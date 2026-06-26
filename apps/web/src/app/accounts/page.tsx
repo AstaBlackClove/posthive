@@ -3,9 +3,16 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
+import { PlatformIcon } from "../../components/PlatformIcon";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const THREADS_AUTH_URL = process.env.NEXT_PUBLIC_THREADS_AUTH_URL ?? `${API_BASE}/auth/threads`;
+
+const BG = "#0a0a0a";
+const SURFACE = "#111111";
+const BORDER = "#1f1f1f";
+const TEXT = "#ededed";
+const MUTED = "#888888";
 
 interface Account {
   id: string;
@@ -15,10 +22,10 @@ interface Account {
   createdAt: string;
 }
 
-const PLATFORM_META: Record<string, { label: string; icon: string; color: string; bg: string; brand: string }> = {
-  bluesky:  { label: "Bluesky",  icon: "🦋", color: "text-blue-600",  bg: "bg-blue-50",  brand: "#0085ff" },
-  threads:  { label: "Threads",  icon: "🧵", color: "text-gray-900",  bg: "bg-gray-100", brand: "#000000" },
-  linkedin: { label: "LinkedIn", icon: "💼", color: "text-blue-700",  bg: "bg-blue-50",  brand: "#0077b5" },
+const PLATFORM_META: Record<string, { label: string; icon: string; brand: string }> = {
+  bluesky:  { label: "Bluesky",  icon: "🦋", brand: "#0085ff" },
+  threads:  { label: "Threads",  icon: "🧵", brand: "#1a1a1a" },
+  linkedin: { label: "LinkedIn", icon: "💼", brand: "#0077b5" },
 };
 
 function Avatar({ account }: { account: Account }) {
@@ -27,11 +34,12 @@ function Avatar({ account }: { account: Account }) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img src={account.avatarUrl} alt={account.displayName}
-        className="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-sm" />
+        className="w-10 h-10 rounded-full object-cover" style={{ boxShadow: `0 0 0 2px ${SURFACE}` }} />
     );
   }
   return (
-    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${meta?.bg} ${meta?.color}`}>
+    <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
+      style={{ backgroundColor: meta?.brand ?? "#6b7280" }}>
       {account.displayName[0]?.toUpperCase()}
     </div>
   );
@@ -43,26 +51,30 @@ function ConnectedAccountRow({ account, onDisconnect, disconnecting }: {
   disconnecting: string | null;
 }) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 group">
+    <div className="flex items-center gap-3 p-3 rounded-xl group" style={{ backgroundColor: BG, border: `1px solid ${BORDER}` }}>
       <Avatar account={account} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-gray-900 truncate">
+        <p className="text-sm font-semibold truncate" style={{ color: TEXT }}>
           {account.platform === "threads" ? "@" : ""}{account.displayName}
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs" style={{ color: MUTED }}>
           Connected {new Date(account.createdAt).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
         </p>
       </div>
       <button
         onClick={() => onDisconnect(account.id, account.displayName)}
         disabled={disconnecting === account.id}
-        className="text-xs text-gray-300 group-hover:text-red-400 font-medium transition-colors disabled:opacity-50 px-2 py-1 rounded-lg group-hover:bg-red-50"
+        className="text-xs font-medium transition-colors disabled:opacity-50 px-2 py-1 rounded-lg hover:text-red-500 hover:bg-red-50"
+        style={{ color: MUTED }}
       >
         {disconnecting === account.id ? "…" : "Disconnect"}
       </button>
     </div>
   );
 }
+
+const inputCls = "w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition";
+const inputStyle = { border: `1px solid ${BORDER}`, backgroundColor: BG, color: TEXT };
 
 export default function AccountsPage() {
   const searchParams = useSearchParams();
@@ -96,10 +108,7 @@ export default function AccountsPage() {
     e.preventDefault();
     setConnecting(true); setConnectError(null); setConnectSuccess(false);
     try {
-      await apiFetch("/accounts/bluesky", {
-        method: "POST",
-        body: JSON.stringify({ handle: handle.replace(/^@/, ""), appPassword }),
-      });
+      await apiFetch("/accounts/bluesky", { method: "POST", body: JSON.stringify({ handle: handle.replace(/^@/, ""), appPassword }) });
       setHandle(""); setAppPassword(""); setConnectSuccess(true);
       await fetchAccounts();
     } catch (err) { setConnectError(String(err)); }
@@ -110,10 +119,7 @@ export default function AccountsPage() {
     e.preventDefault();
     setConnectingThreads(true); setThreadsError(null);
     try {
-      await apiFetch("/auth/threads/manual", {
-        method: "POST",
-        body: JSON.stringify({ accessToken: threadsToken.trim() }),
-      });
+      await apiFetch("/auth/threads/manual", { method: "POST", body: JSON.stringify({ accessToken: threadsToken.trim() }) });
       setThreadsToken(""); setShowManualToken(false);
       await fetchAccounts();
     } catch (err) { setThreadsError(String(err)); }
@@ -131,49 +137,52 @@ export default function AccountsPage() {
   const threadsAccounts = accounts.filter((a) => a.platform === "threads");
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: BG }}>
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 bg-white flex-shrink-0">
+      <div className="flex items-center justify-between px-8 py-4 flex-shrink-0"
+        style={{ borderBottom: `1px solid ${BORDER}`, backgroundColor: SURFACE }}>
         <div>
-          <h1 className="text-lg font-bold text-gray-900">Accounts</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Connect the social accounts you want to post to.</p>
+          <h1 className="text-lg font-bold" style={{ color: TEXT }}>Accounts</h1>
+          <p className="text-xs mt-0.5" style={{ color: MUTED }}>Connect the social accounts you want to post to.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-            accounts.length > 0 ? "bg-green-50 text-green-700 border border-green-200" : "bg-gray-100 text-gray-500"
-          }`}>
-            {accounts.length} connected
-          </span>
-        </div>
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+          style={accounts.length > 0
+            ? { backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #bbf7d0" }
+            : { backgroundColor: "#1a1a1a", color: MUTED, border: `1px solid ${BORDER}` }}>
+          {accounts.length} connected
+        </span>
       </div>
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-8 py-6">
 
-        {/* OAuth banners */}
         {oauthConnected === "threads" && (
           <div className="mb-5 flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-            <span>✓</span> Threads account connected successfully!
+            ✓ Threads account connected successfully!
           </div>
         )}
         {oauthError && (
           <div className="mb-5 flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-            <span>⚠️</span> {decodeURIComponent(oauthError)}
+            ⚠️ {decodeURIComponent(oauthError)}
           </div>
         )}
 
-        <div className="max-w-2xl space-y-4">
+        <div className="grid grid-cols-2 gap-4">
 
-          {/* ── Bluesky ── */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">🦋</div>
-              <div className="flex-1">
-                <p className="font-semibold text-gray-900 text-sm">Bluesky</p>
-                <p className="text-xs text-gray-400">App password · no OAuth needed</p>
+          {/* Bluesky */}
+          <div className="rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: "#0a2040" }}>
+                <PlatformIcon platform="bluesky" size={20} />
               </div>
-              <span className="text-[11px] bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">Live</span>
+              <div className="flex-1">
+                <p className="font-semibold text-sm" style={{ color: TEXT }}>Bluesky</p>
+                <p className="text-xs" style={{ color: MUTED }}>App password · no OAuth needed</p>
+              </div>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "#dcfce7", color: "#15803d" }}>Live</span>
             </div>
 
             {!loading && blueskyAccounts.length > 0 && (
@@ -185,45 +194,38 @@ export default function AccountsPage() {
             )}
 
             <form onSubmit={connectBluesky} className="p-5 space-y-3">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: MUTED }}>
                 {blueskyAccounts.length > 0 ? "Add another account" : "Connect your account"}
               </p>
-              <input
-                placeholder="Handle — e.g. you.bsky.social"
-                value={handle}
-                onChange={(e) => setHandle(e.target.value)}
-                required
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              />
-              <input
-                type="password"
-                placeholder="App password — bsky.app → Settings → App Passwords"
-                value={appPassword}
-                onChange={(e) => setAppPassword(e.target.value)}
-                required
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              />
+              <input placeholder="Handle — e.g. you.bsky.social" value={handle}
+                onChange={(e) => setHandle(e.target.value)} required
+                className={inputCls} style={inputStyle} />
+              <input type="password" placeholder="App password — bsky.app → Settings → App Passwords"
+                value={appPassword} onChange={(e) => setAppPassword(e.target.value)} required
+                className={inputCls} style={inputStyle} />
               {connectError && <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{connectError}</p>}
               {connectSuccess && <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">✓ Connected successfully</p>}
-              <button
-                type="submit"
-                disabled={connecting}
-                className="w-full py-2.5 bg-[#0085ff] hover:bg-blue-600 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
-              >
+              <button type="submit" disabled={connecting}
+                className="w-full py-2.5 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+                style={{ backgroundColor: "#0085ff" }}>
                 {connecting ? "Connecting…" : "Connect Bluesky"}
               </button>
             </form>
           </div>
 
-          {/* ── Threads ── */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-              <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">🧵</div>
-              <div className="flex-1">
-                <p className="font-semibold text-gray-900 text-sm">Threads</p>
-                <p className="text-xs text-gray-400">Meta OAuth 2.0</p>
+          {/* Threads */}
+          <div className="rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: "#1a1a1a", color: "#ededed" }}>
+                <PlatformIcon platform="threads" size={20} />
               </div>
-              <span className="text-[11px] bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">Live</span>
+              <div className="flex-1">
+                <p className="font-semibold text-sm" style={{ color: TEXT }}>Threads</p>
+                <p className="text-xs" style={{ color: MUTED }}>Meta OAuth 2.0</p>
+              </div>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "#dcfce7", color: "#15803d" }}>Live</span>
             </div>
 
             {!loading && threadsAccounts.length > 0 && (
@@ -235,45 +237,35 @@ export default function AccountsPage() {
             )}
 
             <div className="p-5 space-y-3">
-              <a
-                href={THREADS_AUTH_URL}
-                className="flex items-center justify-center gap-2 w-full py-2.5 bg-gray-900 hover:bg-gray-700 text-white text-sm font-semibold rounded-xl transition-colors"
-              >
-                <span>🧵</span>
+              <a href={THREADS_AUTH_URL}
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-white text-sm font-semibold rounded-xl transition-colors hover:opacity-90"
+                style={{ backgroundColor: "#1a1a1a" }}>
+                <PlatformIcon platform="threads" size={16} />
                 {threadsAccounts.length > 0 ? "Add another Threads account" : "Connect with Threads"}
               </a>
 
-              <button
-                type="button"
-                onClick={() => setShowManualToken((v) => !v)}
-                className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors text-center py-1"
-              >
+              <button type="button" onClick={() => setShowManualToken((v) => !v)}
+                className="w-full text-xs transition-colors text-center py-1 hover:opacity-70"
+                style={{ color: MUTED }}>
                 {showManualToken ? "▲ Hide manual token option" : "OAuth not working? Paste an access token instead"}
               </button>
 
               {showManualToken && (
-                <form onSubmit={connectThreadsManual} className="space-y-3 pt-1 border-t border-gray-100">
-                  <p className="text-xs text-gray-400 pt-2">
+                <form onSubmit={connectThreadsManual} className="space-y-3 pt-1" style={{ borderTop: `1px solid ${BORDER}` }}>
+                  <p className="text-xs pt-2" style={{ color: MUTED }}>
                     Get a token from the{" "}
-                    <a href="https://developers.facebook.com" target="_blank" rel="noreferrer" className="underline text-gray-600">
+                    <a href="https://developers.facebook.com" target="_blank" rel="noreferrer" className="underline">
                       Meta developer dashboard
                     </a>
                     {" "}→ Use cases → Customize → User Token Generator.
                   </p>
-                  <input
-                    type="password"
-                    placeholder="Paste Threads access token"
-                    value={threadsToken}
-                    onChange={(e) => setThreadsToken(e.target.value)}
-                    required
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
-                  />
+                  <input type="password" placeholder="Paste Threads access token"
+                    value={threadsToken} onChange={(e) => setThreadsToken(e.target.value)} required
+                    className={inputCls} style={inputStyle} />
                   {threadsError && <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{threadsError}</p>}
-                  <button
-                    type="submit"
-                    disabled={connectingThreads || !threadsToken.trim()}
-                    className="w-full py-2.5 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
-                  >
+                  <button type="submit" disabled={connectingThreads || !threadsToken.trim()}
+                    className="w-full py-2.5 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+                    style={{ backgroundColor: "#3d3c3a" }}>
                     {connectingThreads ? "Connecting…" : "Connect via Token"}
                   </button>
                 </form>
@@ -281,19 +273,23 @@ export default function AccountsPage() {
             </div>
           </div>
 
-          {/* ── LinkedIn ── */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden opacity-50">
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">💼</div>
-              <div className="flex-1">
-                <p className="font-semibold text-gray-900 text-sm">LinkedIn</p>
-                <p className="text-xs text-gray-400">Requires LinkedIn developer app</p>
+          {/* LinkedIn — coming soon */}
+          <div className="col-span-2 rounded-2xl shadow-sm overflow-hidden opacity-50" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: "#00263d" }}>
+                <PlatformIcon platform="linkedin" size={20} />
               </div>
-              <span className="text-[11px] bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">Coming soon</span>
+              <div className="flex-1">
+                <p className="font-semibold text-sm" style={{ color: TEXT }}>LinkedIn</p>
+                <p className="text-xs" style={{ color: MUTED }}>Requires LinkedIn developer app</p>
+              </div>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "#1a1a1a", color: MUTED }}>Coming soon</span>
             </div>
             <div className="p-5">
-              <button disabled
-                className="w-full py-2.5 bg-gray-100 text-gray-400 text-sm font-semibold rounded-xl cursor-not-allowed">
+              <button disabled className="w-full py-2.5 text-sm font-semibold rounded-xl cursor-not-allowed"
+                style={{ backgroundColor: "#1a1a1a", color: MUTED }}>
                 Connect LinkedIn
               </button>
             </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Sidebar } from "../components/Sidebar";
+import { AuthProvider } from "../context/AuthContext";
+import { AppShell } from "../components/AppShell";
 
 export const metadata: Metadata = {
   title: "Social Scheduler",
@@ -9,14 +10,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full bg-gray-50">
+    <html lang="en" className="h-full" style={{ backgroundColor: "var(--color-bg)" }}>
       <body className="h-full font-sans antialiased">
-        <div className="flex h-full">
-          <Sidebar />
-          <main className="flex-1 overflow-hidden flex flex-col">
-            {children}
-          </main>
-        </div>
+        <AuthProvider>
+          <AppShell>{children}</AppShell>
+        </AuthProvider>
       </body>
     </html>
   );

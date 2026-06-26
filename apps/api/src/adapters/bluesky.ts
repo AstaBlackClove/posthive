@@ -2,6 +2,7 @@ import { BskyAgent } from "@atproto/api";
 import type { AppBskyEmbedImages } from "@atproto/api";
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
+import { compressForPlatform } from "../lib/compress.js";
 import type { StorageAdapter } from "../lib/storage.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
@@ -47,7 +48,8 @@ async function buildImageEmbed(
       };
       const mimeType = mimeMap[ext] ?? "image/jpeg";
 
-      const { data } = await agent.uploadBlob(buffer, { encoding: mimeType });
+      const { buffer: compressed, mimeType: outMime } = await compressForPlatform(buffer, mimeType, "bluesky");
+      const { data } = await agent.uploadBlob(compressed, { encoding: outMime });
       return {
         image: data.blob,
         alt: "", // TODO: accept alt text in the compose UI for accessibility

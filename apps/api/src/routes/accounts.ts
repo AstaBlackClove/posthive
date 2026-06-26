@@ -1,18 +1,10 @@
-/**
- * Account management routes.
- *
- * POST /accounts/bluesky — connect a Bluesky account with handle + app-password
- * GET  /accounts          — list all connected accounts (credentials never returned)
- * DELETE /accounts/:id    — disconnect an account
- *
- * OAuth flows for Threads and LinkedIn will be added here once those
- * adapters are implemented.
- */
-
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { encryptBlueskyCredentials } from "../adapters/bluesky.js";
 import { prisma } from "../lib/prisma.js";
+import { withAuth, getUser } from "../lib/auth/withAuth.js";
+import { getPlan } from "../lib/plans.js";
+import { enforcePlan } from "../lib/enforcePlan.js";
 
 const connectBlueskyBody = z.object({
   handle: z.string().min(1),
@@ -20,18 +12,19 @@ const connectBlueskyBody = z.object({
 });
 
 export async function accountRoutes(app: FastifyInstance): Promise<void> {
+
   // Connect a Bluesky account
-  app.post("/accounts/bluesky", async (req, reply) => {
+  app.post("/accounts/bluesky", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const blocked = await enforcePlan(userId, "accounts");
+    if (blocked) return reply.status(402).send(blocked);
     const parsed = connectBlueskyBody.safeParse(req.body);
-    if (!parsed.success) {
-      return reply.status(400).send({ error: parsed.error.flatten() });
-    }
+    if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
 
     const { handle, appPassword } = parsed.data;
 
     let encryptedCredentials: string;
     try {
-      // This validates the credentials against Bluesky before persisting.
       encryptedCredentials = await encryptBlueskyCredentials(handle, appPassword);
     } catch (err) {
       return reply.status(400).send({
@@ -40,7 +33,6 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
       });
     }
 
-    // Fetch Bluesky avatar via public AppView API (no auth needed)
     let avatarUrl: string | null = null;
     try {
       const profileRes = await fetch(
@@ -50,33 +42,33 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
         const profile = await profileRes.json() as { avatar?: string };
         avatarUrl = profile.avatar ?? null;
       }
-    } catch { /* avatar is optional — don't fail the whole connect */ }
+    } catch { /* avatar optional */ }
 
     const account = await prisma.account.create({
-      data: {
-        platform: "bluesky",
-        displayName: handle,
-        credentials: encryptedCredentials,
-        avatarUrl,
-      },
+      data: { platform: "bluesky", displayName: handle, credentials: encryptedCredentials, avatarUrl, userId },
       select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
     });
 
     return reply.status(201).send(account);
   });
 
-  // List all accounts (no credentials in response)
-  app.get("/accounts", async (_req, reply) => {
+  // List accounts for current user
+  app.get("/accounts", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
     const accounts = await prisma.account.findMany({
+      where: { userId },
       select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
       orderBy: { createdAt: "asc" },
     });
     return reply.send(accounts);
   });
 
-  // Delete an account — remove linked targets first to satisfy foreign key
-  app.delete("/accounts/:id", async (req, reply) => {
+  // Delete account — scoped to user
+  app.delete("/accounts/:id", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
     const { id } = req.params as { id: string };
+    const account = await prisma.account.findFirst({ where: { id, userId } });
+    if (!account) return reply.status(404).send({ error: "Account not found" });
     await prisma.postJobTarget.deleteMany({ where: { accountId: id } });
     await prisma.account.delete({ where: { id } });
     return reply.status(204).send();

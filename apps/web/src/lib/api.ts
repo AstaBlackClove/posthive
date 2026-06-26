@@ -11,6 +11,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { "Content-Type": "application/json", ...options?.headers },
+    credentials: "include", // send auth cookies on every request
     ...options,
   });
 

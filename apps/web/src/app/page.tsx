@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../lib/api";
+import { DateTimePicker } from "../components/DateTimePicker";
+import { PlatformIcon } from "../components/PlatformIcon";
 
 interface Account {
   id: string;
@@ -21,7 +23,7 @@ const PLATFORM_ICON: Record<string, string> = {
 };
 
 const PLATFORM_COLOR: Record<string, string> = {
-  bluesky: "#0085ff", threads: "#000000", linkedin: "#0077b5",
+  bluesky: "#0085ff", threads: "#aaaaaa", linkedin: "#0077b5",
 };
 
 const PLATFORM_LIMIT: Record<string, number> = {
@@ -51,16 +53,16 @@ function PlatformPreview({ account, text, commentText, images }: {
   const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="rounded-2xl border border-gray-200 shadow-sm overflow-hidden bg-white">
+    <div className="rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}>
       {/* Platform header */}
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100" style={{ borderLeftColor: color, borderLeftWidth: 3 }}>
-        <span className="text-base">{PLATFORM_ICON[account.platform] ?? "🌐"}</span>
-        <span className="text-xs font-semibold text-gray-600 capitalize">{account.platform}</span>
+      <div className="flex items-center gap-2 px-4 py-2.5" style={{ borderBottom: "1px solid #1f1f1f", borderLeft: `3px solid ${color}`, backgroundColor: "#0a0a0a" }}>
+        <PlatformIcon platform={account.platform} size={16} />
+        <span className="text-xs font-semibold capitalize" style={{ color: color }}>{account.platform}</span>
         <span className="text-xs text-gray-400 ml-auto">{account.displayName}</span>
       </div>
 
       {/* Post body */}
-      <div className="p-4">
+      <div className="p-4" style={{ backgroundColor: "#111111" }}>
         <div className="flex gap-3">
           {account.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -102,7 +104,7 @@ function PlatformPreview({ account, text, commentText, images }: {
         </div>
 
         {/* Engagement bar */}
-        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100 text-gray-300">
+        <div className="flex items-center gap-4 mt-3 pt-3 text-gray-300" style={{ borderTop: "1px solid #1f1f1f" }}>
           <span className="text-xs flex items-center gap-1">♡ <span>0</span></span>
           <span className="text-xs flex items-center gap-1">↩ <span>Reply</span></span>
           <span className="text-xs flex items-center gap-1">↗ <span>Share</span></span>
@@ -110,7 +112,7 @@ function PlatformPreview({ account, text, commentText, images }: {
 
         {/* Comment preview */}
         {commentText && (
-          <div className="mt-3 pt-3 border-t border-gray-100 flex gap-2.5">
+          <div className="mt-3 pt-3 flex gap-2.5" style={{ borderTop: "1px solid #1f1f1f" }}>
             {account.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={account.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
@@ -168,7 +170,7 @@ export default function ComposePage() {
       const formData = new FormData();
       formData.append("file", file);
       try {
-        const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData });
+        const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
         if (!res.ok) { const b = await res.json() as { error: string }; setUploadError(b.error); URL.revokeObjectURL(previewUrl); continue; }
         const { url } = await res.json() as { url: string };
         setImages((prev) => [...prev, { url, previewUrl, name: file.name || "pasted-image" }]);
@@ -214,7 +216,7 @@ export default function ComposePage() {
   const selectedAccounts = accounts.filter((a) => selectedIds.includes(a.id));
   const platformLimits = selectedAccounts.map((a) => ({
     platform: a.platform, limit: PLATFORM_LIMIT[a.platform] ?? 300,
-    icon: PLATFORM_ICON[a.platform] ?? "🌐",
+    icon: a.platform,
     over: graphemeCount > (PLATFORM_LIMIT[a.platform] ?? 300),
     color: PLATFORM_COLOR[a.platform] ?? "#6b7280",
   }));
@@ -225,7 +227,7 @@ export default function ComposePage() {
     <div className="flex flex-col h-full overflow-hidden">
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 bg-white">
+      <div className="flex items-center justify-between px-8 py-4" style={{ borderBottom: "1px solid #1f1f1f", backgroundColor: "#0a0a0a" }}>
         <div>
           <h1 className="text-lg font-bold text-gray-900">New Post</h1>
           <p className="text-xs text-gray-400 mt-0.5">Write once · schedule across platforms</p>
@@ -241,59 +243,104 @@ export default function ComposePage() {
       <form onSubmit={handleSubmit} onPaste={handlePaste} className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* Left — editor */}
-        <div className="flex flex-col flex-1 border-r border-gray-200 overflow-y-auto">
+        <div className="flex flex-col flex-1 overflow-y-auto min-h-0" style={{ borderRight: "1px solid #1f1f1f", backgroundColor: "#0a0a0a" }}>
 
-          {/* Platform selector pills */}
-          <div className="px-6 pt-5 pb-3 border-b border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Post to</p>
+          {/* Platform selector */}
+          <div className="px-6 pt-4 pb-3" style={{ borderBottom: "1px solid #1f1f1f" }}>
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#444" }}>Post to</p>
+              {!loadingAccounts && accounts.length > 1 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs" style={{ color: "#444" }}>
+                    {selectedIds.length}/{accounts.length} selected
+                  </span>
+                  <button type="button"
+                    onClick={() => {
+                      if (selectedIds.length === accounts.length) setSelectedIds([]);
+                      else setSelectedIds(accounts.map((a) => a.id));
+                    }}
+                    className="text-xs font-semibold transition-colors hover:opacity-80"
+                    style={{ color: "#5b63d3" }}>
+                    {selectedIds.length === accounts.length ? "Deselect all" : "Select all"}
+                  </button>
+                </div>
+              )}
+            </div>
+
             {loadingAccounts ? (
-              <div className="flex gap-2"><div className="h-9 w-28 rounded-xl bg-gray-100 animate-pulse" /></div>
+              <div className="flex gap-2">
+                {[1,2].map(i => <div key={i} className="h-8 w-32 rounded-xl animate-pulse" style={{ backgroundColor: "#1a1a1a" }} />)}
+              </div>
+            ) : accounts.length === 0 ? (
+              <a href="/accounts" className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors hover:opacity-80"
+                style={{ color: "#5b63d3" }}>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Connect an account to post
+              </a>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {accounts.map((a) => {
-                  const selected = selectedIds.includes(a.id);
-                  const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
-                  return (
-                    <button
-                      key={a.id}
-                      type="button"
-                      onClick={() => toggleAccount(a.id)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all"
-                      style={selected ? {
-                        background: color + "14",
-                        borderColor: color + "60",
-                        color: color,
-                      } : {
-                        background: "#f9fafb",
-                        borderColor: "#e5e7eb",
-                        color: "#6b7280",
-                      }}
-                    >
-                      {a.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={a.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
-                      ) : (
-                        <span className="text-base">{PLATFORM_ICON[a.platform] ?? "🌐"}</span>
-                      )}
-                      <span className="capitalize">{a.platform}</span>
-                      <span className={`text-xs ${selected ? "opacity-60" : "opacity-40"}`}>{a.displayName}</span>
-                      {selected && <span className="text-xs ml-0.5">✓</span>}
-                    </button>
-                  );
-                })}
+              /* Scrollable when many accounts */
+              <div className="flex flex-wrap gap-1.5" style={{ maxHeight: 120, overflowY: "auto" }}>
+                {/* Group by platform */}
+                {Object.entries(
+                  accounts.reduce<Record<string, typeof accounts>>((acc, a) => {
+                    (acc[a.platform] ??= []).push(a); return acc;
+                  }, {})
+                ).map(([platform, platformAccounts]) => (
+                  <div key={platform} className="flex items-center gap-1.5 flex-wrap">
+                    {/* Platform label chip */}
+                    <span className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold"
+                      style={{ backgroundColor: "#111111", color: "#555", border: "1px solid #1f1f1f" }}>
+                      <PlatformIcon platform={platform} size={11} />
+                    </span>
+
+                    {platformAccounts.map((a) => {
+                      const selected = selectedIds.includes(a.id);
+                      const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
+                      return (
+                        <button key={a.id} type="button" onClick={() => toggleAccount(a.id)}
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+                          style={selected ? {
+                            background: color + "18",
+                            border: `1px solid ${color}50`,
+                            color: color,
+                          } : {
+                            background: "#111111",
+                            border: "1px solid #2a2a2a",
+                            color: "#888",
+                          }}>
+                          {a.avatarUrl
+                            // eslint-disable-next-line @next/next/no-img-element
+                            ? <img src={a.avatarUrl} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                            : null}
+                          <span className="truncate max-w-[96px]">{a.displayName}</span>
+                          {selected && (
+                            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
+
+                    {/* Divider between platform groups */}
+                    <div className="w-px h-5 self-center" style={{ backgroundColor: "#1f1f1f" }} />
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
           {/* Text editor */}
-          <div className="flex-1 px-6 py-5">
+          <div className="px-6 py-5">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Post</span>
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Post</span>
               <div className="flex items-center gap-3">
                 {platformLimits.map((p) => (
                   <span key={p.platform} className="text-xs font-medium flex items-center gap-1"
-                    style={{ color: p.over ? "#ef4444" : graphemeCount > p.limit * 0.8 ? "#f59e0b" : "#9ca3af" }}>
-                    {p.icon} {graphemeCount}/{p.limit}
+                    style={{ color: p.over ? "#ef4444" : graphemeCount > p.limit * 0.8 ? "#f59e0b" : "#555" }}>
+                    <PlatformIcon platform={p.icon} size={12} /> {graphemeCount}/{p.limit}
                   </span>
                 ))}
               </div>
@@ -303,82 +350,92 @@ export default function ComposePage() {
               onChange={(e) => setText(e.target.value)}
               placeholder="What do you want to share?"
               required
-              rows={7}
-              className={`w-full resize-none rounded-xl border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                overAnyLimit ? "border-red-300 bg-red-50" : "border-gray-200 bg-white"
-              }`}
+              rows={8}
+              className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"
+              style={overAnyLimit
+                ? { borderColor: "#fca5a5", backgroundColor: "#111111", color: "#ededed" }
+                : { borderColor: "#1f1f1f", backgroundColor: "#111111", color: "#ededed" }
+              }
             />
             {overAnyLimit && (
               <p className="mt-1 text-xs text-red-500">
                 {Math.abs(mostRestrictiveLimit - graphemeCount)} chars over the limit for one of your selected platforms
               </p>
             )}
+          </div>
 
-            {/* Image upload row */}
-            <div className="mt-3">
-              {images.length > 0 && (
-                <div className="flex gap-2 mb-3 flex-wrap">
-                  {images.map((img, i) => (
-                    <div key={img.url} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={img.previewUrl} alt={img.name} className="w-full h-full object-cover" />
-                      <button type="button" onClick={() => removeImage(i)}
-                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-gray-900/70 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500">
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                  {images.length < MAX_IMAGES && Array.from({ length: MAX_IMAGES - images.length }).map((_, i) => (
-                    <div key={`e-${i}`} className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50" />
-                  ))}
-                </div>
-              )}
-
-              {images.length < MAX_IMAGES && (
-                <div className="flex items-center gap-2">
-                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp"
-                    multiple onChange={handleFileChange} className="hidden" id="image-upload" />
-                  <label htmlFor="image-upload"
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          {/* Media + upload row */}
+          <div className="px-6 pb-5" style={{ borderBottom: "1px solid #1f1f1f" }}>
+            {images.length > 0 && (
+              <div className="flex gap-2 mb-3 flex-wrap">
+                {images.map((img, i) => (
+                  <div key={img.url} className="relative group w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style={{ border: "1px solid #1f1f1f", backgroundColor: "#1a1a1a" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.previewUrl} alt={img.name} className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => removeImage(i)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+                      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                {images.length < MAX_IMAGES && Array.from({ length: MAX_IMAGES - images.length }).map((_, i) => (
+                  <div key={`e-${i}`} className="w-20 h-20 rounded-xl border-2 border-dashed flex items-center justify-center"
+                    style={{ borderColor: "#222", backgroundColor: "#0a0a0a" }}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "#2a2a2a" }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
                     </svg>
-                    {uploading ? "Uploading…" : `Photo${images.length > 0 ? ` · ${images.length}/${MAX_IMAGES}` : ""}`}
-                  </label>
-                  <span className="text-xs text-gray-400">or Ctrl+V to paste</span>
-                </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp"
+                multiple onChange={handleFileChange} className="hidden" id="image-upload" />
+              <label htmlFor="image-upload"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all hover:border-opacity-60 ${uploading ? "opacity-50 pointer-events-none" : ""}`}
+                style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {uploading ? "Uploading…" : images.length > 0 ? `${images.length}/${MAX_IMAGES} photos` : "Add photo"}
+              </label>
+              {images.length === 0 && (
+                <span className="text-xs" style={{ color: "#333" }}>or Ctrl+V to paste</span>
               )}
-              {uploadError && <p className="mt-2 text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{uploadError}</p>}
             </div>
+            {uploadError && <p className="mt-2 text-xs text-red-500 rounded-lg px-3 py-2" style={{ backgroundColor: "#1f0a0a", border: "1px solid #3a1a1a" }}>{uploadError}</p>}
           </div>
 
           {/* First comment */}
-          <div className="px-6 pb-6 border-t border-gray-100 pt-5">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">First Comment</span>
-              <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">optional</span>
+          <div className="px-6 pb-6 pt-5">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>First Comment</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
             </div>
-            <p className="text-xs text-gray-400 mb-2">Posted as the first reply immediately after your post goes live.</p>
+            <p className="text-xs mb-2.5" style={{ color: "#444" }}>Posted as the first reply immediately after your post goes live.</p>
             <textarea
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Add a link, thread continuation, or extra context…"
               rows={3}
-              className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"
+              style={{ borderColor: "#1f1f1f", backgroundColor: "#111111", color: "#ededed" }}
             />
           </div>
         </div>
 
         {/* Right — per-platform previews (fixed 480px) */}
-        <div className="w-[480px] flex-shrink-0 flex flex-col bg-gray-50 overflow-y-auto">
+        <div className="w-[480px] flex-shrink-0 flex flex-col overflow-y-auto" style={{ backgroundColor: "#0a0a0a" }}>
           <div className="px-5 pt-5 pb-3">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Preview</p>
           </div>
           <div className="px-5 pb-5 space-y-4 flex-1">
             {selectedAccounts.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed border-gray-200 p-10 text-center">
-                <p className="text-gray-400 text-sm">Select an account above to see a preview</p>
+              <div className="rounded-2xl border-2 border-dashed p-10 text-center" style={{ borderColor: "#1f1f1f" }}>
+                <p className="text-sm" style={{ color: "#888888" }}>Select an account above to see a preview</p>
               </div>
             ) : (
               selectedAccounts.map((a) => (
@@ -396,31 +453,19 @@ export default function ComposePage() {
       </form>
 
       {/* Bottom footer bar — full width */}
-      <div className="border-t border-gray-200 bg-white px-8 py-4 flex items-center gap-4">
+      <div className="px-8 py-4 flex items-center gap-4" style={{ borderTop: "1px solid #1f1f1f", backgroundColor: "#0a0a0a" }}>
         {/* Dry run toggle */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setDryRun((v) => !v)}>
           <div className={`relative w-9 h-5 rounded-full transition-colors ${dryRun ? "bg-violet-500" : "bg-gray-300"}`}>
-            <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${dryRun ? "translate-x-4" : "translate-x-0.5"}`} />
+            <span className={`absolute top-0.5 w-4 h-4 rounded-full shadow transition-transform ${dryRun ? "translate-x-4" : "translate-x-0.5"}`} style={{ backgroundColor: "#111111" }} />
           </div>
           <span className={`text-xs font-medium ${dryRun ? "text-violet-700" : "text-gray-500"}`}>Dry run</span>
         </div>
 
-        <div className="h-5 w-px bg-gray-200" />
+        <div className="h-5 w-px" style={{ backgroundColor: "#1f1f1f" }} />
 
         {/* Schedule datetime */}
-        <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <input
-            type="datetime-local"
-            value={scheduledFor}
-            onChange={(e) => setScheduledFor(e.target.value)}
-            required
-            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          />
-        </div>
+        <DateTimePicker value={scheduledFor} onChange={setScheduledFor} />
 
         {/* Spacer */}
         <div className="flex-1" />
@@ -439,7 +484,8 @@ export default function ComposePage() {
           form=""
           disabled={submitting || overAnyLimit || accounts.length === 0}
           onClick={handleSubmit}
-          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-colors shadow-sm"
+          className="px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-colors shadow-sm"
+          style={{ backgroundColor: "var(--color-accent)" }}
         >
           {submitting ? "Scheduling…" : dryRun ? "Schedule Dry Run" : "Schedule Post"}
         </button>

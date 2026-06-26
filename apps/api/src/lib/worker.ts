@@ -14,10 +14,11 @@ import { Worker } from "bullmq";
 import { prisma } from "./prisma.js";
 import { type PostJobPayload } from "./queue.js";
 import { runJob } from "../runner/jobRunner.js";
+import type { StorageAdapter } from "./storage.js";
 
 const connection = { url: process.env.REDIS_URL! };
 
-export function startWorker(): void {
+export function startWorker(storage: StorageAdapter): void {
   const worker = new Worker<PostJobPayload>(
     "post-jobs",
     async (job) => {
@@ -41,7 +42,7 @@ export function startWorker(): void {
       }
 
       console.log(`[worker] processing PostJob ${postJobId}`);
-      await runJob(postJob);
+      await runJob(postJob, storage);
     },
     {
       connection,

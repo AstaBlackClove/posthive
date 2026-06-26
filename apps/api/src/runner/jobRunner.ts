@@ -16,6 +16,7 @@ import type { PostJob, PostJobTarget, Account } from "@prisma/client";
 import { getAdapter } from "../adapters/index.js";
 import { prisma } from "../lib/prisma.js";
 import type { PostResult, CommentResult } from "../adapters/types.js";
+import type { StorageAdapter } from "../lib/storage.js";
 
 const MAX_ATTEMPTS = 3;
 
@@ -35,7 +36,10 @@ function dryRunCommentResult(platform: string): CommentResult {
   return { platformCommentId: `dry-run:comment:${platform}:${Date.now()}` };
 }
 
-export async function runJob(job: PostJob & { targets: FullTarget[] }): Promise<void> {
+export async function runJob(
+  job: PostJob & { targets: FullTarget[] },
+  storage?: StorageAdapter
+): Promise<void> {
   await prisma.postJob.update({
     where: { id: job.id },
     data: { status: "running" },
@@ -63,10 +67,18 @@ export async function runJob(job: PostJob & { targets: FullTarget[] }): Promise<
     t.status === "post_failed" || t.status === "comment_failed"
   );
 
-  await prisma.postJob.update({
-    where: { id: job.id },
-    data: { status: allDone && !anyFailed ? "done" : anyFailed ? "failed" : "running" },
-  });
+  const finalStatus = allDone && !anyFailed ? "done" : anyFailed ? "failed" : "running";
+  await prisma.postJob.update({ where: { id: job.id }, data: { status: finalStatus } });
+
+  // Clean up stored media once the job is fully done (not dry-run, not failed)
+  if (finalStatus === "done" && !job.dryRun && storage && content.mediaUrls?.length) {
+    await Promise.allSettled(
+      content.mediaUrls.map((url) => {
+        console.log(`[storage] deleting ${url} after successful post`);
+        return storage.delete(url);
+      })
+    );
+  }
 }
 
 async function runTarget(

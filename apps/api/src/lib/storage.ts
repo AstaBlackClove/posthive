@@ -17,7 +17,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-export const MAX_IMAGE_SIZE_BYTES = 1_000_000; // 1 MB — Bluesky hard limit
+export const MAX_IMAGE_SIZE_BYTES = 10_000_000; // 10 MB
 export const MAX_IMAGES_PER_POST = 4;
 
 const EXT_MAP: Record<string, string> = {
@@ -28,15 +28,14 @@ const EXT_MAP: Record<string, string> = {
 };
 
 export interface StorageAdapter {
-  /**
-   * Persist a file and return a URL the client and job runner can use.
-   * For local disk: a path served by GET /uploads/:filename
-   * For S3/R2: a signed or public object URL
-   */
+  /** Persist a file and return a URL the client and job runner can use. */
   upload(buffer: Buffer, mimeType: string): Promise<string>;
 
   /** Read a file back as a Buffer so adapters can upload it to platforms. */
   getBuffer(url: string): Promise<Buffer>;
+
+  /** Delete a stored file by its URL. Called after a job posts successfully. */
+  delete(url: string): Promise<void>;
 }
 
 export class LocalDiskStorage implements StorageAdapter {
@@ -44,23 +43,87 @@ export class LocalDiskStorage implements StorageAdapter {
 
   async upload(buffer: Buffer, mimeType: string): Promise<string> {
     await fs.mkdir(this.uploadsDir, { recursive: true });
-
     const ext = EXT_MAP[mimeType] ?? ".bin";
     const filename = `${crypto.randomUUID()}${ext}`;
     const filepath = path.join(this.uploadsDir, filename);
     await fs.writeFile(filepath, buffer);
-
-    // Return a relative URL — the API serves /uploads/* as static files
     return `/uploads/${filename}`;
   }
 
   async getBuffer(url: string): Promise<Buffer> {
-    // Strip the leading /uploads/ to get the filename
     const filename = path.basename(url);
     const filepath = path.join(this.uploadsDir, filename);
     return fs.readFile(filepath);
   }
+
+  async delete(url: string): Promise<void> {
+    try {
+      const filename = path.basename(url);
+      const filepath = path.join(this.uploadsDir, filename);
+      await fs.unlink(filepath);
+    } catch (err: unknown) {
+      // File already gone — not an error
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+    }
+  }
 }
 
-// TODO(saas): replace with S3Storage / R2Storage:
-// export class S3Storage implements StorageAdapter { ... }
+/**
+ * SupabaseStorage — swap in when AUTH_PROVIDER=supabase.
+ * Uses the Supabase Storage API (S3-compatible bucket).
+ *
+ * Set env vars:
+ *   SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_STORAGE_BUCKET (default: "uploads")
+ */
+export class SupabaseStorage implements StorageAdapter {
+  private readonly bucket: string;
+  private readonly baseUrl: string;
+  private readonly serviceKey: string;
+
+  constructor() {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY;
+    if (!url || !key) throw new Error("SUPABASE_URL and SUPABASE_SERVICE_KEY are required for SupabaseStorage");
+    this.baseUrl = url;
+    this.serviceKey = key;
+    this.bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "uploads";
+  }
+
+  private storageUrl(path: string) {
+    return `${this.baseUrl}/storage/v1/object/${this.bucket}/${path}`;
+  }
+
+  private headers() {
+    return { Authorization: `Bearer ${this.serviceKey}`, apikey: this.serviceKey };
+  }
+
+  async upload(buffer: Buffer, mimeType: string): Promise<string> {
+    const ext = EXT_MAP[mimeType] ?? ".bin";
+    const filename = `${crypto.randomUUID()}${ext}`;
+    const res = await fetch(this.storageUrl(filename), {
+      method: "POST",
+      headers: { ...this.headers(), "Content-Type": mimeType },
+      body: buffer,
+    });
+    if (!res.ok) throw new Error(`Supabase upload failed: ${await res.text()}`);
+    return `${this.baseUrl}/storage/v1/object/public/${this.bucket}/${filename}`;
+  }
+
+  async getBuffer(url: string): Promise<Buffer> {
+    const res = await fetch(url, { headers: this.headers() });
+    if (!res.ok) throw new Error(`Supabase getBuffer failed: ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
+  }
+
+  async delete(url: string): Promise<void> {
+    // Extract the path after /object/public/{bucket}/
+    const marker = `/object/public/${this.bucket}/`;
+    const idx = url.indexOf(marker);
+    const filePath = idx !== -1 ? url.slice(idx + marker.length) : url.split("/").pop()!;
+    const res = await fetch(`${this.baseUrl}/storage/v1/object/${this.bucket}/${filePath}`, {
+      method: "DELETE",
+      headers: this.headers(),
+    });
+    if (!res.ok && res.status !== 404) throw new Error(`Supabase delete failed: ${await res.text()}`);
+  }
+}

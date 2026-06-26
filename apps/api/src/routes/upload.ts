@@ -13,12 +13,14 @@ import {
   MAX_IMAGE_SIZE_BYTES,
   type StorageAdapter,
 } from "../lib/storage.js";
+import { withAuth } from "../lib/auth/withAuth.js";
+import { compressForPlatform } from "../lib/compress.js";
 
 export async function uploadRoutes(
   app: FastifyInstance,
   { storage }: { storage: StorageAdapter }
 ): Promise<void> {
-  app.post("/upload", async (req, reply) => {
+  app.post("/upload", { preHandler: [withAuth] }, async (req, reply) => {
     const data = await req.file();
 
     if (!data) {
@@ -31,16 +33,19 @@ export async function uploadRoutes(
       });
     }
 
-    // Read the stream into a buffer so we can check size before persisting
-    const buffer = await data.toBuffer();
+    const raw = await data.toBuffer();
 
-    if (buffer.length > MAX_IMAGE_SIZE_BYTES) {
+    if (raw.length > MAX_IMAGE_SIZE_BYTES) {
       return reply.status(400).send({
-        error: `File too large: ${(buffer.length / 1_000_000).toFixed(2)} MB. Maximum is 1 MB.`,
+        error: `File too large: ${(raw.length / 1_000_000).toFixed(2)} MB. Maximum is ${MAX_IMAGE_SIZE_BYTES / 1_000_000} MB.`,
       });
     }
 
-    const url = await storage.upload(buffer, data.mimetype);
+    // Compress to the strictest platform limit (Bluesky ~1 MB) so stored files
+    // work across all platforms. Bluesky adapter also re-compresses at post time.
+    const { buffer, mimeType } = await compressForPlatform(raw, data.mimetype, "bluesky");
+
+    const url = await storage.upload(buffer, mimeType);
     return reply.status(201).send({ url });
   });
 }

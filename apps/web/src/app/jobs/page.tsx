@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { CalendarView } from "../../components/CalendarView";
+import { PlatformIcon } from "../../components/PlatformIcon";
 
 interface Target {
   id: string;
@@ -42,7 +43,7 @@ const PLATFORM_ICON: Record<string, string> = {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, dot: "bg-gray-400", badge: "bg-gray-50 text-gray-600 border-gray-200" };
+  const cfg = STATUS_CONFIG[status] ?? { label: status, dot: "bg-gray-400", badge: "bg-stone-100 text-stone-600 border-stone-200" };
   return (
     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border ${cfg.badge}`}>
       <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
@@ -66,16 +67,15 @@ function JobCard({ job }: { job: Job }) {
   }
 
   return (
-    <div className={`group bg-white rounded-2xl border shadow-sm overflow-hidden transition-shadow hover:shadow-md ${
-      isPast && job.status === "done" ? "border-gray-100" : "border-gray-200"
-    }`}>
+    <div className="group rounded-2xl shadow-sm overflow-hidden transition-shadow hover:shadow-md"
+      style={{ backgroundColor: "#111111", border: "1px solid #1f1f1f" }}>
       <div className="p-5">
         <div className="flex items-start gap-3">
           {/* Platform icons */}
-          <div className="flex -space-x-1 mt-0.5 flex-shrink-0">
+          <div className="flex items-center gap-0.5 mt-0.5 flex-shrink-0">
             {job.targets.map((t) => (
-              <span key={t.id} className="text-lg" title={t.account.displayName}>
-                {PLATFORM_ICON[t.account.platform] ?? "🌐"}
+              <span key={t.id} title={t.account.displayName}>
+                <PlatformIcon platform={t.account.platform} size={18} />
               </span>
             ))}
           </div>
@@ -107,7 +107,7 @@ function JobCard({ job }: { job: Job }) {
               // eslint-disable-next-line @next/next/no-img-element
               <img key={i}
                 src={url.startsWith("http") ? url : `${API_BASE}${url}`}
-                alt="" className="w-14 h-14 rounded-xl object-cover border border-gray-100" />
+                alt="" className="w-14 h-14 rounded-xl object-cover" style={{ border: "1px solid #1f1f1f", backgroundColor: "#111111" }} />
             ))}
           </div>
         )}
@@ -126,15 +126,14 @@ function JobCard({ job }: { job: Job }) {
 
       {/* Target breakdown — hover or on error */}
       {job.targets.length > 0 && (
-        <div className={`border-t border-gray-100 px-5 py-3 space-y-1.5 transition-all ${
-          job.targets.some((t) => t.error) ? "block" : "hidden group-hover:block"
-        }`}>
+        <div className={`px-5 py-3 space-y-1.5 ${job.targets.some((t) => t.error) ? "block" : "hidden group-hover:block"}`}
+          style={{ borderTop: "1px solid #1f1f1f" }}>
           {job.targets.map((t) => (
             <div key={t.id} className="flex items-center gap-2 text-xs">
-              <span>{PLATFORM_ICON[t.account.platform] ?? "🌐"}</span>
-              <span className="text-gray-500 font-medium">{t.account.displayName}</span>
+              <PlatformIcon platform={t.account.platform} size={13} />
+              <span className="font-medium" style={{ color: "#888888" }}>{t.account.displayName}</span>
               <StatusBadge status={t.status} />
-              {t.attempts > 1 && <span className="text-gray-400">{t.attempts} attempts</span>}
+              {t.attempts > 1 && <span style={{ color: "#888888" }}>{t.attempts} attempts</span>}
               {t.error && <span className="text-red-500 truncate flex-1">{t.error}</span>}
             </div>
           ))}
@@ -164,23 +163,36 @@ export default function JobsPage() {
   }
 
   useEffect(() => {
-    const es = new EventSource(`${API_BASE}/jobs/stream`);
+    let es: EventSource;
 
-    es.onmessage = (e: MessageEvent<string>) => {
+    // EventSource can't send cookies cross-origin — fetch the access token
+    // from the session endpoint first, then pass it as ?token= query param.
+    async function connect() {
       try {
-        setJobs(JSON.parse(e.data) as Job[]);
-        setLastRefresh(new Date());
-        setError(null);
-        setLoading(false);
-      } catch { /* malformed frame — ignore */ }
-    };
+        const res = await fetch(`${API_BASE}/auth/session`, { credentials: "include" });
+        if (!res.ok) { setError("Not authenticated"); setLoading(false); return; }
+        const { token } = await res.json() as { token: string; user: unknown };
+        es = new EventSource(`${API_BASE}/jobs/stream?token=${encodeURIComponent(token)}`);
 
-    es.onerror = () => {
-      setError("Connection lost — retrying…");
-      // Browser auto-reconnects EventSource — no manual retry needed
-    };
+        es.onmessage = (e: MessageEvent<string>) => {
+          try {
+            const data = JSON.parse(e.data) as Job[] | { error: string };
+            if (!Array.isArray(data)) { setError("Not authenticated"); es.close(); return; }
+            setJobs(data);
+            setLastRefresh(new Date());
+            setError(null);
+            setLoading(false);
+          } catch { /* malformed frame — ignore */ }
+        };
 
-    return () => es.close();
+        es.onerror = () => setError("Connection lost — retrying…");
+      } catch {
+        setError("Connection lost — retrying…");
+      }
+    }
+
+    connect();
+    return () => es?.close();
   }, []);
 
   const counts = {
@@ -200,21 +212,21 @@ export default function JobsPage() {
   const past = filteredJobs.filter((j) => j.status === "done" || j.status === "failed");
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 bg-white flex-shrink-0">
+      <div className="flex items-center justify-between px-8 py-4 flex-shrink-0"
+        style={{ borderBottom: "1px solid #1f1f1f", backgroundColor: "#111111" }}>
         <div>
-          <h1 className="text-lg font-bold text-gray-900">Posts</h1>
-          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
+          <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Posts</h1>
+          <p className="text-xs mt-0.5 flex items-center gap-1.5" style={{ color: "#888888" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
             {lastRefresh ? `Live · updated ${lastRefresh.toLocaleTimeString()}` : "Connecting…"}
           </p>
         </div>
-        <a
-          href="/"
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
-        >
+        <a href="/"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+          style={{ backgroundColor: "#5b63d3" }}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -222,36 +234,49 @@ export default function JobsPage() {
         </a>
       </div>
 
-      {/* Toolbar — view toggle + filter pills */}
-      <div className="flex items-center gap-4 px-8 py-3 border-b border-gray-100 bg-white flex-shrink-0 flex-wrap">
+      {/* Toolbar */}
+      <div className="flex items-center gap-3 px-8 py-3 flex-shrink-0 flex-wrap"
+        style={{ borderBottom: "1px solid #1f1f1f", backgroundColor: "#0a0a0a" }}>
+
         {/* View toggle */}
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
-          {(["list", "calendar"] as ViewTab[]).map((t) => (
-            <button key={t} onClick={() => setViewTab(t)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                viewTab === t ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-              }`}>
-              {t === "list" ? "📋 List" : "📅 Calendar"}
+        <div className="flex gap-0.5 p-1 rounded-xl" style={{ backgroundColor: "#111111", border: "1px solid #1f1f1f" }}>
+          {([
+            { id: "list",     icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>, label: "List" },
+            { id: "calendar", icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>, label: "Calendar" },
+          ] as { id: ViewTab; icon: React.ReactNode; label: string }[]).map((t) => (
+            <button key={t.id} onClick={() => setViewTab(t.id)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              style={viewTab === t.id
+                ? { backgroundColor: "#1f1f2e", color: "#818cf8", boxShadow: "0 0 0 1px #3730a3" }
+                : { color: "#555" }}>
+              {t.icon}{t.label}
             </button>
           ))}
         </div>
 
-        {/* Divider */}
-        <div className="h-5 w-px bg-gray-200" />
-
-        {/* Status filter — list view only */}
+        {/* Filter pills — list view only */}
         {viewTab === "list" && (
-          <div className="flex gap-1">
-            {(["all", "pending", "done", "failed"] as FilterTab[]).map((f) => (
-              <button key={f} onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  filter === f ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                }`}>
-                {f.charAt(0).toUpperCase() + f.slice(1)}{" "}
-                <span className={filter === f ? "text-gray-400" : "text-gray-400"}>{counts[f]}</span>
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="h-4 w-px" style={{ backgroundColor: "#1f1f1f" }} />
+            <div className="flex gap-1.5">
+              {([
+                { id: "all",     label: "All",      dot: null,        activeColor: "#ededed", activeBg: "#1f1f1f" },
+                { id: "pending", label: "Scheduled", dot: "#f59e0b",  activeColor: "#fbbf24", activeBg: "#1c1a10" },
+                { id: "done",    label: "Published", dot: "#22c55e",  activeColor: "#4ade80", activeBg: "#0a1f12" },
+                { id: "failed",  label: "Failed",    dot: "#ef4444",  activeColor: "#f87171", activeBg: "#1f0a0a" },
+              ] as { id: FilterTab; label: string; dot: string | null; activeColor: string; activeBg: string }[]).map((f) => (
+                <button key={f.id} onClick={() => setFilter(f.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+                  style={filter === f.id
+                    ? { backgroundColor: f.activeBg, color: f.activeColor, border: `1px solid ${f.dot ?? "#3a3a3a"}40` }
+                    : { backgroundColor: "transparent", color: "#555", border: "1px solid transparent" }}>
+                  {f.dot && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: filter === f.id ? f.dot : "#333" }} />}
+                  {f.label}
+                  <span className="ml-0.5 tabular-nums" style={{ opacity: 0.6, fontSize: "0.65rem" }}>{counts[f.id]}</span>
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -262,23 +287,21 @@ export default function JobsPage() {
           <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5">{error}</div>
         )}
 
-        {/* Calendar view */}
         {viewTab === "calendar" && (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <div className="rounded-2xl shadow-sm p-6" style={{ backgroundColor: "#111111", border: "1px solid #1f1f1f" }}>
             {loading
-              ? <div className="text-center py-20 text-gray-400 text-sm">Loading…</div>
+              ? <div className="text-center py-20 text-sm" style={{ color: "#888888" }}>Loading…</div>
               : <CalendarView jobs={jobs} onReschedule={reschedule} />
             }
           </div>
         )}
 
-        {/* List view */}
         {viewTab === "list" && (
           <>
             {loading && (
               <div className="space-y-3">
                 {[1,2,3].map((i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-200 h-28 animate-pulse" />
+                  <div key={i} className="rounded-2xl h-28 animate-pulse" style={{ backgroundColor: "#1a1a1a", border: "1px solid #1f1f1f" }} />
                 ))}
               </div>
             )}
