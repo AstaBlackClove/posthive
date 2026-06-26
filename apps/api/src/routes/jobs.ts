@@ -10,6 +10,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
+import { schedulePostJob, postJobQueue } from "../lib/queue.js";
 
 const createJobBody = z.object({
   scheduledFor: z.string().datetime(), // ISO 8601
@@ -18,8 +19,9 @@ const createJobBody = z.object({
     mediaUrls: z.array(z.string()).default([]),
   }),
   commentText: z.string().optional(),
-  // Which accounts to target — must already exist in the accounts table
   accountIds: z.array(z.string().cuid()).min(1),
+  // When true: skips real API calls, simulates success. Tests the full flow.
+  dryRun: z.boolean().default(false),
 });
 
 export async function jobRoutes(app: FastifyInstance): Promise<void> {
@@ -30,7 +32,7 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: parsed.error.flatten() });
     }
 
-    const { scheduledFor, content, commentText, accountIds } = parsed.data;
+    const { scheduledFor, content, commentText, accountIds, dryRun } = parsed.data;
 
     // Verify all accountIds exist
     const accounts = await prisma.account.findMany({
@@ -46,6 +48,7 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
         scheduledFor: new Date(scheduledFor),
         content: JSON.stringify(content),
         commentText: commentText ?? null,
+        dryRun,
         targets: {
           create: accountIds.map((accountId) => ({ accountId })),
         },
@@ -55,7 +58,71 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
       },
     });
 
+    // Add to BullMQ queue with exact delay — fires at scheduledFor time
+    await schedulePostJob(job.id, new Date(scheduledFor));
+
     return reply.status(201).send(job);
+  });
+
+  // SSE stream — pushes job list whenever data changes (client holds one connection)
+  app.get("/jobs/stream", async (req, reply) => {
+    reply.raw.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+      "X-Accel-Buffering": "no", // disable nginx buffering
+    });
+
+    const fetchJobs = async () => {
+      const jobs = await prisma.postJob.findMany({
+        orderBy: { scheduledFor: "desc" },
+        include: {
+          targets: {
+            select: {
+              id: true,
+              accountId: true,
+              status: true,
+              platformPostId: true,
+              error: true,
+              attempts: true,
+              account: { select: { platform: true, displayName: true } },
+            },
+          },
+        },
+      });
+      return JSON.stringify(jobs);
+    };
+
+    // Send immediately on connect
+    let lastPayload = "";
+    try {
+      lastPayload = await fetchJobs();
+      reply.raw.write(`data: ${lastPayload}\n\n`);
+    } catch { /* ignore — client will retry */ }
+
+    // Poll DB every 3s, only push when data changed
+    const poll = setInterval(async () => {
+      try {
+        const payload = await fetchJobs();
+        if (payload !== lastPayload) {
+          lastPayload = payload;
+          reply.raw.write(`data: ${payload}\n\n`);
+        }
+      } catch { /* ignore */ }
+    }, 3000);
+
+    // Keepalive ping every 25s so proxies/load balancers don't close idle connections
+    const keepAlive = setInterval(() => {
+      reply.raw.write(": ping\n\n");
+    }, 25000);
+
+    req.raw.on("close", () => {
+      clearInterval(poll);
+      clearInterval(keepAlive);
+    });
+
+    // Never resolve — connection stays open until client closes it
+    await new Promise<void>((resolve) => req.raw.on("close", resolve));
   });
 
   // List all jobs
@@ -119,10 +186,16 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(409).send({ error: `Cannot reschedule a job with status "${job.status}"` });
     }
 
+    const newScheduledFor = new Date(body.data.scheduledFor);
+
     const updated = await prisma.postJob.update({
       where: { id },
-      data: { scheduledFor: new Date(body.data.scheduledFor) },
+      data: { scheduledFor: newScheduledFor },
     });
+
+    // Remove the old BullMQ job and re-add with new delay
+    await postJobQueue.remove(id);
+    await schedulePostJob(id, newScheduledFor);
 
     return reply.send(updated);
   });

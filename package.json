@@ -2,6 +2,7 @@
   "name": "social-scheduler",
   "private": true,
   "version": "0.1.0",
+  "license": "AGPL-3.0",
   "scripts": {
     "dev": "pnpm --parallel --filter api --filter web dev",
     "dev:api": "pnpm --filter api dev",

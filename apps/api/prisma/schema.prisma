@@ -19,6 +19,7 @@ model Account {
   platform     String   // "bluesky" | "threads" | "linkedin"
   displayName  String
   credentials  String   // AES-256-GCM encrypted JSON, never plaintext
+  avatarUrl    String?  // profile picture URL fetched at connect time
   refreshToken String?  // separate field so the runner can update it without
   expiresAt    DateTime? // touching the full credentials blob
 
@@ -45,6 +46,10 @@ model PostJob {
   // JSON: { text: string, mediaUrls: string[] }
   content     String
   commentText String? // null means "no first-comment needed"
+
+  // When true the runner skips real API calls and simulates success.
+  // Use this to verify the full scheduling flow without posting anything.
+  dryRun Boolean @default(false)
 
   targets PostJobTarget[]
 

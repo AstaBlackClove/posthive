@@ -6,35 +6,51 @@
  *                         ↘ post_failed
  *                                       ↘ comment_failed
  *
- * The runner is crash-safe: it persists platformPostId + replyContext and
- * advances the target to post_done *before* attempting the comment step.
- * On a crash-resume, a target already at post_done skips straight to
- * createComment — no duplicate posts.
+ * Dry-run mode (PostJob.dryRun = true):
+ *   Skips all real platform API calls. Simulates success with fake IDs.
+ *   Everything else runs for real — BullMQ, DB state machine, retries.
+ *   Use this to verify the full scheduling flow without posting anything.
  */
 
 import type { PostJob, PostJobTarget, Account } from "@prisma/client";
 import { getAdapter } from "../adapters/index.js";
 import { prisma } from "../lib/prisma.js";
+import type { PostResult, CommentResult } from "../adapters/types.js";
 
 const MAX_ATTEMPTS = 3;
 
-// Full type including relations loaded by the runner
 type FullTarget = PostJobTarget & { account: Account };
 type JobContent = { text: string; mediaUrls: string[] };
 
+// Simulated results returned in dry-run mode
+function dryRunPostResult(platform: string): PostResult {
+  const fakeId = `dry-run:${platform}:${Date.now()}`;
+  return {
+    platformPostId: fakeId,
+    replyContext: { uri: fakeId, cid: "dry-run-cid" },
+  };
+}
+
+function dryRunCommentResult(platform: string): CommentResult {
+  return { platformCommentId: `dry-run:comment:${platform}:${Date.now()}` };
+}
+
 export async function runJob(job: PostJob & { targets: FullTarget[] }): Promise<void> {
-  // Mark job as running
   await prisma.postJob.update({
     where: { id: job.id },
     data: { status: "running" },
   });
 
+  if (job.dryRun) {
+    console.log(`[runner] DRY RUN — job ${job.id} — no real API calls will be made`);
+  }
+
   const content: JobContent = JSON.parse(job.content);
 
-  // Process all targets concurrently. One target failing doesn't cancel others.
-  await Promise.allSettled(job.targets.map((target) => runTarget(target, content, job.commentText)));
+  await Promise.allSettled(
+    job.targets.map((target) => runTarget(target, content, job.commentText, job.dryRun))
+  );
 
-  // After all targets finish, set the aggregate job status.
   const updated = await prisma.postJobTarget.findMany({
     where: { postJobId: job.id },
     select: { status: true },
@@ -56,11 +72,11 @@ export async function runJob(job: PostJob & { targets: FullTarget[] }): Promise<
 async function runTarget(
   target: FullTarget,
   content: JobContent,
-  commentText: string | null
+  commentText: string | null,
+  dryRun: boolean
 ): Promise<void> {
   const adapter = getAdapter(target.account.platform);
 
-  // Step 1: create post (skip if already done — crash-resume path)
   if (target.status === "pending") {
     if (target.attempts >= MAX_ATTEMPTS) {
       await setTargetStatus(target.id, "post_failed", { error: "Max attempts reached" });
@@ -74,22 +90,24 @@ async function runTarget(
 
     let refreshedAccount: Account;
     try {
-      refreshedAccount = await adapter.refreshTokenIfNeeded(target.account);
+      refreshedAccount = dryRun
+        ? target.account
+        : await adapter.refreshTokenIfNeeded(target.account);
     } catch (err) {
       await setTargetStatus(target.id, "post_failed", { error: String(err) });
       return;
     }
 
-    let postResult: Awaited<ReturnType<typeof adapter.createPost>>;
+    let postResult: PostResult;
     try {
-      postResult = await adapter.createPost(refreshedAccount, content);
+      postResult = dryRun
+        ? dryRunPostResult(target.account.platform)
+        : await adapter.createPost(refreshedAccount, content);
     } catch (err) {
       await setTargetStatus(target.id, "post_failed", { error: String(err) });
       return;
     }
 
-    // Persist the post result immediately before attempting the comment.
-    // If the process crashes here, on resume we pick up from post_done.
     await prisma.postJobTarget.update({
       where: { id: target.id },
       data: {
@@ -100,11 +118,9 @@ async function runTarget(
       },
     });
 
-    // Reload so we have the latest state for the comment step
     target = { ...target, status: "post_done", replyContext: JSON.stringify(postResult.replyContext) };
   }
 
-  // Step 2: create comment (only if the job has commentText)
   if (!commentText || target.status !== "post_done") return;
 
   const replyContext = target.replyContext ? JSON.parse(target.replyContext) : null;
@@ -117,14 +133,20 @@ async function runTarget(
 
   let refreshedAccount: Account;
   try {
-    refreshedAccount = await adapter.refreshTokenIfNeeded(target.account);
+    refreshedAccount = dryRun
+      ? target.account
+      : await adapter.refreshTokenIfNeeded(target.account);
   } catch (err) {
     await setTargetStatus(target.id, "comment_failed", { error: String(err) });
     return;
   }
 
   try {
-    await adapter.createComment(refreshedAccount, replyContext, commentText);
+    if (!dryRun) {
+      await adapter.createComment(refreshedAccount, replyContext, commentText);
+    } else {
+      dryRunCommentResult(target.account.platform); // simulated — no API call
+    }
     await setTargetStatus(target.id, "comment_done", {});
   } catch (err) {
     await setTargetStatus(target.id, "comment_failed", { error: String(err) });

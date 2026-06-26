@@ -18,9 +18,11 @@
     "@fastify/multipart": "^8.3.1",
     "@fastify/static": "^7.0.4",
     "@prisma/client": "^5.16.2",
+    "bullmq": "^5.79.1",
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
+    "ioredis": "^5.11.1",
     "node-cron": "^3.0.3",
     "zod": "^3.23.8"
   },

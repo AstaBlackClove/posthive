@@ -40,14 +40,26 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
       });
     }
 
+    // Fetch Bluesky avatar via public AppView API (no auth needed)
+    let avatarUrl: string | null = null;
+    try {
+      const profileRes = await fetch(
+        `https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(handle)}`
+      );
+      if (profileRes.ok) {
+        const profile = await profileRes.json() as { avatar?: string };
+        avatarUrl = profile.avatar ?? null;
+      }
+    } catch { /* avatar is optional — don't fail the whole connect */ }
+
     const account = await prisma.account.create({
       data: {
         platform: "bluesky",
         displayName: handle,
         credentials: encryptedCredentials,
+        avatarUrl,
       },
-      // Never return the credentials blob to the client
-      select: { id: true, platform: true, displayName: true, createdAt: true },
+      select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
     });
 
     return reply.status(201).send(account);
@@ -56,15 +68,16 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
   // List all accounts (no credentials in response)
   app.get("/accounts", async (_req, reply) => {
     const accounts = await prisma.account.findMany({
-      select: { id: true, platform: true, displayName: true, createdAt: true },
+      select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
       orderBy: { createdAt: "asc" },
     });
     return reply.send(accounts);
   });
 
-  // Delete an account
+  // Delete an account — remove linked targets first to satisfy foreign key
   app.delete("/accounts/:id", async (req, reply) => {
     const { id } = req.params as { id: string };
+    await prisma.postJobTarget.deleteMany({ where: { accountId: id } });
     await prisma.account.delete({ where: { id } });
     return reply.status(204).send();
   });
