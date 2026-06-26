@@ -1,0 +1,34 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@atproto/api": "^0.13.23",
+    "@fastify/cors": "^9.0.1",
+    "@fastify/multipart": "^8.3.1",
+    "@fastify/static": "^7.0.4",
+    "@prisma/client": "^5.16.2",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.28.1",
+    "node-cron": "^3.0.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.12",
+    "@types/node-cron": "^3.0.11",
+    "prisma": "^5.16.2",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4"
+  }
+}

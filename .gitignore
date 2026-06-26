@@ -1,0 +1,33 @@
+node_modules/
+dist/
+
+# Environment variables — never commit real secrets
+.env
+.env.local
+.env*.local
+
+# Database
+*.db
+*.db-journal
+
+# Next.js
+.next/
+
+# Build cache
+.turbo/
+*.tsbuildinfo
+
+# Prisma migrations lock (keep migrations themselves, not the lock)
+prisma/migrations/migration_lock.toml
+
+# Uploaded media files — kept locally, not committed
+apps/api/uploads/*
+!apps/api/uploads/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

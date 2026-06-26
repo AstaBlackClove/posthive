@@ -1,0 +1,83 @@
+// Targeting SQLite for local dev, Postgres for production.
+// Avoid any SQLite-only features so this schema works with both.
+// To switch: change provider to "postgresql" and update DATABASE_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A connected social media account for a specific platform.
+// credentials stores the encrypted serialized auth payload (e.g. app-password
+// for Bluesky, access+refresh token pair for OAuth platforms).
+model Account {
+  id           String   @id @default(cuid())
+  platform     String   // "bluesky" | "threads" | "linkedin"
+  displayName  String
+  credentials  String   // AES-256-GCM encrypted JSON, never plaintext
+  refreshToken String?  // separate field so the runner can update it without
+  expiresAt    DateTime? // touching the full credentials blob
+
+  targets PostJobTarget[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// A scheduled post job. One job can target multiple accounts (PostJobTargets).
+// content is stored as JSON text; mediaUrls is an array serialised inside it.
+// commentText is optional — if present the runner posts it as a reply.
+model PostJob {
+  id           String   @id @default(cuid())
+  scheduledFor DateTime
+
+  // Reflects the aggregate state across all targets:
+  //   pending  — waiting for the scheduler to pick it up
+  //   running  — job runner is actively processing it
+  //   done     — all targets reached comment_done (or had no comment)
+  //   failed   — at least one target failed after max retries
+  status String @default("pending") // pending | running | done | failed
+
+  // JSON: { text: string, mediaUrls: string[] }
+  content     String
+  commentText String? // null means "no first-comment needed"
+
+  targets PostJobTarget[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// One row per (PostJob × Account). This isolation means:
+// - A Bluesky failure doesn't block LinkedIn posting.
+// - Resuming after a crash works per-target, not per-job.
+// - Duplicate-post bugs are prevented: post_done is persisted before the
+//   comment step, so a crash mid-comment won't re-post on resume.
+model PostJobTarget {
+  id String @id @default(cuid())
+
+  postJob   PostJob @relation(fields: [postJobId], references: [id])
+  postJobId String
+
+  account   Account @relation(fields: [accountId], references: [id])
+  accountId String
+
+  // State machine:
+  //   pending        → (post attempt) → post_done | post_failed
+  //   post_done      → (comment attempt, if commentText) → comment_done | comment_failed
+  //   comment_failed → retried up to max attempts, then stays comment_failed
+  status String @default("pending")
+  // pending | post_done | comment_done | post_failed | comment_failed
+
+  platformPostId String? // ID returned by the platform after successful post
+  replyContext   String? // JSON blob passed back to createComment (platform-specific)
+  error          String? // last error message, for display/debugging
+  attempts       Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
