@@ -69,7 +69,7 @@ social-scheduler/
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/your-username/social-scheduler.git
+git clone https://github.com/AstaBlackClove/social-scheduler.git
 cd social-scheduler
 pnpm install
 ```
