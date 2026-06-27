@@ -70,7 +70,7 @@ async function main() {
   await app.register(accountRoutes);
   await app.register(jobRoutes);
   await app.register(uploadRoutes, { storage });
-  await app.register(billingRoutes);
+  if (process.env.ENABLE_BILLING === "true") await app.register(billingRoutes);
 
   app.get("/health", async () => ({ ok: true }));
 

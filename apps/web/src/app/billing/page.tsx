@@ -317,9 +317,40 @@ export default function BillingPage() {
   const isOnHold = status?.planStatus === "on_hold";
   const isActive = status?.planStatus === "active";
 
+  const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === "true";
+
   const now = new Date();
   const monthName = now.toLocaleString("default", { month: "long" });
   const planPrice = (plan: typeof PLANS[number]) => isIndia ? plan.priceInr : plan.priceUsd;
+
+  if (!billingEnabled) {
+    return (
+      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+        <div className="flex items-center px-8 flex-shrink-0"
+          style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#111111" }}>
+          <div>
+            <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Billing</h1>
+            <p className="text-xs mt-0.5" style={{ color: "#888888" }}>Self-hosted instance</p>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-sm">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+              <svg className="w-7 h-7" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+            <h2 className="text-lg font-bold mb-2" style={{ color: "#ededed" }}>Self-hosted mode</h2>
+            <p className="text-sm leading-relaxed" style={{ color: "#888888" }}>
+              Billing is disabled on this instance. All features are unlocked with no limits.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full overflow-y-auto" style={{ backgroundColor: "#0a0a0a" }}>

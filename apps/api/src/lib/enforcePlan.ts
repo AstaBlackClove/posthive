@@ -17,6 +17,9 @@ export async function enforcePlan(
   userId: string,
   resource: PlanResource
 ): Promise<PlanError | null> {
+  // Billing disabled — self-hosted mode, no limits enforced
+  if (process.env.ENABLE_BILLING !== "true") return null;
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: { _count: { select: { accounts: true } } },

@@ -118,6 +118,7 @@ pnpm dev
 
 | Variable | Required | Description |
 |---|---|---|
+| `ENABLE_BILLING` | No | Set to `true` to enable Dodo Payments billing and plan limits. Leave unset for self-hosted use — all features unlocked with no limits |
 | `PORT` | No | API port. Defaults to `3001` |
 | `DATABASE_URL` | Yes | Prisma DB URL. Use `file:./dev.db` for SQLite |
 | `AUTH_PROVIDER` | No | `local` (default) or `supabase` |
@@ -219,6 +220,22 @@ All plans include a **14-day free trial**. Powered by [Dodo Payments](https://do
 | Threads | 500 characters |
 | Instagram | 2,200 characters |
 | LinkedIn | 3,000 characters |
+
+---
+
+## Self-Hosting
+
+Posthive is designed to be self-hosted. By default, billing is **disabled** — no Dodo account needed, no plan limits, all features unlocked for all users.
+
+To run without billing:
+1. Leave `ENABLE_BILLING` unset (or set to `false`) in `apps/api/.env`
+2. Skip all `DODO_*` environment variables
+3. The billing page shows a "Self-hosted mode" message
+
+To run as a SaaS with billing:
+1. Set `ENABLE_BILLING=true`
+2. Create a [Dodo Payments](https://dodopayments.com) account and fill in all `DODO_*` env vars
+3. Set `NEXT_PUBLIC_ENABLE_BILLING=true` in `apps/web/.env.local`
 
 ---
 
