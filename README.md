@@ -39,7 +39,7 @@
 |---|---|
 | Frontend | Next.js 16 (App Router), Tailwind CSS |
 | Backend | Fastify v4, TypeScript ESM |
-| Database | Prisma ORM — SQLite (dev) / Postgres (prod) |
+| Database | Prisma ORM SQLite (dev) / Postgres (prod) |
 | Queue | BullMQ + Redis (Upstash or Railway) |
 | Billing | Dodo Payments |
 | Storage | Local disk (dev) / Supabase Storage (prod) |
@@ -70,8 +70,8 @@ posthive/
 ## Prerequisites
 
 - **Node.js** >= 20
-- **pnpm** >= 9 — `npm install -g pnpm`
-- **Redis** — [Upstash](https://upstash.com) free tier or Railway Redis
+- **pnpm** >= 9 `npm install -g pnpm`
+- **Redis** [Upstash](https://upstash.com) free tier or Railway Redis
 
 ---
 
@@ -155,7 +155,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | Yes | API URL as seen from the browser. `http://localhost:3001` in dev |
 | `NEXT_PUBLIC_ENABLE_BILLING` | No | Must match `ENABLE_BILLING` in the API. `false` for self-hosted, `true` for SaaS |
-| `NEXT_PUBLIC_THREADS_AUTH_URL` | Threads | Full URL of the Threads OAuth start route — must be HTTPS in dev (use tunnel) |
+| `NEXT_PUBLIC_THREADS_AUTH_URL` | Threads | Full URL of the Threads OAuth start route must be HTTPS in dev (use tunnel) |
 
 ---
 
@@ -165,7 +165,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 1. Go to **Accounts** in the app
 2. Enter your handle (e.g. `you.bsky.social`)
 3. Generate an app password at [bsky.app](https://bsky.app) → Settings → App Passwords
-4. Enter it and click Connect — no OAuth needed
+4. Enter it and click Connect no OAuth needed
 
 ### Threads
 1. Create an app at [developers.facebook.com](https://developers.facebook.com) and add the Threads use case
@@ -196,7 +196,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    - Refreshes OAuth tokens if needed
    - Posts the main content
    - Posts the first comment as a reply (if provided)
-5. Each step is persisted before the next — crash-safe and resumable
+5. Each step is persisted before the next crash-safe and resumable
 6. Jobs page receives real-time updates via Server-Sent Events
 
 ---
@@ -228,7 +228,7 @@ All plans include a **14-day free trial**. Powered by [Dodo Payments](https://do
 
 Posthive is designed to be self-hosted. By default, billing is **disabled** no Dodo account needed, no plan limits, all features unlocked for all users.
 
-**Both the API and web env vars must match — setting only one will cause errors.**
+**Both the API and web env vars must match setting only one will cause errors.**
 
 To run without billing:
 ```env
@@ -258,7 +258,7 @@ NEXT_PUBLIC_ENABLE_BILLING=true
 ## Production Deployment
 
 1. Create a Railway project with a **Redis** and **Postgres** service
-2. Deploy the monorepo — Railway auto-detects it
+2. Deploy the monorepo Railway auto-detects it
 3. Change `provider` in `prisma/schema.prisma` from `sqlite` to `postgresql`
 4. Set all env vars from `.env.example` in Railway settings
 5. Set `PUBLIC_API_URL` and all OAuth redirect URIs to your Railway domain
@@ -279,6 +279,6 @@ NEXT_PUBLIC_ENABLE_BILLING=true
 
 ## License
 
-GNU Affero General Public License v3.0 — see [LICENSE](LICENSE) for details.
+GNU Affero General Public License v3.0 see [LICENSE](LICENSE) for details.
 
 If you modify this project and run it as a network service, you must make your modified source code available to users of that service.

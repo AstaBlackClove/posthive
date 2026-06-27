@@ -31,3 +31,6 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+
+# Claude Code agent worktrees — temporary, never commit
+.claude/worktrees/
