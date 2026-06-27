@@ -1,20 +1,33 @@
-# Social Scheduler
+<p align="center">
+  <img src="apps/web/public/posthivemain.png" alt="Posthive" width="180" />
+</p>
 
-A self-hosted social media scheduler that lets you write a post once and schedule it across multiple platforms — with support for a **first comment** posted immediately after the main post.
+<h1 align="center">Posthive</h1>
 
-Built with Next.js, Fastify, Prisma, BullMQ, and Upstash Redis.
+<p align="center">
+  Schedule posts to Bluesky, Threads, Instagram, and LinkedIn from a single UI.<br/>
+  Self-hostable · Open-source · AGPL-3.0
+</p>
+
+<p align="center">
+  <a href="https://github.com/AstaBlackClove/posthive/blob/main/LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" /></a>
+  <a href="https://github.com/AstaBlackClove/posthive"><img alt="GitHub Repo" src="https://img.shields.io/badge/github-AstaBlackClove%2Fposthive-181717?logo=github" /></a>
+</p>
 
 ---
 
 ## Features
 
-- Schedule posts to **Bluesky**, **Threads**, and **LinkedIn** (coming soon)
-- Optional **first comment** — posted as a reply right after the main post goes live
-- **Image support** — upload up to 4 images per post (single image or carousel)
-- **Exact-time scheduling** — BullMQ fires jobs within ~1 second of the scheduled time
-- **Live updates** — job status page uses Server-Sent Events, no polling
-- **Dry run mode** — tests the full scheduling pipeline without making any real API calls
+- **Multi-platform scheduling** — Bluesky, Threads, Instagram, LinkedIn
+- **First comment** — post a reply/comment immediately after the main post goes live
+- **Per-platform overrides** — customize text and comment per account
+- **Image & video support** — up to 4 images or 1 video per post with alt text
 - **Calendar view** — drag-and-drop to reschedule pending posts
+- **Live status updates** — Server-Sent Events, no polling
+- **Dry run mode** — full pipeline test without making real API calls
+- **Onboarding flow** — guided setup after registration
+- **Billing** — Dodo Payments integration with 14-day free trial, plan upgrades/downgrades
+- **Settings** — profile, password change, delete account
 - **Credentials encrypted at rest** — AES-256-GCM, never stored in plaintext
 - SQLite locally, drop-in Postgres for production
 
@@ -25,33 +38,31 @@ Built with Next.js, Fastify, Prisma, BullMQ, and Upstash Redis.
 | Layer | Technology |
 |---|---|
 | Frontend | Next.js 16 (App Router), Tailwind CSS |
-| Backend | Fastify v4, TypeScript |
+| Backend | Fastify v4, TypeScript ESM |
 | Database | Prisma ORM — SQLite (dev) / Postgres (prod) |
-| Queue | BullMQ + Redis (Upstash or Railway Redis) |
-| Auth | Bluesky app passwords, Threads OAuth 2.0 |
-| Storage | Local disk (dev) — swap to Supabase Storage for prod |
+| Queue | BullMQ + Redis (Upstash or Railway) |
+| Billing | Dodo Payments |
+| Storage | Local disk (dev) / Supabase Storage (prod) |
 
 ---
 
 ## Project Structure
 
 ```
-social-scheduler/
+posthive/
 ├── apps/
-│   ├── api/          # Fastify API server
-│   │   ├── prisma/   # Database schema and migrations
-│   │   ├── src/
-│   │   │   ├── adapters/   # Platform adapters (Bluesky, Threads, LinkedIn)
-│   │   │   ├── lib/        # Queue, worker, encryption, storage
-│   │   │   ├── routes/     # API routes (accounts, jobs, auth, upload)
-│   │   │   └── runner/     # Job state machine
-│   │   └── uploads/        # Uploaded images (gitignored)
-│   └── web/          # Next.js frontend
+│   ├── api/                  # Fastify v4 API server
+│   │   ├── prisma/           # Schema and migrations
+│   │   └── src/
+│   │       ├── adapters/     # Bluesky, Threads, Instagram, LinkedIn
+│   │       ├── lib/          # Auth, queue, worker, encryption, storage, billing
+│   │       ├── routes/       # auth, accounts, jobs, upload, billing, user
+│   │       └── runner/       # Job state machine
+│   └── web/                  # Next.js frontend
 │       └── src/
-│           ├── app/        # Pages (compose, jobs, accounts)
-│           ├── components/ # Sidebar, CalendarView
-│           └── lib/        # API client
-└── package.json      # pnpm workspace root
+│           ├── app/          # Pages: compose, jobs, accounts, billing, settings
+│           └── components/   # Sidebar, Calendar, Previews, Toast, Modals
+└── package.json              # pnpm workspace root
 ```
 
 ---
@@ -60,7 +71,7 @@ social-scheduler/
 
 - **Node.js** >= 20
 - **pnpm** >= 9 — `npm install -g pnpm`
-- **Redis** — [Upstash](https://upstash.com) free tier works great, or Railway Redis in production
+- **Redis** — [Upstash](https://upstash.com) free tier or Railway Redis
 
 ---
 
@@ -69,44 +80,32 @@ social-scheduler/
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/AstaBlackClove/social-scheduler.git
-cd social-scheduler
+git clone https://github.com/AstaBlackClove/posthive.git
+cd posthive
 pnpm install
 ```
 
 ### 2. Set up environment variables
 
-**API** — copy and fill in:
-
 ```bash
 cp apps/api/.env.example apps/api/.env
 ```
 
-**Web** — copy and fill in:
-
-```bash
-cp apps/web/.env.example apps/web/.env.local
-```
-
-See the [Environment Variables](#environment-variables) section below for details on each variable.
+Fill in the values — see [Environment Variables](#environment-variables) below.
 
 ### 3. Set up the database
 
 ```bash
 cd apps/api
-pnpm prisma migrate dev
+pnpm db:migrate
 pnpm prisma generate
 ```
 
-### 4. Run the dev servers
-
-From the repo root:
+### 4. Run dev servers
 
 ```bash
 pnpm dev
 ```
-
-This starts both the API (port 3001) and the web app (port 3000) in parallel.
 
 - Web: http://localhost:3000
 - API: http://localhost:3001
@@ -120,113 +119,128 @@ This starts both the API (port 3001) and the web app (port 3000) in parallel.
 | Variable | Required | Description |
 |---|---|---|
 | `PORT` | No | API port. Defaults to `3001` |
-| `DATABASE_URL` | Yes | Prisma DB URL. Use `file:./dev.db` for SQLite locally |
-| `ENCRYPTION_KEY` | Yes | 64-character hex string for AES-256-GCM encryption. Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `REDIS_URL` | Yes | Redis connection string. Get a free instance at [upstash.com](https://upstash.com) |
-| `THREADS_APP_ID` | Yes* | Your Threads app ID from the Meta developer dashboard |
-| `THREADS_APP_SECRET` | Yes* | Your Threads app secret |
-| `THREADS_REDIRECT_URI` | Yes* | OAuth callback URL — must match exactly what's set in the Meta dashboard |
-| `PUBLIC_API_URL` | Yes* | Public HTTPS URL of the API. Meta fetches uploaded images from this URL. Use a tunnel (e.g. VS Code port forwarding) in dev |
+| `DATABASE_URL` | Yes | Prisma DB URL. Use `file:./dev.db` for SQLite |
+| `AUTH_PROVIDER` | No | `local` (default) or `supabase` |
+| `JWT_ACCESS_SECRET` | Yes | 64-char hex string for JWT signing |
+| `JWT_REFRESH_SECRET` | Yes | 64-char hex string for refresh tokens |
+| `ENCRYPTION_KEY` | Yes | 64-char hex — AES-256-GCM key. **Never change after data is written** |
+| `REDIS_URL` | Yes | Redis connection string |
+| `WEB_URL` | Yes | Web app URL for CORS and OAuth redirects. Use `http://localhost:3000` in dev |
+| `THREADS_APP_ID` | OAuth | Meta app ID for Threads |
+| `THREADS_APP_SECRET` | OAuth | Meta app secret for Threads |
+| `THREADS_REDIRECT_URI` | OAuth | Must be public HTTPS (use a tunnel in dev) |
+| `INSTAGRAM_APP_ID` | OAuth | Meta app ID for Instagram |
+| `INSTAGRAM_APP_SECRET` | OAuth | Meta app secret for Instagram |
+| `INSTAGRAM_REDIRECT_URI` | OAuth | Must be public HTTPS |
+| `PUBLIC_API_URL` | OAuth | Public HTTPS URL of the API — Meta fetches images from here |
+| `LINKEDIN_CLIENT_ID` | OAuth | LinkedIn app client ID |
+| `LINKEDIN_CLIENT_SECRET` | OAuth | LinkedIn app client secret |
+| `LINKEDIN_REDIRECT_URI` | OAuth | Must be public HTTPS |
+| `DODO_ENV` | Billing | `test_mode` or `live_mode` |
+| `DODO_API_KEY` | Billing | Dodo Payments API key |
+| `DODO_WEBHOOK_SECRET` | Billing | Dodo webhook signing secret (`whsec_...`) |
+| `DODO_PRODUCT_CREATOR` | Billing | Dodo product ID for Creator plan |
+| `DODO_PRODUCT_PRO` | Billing | Dodo product ID for Pro plan |
+| `DODO_PRODUCT_TEAM` | Billing | Dodo product ID for Team plan |
 
-*Required only if you want Threads support.
+Generate secrets:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
 ### `apps/web/.env.local`
 
 | Variable | Required | Description |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | Yes | URL of the API server as seen from the browser. `http://localhost:3001` in dev |
-| `NEXT_PUBLIC_THREADS_AUTH_URL` | Yes* | Full URL of the Threads OAuth start route. Must be HTTPS — use your tunnel URL in dev |
-
-*Required only if you want Threads support.
+| `NEXT_PUBLIC_API_URL` | Yes | API URL as seen from the browser. `http://localhost:3001` in dev |
+| `NEXT_PUBLIC_THREADS_AUTH_URL` | Threads | Full URL of the Threads OAuth start route — must be HTTPS in dev (use tunnel) |
 
 ---
 
-## Connecting Accounts
+## Connecting Platforms
 
 ### Bluesky
-
 1. Go to **Accounts** in the app
-2. Enter your Bluesky handle (e.g. `you.bsky.social`)
+2. Enter your handle (e.g. `you.bsky.social`)
 3. Generate an app password at [bsky.app](https://bsky.app) → Settings → App Passwords
-4. Enter the app password and click Connect
+4. Enter it and click Connect — no OAuth needed
 
 ### Threads
+1. Create an app at [developers.facebook.com](https://developers.facebook.com) and add the Threads use case
+2. Set the OAuth redirect URI to `https://your-domain/auth/threads/callback`
+3. Add your App ID and Secret to `.env`
+4. Click **Connect with Threads** in the app
 
-Threads requires a Meta developer app:
+> In development mode, only Threads Testers can connect. Submit for Meta App Review (`threads_basic` + `threads_content_publish`) for public access.
 
-1. Go to [developers.facebook.com](https://developers.facebook.com) and create an app
-2. Add the **Threads** use case
-3. Under Advanced Settings, set the callback URL to `https://your-domain.com/auth/threads/callback`
-4. Copy your **Threads App ID** and **App Secret** into `apps/api/.env`
-5. In dev, add yourself as a Threads Tester in the Meta dashboard (development mode only allows testers)
-6. Click **Connect with Threads** in the app and complete the OAuth flow
+### Instagram
+1. Add the Instagram product to your Meta app
+2. Set the OAuth redirect URI to `https://your-domain/auth/instagram/callback`
+3. Requires a **Professional** (Business or Creator) Instagram account
 
-> **Note:** To allow any user to connect (not just testers), you need to submit your app for [Meta App Review](https://developers.facebook.com/docs/app-review) requesting the `threads_basic` and `threads_content_publish` permissions.
+### LinkedIn
+1. Create an app at [developer.linkedin.com](https://developer.linkedin.com)
+2. Add the **Share on LinkedIn** and **Sign In with LinkedIn using OpenID Connect** products
+3. Set the OAuth redirect URI to `https://your-domain/auth/linkedin/callback`
 
 ---
 
 ## How Scheduling Works
 
-1. You create a post in the Compose page and pick a scheduled time
-2. The API creates a `PostJob` record in the database and adds a BullMQ job with an exact delay
-3. At the scheduled time BullMQ fires the job (within ~1 second accuracy)
-4. The job runner processes each target platform independently:
+1. Write a post in Compose, pick accounts, set a time
+2. API creates a `PostJob` in the DB and queues a BullMQ job with exact delay
+3. At the scheduled time BullMQ fires the job (~1 second accuracy)
+4. The runner processes each platform independently:
    - Refreshes OAuth tokens if needed
    - Posts the main content
    - Posts the first comment as a reply (if provided)
-5. Each step is persisted to the database before moving to the next — crash-safe and resumable
-6. The Jobs page receives status updates in real time via Server-Sent Events
+5. Each step is persisted before the next — crash-safe and resumable
+6. Jobs page receives real-time updates via Server-Sent Events
 
 ---
 
-## Dry Run Mode
+## Plans
 
-Toggle **Dry run** in the Compose page before scheduling. The full pipeline runs — BullMQ queue, worker, state machine, database writes — but no real API calls are made to any platform. Useful for verifying your setup is working end-to-end without actually posting.
+| Plan | Accounts | Posts/month |
+|---|---|---|
+| Creator | 3 | 30 |
+| Pro | 15 | Unlimited |
+| Team | 50 | Unlimited |
 
----
-
-## Production Deployment (Railway)
-
-1. Create a new Railway project
-2. Add a **Redis** service from the Railway dashboard
-3. Deploy the repo — Railway auto-detects the monorepo
-4. Set all environment variables from `apps/api/.env` in the Railway service settings
-5. Set `DATABASE_URL` to a Railway Postgres instance (change `provider` in `prisma/schema.prisma` from `sqlite` to `postgresql`)
-6. Set `PUBLIC_API_URL` to your Railway-assigned domain
-7. Update `THREADS_REDIRECT_URI` and `NEXT_PUBLIC_THREADS_AUTH_URL` to your Railway domain
-
-> Railway Redis has no per-command pricing — unlike Upstash, BullMQ's polling is free.
-
----
-
-## Adding a New Platform
-
-1. Create `apps/api/src/adapters/your-platform.ts` implementing the `PlatformAdapter` interface:
-
-```typescript
-export interface PlatformAdapter {
-  name: string;
-  refreshTokenIfNeeded(account: Account): Promise<Account>;
-  createPost(account: Account, content: { text: string; mediaUrls: string[] }): Promise<PostResult>;
-  createComment(account: Account, replyContext: unknown, comment: string): Promise<CommentResult>;
-}
-```
-
-2. Register it in `apps/api/src/adapters/index.ts`
-3. Add a connect route in `apps/api/src/routes/accounts.ts` or `auth.ts`
-4. Add the platform card to `apps/web/src/app/accounts/page.tsx`
+All plans include a **14-day free trial**. Powered by [Dodo Payments](https://dodopayments.com).
 
 ---
 
 ## Character Limits
 
-| Platform | Post limit |
+| Platform | Limit |
 |---|---|
 | Bluesky | 300 graphemes |
 | Threads | 500 characters |
+| Instagram | 2,200 characters |
 | LinkedIn | 3,000 characters |
 
-The compose page shows per-platform counters and blocks submission if any selected platform's limit is exceeded.
+---
+
+## Production Deployment
+
+1. Create a Railway project with a **Redis** and **Postgres** service
+2. Deploy the monorepo — Railway auto-detects it
+3. Change `provider` in `prisma/schema.prisma` from `sqlite` to `postgresql`
+4. Set all env vars from `.env.example` in Railway settings
+5. Set `PUBLIC_API_URL` and all OAuth redirect URIs to your Railway domain
+6. Set `SECURE_COOKIES=true` in the API env (required for HTTPS cookie auth)
+
+---
+
+## Adding a New Platform
+
+1. Create `apps/api/src/adapters/<platform>.ts` implementing `PlatformAdapter`
+2. Register it in `apps/api/src/adapters/index.ts`
+3. Add OAuth routes in `apps/api/src/routes/auth.ts`
+4. Add the platform card to `apps/web/src/app/accounts/page.tsx`
+5. Add favicon domain in `apps/web/src/components/PlatformIcon.tsx`
+6. Add char limit in `PLATFORM_LIMIT` in `apps/web/src/app/page.tsx`
 
 ---
 
