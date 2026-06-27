@@ -38,7 +38,12 @@ export interface PlatformAdapter {
    */
   createPost(
     account: Account,
-    content: { text: string; mediaUrls: string[] }
+    content: {
+      text: string;
+      mediaUrls: string[];
+      altTexts?: string[];          // per-image alt text (Instagram accessibility_caption)
+      mediaType?: "post" | "reel" | "story"; // Instagram-specific; ignored by other adapters
+    }
   ): Promise<PostResult>;
 
   /**

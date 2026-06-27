@@ -13,12 +13,14 @@
     "@fullcalendar/interaction": "^6.1.21",
     "@fullcalendar/react": "^6.1.21",
     "@fullcalendar/timegrid": "^6.1.21",
+    "canvas-confetti": "^1.9.4",
     "js-cookie": "^3.0.8",
     "next": "^16.2.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20.14.12",
     "@types/react": "^18.3.3",

@@ -8,6 +8,7 @@
     "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
     "build": "pnpm --filter api build && pnpm --filter web build",
+    "start": "pnpm --parallel --filter api --filter web start",
     "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
@@ -16,5 +17,8 @@
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.21"
   }
 }

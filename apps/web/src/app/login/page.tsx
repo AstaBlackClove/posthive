@@ -32,18 +32,15 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#0a0a0a" }}>
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#5b63d3" }}>
-            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/posthivemain.png" alt="Posthive" className="w-9 h-9 rounded-xl object-cover" />
           <div>
-            <p className="font-bold text-sm leading-tight" style={{ color: "#ededed" }}>Social Scheduler</p>
+            <p className="font-bold text-sm leading-tight" style={{ color: "#ededed" }}>Posthive</p>
             <p className="text-xs" style={{ color: "#888" }}>Self-hosted</p>
           </div>
         </div>
 
-        <div className="rounded-2xl p-7" style={{ backgroundColor: "#111111", border: "1px solid #1f1f1f" }}>
+        <div className="rounded-2xl p-7" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
           <h1 className="text-lg font-bold mb-1" style={{ color: "#ededed" }}>Welcome back</h1>
           <p className="text-sm mb-6" style={{ color: "#888" }}>Sign in to your account</p>
 
@@ -71,8 +68,8 @@ export default function LoginPage() {
             )}
 
             <button type="submit" disabled={loading}
-              className="w-full py-2.5 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-opacity"
-              style={{ backgroundColor: "#5b63d3" }}>
+              className="w-full py-2.5 disabled:opacity-50 font-semibold rounded-xl text-sm transition-opacity hover:bg-gray-100"
+              style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
               {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>

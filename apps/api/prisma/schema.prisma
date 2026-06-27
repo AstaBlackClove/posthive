@@ -87,7 +87,7 @@ model PostJob {
 model PostJobTarget {
   id String @id @default(cuid())
 
-  postJob   PostJob @relation(fields: [postJobId], references: [id])
+  postJob   PostJob @relation(fields: [postJobId], references: [id], onDelete: Cascade)
   postJobId String
 
   account   Account @relation(fields: [accountId], references: [id])
@@ -101,4 +101,27 @@ model PostJobTarget {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Short-lived nonce for OAuth CSRF protection.
+model OAuthState {
+  id        String   @id @default(cuid())
+  userId    String
+  nonce     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([nonce])
+}
+
+// Cancellation feedback submitted when a user cancels their subscription.
+model CancellationFeedback {
+  id        String   @id @default(cuid())
+  userId    String
+  plan      String
+  reason    String?
+  feedback  String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }

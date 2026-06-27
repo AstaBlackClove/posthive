@@ -19,6 +19,25 @@ export function TrialBanner() {
 
   if (!status) return null;
   if (status.planStatus === "active") return null;
+
+  // New user — registered but hasn't entered card / started Dodo trial yet
+  if (status.planStatus === "inactive") {
+    return (
+      <div className="mx-3 mb-2 px-3 py-2.5 rounded-xl"
+        style={{ backgroundColor: "#0d0d1a", border: "1px solid #2a2a5a" }}>
+        <p className="text-xs font-semibold mb-1.5" style={{ color: "#ededed" }}>Start your free trial</p>
+        <p className="text-xs mb-2 leading-relaxed" style={{ color: "#555" }}>
+          Enter your card to activate 14 days free. No charge until it ends.
+        </p>
+        <Link href="/billing"
+          className="flex items-center justify-center gap-1 w-full font-semibold text-xs px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+          Start free trial →
+        </Link>
+      </div>
+    );
+  }
+
   if (status.planStatus === "cancelled") {
     return (
       <div className="mx-3 mb-2 px-3 py-2.5 rounded-xl text-xs"
@@ -38,8 +57,8 @@ export function TrialBanner() {
         <p className="font-semibold mb-1" style={{ color: "#f87171" }}>Trial expired</p>
         <p className="mb-1.5" style={{ color: "#888" }}>Upgrade to keep posting.</p>
         <Link href="/billing"
-          className="inline-flex items-center gap-1 font-semibold px-2.5 py-1 rounded-lg text-white"
-          style={{ backgroundColor: "#5b63d3" }}>
+          className="inline-flex items-center gap-1 font-semibold px-2.5 py-1 rounded-lg hover:bg-gray-100 transition-colors"
+          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
           Upgrade now →
         </Link>
       </div>

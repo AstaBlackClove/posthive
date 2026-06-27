@@ -1,21 +1,21 @@
 import { prisma } from "./prisma.js";
 import { getPlan } from "./plans.js";
 
-type Resource = "accounts";
+/**
+ * "accounts"   — checks status + connected-account count limit
+ * "scheduling" — checks status + monthly post count limit
+ */
+export type PlanResource = "accounts" | "scheduling";
 
-interface PlanError {
+export interface PlanError {
   error: string;
-  code: "TRIAL_EXPIRED" | "PLAN_LIMIT" | "CANCELLED";
+  code: "INACTIVE" | "TRIAL_EXPIRED" | "PLAN_LIMIT" | "CANCELLED";
   upgradeRequired: boolean;
 }
 
-/**
- * Check if a user is allowed to create a resource.
- * Returns null if allowed, or a PlanError object to send as 402 response.
- */
 export async function enforcePlan(
   userId: string,
-  resource: Resource
+  resource: PlanResource
 ): Promise<PlanError | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -24,33 +24,58 @@ export async function enforcePlan(
 
   if (!user) return { error: "User not found", code: "CANCELLED", upgradeRequired: false };
 
-  // Cancelled plan — hard block
+  // Registered but hasn't entered card / started Dodo trial yet
+  if (user.planStatus === "inactive") {
+    return {
+      error: "Start your free 14-day trial to use Posthive. A card is required — you won't be charged until the trial ends.",
+      code: "INACTIVE",
+      upgradeRequired: true,
+    };
+  }
+
   if (user.planStatus === "cancelled" || user.plan === "cancelled") {
     return {
-      error: "Your subscription has been cancelled. Please resubscribe to continue.",
+      error: "Your subscription has been cancelled. Resubscribe to continue using Posthive.",
       code: "CANCELLED",
       upgradeRequired: true,
     };
   }
 
-  // Trial expired — hard block
   if (user.planStatus === "trialing" && user.trialEndsAt && user.trialEndsAt < new Date()) {
     return {
-      error: "Your 14-day free trial has expired. Upgrade to continue.",
+      error: "Your 14-day free trial has expired. Upgrade to keep scheduling posts.",
       code: "TRIAL_EXPIRED",
       upgradeRequired: true,
     };
   }
-
-  // Payment on hold — grace period, still allow
-  // (Dodo retries failed payments — we don't block immediately)
 
   const plan = getPlan(user.plan);
 
   if (resource === "accounts") {
     if (user._count.accounts >= plan.maxAccounts) {
       return {
-        error: `Your ${plan.name} plan allows up to ${plan.maxAccounts} connected accounts. Upgrade to add more.`,
+        error: `Your ${plan.name} plan supports up to ${plan.maxAccounts} connected account${plan.maxAccounts === 1 ? "" : "s"}. Upgrade to connect more.`,
+        code: "PLAN_LIMIT",
+        upgradeRequired: true,
+      };
+    }
+  }
+
+  if (resource === "scheduling" && plan.maxPostsPerMonth !== null) {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const postsThisMonth = await prisma.postJob.count({
+      where: { userId, createdAt: { gte: startOfMonth } },
+    });
+
+    if (postsThisMonth >= plan.maxPostsPerMonth) {
+      const isTrialing = user.planStatus === "trialing";
+      return {
+        error: isTrialing
+          ? `Your free trial allows up to ${plan.maxPostsPerMonth} scheduled posts. Upgrade to continue scheduling.`
+          : `Your ${plan.name} plan allows up to ${plan.maxPostsPerMonth} posts per month. Upgrade to Pro for unlimited posts.`,
         code: "PLAN_LIMIT",
         upgradeRequired: true,
       };

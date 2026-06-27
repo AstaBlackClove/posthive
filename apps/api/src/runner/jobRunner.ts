@@ -21,7 +21,14 @@ import type { StorageAdapter } from "../lib/storage.js";
 const MAX_ATTEMPTS = 3;
 
 type FullTarget = PostJobTarget & { account: Account };
-type JobContent = { text: string; mediaUrls: string[] };
+type PerAccountOverride = { text?: string; commentText?: string };
+type JobContent = {
+  text: string;
+  mediaUrls?: string[];
+  altTexts?: string[];
+  mediaType?: "post" | "reel" | "story";
+  perAccount?: Record<string, PerAccountOverride>;
+};
 
 // Simulated results returned in dry-run mode
 function dryRunPostResult(platform: string): PostResult {
@@ -52,7 +59,17 @@ export async function runJob(
   const content: JobContent = JSON.parse(job.content);
 
   await Promise.allSettled(
-    job.targets.map((target) => runTarget(target, content, job.commentText, job.dryRun))
+    job.targets.map((target) => {
+      const override = content.perAccount?.[target.accountId];
+      const effectiveContent = {
+        text: override?.text ?? content.text,
+        mediaUrls: content.mediaUrls ?? [],
+        altTexts: content.altTexts,
+        mediaType: content.mediaType,
+      };
+      const effectiveComment = override?.commentText !== undefined ? override.commentText : job.commentText;
+      return runTarget(target, effectiveContent, effectiveComment, job.dryRun);
+    })
   );
 
   const updated = await prisma.postJobTarget.findMany({
@@ -81,9 +98,16 @@ export async function runJob(
   }
 }
 
+type EffectiveContent = {
+  text: string;
+  mediaUrls: string[];
+  altTexts?: string[];
+  mediaType?: "post" | "reel" | "story";
+};
+
 async function runTarget(
   target: FullTarget,
-  content: JobContent,
+  content: EffectiveContent,
   commentText: string | null,
   dryRun: boolean
 ): Promise<void> {
@@ -116,6 +140,7 @@ async function runTarget(
         ? dryRunPostResult(target.account.platform)
         : await adapter.createPost(refreshedAccount, content);
     } catch (err) {
+      console.error(`[runner] createPost failed for ${target.account.platform} (account ${target.accountId}):`, err);
       await setTargetStatus(target.id, "post_failed", { error: String(err) });
       return;
     }

@@ -5,7 +5,7 @@ import type { AuthProvider, AuthUser, TokenPair } from "./types.js";
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
-const ACCESS_EXPIRES = "15m";
+const ACCESS_EXPIRES = "2h";
 const REFRESH_EXPIRES_DAYS = 30;
 
 function signAccess(userId: string): string {
@@ -22,9 +22,10 @@ export const localAuthProvider: AuthProvider = {
     if (existing) throw new Error("Email already in use");
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const trialEndsAt = new Date(Date.now() + 14 * 86_400_000);
     const user = await prisma.user.create({
-      data: { email, name, passwordHash, plan: "trialing", planStatus: "trialing", trialEndsAt },
+      // planStatus "inactive" = registered but hasn't started a Dodo trial yet.
+      // Dodo checkout sets planStatus → "trialing" once the user enters their card.
+      data: { email, name, passwordHash, plan: "trialing", planStatus: "inactive" },
     });
 
     const accessToken = signAccess(user.id);
@@ -47,6 +48,11 @@ export const localAuthProvider: AuthProvider = {
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) throw new Error("Invalid email or password");
+
+    // Clean up only expired tokens — keep valid sessions alive across devices
+    await prisma.refreshToken.deleteMany({
+      where: { userId: user.id, expiresAt: { lt: new Date() } },
+    });
 
     const accessToken = signAccess(user.id);
     const refreshToken = signRefresh(user.id);
@@ -85,21 +91,17 @@ export const localAuthProvider: AuthProvider = {
         return null;
       }
 
-      // Rotate — delete old, issue new pair
-      await prisma.refreshToken.delete({ where: { token: refreshToken } });
-
+      // Issue new access token but keep the same refresh token to avoid
+      // race conditions when multiple parallel requests trigger refresh simultaneously.
       const newAccess = signAccess(payload.sub);
-      const newRefresh = signRefresh(payload.sub);
 
-      await prisma.refreshToken.create({
-        data: {
-          token: newRefresh,
-          userId: payload.sub,
-          expiresAt: new Date(Date.now() + REFRESH_EXPIRES_DAYS * 86400 * 1000),
-        },
+      // Extend refresh token expiry on use
+      await prisma.refreshToken.update({
+        where: { token: refreshToken },
+        data: { expiresAt: new Date(Date.now() + REFRESH_EXPIRES_DAYS * 86400 * 1000) },
       });
 
-      return { accessToken: newAccess, refreshToken: newRefresh };
+      return { accessToken: newAccess, refreshToken };
     } catch {
       return null;
     }

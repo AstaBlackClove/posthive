@@ -57,6 +57,26 @@ async function createContainer(
   return data.id;
 }
 
+async function waitForContainer(
+  userId: string,
+  accessToken: string,
+  containerId: string,
+  maxSeconds = 60
+): Promise<void> {
+  const deadline = Date.now() + maxSeconds * 1000;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const res = await fetch(
+      `${BASE}/${containerId}?fields=status,error_message&access_token=${accessToken}`
+    );
+    if (!res.ok) continue;
+    const data = await res.json() as { status?: string; error_message?: string };
+    if (data.status === "FINISHED") return;
+    if (data.status === "ERROR") throw new Error(`Threads video processing failed: ${data.error_message ?? "unknown error"}`);
+  }
+  throw new Error("Threads video processing timed out after 60s");
+}
+
 async function publishContainer(
   userId: string,
   accessToken: string,
@@ -117,16 +137,21 @@ export const threadsAdapter: PlatformAdapter = {
 
   async createPost(
     account: Account,
-    content: { text: string; mediaUrls: string[] }
+    content: { text: string; mediaUrls: string[]; mediaType?: string }
   ): Promise<PostResult> {
     const { accessToken, userId } = getCredentials(account);
 
     // Resolve relative /uploads/ paths to a publicly accessible URL.
-    // Threads fetches images itself — localhost won't work.
+    // Threads fetches media itself — localhost won't work.
     const publicBase = process.env.PUBLIC_API_URL ?? process.env.THREADS_REDIRECT_URI?.replace("/auth/threads/callback", "") ?? "";
+    if (!publicBase && content.mediaUrls.length > 0) {
+      console.warn("[threads] PUBLIC_API_URL is not set — media URLs may not be publicly accessible");
+    }
     const resolvedUrls = content.mediaUrls.map((u) =>
       u.startsWith("http") ? u : `${publicBase}${u}`
     );
+
+    const isVideo = (u: string) => /\.(mp4|mov|quicktime)$/i.test(u);
 
     let containerId: string;
 
@@ -136,6 +161,15 @@ export const threadsAdapter: PlatformAdapter = {
         media_type: "TEXT",
         text: content.text,
       });
+    } else if (resolvedUrls.length === 1 && isVideo(resolvedUrls[0])) {
+      // Single video post
+      containerId = await createContainer(userId, accessToken, {
+        media_type: "VIDEO",
+        video_url: resolvedUrls[0],
+        text: content.text,
+      });
+      // Wait for video processing (up to 60s)
+      await waitForContainer(userId, accessToken, containerId, 60);
     } else if (resolvedUrls.length === 1) {
       // Single image post
       containerId = await createContainer(userId, accessToken, {
@@ -144,7 +178,7 @@ export const threadsAdapter: PlatformAdapter = {
         text: content.text,
       });
     } else {
-      // Carousel post — create one container per image, then a carousel container
+      // Carousel post — images only (Threads doesn't support video in carousel)
       const itemIds: string[] = [];
       for (const url of resolvedUrls) {
         const itemId = await createContainer(userId, accessToken, {

@@ -2,8 +2,10 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { schedulePostJob, postJobQueue } from "../lib/queue.js";
-import { withAuth, getUser } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, ACCESS_COOKIE_NAME } from "../lib/auth/withAuth.js";
 import { authProvider } from "../lib/auth/index.js";
+import { enforcePlan } from "../lib/enforcePlan.js";
+import type { StorageAdapter } from "../lib/storage.js";
 
 const TARGET_SELECT = {
   id: true, accountId: true, status: true,
@@ -11,19 +13,34 @@ const TARGET_SELECT = {
   account: { select: { platform: true, displayName: true } },
 };
 
+const perAccountOverrideSchema = z.object({
+  text: z.string().optional(),
+  commentText: z.string().optional(),
+});
+
 const createJobBody = z.object({
   scheduledFor: z.string().datetime(),
-  content: z.object({ text: z.string().min(1), mediaUrls: z.array(z.string()).default([]) }),
+  content: z.object({
+    text: z.string().min(1),
+    mediaUrls: z.array(z.string()).default([]),
+    altTexts: z.array(z.string()).optional(),
+    mediaType: z.enum(["post", "reel", "story"]).optional(),
+    perAccount: z.record(z.string().cuid(), perAccountOverrideSchema).optional(),
+  }),
   commentText: z.string().optional(),
   accountIds: z.array(z.string().cuid()).min(1),
   dryRun: z.boolean().default(false),
 });
 
-export async function jobRoutes(app: FastifyInstance): Promise<void> {
+export async function jobRoutes(app: FastifyInstance, { storage }: { storage: StorageAdapter }): Promise<void> {
 
   // Create a new scheduled job
   app.post("/jobs", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+
+    const blocked = await enforcePlan(userId, "scheduling");
+    if (blocked) return reply.status(402).send(blocked);
+
     const parsed = createJobBody.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
 
@@ -67,7 +84,7 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
       "Access-Control-Allow-Credentials": "true",
     };
 
-    const token = (req.query as Record<string, string>)?.token;
+    const token = (req.query as Record<string, string>)?.token ?? req.cookies?.[ACCESS_COOKIE_NAME];
     const user = token ? await authProvider.validateAccessToken(token) : null;
 
     if (!user) {
@@ -132,23 +149,102 @@ export async function jobRoutes(app: FastifyInstance): Promise<void> {
     return reply.send(job);
   });
 
-  // Reschedule a pending job
+  // Update a pending job (content, commentText, scheduledFor — all optional)
   app.patch("/jobs/:id", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
     const { id } = req.params as { id: string };
-    const body = z.object({ scheduledFor: z.string().datetime() }).safeParse(req.body);
+    const body = z.object({
+      scheduledFor: z.string().datetime().optional(),
+      text: z.string().min(1).optional(),
+      commentText: z.string().optional(),
+      mediaUrls: z.array(z.string()).optional(),
+      mediaType: z.enum(["post", "reel", "story"]).optional(),
+      accountIds: z.array(z.string().cuid()).min(1).optional(),
+      perAccount: z.record(z.string().cuid(), perAccountOverrideSchema).optional(),
+    }).safeParse(req.body);
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
 
-    const job = await prisma.postJob.findFirst({ where: { id, userId }, select: { status: true } });
+    const job = await prisma.postJob.findFirst({ where: { id, userId }, select: { status: true, content: true } });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status !== "pending") {
-      return reply.status(409).send({ error: `Cannot reschedule a job with status "${job.status}"` });
+      return reply.status(409).send({ error: `Cannot edit a job with status "${job.status}"` });
     }
 
-    const newScheduledFor = new Date(body.data.scheduledFor);
-    const updated = await prisma.postJob.update({ where: { id }, data: { scheduledFor: newScheduledFor } });
-    await postJobQueue.remove(id);
-    await schedulePostJob(id, newScheduledFor);
+    const updateData: Record<string, unknown> = {};
+
+    if (body.data.scheduledFor) {
+      updateData.scheduledFor = new Date(body.data.scheduledFor);
+    }
+    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.perAccount !== undefined) {
+      const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; perAccount?: Record<string, unknown> };
+      updateData.content = JSON.stringify({
+        ...existing,
+        ...(body.data.text !== undefined ? { text: body.data.text } : {}),
+        ...(body.data.mediaUrls !== undefined ? { mediaUrls: body.data.mediaUrls } : {}),
+        ...(body.data.mediaType !== undefined ? { mediaType: body.data.mediaType } : {}),
+        ...(body.data.perAccount !== undefined ? { perAccount: body.data.perAccount } : {}),
+      });
+    }
+    if (body.data.commentText !== undefined) {
+      updateData.commentText = body.data.commentText || null;
+    }
+
+    const updated = await prisma.postJob.update({ where: { id }, data: updateData });
+
+    if (body.data.accountIds) {
+      const newIds = body.data.accountIds;
+      const currentTargets = await prisma.postJobTarget.findMany({
+        where: { postJobId: id },
+        select: { id: true, accountId: true },
+      });
+
+      const toRemove = currentTargets.filter(t => !newIds.includes(t.accountId));
+      const toAdd = newIds.filter(nid => !currentTargets.some(t => t.accountId === nid));
+
+      if (toAdd.length > 0) {
+        const valid = await prisma.account.findMany({ where: { id: { in: toAdd }, userId }, select: { id: true } });
+        if (valid.length !== toAdd.length) return reply.status(400).send({ error: "One or more accountIds not found" });
+      }
+
+      if (toRemove.length > 0) {
+        await prisma.postJobTarget.deleteMany({ where: { id: { in: toRemove.map(t => t.id) } } });
+      }
+      if (toAdd.length > 0) {
+        await prisma.postJobTarget.createMany({ data: toAdd.map(accountId => ({ postJobId: id, accountId })) });
+      }
+    }
+
+    if (body.data.scheduledFor) {
+      await postJobQueue.remove(id);
+      await schedulePostJob(id, new Date(body.data.scheduledFor));
+    }
+
     return reply.send(updated);
+  });
+
+  // Delete a job and clean up associated media
+  app.delete("/jobs/:id", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { id } = req.params as { id: string };
+
+    const job = await prisma.postJob.findFirst({ where: { id, userId }, select: { status: true, content: true } });
+    if (!job) return reply.status(404).send({ error: "Job not found" });
+    if (job.status === "running") return reply.status(409).send({ error: "Cannot delete a job that is currently running" });
+
+    // Delete media files from storage
+    try {
+      const content = JSON.parse(job.content) as { mediaUrls?: string[] };
+      if (content.mediaUrls?.length) {
+        await Promise.allSettled(content.mediaUrls.map((url) => storage.delete(url)));
+      }
+    } catch { /* non-fatal */ }
+
+    // Remove from queue if pending
+    if (job.status === "pending") await postJobQueue.remove(id).catch(() => {});
+
+    // Targets are deleted automatically via onDelete: Cascade
+    await prisma.postJob.delete({ where: { id } });
+
+    return reply.status(204).send();
   });
 }

@@ -3,17 +3,19 @@ export type PlanId = "trialing" | "creator" | "pro" | "team" | "cancelled";
 export interface Plan {
   id: PlanId;
   name: string;
-  maxAccounts: number;   // connected social accounts
-  maxSeats: number;      // team members
-  dodoProductId: string; // set in Dodo dashboard
+  maxAccounts: number;          // connected social accounts
+  maxSeats: number;             // team members (future)
+  maxPostsPerMonth: number | null; // null = unlimited
+  dodoProductId: string;
 }
 
 export const PLANS: Record<PlanId, Plan> = {
   trialing: {
     id: "trialing",
     name: "Free Trial",
-    maxAccounts: 10,
+    maxAccounts: 3,
     maxSeats: 1,
+    maxPostsPerMonth: 30,        // enough to test; motivates upgrade
     dodoProductId: "",
   },
   creator: {
@@ -21,6 +23,7 @@ export const PLANS: Record<PlanId, Plan> = {
     name: "Creator",
     maxAccounts: 5,
     maxSeats: 1,
+    maxPostsPerMonth: 400,
     dodoProductId: process.env.DODO_PRODUCT_CREATOR ?? "",
   },
   pro: {
@@ -28,13 +31,15 @@ export const PLANS: Record<PlanId, Plan> = {
     name: "Pro",
     maxAccounts: 15,
     maxSeats: 1,
+    maxPostsPerMonth: null,      // unlimited
     dodoProductId: process.env.DODO_PRODUCT_PRO ?? "",
   },
   team: {
     id: "team",
     name: "Team",
-    maxAccounts: 999,
+    maxAccounts: 50,
     maxSeats: 3,
+    maxPostsPerMonth: null,      // unlimited
     dodoProductId: process.env.DODO_PRODUCT_TEAM ?? "",
   },
   cancelled: {
@@ -42,6 +47,7 @@ export const PLANS: Record<PlanId, Plan> = {
     name: "Cancelled",
     maxAccounts: 0,
     maxSeats: 0,
+    maxPostsPerMonth: 0,
     dodoProductId: "",
   },
 };

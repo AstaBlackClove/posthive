@@ -11,9 +11,9 @@
 :root {
   --color-bg:      #0a0a0a;
   --color-surface: #111111;
-  --color-border:  #1f1f1f;
+  --color-border:  #2a2a2a;
   --color-text:    #ededed;
-  --color-muted:   #888888;
+  --color-muted:   #aaaaaa;
   --color-accent:  #5b63d3;
 }
 
@@ -32,10 +32,10 @@ html, body {
 .text-gray-300 { color: #555555; }
 
 /* Fix dark backgrounds that become invisible */
-.bg-gray-100 { background-color: #1a1a1a; }
-.bg-gray-200 { background-color: #222222; }
-.border-gray-100 { border-color: #1a1a1a; }
-.border-gray-200 { border-color: #1f1f1f; }
+.bg-gray-100 { background-color: #222222; }
+.bg-gray-200 { background-color: #2a2a2a; }
+.border-gray-100 { border-color: #2a2a2a; }
+.border-gray-200 { border-color: #333333; }
 
 input, textarea, select {
   background-color: var(--color-bg);
@@ -47,6 +47,90 @@ input::placeholder, textarea::placeholder {
   color: #555;
 }
 
+/* ── Job card smooth hover ── */
+.job-card {
+  border: 1px solid #2a2a2a;
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  transition:
+    transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 280ms ease,
+    border-color 200ms ease;
+}
+.job-card:hover {
+  border-color: #404040;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+}
+
+/* Smooth expand for target breakdown on hover */
+.job-card-targets {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.job-card:hover .job-card-targets,
+.job-card-targets.force-open {
+  grid-template-rows: 1fr;
+}
+.job-card-targets-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Modal animations */
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(6px);
+  animation: modalFadeIn 160ms ease both;
+}
+.modal-panel {
+  animation: modalSlideIn 220ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes modalSlideIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Job card action icon buttons (edit / delete) */
+.job-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+  background-color: #1a1a1a;
+  color: #666;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.job-action-btn:hover {
+  background-color: #222;
+  border-color: #3a3a3a;
+  color: #aaa;
+}
+.job-action-btn--danger:hover {
+  background-color: #2a1010;
+  border-color: #5a1a1a;
+  color: #f87171;
+}
+
+/* Job card inline edit panel */
+.job-card-edit {
+  animation: editSlideDown 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes editSlideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ── FullCalendar dark theme overrides ── */
 .fc {
   color: var(--color-text) !important;
@@ -56,8 +140,20 @@ input::placeholder, textarea::placeholder {
 .fc-theme-standard .fc-scrollgrid {
   border-color: #1f1f1f !important;
 }
+.fc .fc-col-header-cell,
+.fc .fc-col-header,
+.fc thead,
+.fc thead tr,
+.fc thead td,
+.fc .fc-scrollgrid-section-header td,
+.fc .fc-scrollgrid-section-header .fc-scroller,
+.fc .fc-scrollgrid-section-header,
+.fc .fc-scroller-harness,
+.fc .fc-scroller-liquid-absolute,
+.fc .fc-scroller {
+  background-color: #111111 !important;
+}
 .fc .fc-col-header-cell {
-  background-color: #0a0a0a !important;
   color: #888 !important;
   font-size: 0.7rem;
   font-weight: 600;

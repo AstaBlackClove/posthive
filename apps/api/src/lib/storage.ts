@@ -103,7 +103,7 @@ export class SupabaseStorage implements StorageAdapter {
     const res = await fetch(this.storageUrl(filename), {
       method: "POST",
       headers: { ...this.headers(), "Content-Type": mimeType },
-      body: buffer,
+      body: new Uint8Array(buffer),
     });
     if (!res.ok) throw new Error(`Supabase upload failed: ${await res.text()}`);
     return `${this.baseUrl}/storage/v1/object/public/${this.bucket}/${filename}`;

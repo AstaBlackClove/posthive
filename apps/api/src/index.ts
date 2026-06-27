@@ -6,8 +6,10 @@ import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 import multipart from "@fastify/multipart";
 import staticFiles from "@fastify/static";
+import rateLimit from "@fastify/rate-limit";
+import rawBody from "fastify-raw-body";
 import { prisma } from "./lib/prisma.js";
-import { LocalDiskStorage, MAX_IMAGE_SIZE_BYTES } from "./lib/storage.js";
+import { LocalDiskStorage } from "./lib/storage.js";
 import { setBlueskyStorage } from "./adapters/bluesky.js";
 import { accountRoutes } from "./routes/accounts.js";
 import { authRoutes } from "./routes/auth.js";
@@ -16,16 +18,22 @@ import { uploadRoutes } from "./routes/upload.js";
 import { userRoutes } from "./routes/user.js";
 import { billingRoutes } from "./routes/billing.js";
 import { startWorker } from "./lib/worker.js";
+import { withAuth } from "./lib/auth/withAuth.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 3001);
 const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
 
+const MAX_UPLOAD_SIZE = 100 * 1024 * 1024; // 100 MB — covers video
+
 async function main() {
   const storage = new LocalDiskStorage(UPLOADS_DIR);
   setBlueskyStorage(storage);
 
-  const app = Fastify({ logger: true });
+  const app = Fastify({
+    logger: { redact: ["req.query.token"] },
+    bodyLimit: 1_048_576, // 1 MB
+  });
 
   const allowedOrigins = [
     "http://localhost:3000",
@@ -41,8 +49,18 @@ async function main() {
     credentials: true,
   });
   await app.register(cookie);
-  await app.register(multipart, { limits: { fileSize: MAX_IMAGE_SIZE_BYTES } });
+  await app.register(multipart, { limits: { fileSize: MAX_UPLOAD_SIZE, files: 4 } });
   await app.register(staticFiles, { root: UPLOADS_DIR, prefix: "/uploads/" });
+
+  // Raw body — needed for webhook signature verification
+  await app.register(rawBody, { global: false, encoding: "utf8" });
+
+  // Rate limiting — opt-in per route
+  await app.register(rateLimit, {
+    global: false,
+    max: 100,
+    timeWindow: "1 minute",
+  });
 
   // Auth routes (no auth required)
   await app.register(userRoutes);
@@ -55,6 +73,54 @@ async function main() {
   await app.register(billingRoutes);
 
   app.get("/health", async () => ({ ok: true }));
+
+  // OG preview fetch — used by compose preview
+  // Requires auth; blocks SSRF to private/internal IP ranges
+  app.get("/og", { preHandler: [withAuth] }, async (req, reply) => {
+    const { url } = req.query as { url?: string };
+    if (!url) return reply.status(400).send({ error: "url required" });
+
+    let parsed: URL;
+    try { parsed = new URL(url); } catch { return reply.status(400).send({ error: "Invalid URL" }); }
+
+    if (parsed.protocol !== "https:") return reply.status(400).send({ error: "Only HTTPS URLs allowed" });
+
+    // Block private/internal IP ranges (SSRF protection)
+    const hostname = parsed.hostname;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("172.16.") ||
+      hostname === "169.254.169.254" || // cloud metadata
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal")
+    ) {
+      return reply.status(400).send({ error: "URL not allowed" });
+    }
+
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": "Posthive/1.0" },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return reply.status(200).send({});
+      const html = await res.text();
+      const getTag = (prop: string) => {
+        const m = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']+)["']`, "i"))
+          ?? html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${prop}["']`, "i"));
+        return m?.[1] ?? null;
+      };
+      const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      return reply.status(200).send({
+        title: getTag("og:title") ?? getTag("twitter:title") ?? titleTag?.[1] ?? "",
+        description: getTag("og:description") ?? getTag("twitter:description") ?? getTag("description") ?? "",
+        image: getTag("og:image") ?? getTag("twitter:image") ?? null,
+        url,
+      });
+    } catch { return reply.status(200).send({}); }
+  });
 
   await app.listen({ port: PORT, host: "0.0.0.0" });
   console.log(`API listening on http://localhost:${PORT}`);

@@ -4,14 +4,19 @@ import React, { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { CalendarView } from "../../components/CalendarView";
 import { PlatformIcon } from "../../components/PlatformIcon";
+import { EditPostDialog } from "../../components/EditPostDialog";
+import { DeleteConfirmDialog } from "../../components/DeleteConfirmDialog";
+import { useToast } from "../../components/Toast";
+import type { Account, PerAccountOverride } from "../../components/PlatformPreview";
 
 interface Target {
   id: string;
+  accountId: string;
   status: string;
   platformPostId: string | null;
   error: string | null;
   attempts: number;
-  account: { platform: string; displayName: string };
+  account: { platform: string; displayName: string } | null;
 }
 
 export interface Job {
@@ -36,10 +41,6 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string 
   comment_failed: { label: "Reply failed", dot: "bg-orange-400", badge: "bg-orange-50 text-orange-700 border-orange-200" },
 };
 
-const PLATFORM_ICON: Record<string, string> = {
-  bluesky: "🦋", threads: "🧵", linkedin: "💼",
-};
-
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function StatusBadge({ status }: { status: string }) {
@@ -52,91 +53,120 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function JobCard({ job }: { job: Job }) {
+function JobCard({ job, onEdit, onDelete }: {
+  job: Job;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
   const content = JSON.parse(job.content) as { text: string; mediaUrls?: string[] };
   const scheduled = new Date(job.scheduledFor);
   const isPast = scheduled < new Date();
   const isToday = scheduled.toDateString() === new Date().toDateString();
+  const canEdit = job.status === "pending";
 
   function formatScheduled() {
     if (isToday) return `Today at ${scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-    return (
-      scheduled.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" }) +
-      " · " + scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    );
+    return scheduled.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" }) +
+      " · " + scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
   return (
-    <div className="group rounded-2xl shadow-sm overflow-hidden transition-shadow hover:shadow-md"
-      style={{ backgroundColor: "#111111", border: "1px solid #1f1f1f" }}>
+    <div className="job-card group rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111" }}>
       <div className="p-5">
+
+        {/* Header row */}
         <div className="flex items-start gap-3">
-          {/* Platform icons */}
           <div className="flex items-center gap-0.5 mt-0.5 flex-shrink-0">
             {job.targets.map((t) => (
-              <span key={t.id} title={t.account.displayName}>
-                <PlatformIcon platform={t.account.platform} size={18} />
+              <span key={t.id} title={t.account?.displayName ?? t.accountId}>
+                <PlatformIcon platform={t.account?.platform ?? "unknown"} size={18} />
               </span>
             ))}
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 leading-snug line-clamp-2">{content.text}</p>
+            <p className="text-sm font-medium leading-snug line-clamp-2" style={{ color: "#ededed" }}>{content.text}</p>
             {job.commentText && (
-              <p className="mt-1 text-xs text-gray-400 flex items-start gap-1">
-                <span>↳</span>
-                <span className="italic line-clamp-1">{job.commentText}</span>
+              <p className="mt-1 text-xs flex items-start gap-1" style={{ color: "#666" }}>
+                <span>↳</span><span className="italic line-clamp-1">{job.commentText}</span>
               </p>
             )}
           </div>
 
-          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            <StatusBadge status={job.status} />
+          {/* Action buttons */}
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1.5">
+              <StatusBadge status={job.status} />
+              {canEdit && (
+                <button onClick={onEdit} className="job-action-btn" title="Edit post">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+              )}
+              <button onClick={onDelete} className="job-action-btn job-action-btn--danger" title="Delete post">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
             {job.dryRun && (
-              <span className="text-[10px] bg-violet-50 text-violet-600 border border-violet-200 px-1.5 py-0.5 rounded-full font-semibold">
-                dry run
-              </span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                style={{ backgroundColor: "#1e1a2e", color: "#a78bfa", border: "1px solid #4c1d95" }}>dry run</span>
             )}
           </div>
         </div>
 
-        {/* Image thumbnails */}
-        {content.mediaUrls && content.mediaUrls.length > 0 && (
+        {/* Media thumbnails */}
+        {content.mediaUrls && content.mediaUrls.length > 0 && job.status !== "done" && (
           <div className="flex gap-2 mt-3">
             {content.mediaUrls.slice(0, 4).map((url, i) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={i}
-                src={url.startsWith("http") ? url : `${API_BASE}${url}`}
-                alt="" className="w-14 h-14 rounded-xl object-cover" style={{ border: "1px solid #1f1f1f", backgroundColor: "#111111" }} />
+              <img key={i} src={url.startsWith("http") ? url : `${API_BASE}${url}`}
+                alt="" className="w-14 h-14 rounded-xl object-cover" style={{ border: "1px solid #2a2a2a" }} />
             ))}
+          </div>
+        )}
+        {content.mediaUrls && content.mediaUrls.length > 0 && job.status === "done" && (
+          <div className="flex gap-1.5 mt-3">
+            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-lg"
+              style={{ backgroundColor: "#1a1a1a", color: "#555", border: "1px solid #2a2a2a" }}>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {content.mediaUrls.length} image{content.mediaUrls.length > 1 ? "s" : ""}
+            </span>
           </div>
         )}
 
         {/* Time row */}
         <div className="mt-3 flex items-center gap-1.5">
-          <svg className="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "#555" }}>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span className={`text-xs ${isPast ? "text-gray-400" : "text-gray-500"}`}>
-            {formatScheduled()}
-          </span>
+          <span className="text-xs" style={{ color: isPast ? "#555" : "#888" }}>{formatScheduled()}</span>
         </div>
       </div>
 
-      {/* Target breakdown — hover or on error */}
+      {/* Target breakdown — smooth expand on hover */}
       {job.targets.length > 0 && (
-        <div className={`px-5 py-3 space-y-1.5 ${job.targets.some((t) => t.error) ? "block" : "hidden group-hover:block"}`}
-          style={{ borderTop: "1px solid #1f1f1f" }}>
-          {job.targets.map((t) => (
-            <div key={t.id} className="flex items-center gap-2 text-xs">
-              <PlatformIcon platform={t.account.platform} size={13} />
-              <span className="font-medium" style={{ color: "#888888" }}>{t.account.displayName}</span>
-              <StatusBadge status={t.status} />
-              {t.attempts > 1 && <span style={{ color: "#888888" }}>{t.attempts} attempts</span>}
-              {t.error && <span className="text-red-500 truncate flex-1">{t.error}</span>}
+        <div className={`job-card-targets ${job.targets.some((t) => t.error) ? "force-open" : ""}`}>
+          <div className="job-card-targets-inner" style={{ borderTop: "1px solid #1f1f1f" }}>
+            <div className="px-5 py-3 space-y-1.5">
+              {job.targets.map((t) => (
+                <div key={t.id} className="flex items-center gap-2 text-xs">
+                  <PlatformIcon platform={t.account?.platform ?? "unknown"} size={13} />
+                  <span className="font-medium" style={{ color: "#666" }}>{t.account?.displayName ?? t.accountId.slice(0, 8)}</span>
+                  <StatusBadge status={t.status} />
+                  {t.attempts > 1 && <span style={{ color: "#555" }}>{t.attempts} attempts</span>}
+                  {t.error && <span className="text-red-500 truncate flex-1">{t.error}</span>}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       )}
     </div>
@@ -147,26 +177,65 @@ type ViewTab = "list" | "calendar";
 type FilterTab = "all" | "pending" | "done" | "failed";
 
 export default function JobsPage() {
+  const { success, error: toastError } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [viewTab, setViewTab] = useState<ViewTab>("list");
   const [filter, setFilter] = useState<FilterTab>("all");
 
+  const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [deletingJob, setDeletingJob] = useState<Job | null>(null);
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
+
+  useEffect(() => {
+    apiFetch<Account[]>("/accounts").then(setAccounts).catch(() => {});
+  }, []);
+
   async function reschedule(jobId: string, newDate: Date) {
-    await apiFetch(`/jobs/${jobId}`, {
-      method: "PATCH",
-      body: JSON.stringify({ scheduledFor: newDate.toISOString() }),
-    });
-    setJobs((prev) => prev.map((j) => j.id === jobId ? { ...j, scheduledFor: newDate.toISOString() } : j));
+    try {
+      await apiFetch(`/jobs/${jobId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ scheduledFor: newDate.toISOString() }),
+      });
+      setJobs((prev) => prev.map((j) => j.id === jobId ? { ...j, scheduledFor: newDate.toISOString() } : j));
+      success("Post rescheduled.");
+    } catch (err) { toastError(String(err)); }
+  }
+
+  async function deleteJob(jobId: string) {
+    try {
+      await apiFetch(`/jobs/${jobId}`, { method: "DELETE" });
+      setJobs((prev) => prev.filter((j) => j.id !== jobId));
+      success("Post deleted.");
+    } catch (err) { toastError(String(err)); }
+  }
+
+  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story") {
+    try {
+      await apiFetch(`/jobs/${jobId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          text,
+          commentText: commentText || undefined,
+          scheduledFor: scheduledFor.toISOString(),
+          mediaUrls,
+          mediaType,
+          accountIds,
+          ...(Object.keys(perAccount).length > 0 ? { perAccount } : { perAccount: {} }),
+        }),
+      });
+      const updated = await apiFetch<Job>(`/jobs/${jobId}`);
+      setJobs((prev) => prev.map((j) => j.id === jobId ? updated : j));
+      success("Post updated.");
+    } catch (err) { toastError(String(err)); throw err; } // rethrow so dialog stays open on failure
   }
 
   useEffect(() => {
     let es: EventSource;
 
-    // EventSource can't send cookies cross-origin — fetch the access token
-    // from the session endpoint first, then pass it as ?token= query param.
     async function connect() {
       try {
         const res = await fetch(`${API_BASE}/auth/session`, { credentials: "include" });
@@ -202,21 +271,53 @@ export default function JobsPage() {
     failed: jobs.filter((j) => j.status === "failed").length,
   };
 
+  const allPlatforms = Array.from(new Set(jobs.flatMap((j) => j.targets.map((t) => t.account?.platform).filter(Boolean) as string[])));
+
   const filteredJobs = jobs.filter((j) => {
-    if (filter === "all") return true;
-    if (filter === "pending") return j.status === "pending" || j.status === "running";
-    return j.status === filter;
+    if (filter !== "all") {
+      if (filter === "pending" && j.status !== "pending" && j.status !== "running") return false;
+      if (filter !== "pending" && j.status !== filter) return false;
+    }
+    if (platformFilter !== "all" && !j.targets.some((t) => t.account?.platform === platformFilter)) return false;
+    return true;
   });
 
   const upcoming = filteredJobs.filter((j) => j.status === "pending" || j.status === "running");
   const past = filteredJobs.filter((j) => j.status === "done" || j.status === "failed");
 
+
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
 
+      {/* Edit dialog */}
+      {editingJob && (
+        <EditPostDialog
+          open={!!editingJob}
+          job={editingJob}
+          accounts={accounts}
+          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType) => {
+            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType);
+          }}
+          onClose={() => setEditingJob(null)}
+        />
+      )}
+
+      {/* Delete confirm dialog */}
+      {deletingJob && (
+        <DeleteConfirmDialog
+          open={!!deletingJob}
+          onClose={() => setDeletingJob(null)}
+          onConfirm={async () => {
+            await deleteJob(deletingJob.id);
+            setDeletingJob(null);
+          }}
+          postText={(JSON.parse(deletingJob.content) as { text: string }).text}
+        />
+      )}
+
       {/* Top bar */}
-      <div className="flex items-center justify-between px-8 py-4 flex-shrink-0"
-        style={{ borderBottom: "1px solid #1f1f1f", backgroundColor: "#111111" }}>
+      <div className="flex items-center justify-between px-8 flex-shrink-0"
+        style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#111111" }}>
         <div>
           <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Posts</h1>
           <p className="text-xs mt-0.5 flex items-center gap-1.5" style={{ color: "#888888" }}>
@@ -225,8 +326,8 @@ export default function JobsPage() {
           </p>
         </div>
         <a href="/"
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
-          style={{ backgroundColor: "#5b63d3" }}>
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -236,10 +337,9 @@ export default function JobsPage() {
 
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-8 py-3 flex-shrink-0 flex-wrap"
-        style={{ borderBottom: "1px solid #1f1f1f", backgroundColor: "#0a0a0a" }}>
+        style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
 
-        {/* View toggle */}
-        <div className="flex gap-0.5 p-1 rounded-xl" style={{ backgroundColor: "#111111", border: "1px solid #1f1f1f" }}>
+        <div className="flex gap-0.5 p-1 rounded-xl" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
           {([
             { id: "list",     icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>, label: "List" },
             { id: "calendar", icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>, label: "Calendar" },
@@ -248,31 +348,49 @@ export default function JobsPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
               style={viewTab === t.id
                 ? { backgroundColor: "#1f1f2e", color: "#818cf8", boxShadow: "0 0 0 1px #3730a3" }
-                : { color: "#555" }}>
+                : { color: "" }}>
               {t.icon}{t.label}
             </button>
           ))}
         </div>
 
-        {/* Filter pills — list view only */}
         {viewTab === "list" && (
           <>
-            <div className="h-4 w-px" style={{ backgroundColor: "#1f1f1f" }} />
+            <div className="h-4 w-px" style={{ backgroundColor: "#2a2a2a" }} />
             <div className="flex gap-1.5">
               {([
-                { id: "all",     label: "All",      dot: null,        activeColor: "#ededed", activeBg: "#1f1f1f" },
-                { id: "pending", label: "Scheduled", dot: "#f59e0b",  activeColor: "#fbbf24", activeBg: "#1c1a10" },
-                { id: "done",    label: "Published", dot: "#22c55e",  activeColor: "#4ade80", activeBg: "#0a1f12" },
-                { id: "failed",  label: "Failed",    dot: "#ef4444",  activeColor: "#f87171", activeBg: "#1f0a0a" },
+                { id: "all",     label: "All",       dot: null,       activeColor: "#ededed", activeBg: "#2a2a2a" },
+                { id: "pending", label: "Scheduled",  dot: "#f59e0b", activeColor: "#fbbf24", activeBg: "#1c1a10" },
+                { id: "done",    label: "Published",  dot: "#22c55e", activeColor: "#4ade80", activeBg: "#0a1f12" },
+                { id: "failed",  label: "Failed",     dot: "#ef4444", activeColor: "#f87171", activeBg: "#1f0a0a" },
               ] as { id: FilterTab; label: string; dot: string | null; activeColor: string; activeBg: string }[]).map((f) => (
                 <button key={f.id} onClick={() => setFilter(f.id)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
                   style={filter === f.id
                     ? { backgroundColor: f.activeBg, color: f.activeColor, border: `1px solid ${f.dot ?? "#3a3a3a"}40` }
-                    : { backgroundColor: "transparent", color: "#555", border: "1px solid transparent" }}>
+                    : { backgroundColor: "transparent", border: "1px solid #2a2a2a" }}>
                   {f.dot && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: filter === f.id ? f.dot : "#333" }} />}
                   {f.label}
                   <span className="ml-0.5 tabular-nums" style={{ opacity: 0.6, fontSize: "0.65rem" }}>{counts[f.id]}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Platform filter */}
+        {allPlatforms.length > 1 && (
+          <>
+            <div className="h-4 w-px" style={{ backgroundColor: "#2a2a2a" }} />
+            <div className="flex gap-1.5">
+              {(["all", ...allPlatforms] as string[]).map((p) => (
+                <button key={p} onClick={() => setPlatformFilter(p)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all capitalize"
+                  style={platformFilter === p
+                    ? { backgroundColor: "#1f1f2e", color: "#818cf8", border: "1px solid #3730a340" }
+                    : { backgroundColor: "transparent", border: "1px solid #2a2a2a" }}>
+                  {p !== "all" && <PlatformIcon platform={p} size={12} />}
+                  {p === "all" ? "All platforms" : p}
                 </button>
               ))}
             </div>
@@ -288,10 +406,10 @@ export default function JobsPage() {
         )}
 
         {viewTab === "calendar" && (
-          <div className="rounded-2xl shadow-sm p-6" style={{ backgroundColor: "#111111", border: "1px solid #1f1f1f" }}>
+          <div className="rounded-2xl shadow-sm p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
             {loading
               ? <div className="text-center py-20 text-sm" style={{ color: "#888888" }}>Loading…</div>
-              : <CalendarView jobs={jobs} onReschedule={reschedule} />
+              : <CalendarView jobs={jobs} onReschedule={reschedule} onEdit={setEditingJob} />
             }
           </div>
         )}
@@ -301,7 +419,7 @@ export default function JobsPage() {
             {loading && (
               <div className="space-y-3">
                 {[1,2,3].map((i) => (
-                  <div key={i} className="rounded-2xl h-28 animate-pulse" style={{ backgroundColor: "#1a1a1a", border: "1px solid #1f1f1f" }} />
+                  <div key={i} className="rounded-2xl h-28 animate-pulse" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }} />
                 ))}
               </div>
             )}
@@ -310,9 +428,7 @@ export default function JobsPage() {
               <div className="flex flex-col items-center justify-center py-32 text-center">
                 <p className="text-5xl mb-4">📭</p>
                 <p className="text-gray-500 text-sm font-medium">
-                  {filter === "all"
-                    ? "No posts yet"
-                    : `No ${filter} posts`}
+                  {filter === "all" ? "No posts yet" : `No ${filter} posts`}
                 </p>
                 {filter === "all" && (
                   <a href="/" className="mt-3 text-sm text-blue-600 font-semibold hover:underline">
@@ -331,7 +447,11 @@ export default function JobsPage() {
                   </p>
                 </div>
                 <div className="space-y-3">
-                  {upcoming.map((job) => <JobCard key={job.id} job={job} />)}
+                  {upcoming.map((job) => (
+                    <JobCard key={job.id} job={job}
+                      onEdit={() => setEditingJob(job)}
+                      onDelete={() => setDeletingJob(job)} />
+                  ))}
                 </div>
               </section>
             )}
@@ -345,7 +465,11 @@ export default function JobsPage() {
                   </p>
                 </div>
                 <div className="space-y-3">
-                  {past.map((job) => <JobCard key={job.id} job={job} />)}
+                  {past.map((job) => (
+                    <JobCard key={job.id} job={job}
+                      onEdit={() => setEditingJob(job)}
+                      onDelete={() => setDeletingJob(job)} />
+                  ))}
                 </div>
               </section>
             )}

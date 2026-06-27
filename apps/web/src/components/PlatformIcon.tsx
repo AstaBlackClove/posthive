@@ -1,7 +1,8 @@
 const PLATFORM_DOMAIN: Record<string, string> = {
-  bluesky:  "bsky.app",
-  threads:  "threads.net",
-  linkedin: "linkedin.com",
+  bluesky:   "bsky.app",
+  threads:   "threads.net",
+  instagram: "instagram.com",
+  linkedin:  "linkedin.com",
 };
 
 interface Props {

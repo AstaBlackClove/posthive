@@ -1,0 +1,505 @@
+"use client";
+
+import { useRef, useState } from "react";
+import { Modal } from "./Modal";
+import { PlatformPreview, PLATFORM_COLOR, PLATFORM_LIMIT, MAX_IMAGES, countGraphemes } from "./PlatformPreview";
+import type { Account, UploadedImage, PerAccountOverride } from "./PlatformPreview";
+import { DateTimePicker } from "./DateTimePicker";
+import { PlatformIcon } from "./PlatformIcon";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+const pad = (n: number) => String(n).padStart(2, "0");
+function toLocalInput(d: Date) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+interface EditableJob {
+  scheduledFor: string;
+  content: string;
+  commentText: string | null;
+  targets: Array<{ accountId: string }>;
+}
+
+interface Props {
+  open: boolean;
+  job: EditableJob;
+  accounts: Account[];
+  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story") => Promise<void>;
+  onClose: () => void;
+}
+
+export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) {
+  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; perAccount?: Record<string, PerAccountOverride> };
+
+  const [text, setText] = useState(parsedContent.text);
+  const [commentText, setCommentText] = useState(job.commentText ?? "");
+  const [scheduledFor, setScheduledFor] = useState(toLocalInput(new Date(job.scheduledFor)));
+  const [igMediaType, setIgMediaType] = useState<"post" | "reel" | "story">(parsedContent.mediaType ?? "post");
+  const [images, setImages] = useState<UploadedImage[]>(() => {
+    const urls = parsedContent.mediaUrls ?? [];
+    const isVideo = (u: string) => /\.(mp4|mov|quicktime)$/i.test(u);
+    return urls.filter(u => !isVideo(u)).map(url => ({
+      url,
+      previewUrl: url.startsWith("http") ? url : `${API_BASE}${url}`,
+      name: url.split("/").pop() ?? "image",
+    }));
+  });
+  const [video, setVideo] = useState<{ url: string; previewUrl: string; name: string } | null>(() => {
+    const urls = parsedContent.mediaUrls ?? [];
+    const isVideo = (u: string) => /\.(mp4|mov|quicktime)$/i.test(u);
+    const vUrl = urls.find(isVideo);
+    return vUrl ? { url: vUrl, previewUrl: vUrl.startsWith("http") ? vUrl : `${API_BASE}${vUrl}`, name: vUrl.split("/").pop() ?? "video" } : null;
+  });
+  const [selectedIds, setSelectedIds] = useState<string[]>(job.targets.map(t => t.accountId));
+  const [perAccountOverrides, setPerAccountOverrides] = useState<Record<string, PerAccountOverride>>(parsedContent.perAccount ?? {});
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function toggleOverride(accountId: string, defaultText: string, defaultComment: string) {
+    setPerAccountOverrides(prev => {
+      if (accountId in prev) {
+        const next = { ...prev };
+        delete next[accountId];
+        return next;
+      }
+      return { ...prev, [accountId]: { text: defaultText, commentText: defaultComment } };
+    });
+  }
+  function setOverrideField(accountId: string, field: keyof PerAccountOverride, value: string) {
+    setPerAccountOverrides(prev => ({ ...prev, [accountId]: { ...prev[accountId], [field]: value } }));
+  }
+
+  function toggleAccount(id: string) {
+    const account = accounts.find(a => a.id === id);
+    setSelectedIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      if (account?.platform === "instagram" && !next.some(sid => accounts.find(a => a.id === sid)?.platform === "instagram")) {
+        setIgMediaType("post");
+      }
+      return next;
+    });
+  }
+
+  async function uploadFiles(files: File[]) {
+    const toUpload = files.filter(f => f.type.startsWith("image/")).slice(0, MAX_IMAGES - images.length);
+    if (!toUpload.length) return;
+    setUploading(true); setUploadError(null);
+    for (const file of toUpload) {
+      const previewUrl = URL.createObjectURL(file);
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
+        if (!res.ok) {
+          const b = await res.json().catch(() => ({})) as { error?: string };
+          setUploadError(b.error ?? "Upload failed");
+          URL.revokeObjectURL(previewUrl);
+          continue;
+        }
+        const { url } = await res.json() as { url: string };
+        setImages(prev => [...prev, { url, previewUrl, name: file.name }]);
+      } catch {
+        setUploadError("Upload failed — is the API running?");
+        URL.revokeObjectURL(previewUrl);
+      }
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function removeImage(i: number) {
+    setImages(prev => {
+      const img = prev[i];
+      if (img.previewUrl.startsWith("blob:")) URL.revokeObjectURL(img.previewUrl);
+      return prev.filter((_, j) => j !== i);
+    });
+  }
+
+  async function handleSave() {
+    if (!text.trim() || selectedIds.length === 0) return;
+    const [dp, tp] = scheduledFor.split("T");
+    const [y, mo, d] = dp.split("-").map(Number);
+    const [h, m] = (tp ?? "09:00").split(":").map(Number);
+    const date = new Date(y, mo - 1, d, h, m);
+    if (isNaN(date.getTime())) return;
+    const cleanOverrides = Object.fromEntries(
+      Object.entries(perAccountOverrides).filter(([id]) => selectedIds.includes(id))
+    );
+    const hasInstagram = selectedAccounts.some(a => a.platform === "instagram");
+    const mediaUrls = video ? [video.url] : images.map(i => i.url);
+    setSaving(true); setSaveError(null);
+    try {
+      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined);
+      onClose();
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message.replace(/^API PATCH.*→ \d+: /, "") : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const selectedAccounts = accounts.filter(a => selectedIds.includes(a.id));
+  const instagramSelected = selectedAccounts.some(a => a.platform === "instagram");
+  const graphemeCount = countGraphemes(text);
+  const platformLimits = selectedAccounts.map(a => ({
+    platform: a.platform,
+    limit: PLATFORM_LIMIT[a.platform] ?? 500,
+    over: graphemeCount > (PLATFORM_LIMIT[a.platform] ?? 500),
+  }));
+  const overAnyLimit = platformLimits.some(p => p.over);
+
+  // Footer warning logic
+  let mediaWarning: string | null = null;
+  if (instagramSelected) {
+    if (igMediaType === "story" && images.length === 0) mediaWarning = "⚠ Instagram Story requires an image";
+    else if (igMediaType === "reel" && !video) mediaWarning = "⚠ Instagram Reel requires a video";
+    else if (igMediaType === "post" && images.length === 0) mediaWarning = "⚠ Instagram Post requires an image";
+  }
+
+  // Group accounts by platform for the selector
+  const groupedAccounts = accounts.reduce<Record<string, Account[]>>((acc, a) => {
+    (acc[a.platform] ??= []).push(a); return acc;
+  }, {});
+
+  return (
+    <Modal open={open} onClose={onClose} maxWidth={1080}>
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
+        style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
+        <div>
+          <h2 className="text-base font-bold" style={{ color: "#ededed" }}>Edit Post</h2>
+          <p className="text-xs mt-0.5" style={{ color: "#555" }}>Edits apply to the pending scheduled post</p>
+        </div>
+        <button onClick={onClose}
+          className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
+          style={{ color: "#666" }}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Body — editor left, preview right */}
+      <div className="flex min-h-0 overflow-hidden" style={{ height: "calc(90vh - 136px)" }}>
+
+        {/* Left: editor */}
+        <div className="flex flex-col flex-1 overflow-y-auto min-w-0"
+          style={{ borderRight: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
+
+          {/* Platform selector */}
+          <div className="px-6 pt-5 pb-4" style={{ borderBottom: "1px solid #1a1a1a" }}>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#444" }}>Post to</p>
+              {accounts.length > 1 && (
+                <button type="button"
+                  onClick={() => {
+                    const next = selectedIds.length === accounts.length ? [] : accounts.map(a => a.id);
+                    if (!next.some(id => accounts.find(a => a.id === id)?.platform === "instagram")) setIgMediaType("post");
+                    setSelectedIds(next);
+                  }}
+                  className="text-xs font-semibold" style={{ color: "#5b63d3" }}>
+                  {selectedIds.length === accounts.length ? "Deselect all" : "Select all"}
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(groupedAccounts).map(([platform, accs]) => (
+                <div key={platform} className="flex items-center gap-1.5 flex-wrap">
+                  <span className="flex items-center px-2 py-1 rounded-lg"
+                    style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+                    <PlatformIcon platform={platform} size={11} />
+                  </span>
+                  {accs.map(a => {
+                    const sel = selectedIds.includes(a.id);
+                    const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
+                    return (
+                      <button key={a.id} type="button" onClick={() => toggleAccount(a.id)}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+                        style={sel
+                          ? { background: color + "18", border: `1px solid ${color}50`, color }
+                          : { background: "#111111", border: "1px solid #2a2a2a", color: "#888" }}>
+                        {a.avatarUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={a.avatarUrl} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                        )}
+                        <span className="truncate max-w-[96px]">{a.displayName}</span>
+                        {sel && (
+                          <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                  <div className="w-px h-5 self-center" style={{ backgroundColor: "#2a2a2a" }} />
+                </div>
+              ))}
+            </div>
+            {selectedIds.length === 0 && (
+              <p className="mt-2 text-xs" style={{ color: "#ef4444" }}>Select at least one account</p>
+            )}
+          </div>
+
+          {/* Caption */}
+          <div className="px-6 py-5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Caption</span>
+              <div className="flex items-center gap-3">
+                {platformLimits.map(p => (
+                  <span key={p.platform} className="text-xs font-medium flex items-center gap-1"
+                    style={{ color: p.over ? "#ef4444" : graphemeCount > p.limit * 0.8 ? "#f59e0b" : "#555" }}>
+                    <PlatformIcon platform={p.platform} size={12} /> {graphemeCount}/{p.limit}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <textarea
+              value={text} onChange={e => setText(e.target.value)}
+              placeholder="What do you want to share?"
+              rows={7}
+              className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-none transition"
+              style={{
+                border: overAnyLimit ? "1px solid #fca5a5" : "1px solid #2a2a2a",
+                backgroundColor: "#111111", color: "#ededed",
+              }}
+            />
+            {overAnyLimit && (
+              <p className="mt-1 text-xs" style={{ color: "#ef4444" }}>
+                Over the character limit for one of your selected platforms
+              </p>
+            )}
+          </div>
+
+          {/* Per-platform overrides */}
+          {selectedAccounts.length > 1 && (
+            <div className="px-6 pb-4" style={{ borderBottom: "1px solid #1a1a1a" }}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Customize per platform</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
+              </div>
+              <div className="space-y-2">
+                {selectedAccounts.map(a => {
+                  const hasOverride = a.id in perAccountOverrides;
+                  const override = perAccountOverrides[a.id];
+                  const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
+                  const limit = PLATFORM_LIMIT[a.platform] ?? 500;
+                  const overrideCount = countGraphemes(override?.text ?? "");
+                  return (
+                    <div key={a.id} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${hasOverride ? color + "40" : "#1f1f1f"}`, backgroundColor: "#0d0d0d" }}>
+                      <button type="button" onClick={() => toggleOverride(a.id, text, commentText)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left"
+                        style={{ backgroundColor: hasOverride ? color + "10" : "transparent" }}>
+                        <PlatformIcon platform={a.platform} size={14} />
+                        <span className="text-xs font-medium flex-1" style={{ color: hasOverride ? color : "#666" }}>{a.displayName}</span>
+                        {hasOverride ? (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: color + "20", color }}>Custom ✓</span>
+                        ) : (
+                          <span className="text-[10px]" style={{ color: "#444" }}>✎ Customize</span>
+                        )}
+                      </button>
+                      {hasOverride && (
+                        <div className="px-3 pb-3 space-y-2">
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Caption</span>
+                              <span className="text-[10px]" style={{ color: overrideCount > limit ? "#ef4444" : "#444" }}>{overrideCount}/{limit}</span>
+                            </div>
+                            <textarea
+                              value={override?.text ?? ""}
+                              onChange={e => setOverrideField(a.id, "text", e.target.value)}
+                              rows={3}
+                              placeholder={`Custom caption for ${a.displayName}…`}
+                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
+                              style={{ backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }}
+                            />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "#555" }}>First Comment</span>
+                            <textarea
+                              value={override?.commentText ?? ""}
+                              onChange={e => setOverrideField(a.id, "commentText", e.target.value)}
+                              rows={2}
+                              placeholder={`Custom first comment for ${a.displayName}…`}
+                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
+                              style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Media */}
+          <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #1a1a1a" }}>
+            {/* Header row with Instagram format toggle */}
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Media</span>
+              {instagramSelected && (
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-semibold mr-1.5" style={{ color: "#555" }}>Instagram format</span>
+                  {(["post", "reel", "story"] as const).map(t => (
+                    <button key={t} type="button" onClick={() => {
+                      setIgMediaType(t);
+                      if (t === "story") setVideo(null);
+                      if (t === "reel") { setImages([]); }
+                    }}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all"
+                      style={igMediaType === t
+                        ? { backgroundColor: "#E1306C20", color: "#E1306C", border: "1px solid #E1306C50" }
+                        : { backgroundColor: "#111111", color: "#444", border: "1px solid #1f1f1f" }}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Video preview (reel) */}
+            {video && (
+              <div className="mb-3 relative group w-28 rounded-xl overflow-hidden" style={{ border: "1px solid #2a2a2a", backgroundColor: "#1a1a1a" }}>
+                <video src={video.previewUrl} className="w-full h-20 object-cover" muted />
+                <div className="absolute bottom-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#fff" }}>REEL</div>
+                <button type="button" onClick={() => setVideo(null)}
+                  className="absolute top-1 right-1 w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ backgroundColor: "rgba(239,68,68,0.9)" }}>✕</button>
+              </div>
+            )}
+
+            {/* Image grid */}
+            {images.length > 0 && igMediaType !== "reel" && (
+              <div className="flex gap-2 mb-3 flex-wrap">
+                {images.map((img, i) => (
+                  <div key={img.url + i} className="relative group w-20 h-20 rounded-xl overflow-hidden flex-shrink-0"
+                    style={{ border: "1px solid #2a2a2a", backgroundColor: "#1a1a1a" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.previewUrl} alt={img.name} className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => removeImage(i)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ backgroundColor: "rgba(239,68,68,0.9)" }}>✕</button>
+                  </div>
+                ))}
+                {igMediaType === "story"
+                  ? null // story = single image only
+                  : images.length < MAX_IMAGES && Array.from({ length: MAX_IMAGES - images.length }).map((_, i) => (
+                    <div key={`e-${i}`} className="w-20 h-20 rounded-xl border-2 border-dashed flex items-center justify-center"
+                      style={{ borderColor: "#222", backgroundColor: "#0a0a0a" }}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "#2a2a2a" }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                  ))
+                }
+              </div>
+            )}
+
+            {/* Upload button */}
+            <div className="flex items-center gap-3">
+              <input ref={fileInputRef} type="file"
+                accept={igMediaType === "reel" ? "video/mp4,video/quicktime" : "image/jpeg,image/png,image/gif,image/webp"}
+                multiple={igMediaType !== "reel" && igMediaType !== "story"}
+                className="hidden" id="edit-dialog-media-upload"
+                onChange={e => uploadFiles(Array.from(e.target.files ?? []))} />
+              <label htmlFor="edit-dialog-media-upload"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${uploading || (igMediaType !== "reel" && images.length >= MAX_IMAGES) || (igMediaType === "story" && images.length >= 1) || (igMediaType === "reel" && !!video) ? "opacity-40 pointer-events-none" : "hover:border-white/20"}`}
+                style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d={igMediaType === "reel"
+                      ? "M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"
+                      : "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"} />
+                </svg>
+                {uploading ? "Uploading…"
+                  : igMediaType === "reel" ? (video ? "Change video" : "Add video")
+                  : igMediaType === "story" ? (images.length > 0 ? "Change image" : "Add story image")
+                  : images.length > 0 ? `${images.length}/${MAX_IMAGES} photos` : "Add photo"}
+              </label>
+            </div>
+            {uploadError && (
+              <p className="mt-2 text-xs rounded-lg px-3 py-2" style={{ color: "#f87171", backgroundColor: "#1f0a0a", border: "1px solid #3a1a1a" }}>
+                {uploadError}
+              </p>
+            )}
+          </div>
+
+          {/* First comment */}
+          <div className="px-6 py-5">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>First Comment</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full"
+                style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
+            </div>
+            <p className="text-xs mb-2.5" style={{ color: "#444" }}>
+              Posted as the first reply immediately after your post goes live.
+            </p>
+            <textarea value={commentText} onChange={e => setCommentText(e.target.value)}
+              placeholder="Add a link, thread continuation, or extra context…"
+              rows={3}
+              className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-none"
+              style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+            />
+          </div>
+        </div>
+
+        {/* Right: live previews */}
+        <div className="w-[400px] flex-shrink-0 flex flex-col overflow-y-auto" style={{ backgroundColor: "#0a0a0a" }}>
+          <div className="px-5 pt-5 pb-3">
+            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Preview</p>
+          </div>
+          <div className="px-5 pb-5 space-y-4 flex-1">
+            {selectedAccounts.length === 0 ? (
+              <div className="rounded-2xl border-2 border-dashed p-10 text-center" style={{ borderColor: "#1f1f1f" }}>
+                <p className="text-sm" style={{ color: "#444" }}>Select an account above to see a preview</p>
+              </div>
+            ) : (
+              selectedAccounts.map(a => {
+                const ov = perAccountOverrides[a.id];
+                return (
+                  <PlatformPreview
+                    key={a.id}
+                    account={a}
+                    text={ov?.text !== undefined ? ov.text : text}
+                    commentText={ov?.commentText !== undefined ? ov.commentText : commentText}
+                    images={images}
+                    video={video}
+                    igMediaType={a.platform === "instagram" ? igMediaType : undefined}
+                  />
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center gap-3 px-6 py-4 flex-shrink-0"
+        style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
+        <DateTimePicker value={scheduledFor} onChange={setScheduledFor} />
+        <div className="flex-1" />
+        {mediaWarning && (
+          <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>{mediaWarning}</p>
+        )}
+        {saveError && <p className="text-xs" style={{ color: "#ef4444" }}>{saveError}</p>}
+        <button onClick={onClose} disabled={saving}
+          className="px-4 py-2 text-sm rounded-xl font-medium disabled:opacity-40"
+          style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+          Cancel
+        </button>
+        <button onClick={handleSave}
+          disabled={saving || !text.trim() || selectedIds.length === 0 || overAnyLimit || uploading}
+          className="px-5 py-2 text-sm font-semibold rounded-xl disabled:opacity-40"
+          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+          {saving ? "Saving…" : "Save changes"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
