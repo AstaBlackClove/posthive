@@ -268,9 +268,20 @@ export default function BillingPage() {
   async function checkout(planId: string) {
     setCheckingOut(planId);
     try {
+      // Existing subscribers (trialing or active) — change plan in place, no new checkout
+      if (isTrialing || isActive) {
+        await apiFetch("/billing/change-plan", {
+          method: "POST",
+          body: JSON.stringify({ planId }),
+        });
+        setStatus((s) => s ? { ...s, plan: planId } : s);
+        toastSuccess("Plan updated successfully!");
+        return;
+      }
+      // New users — open Dodo checkout
       const { url } = await apiFetch<{ url: string }>("/billing/checkout", {
         method: "POST",
-        body: JSON.stringify({ planId, skipTrial: isTrialing }),
+        body: JSON.stringify({ planId }),
       });
       window.location.href = url;
     } catch (err) {
@@ -605,7 +616,7 @@ export default function BillingPage() {
                       <button onClick={() => checkout(plan.id)} disabled={!!checkingOut}
                         className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 active:scale-[0.98]"
                         style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                        {checkingOut === plan.id ? "Opening checkout…" : (isTrialing || isActive) ? changeLabel : "Start free trial →"}
+                        {checkingOut === plan.id ? ((isTrialing || isActive) ? "Switching plan…" : "Opening checkout…") : (isTrialing || isActive) ? changeLabel : "Start free trial →"}
                       </button>
                     )}
                   </div>

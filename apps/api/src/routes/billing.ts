@@ -202,6 +202,46 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
     }
   );
 
+  // POST /billing/change-plan — upgrade/downgrade existing subscription via changePlan
+  app.post<{ Body: { planId: PlanId } }>(
+    "/billing/change-plan",
+    { preHandler: [withAuth] },
+    async (req, reply) => {
+      const u = getUser(req);
+      const { planId } = req.body;
+      const plan = PLANS[planId];
+      if (!plan || !plan.dodoProductId) {
+        return reply.status(400).send({ error: "Invalid plan" });
+      }
+
+      const user = await prisma.user.findUnique({ where: { id: u.id } });
+      if (!user) return reply.status(404).send({ error: "User not found" });
+      if (!user.dodoSubId) return reply.status(400).send({ error: "No active subscription to change" });
+      if (user.plan === planId) return reply.status(400).send({ error: "Already on this plan" });
+
+      try {
+        await dodo.subscriptions.changePlan(user.dodoSubId, {
+          product_id: plan.dodoProductId,
+          proration_billing_mode: "prorated_immediately",
+          quantity: 1,
+          effective_at: "immediately",
+          metadata: { userId: user.id, planId },
+        });
+
+        // Update DB immediately — webhook will confirm but we don't wait for it
+        await prisma.user.update({
+          where: { id: u.id },
+          data: { plan: planId },
+        });
+
+        return reply.send({ ok: true });
+      } catch (err) {
+        console.error("[billing] change-plan error:", err);
+        return reply.status(500).send({ error: "Failed to change plan — please try again" });
+      }
+    }
+  );
+
   // POST /billing/cancel — cancel subscription at period end
   app.post("/billing/cancel", { preHandler: [withAuth] }, async (req, reply) => {
     const u = getUser(req);
