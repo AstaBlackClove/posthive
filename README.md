@@ -154,6 +154,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | Variable | Required | Description |
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | Yes | API URL as seen from the browser. `http://localhost:3001` in dev |
+| `NEXT_PUBLIC_ENABLE_BILLING` | No | Must match `ENABLE_BILLING` in the API. `false` for self-hosted, `true` for SaaS |
 | `NEXT_PUBLIC_THREADS_AUTH_URL` | Threads | Full URL of the Threads OAuth start route — must be HTTPS in dev (use tunnel) |
 
 ---
@@ -227,15 +228,30 @@ All plans include a **14-day free trial**. Powered by [Dodo Payments](https://do
 
 Posthive is designed to be self-hosted. By default, billing is **disabled** — no Dodo account needed, no plan limits, all features unlocked for all users.
 
+**Both the API and web env vars must match — setting only one will cause errors.**
+
 To run without billing:
-1. Leave `ENABLE_BILLING` unset (or set to `false`) in `apps/api/.env`
-2. Skip all `DODO_*` environment variables
-3. The billing page shows a "Self-hosted mode" message
+```env
+# apps/api/.env
+ENABLE_BILLING=false
+
+# apps/web/.env.local
+NEXT_PUBLIC_ENABLE_BILLING=false
+```
+- No Dodo account needed, no plan limits, all features unlocked
+- Onboarding skips the plan selection step
+- Billing page shows a "Self-hosted mode" message
 
 To run as a SaaS with billing:
-1. Set `ENABLE_BILLING=true`
-2. Create a [Dodo Payments](https://dodopayments.com) account and fill in all `DODO_*` env vars
-3. Set `NEXT_PUBLIC_ENABLE_BILLING=true` in `apps/web/.env.local`
+```env
+# apps/api/.env
+ENABLE_BILLING=true
+
+# apps/web/.env.local
+NEXT_PUBLIC_ENABLE_BILLING=true
+```
+- Create a [Dodo Payments](https://dodopayments.com) account and fill in all `DODO_*` env vars
+- Users go through a 14-day free trial on signup
 
 ---
 

@@ -14,6 +14,7 @@ export function TrialBanner() {
   const [status, setStatus] = useState<BillingStatus | null>(null);
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_ENABLE_BILLING !== "true") return;
     apiFetch<BillingStatus>("/billing/status").then(setStatus).catch(() => {});
   }, []);
 

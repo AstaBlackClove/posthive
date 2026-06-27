@@ -197,9 +197,10 @@ export default function AccountsPage() {
 
   async function fetchAccounts() {
     try {
+      const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === "true";
       const [accs, status] = await Promise.all([
         apiFetch<Account[]>("/accounts"),
-        apiFetch<PlanStatus>("/billing/status"),
+        billingEnabled ? apiFetch<PlanStatus>("/billing/status") : Promise.resolve(null),
       ]);
       setAccounts(accs);
       setPlanStatus(status);

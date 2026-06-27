@@ -31,11 +31,11 @@ const PLANS = [
 ];
 
 // ── Step indicator ──────────────────────────────────────────────────────────────
-function StepIndicator({ current }: { current: number }) {
+function StepIndicator({ current, billingEnabled }: { current: number; billingEnabled: boolean }) {
   const steps = [
-    { n: 1, label: "Choose plan" },
-    { n: 2, label: "Connect account" },
-    { n: 3, label: "First post" },
+    ...(billingEnabled ? [{ n: 1, label: "Choose plan" }] : []),
+    { n: billingEnabled ? 2 : 1, label: "Connect account" },
+    { n: billingEnabled ? 3 : 2, label: "First post" },
   ];
   return (
     <div className="flex items-center gap-0">
@@ -143,8 +143,9 @@ export default function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { success, error: toastError } = useToast();
-  const stepParam = parseInt(searchParams.get("step") ?? "1");
-  const step = Math.min(Math.max(stepParam, 1), 3);
+  const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === "true";
+  const stepParam = parseInt(searchParams.get("step") ?? (billingEnabled ? "1" : "2"));
+  const step = Math.min(Math.max(stepParam, billingEnabled ? 1 : 2), 3);
 
   const [isIndia, setIsIndia] = useState(true);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
@@ -244,11 +245,11 @@ export default function OnboardingPage() {
 
       {/* Step indicator */}
       <div className="mb-10">
-        <StepIndicator current={step} />
+        <StepIndicator current={step} billingEnabled={billingEnabled} />
       </div>
 
       {/* ── Step 1: Choose plan ─────────────────────────────────────────────── */}
-      {step === 1 && (
+      {step === 1 && billingEnabled && (
         <div className="w-full max-w-3xl">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold mb-2" style={{ color: "#ededed" }}>Start your 14-day free trial</h1>

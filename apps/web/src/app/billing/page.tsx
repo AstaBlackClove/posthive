@@ -260,6 +260,7 @@ export default function BillingPage() {
   }, []);
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_ENABLE_BILLING !== "true") { setLoading(false); return; }
     apiFetch<BillingStatus>("/billing/status")
       .then(setStatus)
       .finally(() => setLoading(false));

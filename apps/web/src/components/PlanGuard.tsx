@@ -10,6 +10,7 @@ export function PlanGuard({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_ENABLE_BILLING !== "true") { setReady(true); return; }
     apiFetch<{ planStatus: string }>("/billing/status")
       .then(({ planStatus }) => {
         if (planStatus === "inactive") {
