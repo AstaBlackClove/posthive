@@ -18,17 +18,17 @@
 
 ## Features
 
-- **Multi-platform scheduling** — Bluesky, Threads, Instagram, LinkedIn
-- **First comment** — post a reply/comment immediately after the main post goes live
-- **Per-platform overrides** — customize text and comment per account
-- **Image & video support** — up to 4 images or 1 video per post with alt text
-- **Calendar view** — drag-and-drop to reschedule pending posts
-- **Live status updates** — Server-Sent Events, no polling
-- **Dry run mode** — full pipeline test without making real API calls
-- **Onboarding flow** — guided setup after registration
-- **Billing** — Dodo Payments integration with 14-day free trial, plan upgrades/downgrades
-- **Settings** — profile, password change, delete account
-- **Credentials encrypted at rest** — AES-256-GCM, never stored in plaintext
+- **Multi-platform scheduling** - Bluesky, Threads, Instagram, LinkedIn
+- **First comment** - post a reply/comment immediately after the main post goes live
+- **Per-platform overrides** - customize text and comment per account
+- **Image & video support** - up to 4 images or 1 video per post with alt text
+- **Calendar view** - drag-and-drop to reschedule pending posts
+- **Live status updates** - Server-Sent Events, no polling
+- **Dry run mode** - full pipeline test without making real API calls
+- **Onboarding flow** - guided setup after registration
+- **Billing** - Dodo Payments integration with 14-day free trial, plan upgrades/downgrades
+- **Settings** - profile, password change, delete account
+- **Credentials encrypted at rest** - AES-256-GCM, never stored in plaintext
 - SQLite locally, drop-in Postgres for production
 
 ---
@@ -118,13 +118,13 @@ pnpm dev
 
 | Variable | Required | Description |
 |---|---|---|
-| `ENABLE_BILLING` | No | Set to `true` to enable Dodo Payments billing and plan limits. Leave unset for self-hosted use — all features unlocked with no limits |
+| `ENABLE_BILLING` | No | Set to `true` to enable Dodo Payments billing and plan limits. Leave unset for self-hosted use all features unlocked with no limits |
 | `PORT` | No | API port. Defaults to `3001` |
 | `DATABASE_URL` | Yes | Prisma DB URL. Use `file:./dev.db` for SQLite |
 | `AUTH_PROVIDER` | No | `local` (default) or `supabase` |
 | `JWT_ACCESS_SECRET` | Yes | 64-char hex string for JWT signing |
 | `JWT_REFRESH_SECRET` | Yes | 64-char hex string for refresh tokens |
-| `ENCRYPTION_KEY` | Yes | 64-char hex — AES-256-GCM key. **Never change after data is written** |
+| `ENCRYPTION_KEY` | Yes | 64-char hex - AES-256-GCM key. **Never change after data is written** |
 | `REDIS_URL` | Yes | Redis connection string |
 | `WEB_URL` | Yes | Web app URL for CORS and OAuth redirects. Use `http://localhost:3000` in dev |
 | `THREADS_APP_ID` | OAuth | Meta app ID for Threads |
@@ -133,7 +133,7 @@ pnpm dev
 | `INSTAGRAM_APP_ID` | OAuth | Meta app ID for Instagram |
 | `INSTAGRAM_APP_SECRET` | OAuth | Meta app secret for Instagram |
 | `INSTAGRAM_REDIRECT_URI` | OAuth | Must be public HTTPS |
-| `PUBLIC_API_URL` | OAuth | Public HTTPS URL of the API — Meta fetches images from here |
+| `PUBLIC_API_URL` | OAuth | Public HTTPS URL of the API Meta fetches images from here |
 | `LINKEDIN_CLIENT_ID` | OAuth | LinkedIn app client ID |
 | `LINKEDIN_CLIENT_SECRET` | OAuth | LinkedIn app client secret |
 | `LINKEDIN_REDIRECT_URI` | OAuth | Must be public HTTPS |
@@ -205,7 +205,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 | Plan | Accounts | Posts/month |
 |---|---|---|
-| Creator | 3 | 30 |
+| Creator | 3 | 400 |
 | Pro | 15 | Unlimited |
 | Team | 50 | Unlimited |
 
@@ -226,7 +226,7 @@ All plans include a **14-day free trial**. Powered by [Dodo Payments](https://do
 
 ## Self-Hosting
 
-Posthive is designed to be self-hosted. By default, billing is **disabled** — no Dodo account needed, no plan limits, all features unlocked for all users.
+Posthive is designed to be self-hosted. By default, billing is **disabled** no Dodo account needed, no plan limits, all features unlocked for all users.
 
 **Both the API and web env vars must match — setting only one will cause errors.**
 
