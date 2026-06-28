@@ -28,11 +28,8 @@ async function apiGet<T>(path: string, token: string, params: Record<string, str
 async function apiPost<T>(path: string, token: string, body: Record<string, string>): Promise<T> {
   const url = new URL(`${API}${path}`);
   url.searchParams.set("access_token", token);
-  const res = await fetch(url.toString(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  for (const [k, v] of Object.entries(body)) url.searchParams.set(k, v);
+  const res = await fetch(url.toString(), { method: "POST" });
   const json = await res.json() as T & { error?: { message: string } };
   if (!res.ok) throw new Error((json as { error?: { message: string } }).error?.message ?? `Instagram API error: ${res.status}`);
   return json;
@@ -99,7 +96,7 @@ export const instagramAdapter: PlatformAdapter = {
     return refreshIfNeeded(account);
   },
 
-  async createPost(account, { text, mediaUrls, altTexts, mediaType, locationId, userTags, collaborators }) {
+  async createPost(account, { text, mediaUrls, altTexts, mediaType, locationId }) {
     const { accessToken, userId } = getCredentials(account);
 
     const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "";
@@ -114,10 +111,10 @@ export const instagramAdapter: PlatformAdapter = {
     // ── Story ──────────────────────────────────────────────────────────────
     if (type === "story") {
       if (absoluteUrls.length === 0) throw new Error("Instagram Stories require at least one image.");
-      const body: Record<string, string> = {
-        media_type: "STORIES",
-        image_url: absoluteUrls[0],
-      };
+      const isStoryVideo = isVideoUrl(absoluteUrls[0]);
+      const body: Record<string, string> = isStoryVideo
+        ? { media_type: "STORIES", video_url: absoluteUrls[0] }
+        : { media_type: "STORIES", image_url: absoluteUrls[0] };
       const { id: containerId } = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body);
       await waitForContainer(userId, accessToken, containerId);
       const postId = await publishContainer(userId, accessToken, containerId);
@@ -154,9 +151,7 @@ export const instagramAdapter: PlatformAdapter = {
       if (text) body.caption = text;
       if (!isVid && altTexts?.[0]) body.accessibility_caption = altTexts[0];
       if (locationId) body.location_id = locationId;
-      if (collaborators?.length) body.collaborators = collaborators.join(",");
-      if (userTags?.length) body.user_tags = JSON.stringify(userTags.map(username => ({ username })));
-      const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body);
+const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body);
       containerId = res.id;
     } else {
       // Carousel — supports mixed image + video items
@@ -179,7 +174,6 @@ export const instagramAdapter: PlatformAdapter = {
       };
       if (text) carouselBody.caption = text;
       if (locationId) carouselBody.location_id = locationId;
-      if (collaborators?.length) carouselBody.collaborators = collaborators.join(",");
       const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, carouselBody);
       containerId = res.id;
     }

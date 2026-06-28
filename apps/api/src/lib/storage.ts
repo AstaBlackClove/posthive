@@ -25,6 +25,9 @@ const EXT_MAP: Record<string, string> = {
   "image/png": ".png",
   "image/gif": ".gif",
   "image/webp": ".webp",
+  "video/mp4": ".mp4",
+  "video/quicktime": ".mov",
+  "video/mov": ".mov",
 };
 
 export interface StorageAdapter {
@@ -82,8 +85,8 @@ export class SupabaseStorage implements StorageAdapter {
 
   constructor() {
     const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_KEY;
-    if (!url || !key) throw new Error("SUPABASE_URL and SUPABASE_SERVICE_KEY are required for SupabaseStorage");
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for SupabaseStorage");
     this.baseUrl = url;
     this.serviceKey = key;
     this.bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "uploads";

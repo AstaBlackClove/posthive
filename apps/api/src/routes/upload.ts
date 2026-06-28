@@ -4,8 +4,9 @@ import {
   MAX_IMAGE_SIZE_BYTES,
   type StorageAdapter,
 } from "../lib/storage.js";
-import { withAuth } from "../lib/auth/withAuth.js";
+import { withAuth, getUser } from "../lib/auth/withAuth.js";
 import { compressForPlatform } from "../lib/compress.js";
+import { prisma } from "../lib/prisma.js";
 
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/mov"];
 const MAX_VIDEO_SIZE_BYTES = 100_000_000; // 100 MB (Instagram Reels limit)
@@ -15,12 +16,14 @@ export async function uploadRoutes(
   { storage }: { storage: StorageAdapter }
 ): Promise<void> {
   app.delete("/upload", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
     const { url } = req.body as { url?: string };
     if (!url || typeof url !== "string") {
       return reply.status(400).send({ error: "url is required" });
     }
     try {
       await storage.delete(url);
+      await prisma.upload.deleteMany({ where: { url, userId } });
     } catch {
       // Best-effort — don't fail if file is already gone
     }
@@ -28,6 +31,7 @@ export async function uploadRoutes(
   });
 
   app.post("/upload", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
     const data = await req.file();
 
     if (!data) {
@@ -52,6 +56,7 @@ export async function uploadRoutes(
         });
       }
       const url = await storage.upload(raw, data.mimetype);
+      await prisma.upload.create({ data: { url, userId } });
       return reply.status(201).send({ url, type: "video" });
     }
 
@@ -64,6 +69,7 @@ export async function uploadRoutes(
 
     const { buffer, mimeType } = await compressForPlatform(raw, data.mimetype, "bluesky");
     const url = await storage.upload(buffer, mimeType);
+    await prisma.upload.create({ data: { url, userId } });
     return reply.status(201).send({ url, type: "image" });
   });
 }

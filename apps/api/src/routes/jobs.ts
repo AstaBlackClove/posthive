@@ -10,7 +10,7 @@ import type { StorageAdapter } from "../lib/storage.js";
 const TARGET_SELECT = {
   id: true, accountId: true, status: true,
   platformPostId: true, error: true, attempts: true,
-  account: { select: { platform: true, displayName: true } },
+  account: { select: { platform: true, displayName: true, avatarUrl: true } },
 };
 
 const perAccountOverrideSchema = z.object({
@@ -21,7 +21,7 @@ const perAccountOverrideSchema = z.object({
 const createJobBody = z.object({
   scheduledFor: z.string().datetime(),
   content: z.object({
-    text: z.string().min(1),
+    text: z.string().default(""),
     mediaUrls: z.array(z.string()).default([]),
     altTexts: z.array(z.string()).optional(),
     mediaType: z.enum(["post", "reel", "story"]).optional(),
@@ -71,6 +71,15 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     });
 
     await schedulePostJob(job.id, new Date(scheduledFor));
+
+    // Mark uploaded files as claimed so the orphan cron leaves them alone
+    if (content.mediaUrls?.length) {
+      await prisma.upload.updateMany({
+        where: { url: { in: content.mediaUrls }, userId },
+        data: { claimedAt: new Date() },
+      });
+    }
+
     return reply.status(201).send(job);
   });
 

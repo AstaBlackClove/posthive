@@ -36,7 +36,6 @@ export default function LoginPage() {
           <img src="/posthivemain.png" alt="Posthive" className="w-9 h-9 rounded-xl object-cover" />
           <div>
             <p className="font-bold text-sm leading-tight" style={{ color: "#ededed" }}>Posthive</p>
-            <p className="text-xs" style={{ color: "#888" }}>Self-hosted</p>
           </div>
         </div>
 

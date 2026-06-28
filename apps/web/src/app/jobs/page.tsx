@@ -16,7 +16,7 @@ interface Target {
   platformPostId: string | null;
   error: string | null;
   attempts: number;
-  account: { platform: string; displayName: string } | null;
+  account: { platform: string; displayName: string; avatarUrl: string | null } | null;
 }
 
 export interface Job {
@@ -76,10 +76,24 @@ function JobCard({ job, onEdit, onDelete }: {
 
         {/* Header row */}
         <div className="flex items-start gap-3">
-          <div className="flex items-center gap-0.5 mt-0.5 flex-shrink-0">
+          <div className="flex items-center gap-1.5 mt-0.5 flex-shrink-0">
             {job.targets.map((t) => (
-              <span key={t.id} title={t.account?.displayName ?? t.accountId}>
-                <PlatformIcon platform={t.account?.platform ?? "unknown"} size={18} />
+              <span key={t.id} title={`${t.account?.displayName ?? t.accountId} (${t.account?.platform ?? "unknown"})`}
+                className="relative flex-shrink-0">
+                {t.account?.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={t.account.avatarUrl} alt={t.account.displayName}
+                    className="w-7 h-7 rounded-full object-cover" style={{ border: "1px solid #2a2a2a" }} />
+                ) : (
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888" }}>
+                    {t.account?.displayName?.[0]?.toUpperCase() ?? "?"}
+                  </div>
+                )}
+                <span className="absolute -bottom-0.5 -right-0.5 rounded-full flex items-center justify-center"
+                  style={{ width: 13, height: 13 }}>
+                  <PlatformIcon platform={t.account?.platform ?? "unknown"} size={11} />
+                </span>
               </span>
             ))}
           </div>

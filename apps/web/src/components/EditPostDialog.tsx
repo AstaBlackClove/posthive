@@ -468,8 +468,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
                     account={a}
                     text={ov?.text !== undefined ? ov.text : text}
                     commentText={ov?.commentText !== undefined ? ov.commentText : commentText}
-                    images={images}
-                    video={video}
+                    mediaItems={[...images, ...(video ? [{ ...video, isVideo: true }] : [])]}
                     igMediaType={a.platform === "instagram" ? igMediaType : undefined}
                   />
                 );

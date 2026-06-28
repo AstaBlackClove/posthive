@@ -93,7 +93,8 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
 
     const { accessToken } = JSON.parse(decrypt(igAccount.credentials)) as { accessToken: string; userId: string };
 
-    const url = new URL("https://graph.facebook.com/v21.0/pages/search");
+    const url = new URL("https://graph.facebook.com/v21.0/search");
+    url.searchParams.set("type", "place");
     url.searchParams.set("q", q);
     url.searchParams.set("fields", "id,name,location");
     url.searchParams.set("access_token", accessToken);

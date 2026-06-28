@@ -1,22 +1,9 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-function createTransport() {
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT ?? "587");
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  if (!host || !user || !pass) {
-    // Dev fallback — logs to console instead of sending
-    return null;
-  }
-
-  return nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
-}
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
-  const transport = createTransport();
-  const from = process.env.SMTP_FROM ?? "Posthive <noreply@posthive.app>";
+  const from = process.env.EMAIL_FROM ?? "Posthive <noreply@posthive.app>";
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#0a0a0a;color:#ededed;">
@@ -34,11 +21,11 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
     </div>
   `;
 
-  if (!transport) {
-    // No SMTP configured — print to console for dev
+  if (!resend) {
+    // No Resend API key — print to console for dev
     console.log(`[mailer] Password reset link for ${to}:\n${resetUrl}`);
     return;
   }
 
-  await transport.sendMail({ from, to, subject: "Reset your Posthive password", html });
+  await resend.emails.send({ from, to, subject: "Reset your Posthive password", html });
 }

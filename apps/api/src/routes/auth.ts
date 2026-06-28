@@ -235,9 +235,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     let avatarUrl: string | null = null;
     try {
       const profileRes = await fetch(
-        `https://graph.instagram.com/v21.0/me?fields=username,profile_picture_url&access_token=${longToken}`
+        `https://graph.instagram.com/v21.0/me?fields=id,username,profile_picture_url&access_token=${longToken}`
       );
-      const profile = await profileRes.json() as { username?: string; profile_picture_url?: string };
+      const profile = await profileRes.json() as { id?: string; username?: string; profile_picture_url?: string };
+      if (profile.id) igUserId = profile.id;
       displayName = profile.username ?? igUserId;
       avatarUrl = profile.profile_picture_url ?? null;
     } catch { /* optional */ }
@@ -380,4 +381,5 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     console.log(`[threads] manually connected @${profile.username} → user ${userId}`);
     return reply.status(201).send(account);
   });
+
 }

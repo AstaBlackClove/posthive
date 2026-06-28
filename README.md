@@ -21,13 +21,14 @@
 - **Multi-platform scheduling** - Bluesky, Threads, Instagram, LinkedIn
 - **First comment** - post a reply/comment immediately after the main post goes live
 - **Per-platform overrides** - customize text and comment per account
-- **Image & video support** - up to 4 images or 1 video per post with alt text
+- **Image & video support** - mixed image/video carousel (up to 10 items), alt text, Instagram Reels, Stories
 - **Calendar view** - drag-and-drop to reschedule pending posts
 - **Live status updates** - Server-Sent Events, no polling
 - **Dry run mode** - full pipeline test without making real API calls
 - **Onboarding flow** - guided setup after registration
 - **Billing** - Dodo Payments integration with 14-day free trial, plan upgrades/downgrades
 - **Settings** - profile, password change, delete account
+- **Password reset** - forgot password email flow via Resend
 - **Credentials encrypted at rest** - AES-256-GCM, never stored in plaintext
 - SQLite locally, drop-in Postgres for production
 
@@ -39,7 +40,7 @@
 |---|---|
 | Frontend | Next.js 16 (App Router), Tailwind CSS |
 | Backend | Fastify v4, TypeScript ESM |
-| Database | Prisma ORM SQLite (dev) / Postgres (prod) |
+| Database | Prisma ORM SQLite (dev) / Supabase (prod) |
 | Queue | BullMQ + Redis (Upstash or Railway) |
 | Billing | Dodo Payments |
 | Storage | Local disk (dev) / Supabase Storage (prod) |
@@ -55,12 +56,13 @@ posthive/
 │   │   ├── prisma/           # Schema and migrations
 │   │   └── src/
 │   │       ├── adapters/     # Bluesky, Threads, Instagram, LinkedIn
-│   │       ├── lib/          # Auth, queue, worker, encryption, storage, billing
+│   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, billing
 │   │       ├── routes/       # auth, accounts, jobs, upload, billing, user
-│   │       └── runner/       # Job state machine
+│   │       ├── runner/       # Job state machine
+│   │       └── scheduler/    # Token refresh and cleanup crons
 │   └── web/                  # Next.js frontend
 │       └── src/
-│           ├── app/          # Pages: compose, jobs, accounts, billing, settings
+│           ├── app/          # Pages: compose, jobs, accounts, billing, settings, auth
 │           └── components/   # Sidebar, Calendar, Previews, Toast, Modals
 └── package.json              # pnpm workspace root
 ```
@@ -91,7 +93,7 @@ pnpm install
 cp apps/api/.env.example apps/api/.env
 ```
 
-Fill in the values — see [Environment Variables](#environment-variables) below.
+Fill in the values see [Environment Variables](#environment-variables) below.
 
 ### 3. Set up the database
 
@@ -118,25 +120,41 @@ pnpm dev
 
 | Variable | Required | Description |
 |---|---|---|
-| `ENABLE_BILLING` | No | Set to `true` to enable Dodo Payments billing and plan limits. Leave unset for self-hosted use all features unlocked with no limits |
+| `NODE_ENV` | No | Set to `production` in production enables secure cookie behaviour |
 | `PORT` | No | API port. Defaults to `3001` |
-| `DATABASE_URL` | Yes | Prisma DB URL. Use `file:./dev.db` for SQLite |
-| `AUTH_PROVIDER` | No | `local` (default) or `supabase` |
-| `JWT_ACCESS_SECRET` | Yes | 64-char hex string for JWT signing |
-| `JWT_REFRESH_SECRET` | Yes | 64-char hex string for refresh tokens |
-| `ENCRYPTION_KEY` | Yes | 64-char hex - AES-256-GCM key. **Never change after data is written** |
-| `REDIS_URL` | Yes | Redis connection string |
-| `WEB_URL` | Yes | Web app URL for CORS and OAuth redirects. Use `http://localhost:3000` in dev |
-| `THREADS_APP_ID` | OAuth | Meta app ID for Threads |
-| `THREADS_APP_SECRET` | OAuth | Meta app secret for Threads |
-| `THREADS_REDIRECT_URI` | OAuth | Must be public HTTPS (use a tunnel in dev) |
-| `INSTAGRAM_APP_ID` | OAuth | Meta app ID for Instagram |
-| `INSTAGRAM_APP_SECRET` | OAuth | Meta app secret for Instagram |
-| `INSTAGRAM_REDIRECT_URI` | OAuth | Must be public HTTPS |
-| `PUBLIC_API_URL` | OAuth | Public HTTPS URL of the API Meta fetches images from here |
-| `LINKEDIN_CLIENT_ID` | OAuth | LinkedIn app client ID |
-| `LINKEDIN_CLIENT_SECRET` | OAuth | LinkedIn app client secret |
-| `LINKEDIN_REDIRECT_URI` | OAuth | Must be public HTTPS |
+| `DATABASE_URL` | Yes | Prisma DB URL. Use `file:./dev.db` for SQLite, Postgres URL in prod |
+| `ENCRYPTION_KEY` | Yes | 64-char hex AES-256-GCM key. **Never change after data is written** |
+| `REDIS_URL` | Yes | Redis connection string (Upstash or Railway) |
+| `WEB_URL` | Yes | Web app URL for CORS and OAuth redirects. `http://localhost:3000` in dev |
+| `SECURE_COOKIES` | Prod | Set to `true` in production so auth cookies require HTTPS |
+| **Auth** | | |
+| `AUTH_PROVIDER` | No | `local` (default, JWT + bcrypt) or `supabase` |
+| `JWT_ACCESS_SECRET` | local auth | 64-char hex string for access token signing |
+| `JWT_REFRESH_SECRET` | local auth | 64-char hex string for refresh token signing |
+| `SUPABASE_URL` | Supabase | `https://your-project.supabase.co` |
+| `SUPABASE_ANON_KEY` | Supabase | Supabase anon/public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Supabase service role key (admin operations) |
+| **Storage** | | |
+| `STORAGE_PROVIDER` | No | `local` (default, disk) or `supabase` (required for prod/multi-instance) |
+| `SUPABASE_STORAGE_BUCKET` | Supabase storage | Bucket name create a public bucket in Supabase dashboard. Defaults to `media` |
+| **Email** | | |
+| `RESEND_API_KEY` | No | [Resend](https://resend.com) API key for password reset emails. Falls back to console logging in dev |
+| `EMAIL_FROM` | No | From address must be a domain verified in Resend. Defaults to `Posthive <noreply@posthive.app>` |
+| **OAuth - Threads** | | |
+| `THREADS_APP_ID` | Threads | Meta app ID |
+| `THREADS_APP_SECRET` | Threads | Meta app secret |
+| `THREADS_REDIRECT_URI` | Threads | Must be public HTTPS (use a tunnel in dev) |
+| **OAuth - Instagram** | | |
+| `INSTAGRAM_APP_ID` | Instagram | Meta app ID |
+| `INSTAGRAM_APP_SECRET` | Instagram | Meta app secret |
+| `INSTAGRAM_REDIRECT_URI` | Instagram | Must be public HTTPS |
+| `PUBLIC_API_URL` | Instagram | Public HTTPS URL of the API — Meta fetches uploaded images from here |
+| **OAuth - LinkedIn** | | |
+| `LINKEDIN_CLIENT_ID` | LinkedIn | LinkedIn app client ID |
+| `LINKEDIN_CLIENT_SECRET` | LinkedIn | LinkedIn app client secret |
+| `LINKEDIN_REDIRECT_URI` | LinkedIn | Must be public HTTPS |
+| **Billing** | | |
+| `ENABLE_BILLING` | No | Set to `true` to enable Dodo Payments and plan limits. Leave unset for self-hosted all features unlocked |
 | `DODO_ENV` | Billing | `test_mode` or `live_mode` |
 | `DODO_API_KEY` | Billing | Dodo Payments API key |
 | `DODO_WEBHOOK_SECRET` | Billing | Dodo webhook signing secret (`whsec_...`) |
@@ -155,7 +173,6 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | Yes | API URL as seen from the browser. `http://localhost:3001` in dev |
 | `NEXT_PUBLIC_ENABLE_BILLING` | No | Must match `ENABLE_BILLING` in the API. `false` for self-hosted, `true` for SaaS |
-| `NEXT_PUBLIC_THREADS_AUTH_URL` | Threads | Full URL of the Threads OAuth start route must be HTTPS in dev (use tunnel) |
 
 ---
 
@@ -184,6 +201,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 1. Create an app at [developer.linkedin.com](https://developer.linkedin.com)
 2. Add the **Share on LinkedIn** and **Sign In with LinkedIn using OpenID Connect** products
 3. Set the OAuth redirect URI to `https://your-domain/auth/linkedin/callback`
+4. Add your Client ID and Secret to `.env`
+5. Click **Connect with LinkedIn** in the app
 
 ---
 
@@ -260,9 +279,15 @@ NEXT_PUBLIC_ENABLE_BILLING=true
 1. Create a Railway project with a **Redis** and **Postgres** service
 2. Deploy the monorepo Railway auto-detects it
 3. Change `provider` in `prisma/schema.prisma` from `sqlite` to `postgresql`
-4. Set all env vars from `.env.example` in Railway settings
-5. Set `PUBLIC_API_URL` and all OAuth redirect URIs to your Railway domain
-6. Set `SECURE_COOKIES=true` in the API env (required for HTTPS cookie auth)
+4. Set all env vars from `.env.example` in Railway/hosting settings:
+   - `DATABASE_URL` → Postgres connection string
+   - `REDIS_URL` → Redis connection string
+   - `STORAGE_PROVIDER=supabase` + `SUPABASE_*` vars → create a public `media` bucket in Supabase Storage
+   - `AUTH_PROVIDER=supabase` (optional, or keep `local`)
+   - `RESEND_API_KEY` + `EMAIL_FROM` → [Resend](https://resend.com) for password reset emails (verify your domain in Resend first)
+   - `SECURE_COOKIES=true` → required for HTTPS cookie auth
+5. Set `PUBLIC_API_URL` and all OAuth redirect URIs to your production domain
+6. Run `pnpm db:migrate` on first deploy to apply migrations to Postgres
 
 ---
 

@@ -116,6 +116,18 @@ model PasswordReset {
   @@index([token])
 }
 
+// Tracks uploaded media files so orphans can be cleaned up.
+model Upload {
+  id        String    @id @default(cuid())
+  url       String    @unique
+  userId    String
+  claimedAt DateTime? // set when a PostJob references this file
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([claimedAt, createdAt])
+}
+
 // Short-lived nonce for OAuth CSRF protection.
 model OAuthState {
   id        String   @id @default(cuid())

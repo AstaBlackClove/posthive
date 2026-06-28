@@ -7,7 +7,7 @@ import { PlatformIcon } from "../../components/PlatformIcon";
 import { useToast } from "../../components/Toast";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-const THREADS_AUTH_URL = process.env.NEXT_PUBLIC_THREADS_AUTH_URL ?? `${API_BASE}/auth/threads`;
+const THREADS_AUTH_URL = `${API_BASE}/auth/threads`;
 const INSTAGRAM_AUTH_URL = `${API_BASE}/auth/instagram`;
 const LINKEDIN_AUTH_URL = `${API_BASE}/auth/linkedin`;
 
@@ -184,6 +184,7 @@ export default function AccountsPage() {
   const [loading, setLoading] = useState(true);
   const [planStatus, setPlanStatus] = useState<PlanStatus | null>(null);
   const [showBlueskyDialog, setShowBlueskyDialog] = useState(false);
+  const [disconnectTarget, setDisconnectTarget] = useState<{ id: string; displayName: string } | null>(null);
 
   const [threadsToken, setThreadsToken] = useState("");
   const [connectingThreads, setConnectingThreads] = useState(false);
@@ -235,7 +236,13 @@ export default function AccountsPage() {
   }
 
   async function disconnect(id: string, displayName: string) {
-    if (!confirm(`Disconnect @${displayName}? This won't affect already-scheduled jobs.`)) return;
+    setDisconnectTarget({ id, displayName });
+  }
+
+  async function confirmDisconnect() {
+    if (!disconnectTarget) return;
+    const { id, displayName } = disconnectTarget;
+    setDisconnectTarget(null);
     setDisconnecting(id);
     try {
       await apiFetch(`/accounts/${id}`, { method: "DELETE" });
@@ -522,6 +529,33 @@ export default function AccountsPage() {
 
         </div>
       </div>
+
+      {/* Disconnect confirm dialog */}
+      {disconnectTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+          onClick={e => { if (e.target === e.currentTarget) setDisconnectTarget(null); }}>
+          <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+            <h2 className="text-base font-bold mb-1" style={{ color: "#ededed" }}>Disconnect account?</h2>
+            <p className="text-sm mb-5" style={{ color: "#888" }}>
+              <span style={{ color: "#ededed" }}>@{disconnectTarget.displayName}  </span> will be removed.
+              Already-scheduled posts won&apos;t be affected.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDisconnectTarget(null)}
+                className="flex-1 text-sm font-semibold py-2 rounded-xl"
+                style={{ backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a" }}>
+                Cancel
+              </button>
+              <button onClick={confirmDisconnect}
+                className="flex-1 text-sm font-semibold py-2 rounded-xl transition-opacity hover:opacity-80"
+                style={{ backgroundColor: "#7f1d1d", color: "#fca5a5" }}>
+                Disconnect
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

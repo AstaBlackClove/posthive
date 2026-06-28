@@ -6,7 +6,7 @@ import { AuthGuard } from "./AuthGuard";
 import { PlanGuard } from "./PlanGuard";
 
 // No auth, no sidebar — public pages
-const PUBLIC_ROUTES = ["/login", "/register"];
+const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

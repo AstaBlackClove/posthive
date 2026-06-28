@@ -9,7 +9,7 @@ import staticFiles from "@fastify/static";
 import rateLimit from "@fastify/rate-limit";
 import rawBody from "fastify-raw-body";
 import { prisma } from "./lib/prisma.js";
-import { LocalDiskStorage } from "./lib/storage.js";
+import { LocalDiskStorage, SupabaseStorage } from "./lib/storage.js";
 import { setBlueskyStorage } from "./adapters/bluesky.js";
 import { accountRoutes } from "./routes/accounts.js";
 import { authRoutes } from "./routes/auth.js";
@@ -19,6 +19,7 @@ import { userRoutes } from "./routes/user.js";
 import { billingRoutes } from "./routes/billing.js";
 import { startWorker } from "./lib/worker.js";
 import { withAuth } from "./lib/auth/withAuth.js";
+import type { StorageAdapter } from "./lib/storage.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 3001);
@@ -27,7 +28,9 @@ const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
 const MAX_UPLOAD_SIZE = 100 * 1024 * 1024; // 100 MB — covers video
 
 async function main() {
-  const storage = new LocalDiskStorage(UPLOADS_DIR);
+  const storage = process.env.STORAGE_PROVIDER === "supabase"
+    ? new SupabaseStorage()
+    : new LocalDiskStorage(UPLOADS_DIR);
   setBlueskyStorage(storage);
 
   const app = Fastify({
@@ -126,12 +129,37 @@ async function main() {
   console.log(`API listening on http://localhost:${PORT}`);
 
   startWorker(storage);
+  startOrphanCleanup(storage);
 }
 
 main().catch((err) => {
   console.error("Fatal startup error:", err);
   process.exit(1);
 });
+
+// Deletes unclaimed uploads older than 24 hours — runs every 6 hours
+function startOrphanCleanup(storage: StorageAdapter) {
+  const INTERVAL_MS = 6 * 60 * 60 * 1000;
+  const TTL_MS = 24 * 60 * 60 * 1000;
+
+  async function run() {
+    const cutoff = new Date(Date.now() - TTL_MS);
+    const orphans = await prisma.upload.findMany({
+      where: { claimedAt: null, createdAt: { lt: cutoff } },
+      select: { id: true, url: true },
+    });
+    if (!orphans.length) return;
+    console.log(`[orphan-cleanup] deleting ${orphans.length} unclaimed upload(s)`);
+    await Promise.allSettled(orphans.map(async (u) => {
+      try { await storage.delete(u.url); } catch { /* already gone */ }
+      await prisma.upload.delete({ where: { id: u.id } });
+    }));
+  }
+
+  // Run once at startup (catches anything from a previous session), then on interval
+  run().catch((e) => console.error("[orphan-cleanup] error:", e));
+  setInterval(() => run().catch((e) => console.error("[orphan-cleanup] error:", e)), INTERVAL_MS);
+}
 
 process.on("SIGTERM", async () => {
   await prisma.$disconnect();

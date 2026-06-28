@@ -97,7 +97,6 @@ export function Sidebar() {
         {!collapsed && (
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm leading-tight text-white">Posthive</p>
-            <p className="text-xs" style={{ color: "var(--color-muted)" }}>Self-hosted</p>
           </div>
         )}
       </div>

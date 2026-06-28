@@ -66,6 +66,7 @@ export interface UploadedImage {
   url: string;        // server URL — sent to API on save
   previewUrl: string; // display URL — blob or server
   name: string;
+  isVideo?: boolean;
 }
 
 export const PLATFORM_COLOR: Record<string, string> = {
@@ -88,14 +89,16 @@ export function countGraphemes(text: string): number {
   catch { return text.length; }
 }
 
-export function InstagramPreview({ account, text, commentText, images, video, igMediaType = "post" }: {
+export function InstagramPreview({ account, text, commentText, mediaItems = [], igMediaType = "post" }: {
   account: Account;
   text: string;
   commentText: string;
-  images: UploadedImage[];
-  video?: { url: string; previewUrl: string; name: string } | null;
+  mediaItems?: UploadedImage[];
   igMediaType?: "post" | "reel" | "story";
 }) {
+  const images = mediaItems.filter(m => !m.isVideo);
+  const video = mediaItems.find(m => m.isVideo) ?? null;
+  const [carouselIdx, setCarouselIdx] = useState(0);
   const initial = account.displayName[0]?.toUpperCase() ?? "?";
   const igGradient = "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)";
 
@@ -126,7 +129,9 @@ export function InstagramPreview({ account, text, commentText, images, video, ig
 
         {/* 9:16 story canvas */}
         <div className="relative w-full overflow-hidden" style={{ aspectRatio: "9/16", backgroundColor: "#000" }}>
-          {images.length > 0 ? (
+          {video ? (
+            <video src={video.previewUrl} className="w-full h-full object-cover" muted playsInline loop autoPlay />
+          ) : images.length > 0 ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={images[0].previewUrl} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -137,7 +142,7 @@ export function InstagramPreview({ account, text, commentText, images, video, ig
                   <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="1.5" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 15l-5-5L5 21" />
                 </svg>
-                <p className="text-xs" style={{ color: "#555" }}>Add an image</p>
+                <p className="text-xs" style={{ color: "#555" }}>Add an image or video</p>
               </div>
             </div>
           )}
@@ -245,14 +250,61 @@ export function InstagramPreview({ account, text, commentText, images, video, ig
         <span className="text-xs font-semibold" style={{ color: "#3b82f6" }}>Follow</span>
       </div>
 
-      {images.length > 0 ? (
+      {mediaItems.length > 0 ? (
         <div className="relative w-full aspect-square bg-black overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={images[0].previewUrl} alt="" className="w-full h-full object-cover" />
-          {images.length > 1 && (
-            <div className="absolute top-2 right-2 bg-black/60 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-              1/{images.length}
+          {/* Current slide */}
+          {mediaItems[carouselIdx]?.isVideo ? (
+            <video src={mediaItems[carouselIdx].previewUrl} className="w-full h-full object-cover" muted loop autoPlay />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={mediaItems[carouselIdx]?.previewUrl} alt="" className="w-full h-full object-cover" />
+          )}
+
+          {/* Video badge */}
+          {mediaItems[carouselIdx]?.isVideo && (
+            <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+              VIDEO
             </div>
+          )}
+
+          {/* Carousel nav arrows */}
+          {mediaItems.length > 1 && (
+            <>
+              <button type="button"
+                onClick={() => setCarouselIdx(i => Math.max(0, i - 1))}
+                disabled={carouselIdx === 0}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-0 transition-opacity"
+                style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
+                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button type="button"
+                onClick={() => setCarouselIdx(i => Math.min(mediaItems.length - 1, i + 1))}
+                disabled={carouselIdx === mediaItems.length - 1}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-0 transition-opacity"
+                style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
+                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* Dot indicators */}
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                {mediaItems.map((_, i) => (
+                  <button key={i} type="button" onClick={() => setCarouselIdx(i)}
+                    className="w-1.5 h-1.5 rounded-full transition-all"
+                    style={{ backgroundColor: i === carouselIdx ? "#fff" : "rgba(255,255,255,0.4)" }} />
+                ))}
+              </div>
+
+              {/* Carousel icon top-right */}
+              <div className="absolute top-2 right-2">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white" opacity="0.85">
+                  <path d="M2 6a2 2 0 012-2h.5a.5.5 0 000-1H4a3 3 0 00-3 3v.5a.5.5 0 001 0V6zM22 6a2 2 0 00-2-2h-.5a.5.5 0 010-1H20a3 3 0 013 3v.5a.5.5 0 01-1 0V6zM2 18a2 2 0 002 2h.5a.5.5 0 010 1H4a3 3 0 01-3-3v-.5a.5.5 0 011 0V18zM22 18a2 2 0 01-2 2h-.5a.5.5 0 000 1H20a3 3 0 003-3v-.5a.5.5 0 00-1 0V18zM8 7h8a1 1 0 011 1v8a1 1 0 01-1 1H8a1 1 0 01-1-1V8a1 1 0 011-1z"/>
+                </svg>
+              </div>
+            </>
           )}
         </div>
       ) : (
@@ -263,7 +315,7 @@ export function InstagramPreview({ account, text, commentText, images, video, ig
               <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="1.5" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 15l-5-5L5 21" />
             </svg>
-            <p className="text-xs" style={{ color: "#555" }}>Add an image to preview</p>
+            <p className="text-xs" style={{ color: "#555" }}>Add media to preview</p>
           </div>
         </div>
       )}
@@ -391,16 +443,18 @@ function LinkedInPreview({ account, text, commentText, images }: {
   );
 }
 
-export function PlatformPreview({ account, text, commentText, images, video, igMediaType }: {
+export function PlatformPreview({ account, text, commentText, mediaItems = [], igMediaType }: {
   account: Account;
   text: string;
   commentText: string;
-  images: UploadedImage[];
-  video?: { url: string; previewUrl: string; name: string } | null;
+  mediaItems?: UploadedImage[];
   igMediaType?: "post" | "reel" | "story";
 }) {
+  const images = mediaItems.filter(m => !m.isVideo);
+  const video = mediaItems.find(m => m.isVideo) ?? null;
+
   if (account.platform === "instagram") {
-    return <InstagramPreview account={account} text={text} commentText={commentText} images={images} video={video} igMediaType={igMediaType} />;
+    return <InstagramPreview account={account} text={text} commentText={commentText} mediaItems={mediaItems} igMediaType={igMediaType} />;
   }
   if (account.platform === "linkedin") {
     return <LinkedInPreview account={account} text={text} commentText={commentText} images={images} />;

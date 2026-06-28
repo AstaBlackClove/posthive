@@ -28,7 +28,6 @@ function EventCard({ info }: { info: EventContentArg }) {
   const job = info.event.extendedProps.job as Job;
   const content = JSON.parse(job.content) as { text: string };
   const style = STATUS_STYLE[job.status] ?? STATUS_STYLE.pending;
-  const platforms = job.targets.map((t) => t.account?.platform ?? "unknown");
 
   return (
     <div style={{
@@ -45,8 +44,25 @@ function EventCard({ info }: { info: EventContentArg }) {
         <span style={{ fontSize: 9, color: style.text, fontWeight: 700, opacity: 0.8, letterSpacing: "0.03em" }}>
           {info.timeText}
         </span>
-        <span style={{ display: "flex", gap: 2, marginLeft: "auto" }}>
-          {platforms.map((p, i) => <PlatformIcon key={i} platform={p} size={10} />)}
+        <span style={{ display: "flex", gap: 3, marginLeft: "auto" }}>
+          {job.targets.map((t, i) => (
+            <span key={i} style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+              {t.account?.avatarUrl ? (
+                <img src={t.account.avatarUrl} alt={t.account.displayName}
+                  style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover" }} />
+              ) : (
+                <span style={{ width: 14, height: 14, borderRadius: "50%", backgroundColor: "#333",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 7, fontWeight: 700, color: "#888" }}>
+                  {t.account?.displayName?.[0]?.toUpperCase() ?? "?"}
+                </span>
+              )}
+              <span style={{ position: "absolute", bottom: -1, right: -1,
+                width: 9, height: 9, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 0 }}>
+                <PlatformIcon platform={t.account?.platform ?? "unknown"} size={8} />
+              </span>
+            </span>
+          ))}
         </span>
       </div>
       <p style={{
@@ -178,6 +194,31 @@ const DARK_CSS = `
     border: 2px solid #5b63d3;
     pointer-events: none;
     z-index: 5;
+  }
+
+  /* Day popover — scrollable */
+  .fc-dark .fc-popover {
+    background: #111111 !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+  }
+  .fc-dark .fc-popover-header {
+    background: #161616 !important;
+    border-bottom: 1px solid #2a2a2a !important;
+    padding: 8px 12px !important;
+    color: #ededed !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+  }
+  .fc-dark .fc-popover-close {
+    color: #888 !important;
+  }
+  .fc-dark .fc-popover-body {
+    max-height: 320px !important;
+    overflow-y: auto !important;
+    padding: 6px !important;
   }
 `;
 
