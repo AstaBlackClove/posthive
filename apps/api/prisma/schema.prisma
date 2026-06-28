@@ -20,6 +20,7 @@ model User {
   passwordHash String? // null for Supabase auth users
   supabaseId  String?  @unique // null for local auth users
   avatarUrl   String?
+  timezone    String    @default("UTC")
 
   // Billing
   plan           String    @default("trialing")   // trialing | creator | pro | team | cancelled
@@ -101,6 +102,18 @@ model PostJobTarget {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Password reset token — single-use, 1-hour TTL.
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
 }
 
 // Short-lived nonce for OAuth CSRF protection.

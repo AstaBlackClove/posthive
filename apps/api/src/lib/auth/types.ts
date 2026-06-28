@@ -3,6 +3,7 @@ export interface AuthUser {
   email: string;
   name: string;
   avatarUrl: string | null;
+  timezone: string;
 }
 
 export interface TokenPair {

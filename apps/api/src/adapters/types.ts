@@ -41,8 +41,11 @@ export interface PlatformAdapter {
     content: {
       text: string;
       mediaUrls: string[];
-      altTexts?: string[];          // per-image alt text (Instagram accessibility_caption)
-      mediaType?: "post" | "reel" | "story"; // Instagram-specific; ignored by other adapters
+      altTexts?: string[];
+      mediaType?: "post" | "reel" | "story";
+      locationId?: string;           // Instagram: Facebook Place ID for location tagging
+      userTags?: string[];           // Instagram: usernames to tag in the post
+      collaborators?: string[];      // Instagram: usernames to add as collaborators
     }
   ): Promise<PostResult>;
 

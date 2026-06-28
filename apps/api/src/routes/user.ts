@@ -1,9 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { prisma } from "../lib/prisma.js";
 import { authProvider } from "../lib/auth/index.js";
 import { withAuth, getUser, COOKIE_OPTS, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from "../lib/auth/withAuth.js";
+import { sendPasswordResetEmail } from "../lib/mailer.js";
 
 const registerBody = z.object({
   email: z.string().email(),
@@ -91,24 +93,70 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ ok: true });
   });
 
+  // ── Password reset ────────────────────────────────────────────────────────
+
+  // Request reset — always returns 200 to avoid email enumeration
+  app.post("/auth/forgot-password", {
+    config: { rateLimit: { max: 5, timeWindow: "15 minutes" } },
+  }, async (req, reply) => {
+    const { email } = req.body as { email?: string };
+    if (!email) return reply.status(400).send({ error: "Email required" });
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (user) {
+      // Invalidate previous unused tokens for this user
+      await prisma.passwordReset.deleteMany({ where: { userId: user.id, usedAt: null } });
+
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      await prisma.passwordReset.create({ data: { userId: user.id, token, expiresAt } });
+
+      const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
+      const resetUrl = `${webUrl}/reset-password?token=${token}`;
+      await sendPasswordResetEmail(email, resetUrl);
+    }
+
+    return reply.send({ ok: true });
+  });
+
+  // Consume reset token + set new password
+  app.post("/auth/reset-password", {
+    config: { rateLimit: { max: 10, timeWindow: "15 minutes" } },
+  }, async (req, reply) => {
+    const { token, password } = req.body as { token?: string; password?: string };
+    if (!token || !password) return reply.status(400).send({ error: "Token and password required" });
+    if (password.length < 8) return reply.status(400).send({ error: "Password must be at least 8 characters" });
+
+    const reset = await prisma.passwordReset.findUnique({ where: { token } });
+    if (!reset || reset.usedAt || reset.expiresAt < new Date()) {
+      return reply.status(400).send({ error: "This reset link is invalid or has expired." });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    await prisma.user.update({ where: { id: reset.userId }, data: { passwordHash } });
+    await prisma.passwordReset.update({ where: { id: reset.id }, data: { usedAt: new Date() } });
+    // Invalidate all sessions
+    await prisma.refreshToken.deleteMany({ where: { userId: reset.userId } });
+
+    return reply.send({ ok: true });
+  });
+
   // ── Settings ──────────────────────────────────────────────────────────────
 
-  // Update profile (name + email)
+  // Update profile (name + timezone)
   app.patch("/user/profile", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
-    const { name, email } = req.body as { name?: string; email?: string };
-    if (!name && !email) return reply.status(400).send({ error: "Nothing to update" });
-
-    if (email) {
-      const existing = await prisma.user.findFirst({ where: { email, NOT: { id: userId } } });
-      if (existing) return reply.status(400).send({ error: "Email already in use" });
-    }
+    const { name, timezone } = req.body as { name?: string; timezone?: string };
+    if (!name && !timezone) return reply.status(400).send({ error: "Nothing to update" });
 
     const updated = await prisma.user.update({
       where: { id: userId },
-      data: { ...(name ? { name } : {}), ...(email ? { email } : {}) },
+      data: {
+        ...(name ? { name } : {}),
+        ...(timezone ? { timezone } : {}),
+      },
     });
-    return reply.send({ user: { id: updated.id, email: updated.email, name: updated.name, avatarUrl: updated.avatarUrl } });
+    return reply.send({ user: { id: updated.id, email: updated.email, name: updated.name, avatarUrl: updated.avatarUrl, timezone: updated.timezone } });
   });
 
   // Change password

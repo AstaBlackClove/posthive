@@ -81,6 +81,11 @@ export default function LoginPage() {
             Create one
           </Link>
         </p>
+        <p className="text-center text-xs mt-2">
+          <Link href="/forgot-password" className="hover:opacity-80" style={{ color: "#555" }}>
+            Forgot your password?
+          </Link>
+        </p>
       </div>
     </div>
   );

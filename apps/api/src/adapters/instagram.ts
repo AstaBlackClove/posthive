@@ -99,7 +99,7 @@ export const instagramAdapter: PlatformAdapter = {
     return refreshIfNeeded(account);
   },
 
-  async createPost(account, { text, mediaUrls, altTexts, mediaType }) {
+  async createPost(account, { text, mediaUrls, altTexts, mediaType, locationId, userTags, collaborators }) {
     const { accessToken, userId } = getCredentials(account);
 
     const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "";
@@ -108,7 +108,8 @@ export const instagramAdapter: PlatformAdapter = {
     );
 
     const hasVideo = absoluteUrls.some(isVideoUrl);
-    const type = mediaType ?? (hasVideo ? "reel" : "post");
+    const hasMixed = absoluteUrls.length > 1 && absoluteUrls.some(isVideoUrl) && absoluteUrls.some(u => !isVideoUrl(u));
+    const type = mediaType ?? (hasVideo && !hasMixed ? "reel" : "post");
 
     // ── Story ──────────────────────────────────────────────────────────────
     if (type === "story") {
@@ -138,7 +139,7 @@ export const instagramAdapter: PlatformAdapter = {
       return { platformPostId: postId, replyContext: { postId, userId } };
     }
 
-    // ── Regular post (image / carousel) ────────────────────────────────────
+    // ── Regular post (image / carousel / mixed video+image carousel) ──────
     if (absoluteUrls.length === 0) {
       throw new Error("Instagram requires at least one image. Text-only posts are not supported.");
     }
@@ -146,18 +147,29 @@ export const instagramAdapter: PlatformAdapter = {
     let containerId: string;
 
     if (absoluteUrls.length === 1) {
-      const body: Record<string, string> = { image_url: absoluteUrls[0] };
+      const isVid = isVideoUrl(absoluteUrls[0]);
+      const body: Record<string, string> = isVid
+        ? { media_type: "VIDEO", video_url: absoluteUrls[0] }
+        : { image_url: absoluteUrls[0] };
       if (text) body.caption = text;
-      if (altTexts?.[0]) body.accessibility_caption = altTexts[0];
+      if (!isVid && altTexts?.[0]) body.accessibility_caption = altTexts[0];
+      if (locationId) body.location_id = locationId;
+      if (collaborators?.length) body.collaborators = collaborators.join(",");
+      if (userTags?.length) body.user_tags = JSON.stringify(userTags.map(username => ({ username })));
       const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body);
       containerId = res.id;
     } else {
-      // Carousel — create each item then the carousel container
+      // Carousel — supports mixed image + video items
       const items = await Promise.all(
         absoluteUrls.map(async (url, i) => {
-          const body: Record<string, string> = { image_url: url, is_carousel_item: "true" };
-          if (altTexts?.[i]) body.accessibility_caption = altTexts[i];
+          const isVid = isVideoUrl(url);
+          const body: Record<string, string> = isVid
+            ? { media_type: "VIDEO", video_url: url, is_carousel_item: "true" }
+            : { image_url: url, is_carousel_item: "true" };
+          if (!isVid && altTexts?.[i]) body.accessibility_caption = altTexts[i];
           const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body);
+          // Video items in carousels also need processing time
+          if (isVid) await waitForContainer(userId, accessToken, res.id, 300_000);
           return res.id;
         })
       );
@@ -166,6 +178,8 @@ export const instagramAdapter: PlatformAdapter = {
         children: items.join(","),
       };
       if (text) carouselBody.caption = text;
+      if (locationId) carouselBody.location_id = locationId;
+      if (collaborators?.length) carouselBody.collaborators = collaborators.join(",");
       const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, carouselBody);
       containerId = res.id;
     }

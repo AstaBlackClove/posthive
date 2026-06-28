@@ -7,6 +7,9 @@ import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../components/Toast";
 import type { ReactNode } from "react";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const TIMEZONES: string[] = (Intl as any).supportedValuesOf("timeZone");
+
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
     <div className="rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
@@ -40,13 +43,14 @@ const inputStyle = {
 };
 
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, refresh } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
   // Profile
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [timezone, setTimezone] = useState("UTC");
   const [profileLoading, setProfileLoading] = useState(false);
 
   // Password
@@ -64,6 +68,7 @@ export default function SettingsPage() {
     if (user) {
       setName(user.name ?? "");
       setEmail(user.email ?? "");
+      setTimezone(user.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
     }
   }, [user]);
 
@@ -71,7 +76,8 @@ export default function SettingsPage() {
     e.preventDefault();
     setProfileLoading(true);
     try {
-      await apiFetch("/user/profile", { method: "PATCH", body: JSON.stringify({ name }) });
+      await apiFetch("/user/profile", { method: "PATCH", body: JSON.stringify({ name, timezone }) });
+      await refresh();
       toast("Profile updated", "success");
     } catch (err) {
       toast(err instanceof Error ? err.message : "Failed to update profile", "error");
@@ -148,6 +154,13 @@ export default function SettingsPage() {
               </Field>
               <Field label="Email">
                 <input type="email" value={email} disabled style={{ ...inputStyle, opacity: 0.5, cursor: "not-allowed" }} />
+              </Field>
+              <Field label="Timezone">
+                <select value={timezone} onChange={e => setTimezone(e.target.value)} style={inputStyle}>
+                  {TIMEZONES.map(tz => (
+                    <option key={tz} value={tz}>{tz.replace(/_/g, " ")}</option>
+                  ))}
+                </select>
               </Field>
               <div className="flex justify-end pt-1">
                 <button type="submit" disabled={profileLoading} style={{ ...btnStyle, opacity: profileLoading ? 0.6 : 1 }}>

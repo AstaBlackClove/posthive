@@ -23,7 +23,7 @@ async function upsertLocalUser(supabaseId: string, email: string, name: string, 
     update: { email, name, avatarUrl: avatarUrl ?? null },
     create: { email, name, supabaseId, avatarUrl: avatarUrl ?? null },
   });
-  return { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl };
+  return { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, timezone: user.timezone ?? "UTC" };
 }
 
 export const supabaseAuthProvider: AuthProvider = {
@@ -73,7 +73,7 @@ export const supabaseAuthProvider: AuthProvider = {
 
     const user = await prisma.user.findUnique({ where: { supabaseId: data.user.id } });
     if (!user) return null;
-    return { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl };
+    return { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, timezone: user.timezone ?? "UTC" };
   },
 
   async refreshTokens(refreshToken) {

@@ -39,7 +39,7 @@ export const localAuthProvider: AuthProvider = {
       },
     });
 
-    return { user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl }, accessToken, refreshToken };
+    return { user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, timezone: user.timezone }, accessToken, refreshToken };
   },
 
   async login(email, password) {
@@ -65,7 +65,7 @@ export const localAuthProvider: AuthProvider = {
       },
     });
 
-    return { user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl }, accessToken, refreshToken };
+    return { user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, timezone: user.timezone }, accessToken, refreshToken };
   },
 
   async validateAccessToken(token) {
@@ -74,7 +74,7 @@ export const localAuthProvider: AuthProvider = {
       if (payload.type !== "access") return null;
       const user = await prisma.user.findUnique({ where: { id: payload.sub } });
       if (!user) return null;
-      return { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl };
+      return { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, timezone: user.timezone };
     } catch {
       return null;
     }

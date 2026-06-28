@@ -5,6 +5,7 @@ export interface AuthUser {
   email: string;
   name: string;
   avatarUrl: string | null;
+  timezone: string;
 }
 
 export async function getSession(): Promise<AuthUser | null> {

@@ -30,6 +30,13 @@ export default function ComposePage() {
   const [altTexts, setAltTexts] = useState<string[]>([]);
   const [video, setVideo] = useState<{ url: string; previewUrl: string; name: string } | null>(null);
   const [igMediaType, setIgMediaType] = useState<"post" | "reel" | "story">("post");
+  const [igLocation, setIgLocation] = useState<{ id: string; name: string } | null>(null);
+  const [igLocationQuery, setIgLocationQuery] = useState("");
+  const [igLocationResults, setIgLocationResults] = useState<{ id: string; name: string; subtitle?: string }[]>([]);
+  const [igUserTags, setIgUserTags] = useState<string[]>([]);
+  const [igUserTagInput, setIgUserTagInput] = useState("");
+  const [igCollaborators, setIgCollaborators] = useState<string[]>([]);
+  const [igCollabInput, setIgCollabInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dryRun, setDryRun] = useState(false);
@@ -37,6 +44,21 @@ export default function ComposePage() {
   const [perAccountOverrides, setPerAccountOverrides] = useState<Record<string, PerAccountOverride>>({});
   const { success: toastSuccess, error: toastError, warning: toastWarning } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const locationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (locationTimer.current) clearTimeout(locationTimer.current);
+    if (!igLocationQuery.trim() || igLocationQuery.length < 2) { setIgLocationResults([]); return; }
+    locationTimer.current = setTimeout(async () => {
+      try {
+        const results = await apiFetch<{ id: string; name: string; subtitle?: string }[]>(
+          `/accounts/instagram/locations?q=${encodeURIComponent(igLocationQuery)}`
+        );
+        setIgLocationResults(results);
+      } catch { setIgLocationResults([]); }
+    }, 500);
+    return () => { if (locationTimer.current) clearTimeout(locationTimer.current); };
+  }, [igLocationQuery]);
 
   function toggleOverride(accountId: string, defaultText: string, defaultComment: string) {
     setPerAccountOverrides(prev => {
@@ -202,6 +224,9 @@ export default function ComposePage() {
             mediaUrls,
             ...(altTexts.some(Boolean) ? { altTexts } : {}),
             ...(hasInstagram && igMediaType !== "post" ? { mediaType: igMediaType } : {}),
+            ...(hasInstagram && igLocation ? { locationId: igLocation.id } : {}),
+            ...(hasInstagram && igUserTags.length > 0 ? { userTags: igUserTags } : {}),
+            ...(hasInstagram && igCollaborators.length > 0 ? { collaborators: igCollaborators } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -217,6 +242,7 @@ export default function ComposePage() {
       }
       setText(""); setCommentText(""); setScheduledFor(defaultScheduledFor());
       setPerAccountOverrides({});
+      setIgLocation(null); setIgLocationQuery(""); setIgUserTags([]); setIgCollaborators([]);
       images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
       setImages([]); setAltTexts([]); setVideo(null);
     } catch (err) {
@@ -567,6 +593,108 @@ export default function ComposePage() {
             </div>
             {uploadError && <p className="mt-2 text-xs text-red-500 rounded-lg px-3 py-2" style={{ backgroundColor: "#1f0a0a", border: "1px solid #3a1a1a" }}>{uploadError}</p>}
           </div>
+
+          {/* Instagram tagging options — location, user tags, collaborators */}
+          {instagramSelected && igMediaType === "post" && (
+            <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wide">Instagram Options</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
+              </div>
+              <div className="space-y-3">
+
+                {/* Location */}
+                <div>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Location</label>
+                  {igLocation ? (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#0a1a0a", border: "1px solid #14532d" }}>
+                      <span className="text-xs flex-1" style={{ color: "#ededed" }}>{igLocation.name}</span>
+                      <button type="button" onClick={() => { setIgLocation(null); setIgLocationQuery(""); }}
+                        className="text-xs hover:opacity-70" style={{ color: "#555" }}>✕</button>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={igLocationQuery}
+                        onChange={e => setIgLocationQuery(e.target.value)}
+                        placeholder="Search for a place…"
+                        className="w-full rounded-xl px-3 py-2 text-xs focus:outline-none"
+                        style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+                      />
+                      {igLocationResults.length > 0 && (
+                        <div className="absolute z-10 top-full mt-1 w-full rounded-xl overflow-hidden shadow-lg" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+                          {igLocationResults.slice(0, 5).map(loc => (
+                            <button key={loc.id} type="button"
+                              onClick={() => { setIgLocation({ id: loc.id, name: loc.name }); setIgLocationQuery(""); setIgLocationResults([]); }}
+                              className="w-full text-left px-3 py-2 hover:bg-white/5 transition-colors">
+                              <p className="text-xs font-medium" style={{ color: "#ededed" }}>{loc.name}</p>
+                              {loc.subtitle && <p className="text-[10px]" style={{ color: "#555" }}>{loc.subtitle}</p>}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* User tags */}
+                <div>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Tag users</label>
+                  <div className="flex flex-wrap gap-1.5 mb-1.5">
+                    {igUserTags.map(tag => (
+                      <span key={tag} className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: "#5b63d315", color: "#5b63d3", border: "1px solid #5b63d330" }}>
+                        @{tag}
+                        <button type="button" onClick={() => setIgUserTags(p => p.filter(t => t !== tag))} className="hover:opacity-70">✕</button>
+                      </span>
+                    ))}
+                  </div>
+                  <form onSubmit={e => {
+                    e.preventDefault();
+                    const u = igUserTagInput.trim().replace(/^@/, "");
+                    if (u && !igUserTags.includes(u)) setIgUserTags(p => [...p, u]);
+                    setIgUserTagInput("");
+                  }} className="flex gap-2">
+                    <input type="text" value={igUserTagInput} onChange={e => setIgUserTagInput(e.target.value)}
+                      placeholder="username (without @)"
+                      className="flex-1 rounded-xl px-3 py-2 text-xs focus:outline-none"
+                      style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }} />
+                    <button type="submit" className="text-xs px-3 py-2 rounded-xl font-semibold"
+                      style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>Add</button>
+                  </form>
+                </div>
+
+                {/* Collaborators */}
+                <div>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Collaborators <span style={{ color: "#555", fontWeight: 400 }}>(co-author the post)</span></label>
+                  <div className="flex flex-wrap gap-1.5 mb-1.5">
+                    {igCollaborators.map(c => (
+                      <span key={c} className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: "#7c3aed15", color: "#7c3aed", border: "1px solid #7c3aed30" }}>
+                        @{c}
+                        <button type="button" onClick={() => setIgCollaborators(p => p.filter(x => x !== c))} className="hover:opacity-70">✕</button>
+                      </span>
+                    ))}
+                  </div>
+                  <form onSubmit={e => {
+                    e.preventDefault();
+                    const u = igCollabInput.trim().replace(/^@/, "");
+                    if (u && !igCollaborators.includes(u)) setIgCollaborators(p => [...p, u]);
+                    setIgCollabInput("");
+                  }} className="flex gap-2">
+                    <input type="text" value={igCollabInput} onChange={e => setIgCollabInput(e.target.value)}
+                      placeholder="username (without @)"
+                      className="flex-1 rounded-xl px-3 py-2 text-xs focus:outline-none"
+                      style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }} />
+                    <button type="submit" className="text-xs px-3 py-2 rounded-xl font-semibold"
+                      style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>Add</button>
+                  </form>
+                </div>
+
+              </div>
+            </div>
+          )}
 
           {/* First comment — hidden when all selected accounts are Instagram Story */}
           {!onlyInstagramStory && (

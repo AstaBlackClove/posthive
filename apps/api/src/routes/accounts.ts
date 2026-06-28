@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { encryptBlueskyCredentials } from "../adapters/bluesky.js";
+import { decrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import { withAuth, getUser } from "../lib/auth/withAuth.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
@@ -77,6 +78,37 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
       orderBy: { createdAt: "asc" },
     });
     return reply.send(accounts);
+  });
+
+  // Instagram location search — proxies Facebook Places API using user's IG token
+  app.get("/accounts/instagram/locations", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { q } = req.query as { q?: string };
+    if (!q || q.trim().length < 2) return reply.send([]);
+
+    const igAccount = await prisma.account.findFirst({
+      where: { userId, platform: "instagram" },
+    });
+    if (!igAccount) return reply.status(400).send({ error: "No Instagram account connected" });
+
+    const { accessToken } = JSON.parse(decrypt(igAccount.credentials)) as { accessToken: string; userId: string };
+
+    const url = new URL("https://graph.facebook.com/v21.0/pages/search");
+    url.searchParams.set("q", q);
+    url.searchParams.set("fields", "id,name,location");
+    url.searchParams.set("access_token", accessToken);
+
+    const res = await fetch(url.toString());
+    if (!res.ok) return reply.send([]);
+    const data = await res.json() as { data?: { id: string; name: string; location?: { city?: string; country?: string } }[] };
+
+    return reply.send(
+      (data.data ?? []).map(p => ({
+        id: p.id,
+        name: p.name,
+        subtitle: [p.location?.city, p.location?.country].filter(Boolean).join(", "),
+      }))
+    );
   });
 
   // Delete account — scoped to user

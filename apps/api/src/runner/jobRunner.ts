@@ -27,6 +27,9 @@ type JobContent = {
   mediaUrls?: string[];
   altTexts?: string[];
   mediaType?: "post" | "reel" | "story";
+  locationId?: string;
+  userTags?: string[];
+  collaborators?: string[];
   perAccount?: Record<string, PerAccountOverride>;
 };
 
@@ -66,6 +69,9 @@ export async function runJob(
         mediaUrls: content.mediaUrls ?? [],
         altTexts: content.altTexts,
         mediaType: content.mediaType,
+        locationId: content.locationId,
+        userTags: content.userTags,
+        collaborators: content.collaborators,
       };
       const effectiveComment = override?.commentText !== undefined ? override.commentText : job.commentText;
       return runTarget(target, effectiveContent, effectiveComment, job.dryRun);
