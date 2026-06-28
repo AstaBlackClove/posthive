@@ -650,19 +650,25 @@ export default function ComposePage() {
                       </span>
                     ))}
                   </div>
-                  <form onSubmit={e => {
-                    e.preventDefault();
-                    const u = igUserTagInput.trim().replace(/^@/, "");
-                    if (u && !igUserTags.includes(u)) setIgUserTags(p => [...p, u]);
-                    setIgUserTagInput("");
-                  }} className="flex gap-2">
+                  <div className="flex gap-2">
                     <input type="text" value={igUserTagInput} onChange={e => setIgUserTagInput(e.target.value)}
                       placeholder="username (without @)"
+                      onKeyDown={e => {
+                        if (e.key !== "Enter") return;
+                        e.preventDefault();
+                        const u = igUserTagInput.trim().replace(/^@/, "");
+                        if (u && !igUserTags.includes(u)) setIgUserTags(p => [...p, u]);
+                        setIgUserTagInput("");
+                      }}
                       className="flex-1 rounded-xl px-3 py-2 text-xs focus:outline-none"
                       style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }} />
-                    <button type="submit" className="text-xs px-3 py-2 rounded-xl font-semibold"
+                    <button type="button" onClick={() => {
+                      const u = igUserTagInput.trim().replace(/^@/, "");
+                      if (u && !igUserTags.includes(u)) setIgUserTags(p => [...p, u]);
+                      setIgUserTagInput("");
+                    }} className="text-xs px-3 py-2 rounded-xl font-semibold"
                       style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>Add</button>
-                  </form>
+                  </div>
                 </div>
 
                 {/* Collaborators */}
@@ -677,19 +683,25 @@ export default function ComposePage() {
                       </span>
                     ))}
                   </div>
-                  <form onSubmit={e => {
-                    e.preventDefault();
-                    const u = igCollabInput.trim().replace(/^@/, "");
-                    if (u && !igCollaborators.includes(u)) setIgCollaborators(p => [...p, u]);
-                    setIgCollabInput("");
-                  }} className="flex gap-2">
+                  <div className="flex gap-2">
                     <input type="text" value={igCollabInput} onChange={e => setIgCollabInput(e.target.value)}
                       placeholder="username (without @)"
+                      onKeyDown={e => {
+                        if (e.key !== "Enter") return;
+                        e.preventDefault();
+                        const u = igCollabInput.trim().replace(/^@/, "");
+                        if (u && !igCollaborators.includes(u)) setIgCollaborators(p => [...p, u]);
+                        setIgCollabInput("");
+                      }}
                       className="flex-1 rounded-xl px-3 py-2 text-xs focus:outline-none"
                       style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }} />
-                    <button type="submit" className="text-xs px-3 py-2 rounded-xl font-semibold"
+                    <button type="button" onClick={() => {
+                      const u = igCollabInput.trim().replace(/^@/, "");
+                      if (u && !igCollaborators.includes(u)) setIgCollaborators(p => [...p, u]);
+                      setIgCollabInput("");
+                    }} className="text-xs px-3 py-2 rounded-xl font-semibold"
                       style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>Add</button>
-                  </form>
+                  </div>
                 </div>
 
               </div>
