@@ -5,6 +5,7 @@ import { schedulePostJob, postJobQueue } from "../lib/queue.js";
 import { withAuth, getUser, ACCESS_COOKIE_NAME } from "../lib/auth/withAuth.js";
 import { authProvider } from "../lib/auth/index.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
+import { getPlan } from "../lib/plans.js";
 import type { StorageAdapter } from "../lib/storage.js";
 
 const TARGET_SELECT = {
@@ -48,6 +49,31 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
 
     const { scheduledFor, content, commentText, accountIds, dryRun } = parsed.data;
+
+    // Gate: Reels & Stories (Pro+)
+    if (content.mediaType === "reel" || content.mediaType === "story") {
+      const reelBlocked = await enforcePlan(userId, "reels");
+      if (reelBlocked) return reply.status(402).send(reelBlocked);
+    }
+
+    // Gate: per-platform overrides (Pro+)
+    if (content.perAccount && Object.keys(content.perAccount).length > 0) {
+      const overrideBlocked = await enforcePlan(userId, "overrides");
+      if (overrideBlocked) return reply.status(402).send(overrideBlocked);
+    }
+
+    // Gate: max images per post
+    if (content.mediaUrls.length > 0) {
+      const postUser = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
+      const planCfg = getPlan(postUser?.plan ?? "cancelled");
+      if (content.mediaUrls.length > planCfg.maxImagesPerPost) {
+        return reply.status(402).send({
+          error: `Your ${planCfg.name} plan allows up to ${planCfg.maxImagesPerPost} images per post. Upgrade to Pro for up to 10.`,
+          code: "PLAN_LIMIT",
+          upgradeRequired: true,
+        });
+      }
+    }
 
     // Verify accounts belong to this user
     const accounts = await prisma.account.findMany({

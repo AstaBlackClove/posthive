@@ -313,7 +313,7 @@ NEXT_PUBLIC_ENABLE_BILLING=true
 3. Add OAuth routes in `apps/api/src/routes/auth.ts`
 4. Add the platform card to `apps/web/src/app/accounts/page.tsx`
 5. Add favicon domain in `apps/web/src/components/PlatformIcon.tsx`
-6. Add char limit in `PLATFORM_LIMIT` in `apps/web/src/app/page.tsx`
+6. Add char limit in `PLATFORM_LIMIT` in `apps/web/src/app/compose/page.tsx`
 
 ---
 

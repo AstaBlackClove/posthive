@@ -4,8 +4,10 @@ import { getPlan } from "./plans.js";
 /**
  * "accounts"   — checks status + connected-account count limit
  * "scheduling" — checks status + monthly post count limit
+ * "reels"      — checks allowReels flag (Pro/Team only)
+ * "overrides"  — checks allowOverrides flag (Pro/Team only)
  */
-export type PlanResource = "accounts" | "scheduling";
+export type PlanResource = "accounts" | "scheduling" | "reels" | "overrides";
 
 export interface PlanError {
   error: string;
@@ -83,6 +85,22 @@ export async function enforcePlan(
         upgradeRequired: true,
       };
     }
+  }
+
+  if (resource === "reels" && !plan.allowReels) {
+    return {
+      error: `Instagram Reels & Stories are available on the Pro plan and above. Upgrade to unlock.`,
+      code: "PLAN_LIMIT",
+      upgradeRequired: true,
+    };
+  }
+
+  if (resource === "overrides" && !plan.allowOverrides) {
+    return {
+      error: `Per-platform customization is available on the Pro plan and above. Upgrade to unlock.`,
+      code: "PLAN_LIMIT",
+      upgradeRequired: true,
+    };
   }
 
   return null;

@@ -1,0 +1,155 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy - Posthive",
+  description: "How Posthive collects, uses, and protects your data.",
+};
+
+const LAST_UPDATED = "June 29, 2026";
+const CONTACT_EMAIL = "gunasheelan208@gmail.com";
+
+export default function PrivacyPage() {
+  return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#ededed", fontFamily: "system-ui, sans-serif" }}>
+      <style>{`
+        .prose h2 { font-size: 20px; font-weight: 600; color: #ededed; margin: 40px 0 12px; letter-spacing: -.01em; }
+        .prose h3 { font-size: 15px; font-weight: 600; color: #cfcfcf; margin: 24px 0 8px; }
+        .prose p  { font-size: 15px; line-height: 1.75; color: #888; margin-bottom: 14px; }
+        .prose ul { padding-left: 20px; margin-bottom: 14px; }
+        .prose li { font-size: 15px; line-height: 1.75; color: #888; margin-bottom: 6px; }
+        .prose a  { color: #9ba2ee; text-decoration: underline; text-underline-offset: 3px; }
+        .prose a:hover { color: #c7caff; }
+        .section-divider { border: none; border-top: 1px solid rgba(255,255,255,.06); margin: 0; }
+      `}</style>
+
+      {/* Nav */}
+      <nav style={{ borderBottom: "1px solid rgba(255,255,255,.06)", padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/posthivemain.png" alt="Posthive" width={28} height={28} style={{ objectFit: "contain" }} />
+          <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-.02em" }}>Posthive</span>
+        </Link>
+        <Link href="/" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>← Back to home</Link>
+      </nav>
+
+      {/* Content */}
+      <div style={{ maxWidth: 740, margin: "0 auto", padding: "72px 40px 100px" }}>
+        <div style={{ marginBottom: 48 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 12px", borderRadius: 999, border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.03)", fontSize: 12, color: "#666", fontFamily: "monospace", marginBottom: 20 }}>
+            Last updated: {LAST_UPDATED}
+          </div>
+          <h1 style={{ fontSize: 42, fontWeight: 700, letterSpacing: "-.03em", marginBottom: 16 }}>Privacy Policy</h1>
+          <p style={{ fontSize: 16, color: "#777", lineHeight: 1.7 }}>
+            Posthive is built with privacy in mind. This policy explains what we collect, why we collect it, and how you can control it. We keep it plain English no legalese walls.
+          </p>
+        </div>
+
+        <hr className="section-divider" />
+
+        <div className="prose">
+          <h2>1. Who we are</h2>
+          <p>
+            Posthive is an open-source social media scheduling tool licensed under AGPL-3.0. When you use the hosted version at posthive.app, the data controller is the Posthive team. If you self-host Posthive, you are the data controller for your own instance.
+          </p>
+
+          <h2>2. What we collect</h2>
+          <h3>Account information</h3>
+          <p>When you register we collect your email address and a bcrypt-hashed password. We never store your password in plain text.</p>
+
+          <h3>Social account credentials</h3>
+          <p>
+            OAuth tokens and app passwords (e.g. Bluesky) are stored <strong style={{ color: "#ededed" }}>AES-256-GCM encrypted</strong> in our database. The encryption key is never stored in the database only in the server environment. We cannot read your tokens without the key.
+          </p>
+
+          <h3>Post content & media</h3>
+          <p>The text and images you schedule are stored so we can publish them at the time you choose. Media files are stored on Supabase Storage (hosted version) or local disk (self-hosted). We do not analyse your content.</p>
+
+          <h3>Usage data</h3>
+          <p>We collect basic server logs (IP address, request path, timestamp) for debugging and abuse prevention. These are not sold or shared with third parties.</p>
+
+          <h3>Billing information</h3>
+          <p>Payments are handled by <strong style={{ color: "#ededed" }}>Dodo Payments</strong>. We never see or store your card details only a customer ID and subscription status returned by the payment processor.</p>
+
+          <h2>3. What we do not collect</h2>
+          <ul>
+            <li>We do not use tracking pixels or third-party analytics scripts.</li>
+            <li>We do not sell, rent, or trade your data to any third party.</li>
+            <li>We do not read or analyse the content of your scheduled posts.</li>
+            <li>We do not build advertising profiles.</li>
+          </ul>
+
+          <h2>4. How we use your data</h2>
+          <ul>
+            <li><strong style={{ color: "#cfcfcf" }}>Publishing posts</strong> - your content and credentials are used solely to post on your behalf at the scheduled time.</li>
+            <li><strong style={{ color: "#cfcfcf" }}>Authentication</strong> - your email and hashed password authenticate you to the app.</li>
+            <li><strong style={{ color: "#cfcfcf" }}>Transactional email</strong> - we send password reset emails via Resend. No marketing email without your consent.</li>
+            <li><strong style={{ color: "#cfcfcf" }}>Billing</strong> - subscription status determines which plan features are available to you.</li>
+          </ul>
+
+          <h2>5. Data retention</h2>
+          <p>
+            We keep your data for as long as your account is active. When you delete your account, all personal data including social account credentials and scheduled posts is permanently deleted within 30 days. Anonymised aggregate statistics (total post count etc.) may be retained.
+          </p>
+
+          <h2>6. Third-party services</h2>
+          <p>The hosted version of Posthive uses the following sub-processors:</p>
+          <ul>
+            <li><strong style={{ color: "#cfcfcf" }}>Supabase</strong> - database and file storage (EU/US regions)</li>
+            <li><strong style={{ color: "#cfcfcf" }}>Upstash / Railway Redis</strong> - job queue</li>
+            <li><strong style={{ color: "#cfcfcf" }}>Dodo Payments</strong> - payment processing</li>
+            <li><strong style={{ color: "#cfcfcf" }}>Resend</strong> - transactional email</li>
+          </ul>
+          <p>Each processor has its own privacy policy. We only share the minimum data required for them to perform their service.</p>
+
+          <h2>7. Cookies & local storage</h2>
+          <p>
+            We use a single HTTP-only cookie to store your session (JWT refresh token). This cookie is strictly necessary for the app to function and does not track you across other sites. We do not use advertising cookies.
+          </p>
+
+          <h2>8. Your rights</h2>
+          <p>Depending on your jurisdiction you may have the right to:</p>
+          <ul>
+            <li>Access the personal data we hold about you</li>
+            <li>Request correction of inaccurate data</li>
+            <li>Request deletion of your data (right to erasure)</li>
+            <li>Export your data in a portable format</li>
+            <li>Object to or restrict certain processing</li>
+          </ul>
+          <p>
+            To exercise any of these rights, email us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. We will respond within 30 days.
+          </p>
+
+          <h2>9. Security</h2>
+          <p>
+            We use industry-standard practices: HTTPS everywhere, AES-256-GCM credential encryption, bcrypt password hashing, HTTP-only secure cookies, and rate limiting on auth endpoints. No system is 100% secure if you discover a vulnerability please disclose it responsibly to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+          </p>
+
+          <h2>10. Self-hosted instances</h2>
+          <p>
+            If you run Posthive on your own infrastructure, this policy does not apply to your instance. You are the data controller and are responsible for your users' data under applicable law.
+          </p>
+
+          <h2>11. Changes to this policy</h2>
+          <p>
+            We may update this policy as the product evolves. Material changes will be communicated via email or an in-app notice at least 14 days before they take effect. The "Last updated" date at the top will always reflect the current version.
+          </p>
+
+          <h2>12. Contact</h2>
+          <p>
+            Questions about this policy? Reach us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+          </p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "24px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, color: "#555" }}>
+        <span>© 2026 Posthive. Open source under AGPL-3.0.</span>
+        <div style={{ display: "flex", gap: 24 }}>
+          <Link href="/privacy" style={{ color: "#9ba2ee" }}>Privacy</Link>
+          <Link href="/terms" style={{ color: "#777", textDecoration: "none" }}>Terms</Link>
+        </div>
+      </div>
+    </div>
+  );
+}

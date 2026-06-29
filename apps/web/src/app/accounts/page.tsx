@@ -404,7 +404,28 @@ export default function AccountsPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* Skeleton grid while loading */}
+        {loading && (
+          <div className="grid grid-cols-2 gap-4 animate-pulse">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+                <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+                  <div className="w-9 h-9 rounded-xl" style={{ backgroundColor: "#1e1e1e" }} />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-20 rounded" style={{ backgroundColor: "#1e1e1e" }} />
+                    <div className="h-2.5 w-32 rounded" style={{ backgroundColor: "#1a1a1a" }} />
+                  </div>
+                  <div className="h-5 w-10 rounded-full" style={{ backgroundColor: "#1e1e1e" }} />
+                </div>
+                <div className="p-5">
+                  <div className="h-9 w-full rounded-xl" style={{ backgroundColor: "#1e1e1e" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && <div className="grid grid-cols-2 gap-4">
 
           {/* ── Bluesky ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
@@ -634,7 +655,7 @@ export default function AccountsPage() {
             </div>
           </div>
 
-        </div>
+        </div>}
       </div>
 
       {showMastodonDialog && <MastodonDialog onClose={() => setShowMastodonDialog(false)} />}

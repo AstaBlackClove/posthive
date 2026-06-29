@@ -423,7 +423,7 @@ export default function JobsPage() {
           <div className="rounded-2xl shadow-sm p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
             {loading
               ? <div className="text-center py-20 text-sm" style={{ color: "#888888" }}>Loading…</div>
-              : <CalendarView jobs={jobs} onReschedule={reschedule} onEdit={setEditingJob} />
+              : <CalendarView jobs={filteredJobs} onReschedule={reschedule} onEdit={setEditingJob} />
             }
           </div>
         )}

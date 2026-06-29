@@ -159,7 +159,7 @@ function UsageBar({
       </div>
       {isFull && (
         <p className="mt-1.5 text-xs" style={{ color: "#fb923c" }}>
-          Limit reached — upgrade to continue.
+          Limit reached - upgrade to continue.
         </p>
       )}
     </div>
