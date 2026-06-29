@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+﻿import { randomBytes } from "crypto";
 import type { FastifyInstance } from "fastify";
 import { encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
@@ -16,6 +16,11 @@ const IG_REDIRECT_URI = process.env.INSTAGRAM_REDIRECT_URI!;
 const LI_CLIENT_ID = process.env.LINKEDIN_CLIENT_ID!;
 const LI_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET!;
 const LI_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI!;
+
+const MASTO_CLIENT_ID = process.env.MASTODON_CLIENT_ID!;
+const MASTO_CLIENT_SECRET = process.env.MASTODON_CLIENT_SECRET!;
+const MASTO_REDIRECT_URI = process.env.MASTODON_REDIRECT_URI!;
+const MASTODON_SCOPES = "read:accounts write:statuses write:media";
 
 const SCOPES = ["threads_basic", "threads_content_publish"].join(",");
 
@@ -382,4 +387,88 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     return reply.status(201).send(account);
   });
 
+
+  // ── Mastodon OAuth ────────────────────────────────────────────────────────
+
+  // Step 1 — redirect to the user's Mastodon instance
+  app.get("/auth/mastodon", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { instance } = req.query as { instance?: string };
+
+    if (!instance) return reply.status(400).send({ error: "instance required" });
+
+    const instanceUrl = instance.startsWith("http") ? instance.replace(/\/$/, "") : `https://${instance.replace(/\/$/, "")}`;
+
+    const nonce = randomBytes(32).toString("hex");
+    await prisma.oAuthState.create({
+      data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
+    });
+    const state = Buffer.from(JSON.stringify({ userId, nonce, instanceUrl })).toString("base64url");
+
+    const url = new URL(`${instanceUrl}/oauth/authorize`);
+    url.searchParams.set("client_id", MASTO_CLIENT_ID);
+    url.searchParams.set("redirect_uri", MASTO_REDIRECT_URI);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("scope", MASTODON_SCOPES);
+    url.searchParams.set("state", state);
+
+    return reply.redirect(url.toString());
+  });
+
+  // Step 2 — exchange code for token
+  app.get("/auth/mastodon/callback", async (req, reply) => {
+    const { code, state: stateRaw, error } = req.query as Record<string, string>;
+
+    if (error) return reply.redirect(`${WEB_URL}/accounts?error=${encodeURIComponent(error)}`);
+    if (!code || !stateRaw) return reply.redirect(`${WEB_URL}/accounts?error=missing_params`);
+
+    let userId: string, nonce: string, instanceUrl: string;
+    try {
+      ({ userId, nonce, instanceUrl } = JSON.parse(Buffer.from(stateRaw, "base64url").toString()));
+    } catch {
+      return reply.redirect(`${WEB_URL}/accounts?error=invalid_state`);
+    }
+
+    const storedState = await prisma.oAuthState.findFirst({ where: { userId, nonce } });
+    if (!storedState || storedState.expiresAt < new Date()) {
+      return reply.redirect(`${WEB_URL}/accounts?error=state_expired`);
+    }
+    await prisma.oAuthState.delete({ where: { id: storedState.id } });
+
+    const tokenRes = await fetch(`${instanceUrl}/oauth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: MASTO_CLIENT_ID,
+        client_secret: MASTO_CLIENT_SECRET,
+        redirect_uri: MASTO_REDIRECT_URI,
+        grant_type: "authorization_code",
+        code,
+        scope: MASTODON_SCOPES,
+      }),
+    });
+    if (!tokenRes.ok) return reply.redirect(`${WEB_URL}/accounts?error=token_exchange_failed`);
+    const { access_token: accessToken } = await tokenRes.json() as { access_token: string };
+
+    const profileRes = await fetch(`${instanceUrl}/api/v1/accounts/verify_credentials`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!profileRes.ok) return reply.redirect(`${WEB_URL}/accounts?error=profile_fetch_failed`);
+    const profile = await profileRes.json() as { id: string; username: string; avatar?: string };
+
+    const credentials = encrypt(JSON.stringify({ accessToken, instanceUrl, accountId: profile.id }));
+
+    const existing = await prisma.account.findFirst({
+      where: { platform: "mastodon", displayName: profile.username, userId },
+      select: { id: true },
+    });
+    await prisma.account.upsert({
+      where: { id: existing?.id ?? "new" },
+      create: { platform: "mastodon", displayName: profile.username, credentials, avatarUrl: profile.avatar ?? null, userId },
+      update: { credentials, avatarUrl: profile.avatar ?? null },
+    });
+
+    console.log("[mastodon] connected @" + profile.username + " -> user " + userId);
+    return reply.redirect(`${WEB_URL}/accounts?connected=mastodon`);
+  });
 }

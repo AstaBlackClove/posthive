@@ -5,7 +5,7 @@
 <h1 align="center">Posthive</h1>
 
 <p align="center">
-  Schedule posts to Bluesky, Threads, Instagram, and LinkedIn from a single UI.<br/>
+  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, and Mastodon from a single UI.<br/>
   Self-hostable · Open-source · AGPL-3.0
 </p>
 
@@ -18,7 +18,7 @@
 
 ## Features
 
-- **Multi-platform scheduling** - Bluesky, Threads, Instagram, LinkedIn
+- **Multi-platform scheduling** - Bluesky, Threads, Instagram, LinkedIn, Mastodon
 - **First comment** - post a reply/comment immediately after the main post goes live
 - **Per-platform overrides** - customize text and comment per account
 - **Image & video support** - mixed image/video carousel (up to 10 items), alt text, Instagram Reels, Stories
@@ -55,7 +55,7 @@ posthive/
 │   ├── api/                  # Fastify v4 API server
 │   │   ├── prisma/           # Schema and migrations
 │   │   └── src/
-│   │       ├── adapters/     # Bluesky, Threads, Instagram, LinkedIn
+│   │       ├── adapters/     # Bluesky, Threads, Instagram, LinkedIn, Mastodon
 │   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, billing
 │   │       ├── routes/       # auth, accounts, jobs, upload, billing, user
 │   │       ├── runner/       # Job state machine
@@ -153,6 +153,10 @@ pnpm dev
 | `LINKEDIN_CLIENT_ID` | LinkedIn | LinkedIn app client ID |
 | `LINKEDIN_CLIENT_SECRET` | LinkedIn | LinkedIn app client secret |
 | `LINKEDIN_REDIRECT_URI` | LinkedIn | Must be public HTTPS |
+| **OAuth - Mastodon** | | |
+| `MASTODON_CLIENT_ID` | Mastodon | Client key from your Mastodon app settings |
+| `MASTODON_CLIENT_SECRET` | Mastodon | Client secret from your Mastodon app settings |
+| `MASTODON_REDIRECT_URI` | Mastodon | Must be public HTTPS |
 | **Billing** | | |
 | `ENABLE_BILLING` | No | Set to `true` to enable Dodo Payments and plan limits. Leave unset for self-hosted all features unlocked |
 | `DODO_ENV` | Billing | `test_mode` or `live_mode` |
@@ -202,7 +206,17 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 2. Add the **Share on LinkedIn** and **Sign In with LinkedIn using OpenID Connect** products
 3. Set the OAuth redirect URI to `https://your-domain/auth/linkedin/callback`
 4. Add your Client ID and Secret to `.env`
-5. Click **Connect with LinkedIn** in the app
+5. Click **Connect LinkedIn** in the app
+
+### Mastodon
+1. Log in to your Mastodon instance (e.g. mastodon.social)
+2. Go to **Settings → Development → New Application**
+3. Set the redirect URI to `https://your-domain/auth/mastodon/callback`
+4. Select scopes: `read:accounts`, `write:statuses`, `write:media`
+5. Copy the **Client key** and **Client secret** to `.env`
+6. Click **Connect Mastodon** in the app and enter your instance URL
+
+> Works with any Mastodon-compatible instance — mastodon.social, fosstodon.org, hachyderm.io, and more.
 
 ---
 
@@ -240,6 +254,7 @@ All plans include a **14-day free trial**. Powered by [Dodo Payments](https://do
 | Threads | 500 characters |
 | Instagram | 2,200 characters |
 | LinkedIn | 3,000 characters |
+| Mastodon | 500 characters |
 
 ---
 

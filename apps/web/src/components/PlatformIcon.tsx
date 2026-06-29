@@ -3,6 +3,7 @@ const PLATFORM_DOMAIN: Record<string, string> = {
   threads:   "threads.net",
   instagram: "instagram.com",
   linkedin:  "linkedin.com",
+  mastodon:  "mastodon.social",
 };
 
 interface Props {

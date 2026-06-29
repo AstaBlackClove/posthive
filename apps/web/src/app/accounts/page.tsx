@@ -10,6 +10,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const THREADS_AUTH_URL = `${API_BASE}/auth/threads`;
 const INSTAGRAM_AUTH_URL = `${API_BASE}/auth/instagram`;
 const LINKEDIN_AUTH_URL = `${API_BASE}/auth/linkedin`;
+const MASTODON_AUTH_URL = `${API_BASE}/auth/mastodon`;
 
 const BG = "#0a0a0a";
 const SURFACE = "#111111";
@@ -26,9 +27,10 @@ interface Account {
 }
 
 const PLATFORM_META: Record<string, { label: string; brand: string }> = {
-  bluesky:  { label: "Bluesky",  brand: "#0085ff" },
-  threads:  { label: "Threads",  brand: "#1a1a1a" },
-  linkedin: { label: "LinkedIn", brand: "#0077b5" },
+  bluesky:   { label: "Bluesky",   brand: "#0085ff" },
+  threads:   { label: "Threads",   brand: "#1a1a1a" },
+  linkedin:  { label: "LinkedIn",  brand: "#0077b5" },
+  mastodon:  { label: "Mastodon",  brand: "#6364ff" },
 };
 
 function Avatar({ account }: { account: Account }) {
@@ -170,6 +172,74 @@ function BlueskyDialog({ onClose, onConnected }: { onClose: () => void; onConnec
   );
 }
 
+// ── Mastodon connect dialog ───────────────────────────────────────────────────
+function MastodonDialog({ onClose }: { onClose: () => void }) {
+  const [instance, setInstance] = useState("mastodon.social");
+
+  function connect() {
+    const url = `${MASTODON_AUTH_URL}?instance=${encodeURIComponent(instance.trim())}`;
+    window.location.href = url;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
+        style={{ backgroundColor: "#161616", border: `1px solid ${BORDER}` }}>
+
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center">
+              <PlatformIcon platform="mastodon" size={18} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm" style={{ color: TEXT }}>Connect Mastodon</p>
+              <p className="text-xs" style={{ color: MUTED }}>Any instance supported</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 transition-colors hover:bg-white/5" style={{ color: MUTED }}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Your Mastodon instance</label>
+            <input
+              value={instance}
+              onChange={e => setInstance(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && instance.trim() && connect()}
+              placeholder="mastodon.social"
+              autoFocus
+              className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+              style={{ backgroundColor: "#0a0a0a", border: `1px solid ${BORDER}`, color: TEXT }}
+            />
+            <p className="text-xs mt-1.5" style={{ color: "#555" }}>
+              e.g. mastodon.social · fosstodon.org · hachyderm.io
+            </p>
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+              style={{ backgroundColor: "#1a1a1a", color: MUTED, border: `1px solid ${BORDER}` }}>
+              Cancel
+            </button>
+            <button onClick={connect} disabled={!instance.trim()}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 hover:bg-gray-100"
+              style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+              Continue →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface PlanStatus {
   maxAccounts: number;
   accountsUsed: number;
@@ -262,6 +332,9 @@ export default function AccountsPage() {
   const threadsAccounts = accounts.filter((a) => a.platform === "threads");
   const instagramAccounts = accounts.filter((a) => a.platform === "instagram");
   const linkedinAccounts = accounts.filter((a) => a.platform === "linkedin");
+  const mastodonAccounts = accounts.filter((a) => a.platform === "mastodon");
+
+  const [showMastodonDialog, setShowMastodonDialog] = useState(false);
 
   const isCancelled = planStatus?.planStatus === "cancelled";
   const atLimit = planStatus !== null && !isCancelled && accounts.length >= planStatus.maxAccounts;
@@ -527,8 +600,44 @@ export default function AccountsPage() {
             </div>
           </div>
 
+          {/* ── Mastodon ── */}
+          <div className="rounded-2xl p-5" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <PlatformIcon platform="mastodon" size={20} />
+                <div>
+                  <p className="font-semibold text-sm" style={{ color: TEXT }}>Mastodon</p>
+                  <p className="text-xs" style={{ color: MUTED }}>Free & open source, any instance</p>
+                </div>
+              </div>
+
+              {!loading && mastodonAccounts.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  {mastodonAccounts.map((a) => (
+                    <ConnectedAccountRow key={a.id} account={a}
+                      onDisconnect={() => setDisconnectTarget(a)}
+                      disconnecting={disconnecting} />
+                  ))}
+                </div>
+              )}
+
+              <button onClick={() => setShowMastodonDialog(true)} disabled={connectDisabled}
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors disabled:opacity-40 hover:bg-gray-100"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                <PlatformIcon platform="mastodon" size={16} />
+                {mastodonAccounts.length > 0 ? "Add another Mastodon account" : "Connect Mastodon"}
+              </button>
+
+              <p className="text-xs" style={{ color: "#555" }}>
+                Works with any Mastodon instance — mastodon.social, fosstodon.org, hachyderm.io, and more
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
+
+      {showMastodonDialog && <MastodonDialog onClose={() => setShowMastodonDialog(false)} />}
 
       {/* Disconnect confirm dialog */}
       {disconnectTarget && (

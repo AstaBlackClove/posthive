@@ -2,6 +2,7 @@ import { blueskyAdapter } from "./bluesky.js";
 import { linkedinAdapter } from "./linkedin.js";
 import { threadsAdapter } from "./threads.js";
 import { instagramAdapter } from "./instagram.js";
+import { mastodonAdapter } from "./mastodon.js";
 import type { PlatformAdapter } from "./types.js";
 
 const adapters: PlatformAdapter[] = [
@@ -9,6 +10,7 @@ const adapters: PlatformAdapter[] = [
   threadsAdapter,
   linkedinAdapter,
   instagramAdapter,
+  mastodonAdapter,
 ];
 
 /** Look up an adapter by platform name. Throws if not found. */

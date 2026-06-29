@@ -74,12 +74,14 @@ export const PLATFORM_COLOR: Record<string, string> = {
   threads: "#aaaaaa",
   linkedin: "#0077b5",
   instagram: "#e1306c",
+  mastodon: "#6364ff",
 };
 
 export const PLATFORM_LIMIT: Record<string, number> = {
   bluesky: 300,
   threads: 500,
   linkedin: 3000,
+  mastodon: 500,
 };
 
 export const MAX_IMAGES = 4;
@@ -443,6 +445,86 @@ function LinkedInPreview({ account, text, commentText, images }: {
   );
 }
 
+function MastodonPreview({ account, text, commentText, images, video }: {
+  account: Account;
+  text: string;
+  commentText: string;
+  images: UploadedImage[];
+  video: UploadedImage | null;
+}) {
+  const initial = account.displayName[0]?.toUpperCase() ?? "?";
+  const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#1f1f2e", border: "1px solid #2a2a2a" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5"
+        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #6364ff", backgroundColor: "#0a0a0a" }}>
+        <PlatformIcon platform="mastodon" size={16} />
+        <span className="text-xs font-semibold" style={{ color: "#6364ff" }}>Mastodon</span>
+        <span className="text-xs ml-auto" style={{ color: "#666" }}>@{account.displayName}</span>
+      </div>
+
+      <div className="p-4">
+        <div className="flex gap-3">
+          {account.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white"
+              style={{ background: "#6364ff" }}>
+              {initial}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-1.5 mb-1">
+              <span className="text-sm font-bold" style={{ color: "#ededed" }}>{account.displayName}</span>
+              <span className="text-xs" style={{ color: "#555" }}>{timeStr}</span>
+            </div>
+            {text ? (
+              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#d4d4d4" }}>{text}</p>
+            ) : (
+              <p className="text-sm italic" style={{ color: "#444" }}>Start writing your post…</p>
+            )}
+
+            {video && (
+              <div className="mt-2.5 rounded-xl overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
+                <video src={video.previewUrl} className="w-full h-48 object-cover" muted />
+              </div>
+            )}
+
+            {images.length > 0 && (
+              <div className={`mt-2.5 grid gap-1 rounded-xl overflow-hidden ${images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                {images.slice(0, 4).map((img, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={img.previewUrl} alt=""
+                    className={`w-full object-cover ${images.length === 1 ? "h-52" : "h-28"}`} />
+                ))}
+              </div>
+            )}
+
+            <div className="mt-3 flex items-center gap-4">
+              {["💬", "🔁", "⭐", "🔖"].map((icon) => (
+                <span key={icon} className="text-base" style={{ color: "#555" }}>{icon}</span>
+              ))}
+            </div>
+
+            {commentText && (
+              <div className="mt-3 pt-2.5 flex gap-2" style={{ borderTop: "1px solid #2a2a2a" }}>
+                <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
+                  style={{ background: "#6364ff" }}>{initial}</div>
+                <div className="flex-1 rounded-lg px-3 py-2" style={{ backgroundColor: "#111111" }}>
+                  <p className="text-xs font-semibold mb-0.5" style={{ color: "#ededed" }}>@{account.displayName}</p>
+                  <p className="text-xs" style={{ color: "#aaa" }}>{commentText}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PlatformPreview({ account, text, commentText, mediaItems = [], igMediaType }: {
   account: Account;
   text: string;
@@ -458,6 +540,9 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   }
   if (account.platform === "linkedin") {
     return <LinkedInPreview account={account} text={text} commentText={commentText} images={images} />;
+  }
+  if (account.platform === "mastodon") {
+    return <MastodonPreview account={account} text={text} commentText={commentText} images={images} video={video} />;
   }
 
   const color = PLATFORM_COLOR[account.platform] ?? "#6b7280";
