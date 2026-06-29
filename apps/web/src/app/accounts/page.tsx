@@ -482,7 +482,7 @@ export default function AccountsPage() {
 
               {!connectDisabled && (
                 <button type="button" onClick={() => setShowManualToken((v) => !v)}
-                  className="w-full text-xs transition-colors text-center py-1 hover:opacity-70"
+                  className="w-full text-xs transition-colors py-1 hover:opacity-70"
                   >
                   {showManualToken ? "▲ Hide" : "OAuth not working? Paste an access token instead"}
                 </button>
@@ -552,7 +552,7 @@ export default function AccountsPage() {
                   {instagramAccounts.length > 0 ? "Add another Instagram account" : "Connect Instagram"}
                 </a>
               )}
-              <p className="text-xs text-center">
+              <p className="text-xs">
                 Requires a Professional (Business or Creator) Instagram account
               </p>
             </div>
@@ -594,7 +594,7 @@ export default function AccountsPage() {
                   {linkedinAccounts.length > 0 ? "Add another LinkedIn account" : "Connect LinkedIn"}
                 </a>
               )}
-              <p className="text-xs text-center">
+              <p className="text-xs">
                 Requires a LinkedIn developer app with w_member_social permission
               </p>
             </div>
@@ -628,8 +628,8 @@ export default function AccountsPage() {
                 {mastodonAccounts.length > 0 ? "Add another Mastodon account" : "Connect Mastodon"}
               </button>
 
-              <p className="text-xs" style={{ color: "#555" }}>
-                Works with any Mastodon instance — mastodon.social, fosstodon.org, hachyderm.io, and more
+              <p className="text-xs">
+                Works with any Mastodon instance mastodon.social, fosstodon.org, hachyderm.io, and more
               </p>
             </div>
           </div>
