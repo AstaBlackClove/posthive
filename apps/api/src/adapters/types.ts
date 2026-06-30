@@ -43,6 +43,7 @@ export interface PlatformAdapter {
       mediaUrls: string[];
       altTexts?: string[];
       mediaType?: "post" | "reel" | "story";
+      youtubeType?: "short" | "video"; // YouTube: upload as a Short (default) or a regular video
       locationId?: string;           // Instagram: Facebook Place ID for location tagging
       userTags?: string[];           // Instagram: usernames to tag in the post
       collaborators?: string[];      // Instagram: usernames to add as collaborators

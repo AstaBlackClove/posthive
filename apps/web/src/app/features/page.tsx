@@ -52,7 +52,7 @@ export default function FeaturesPage() {
             One composer.<br />Every platform.
           </h1>
           <p className="fade-up-3" style={{ fontSize: 18, color: "#888", lineHeight: 1.7, marginBottom: 40, maxWidth: 560, margin: "0 auto 40px" }}>
-            Posthive gives you a polished scheduling workflow for Bluesky, Threads, Instagram, LinkedIn, and Mastodon — without the bloat of enterprise tools.
+            Posthive gives you a polished scheduling workflow for Bluesky, Threads, Instagram, LinkedIn, Mastodon, and YouTube — without the bloat of enterprise tools.
           </p>
           <div className="fade-up-3 hero-btns" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="/register" className="cta-primary" style={{ background: "#fff", color: "#0a0a0a", padding: "12px 28px", borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 15, transition: "background 0.2s" }}>
@@ -87,6 +87,7 @@ export default function FeaturesPage() {
                   { name: "Instagram", domain: "instagram.com" },
                   { name: "LinkedIn", domain: "linkedin.com" },
                   { name: "Mastodon", domain: "mastodon.social" },
+                  { name: "YouTube", domain: "youtube.com" },
                 ].map((p) => (
                   <span key={p.domain} className="platform-chip" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, border: "1px solid #2a2a2a", background: "#111", fontSize: 13, color: "#ededed", transition: "border-color 0.2s, background 0.2s", cursor: "default" }}>
                     <img src={`https://www.google.com/s2/favicons?domain=${p.domain}&sz=32`} alt={p.name} width={14} height={14} style={{ borderRadius: 2 }} />
@@ -395,6 +396,7 @@ export default function FeaturesPage() {
                     { domain: "instagram.com", name: "Instagram", auth: "OAuth 2.0", limit: "2,200", media: "Images / Video / Reels / Stories", status: "Live" },
                     { domain: "linkedin.com", name: "LinkedIn", auth: "OAuth 2.0", limit: "3,000", media: "Images *", status: "Live" },
                     { domain: "mastodon.social", name: "Mastodon", auth: "OAuth 2.0", limit: "500", media: "Images", status: "Live" },
+                    { domain: "youtube.com", name: "YouTube", auth: "Google OAuth 2.0", limit: "100 / 5,000", media: "Video (Shorts & regular)", status: "Live" },
                   ].map((row) => (
                     <tr key={row.name} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                       <td style={{ padding: "14px 16px" }}>
@@ -418,6 +420,7 @@ export default function FeaturesPage() {
               </table>
             </div>
             <p style={{ color: "#555", fontSize: 12, marginTop: 16, paddingLeft: 16 }}>* LinkedIn media requires elevated API access</p>
+            <p style={{ color: "#555", fontSize: 12, marginTop: 4, paddingLeft: 16 }}>YouTube limit is title / description (100 chars / 5,000 chars) — video required on every post.</p>
           </div>
         </section>
 

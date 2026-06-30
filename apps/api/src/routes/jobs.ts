@@ -26,6 +26,7 @@ const createJobBody = z.object({
     mediaUrls: z.array(z.string()).default([]),
     altTexts: z.array(z.string()).optional(),
     mediaType: z.enum(["post", "reel", "story"]).optional(),
+    youtubeType: z.enum(["short", "video"]).optional(),
     locationId: z.string().optional(),
     userTags: z.array(z.string()).optional(),
     collaborators: z.array(z.string()).optional(),

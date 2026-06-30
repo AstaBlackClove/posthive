@@ -75,6 +75,7 @@ export const PLATFORM_COLOR: Record<string, string> = {
   linkedin: "#0077b5",
   instagram: "#e1306c",
   mastodon: "#6364ff",
+  youtube: "#ff0000",
 };
 
 export const PLATFORM_LIMIT: Record<string, number> = {
@@ -82,6 +83,7 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   threads: 500,
   linkedin: 3000,
   mastodon: 500,
+  youtube: 5000,
 };
 
 export const MAX_IMAGES = 4;
@@ -445,6 +447,105 @@ function LinkedInPreview({ account, text, commentText, images }: {
   );
 }
 
+function YouTubePreview({ account, text, commentText, mediaItems = [], youtubeType = "short" }: {
+  account: Account;
+  text: string;
+  commentText: string;
+  mediaItems?: UploadedImage[];
+  youtubeType?: "short" | "video";
+}) {
+  const video = mediaItems.find(m => m.isVideo) ?? null;
+  const trimmed = text.trim();
+  const newlineIdx = trimmed.indexOf("\n");
+  const title = newlineIdx === -1 ? trimmed : trimmed.slice(0, newlineIdx);
+  const description = newlineIdx === -1 ? "" : trimmed.slice(newlineIdx + 1).trim();
+  const isShort = youtubeType === "short";
+  const initial = account.displayName[0]?.toUpperCase() ?? "?";
+
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#0f0f0f", border: "1px solid #2a2a2a" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5"
+        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #ff0000", backgroundColor: "#0a0a0a" }}>
+        <PlatformIcon platform="youtube" size={16} />
+        <span className="text-xs font-semibold" style={{ color: "#ff0000" }}>YouTube</span>
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ backgroundColor: "#ff000020", color: "#ff0000" }}>
+          {isShort ? "SHORT" : "VIDEO"}
+        </span>
+        <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+      </div>
+
+      <div className="p-4">
+        {/* Video thumbnail — actual video if attached, otherwise a placeholder. Shorts render
+            as a tall 9:16 canvas (matching the real Shorts player), regular videos as 16:9. */}
+        {isShort ? (
+          <div className="mx-auto rounded-xl overflow-hidden relative" style={{ width: 160, aspectRatio: "9/16", backgroundColor: "#000", border: "1px solid #2a2a2a" }}>
+            {video ? (
+              <video src={video.previewUrl} className="w-full h-full object-cover" muted playsInline loop autoPlay />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="1.5">
+                  <rect x="2" y="5" width="20" height="14" rx="3" />
+                  <path d="M10 9l5 3-5 3V9z" fill="#444" stroke="none" />
+                </svg>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-xl overflow-hidden relative" style={{ aspectRatio: "16/9", backgroundColor: "#000", border: "1px solid #2a2a2a" }}>
+            {video ? (
+              <video src={video.previewUrl} className="w-full h-full object-cover" muted />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="1.5">
+                  <rect x="2" y="5" width="20" height="14" rx="3" />
+                  <path d="M10 9l5 3-5 3V9z" fill="#444" stroke="none" />
+                </svg>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-3 flex gap-3">
+          {account.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white"
+              style={{ background: "#ff0000" }}>
+              {account.displayName[0]?.toUpperCase() ?? "?"}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            {title ? (
+              <p className="text-sm font-semibold leading-snug" style={{ color: "#ededed" }}>{title}</p>
+            ) : (
+              <p className="text-sm italic" style={{ color: "#444" }}>Title — first line of your post</p>
+            )}
+            <p className="text-xs mt-1" style={{ color: "#888" }}>{account.displayName}</p>
+            {description ? (
+              <p className="text-xs mt-2 whitespace-pre-wrap break-words leading-relaxed line-clamp-3" style={{ color: "#aaa" }}>{description}</p>
+            ) : (
+              <p className="text-xs mt-2 italic" style={{ color: "#444" }}>Description everything after the first line</p>
+            )}
+          </div>
+        </div>
+
+        {/* First comment */}
+        {commentText && (
+          <div className="mt-3 pt-2.5 flex gap-2" style={{ borderTop: "1px solid #1a1a1a" }}>
+            <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
+              style={{ background: "#ff0000" }}>{initial}</div>
+            <div className="flex-1 rounded-lg px-3 py-2" style={{ backgroundColor: "#111111" }}>
+              <p className="text-xs font-semibold mb-0.5" style={{ color: "#ededed" }}>{account.displayName}</p>
+              <p className="text-xs" style={{ color: "#aaa" }}>{commentText}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function MastodonPreview({ account, text, commentText, images, video }: {
   account: Account;
   text: string;
@@ -525,12 +626,13 @@ function MastodonPreview({ account, text, commentText, images, video }: {
   );
 }
 
-export function PlatformPreview({ account, text, commentText, mediaItems = [], igMediaType }: {
+export function PlatformPreview({ account, text, commentText, mediaItems = [], igMediaType, youtubeType }: {
   account: Account;
   text: string;
   commentText: string;
   mediaItems?: UploadedImage[];
   igMediaType?: "post" | "reel" | "story";
+  youtubeType?: "short" | "video";
 }) {
   const images = mediaItems.filter(m => !m.isVideo);
   const video = mediaItems.find(m => m.isVideo) ?? null;
@@ -543,6 +645,9 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   }
   if (account.platform === "mastodon") {
     return <MastodonPreview account={account} text={text} commentText={commentText} images={images} video={video} />;
+  }
+  if (account.platform === "youtube") {
+    return <YouTubePreview account={account} text={text} commentText={commentText} mediaItems={mediaItems} youtubeType={youtubeType ?? "short"} />;
   }
 
   const color = PLATFORM_COLOR[account.platform] ?? "#6b7280";

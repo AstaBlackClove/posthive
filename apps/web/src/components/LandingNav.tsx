@@ -11,10 +11,11 @@ export const PLATFORMS_NAV = [
   { platform: "instagram", label: "Instagram", desc: "Posts, Reels & Stories" },
   { platform: "linkedin",  label: "LinkedIn",  desc: "3,000 chars, professional" },
   { platform: "mastodon",  label: "Mastodon",  desc: "500 chars, federated" },
+  { platform: "youtube",   label: "YouTube",   desc: "Shorts & video, Google OAuth" },
 ];
 
 const FEATURES_NAV = [
-  { icon: <SunIcon />,      bg: "rgba(91,99,211,.18)",  color: "#9ba2ee", title: "Multi-platform posting",  desc: "One composer, five platforms" },
+  { icon: <SunIcon />,      bg: "rgba(91,99,211,.18)",  color: "#9ba2ee", title: "Multi-platform posting",  desc: "One composer, six platforms" },
   { icon: <InstagramIcon />,bg: "rgba(225,100,100,.18)",color: "#e86b6b", title: "Reels & Stories",         desc: "Full Instagram media support" },
   { icon: <CalendarIcon />, bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Drag-to-reschedule",      desc: "Visual calendar view" },
   { icon: <CommentIcon />,  bg: "rgba(220,160,60,.18)", color: "#d4a83c", title: "First comment",           desc: "Auto-reply on publish" },

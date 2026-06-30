@@ -1,6 +1,6 @@
 # Posthive — CLAUDE.md
 
-Social media scheduling SaaS. Schedule posts to Bluesky, Threads, and Instagram from a single UI. Self-hostable, open-source (AGPL-3.0).
+Social media scheduling SaaS. Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, and YouTube from a single UI. Self-hostable, open-source (AGPL-3.0).
 
 ---
 
@@ -57,7 +57,9 @@ Each adapter implements `PlatformAdapter` from `types.ts`:
 - `bluesky.ts` — AT Protocol (app password auth)
 - `threads.ts` — Meta Threads API (OAuth 2.0, 60-day tokens)
 - `instagram.ts` — Instagram Business API (OAuth 2.0, image/carousel publishing)
-- `linkedin.ts` — stub, not yet implemented
+- `linkedin.ts` — LinkedIn UGC API (OAuth 2.0, text + image posts)
+- `mastodon.ts` — Mastodon API (OAuth 2.0, any instance)
+- `youtube.ts` — YouTube Data API v3 (Google OAuth 2.0, resumable video upload as Shorts; title = first line of post text, description = rest)
 
 **Register adapters in `src/adapters/index.ts`** — add to the array to enable.
 
@@ -141,6 +143,10 @@ INSTAGRAM_APP_ID="..."
 INSTAGRAM_APP_SECRET="..."
 INSTAGRAM_REDIRECT_URI="https://your-tunnel/auth/instagram/callback"
 PUBLIC_API_URL="https://your-tunnel"   # Must be public HTTPS — Meta fetches images from here
+
+YOUTUBE_CLIENT_ID="....apps.googleusercontent.com"
+YOUTUBE_CLIENT_SECRET="..."
+YOUTUBE_REDIRECT_URI="https://your-tunnel/auth/youtube/callback"
 
 DODO_ENV="test_mode"           # or "live_mode"
 DODO_API_KEY="..."

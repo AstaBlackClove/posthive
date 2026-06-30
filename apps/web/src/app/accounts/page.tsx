@@ -11,6 +11,7 @@ const THREADS_AUTH_URL = `${API_BASE}/auth/threads`;
 const INSTAGRAM_AUTH_URL = `${API_BASE}/auth/instagram`;
 const LINKEDIN_AUTH_URL = `${API_BASE}/auth/linkedin`;
 const MASTODON_AUTH_URL = `${API_BASE}/auth/mastodon`;
+const YOUTUBE_AUTH_URL = `${API_BASE}/auth/youtube`;
 
 const BG = "#0a0a0a";
 const SURFACE = "#111111";
@@ -31,6 +32,7 @@ const PLATFORM_META: Record<string, { label: string; brand: string }> = {
   threads:   { label: "Threads",   brand: "#1a1a1a" },
   linkedin:  { label: "LinkedIn",  brand: "#0077b5" },
   mastodon:  { label: "Mastodon",  brand: "#6364ff" },
+  youtube:   { label: "YouTube",   brand: "#ff0000" },
 };
 
 function Avatar({ account }: { account: Account }) {
@@ -333,6 +335,7 @@ export default function AccountsPage() {
   const instagramAccounts = accounts.filter((a) => a.platform === "instagram");
   const linkedinAccounts = accounts.filter((a) => a.platform === "linkedin");
   const mastodonAccounts = accounts.filter((a) => a.platform === "mastodon");
+  const youtubeAccounts = accounts.filter((a) => a.platform === "youtube");
 
   const [showMastodonDialog, setShowMastodonDialog] = useState(false);
 
@@ -617,6 +620,48 @@ export default function AccountsPage() {
               )}
               <p className="text-xs">
                 Requires a LinkedIn developer app with w_member_social permission
+              </p>
+            </div>
+          </div>
+
+          {/* ── YouTube ── */}
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                <PlatformIcon platform="youtube" size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm" style={{ color: TEXT }}>YouTube</p>
+                <p className="text-xs" style={{ color: MUTED }}>Google OAuth 2.0 · Shorts</p>
+              </div>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
+            </div>
+            <div className="p-5 space-y-3">
+              {!loading && youtubeAccounts.length > 0 && (
+                <div className="space-y-2">
+                  {youtubeAccounts.map((a) => (
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} />
+                  ))}
+                </div>
+              )}
+              {connectDisabled ? (
+                <button disabled title={connectDisabled ? (limitMsg ?? undefined) : undefined}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="youtube" size={16} />
+                  {youtubeAccounts.length > 0 ? "Add another YouTube channel" : "Connect YouTube"}
+                </button>
+              ) : (
+                <a href={YOUTUBE_AUTH_URL}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="youtube" size={16} />
+                  {youtubeAccounts.length > 0 ? "Add another YouTube channel" : "Connect YouTube"}
+                </a>
+              )}
+              <p className="text-xs">
+                Posts as YouTube Shorts requires a video attached to every post
               </p>
             </div>
           </div>

@@ -4,29 +4,20 @@
 
 ## In Progress
 
-- [ ] **YouTube Shorts adapter** — next platform (see Platform Adapters section below)
+(nothing in progress)
 
 ---
 
 ## Pending Features
 
-### Next Platform — YouTube Shorts
-- [ ] **YouTube OAuth** — Google OAuth 2.0, scopes: `youtube.upload` + `youtube.readonly`
-- [ ] **YouTube adapter** — `apps/api/src/adapters/youtube.ts` implementing `PlatformAdapter`
-  - Upload video via YouTube Data API v3 (`videos.insert` with resumable upload)
-  - Set title from first line of content, description from rest
-  - `privacyStatus: "public"` by default, configurable via per-platform override
-  - Reuse existing video upload pipeline from Instagram Reels
-- [ ] **YouTube OAuth routes** — `/auth/youtube/start` + `/auth/youtube/callback` in `routes/auth.ts`
-- [ ] **YouTube account card** — add to `apps/web/src/app/accounts/page.tsx`
-- [ ] **YouTube favicon** — add `youtube.com` to `PlatformIcon` domains
-- [ ] **YouTube char limit** — title 100 chars, description 5000 chars in `PLATFORM_LIMIT` in compose
-- [ ] **YouTube preview** — thumbnail placeholder + title/description split preview in compose
-- [ ] **Token refresh** — YouTube tokens expire in 1h; implement refresh_token flow
+### YouTube — follow-ups
+- [ ] **CRITICAL — Google app verification** — while the OAuth consent screen stays in "Testing" status, Google expires refresh tokens after 7 days regardless of activity. This silently breaks scheduled YouTube posts weekly until the account is manually reconnected. Testing mode is also capped at 100 manually-added test users — anyone outside that list is hard-blocked (`Error 403: access_denied`) before they even see a consent screen. Required for verification: privacy policy URL, terms of service URL, real app homepage domain (not a tunnel), domain ownership via Search Console, and a demo video justifying use of the `youtube.upload` / `youtube.force-ssl` sensitive scopes. Turnaround is days to weeks.
+- [ ] **Privacy status override** — currently hardcoded to `public`; expose `private`/`unlisted` as a per-platform override in the Customize dialog
+- [ ] **YouTube token expiry warning** — show warning in Accounts page when access token can't be silently refreshed (e.g. refresh_token revoked or expired due to unverified-app 7-day limit)
+- [ ] **Thumbnail upload** — YouTube Data API supports custom thumbnails (`thumbnails.set`); not wired up yet, auto-generated thumbnail is used
 
 ### Platform Adapters
 - [ ] **Threads token auto-refresh cron** — tokens refresh on-demand before posting, but no background cron for idle accounts
-- [ ] **Mastodon adapter** — stub exists in adapter list; needs full implementation
 
 ### Instagram Advanced
 - [ ] **Video carousel** — mix of image + video items in one carousel post
@@ -85,12 +76,17 @@
 - [x] Threads token refresh — `refreshTokenIfNeeded()` refreshes when < 7 days remaining
 - [x] Instagram OAuth + adapter (image, carousel, Reels, Stories, alt text)
 - [x] LinkedIn OAuth + adapter (text + image posts via UGC API)
+- [x] Mastodon OAuth + adapter (any instance, text + media)
+- [x] YouTube OAuth + adapter — Google OAuth 2.0 (`youtube.upload` + `youtube.readonly` + `youtube.force-ssl` scopes), resumable video upload via YouTube Data API v3, posts as Shorts; 1h access token auto-refresh via refresh_token; `#Shorts` auto-appended to description to ensure Shorts-shelf classification
 
 ### Compose & Scheduling
 - [x] Per-platform content overrides in compose
 - [x] Image & video support (up to 4 images or 1 video, alt text)
 - [x] Instagram preview in compose
 - [x] Instagram image warning in compose when no image attached
+- [x] YouTube preview in compose — title/description split + video thumbnail
+- [x] YouTube dedicated Title + Description fields in compose (separate from the shared Post box other platforms use), auto-synced via per-account overrides; main Post box hidden when only YouTube accounts are selected
+- [x] YouTube "requires a video" hard block — Schedule button disabled (not just a warning) until a video is attached
 - [x] Confetti on first scheduled post
 - [x] Dry run mode — full pipeline test without real API calls
 

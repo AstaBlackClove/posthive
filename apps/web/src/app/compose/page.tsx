@@ -15,6 +15,10 @@ import type { Account, UploadedImage, PerAccountOverride } from "../../component
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+// Mirrors apps/api/src/lib/storage.ts (images) and apps/api/src/routes/upload.ts (videos)
+const MAX_IMAGE_SIZE_MB = 10;
+const MAX_VIDEO_SIZE_MB = 100;
+
 function defaultScheduledFor(): string {
   const d = new Date(Date.now() + 60 * 60 * 1000);
   return d.toISOString().slice(0, 16);
@@ -30,6 +34,10 @@ export default function ComposePage() {
   const [mediaItems, setMediaItems] = useState<UploadedImage[]>([]);
   const [altTexts, setAltTexts] = useState<string[]>([]);
   const [igMediaType, setIgMediaType] = useState<"post" | "reel" | "story">("post");
+  const [youtubeTitle, setYoutubeTitle] = useState("");
+  const [youtubeDescription, setYoutubeDescription] = useState("");
+  const [youtubeType, setYoutubeType] = useState<"short" | "video">("short");
+  const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dryRun, setDryRun] = useState(false);
@@ -79,7 +87,7 @@ export default function ComposePage() {
     }
 
     apiFetch<Account[]>("/accounts")
-      .then((data) => { setAccounts(data); setSelectedIds(data.map((a) => a.id)); })
+      .then((data) => { setAccounts(data); })
       .finally(() => setLoadingAccounts(false));
   }, []);
 
@@ -187,8 +195,8 @@ export default function ComposePage() {
     const hasThreads   = selectedAccounts.some((a) => a.platform === "threads");
     const hasBluesky   = selectedAccounts.some((a) => a.platform === "bluesky");
 
-    // Text required for everything except Instagram Story
-    if (!text.trim() && !onlyInstagramStory) return "Write something before scheduling.";
+    // Text required for everything except Instagram Story and YouTube-only (uses its own Title field)
+    if (!text.trim() && !onlyInstagramStory && !onlyYoutube) return "Write something before scheduling.";
 
     // Instagram-specific
     if (hasInstagram) {
@@ -207,6 +215,12 @@ export default function ComposePage() {
 
     // Threads "" text required, video supported (single video only)
     if (hasThreads && !text.trim()) return "Threads requires a caption.";
+
+    // YouTube "" title required, video required
+    if (youtubeSelected) {
+      if (!youtubeTitle.trim()) return "YouTube requires a title.";
+      if (!video) return "YouTube requires a video attached.";
+    }
 
     // Character limits
     for (const p of platformLimits) {
@@ -239,6 +253,7 @@ export default function ComposePage() {
             mediaUrls,
             ...(altTexts.some(Boolean) ? { altTexts } : {}),
             ...(hasInstagram && igMediaType !== "post" ? { mediaType: igMediaType } : {}),
+            ...(youtubeSelected ? { youtubeType } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -253,6 +268,7 @@ export default function ComposePage() {
         setTimeout(() => confetti({ particleCount: 80, spread: 120, origin: { y: 0.55 }, zIndex: 9999 }), 300);
       }
       setText(""); setCommentText(""); setScheduledFor(defaultScheduledFor());
+      setYoutubeTitle(""); setYoutubeDescription(""); setYoutubeType("short");
       setPerAccountOverrides({});
       mediaItems.forEach(m => URL.revokeObjectURL(m.previewUrl));
       setMediaItems([]); setAltTexts([]);
@@ -265,7 +281,9 @@ export default function ComposePage() {
 
   const graphemeCount = countGraphemes(text);
   const selectedAccounts = accounts.filter((a) => selectedIds.includes(a.id));
-  const platformLimits = selectedAccounts.map((a) => ({
+  // YouTube doesn't use the shared Post box — it has its own dedicated Title/Description
+  // counters — so it's excluded here to avoid showing a misleading/duplicate limit.
+  const platformLimits = selectedAccounts.filter((a) => a.platform !== "youtube").map((a) => ({
     platform: a.platform, limit: PLATFORM_LIMIT[a.platform] ?? 300,
     icon: a.platform,
     over: graphemeCount > (PLATFORM_LIMIT[a.platform] ?? 300),
@@ -280,6 +298,45 @@ export default function ComposePage() {
   const instagramStoryWithNoImage = instagramSelected && igMediaType === "story" && mediaItems.length === 0;
   const onlyInstagramStory = instagramSelected && igMediaType === "story" && selectedAccounts.every((a) => a.platform === "instagram");
   const linkedinSelectedWithMedia = selectedAccounts.some((a) => a.platform === "linkedin") && mediaItems.length > 0;
+  const youtubeAccounts = selectedAccounts.filter((a) => a.platform === "youtube");
+  const youtubeSelected = youtubeAccounts.length > 0;
+  const youtubeSelectedWithNoVideo = youtubeSelected && !video;
+  const onlyYoutube = youtubeSelected && selectedAccounts.every((a) => a.platform === "youtube");
+
+  // YouTube only treats an upload as a Short when it's vertical (9:16), ≤60s, AND
+  // tagged #Shorts — the hashtag alone does nothing if the video itself doesn't
+  // qualify. Probe the actual file's dimensions/duration so we can warn upfront
+  // instead of the upload silently landing as a regular video.
+  useEffect(() => {
+    if (!youtubeSelected || youtubeType !== "short" || !video) { setYoutubeShortsWarning(null); return; }
+    const el = document.createElement("video");
+    el.preload = "metadata";
+    el.src = video.previewUrl;
+    el.onloadedmetadata = () => {
+      const { videoWidth: w, videoHeight: h, duration } = el;
+      const issues: string[] = [];
+      if (w && h && h <= w) issues.push("isn't vertical (9:16) — it'll likely upload as a regular video, not a Short");
+      else if (w && h && duration && duration > 60) issues.push(`is ${Math.round(duration)}s — Shorts reliably need ≤60s`);
+      setYoutubeShortsWarning(issues.length ? `This video ${issues[0]}.` : null);
+    };
+    return () => { el.onloadedmetadata = null; };
+  }, [video, youtubeSelected, youtubeType]);
+
+  // Keep each connected YouTube account's per-account override in sync with the
+  // dedicated Title/Description fields — YouTube needs structured title+description
+  // rather than the shared free-text "Post" box the other platforms use.
+  useEffect(() => {
+    if (youtubeAccounts.length === 0) return;
+    const combined = youtubeDescription ? `${youtubeTitle}\n\n${youtubeDescription}` : youtubeTitle;
+    setPerAccountOverrides(prev => {
+      const next = { ...prev };
+      for (const a of youtubeAccounts) {
+        next[a.id] = { ...next[a.id], text: combined };
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [youtubeTitle, youtubeDescription, selectedIds.join(",")]);
 
   const previewContent = selectedAccounts.length === 0 ? (
     <div className="rounded-2xl border-2 border-dashed p-10 text-center" style={{ borderColor: "#2a2a2a" }}>
@@ -296,6 +353,7 @@ export default function ComposePage() {
           commentText={ov?.commentText !== undefined ? ov.commentText : commentText}
           mediaItems={mediaItems}
           igMediaType={a.platform === "instagram" ? igMediaType : undefined}
+          youtubeType={a.platform === "youtube" ? youtubeType : undefined}
         />
       );
     })
@@ -431,7 +489,7 @@ export default function ComposePage() {
           )}
 
           {/* Text editor */}
-          <div className="px-6 py-5" style={{ display: loadingAccounts ? "none" : undefined }}>
+          <div className="px-6 py-5" style={{ display: (loadingAccounts || onlyYoutube) ? "none" : undefined }}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold uppercase tracking-wide">Post</span>
               {/* Instagram format toggle in Post header */}
@@ -487,12 +545,12 @@ export default function ComposePage() {
               )}
 
             </div>
-            {!onlyInstagramStory && (
+            {!onlyInstagramStory && !onlyYoutube && (
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="What do you want to share?"
-                required
+                required={!onlyYoutube}
                 rows={8}
                 className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"
                 style={overAnyLimit
@@ -502,7 +560,7 @@ export default function ComposePage() {
               />
             )}
             {/* Char counters below textarea */}
-            {!onlyInstagramStory && <div className="flex items-center gap-3 mt-1.5">
+            {!onlyInstagramStory && !onlyYoutube && <div className="flex items-center gap-3 mt-1.5">
               {overAnyLimit && (
                 <p className="text-xs text-red-500 flex-1">
                   {Math.abs(mostRestrictiveLimit - graphemeCount)} chars over limit
@@ -519,8 +577,73 @@ export default function ComposePage() {
             </div>}
           </div>
 
+          {/* YouTube — dedicated Title + Description fields (uses per-account overrides under the hood) */}
+          {youtubeSelected && (
+            <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a", display: loadingAccounts ? "none" : undefined }}>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <PlatformIcon platform="youtube" size={13} />
+                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#ff0000" }}>YouTube</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {(["short", "video"] as const).map((t) => (
+                    <button key={t} type="button" onClick={() => setYoutubeType(t)}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all"
+                      style={youtubeType === t
+                        ? { backgroundColor: "#ff000020", color: "#ff0000", border: "1px solid #ff000050" }
+                        : { backgroundColor: "#111111", color: "#666", border: "1px solid #1f1f1f" }}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs mb-2.5" style={{ color: "#999" }}>
+                {youtubeType === "short"
+                  ? "Uploads to the Shorts shelf separate title and description, other selected platforms keep using the Post box above."
+                  : "Uploads as a regular video separate title and description, other selected platforms keep using the Post box above."}
+              </p>
+
+              {youtubeShortsWarning && (
+                <p className="text-xs font-medium mb-2.5 flex items-start gap-1.5" style={{ color: "#f59e0b" }}>
+                  <span className="flex-shrink-0">⚠️</span>
+                  <span>{youtubeShortsWarning} YouTube classifies Shorts by the video itself (vertical, ≤60s) — #Shorts alone won't override that.</span>
+                </p>
+              )}
+
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Title</span>
+                  <span className="text-[10px]" style={{ color: youtubeTitle.length > 100 ? "#ef4444" : "#444" }}>{youtubeTitle.length}/100</span>
+                </div>
+                <input
+                  value={youtubeTitle}
+                  onChange={(e) => setYoutubeTitle(e.target.value)}
+                  placeholder="Video title"
+                  required={onlyYoutube}
+                  className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                  style={{ borderColor: youtubeTitle.length > 100 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Description</span>
+                  <span className="text-[10px]" style={{ color: youtubeDescription.length > 5000 ? "#ef4444" : "#444" }}>{youtubeDescription.length}/5000</span>
+                </div>
+                <textarea
+                  value={youtubeDescription}
+                  onChange={(e) => setYoutubeDescription(e.target.value)}
+                  placeholder="Video description…"
+                  rows={3}
+                  className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                  style={{ borderColor: youtubeDescription.length > 5000 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* First comment "" right below the post text */}
-          <div className="px-6 pb-5 pt-1" style={{ borderBottom: "1px solid #2a2a2a", display: loadingAccounts ? "none" : undefined }}>
+          <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a", display: loadingAccounts ? "none" : undefined }}>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-semibold uppercase tracking-wide">First Comment</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
@@ -615,12 +738,18 @@ export default function ComposePage() {
                 <span className="text-xs" style={{ color: "#999" }}>or Ctrl+V to paste</span>
               )}
             </div>
+            <p className="mt-1.5 text-[11px]" style={{ color: "#555" }}>
+              Images up to {MAX_IMAGE_SIZE_MB}MB · Videos up to {MAX_VIDEO_SIZE_MB}MB
+            </p>
             {uploadError && <p className="mt-2 text-xs text-red-500 rounded-lg px-3 py-2" style={{ backgroundColor: "#1f0a0a", border: "1px solid #3a1a1a" }}>{uploadError}</p>}
 
             {/* Option buttons row */}
             {(instagramSelected || selectedAccounts.length > 1) && (
               <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: "1px solid #1a1a1a" }}>
-                {selectedAccounts.length > 1 && (
+                {selectedAccounts.length > 1 && (() => {
+                  const customizableOverrideCount = Object.keys(perAccountOverrides)
+                    .filter(id => !youtubeAccounts.some(a => a.id === id)).length;
+                  return (
                   <button type="button" onClick={() => {
                     if (!allowOverrides) {
                       toastWarning("Per-platform customization is a Pro feature. Upgrade to unlock.");
@@ -630,9 +759,9 @@ export default function ComposePage() {
                   }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                     style={{
-                      border: `1px solid ${Object.keys(perAccountOverrides).length > 0 ? "#5b63d350" : "#2a2a2a"}`,
-                      backgroundColor: Object.keys(perAccountOverrides).length > 0 ? "#5b63d310" : "#111111",
-                      color: Object.keys(perAccountOverrides).length > 0 ? "#5b63d3" : "#888",
+                      border: `1px solid ${customizableOverrideCount > 0 ? "#5b63d350" : "#2a2a2a"}`,
+                      backgroundColor: customizableOverrideCount > 0 ? "#5b63d310" : "#111111",
+                      color: customizableOverrideCount > 0 ? "#5b63d3" : "#888",
                     }}>
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -641,14 +770,15 @@ export default function ComposePage() {
                     {!allowOverrides && (
                       <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><rect x="2" y="5" width="8" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M4 5V3.5a2 2 0 014 0V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     )}
-                    {Object.keys(perAccountOverrides).length > 0 && (
+                    {customizableOverrideCount > 0 && (
                       <span className="text-[10px] font-bold px-1 py-0.5 rounded"
                         style={{ backgroundColor: "#5b63d320", color: "#5b63d3" }}>
-                        {Object.keys(perAccountOverrides).length}
+                        {customizableOverrideCount}
                       </span>
                     )}
                   </button>
-                )}
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -703,7 +833,7 @@ export default function ComposePage() {
               </button>
             </div>
             <div className="space-y-2">
-              {selectedAccounts.map(a => {
+              {selectedAccounts.filter(a => a.platform !== "youtube").map(a => {
                 const hasOverride = a.id in perAccountOverrides;
                 const override = perAccountOverrides[a.id];
                 const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
@@ -807,12 +937,17 @@ export default function ComposePage() {
             ℹ️ LinkedIn will post text only image/video support requires elevated API access
           </p>
         )}
+        {youtubeSelectedWithNoVideo && (
+          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#ef4444" }}>
+            ⚠️ YouTube requires a video attached before you can schedule this post
+          </p>
+        )}
 
         {/* Submit */}
         <button
           type="submit"
           form=""
-          disabled={submitting || overAnyLimit || accounts.length === 0}
+          disabled={submitting || overAnyLimit || accounts.length === 0 || youtubeSelectedWithNoVideo}
           onClick={handleSubmit}
           className="w-full md:w-auto order-4 md:order-none px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-colors hover:bg-gray-100"
           style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}

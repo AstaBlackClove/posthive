@@ -5,7 +5,7 @@
 <h1 align="center">Posthive</h1>
 
 <p align="center">
-  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, and Mastodon from a single UI.<br/>
+  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, and YouTube from a single UI.<br/>
   Self-hostable · Open-source · AGPL-3.0
 </p>
 
@@ -18,10 +18,10 @@
 
 ## Features
 
-- **Multi-platform scheduling** - Bluesky, Threads, Instagram, LinkedIn, Mastodon
+- **Multi-platform scheduling** - Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube
 - **First comment** - post a reply/comment immediately after the main post goes live
 - **Per-platform overrides** - customize text and comment per account
-- **Image & video support** - mixed image/video carousel (up to 10 items), alt text, Instagram Reels, Stories
+- **Image & video support** - mixed image/video carousel (up to 10 items), alt text, Instagram Reels, Stories, YouTube Shorts
 - **Calendar view** - drag-and-drop to reschedule pending posts
 - **Live status updates** - Server-Sent Events, no polling
 - **Dry run mode** - full pipeline test without making real API calls
@@ -55,7 +55,7 @@ posthive/
 │   ├── api/                  # Fastify v4 API server
 │   │   ├── prisma/           # Schema and migrations
 │   │   └── src/
-│   │       ├── adapters/     # Bluesky, Threads, Instagram, LinkedIn, Mastodon
+│   │       ├── adapters/     # Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube
 │   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, billing
 │   │       ├── routes/       # auth, accounts, jobs, upload, billing, user
 │   │       ├── runner/       # Job state machine
@@ -157,6 +157,10 @@ pnpm dev
 | `MASTODON_CLIENT_ID` | Mastodon | Client key from your Mastodon app settings |
 | `MASTODON_CLIENT_SECRET` | Mastodon | Client secret from your Mastodon app settings |
 | `MASTODON_REDIRECT_URI` | Mastodon | Must be public HTTPS |
+| **OAuth - YouTube** | | |
+| `YOUTUBE_CLIENT_ID` | YouTube | Google OAuth client ID (console.cloud.google.com) |
+| `YOUTUBE_CLIENT_SECRET` | YouTube | Google OAuth client secret |
+| `YOUTUBE_REDIRECT_URI` | YouTube | **Use `http://localhost:<API_PORT>/auth/youtube/callback`** — unlike the other platforms, Google rejects public tunnel domains (devtunnels.ms, ngrok, etc.) outright since it requires the redirect domain to be owned and verified. Localhost is exempt from that check. This means connecting YouTube only works from a browser on the same machine as your API server. |
 | **Billing** | | |
 | `ENABLE_BILLING` | No | Set to `true` to enable Dodo Payments and plan limits. Leave unset for self-hosted all features unlocked |
 | `DODO_ENV` | Billing | `test_mode` or `live_mode` |

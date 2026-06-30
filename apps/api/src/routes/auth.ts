@@ -22,6 +22,16 @@ const MASTO_CLIENT_SECRET = process.env.MASTODON_CLIENT_SECRET!;
 const MASTO_REDIRECT_URI = process.env.MASTODON_REDIRECT_URI!;
 const MASTODON_SCOPES = "read:accounts write:statuses write:media";
 
+const YT_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID!;
+const YT_CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET!;
+const YT_REDIRECT_URI = process.env.YOUTUBE_REDIRECT_URI!;
+const YOUTUBE_SCOPES = [
+  "https://www.googleapis.com/auth/youtube.upload",
+  "https://www.googleapis.com/auth/youtube.readonly",
+  "https://www.googleapis.com/auth/youtube.force-ssl",
+].join(" ");
+const TOKEN_URL_GOOGLE = "https://oauth2.googleapis.com/token";
+
 const SCOPES = ["threads_basic", "threads_content_publish"].join(",");
 
 // Build a redirect URL safely without double-? issues
@@ -470,5 +480,118 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     console.log("[mastodon] connected @" + profile.username + " -> user " + userId);
     return reply.redirect(`${WEB_URL}/accounts?connected=mastodon`);
+  });
+
+  // ── YouTube OAuth ────────────────────────────────────────────────────────
+
+  app.get("/auth/youtube", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { from } = req.query as Record<string, string>;
+    const nonce = randomBytes(32).toString("hex");
+    await prisma.oAuthState.create({ data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) } });
+    const state = Buffer.from(JSON.stringify({ userId, from, nonce })).toString("base64url");
+    const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    url.searchParams.set("client_id", YT_CLIENT_ID);
+    url.searchParams.set("redirect_uri", YT_REDIRECT_URI);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("scope", YOUTUBE_SCOPES);
+    url.searchParams.set("access_type", "offline");
+    url.searchParams.set("prompt", "consent"); // force refresh_token on every connect
+    url.searchParams.set("state", state);
+    return reply.redirect(url.toString());
+  });
+
+  app.get("/auth/youtube/callback", async (req, reply) => {
+    const { code, state, error } = req.query as Record<string, string>;
+    if (error) return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error }));
+    if (!code || !state) return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "missing_code_or_state" }));
+
+    let userId: string;
+    let from: string | undefined;
+    try {
+      const decoded = JSON.parse(Buffer.from(state, "base64url").toString()) as { userId: string; from?: string; nonce?: string };
+      userId = decoded.userId;
+      from = decoded.from;
+      const nonce = decoded.nonce;
+      if (!nonce) throw new Error("missing nonce");
+      const storedState = await prisma.oAuthState.findUnique({ where: { nonce } });
+      if (!storedState || storedState.userId !== userId || storedState.expiresAt < new Date()) {
+        return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "invalid_or_expired_state" }));
+      }
+      await prisma.oAuthState.delete({ where: { nonce } });
+    } catch {
+      return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "invalid_state" }));
+    }
+
+    const redirectBase = from === "onboarding" ? `${WEB_URL}/onboarding?step=2` : `${WEB_URL}/accounts`;
+
+    let accessToken: string;
+    let refreshToken: string;
+    let expiresIn: number;
+    try {
+      const tokenRes = await fetch(TOKEN_URL_GOOGLE, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: YT_CLIENT_ID,
+          client_secret: YT_CLIENT_SECRET,
+          code,
+          redirect_uri: YT_REDIRECT_URI,
+          grant_type: "authorization_code",
+        }),
+      });
+      if (!tokenRes.ok) throw new Error(await tokenRes.text());
+      const tokenData = await tokenRes.json() as { access_token: string; refresh_token?: string; expires_in: number };
+      accessToken = tokenData.access_token;
+      refreshToken = tokenData.refresh_token ?? "";
+      expiresIn = tokenData.expires_in;
+    } catch (err) {
+      console.error("[youtube oauth] token exchange error:", err);
+      return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
+    }
+
+    if (!refreshToken) {
+      // Google only issues a refresh_token on first consent — if the user already
+      // granted access previously without prompt=consent, this can come back empty.
+      console.error("[youtube oauth] no refresh_token returned — user must revoke app access and reconnect");
+      return reply.redirect(buildRedirect(redirectBase, { error: "no_refresh_token" }));
+    }
+
+    let displayName = "youtube-channel";
+    let avatarUrl: string | null = null;
+    let channelId = "";
+    try {
+      const channelRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const channelData = await channelRes.json() as {
+        items?: { id: string; snippet: { title: string; thumbnails?: { default?: { url: string } } } }[];
+      };
+      const channel = channelData.items?.[0];
+      if (channel) {
+        channelId = channel.id;
+        displayName = channel.snippet.title;
+        avatarUrl = channel.snippet.thumbnails?.default?.url ?? null;
+      }
+    } catch { /* optional */ }
+
+    const credentials = encrypt(JSON.stringify({
+      accessToken,
+      refreshToken,
+      channelId,
+      expiresAt: new Date(Date.now() + (expiresIn - 60) * 1000).toISOString(),
+    }));
+
+    const expiresAt = new Date(Date.now() + (expiresIn - 60) * 1000);
+    const existing = await prisma.account.findFirst({ where: { platform: "youtube", displayName, userId } });
+    await prisma.account.upsert({
+      where: { id: existing?.id ?? "new" },
+      create: { platform: "youtube", displayName, credentials, avatarUrl, expiresAt, userId },
+      update: { credentials, avatarUrl, expiresAt },
+    });
+
+    console.log(`[youtube oauth] connected ${displayName} → user ${userId}`);
+    return reply.redirect(buildRedirect(redirectBase, { connected: "youtube" }));
   });
 }

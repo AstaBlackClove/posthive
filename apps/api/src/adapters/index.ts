@@ -3,6 +3,7 @@ import { linkedinAdapter } from "./linkedin.js";
 import { threadsAdapter } from "./threads.js";
 import { instagramAdapter } from "./instagram.js";
 import { mastodonAdapter } from "./mastodon.js";
+import { youtubeAdapter } from "./youtube.js";
 import type { PlatformAdapter } from "./types.js";
 
 const adapters: PlatformAdapter[] = [
@@ -11,6 +12,7 @@ const adapters: PlatformAdapter[] = [
   linkedinAdapter,
   instagramAdapter,
   mastodonAdapter,
+  youtubeAdapter,
 ];
 
 /** Look up an adapter by platform name. Throws if not found. */

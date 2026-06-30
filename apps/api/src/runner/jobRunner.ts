@@ -27,6 +27,7 @@ type JobContent = {
   mediaUrls?: string[];
   altTexts?: string[];
   mediaType?: "post" | "reel" | "story";
+  youtubeType?: "short" | "video";
   locationId?: string;
   userTags?: string[];
   collaborators?: string[];
@@ -69,6 +70,7 @@ export async function runJob(
         mediaUrls: content.mediaUrls ?? [],
         altTexts: content.altTexts,
         mediaType: content.mediaType,
+        youtubeType: content.youtubeType,
         locationId: content.locationId,
         userTags: content.userTags,
         collaborators: content.collaborators,
@@ -109,6 +111,7 @@ type EffectiveContent = {
   mediaUrls: string[];
   altTexts?: string[];
   mediaType?: "post" | "reel" | "story";
+  youtubeType?: "short" | "video";
 };
 
 async function runTarget(

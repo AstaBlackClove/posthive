@@ -271,7 +271,7 @@ export default function RootPage() {
 
             <div className="anim-5" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 56 }}>
               <span style={{ fontSize: 11, color: "#555", fontFamily: "'Geist Mono', monospace", letterSpacing: ".1em", marginRight: 4 }}>PUBLISH TO</span>
-              {(["bluesky", "threads", "instagram", "linkedin", "mastodon"] as const).map(p => (
+              {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube"] as const).map(p => (
                 <span key={p} className="platform-chip">
                   <PlatformIcon platform={p} size={16} />
                   {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -311,8 +311,8 @@ export default function RootPage() {
           </div>
           <div className="ph-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
             {[
-              { icon: <SunIcon />, title: "5 platforms, one composer", body: "Draft once and ship to Bluesky, Threads, Instagram, LinkedIn and Mastodon in a single click." },
-              { icon: <InstagramIcon />, title: "Reels & Stories included", body: "Full Instagram support schedule Reels, Stories and feed posts with live native previews." },
+              { icon: <SunIcon />, title: "6 platforms, one composer", body: "Draft once and ship to Bluesky, Threads, Instagram, LinkedIn, Mastodon and YouTube in a single click." },
+              { icon: <InstagramIcon />, title: "Reels, Stories & Shorts", body: "Full Instagram support (Reels, Stories, feed posts) plus YouTube Shorts all with live native previews." },
               { icon: <CalendarIcon />, title: "Drag-to-reschedule calendar", body: "See your whole content week at a glance. Drag any post to a new time slot in seconds." },
               { icon: <CommentIcon />, title: "First comment on autopilot", body: "Drop a reply the moment a post goes live perfect for hashtags, threads or a link in comments." },
               { icon: <SlidersIcon />, title: "Per-platform overrides", body: "Different character limits, different audiences. Tweak text and media per network without leaving the composer." },
@@ -338,7 +338,7 @@ export default function RootPage() {
             </div>
             <div className="ph-how-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 32 }}>
               {[
-                { n: "01", title: "Connect your accounts", desc: "Authenticate Bluesky, Threads, Instagram, LinkedIn and Mastodon in a couple of clicks OAuth, encrypted at rest." },
+                { n: "01", title: "Connect your accounts", desc: "Authenticate Bluesky, Threads, Instagram, LinkedIn, Mastodon and YouTube in a couple of clicks OAuth, encrypted at rest." },
                 { n: "02", title: "Compose & tailor", desc: "Write once. Then fine-tune copy and media per platform inside the same composer. Preview exactly what each network will show." },
                 { n: "03", title: "Set it and forget it", desc: "Pick a date and time Posthive fires on the second. Drag to reschedule from the calendar if plans change." },
               ].map(({ n, title, desc }) => (

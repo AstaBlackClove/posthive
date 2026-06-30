@@ -52,6 +52,7 @@ const NAV = [
       { label: "Instagram", id: "instagram" },
       { label: "LinkedIn", id: "linkedin" },
       { label: "Mastodon", id: "mastodon" },
+      { label: "YouTube", id: "youtube" },
     ],
   },
   {
@@ -244,7 +245,7 @@ export default function DocsPage() {
               {/* Hero */}
               <h1 className="doc-h1">Posthive Documentation</h1>
               <p className="doc-p">
-                Posthive is an open-source social media scheduling SaaS. Write once, publish to Bluesky, Threads, Instagram, LinkedIn, and Mastodon — all from a single clean interface. Self-hostable under AGPL-3.0.
+                Posthive is an open-source social media scheduling SaaS. Write once, publish to Bluesky, Threads, Instagram, LinkedIn, Mastodon, and YouTube — all from a single clean interface. Self-hostable under AGPL-3.0.
               </p>
 
               {/* ── Quick start ── */}
@@ -409,6 +410,33 @@ pnpm install`}</code>
                 <li className="doc-li">Click <strong>Connect Mastodon</strong> in Posthive, enter your instance URL and the credentials.</li>
               </ol>
               <DocImage alt="Mastodon app settings — Development tab" aspectRatio="4/3" />
+
+              {/* ── YouTube ── */}
+              <h2 className="doc-h2" id="youtube">YouTube</h2>
+              <p className="doc-p">
+                Posthive publishes to YouTube as <strong>Shorts</strong> (or regular videos — your choice per post) using Google OAuth 2.0 and the YouTube Data API v3. Every post requires a video attached.
+              </p>
+              <h3 className="doc-h3">How to connect</h3>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">Create a project at <a className="doc-a" href="https://console.cloud.google.com" target="_blank" rel="noreferrer">console.cloud.google.com</a> and enable the <strong>YouTube Data API v3</strong>.</li>
+                <li className="doc-li">Configure the OAuth consent screen — add the <span className="doc-inline-code">youtube.upload</span>, <span className="doc-inline-code">youtube.readonly</span>, and <span className="doc-inline-code">youtube.force-ssl</span> scopes, and add your own Google account under <strong>Audience → Test users</strong> while the app is unverified.</li>
+                <li className="doc-li">Create an OAuth client (Web application) and copy the Client ID and Secret into <span className="doc-inline-code">YOUTUBE_CLIENT_ID</span> / <span className="doc-inline-code">YOUTUBE_CLIENT_SECRET</span>.</li>
+                <li className="doc-li">Click <strong>Connect YouTube</strong> on the Accounts page and authorize.</li>
+              </ol>
+              <div className="doc-warn">
+                <strong>Important:</strong> Google requires OAuth redirect domains to be owned and verified — shared tunnel domains (devtunnels.ms, ngrok, etc.) are rejected outright with <span className="doc-inline-code">Error 403: access_denied</span>. Use <span className="doc-inline-code">http://localhost:&lt;API_PORT&gt;/auth/youtube/callback</span> for <span className="doc-inline-code">YOUTUBE_REDIRECT_URI</span> instead — Google exempts localhost from domain verification. This means connecting YouTube only works from a browser on the same machine as your API server (everything else in Posthive works fine over a tunnel).
+              </div>
+              <h3 className="doc-h3">Shorts vs. regular video</h3>
+              <p className="doc-p">
+                In Compose, the YouTube section has a <strong>Short / Video</strong> toggle. YouTube classifies Shorts by the video file itself — vertical (9:16) and 60 seconds or under is the reliable threshold. Posthive auto-appends <span className="doc-inline-code">#Shorts</span> to the description when "Short" is selected, but that tag alone does nothing if the video doesn't already qualify by aspect ratio and duration. Posthive checks the attached video's dimensions and warns you in the UI if it won't actually classify as a Short.
+              </p>
+              <p className="doc-p">
+                Title and description are separate dedicated fields (not the shared Post box other platforms use) — title is capped at 100 characters, description at 5,000. Selecting only YouTube accounts hides the shared Post box entirely since it isn't used.
+              </p>
+              <div className="doc-callout">
+                While the Google app stays in "Testing" publishing status, refresh tokens expire after 7 days regardless of activity — scheduled YouTube posts will start failing until you manually reconnect. Submit the app for Google verification to remove this limit and the 100-test-user cap.
+              </div>
+              <DocImage alt="Compose page — YouTube Title/Description fields and Short/Video toggle" aspectRatio="16/9" />
 
               {/* ── Scheduling posts ── */}
               <h2 className="doc-h2" id="scheduling-posts">Scheduling posts</h2>
