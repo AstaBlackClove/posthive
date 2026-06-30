@@ -69,10 +69,10 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
   };
 
   return (
-    <nav style={{
+    <nav className="ph-nav" style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
       display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 40px", height: 64,
+      height: 64,
       backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
       background: "rgba(10,10,10,.88)",
       borderBottom: scrolled ? "1px solid rgba(255,255,255,.08)" : "1px solid transparent",
@@ -85,7 +85,9 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
       </Link>
 
       {/* Desktop nav */}
-      <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <div className="ph-nav-right" style={{ display: "flex", alignItems: "center", gap: 2 }}>
+        {/* Links + auth — hidden on mobile, replaced by hamburger */}
+        <div className="ph-desktop-links" style={{ display: "flex", alignItems: "center", gap: 2 }}>
         {/* Features dropdown */}
         <div style={{ position: "relative" }} onMouseEnter={openFeat} onMouseLeave={closeFeat}>
           <button style={btnStyle}>Features {chevron(featOpen)}</button>
@@ -144,8 +146,18 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
             {navCtaLabel}
           </Link>
         </div>
+        </div>
 
-        <button onClick={() => setMobileOpen(o => !o)} style={{ display: "none", background: "none", border: "none", cursor: "pointer", padding: 8, color: "#ededed", marginLeft: 8 }} className="ph-hamburger" aria-label="Menu">
+        {/* Mobile-only: CTA stays visible outside the hamburger menu */}
+        <Link href={ctaHref} className="ph-mobile-cta" style={{
+          display: "none", fontSize: 13.5, fontWeight: 600, padding: "8px 14px", borderRadius: 8,
+          background: "#5b63d3", color: "#fff",
+          boxShadow: "0 0 0 1px rgba(255,255,255,.08), 0 8px 24px -8px rgba(91,99,211,.75)",
+        }}>
+          {navCtaLabel}
+        </Link>
+
+        <button onClick={() => setMobileOpen(o => !o)} style={{ display: "none", background: "none", border: "none", cursor: "pointer", padding: 8, color: "#ededed" }} className="ph-hamburger" aria-label="Menu">
           {mobileOpen
             ? <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4l12 12M16 4L4 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
             : <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
@@ -154,7 +166,7 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
       </div>
 
       {mobileOpen && (
-        <div style={{ position: "absolute", top: 64, left: 0, right: 0, background: "#111", borderBottom: "1px solid rgba(255,255,255,.08)", padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ position: "absolute", top: 64, left: 0, right: 0, background: "#111", borderBottom: "1px solid rgba(255,255,255,.08)", padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: 4, maxHeight: "calc(100vh - 64px)", overflowY: "auto" }}>
           <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>Features</p>
           {FEATURES_NAV.map(f => (
             <a key={f.title} href="/features" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", textDecoration: "none" }}>
@@ -166,15 +178,24 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
           {([["/#pricing", "Pricing"], ["/#how", "How it works"], ["/docs", "Docs"]] as [string, string][]).map(([href, label]) => (
             <a key={label} href={href} onClick={() => setMobileOpen(false)} style={{ padding: "9px 4px", fontSize: 14, fontWeight: 500, color: "#888", textDecoration: "none" }}>{label}</a>
           ))}
-          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-            {!user && <Link href="/login" onClick={() => setMobileOpen(false)} style={{ flex: 1, textAlign: "center", padding: "10px 0", borderRadius: 8, border: "1px solid rgba(255,255,255,.12)", color: "#ededed", fontSize: 14, fontWeight: 500, textDecoration: "none" }}>Sign in</Link>}
-            <Link href={ctaHref} onClick={() => setMobileOpen(false)} style={{ flex: 1, textAlign: "center", padding: "10px 0", borderRadius: 8, background: "#5b63d3", color: "#fff", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>{navCtaLabel}</Link>
-          </div>
+          {!user && (
+            <>
+              <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", margin: "12px 0" }} />
+              <Link href="/login" onClick={() => setMobileOpen(false)} style={{ textAlign: "center", padding: "10px 0", borderRadius: 8, border: "1px solid rgba(255,255,255,.12)", color: "#ededed", fontSize: 14, fontWeight: 500, textDecoration: "none" }}>Sign in</Link>
+            </>
+          )}
         </div>
       )}
 
       <style>{`
-        @media (max-width: 768px) { .ph-hamburger { display: block !important; } }
+        .ph-nav { padding: 0 40px; }
+        @media (max-width: 768px) {
+          .ph-nav { padding: 0 16px; }
+          .ph-nav-right { gap: 10px !important; }
+          .ph-desktop-links { display: none !important; }
+          .ph-mobile-cta { display: inline-flex !important; align-items: center; }
+          .ph-hamburger { display: block !important; }
+        }
       `}</style>
     </nav>
   );

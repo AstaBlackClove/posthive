@@ -220,6 +220,33 @@ const DARK_CSS = `
     overflow-y: auto !important;
     padding: 6px !important;
   }
+
+  /* ── Mobile ── */
+  @media (max-width: 640px) {
+    /* Toolbar: stack into clean rows instead of squeezing everything in */
+    .fc-dark .fc-toolbar {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 10px !important;
+    }
+    .fc-dark .fc-toolbar-chunk {
+      display: flex !important;
+      justify-content: center !important;
+    }
+    .fc-dark .fc-toolbar-title { font-size: 0.95rem !important; }
+    .fc-dark .fc-button { font-size: 0.68rem !important; padding: 5px 9px !important; }
+
+    /* Let just the day grid scroll horizontally instead of squashing columns unreadably —
+       the toolbar (prev/next/title/view buttons) stays full-width and fully visible */
+    .fc-dark .fc-view-harness { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+    .fc-dark .fc-scrollgrid { min-width: 560px; }
+
+    .fc-dark .fc-col-header-cell-cushion { font-size: 0.62rem; letter-spacing: 0.02em; }
+    .fc-dark .fc-daygrid-day-number { font-size: 0.7rem; padding: 5px 6px; }
+
+    /* Compact event cards */
+    .fc-dark .fc-daygrid-event-harness { margin: 1px 2px; }
+  }
 `;
 
 const today = new Date();

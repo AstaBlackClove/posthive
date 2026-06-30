@@ -133,18 +133,18 @@ export default function SettingsPage() {
     <div className="flex flex-col h-full overflow-hidden">
 
       {/* Header */}
-      <div className="px-8 flex-shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
-        <div>
+      <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
+        <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Settings</h1>
-          <p className="text-xs mt-0.5" style={{ color: "#aaaaaa" }}>Manage your account and preferences</p>
+          <p className="text-xs mt-0.5 truncate hidden sm:block" style={{ color: "#aaaaaa" }}>Manage your account and preferences</p>
         </div>
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto px-8 py-6">
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
         <div className="space-y-5">
-          {/* Top row: Profile + Password side by side */}
-          <div className="grid gap-5" style={{ gridTemplateColumns: "1fr 1fr" }}>
+          {/* Top row: Profile + Password side by side on desktop, stacked on mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
           {/* Profile */}
           <Section title="Profile" description="Update your display name and email address.">
@@ -195,7 +195,7 @@ export default function SettingsPage() {
 
           {/* Danger zone — full width below */}
           <Section title="Danger zone">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium" style={{ color: "#ededed" }}>Delete account</p>
                 <p className="text-xs mt-0.5" style={{ color: "#aaaaaa" }}>
@@ -203,7 +203,7 @@ export default function SettingsPage() {
                 </p>
               </div>
               <button onClick={() => setShowDelete(true)}
-                className="text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
+                className="text-xs font-semibold px-4 py-2 rounded-xl transition-colors flex-shrink-0 self-start"
                 style={{ backgroundColor: "#2a1010", color: "#f87171", border: "1px solid #5a2020" }}>
                 Delete
               </button>

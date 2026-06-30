@@ -327,7 +327,7 @@ export default function BillingPage() {
   if (!billingEnabled) {
     return (
       <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
-        <div className="flex items-center px-8 flex-shrink-0"
+        <div className="flex items-center pl-16 pr-4 md:px-8 flex-shrink-0"
           style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#111111" }}>
           <div>
             <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Billing</h1>
@@ -354,7 +354,7 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto" style={{ backgroundColor: "#0a0a0a" }}>
+    <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
       {showCancelModal && (
         <CancelModal
           onConfirm={cancelSubscription}
@@ -364,12 +364,12 @@ export default function BillingPage() {
       )}
 
       {/* Header */}
-      <div className="px-8 flex-shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
-        <div>
+      <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
+        <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>
             {isInactive ? "Start your free trial" : "Billing & Plans"}
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "#aaaaaa" }}>
+          <p className="text-xs mt-0.5 truncate hidden sm:block" style={{ color: "#aaaaaa" }}>
             {isInactive
               ? "Choose a plan and enter your card — you won't be charged for 14 days."
               : "Manage your subscription and usage"}
@@ -377,7 +377,7 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <div className="px-8 py-6 space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6">
 
         {/* Inactive welcome banner */}
         {isInactive && !success && (
@@ -566,7 +566,7 @@ export default function BillingPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {PLANS.map((plan) => {
               const isCurrent = status?.plan === plan.id && (isActive || isTrialing);
               const planOrder = ["creator", "pro", "team"];

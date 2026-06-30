@@ -36,6 +36,7 @@ export default function ComposePage() {
   const [submitting, setSubmitting] = useState(false);
   const [perAccountOverrides, setPerAccountOverrides] = useState<Record<string, PerAccountOverride>>({});
   const [showCustomize, setShowCustomize] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [allowOverrides, setAllowOverrides] = useState(true); // optimistic; corrected after fetch
   const [allowReels, setAllowReels] = useState(true); // optimistic; corrected after fetch
   const [maxImagesPerPost, setMaxImagesPerPost] = useState(10); // optimistic; corrected after fetch
@@ -257,7 +258,7 @@ export default function ComposePage() {
       setMediaItems([]); setAltTexts([]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err);
-      toastError(msg.replace(/^Error: API POST \/jobs â†' \d+: /, "").replace(/^\{"error":"/, "").replace(/"\}$/, ""));
+      toastError(msg.replace(/^Error: API POST \/jobs → \d+: /, "").replace(/^\{"error":"/, "").replace(/"\}$/, ""));
     }
     finally { setSubmitting(false); }
   }
@@ -280,27 +281,47 @@ export default function ComposePage() {
   const onlyInstagramStory = instagramSelected && igMediaType === "story" && selectedAccounts.every((a) => a.platform === "instagram");
   const linkedinSelectedWithMedia = selectedAccounts.some((a) => a.platform === "linkedin") && mediaItems.length > 0;
 
+  const previewContent = selectedAccounts.length === 0 ? (
+    <div className="rounded-2xl border-2 border-dashed p-10 text-center" style={{ borderColor: "#2a2a2a" }}>
+      <p className="text-sm" style={{ color: "#888888" }}>Select an account above to see a preview</p>
+    </div>
+  ) : (
+    selectedAccounts.map((a) => {
+      const ov = perAccountOverrides[a.id];
+      return (
+        <PlatformPreview
+          key={a.id}
+          account={a}
+          text={ov?.text !== undefined ? ov.text : text}
+          commentText={ov?.commentText !== undefined ? ov.commentText : commentText}
+          mediaItems={mediaItems}
+          igMediaType={a.platform === "instagram" ? igMediaType : undefined}
+        />
+      );
+    })
+  );
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-8" style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
+      <div className="flex items-center justify-between pl-16 pr-4 md:px-8" style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
         <div>
           <h1 className="text-lg font-bold text-gray-900">New Post</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Write once Â· schedule across platforms</p>
+          <p className="text-xs text-gray-400 mt-0.5 hidden sm:block">Write once · schedule across platforms</p>
         </div>
         {!loadingAccounts && accounts.length === 0 && (
-          <a href="/accounts" className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg font-medium">
-            âš ï¸ Connect an account first â†'
+          <a href="/accounts" className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg font-medium flex-shrink-0">
+            ⚠️ Connect an account first →
           </a>
         )}
       </div>
 
-      {/* Main area "" editor left, previews right */}
-      <form onSubmit={handleSubmit} onPaste={handlePaste} className="flex flex-1 min-h-0 overflow-hidden">
+      {/* Main area "" editor left, previews right (stacked on mobile) */}
+      <form onSubmit={handleSubmit} onPaste={handlePaste} className="flex flex-col md:flex-row flex-1 min-h-0 overflow-y-auto md:overflow-hidden">
 
         {/* Left "" editor */}
-        <div className="flex flex-col flex-1 overflow-y-auto min-h-0" style={{ borderRight: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
+        <div className="flex flex-col md:flex-1 md:overflow-y-auto md:min-h-0" style={{ borderRight: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
 
           {/* Platform selector */}
           <div className="px-6 pt-4 pb-3" style={{ borderBottom: "1px solid #2a2a2a" }}>
@@ -422,9 +443,9 @@ export default function ComposePage() {
                       style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa" }}>
                       <span style={{ color: "#E1306C", fontWeight: 600 }}>Instagram</span> format only.
                       <ul className="mt-1 space-y-0.5 list-none">
-                        <li>Â· Post - image or carousel</li>
-                        <li>Â· Reel - single video</li>
-                        <li>Â· Story - single image</li>
+                        <li>· Post - image or carousel</li>
+                        <li>· Reel - single video</li>
+                        <li>· Story - single image</li>
                       </ul>
                     </div>
                   </div>
@@ -634,35 +655,41 @@ export default function ComposePage() {
 
         </div>
 
-        {/* Right "" per-platform previews (fixed 480px) */}
-        <div className="w-[480px] flex-shrink-0 flex flex-col overflow-y-auto" style={{ backgroundColor: "#0a0a0a" }}>
+        {/* Right "" per-platform previews — desktop only, fixed 480px. Mobile uses the drawer instead */}
+        <div className="hidden md:flex md:w-[480px] flex-shrink-0 flex-col md:overflow-y-auto" style={{ backgroundColor: "#0a0a0a" }}>
           <div className="px-5 pt-5 pb-3">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Preview</p>
           </div>
           <div className="px-5 pb-5 space-y-4 flex-1">
-            {selectedAccounts.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed p-10 text-center" style={{ borderColor: "#2a2a2a" }}>
-                <p className="text-sm" style={{ color: "#888888" }}>Select an account above to see a preview</p>
-              </div>
-            ) : (
-              selectedAccounts.map((a) => {
-                const ov = perAccountOverrides[a.id];
-                return (
-                  <PlatformPreview
-                    key={a.id}
-                    account={a}
-                    text={ov?.text !== undefined ? ov.text : text}
-                    commentText={ov?.commentText !== undefined ? ov.commentText : commentText}
-                    mediaItems={mediaItems}
-                    igMediaType={a.platform === "instagram" ? igMediaType : undefined}
-                  />
-                );
-              })
-            )}
+            {previewContent}
           </div>
         </div>
       </form>
 
+      {/* Mobile-only: preview drawer */}
+      {previewOpen && (
+        <div className="md:hidden fixed inset-0 z-40" onClick={() => setPreviewOpen(false)}>
+          <div className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,.6)" }} />
+          <div
+            className="absolute inset-x-0 bottom-0 rounded-t-2xl flex flex-col"
+            style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderBottom: "none", maxHeight: "80vh" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-center pt-2.5 pb-1 flex-shrink-0">
+              <div className="w-9 h-1 rounded-full" style={{ backgroundColor: "#2a2a2a" }} />
+            </div>
+            <div className="flex items-center justify-between px-5 pt-1 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Preview</p>
+              <button type="button" onClick={() => setPreviewOpen(false)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: "#666" }}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto px-5 py-4 space-y-4">
+              {previewContent}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Customize per platform dialog */}
       {showCustomize && (
@@ -739,7 +766,7 @@ export default function ComposePage() {
       )}
 
       {/* Bottom footer bar "" full width */}
-      <div className="px-8 py-4 flex items-center gap-4" style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0a0a0a", display: loadingAccounts ? "none" : undefined }}>
+      <div className="px-4 md:px-8 py-3 md:py-4 flex flex-wrap items-center gap-3 md:gap-4" style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0a0a0a", display: loadingAccounts ? "none" : undefined }}>
         {/* Dry run toggle */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setDryRun((v) => !v)}>
           <div className={`relative w-9 h-5 rounded-full transition-colors ${dryRun ? "bg-violet-500" : "bg-gray-300"}`}>
@@ -748,27 +775,35 @@ export default function ComposePage() {
           <span className={`text-xs font-medium ${dryRun ? "text-violet-700" : "text-gray-500"}`}>Dry run</span>
         </div>
 
-        <div className="h-5 w-px" style={{ backgroundColor: "#2a2a2a" }} />
+        {/* Preview drawer trigger — mobile only */}
+        <button type="button" onClick={() => setPreviewOpen(true)}
+          className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+          style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Preview
+        </button>
+
+        <div className="h-5 w-px hidden sm:block" style={{ backgroundColor: "#2a2a2a" }} />
 
         {/* Schedule datetime */}
         <DateTimePicker value={scheduledFor} onChange={setScheduledFor} />
 
-        {/* Spacer */}
-        <div className="flex-1" />
+        {/* Spacer — desktop only */}
+        <div className="flex-1 hidden md:block" />
 
         {/* Inline media warnings only */}
         {instagramSelectedWithNoMedia && (
-          <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
+          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#f59e0b" }}>
             ℹ️ {igMediaType === "reel" ? "Add a video for this Reel" : "Instagram requires an image"}
           </p>
         )}
         {instagramStoryWithNoImage && (
-          <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
+          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#f59e0b" }}>
             ℹ️ Add an image for the Instagram Story
           </p>
         )}
         {linkedinSelectedWithMedia && (
-          <p className="text-xs font-medium" style={{ color: "#888" }}>
+          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#888" }}>
             ℹ️ LinkedIn will post text only image/video support requires elevated API access
           </p>
         )}
@@ -779,7 +814,7 @@ export default function ComposePage() {
           form=""
           disabled={submitting || overAnyLimit || accounts.length === 0}
           onClick={handleSubmit}
-          className="px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-colors hover:bg-gray-100"
+          className="w-full md:w-auto order-4 md:order-none px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-colors hover:bg-gray-100"
           style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
         >
           {submitting ? "Scheduling…" : dryRun ? "Schedule Dry Run" : "Schedule Post"}

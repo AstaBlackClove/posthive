@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 // ─── Image slot component ───────────────────────────────────────────────────
@@ -86,9 +86,20 @@ const NAV = [
 
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("quick-start");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsDesktop(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   function scrollTo(id: string) {
     setActiveSection(id);
+    setSidebarOpen(false);
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -109,7 +120,8 @@ export default function DocsPage() {
         .doc-a { color: #9ba2ee; text-decoration: underline; text-underline-offset: 3px; }
         .doc-callout { background: rgba(91,99,211,.08); border: 1px solid rgba(91,99,211,.25); border-radius: 10px; padding: 14px 18px; margin: 16px 0 24px; font-size: 14px; color: #9ba2ee; line-height: 1.6; }
         .doc-warn { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.25); border-radius: 10px; padding: 14px 18px; margin: 16px 0 24px; font-size: 14px; color: #fbbf24; line-height: 1.6; }
-        .doc-table { width: 100%; border-collapse: collapse; margin: 12px 0 24px; font-size: 14px; }
+        .doc-table-wrap { width: 100%; overflow-x: auto; margin: 12px 0 24px; }
+        .doc-table { width: 100%; min-width: 480px; border-collapse: collapse; font-size: 14px; margin: 0; }
         .doc-table th { text-align: left; padding: 10px 14px; color: #666; font-weight: 600; border-bottom: 1px solid #2a2a2a; }
         .doc-table td { padding: 10px 14px; color: #888; border-bottom: 1px solid #1e1e1e; vertical-align: top; }
         .doc-table tr:last-child td { border-bottom: none; }
@@ -124,7 +136,7 @@ export default function DocsPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "0 32px",
+          padding: "0 16px",
           position: "fixed",
           top: 0,
           left: 0,
@@ -132,26 +144,50 @@ export default function DocsPage() {
           zIndex: 50,
           background: "#0a0a0a",
         }}>
-          <img src="/posthivemain.png" alt="Posthive" style={{ height: 28 }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <button
+              onClick={() => setSidebarOpen(o => !o)}
+              className="md:hidden"
+              aria-label="Toggle sections"
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 6, color: "#ededed" }}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+            </button>
+            <img src="/posthivemain.png" alt="Posthive" style={{ height: 28 }} />
+          </div>
           <Link href="/" style={{ fontSize: 14, color: "#888", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
-            <span>←</span> Back to home
+            <span>←</span> <span className="hidden sm:inline">Back to home</span>
           </Link>
         </nav>
+
+        {/* Mobile sidebar backdrop */}
+        {sidebarOpen && (
+          <div
+            className="md:hidden"
+            style={{ position: "fixed", inset: 0, top: 64, background: "rgba(0,0,0,.6)", zIndex: 45 }}
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
         {/* Body below nav */}
         <div style={{ display: "flex", flex: 1, marginTop: 64 }}>
 
           {/* Sidebar */}
-          <aside style={{
-            width: 240,
-            position: "fixed",
-            top: 64,
-            bottom: 0,
-            left: 0,
-            borderRight: "1px solid #2a2a2a",
-            overflowY: "auto",
-            padding: "24px 0",
-          }}>
+          <aside
+            style={{
+              width: 240,
+              position: "fixed",
+              top: 64,
+              bottom: 0,
+              left: 0,
+              borderRight: "1px solid #2a2a2a",
+              overflowY: "auto",
+              padding: "24px 0",
+              background: "#0a0a0a",
+              zIndex: 46,
+              transform: isDesktop || sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+              transition: "transform 0.2s ease",
+            }}>
             {NAV.map((group) => (
               <div key={group.section}>
                 <div style={{
@@ -198,11 +234,12 @@ export default function DocsPage() {
 
           {/* Main content */}
           <main style={{
-            marginLeft: 240,
+            marginLeft: isDesktop ? 240 : 0,
             flex: 1,
             overflowY: "auto",
+            minWidth: 0,
           }}>
-            <div style={{ maxWidth: 760, margin: "0 auto", padding: "48px 40px 120px" }}>
+            <div style={{ maxWidth: 760, margin: "0 auto", paddingTop: 48, paddingBottom: 120 }} className="px-5 md:px-10">
 
               {/* Hero */}
               <h1 className="doc-h1">Posthive Documentation</h1>
@@ -258,7 +295,7 @@ pnpm install`}</code>
                 All configuration lives in <span className="doc-inline-code">apps/api/.env</span>. Copy <span className="doc-inline-code">.env.example</span> and fill in the values below.
               </p>
 
-              <table className="doc-table">
+              <div className="doc-table-wrap"><table className="doc-table">
                 <thead>
                   <tr>
                     <th>Variable</th>
@@ -277,7 +314,7 @@ pnpm install`}</code>
                   <tr><td><span className="doc-inline-code">ENABLE_BILLING</span></td><td>No</td><td>Set to <code>true</code> to enable Dodo Payments billing. Defaults to off for self-hosters.</td></tr>
                   <tr><td><span className="doc-inline-code">AUTH_PROVIDER</span></td><td>No</td><td><code>local</code> (default) or <code>supabase</code>. Switches the auth backend.</td></tr>
                 </tbody>
-              </table>
+              </table></div>
 
               <div className="doc-warn">
                 <strong>Warning:</strong> <span className="doc-inline-code">ENCRYPTION_KEY</span> must never be changed after connected accounts have been saved. Changing it makes all stored credentials permanently unreadable.
@@ -499,7 +536,7 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</code>
               <p className="doc-p">
                 Posthive has four tiers. The trial is available immediately after sign-up with no card required.
               </p>
-              <table className="doc-table">
+              <div className="doc-table-wrap"><table className="doc-table">
                 <thead>
                   <tr>
                     <th>Plan</th>
@@ -544,7 +581,7 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</code>
                     <td>10</td>
                   </tr>
                 </tbody>
-              </table>
+              </table></div>
               <p className="doc-p">
                 Billing is handled through <strong>Dodo Payments</strong>. Set <span className="doc-inline-code">ENABLE_BILLING=true</span> and configure your Dodo API key and product IDs to activate billing.
               </p>
@@ -566,7 +603,7 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</code>
 DODO_WEBHOOK_SECRET="abc123..."`}</code>
 
               <h3 className="doc-h3">Handled events</h3>
-              <table className="doc-table">
+              <div className="doc-table-wrap"><table className="doc-table">
                 <thead>
                   <tr>
                     <th>Event</th>
@@ -583,7 +620,7 @@ DODO_WEBHOOK_SECRET="abc123..."`}</code>
                     <td>Marks the subscription as cancelled. Access continues until the end of the billing period.</td>
                   </tr>
                 </tbody>
-              </table>
+              </table></div>
 
             </div>
           </main>

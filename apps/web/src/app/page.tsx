@@ -62,13 +62,14 @@ export default function RootPage() {
         @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; overflow-x: hidden; width: 100%; }
         body {
           background: #0a0a0a;
           color: #ededed;
           font-family: 'Geist', system-ui, sans-serif;
           -webkit-font-smoothing: antialiased;
           overflow-x: hidden;
+          width: 100%;
         }
         a { color: inherit; text-decoration: none; }
         ::selection { background: rgba(91,99,211,.35); }
@@ -208,6 +209,24 @@ export default function RootPage() {
           transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1);
         }
         .section-reveal.visible { opacity: 1; transform: none; }
+
+        /* ── mobile responsive overrides ── */
+        @media (max-width: 900px) {
+          .ph-features-grid, .ph-how-grid, .ph-pricing-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 768px) {
+          .ph-hero-section { padding: 90px 20px 70px !important; }
+          .ph-hero-title { font-size: clamp(2.2rem, 9vw, 3.2rem) !important; }
+          .ph-hero-sub { font-size: 16px !important; padding: 0 8px; }
+          .ph-section { padding-left: 20px !important; padding-right: 20px !important; }
+          .ph-section-heading { font-size: clamp(1.7rem, 7vw, 2.2rem) !important; }
+          .ph-cta-banner { padding: 48px 24px !important; }
+          .ph-cta-title { font-size: clamp(1.6rem, 7vw, 2.2rem) !important; }
+          .ph-foot-bottom { flex-direction: column !important; align-items: flex-start !important; gap: 14px !important; }
+        }
+        @media (max-width: 480px) {
+          .ph-hero-screenshot { padding: 0 12px; }
+        }
       `}</style>
 
       <NavBar user={!!user} ctaHref={ctaHref} navCtaLabel={navCtaLabel} />
@@ -216,7 +235,7 @@ export default function RootPage() {
       <div style={{ paddingTop: 65 }}>
 
         {/* ── HERO ── */}
-        <section style={{ position: "relative", padding: "110px 40px 100px", textAlign: "center" }}>
+        <section className="ph-hero-section" style={{ position: "relative", padding: "110px 40px 100px", textAlign: "center", overflow: "hidden", maxWidth: "100vw" }}>
           {/* glow blob */}
           <div style={{
             position: "absolute", top: -60, left: "50%",
@@ -230,12 +249,12 @@ export default function RootPage() {
 
           <div style={{ position: "relative", maxWidth: 900, margin: "0 auto" }}>
 
-            <h1 className="anim-2" style={{ fontSize: 80, lineHeight: 1, fontWeight: 800, letterSpacing: "-.04em", marginBottom: 26 }}>
+            <h1 className="anim-2 ph-hero-title" style={{ fontSize: 80, lineHeight: 1, fontWeight: 800, letterSpacing: "-.04em", marginBottom: 26 }}>
               Stop copy-pasting.<br />
               <span className="hero-gradient">Start owning your reach.</span>
             </h1>
 
-            <p className="anim-3" style={{ fontSize: 19, lineHeight: 1.65, color: "#888", maxWidth: 520, margin: "0 auto 44px" }}>
+            <p className="anim-3 ph-hero-sub" style={{ fontSize: 19, lineHeight: 1.65, color: "#888", maxWidth: 520, margin: "0 auto 44px" }}>
               Write once, schedule everywhere at the right time, every time, without the tab-switching chaos.
             </p>
 
@@ -262,7 +281,7 @@ export default function RootPage() {
           </div>
 
           {/* product screenshot */}
-          <div className="screenshot-float anim-fade" style={{ position: "relative", maxWidth: 1060, margin: "80px auto 0" }}>
+          <div className="screenshot-float anim-fade ph-hero-screenshot" style={{ position: "relative", maxWidth: 1060, margin: "80px auto 0" }}>
             <div style={{ position: "absolute", inset: -2, borderRadius: 18, background: "linear-gradient(180deg, rgba(91,99,211,.6) 0%, transparent 50%)", filter: "blur(3px)", pointerEvents: "none" }} />
             <div style={{ position: "relative", borderRadius: 18, border: "1px solid rgba(255,255,255,.1)", background: "#111", padding: 10, boxShadow: "0 60px 140px -40px rgba(91,99,211,.5)" }}>
               <div style={{ borderRadius: 10, overflow: "hidden", lineHeight: 0 }}>
@@ -280,17 +299,17 @@ export default function RootPage() {
         </section>
 
         {/* ── FEATURES ── */}
-        <section id="features" style={{ padding: "120px 40px", maxWidth: 1200, margin: "0 auto" }}>
+        <section id="features" className="ph-section" style={{ padding: "120px 40px", maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 70 }}>
             <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: "#5b63d3", letterSpacing: ".14em" }}>FEATURES</span>
-            <h2 style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-.03em", margin: "14px 0 16px" }}>
+            <h2 className="ph-section-heading" style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-.03em", margin: "14px 0 16px" }}>
               Built for creators who actually post
             </h2>
             <p style={{ fontSize: 18, color: "#777", maxWidth: 500, margin: "0 auto" }}>
               Every tool you need to show up consistently without the manual grind.
             </p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+          <div className="ph-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
             {[
               { icon: <SunIcon />, title: "5 platforms, one composer", body: "Draft once and ship to Bluesky, Threads, Instagram, LinkedIn and Mastodon in a single click." },
               { icon: <InstagramIcon />, title: "Reels & Stories included", body: "Full Instagram support schedule Reels, Stories and feed posts with live native previews." },
@@ -309,15 +328,15 @@ export default function RootPage() {
         </section>
 
         {/* ── HOW IT WORKS ── */}
-        <section id="how" style={{ borderTop: "1px solid rgba(255,255,255,.06)", borderBottom: "1px solid rgba(255,255,255,.06)", background: "#0c0c0c", padding: "100px 40px" }}>
+        <section id="how" className="ph-section" style={{ borderTop: "1px solid rgba(255,255,255,.06)", borderBottom: "1px solid rgba(255,255,255,.06)", background: "#0c0c0c", padding: "100px 40px" }}>
           <div style={{ maxWidth: 1180, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 70 }}>
               <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: "#5b63d3", letterSpacing: ".14em" }}>HOW IT WORKS</span>
-              <h2 style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-.03em", marginTop: 14 }}>
+              <h2 className="ph-section-heading" style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-.03em", marginTop: 14 }}>
                 From zero to scheduled in minutes
               </h2>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 32 }}>
+            <div className="ph-how-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 32 }}>
               {[
                 { n: "01", title: "Connect your accounts", desc: "Authenticate Bluesky, Threads, Instagram, LinkedIn and Mastodon in a couple of clicks OAuth, encrypted at rest." },
                 { n: "02", title: "Compose & tailor", desc: "Write once. Then fine-tune copy and media per platform inside the same composer. Preview exactly what each network will show." },
@@ -334,13 +353,13 @@ export default function RootPage() {
         </section>
 
         {/* ── PRICING ── */}
-        <section id="pricing" style={{ padding: "120px 40px", maxWidth: 1100, margin: "0 auto" }}>
+        <section id="pricing" className="ph-section" style={{ padding: "120px 40px", maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 64 }}>
             <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: "#5b63d3", letterSpacing: ".14em" }}>PRICING</span>
-            <h2 style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-.03em", margin: "14px 0 14px" }}>Pay for what you need</h2>
+            <h2 className="ph-section-heading" style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-.03em", margin: "14px 0 14px" }}>Pay for what you need</h2>
             <p style={{ fontSize: 18, color: "#777" }}>14-day free trial on every plan. Cancel anytime.</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18, alignItems: "start" }}>
+          <div className="ph-pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18, alignItems: "start" }}>
             {PLANS.map(plan => (
               <div key={plan.id} className={plan.popular ? "plan-card-popular" : "plan-card"}>
                 {plan.popular && (
@@ -375,11 +394,11 @@ export default function RootPage() {
         </section>
 
         {/* ── CTA BANNER ── */}
-        <section style={{ padding: "0 40px 120px" }}>
-          <div style={{ position: "relative", maxWidth: 1100, margin: "0 auto", borderRadius: 22, border: "1px solid rgba(91,99,211,.35)", background: "linear-gradient(160deg, rgba(91,99,211,.16) 0%, #0d0d0d 55%)", padding: "72px 40px", textAlign: "center", overflow: "hidden" }}>
+        <section className="ph-section" style={{ padding: "0 40px 120px" }}>
+          <div className="ph-cta-banner" style={{ position: "relative", maxWidth: 1100, margin: "0 auto", borderRadius: 22, border: "1px solid rgba(91,99,211,.35)", background: "linear-gradient(160deg, rgba(91,99,211,.16) 0%, #0d0d0d 55%)", padding: "72px 40px", textAlign: "center", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: -100, left: "50%", transform: "translateX(-50%)", width: 600, height: 360, background: "radial-gradient(ellipse, rgba(91,99,211,.5), transparent 70%)", filter: "blur(40px)", pointerEvents: "none" }} />
             <div style={{ position: "relative" }}>
-              <h2 style={{ fontSize: 44, fontWeight: 800, letterSpacing: "-.035em", marginBottom: 16 }}>
+              <h2 className="ph-cta-title" style={{ fontSize: 44, fontWeight: 800, letterSpacing: "-.035em", marginBottom: 16 }}>
                 Your audience is waiting.<br />Are you scheduled?
               </h2>
               <p style={{ fontSize: 18, color: "#888", marginBottom: 36 }}>
@@ -464,7 +483,7 @@ function SiteFooter({ githubUrl }: { githubUrl: string }) {
         </div>
 
         {/* Bottom bar */}
-        <div style={{ marginTop: 56, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "#444", fontFamily: "'Geist Mono', monospace" }}>
+        <div className="ph-foot-bottom" style={{ marginTop: 56, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "#444", fontFamily: "'Geist Mono', monospace" }}>
           <span>© 2026 Posthive. Open source under AGPL-3.0.</span>
           <div style={{ display: "flex", gap: 20 }}>
             <Link href="/privacy" style={{ color: "#555", textDecoration: "none" }}>Privacy</Link>

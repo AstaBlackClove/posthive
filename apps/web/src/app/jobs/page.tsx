@@ -330,27 +330,27 @@ export default function JobsPage() {
       )}
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-8 flex-shrink-0"
+      <div className="flex items-center justify-between pl-16 pr-4 md:px-8 flex-shrink-0"
         style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#111111" }}>
-        <div>
+        <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Posts</h1>
-          <p className="text-xs mt-0.5 flex items-center gap-1.5" style={{ color: "#888888" }}>
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+          <p className="text-xs mt-0.5 flex items-center gap-1.5 truncate" style={{ color: "#888888" }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block flex-shrink-0" />
             {lastRefresh ? `Live · updated ${lastRefresh.toLocaleTimeString()}` : "Connecting…"}
           </p>
         </div>
         <a href="/"
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+          className="inline-flex items-center gap-1.5 px-3 md:px-4 py-2 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 flex-shrink-0"
           style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          New Post
+          <span className="hidden sm:inline">New Post</span>
         </a>
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-8 py-3 flex-shrink-0 flex-wrap"
+      <div className="flex items-center gap-3 px-4 md:px-8 py-3 flex-shrink-0 flex-wrap"
         style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
 
         <div className="flex gap-0.5 p-1 rounded-xl" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
@@ -370,8 +370,8 @@ export default function JobsPage() {
 
         {viewTab === "list" && (
           <>
-            <div className="h-4 w-px" style={{ backgroundColor: "#2a2a2a" }} />
-            <div className="flex gap-1.5">
+            <div className="h-4 w-px hidden sm:block" style={{ backgroundColor: "#2a2a2a" }} />
+            <div className="flex gap-1.5 flex-wrap">
               {([
                 { id: "all",     label: "All",       dot: null,       activeColor: "#ededed", activeBg: "#2a2a2a" },
                 { id: "pending", label: "Scheduled",  dot: "#f59e0b", activeColor: "#fbbf24", activeBg: "#1c1a10" },
@@ -395,8 +395,8 @@ export default function JobsPage() {
         {/* Platform filter */}
         {allPlatforms.length > 1 && (
           <>
-            <div className="h-4 w-px" style={{ backgroundColor: "#2a2a2a" }} />
-            <div className="flex gap-1.5">
+            <div className="h-4 w-px hidden sm:block" style={{ backgroundColor: "#2a2a2a" }} />
+            <div className="flex gap-1.5 flex-wrap">
               {(["all", ...allPlatforms] as string[]).map((p) => (
                 <button key={p} onClick={() => setPlatformFilter(p)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all capitalize"

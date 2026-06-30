@@ -115,11 +115,30 @@ export function Sidebar() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed");
     if (saved === "true") setCollapsed(true);
   }, []);
+
+  // Track viewport so collapse (icon-only) mode only applies on desktop —
+  // the mobile drawer should always show full content regardless of the saved preference
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsDesktop(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  // Close the mobile drawer whenever the route changes
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  const showCollapsed = collapsed && isDesktop;
 
   function toggleCollapsed() {
     setCollapsed((prev) => {
@@ -136,13 +155,44 @@ export function Sidebar() {
   const initial = user?.name?.[0]?.toUpperCase() ?? "?";
 
   return (
-    <aside
-      style={{
-        backgroundColor: "var(--color-bg)",
-        borderRight: "1px solid #2a2a2a",
-      }}
-      className={`relative flex flex-col shrink-0 h-full transition-all duration-200 ${collapsed ? "w-[60px]" : "w-60"}`}
-    >
+    <>
+      {/* Mobile hamburger trigger */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        aria-label="Open menu"
+        className="md:hidden fixed z-40 flex items-center justify-center"
+        style={{
+          top: 14,
+          left: 14,
+          width: 36,
+          height: 36,
+          borderRadius: 9,
+          backgroundColor: "#161616",
+          border: "1px solid #2a2a2a",
+          color: "#ededed",
+        }}
+      >
+        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40"
+          style={{ backgroundColor: "rgba(0,0,0,.6)" }}
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      <aside
+        style={{
+          backgroundColor: "var(--color-bg)",
+          borderRight: "1px solid #2a2a2a",
+        }}
+        className={`fixed md:relative inset-y-0 left-0 z-50 flex flex-col shrink-0 h-full w-60 transition-transform duration-200 md:transition-all md:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "md:w-[60px]" : "md:w-60"}`}
+      >
       {/* Logo — fixed height 65px to match main content header */}
       <div
         className="flex items-center shrink-0 px-3 gap-2 relative"
@@ -167,7 +217,7 @@ export function Sidebar() {
             height={28}
             style={{ objectFit: "contain" }}
           />
-          {!collapsed && (
+          {!showCollapsed && (
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm leading-tight text-white">
                 Posthive
@@ -177,11 +227,11 @@ export function Sidebar() {
         </Link>
       </div>
 
-      {/* Toggle button — floats at the right edge, always visible */}
+      {/* Toggle button — desktop only, floats at the right edge */}
       <button
         onClick={toggleCollapsed}
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="absolute z-10 flex items-center justify-center transition-colors hover:bg-white/10"
+        className="hidden md:flex absolute z-10 items-center justify-center transition-colors hover:bg-white/10"
         style={{
           top: "50%",
           right: -12,
@@ -204,7 +254,7 @@ export function Sidebar() {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2.5}
-            d={collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"}
+            d={showCollapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"}
           />
         </svg>
       </button>
@@ -217,7 +267,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              title={collapsed ? item.label : undefined}
+              title={showCollapsed ? item.label : undefined}
               style={
                 active
                   ? { backgroundColor: "var(--color-accent)", color: "#fff" }
@@ -225,22 +275,22 @@ export function Sidebar() {
               }
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 !active ? "hover:bg-white/5 hover:text-white" : ""
-              } ${collapsed ? "justify-center" : ""}`}
+              } ${showCollapsed ? "justify-center" : ""}`}
             >
               {item.icon}
-              {!collapsed && item.label}
+              {!showCollapsed && item.label}
             </Link>
           );
         })}
       </nav>
 
       {/* Trial banner — hide when collapsed */}
-      {!collapsed && <TrialBanner />}
+      {!showCollapsed && <TrialBanner />}
 
       {/* User footer */}
       <div className="px-2 py-3" style={{ borderTop: "1px solid #2a2a2a" }}>
         <div
-          className={`flex items-center gap-3 px-2 py-2 rounded-lg ${collapsed ? "justify-center" : ""}`}
+          className={`flex items-center gap-3 px-2 py-2 rounded-lg ${showCollapsed ? "justify-center" : ""}`}
         >
           {user?.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -257,7 +307,7 @@ export function Sidebar() {
               {initial}
             </div>
           )}
-          {!collapsed && (
+          {!showCollapsed && (
             <>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">
@@ -295,5 +345,6 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }

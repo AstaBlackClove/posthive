@@ -356,13 +356,13 @@ export default function AccountsPage() {
       )}
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-8 flex-shrink-0"
+      <div className="flex items-center justify-between pl-16 pr-4 md:px-8 flex-shrink-0"
         style={{ height: 65, borderBottom: `1px solid ${BORDER}`, backgroundColor: SURFACE }}>
-        <div>
+        <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: TEXT }}>Accounts</h1>
-          <p className="text-xs mt-0.5" style={{ color: MUTED }}>Connect the social accounts you want to post to.</p>
+          <p className="text-xs mt-0.5 truncate hidden sm:block" style={{ color: MUTED }}>Connect the social accounts you want to post to.</p>
         </div>
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
           style={accounts.length > 0
             ? { backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }
             : { backgroundColor: "#1a1a1a", color: MUTED, border: `1px solid ${BORDER}` }}>
@@ -371,7 +371,7 @@ export default function AccountsPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-8 py-6">
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
 
 
         {isCancelled && (
@@ -406,7 +406,7 @@ export default function AccountsPage() {
 
         {/* Skeleton grid while loading */}
         {loading && (
-          <div className="grid grid-cols-2 gap-4 animate-pulse">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-pulse">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
@@ -425,7 +425,7 @@ export default function AccountsPage() {
           </div>
         )}
 
-        {!loading && <div className="grid grid-cols-2 gap-4">
+        {!loading && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
           {/* ── Bluesky ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>

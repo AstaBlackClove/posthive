@@ -34,7 +34,7 @@ export default function PrivacyPage() {
       </nav>
 
       {/* Content */}
-      <div style={{ maxWidth: 740, margin: "0 auto", padding: "72px 40px 100px" }}>
+      <div className="px-5 md:px-10" style={{ maxWidth: 740, margin: "0 auto", paddingTop: 72, paddingBottom: 100 }}>
         <div style={{ marginBottom: 48 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 12px", borderRadius: 999, border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.03)", fontSize: 12, color: "#666", fontFamily: "monospace", marginBottom: 20 }}>
             Last updated: {LAST_UPDATED}
