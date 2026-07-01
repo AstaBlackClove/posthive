@@ -11,9 +11,10 @@ export function PlanGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_ENABLE_BILLING !== "true") { setReady(true); return; }
-    apiFetch<{ planStatus: string }>("/billing/status")
-      .then(({ planStatus }) => {
-        if (planStatus === "inactive") {
+    apiFetch<{ planStatus: string; trialEndsAt: string | null }>("/billing/status")
+      .then(({ planStatus, trialEndsAt }) => {
+        const hasActivePlan = planStatus === "active" || (planStatus === "trialing" && trialEndsAt !== null);
+        if (!hasActivePlan) {
           router.replace("/onboarding");
         } else {
           setReady(true);
