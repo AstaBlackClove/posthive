@@ -1,4 +1,4 @@
-# Contributing to Social Scheduler
+# Contributing to Posthive
 
 Thanks for taking the time to contribute! This is a self-hosted, open-source project and all contributions are welcome.
 
@@ -20,6 +20,7 @@ Thanks for taking the time to contribute! This is a self-hosted, open-source pro
 
 - Node.js >= 20
 - pnpm >= 9 (`npm install -g pnpm`)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) — for the local PostgreSQL database
 - A Redis instance — [Upstash](https://upstash.com) free tier is easiest
 
 ### Steps
@@ -35,19 +36,31 @@ pnpm install
 # 3. Set up environment variables
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
-# Fill in the required values
+# Fill in the required values (see apps/api/.env.example for guidance)
 
-# 4. Set up the database
-cd apps/api
-pnpm prisma migrate dev
-pnpm prisma generate
-cd ../..
-
-# 5. Start the dev servers
+# 4. Start the dev servers (Docker Postgres starts automatically)
 pnpm dev
 ```
 
-The API runs on http://localhost:3001 and the web app on http://localhost:3000.
+`pnpm dev` automatically starts a PostgreSQL container named `posthive-pg` via Docker and runs Prisma migrations on first run. The API runs on http://localhost:3001 and the web app on http://localhost:3000.
+
+### Database
+
+```bash
+# Run migrations after schema changes
+cd apps/api && pnpm db:migrate
+
+# Open Prisma Studio (GUI)
+cd apps/api && pnpm db:studio
+
+# Stop the Postgres container
+pnpm db:stop
+
+# Start it again without full dev
+pnpm db:start
+```
+
+The local database uses PostgreSQL (same as production) to avoid SQLite/Postgres compatibility issues.
 
 ---
 
