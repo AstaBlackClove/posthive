@@ -259,6 +259,7 @@ All plans include a **14-day free trial**. Powered by [Dodo Payments](https://do
 | Instagram | 2,200 characters |
 | LinkedIn | 3,000 characters |
 | Mastodon | 500 characters |
+| YouTube | Title: 100 characters · Description: 5,000 characters |
 
 ---
 
@@ -295,18 +296,70 @@ NEXT_PUBLIC_ENABLE_BILLING=true
 
 ## Production Deployment
 
-1. Create a Railway project with a **Redis** and **Postgres** service
-2. Deploy the monorepo Railway auto-detects it
-3. Change `provider` in `prisma/schema.prisma` from `sqlite` to `postgresql`
-4. Set all env vars from `.env.example` in Railway/hosting settings:
-   - `DATABASE_URL` → Postgres connection string
-   - `REDIS_URL` → Redis connection string
-   - `STORAGE_PROVIDER=supabase` + `SUPABASE_*` vars → create a public `media` bucket in Supabase Storage
-   - `AUTH_PROVIDER=supabase` (optional, or keep `local`)
-   - `RESEND_API_KEY` + `EMAIL_FROM` → [Resend](https://resend.com) for password reset emails (verify your domain in Resend first)
-   - `SECURE_COOKIES=true` → required for HTTPS cookie auth
-5. Set `PUBLIC_API_URL` and all OAuth redirect URIs to your production domain
-6. Run `pnpm db:migrate` on first deploy to apply migrations to Postgres
+The recommended stack: **Railway** (API + Redis) · **Supabase** (Postgres + Storage) · **Vercel** (Next.js frontend)
+
+### 1. Supabase setup
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Go to **Storage** → create a bucket named `media` → set it to **Public**
+3. Go to **Settings → Database → Connect → Session pooler** → copy the connection URI (port 5432)
+4. Set a strong alphanumeric database password (no special characters — they break the URL)
+
+### 2. Railway — API service
+
+1. New project → **Deploy from GitHub** → select your repo → set **Root Directory** to `apps/api`
+2. Add a **Redis** service → copy its private URL as `${{ Redis.REDIS_URL }}`
+3. Set these in the API service **Variables**:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | Supabase session pooler URI (port 5432) |
+| `REDIS_URL` | `${{ Redis.REDIS_URL }}` |
+| `NODE_ENV` | `production` |
+| `SECURE_COOKIES` | `true` |
+| `WEB_URL` | your frontend URL (e.g. `https://posthive.co`) |
+| `PUBLIC_API_URL` | your API URL (e.g. `https://api.posthive.co`) |
+| `STORAGE_PROVIDER` | `supabase` |
+| `SUPABASE_URL` | `https://<ref>.supabase.co` |
+| `SUPABASE_ANON_KEY` | Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
+| `SUPABASE_STORAGE_BUCKET` | `media` |
+| `ENCRYPTION_KEY` | 64-char hex (generate once, never change) |
+| `JWT_ACCESS_SECRET` | 64-char hex |
+| `JWT_REFRESH_SECRET` | 64-char hex |
+| All OAuth vars | Platform client IDs/secrets with production redirect URIs |
+
+4. Set **Build Command**: `npm install && npx prisma generate && npm run build`
+5. Set **Start Command**: `npx prisma migrate deploy && node dist/index.js`
+6. Add a custom domain under **Networking** → set port to `3001`
+
+> **Important:** The `prisma/schema.prisma` provider is set to `postgresql` and `prisma/migrations/migration_lock.toml` is set to `postgresql`. Never change these back to `sqlite` in production branches.
+
+### 3. Vercel — Frontend
+
+1. Import the same GitHub repo → set **Root Directory** to `apps/web`
+2. Vercel auto-detects Next.js — leave Build & Output Settings as default
+3. Add environment variables:
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | Your Railway API URL |
+| `NEXT_PUBLIC_ENABLE_BILLING` | `true` or `false` |
+
+### 4. Database migrations
+
+Migrations run automatically on every deploy via `prisma migrate deploy` in the start command. To create a new migration locally after a schema change:
+
+```bash
+cd apps/api
+# Temporarily point DATABASE_URL to your Supabase direct connection URL
+npx prisma migrate dev --name describe_your_change
+# Revert DATABASE_URL back to file:./dev.db
+git add prisma/migrations
+git commit -m "db: add <describe_your_change> migration"
+```
+
+> **Note:** Use the **direct connection** URL (not the pooler) when running `prisma migrate dev` locally — the session pooler can block migration connections.
 
 ---
 

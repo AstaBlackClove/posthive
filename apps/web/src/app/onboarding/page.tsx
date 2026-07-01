@@ -151,7 +151,23 @@ export default function OnboardingPage() {
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
+  const [planChecked, setPlanChecked] = useState(!billingEnabled);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Gate step 2+ behind an active plan/trial when billing is enabled
+  useEffect(() => {
+    if (!billingEnabled || step === 1) { setPlanChecked(true); return; }
+    apiFetch<{ planStatus: string }>("/billing/status")
+      .then(({ planStatus }) => {
+        if (planStatus !== "trialing" && planStatus !== "active") {
+          router.replace("/onboarding?step=1");
+        } else {
+          setPlanChecked(true);
+        }
+      })
+      .catch(() => router.replace("/onboarding?step=1"));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   // Compose state (step 3)
   const [postText, setPostText] = useState("");
@@ -230,6 +246,8 @@ export default function OnboardingPage() {
   const planPrice = (p: typeof PLANS[number]) => isIndia ? p.priceInr : p.priceUsd;
 
   // ── Layout wrapper ─────────────────────────────────────────────────────────
+  if (!planChecked) return null;
+
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-8" style={{ backgroundColor: "#0a0a0a" }}>
 
