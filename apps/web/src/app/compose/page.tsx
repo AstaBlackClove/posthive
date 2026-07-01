@@ -224,7 +224,7 @@ export default function ComposePage() {
 
     // Character limits
     for (const p of platformLimits) {
-      if (p.over) return `Your caption is too long for ${p.platform} (limit: ${p.limit} characters).`;
+      if (p.over) return `Your caption is too long for ${p.platform} (${p.effectiveCount}/${p.limit} characters).`;
     }
 
     // Scheduled time must be in the future
@@ -283,12 +283,12 @@ export default function ComposePage() {
   const selectedAccounts = accounts.filter((a) => selectedIds.includes(a.id));
   // YouTube doesn't use the shared Post box — it has its own dedicated Title/Description
   // counters — so it's excluded here to avoid showing a misleading/duplicate limit.
-  const platformLimits = selectedAccounts.filter((a) => a.platform !== "youtube").map((a) => ({
-    platform: a.platform, limit: PLATFORM_LIMIT[a.platform] ?? 300,
-    icon: a.platform,
-    over: graphemeCount > (PLATFORM_LIMIT[a.platform] ?? 300),
-    color: PLATFORM_COLOR[a.platform] ?? "#6b7280",
-  }));
+  const platformLimits = selectedAccounts.filter((a) => a.platform !== "youtube").map((a) => {
+    const limit = PLATFORM_LIMIT[a.platform] ?? 300;
+    const effectiveText = perAccountOverrides[a.id]?.text ?? text;
+    const effectiveCount = countGraphemes(effectiveText);
+    return { platform: a.platform, limit, icon: a.platform, over: effectiveCount > limit, effectiveCount, color: PLATFORM_COLOR[a.platform] ?? "#6b7280" };
+  });
   const mostRestrictiveLimit = platformLimits.length > 0 ? Math.min(...platformLimits.map((p) => p.limit)) : 300;
   const overAnyLimit = platformLimits.some((p) => p.over);
   const images = mediaItems.filter(m => !m.isVideo);
@@ -569,8 +569,8 @@ export default function ComposePage() {
               <div className="flex items-center gap-3 ml-auto">
                 {platformLimits.map((p) => (
                   <span key={p.platform} className="text-xs font-medium flex items-center gap-1"
-                    style={{ color: p.over ? "#ef4444" : graphemeCount > p.limit * 0.8 ? "#f59e0b" : "#444" }}>
-                    <PlatformIcon platform={p.icon} size={11} /> {graphemeCount}/{p.limit}
+                    style={{ color: p.over ? "#ef4444" : p.effectiveCount > p.limit * 0.8 ? "#f59e0b" : "#444" }}>
+                    <PlatformIcon platform={p.icon} size={11} /> {p.effectiveCount}/{p.limit}
                   </span>
                 ))}
               </div>
