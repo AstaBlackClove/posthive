@@ -164,8 +164,9 @@ export default function OnboardingPage() {
 
     async function check() {
       try {
-        const { planStatus } = await apiFetch<{ planStatus: string }>("/billing/status");
-        if (planStatus === "trialing" || planStatus === "active") {
+        const { planStatus, trialEndsAt } = await apiFetch<{ planStatus: string; trialEndsAt: string | null }>("/billing/status");
+        // Must have gone through checkout: active sub OR trial with trialEndsAt set by webhook
+        if (planStatus === "active" || (planStatus === "trialing" && trialEndsAt !== null)) {
           setPlanChecked(true);
         } else if (attempts < maxAttempts) {
           attempts++;
