@@ -357,7 +357,7 @@ export default function RootPage() {
           <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 20, padding: "40px 36px", textAlign: "center" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://pbs.twimg.com/profile_images/2051139493441540096/MaZHw9f4_400x400.jpg"
+              src="/founder.png"
               alt="Guna — founder of Posthive"
               width={72}
               height={72}
