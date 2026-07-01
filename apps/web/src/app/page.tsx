@@ -352,6 +352,49 @@ export default function RootPage() {
           </div>
         </section>
 
+        {/* ── FOUNDER ── */}
+        <section style={{ padding: "80px 40px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 20, padding: "40px 36px", textAlign: "center" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://pbs.twimg.com/profile_images/2051139493441540096/MaZHw9f4_400x400.jpg"
+              alt="Guna — founder of Posthive"
+              width={72}
+              height={72}
+              style={{ borderRadius: "50%", border: "3px solid #2a2a2a", display: "block", margin: "0 auto 16px" }}
+            />
+            <p style={{ fontSize: 18, fontWeight: 700, color: "#ededed", margin: "0 0 4px" }}>hey, I&apos;m Guna</p>
+            <p style={{ fontSize: 13, color: "#888", fontFamily: "'Geist Mono', monospace", margin: "0 0 24px" }}>
+              frontend dev by day · indie builder by night
+            </p>
+            <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: 14 }}>
+              <p style={{ fontSize: 14.5, color: "#888", lineHeight: 1.7, margin: 0 }}>
+                I was building in public — sharing updates on Bluesky, Threads, LinkedIn, and Mastodon at the same time. Copy-pasting the same post into five different apps every single day.
+              </p>
+              <p style={{ fontSize: 14.5, color: "#888", lineHeight: 1.7, margin: 0 }}>
+                Every tool I tried was either too expensive, too bloated, or didn&apos;t support the platforms I actually used. None of them felt like they were built for indie builders.
+              </p>
+              <p style={{ fontSize: 14.5, color: "#888", lineHeight: 1.7, margin: 0 }}>
+                So I built Posthive — open source, self-hostable, and focused on the platforms that matter to creators. Schedule once, post everywhere.
+              </p>
+              <p style={{ fontSize: 14.5, color: "#ededed", lineHeight: 1.7, margin: 0, fontWeight: 500 }}>
+                if it saves you time too, that&apos;s the whole point.
+              </p>
+            </div>
+            <a
+              href="https://x.com/gunaa_dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "inline-flex", alignItems: "center", gap: 7, marginTop: 24, fontSize: 13, fontWeight: 500, color: "#888", textDecoration: "none", padding: "7px 14px", borderRadius: 8, border: "1px solid #2a2a2a" }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              @gunaa_dev
+            </a>
+          </div>
+        </section>
+
         {/* ── PRICING ── */}
         <section id="pricing" className="ph-section" style={{ padding: "120px 40px", maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 64 }}>
