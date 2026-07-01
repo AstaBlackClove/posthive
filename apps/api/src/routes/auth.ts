@@ -120,11 +120,16 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
           grant_type: "authorization_code", redirect_uri: REDIRECT_URI, code,
         }),
       });
-      if (!tokenRes.ok) throw new Error(`Token exchange failed: ${await tokenRes.text()}`);
-      const tokenData = await tokenRes.json() as { access_token: string; user_id: number };
+      const tokenText = await tokenRes.text();
+      if (!tokenRes.ok) {
+        console.error(`[threads oauth] short-lived token exchange failed (${tokenRes.status}): ${tokenText}`);
+        throw new Error(tokenText);
+      }
+      const tokenData = JSON.parse(tokenText) as { access_token: string; user_id: number };
       shortLivedToken = tokenData.access_token;
       threadsUserId = String(tokenData.user_id);
-    } catch {
+    } catch (err) {
+      console.error("[threads oauth] token_exchange_failed:", err);
       return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
     }
 
@@ -135,11 +140,16 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const llRes = await fetch(`https://graph.threads.net/access_token?` +
         new URLSearchParams({ grant_type: "th_exchange_token", client_secret: APP_SECRET, access_token: shortLivedToken })
       );
-      if (!llRes.ok) throw new Error(`Long-lived token exchange failed: ${await llRes.text()}`);
-      const llData = await llRes.json() as { access_token: string; expires_in: number };
+      const llText = await llRes.text();
+      if (!llRes.ok) {
+        console.error(`[threads oauth] long-lived token exchange failed (${llRes.status}): ${llText}`);
+        throw new Error(llText);
+      }
+      const llData = JSON.parse(llText) as { access_token: string; expires_in: number };
       longLivedToken = llData.access_token;
       expiresAt = new Date(Date.now() + (llData.expires_in - 86400) * 1000);
-    } catch {
+    } catch (err) {
+      console.error("[threads oauth] long_lived_token_exchange_failed:", err);
       return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
     }
 
