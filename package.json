@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "license": "AGPL-3.0",
   "scripts": {
-    "dev": "pnpm --parallel --filter api --filter web dev",
+    "dev:db": "docker start posthive-pg || docker run -d --name posthive-pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:15",
+    "dev": "pnpm dev:db && pnpm --parallel --filter api --filter web dev",
+    "db:stop": "docker stop posthive-pg",
+    "db:start": "docker start posthive-pg",
     "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
     "build": "pnpm --filter api build && pnpm --filter web build",
