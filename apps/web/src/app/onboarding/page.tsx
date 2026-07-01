@@ -154,18 +154,30 @@ export default function OnboardingPage() {
   const [planChecked, setPlanChecked] = useState(!billingEnabled);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Gate step 2+ behind an active plan/trial when billing is enabled
+  // Gate step 2+ behind an active plan/trial when billing is enabled.
+  // When trialStarted=1 is present, poll up to 8s for the webhook to land.
   useEffect(() => {
     if (!billingEnabled || step === 1) { setPlanChecked(true); return; }
-    apiFetch<{ planStatus: string }>("/billing/status")
-      .then(({ planStatus }) => {
-        if (planStatus !== "trialing" && planStatus !== "active") {
-          router.replace("/onboarding?step=1");
-        } else {
+    const trialStarted = searchParams.get("trialStarted") === "1";
+    let attempts = 0;
+    const maxAttempts = trialStarted ? 8 : 1;
+
+    async function check() {
+      try {
+        const { planStatus } = await apiFetch<{ planStatus: string }>("/billing/status");
+        if (planStatus === "trialing" || planStatus === "active") {
           setPlanChecked(true);
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(check, 1000);
+        } else {
+          router.replace("/onboarding?step=1");
         }
-      })
-      .catch(() => router.replace("/onboarding?step=1"));
+      } catch {
+        router.replace("/onboarding?step=1");
+      }
+    }
+    check();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
