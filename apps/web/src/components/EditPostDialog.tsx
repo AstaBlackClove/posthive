@@ -144,12 +144,12 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
 
   const selectedAccounts = accounts.filter(a => selectedIds.includes(a.id));
   const instagramSelected = selectedAccounts.some(a => a.platform === "instagram");
-  const graphemeCount = countGraphemes(text);
-  const platformLimits = selectedAccounts.map(a => ({
-    platform: a.platform,
-    limit: PLATFORM_LIMIT[a.platform] ?? 500,
-    over: graphemeCount > (PLATFORM_LIMIT[a.platform] ?? 500),
-  }));
+  const platformLimits = selectedAccounts.filter(a => a.platform !== "youtube").map(a => {
+    const limit = PLATFORM_LIMIT[a.platform] ?? 500;
+    const effectiveText = perAccountOverrides[a.id]?.text ?? text;
+    const effectiveCount = countGraphemes(effectiveText);
+    return { platform: a.platform, limit, effectiveCount, over: effectiveCount > limit };
+  });
   const overAnyLimit = platformLimits.some(p => p.over);
 
   // Footer warning logic
@@ -252,8 +252,8 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
               <div className="flex items-center gap-3">
                 {platformLimits.map(p => (
                   <span key={p.platform} className="text-xs font-medium flex items-center gap-1"
-                    style={{ color: p.over ? "#ef4444" : graphemeCount > p.limit * 0.8 ? "#f59e0b" : "#555" }}>
-                    <PlatformIcon platform={p.platform} size={12} /> {graphemeCount}/{p.limit}
+                    style={{ color: p.over ? "#ef4444" : p.effectiveCount > p.limit * 0.8 ? "#f59e0b" : "#555" }}>
+                    <PlatformIcon platform={p.platform} size={12} /> {p.effectiveCount}/{p.limit}
                   </span>
                 ))}
               </div>
@@ -275,68 +275,23 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
             )}
           </div>
 
-          {/* Per-platform overrides */}
-          {selectedAccounts.length > 1 && (
-            <div className="px-6 pb-4" style={{ borderBottom: "1px solid #1a1a1a" }}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Customize per platform</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
-              </div>
-              <div className="space-y-2">
-                {selectedAccounts.map(a => {
-                  const hasOverride = a.id in perAccountOverrides;
-                  const override = perAccountOverrides[a.id];
-                  const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
-                  const limit = PLATFORM_LIMIT[a.platform] ?? 500;
-                  const overrideCount = countGraphemes(override?.text ?? "");
-                  return (
-                    <div key={a.id} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${hasOverride ? color + "40" : "#1f1f1f"}`, backgroundColor: "#0d0d0d" }}>
-                      <button type="button" onClick={() => toggleOverride(a.id, text, commentText)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left"
-                        style={{ backgroundColor: hasOverride ? color + "10" : "transparent" }}>
-                        <PlatformIcon platform={a.platform} size={14} />
-                        <span className="text-xs font-medium flex-1" style={{ color: hasOverride ? color : "#666" }}>{a.displayName}</span>
-                        {hasOverride ? (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: color + "20", color }}>Custom ✓</span>
-                        ) : (
-                          <span className="text-[10px]" style={{ color: "#444" }}>✎ Customize</span>
-                        )}
-                      </button>
-                      {hasOverride && (
-                        <div className="px-3 pb-3 space-y-2">
-                          <div>
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Caption</span>
-                              <span className="text-[10px]" style={{ color: overrideCount > limit ? "#ef4444" : "#444" }}>{overrideCount}/{limit}</span>
-                            </div>
-                            <textarea
-                              value={override?.text ?? ""}
-                              onChange={e => setOverrideField(a.id, "text", e.target.value)}
-                              rows={3}
-                              placeholder={`Custom caption for ${a.displayName}…`}
-                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
-                              style={{ backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }}
-                            />
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "#555" }}>First Comment</span>
-                            <textarea
-                              value={override?.commentText ?? ""}
-                              onChange={e => setOverrideField(a.id, "commentText", e.target.value)}
-                              rows={2}
-                              placeholder={`Custom first comment for ${a.displayName}…`}
-                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
-                              style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+          {/* First comment */}
+          <div className="px-6 py-5" style={{ borderBottom: "1px solid #1a1a1a" }}>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>First Comment</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full"
+                style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
             </div>
-          )}
+            <p className="text-xs mb-2.5" style={{ color: "#444" }}>
+              Posted as the first reply immediately after your post goes live.
+            </p>
+            <textarea value={commentText} onChange={e => setCommentText(e.target.value)}
+              placeholder="Add a link, thread continuation, or extra context…"
+              rows={3}
+              className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-none"
+              style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+            />
+          </div>
 
           {/* Media */}
           <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #1a1a1a" }}>
@@ -430,23 +385,68 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
             )}
           </div>
 
-          {/* First comment */}
-          <div className="px-6 py-5">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>First Comment</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full"
-                style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
+          {/* Per-platform overrides */}
+          {selectedAccounts.length > 1 && (
+            <div className="px-6 py-5">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Customize per platform</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
+              </div>
+              <div className="space-y-2">
+                {selectedAccounts.map(a => {
+                  const hasOverride = a.id in perAccountOverrides;
+                  const override = perAccountOverrides[a.id];
+                  const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
+                  const limit = PLATFORM_LIMIT[a.platform] ?? 500;
+                  const overrideCount = countGraphemes(override?.text ?? "");
+                  return (
+                    <div key={a.id} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${hasOverride ? color + "40" : "#1f1f1f"}`, backgroundColor: "#0d0d0d" }}>
+                      <button type="button" onClick={() => toggleOverride(a.id, text, commentText)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left"
+                        style={{ backgroundColor: hasOverride ? color + "10" : "transparent" }}>
+                        <PlatformIcon platform={a.platform} size={14} />
+                        <span className="text-xs font-medium flex-1" style={{ color: hasOverride ? color : "#666" }}>{a.displayName}</span>
+                        {hasOverride ? (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: color + "20", color }}>Custom ✓</span>
+                        ) : (
+                          <span className="text-[10px]" style={{ color: "#444" }}>✎ Customize</span>
+                        )}
+                      </button>
+                      {hasOverride && (
+                        <div className="px-3 pb-3 space-y-2">
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Caption</span>
+                              <span className="text-[10px]" style={{ color: overrideCount > limit ? "#ef4444" : "#444" }}>{overrideCount}/{limit}</span>
+                            </div>
+                            <textarea
+                              value={override?.text ?? ""}
+                              onChange={e => setOverrideField(a.id, "text", e.target.value)}
+                              rows={3}
+                              placeholder={`Custom caption for ${a.displayName}…`}
+                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
+                              style={{ backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }}
+                            />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "#555" }}>First Comment</span>
+                            <textarea
+                              value={override?.commentText ?? ""}
+                              onChange={e => setOverrideField(a.id, "commentText", e.target.value)}
+                              rows={2}
+                              placeholder={`Custom first comment for ${a.displayName}…`}
+                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
+                              style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <p className="text-xs mb-2.5" style={{ color: "#444" }}>
-              Posted as the first reply immediately after your post goes live.
-            </p>
-            <textarea value={commentText} onChange={e => setCommentText(e.target.value)}
-              placeholder="Add a link, thread continuation, or extra context…"
-              rows={3}
-              className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-none"
-              style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
-            />
-          </div>
+          )}
         </div>
 
         {/* Right: live previews */}
