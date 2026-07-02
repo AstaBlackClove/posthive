@@ -16,11 +16,14 @@ function getCredentials(account: Account): MastodonCredentials {
   return JSON.parse(decrypt(account.credentials)) as MastodonCredentials;
 }
 
+const TIMEOUT_MS = 30_000;
+
 async function apiPost<T>(instanceUrl: string, token: string, path: string, body: unknown): Promise<T> {
   const res = await fetch(`${instanceUrl}/api/v1${path}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   const json = await res.json() as T & { error?: string };
   if (!res.ok) throw new Error((json as { error?: string }).error ?? `Mastodon API error: ${res.status}`);
@@ -36,6 +39,7 @@ async function uploadMedia(instanceUrl: string, token: string, buffer: Buffer, m
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: form,
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   const json = await res.json() as { id?: string; error?: string };
   if (!res.ok) throw new Error(json.error ?? `Mastodon media upload failed: ${res.status}`);

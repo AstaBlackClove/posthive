@@ -53,16 +53,18 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function JobCard({ job, onEdit, onDelete }: {
+function JobCard({ job, onEdit, onDelete, onRetry }: {
   job: Job;
   onEdit: () => void;
   onDelete: () => void;
+  onRetry: () => void;
 }) {
   const content = JSON.parse(job.content) as { text: string; mediaUrls?: string[] };
   const scheduled = new Date(job.scheduledFor);
   const isPast = scheduled < new Date();
   const isToday = scheduled.toDateString() === new Date().toDateString();
   const canEdit = job.status === "pending";
+  const hasFailedTargets = job.targets.some((t) => t.status === "post_failed");
 
   function formatScheduled() {
     if (isToday) return `Today at ${scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
@@ -111,6 +113,15 @@ function JobCard({ job, onEdit, onDelete }: {
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
             <div className="flex items-center gap-1.5">
               <StatusBadge status={job.status} />
+              {hasFailedTargets && (
+                <button onClick={onRetry} className="job-action-btn" title="Retry failed platforms"
+                  style={{ color: "#f87171" }}>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              )}
               {canEdit && (
                 <button onClick={onEdit} className="job-action-btn" title="Edit post">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,6 +235,13 @@ export default function JobsPage() {
       await apiFetch(`/jobs/${jobId}`, { method: "DELETE" });
       setJobs((prev) => prev.filter((j) => j.id !== jobId));
       success("Post deleted.");
+    } catch (err) { toastError(String(err)); }
+  }
+
+  async function retryFailed(jobId: string) {
+    try {
+      await apiFetch(`/jobs/${jobId}/retry-failed`, { method: "POST" });
+      success("Retrying failed platforms…");
     } catch (err) { toastError(String(err)); }
   }
 
@@ -464,7 +482,8 @@ export default function JobsPage() {
                   {upcoming.map((job) => (
                     <JobCard key={job.id} job={job}
                       onEdit={() => setEditingJob(job)}
-                      onDelete={() => setDeletingJob(job)} />
+                      onDelete={() => setDeletingJob(job)}
+                      onRetry={() => retryFailed(job.id)} />
                   ))}
                 </div>
               </section>
@@ -482,7 +501,8 @@ export default function JobsPage() {
                   {past.map((job) => (
                     <JobCard key={job.id} job={job}
                       onEdit={() => setEditingJob(job)}
-                      onDelete={() => setDeletingJob(job)} />
+                      onDelete={() => setDeletingJob(job)}
+                      onRetry={() => retryFailed(job.id)} />
                   ))}
                 </div>
               </section>

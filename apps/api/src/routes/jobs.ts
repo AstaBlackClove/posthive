@@ -261,6 +261,44 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     return reply.send(updated);
   });
 
+  // Retry only the failed targets on a partially-failed job
+  app.post("/jobs/:id/retry-failed", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { id } = req.params as { id: string };
+
+    const job = await prisma.postJob.findFirst({
+      where: { id, userId },
+      include: { targets: { select: { id: true, status: true } } },
+    });
+    if (!job) return reply.status(404).send({ error: "Job not found" });
+    if (job.status === "running") return reply.status(409).send({ error: "Job is currently running" });
+
+    const failedTargetIds = job.targets
+      .filter((t) => t.status === "post_failed")
+      .map((t) => t.id);
+
+    if (failedTargetIds.length === 0) {
+      return reply.status(400).send({ error: "No failed targets to retry" });
+    }
+
+    // Reset failed targets and job status, then re-queue for immediate execution
+    await prisma.postJobTarget.updateMany({
+      where: { id: { in: failedTargetIds } },
+      data: { status: "pending", error: null, attempts: 0 },
+    });
+
+    const scheduledFor = new Date(Date.now() + 5000); // 5s from now
+    await prisma.postJob.update({
+      where: { id },
+      data: { status: "pending", scheduledFor },
+    });
+
+    await postJobQueue.remove(id).catch(() => {});
+    await schedulePostJob(id, scheduledFor);
+
+    return reply.status(200).send({ retrying: failedTargetIds.length });
+  });
+
   // Delete a job and clean up associated media
   app.delete("/jobs/:id", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
