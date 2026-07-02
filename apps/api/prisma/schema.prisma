@@ -29,10 +29,13 @@ model User {
   dodoCustomerId String?   @unique
   dodoSubId      String?   @unique
 
+  emailVerified Boolean   @default(false)
+
   accounts      Account[]
   postJobs      PostJob[]
   refreshTokens RefreshToken[]
   apiKeys       ApiKey[]
+  emailVerifications EmailVerification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -103,6 +106,19 @@ model PostJobTarget {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Email verification token — single-use, 24-hour TTL.
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
 }
 
 // Password reset token — single-use, 1-hour TTL.

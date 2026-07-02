@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { prisma } from "../lib/prisma.js";
 import { authProvider } from "../lib/auth/index.js";
 import { withAuth, getUser, COOKIE_OPTS, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from "../lib/auth/withAuth.js";
-import { sendPasswordResetEmail } from "../lib/mailer.js";
+import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/mailer.js";
 
 const registerBody = z.object({
   email: z.string().email(),
@@ -37,6 +37,14 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         parsed.data.email, parsed.data.password, parsed.data.name
       );
       setAuthCookies(reply, accessToken, refreshToken);
+
+      // Send verification email (fire-and-forget — don't block registration)
+      const verifyToken = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await prisma.emailVerification.create({ data: { userId: user.id, token: verifyToken, expiresAt } });
+      const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
+      sendVerificationEmail(parsed.data.email, `${webUrl}/verify-email?token=${verifyToken}`).catch(() => {});
+
       return reply.status(201).send({ user });
     } catch (err) {
       console.error("[register] error:", err);
@@ -74,7 +82,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   // Session — returns current user + raw access token (needed for SSE cross-origin)
   app.get("/auth/session", { preHandler: [withAuth] }, async (req, reply) => {
     const token = req.cookies?.[ACCESS_COOKIE_NAME];
-    return reply.send({ user: getUser(req), token });
+    const u = getUser(req);
+    const dbUser = await prisma.user.findUnique({ where: { id: u.id }, select: { emailVerified: true } });
+    return reply.send({ user: { ...u, emailVerified: dbUser?.emailVerified ?? false }, token });
   });
 
   // Refresh — explicitly refresh tokens (called by frontend if needed)
@@ -90,6 +100,47 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     }
 
     setAuthCookies(reply, tokens.accessToken, tokens.refreshToken);
+    return reply.send({ ok: true });
+  });
+
+  // ── Email verification ────────────────────────────────────────────────────
+
+  // Consume verification token
+  app.post("/auth/verify-email", async (req, reply) => {
+    const { token } = req.body as { token?: string };
+    if (!token) return reply.status(400).send({ error: "Token required" });
+
+    const record = await prisma.emailVerification.findUnique({ where: { token } });
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      return reply.status(400).send({ error: "This verification link is invalid or has expired." });
+    }
+
+    await prisma.user.update({ where: { id: record.userId }, data: { emailVerified: true } });
+    await prisma.emailVerification.update({ where: { id: record.id }, data: { usedAt: new Date() } });
+
+    return reply.send({ ok: true });
+  });
+
+  // Resend verification email
+  app.post("/auth/resend-verification", {
+    preHandler: [withAuth],
+    config: { rateLimit: { max: 3, timeWindow: "15 minutes" } },
+  }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, emailVerified: true } });
+    if (!user) return reply.status(404).send({ error: "User not found" });
+    if (user.emailVerified) return reply.status(400).send({ error: "Email already verified" });
+
+    // Invalidate previous unused tokens
+    await prisma.emailVerification.deleteMany({ where: { userId, usedAt: null } });
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await prisma.emailVerification.create({ data: { userId, token, expiresAt } });
+
+    const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
+    await sendVerificationEmail(user.email, `${webUrl}/verify-email?token=${token}`);
+
     return reply.send({ ok: true });
   });
 

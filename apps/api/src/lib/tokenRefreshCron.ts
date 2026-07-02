@@ -59,7 +59,7 @@ async function run() {
     if (batch.length < BATCH_SIZE) break; // last page
   }
 
-  if (total > 0) console.log(`[token-refresh] processed ${total} account(s)`);
+  // total logged only in debug — individual refreshes are logged per-account above
 }
 
 export function startTokenRefreshCron() {

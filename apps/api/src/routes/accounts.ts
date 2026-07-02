@@ -112,6 +112,27 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     );
   });
 
+  // Posts published per account this month
+  app.get("/accounts/stats", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const start = new Date();
+    start.setDate(1); start.setHours(0, 0, 0, 0);
+
+    const rows = await prisma.postJobTarget.groupBy({
+      by: ["accountId"],
+      where: {
+        account: { userId },
+        status: { in: ["post_done", "comment_done"] },
+        postJob: { scheduledFor: { gte: start } },
+      },
+      _count: { accountId: true },
+    });
+
+    const stats: Record<string, number> = {};
+    for (const r of rows) stats[r.accountId] = r._count.accountId;
+    return reply.send(stats);
+  });
+
   // Delete account — scoped to user
   app.delete("/accounts/:id", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);

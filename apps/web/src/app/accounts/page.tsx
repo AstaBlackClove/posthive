@@ -64,20 +64,24 @@ const RECONNECT_URLS: Record<string, string> = {
   mastodon: `${API_BASE}/auth/mastodon`,
 };
 
-function tokenStatus(expiresAt: string | null): "ok" | "soon" | "expired" {
-  if (!expiresAt) return "ok";
+// Platforms where the token refresh cron handles silent renewal — no user action needed
+const AUTO_REFRESH_PLATFORMS = new Set(["threads", "instagram", "facebook", "youtube"]);
+
+function tokenStatus(platform: string, expiresAt: string | null): "ok" | "soon" | "expired" {
+  if (!expiresAt || AUTO_REFRESH_PLATFORMS.has(platform)) return "ok";
   const ms = new Date(expiresAt).getTime() - Date.now();
   if (ms <= 0) return "expired";
   if (ms < 7 * 24 * 60 * 60 * 1000) return "soon";
   return "ok";
 }
 
-function ConnectedAccountRow({ account, onDisconnect, disconnecting }: {
+function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMonth }: {
   account: Account;
   onDisconnect: (id: string, name: string) => void;
   disconnecting: string | null;
+  postsThisMonth?: number;
 }) {
-  const status = tokenStatus(account.expiresAt);
+  const status = tokenStatus(account.platform, account.expiresAt);
   const reconnectUrl = RECONNECT_URLS[account.platform];
 
   return (
@@ -88,8 +92,14 @@ function ConnectedAccountRow({ account, onDisconnect, disconnecting }: {
           <p className="text-sm font-semibold truncate" style={{ color: TEXT }}>
             {account.platform === "threads" ? "@" : ""}{account.displayName}
           </p>
-          <p className="text-xs" style={{ color: MUTED }}>
+          <p className="text-xs flex items-center gap-1.5 flex-wrap" style={{ color: MUTED }}>
             Connected {new Date(account.createdAt).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
+            {postsThisMonth !== undefined && postsThisMonth > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                style={{ backgroundColor: "#0a1f12", color: "#4ade80", border: "1px solid #14532d" }}>
+                {postsThisMonth} post{postsThisMonth !== 1 ? "s" : ""} this month
+              </span>
+            )}
           </p>
         </div>
         <button
@@ -293,6 +303,7 @@ export default function AccountsPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [planStatus, setPlanStatus] = useState<PlanStatus | null>(null);
+  const [stats, setStats] = useState<Record<string, number>>({});
   const [showBlueskyDialog, setShowBlueskyDialog] = useState(false);
   const [disconnectTarget, setDisconnectTarget] = useState<{ id: string; displayName: string } | null>(null);
 
@@ -309,12 +320,14 @@ export default function AccountsPage() {
   async function fetchAccounts() {
     try {
       const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === "true";
-      const [accs, status] = await Promise.all([
+      const [accs, status, accountStats] = await Promise.all([
         apiFetch<Account[]>("/accounts"),
         billingEnabled ? apiFetch<PlanStatus>("/billing/status") : Promise.resolve(null),
+        apiFetch<Record<string, number>>("/accounts/stats"),
       ]);
       setAccounts(accs);
       setPlanStatus(status);
+      setStats(accountStats);
     } finally { setLoading(false); }
   }
 
@@ -487,7 +500,7 @@ export default function AccountsPage() {
               {!loading && blueskyAccounts.length > 0 && (
                 <div className="space-y-2">
                   {blueskyAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
                   ))}
                 </div>
               )}
@@ -521,7 +534,7 @@ export default function AccountsPage() {
               {!loading && threadsAccounts.length > 0 && (
                 <div className="space-y-2">
                   {threadsAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
                   ))}
                 </div>
               )}
@@ -595,7 +608,7 @@ export default function AccountsPage() {
               {!loading && instagramAccounts.length > 0 && (
                 <div className="space-y-2">
                   {instagramAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
                   ))}
                 </div>
               )}
@@ -638,7 +651,7 @@ export default function AccountsPage() {
               {!loading && linkedinAccounts.length > 0 && (
                 <div className="space-y-2">
                   {linkedinAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
                   ))}
                 </div>
               )}
@@ -680,7 +693,7 @@ export default function AccountsPage() {
               {!loading && youtubeAccounts.length > 0 && (
                 <div className="space-y-2">
                   {youtubeAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
                   ))}
                 </div>
               )}
@@ -718,7 +731,7 @@ export default function AccountsPage() {
               {!loading && facebookAccounts.length > 0 && (
                 <div className="space-y-2">
                   {facebookAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
                   ))}
                 </div>
               )}
@@ -759,7 +772,8 @@ export default function AccountsPage() {
                   {mastodonAccounts.map((a) => (
                     <ConnectedAccountRow key={a.id} account={a}
                       onDisconnect={() => setDisconnectTarget(a)}
-                      disconnecting={disconnecting} />
+                      disconnecting={disconnecting}
+                      postsThisMonth={stats[a.id]} />
                   ))}
                 </div>
               )}

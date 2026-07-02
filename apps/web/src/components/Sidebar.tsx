@@ -284,6 +284,26 @@ export function Sidebar() {
         })}
       </nav>
 
+      {/* Email verification banner — hide when collapsed or already verified */}
+      {!showCollapsed && user && !user.emailVerified && (
+        <div className="mx-2 mb-2 rounded-xl px-3 py-2.5" style={{ backgroundColor: "#1c1209", border: "1px solid #78560a" }}>
+          <p className="text-xs font-semibold mb-0.5" style={{ color: "#fbbf24" }}>Verify your email</p>
+          <p className="text-xs mb-2" style={{ color: "#888" }}>Check your inbox for a verification link.</p>
+          <button
+            onClick={async () => {
+              try {
+                await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/auth/resend-verification`, {
+                  method: "POST", credentials: "include",
+                });
+              } catch { /* ignore */ }
+            }}
+            className="text-xs font-semibold hover:opacity-80 transition-opacity"
+            style={{ color: "#fbbf24" }}>
+            Resend email →
+          </button>
+        </div>
+      )}
+
       {/* Trial banner — hide when collapsed */}
       {!showCollapsed && <TrialBanner />}
 
