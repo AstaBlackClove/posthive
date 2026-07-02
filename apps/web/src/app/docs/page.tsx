@@ -52,6 +52,20 @@ const NAV = [
       { label: "Webhooks", id: "webhooks" },
     ],
   },
+  {
+    section: "API Reference",
+    items: [
+      { label: "Authentication", id: "api-authentication" },
+      { label: "GET /accounts", id: "api-accounts" },
+      { label: "POST /posts", id: "api-posts-create" },
+      { label: "GET /posts", id: "api-posts-list" },
+      { label: "GET /posts/:id", id: "api-posts-get" },
+      { label: "PATCH /posts/:id", id: "api-posts-patch" },
+      { label: "DELETE /posts/:id", id: "api-posts-delete" },
+      { label: "POST /upload", id: "api-upload" },
+      { label: "Error codes", id: "api-errors" },
+    ],
+  },
 ];
 
 // ─── Page ───────────────────────────────────────────────────────────────────
@@ -60,6 +74,7 @@ export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("quick-start");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const mainRef = useRef<HTMLElement>(null);
   const scrollingRef = useRef(false);
 
@@ -193,48 +208,68 @@ export default function DocsPage() {
               transform: isDesktop || sidebarOpen ? "translateX(0)" : "translateX(-100%)",
               transition: "transform 0.2s ease",
             }}>
-            {NAV.map((group) => (
-              <div key={group.section}>
-                <div style={{
-                  fontSize: 10.5,
-                  fontWeight: 700,
-                  color: "#444",
-                  letterSpacing: ".08em",
-                  textTransform: "uppercase",
-                  padding: "16px 20px 6px",
-                }}>
-                  {group.section}
-                </div>
-                {group.items.map((item) => {
-                  const active = activeSection === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => scrollTo(item.id)}
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        textAlign: "left",
-                        fontSize: 13,
-                        padding: "6px 20px",
-                        cursor: "pointer",
-                        color: active ? "#ededed" : "#666",
-                        background: active ? "rgba(91,99,211,.06)" : "transparent",
-                        borderTop: "none",
-                        borderRight: "none",
-                        borderBottom: "none",
-                        borderLeftWidth: 2,
-                        borderLeftStyle: "solid",
-                        borderLeftColor: active ? "#5b63d3" : "transparent",
-                        transition: "all 0.15s",
-                      }}
+            {NAV.map((group) => {
+              const isCollapsed = collapsed[group.section] ?? false;
+              const hasActive = group.items.some(i => i.id === activeSection);
+              return (
+                <div key={group.section}>
+                  <button
+                    onClick={() => setCollapsed(c => ({ ...c, [group.section]: !isCollapsed }))}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      width: "100%",
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      color: hasActive ? "#9ba2ee" : "#444",
+                      letterSpacing: ".08em",
+                      textTransform: "uppercase",
+                      padding: "16px 20px 6px",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span>{group.section}</span>
+                    <svg
+                      width="12" height="12" viewBox="0 0 12 12" fill="none"
+                      style={{ transition: "transform 0.2s", transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)", flexShrink: 0 }}
                     >
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
+                      <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                  {!isCollapsed && group.items.map((item) => {
+                    const active = activeSection === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => scrollTo(item.id)}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          textAlign: "left",
+                          fontSize: 13,
+                          padding: "6px 20px",
+                          cursor: "pointer",
+                          color: active ? "#ededed" : "#666",
+                          background: active ? "rgba(91,99,211,.06)" : "transparent",
+                          borderTop: "none",
+                          borderRight: "none",
+                          borderBottom: "none",
+                          borderLeftWidth: 2,
+                          borderLeftStyle: "solid",
+                          borderLeftColor: active ? "#5b63d3" : "transparent",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </aside>
 
           {/* Main content */}
@@ -659,6 +694,314 @@ DODO_WEBHOOK_SECRET="abc123..."`}</code>
                     <td><span className="doc-inline-code">subscription.cancelled</span></td>
                     <td>Marks the subscription as cancelled. Access continues until the end of the billing period.</td>
                   </tr>
+                </tbody>
+              </table></div>
+
+              {/* ── API REFERENCE ── */}
+              <h2 className="doc-h2" id="api-authentication">Authentication</h2>
+              <p className="doc-p">
+                The Posthive REST API lets you schedule posts and manage accounts programmatically — useful for AI agents, automation scripts, and custom integrations. API access is available on <strong>Pro</strong> and <strong>Team</strong> plans. When self-hosting with <span className="doc-inline-code">ENABLE_BILLING</span> unset, all users have access.
+              </p>
+
+              <h3 className="doc-h3">Base URL</h3>
+              <code className="doc-code">{`https://your-api-url/api/v1`}</code>
+
+              <h3 className="doc-h3">Creating an API key</h3>
+              <p className="doc-p">
+                Go to <strong>Settings → API Keys</strong>, enter a label (e.g. &quot;My Claude agent&quot;), and click <em>Create key</em>. The full key is shown only once — copy it immediately. Keys are prefixed with <span className="doc-inline-code">ph_</span> for easy identification.
+              </p>
+              <div className="doc-callout">
+                Pro plan: up to 3 keys · Team plan: up to 10 keys · Self-hosted: up to 10 keys
+              </div>
+
+              <h3 className="doc-h3">Sending requests</h3>
+              <p className="doc-p">Pass the key in the <span className="doc-inline-code">Authorization</span> header of every request:</p>
+              <code className="doc-code">{`Authorization: Bearer ph_<your-key>`}</code>
+              <div className="doc-warn">
+                <strong>Keep keys secret.</strong> Do not commit them to source control or expose them in client-side code. Revoke any compromised key from Settings → API Keys immediately — revocation takes effect within seconds.
+              </div>
+
+              <h3 className="doc-h3">Response format</h3>
+              <p className="doc-p">All responses are JSON. Successful responses return the resource directly. Errors return an object with an <span className="doc-inline-code">error</span> string field.</p>
+              <code className="doc-code">{`# Success
+{ "accounts": [ ... ] }
+
+# Error
+{ "error": "One or more accountIds are invalid" }`}</code>
+
+              {/* ── GET /accounts ── */}
+              <h2 className="doc-h2" id="api-accounts">GET /accounts</h2>
+              <p className="doc-p">Returns all social accounts connected to your Posthive account. Use the returned <span className="doc-inline-code">id</span> values as <span className="doc-inline-code">accountIds</span> when creating posts.</p>
+
+              <h3 className="doc-h3">Request</h3>
+              <code className="doc-code">{`GET /api/v1/accounts
+Authorization: Bearer ph_<key>`}</code>
+
+              <h3 className="doc-h3">Response</h3>
+              <code className="doc-code">{`{
+  "accounts": [
+    {
+      "id": "cmr289odh000110a5s6rdfmzn",
+      "platform": "bluesky",          // bluesky | threads | instagram | linkedin
+      "displayName": "you.bsky.social", //         | mastodon | youtube  | facebook
+      "avatarUrl": "https://cdn.bsky.app/...",
+      "createdAt": "2026-07-01T15:25:53.956Z"
+    }
+  ]
+}`}</code>
+
+              <h3 className="doc-h3">Example</h3>
+              <code className="doc-code">{`curl https://your-api-url/api/v1/accounts \\
+  -H "Authorization: Bearer ph_<key>"`}</code>
+
+              {/* ── POST /posts ── */}
+              <h2 className="doc-h2" id="api-posts-create">POST /posts</h2>
+              <p className="doc-p">Schedule a post to one or more connected accounts. The post is queued and published automatically at <span className="doc-inline-code">scheduledFor</span>.</p>
+
+              <h3 className="doc-h3">Request body</h3>
+              <div className="doc-table-wrap"><table className="doc-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td><span className="doc-inline-code">content</span></td><td>string</td><td>Yes</td><td>Post text. Used for all platforms unless overridden via <span className="doc-inline-code">perAccount</span>.</td></tr>
+                  <tr><td><span className="doc-inline-code">accountIds</span></td><td>string[]</td><td>Yes</td><td>One or more account IDs from <span className="doc-inline-code">GET /accounts</span>. All must belong to your account.</td></tr>
+                  <tr><td><span className="doc-inline-code">scheduledFor</span></td><td>string (ISO 8601)</td><td>Yes</td><td>Future UTC datetime to publish.</td></tr>
+                  <tr><td><span className="doc-inline-code">commentText</span></td><td>string</td><td>No</td><td>First comment/reply posted immediately after the main post. Override per-platform via <span className="doc-inline-code">perAccount</span>.</td></tr>
+                  <tr><td><span className="doc-inline-code">images</span></td><td>string[]</td><td>No</td><td>Image URLs from <span className="doc-inline-code">POST /upload</span>. Supported on Bluesky, Mastodon, Threads, Instagram, LinkedIn, Facebook.</td></tr>
+                  <tr><td><span className="doc-inline-code">altTexts</span></td><td>string[]</td><td>No</td><td>Alt text for each image, matched by index. Improves accessibility.</td></tr>
+                  <tr><td><span className="doc-inline-code">mediaType</span></td><td><span className="doc-inline-code">&quot;post&quot; | &quot;reel&quot; | &quot;story&quot;</span></td><td>No</td><td>Instagram/Facebook media format. Defaults to <span className="doc-inline-code">&quot;post&quot;</span>.</td></tr>
+                  <tr><td><span className="doc-inline-code">youtubeType</span></td><td><span className="doc-inline-code">&quot;short&quot; | &quot;video&quot;</span></td><td>No</td><td>YouTube upload format. Defaults to <span className="doc-inline-code">&quot;short&quot;</span>.</td></tr>
+                  <tr><td><span className="doc-inline-code">dryRun</span></td><td>boolean</td><td>No</td><td>If <span className="doc-inline-code">true</span>, runs the full scheduling pipeline without making any real platform API calls. Useful for testing.</td></tr>
+                  <tr><td><span className="doc-inline-code">perAccount</span></td><td>object</td><td>No</td><td>Per-platform content overrides keyed by account ID. See below.</td></tr>
+                </tbody>
+              </table></div>
+
+              <h3 className="doc-h3">Per-platform overrides</h3>
+              <p className="doc-p">Use <span className="doc-inline-code">perAccount</span> to post different text or a different first comment to specific accounts. This is the recommended approach when targeting platforms with different character limits (e.g. Bluesky 300 chars vs LinkedIn 3,000 chars).</p>
+              <div className="doc-table-wrap"><table className="doc-table">
+                <thead><tr><th>Platform</th><th>Char limit</th></tr></thead>
+                <tbody>
+                  <tr><td>Bluesky</td><td>300</td></tr>
+                  <tr><td>Threads</td><td>500</td></tr>
+                  <tr><td>Mastodon</td><td>500</td></tr>
+                  <tr><td>Instagram</td><td>2,200</td></tr>
+                  <tr><td>Facebook</td><td>63,206</td></tr>
+                  <tr><td>LinkedIn</td><td>3,000</td></tr>
+                  <tr><td>YouTube</td><td>5,000 (description)</td></tr>
+                </tbody>
+              </table></div>
+
+              <h3 className="doc-h3">Response — 201 Created</h3>
+              <code className="doc-code">{`{
+  "id": "cmr39jppf0003iiwnt643zr91",
+  "scheduledFor": "2026-07-03T10:00:00.000Z",
+  "status": "pending",
+  "targets": [
+    {
+      "id": "cmr39jppf0005iiwn0gkg3mpq",
+      "accountId": "cmr289odh000110a5s6rdfmzn",
+      "status": "pending"
+    }
+  ]
+}`}</code>
+
+              <h3 className="doc-h3">Example — multi-platform with per-account overrides</h3>
+              <code className="doc-code">{`curl -X POST https://your-api-url/api/v1/posts \\
+  -H "Authorization: Bearer ph_<key>" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "content": "Short version for Bluesky (under 300 chars) 🚀",
+    "accountIds": ["<bluesky-id>", "<linkedin-id>"],
+    "scheduledFor": "2026-07-03T10:00:00.000Z",
+    "perAccount": {
+      "<linkedin-id>": {
+        "text": "Longer LinkedIn version with more context and hashtags. #buildinpublic #saas",
+        "commentText": "Happy to answer questions below!"
+      }
+    }
+  }'`}</code>
+
+              <h3 className="doc-h3">Example — dry run (test without posting)</h3>
+              <code className="doc-code">{`curl -X POST https://your-api-url/api/v1/posts \\
+  -H "Authorization: Bearer ph_<key>" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "content": "Test post — will not actually publish",
+    "accountIds": ["<account-id>"],
+    "scheduledFor": "2026-07-03T10:00:00.000Z",
+    "dryRun": true
+  }'`}</code>
+
+              {/* ── GET /posts ── */}
+              <h2 className="doc-h2" id="api-posts-list">GET /posts</h2>
+              <p className="doc-p">Returns your scheduled and completed posts in reverse chronological order (newest first). Supports cursor-based pagination.</p>
+
+              <h3 className="doc-h3">Query parameters</h3>
+              <div className="doc-table-wrap"><table className="doc-table">
+                <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td><span className="doc-inline-code">status</span></td><td>string</td><td>—</td><td>Filter by status: <span className="doc-inline-code">pending</span>, <span className="doc-inline-code">running</span>, <span className="doc-inline-code">done</span>, <span className="doc-inline-code">failed</span>. Omit to return all.</td></tr>
+                  <tr><td><span className="doc-inline-code">limit</span></td><td>number</td><td>20</td><td>Results per page. Maximum 100.</td></tr>
+                  <tr><td><span className="doc-inline-code">cursor</span></td><td>string</td><td>—</td><td>Post <span className="doc-inline-code">id</span> of the last item from the previous page. Omit for the first page.</td></tr>
+                </tbody>
+              </table></div>
+
+              <h3 className="doc-h3">Response</h3>
+              <code className="doc-code">{`{
+  "posts": [
+    {
+      "id": "cmr39jppf0003iiwnt643zr91",
+      "scheduledFor": "2026-07-03T10:00:00.000Z",
+      "status": "done",
+      "content": "Hello from the Posthive API! 🚀",
+      "targets": [
+        { "id": "...", "accountId": "...", "status": "done", "error": null }
+      ]
+    }
+  ],
+  "nextCursor": "cmr39jppf0003iiwnt643zr91"  // null on last page
+}`}</code>
+
+              <h3 className="doc-h3">Paginating</h3>
+              <code className="doc-code">{`# Page 1
+GET /api/v1/posts?limit=20
+
+# Page 2 — pass the last post id as cursor
+GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</code>
+
+              {/* ── GET /posts/:id ── */}
+              <h2 className="doc-h2" id="api-posts-get">GET /posts/:id</h2>
+              <p className="doc-p">Returns a single post by ID, including full per-platform target details and any error messages.</p>
+
+              <h3 className="doc-h3">Response</h3>
+              <code className="doc-code">{`{
+  "id": "cmr39jppf0003iiwnt643zr91",
+  "scheduledFor": "2026-07-03T10:00:00.000Z",
+  "status": "done",
+  "content": "Hello from the Posthive API! 🚀",
+  "commentText": null,
+  "targets": [
+    {
+      "id": "cmr39jppf0005iiwn0gkg3mpq",
+      "accountId": "cmr289odh000110a5s6rdfmzn",
+      "status": "done",
+      "error": null,
+      "platformPostId": "at://did:plc:abc.../app.bsky.feed.post/123"
+    }
+  ],
+  "createdAt": "2026-07-02T08:00:00.000Z",
+  "updatedAt": "2026-07-03T10:00:05.000Z"
+}`}</code>
+
+              <h3 className="doc-h3">Target statuses</h3>
+              <div className="doc-table-wrap"><table className="doc-table">
+                <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+                <tbody>
+                  <tr><td><span className="doc-inline-code">pending</span></td><td>Waiting to be published</td></tr>
+                  <tr><td><span className="doc-inline-code">running</span></td><td>Currently being published</td></tr>
+                  <tr><td><span className="doc-inline-code">post_done</span></td><td>Main post published, first comment pending</td></tr>
+                  <tr><td><span className="doc-inline-code">done</span></td><td>Fully published (post + comment if set)</td></tr>
+                  <tr><td><span className="doc-inline-code">post_failed</span></td><td>Publishing failed — see <span className="doc-inline-code">error</span> field</td></tr>
+                  <tr><td><span className="doc-inline-code">comment_failed</span></td><td>Post published but first comment failed</td></tr>
+                </tbody>
+              </table></div>
+
+              <h3 className="doc-h3">Example</h3>
+              <code className="doc-code">{`curl https://your-api-url/api/v1/posts/cmr39jppf0003iiwnt643zr91 \\
+  -H "Authorization: Bearer ph_<key>"`}</code>
+
+              {/* ── PATCH /posts/:id ── */}
+              <h2 className="doc-h2" id="api-posts-patch">PATCH /posts/:id</h2>
+              <p className="doc-p">Update a <span className="doc-inline-code">pending</span> post — reschedule it, change the content, swap accounts, or update the first comment. All fields are optional; only send what you want to change.</p>
+
+              <h3 className="doc-h3">Request body</h3>
+              <p className="doc-p">All fields are optional — only send what you want to change.</p>
+              <div className="doc-table-wrap"><table className="doc-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td><span className="doc-inline-code">scheduledFor</span></td><td>string (ISO 8601)</td><td>New publish time. Must be in the future.</td></tr>
+                  <tr><td><span className="doc-inline-code">content</span></td><td>string</td><td>Replacement post text (default for all platforms).</td></tr>
+                  <tr><td><span className="doc-inline-code">commentText</span></td><td>string</td><td>Replacement first comment. Pass <span className="doc-inline-code">&quot;&quot;</span> to remove.</td></tr>
+                  <tr><td><span className="doc-inline-code">accountIds</span></td><td>string[]</td><td>Replace target accounts entirely. Must be non-empty.</td></tr>
+                  <tr><td><span className="doc-inline-code">images</span></td><td>string[]</td><td>Replace attached images with new upload URLs.</td></tr>
+                  <tr><td><span className="doc-inline-code">altTexts</span></td><td>string[]</td><td>Alt text for each image, matched by index.</td></tr>
+                  <tr><td><span className="doc-inline-code">mediaType</span></td><td><span className="doc-inline-code">&quot;post&quot; | &quot;reel&quot; | &quot;story&quot;</span></td><td>Instagram/Facebook media format.</td></tr>
+                  <tr><td><span className="doc-inline-code">youtubeType</span></td><td><span className="doc-inline-code">&quot;short&quot; | &quot;video&quot;</span></td><td>YouTube upload format.</td></tr>
+                  <tr><td><span className="doc-inline-code">perAccount</span></td><td>object</td><td>Per-platform text/comment overrides keyed by account ID.</td></tr>
+                </tbody>
+              </table></div>
+
+              <h3 className="doc-h3">Response — 200 OK</h3>
+              <code className="doc-code">{`{
+  "id": "cmr39jppf...",
+  "scheduledFor": "2026-07-04T10:00:00.000Z",
+  "status": "pending",
+  "content": "Updated post text",
+  "commentText": null
+}`}</code>
+
+              <h3 className="doc-h3">Example — reschedule only</h3>
+              <code className="doc-code">{`curl -X PATCH https://your-api-url/api/v1/posts/cmr39jppf... \\
+  -H "Authorization: Bearer ph_<key>" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "scheduledFor": "2026-07-04T10:00:00.000Z" }'`}</code>
+
+              {/* ── DELETE /posts/:id ── */}
+              <h2 className="doc-h2" id="api-posts-delete">DELETE /posts/:id</h2>
+              <p className="doc-p">Cancels and permanently deletes a <span className="doc-inline-code">pending</span> post. Posts with status <span className="doc-inline-code">running</span>, <span className="doc-inline-code">done</span>, or <span className="doc-inline-code">failed</span> cannot be deleted via the API.</p>
+
+              <h3 className="doc-h3">Response — 200 OK</h3>
+              <code className="doc-code">{`{ "ok": true }`}</code>
+
+              <h3 className="doc-h3">Example</h3>
+              <code className="doc-code">{`curl -X DELETE https://your-api-url/api/v1/posts/cmr39jppf0003iiwnt643zr91 \\
+  -H "Authorization: Bearer ph_<key>"`}</code>
+
+              {/* ── POST /upload ── */}
+              <h2 className="doc-h2" id="api-upload">POST /upload</h2>
+              <p className="doc-p">Upload an image or video file and get back a URL you can pass in the <span className="doc-inline-code">images</span> field of <span className="doc-inline-code">POST /posts</span>. Send as <span className="doc-inline-code">multipart/form-data</span> with the file in a field named <span className="doc-inline-code">file</span>.</p>
+
+              <h3 className="doc-h3">Supported types</h3>
+              <div className="doc-table-wrap"><table className="doc-table">
+                <thead><tr><th>Type</th><th>Formats</th><th>Max size</th></tr></thead>
+                <tbody>
+                  <tr><td>Image</td><td><span className="doc-inline-code">image/jpeg</span>, <span className="doc-inline-code">image/png</span>, <span className="doc-inline-code">image/gif</span>, <span className="doc-inline-code">image/webp</span></td><td>10 MB</td></tr>
+                  <tr><td>Video</td><td><span className="doc-inline-code">video/mp4</span>, <span className="doc-inline-code">video/quicktime</span></td><td>100 MB</td></tr>
+                </tbody>
+              </table></div>
+
+              <h3 className="doc-h3">Response — 201 Created</h3>
+              <code className="doc-code">{`{
+  "url": "https://your-api-url/uploads/abc123.jpg",
+  "type": "image"   // "image" | "video"
+}`}</code>
+
+              <h3 className="doc-h3">Example</h3>
+              <code className="doc-code">{`curl -X POST https://your-api-url/api/v1/upload \\
+  -H "Authorization: Bearer ph_<key>" \\
+  -F "file=@/path/to/photo.jpg"
+
+# Then use the returned URL in a post
+curl -X POST https://your-api-url/api/v1/posts \\
+  -H "Authorization: Bearer ph_<key>" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "content": "Check out this photo!",
+    "accountIds": ["cmr289odh..."],
+    "scheduledFor": "2026-07-04T10:00:00.000Z",
+    "images": ["https://your-api-url/uploads/abc123.jpg"]
+  }'`}</code>
+
+              {/* ── Error codes ── */}
+              <h2 className="doc-h2" id="api-errors">Error codes</h2>
+              <p className="doc-p">All errors return a JSON body with an <span className="doc-inline-code">error</span> field describing what went wrong.</p>
+              <div className="doc-table-wrap"><table className="doc-table">
+                <thead><tr><th>HTTP status</th><th>Meaning</th></tr></thead>
+                <tbody>
+                  <tr><td><span className="doc-inline-code">400</span></td><td>Bad request — missing or invalid field. Check the <span className="doc-inline-code">error</span> message.</td></tr>
+                  <tr><td><span className="doc-inline-code">401</span></td><td>Missing, invalid, or revoked API key.</td></tr>
+                  <tr><td><span className="doc-inline-code">403</span></td><td>Your plan does not include API access, or you have reached your key limit.</td></tr>
+                  <tr><td><span className="doc-inline-code">404</span></td><td>Resource not found or does not belong to your account.</td></tr>
+                  <tr><td><span className="doc-inline-code">500</span></td><td>Unexpected server error. Try again or contact support.</td></tr>
                 </tbody>
               </table></div>
 

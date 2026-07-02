@@ -18,6 +18,8 @@ import { jobRoutes } from "./routes/jobs.js";
 import { uploadRoutes } from "./routes/upload.js";
 import { userRoutes } from "./routes/user.js";
 import { billingRoutes } from "./routes/billing.js";
+import { apiKeyRoutes } from "./routes/apiKeys.js";
+import { publicApiRoutes } from "./routes/publicApi.js";
 import { startWorker } from "./lib/worker.js";
 import { withAuth } from "./lib/auth/withAuth.js";
 import type { StorageAdapter } from "./lib/storage.js";
@@ -76,6 +78,8 @@ async function main() {
   await app.register(jobRoutes);
   await app.register(uploadRoutes, { storage });
   if (process.env.ENABLE_BILLING === "true") await app.register(billingRoutes);
+  await app.register(apiKeyRoutes);
+  await app.register(publicApiRoutes, { storage });
 
   app.get("/health", async () => ({ ok: true }));
 

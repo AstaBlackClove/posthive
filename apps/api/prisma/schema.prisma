@@ -29,9 +29,10 @@ model User {
   dodoCustomerId String?   @unique
   dodoSubId      String?   @unique
 
-  accounts    Account[]
-  postJobs    PostJob[]
+  accounts      Account[]
+  postJobs      PostJob[]
   refreshTokens RefreshToken[]
+  apiKeys       ApiKey[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -137,6 +138,22 @@ model OAuthState {
   createdAt DateTime @default(now())
 
   @@index([nonce])
+}
+
+// API key for programmatic access (Pro/Team plans, or all users when billing disabled).
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String                      // human label e.g. "My Claude agent"
+  keyHash    String    @unique           // SHA-256 hash of the raw key
+  prefix     String                      // first 12 chars shown in UI e.g. "ph_abc12345"
+  lastUsedAt DateTime?
+  revokedAt  DateTime?                   // null = active
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([keyHash])
 }
 
 // Cancellation feedback submitted when a user cancels their subscription.

@@ -5,7 +5,8 @@
       "name": "Posthive Web",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev:web"],
-      "port": 3000
+      "port": 3000,
+      "autoPort": false
     }
   ]
 }

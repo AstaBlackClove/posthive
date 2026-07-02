@@ -24,7 +24,7 @@ const PLANS = [
     name: "Creator",
     desc: "For solo creators finding their rhythm.",
     inr: "₹550", usd: "$9",
-    features: ["3 connected accounts", "400 posts / month", "Calendar & drag-reschedule", "First comment scheduling"],
+    features: ["3 connected accounts", "400 posts / month", "Calendar & drag-reschedule", "First comment scheduling", "No API access"],
     popular: false,
   },
   {
@@ -32,7 +32,7 @@ const PLANS = [
     name: "Pro",
     desc: "For power users posting at scale.",
     inr: "₹1,700", usd: "$29",
-    features: ["15 connected accounts", "Unlimited posts", "Reels & Stories support", "Per-platform overrides"],
+    features: ["15 connected accounts", "Unlimited posts", "Reels & Stories support", "Per-platform overrides", "API access (3 keys)"],
     popular: true,
   },
   {
@@ -40,7 +40,7 @@ const PLANS = [
     name: "Team",
     desc: "For agencies managing multiple brands.",
     inr: "₹2,600", usd: "$49",
-    features: ["50 connected accounts", "Unlimited posts", "Team roles & approvals", "Priority support"],
+    features: ["50 connected accounts", "Unlimited posts", "Team roles & approvals", "Priority support", "API access (10 keys)"],
     popular: false,
   },
 ];
@@ -660,12 +660,18 @@ export default function RootPage() {
                     {user ? "Go to scheduler" : "Start free trial"}
                   </Link>
                   <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-                    {plan.features.map(f => (
-                      <span key={f} style={{ display: "flex", gap: 9, alignItems: "center", fontSize: 13.5, color: plan.popular ? "#cfcfcf" : "#b4b4b4" }}>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5b63d3" strokeWidth="2.6"><path d="M5 12l5 5L20 6"/></svg>
-                        {f}
-                      </span>
-                    ))}
+                    {plan.features.map(f => {
+                      const isNo = f.startsWith("No ");
+                      return (
+                        <span key={f} style={{ display: "flex", gap: 9, alignItems: "center", fontSize: 13.5, color: isNo ? "#555" : plan.popular ? "#cfcfcf" : "#b4b4b4" }}>
+                          {isNo
+                            ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2.6"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                            : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5b63d3" strokeWidth="2.6"><path d="M5 12l5 5L20 6"/></svg>
+                          }
+                          {f}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               ))}

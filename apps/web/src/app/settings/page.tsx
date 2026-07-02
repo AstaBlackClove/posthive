@@ -64,6 +64,20 @@ export default function SettingsPage() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // API Keys
+  const [apiKeys, setApiKeys] = useState<{ id: string; name: string; prefix: string; lastUsedAt: string | null; createdAt: string }[]>([]);
+  const [newKeyName, setNewKeyName] = useState("");
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [newKeyRaw, setNewKeyRaw] = useState<string | null>(null);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiFetch<{ keys: typeof apiKeys }>("/user/api-keys")
+      .then((d) => setApiKeys(d.keys ?? []))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (user) {
       setName(user.name ?? "");
@@ -115,6 +129,40 @@ export default function SettingsPage() {
     } catch (err) {
       toast(err instanceof Error ? err.message : "Failed to delete account", "error");
       setDeleteLoading(false);
+    }
+  }
+
+  async function createApiKey(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newKeyName.trim()) return;
+    setCreatingKey(true);
+    try {
+      const data = await apiFetch<{ key: string; prefix: string; name: string }>("/user/api-keys", {
+        method: "POST",
+        body: JSON.stringify({ name: newKeyName.trim() }),
+      });
+      setNewKeyRaw(data.key);
+      setNewKeyName("");
+      // Refresh list to get the real id
+      apiFetch<{ keys: typeof apiKeys }>("/user/api-keys").then((d) => setApiKeys(d.keys ?? [])).catch(() => {});
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to create key", "error");
+    } finally {
+      setCreatingKey(false);
+    }
+  }
+
+  async function revokeApiKey(id: string) {
+    setConfirmRevokeId(null);
+    setRevokingId(id);
+    try {
+      await apiFetch<{ ok: boolean }>(`/user/api-keys/${id}`, { method: "DELETE" });
+      setApiKeys((prev) => prev.filter((k) => k.id !== id));
+      toast("API key revoked", "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to revoke key", "error");
+    } finally {
+      setRevokingId(null);
     }
   }
 
@@ -193,6 +241,64 @@ export default function SettingsPage() {
 
           </div>
 
+          {/* API Keys */}
+          <Section title="API Keys" description="Create keys to schedule posts programmatically. Pro and Team plans only.">
+            {/* Create new key */}
+            <form onSubmit={createApiKey} className="flex gap-2 mb-4">
+              <input
+                value={newKeyName}
+                onChange={(e) => setNewKeyName(e.target.value)}
+                placeholder="Key name (e.g. My Claude agent)"
+                style={{ ...inputStyle, flex: 1 }}
+              />
+              <button type="submit" disabled={creatingKey || !newKeyName.trim()}
+                style={{ ...btnStyle, opacity: (creatingKey || !newKeyName.trim()) ? 0.5 : 1, whiteSpace: "nowrap" }}>
+                {creatingKey ? "Creating…" : "Create key"}
+              </button>
+            </form>
+
+            {/* One-time key reveal */}
+            {newKeyRaw && (
+              <div className="mb-4 rounded-xl p-4" style={{ backgroundColor: "#0d1f0d", border: "1px solid #1a4a1a" }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: "#4ade80" }}>Copy your key now — it won&apos;t be shown again</p>
+                <div className="flex items-center gap-2">
+                  <code className="text-xs break-all flex-1" style={{ color: "#a7f3d0", fontFamily: "monospace" }}>{newKeyRaw}</code>
+                  <button onClick={() => { navigator.clipboard.writeText(newKeyRaw); toast("Copied!", "success"); }}
+                    style={{ ...btnStyle, padding: "4px 10px", fontSize: 11, flexShrink: 0 }}>
+                    Copy
+                  </button>
+                </div>
+                <button onClick={() => setNewKeyRaw(null)} className="text-xs mt-2" style={{ color: "#888" }}>Dismiss</button>
+              </div>
+            )}
+
+            {/* Existing keys list */}
+            {apiKeys.length === 0 ? (
+              <p className="text-xs" style={{ color: "#555" }}>No API keys yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {apiKeys.map((k) => (
+                  <div key={k.id} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3"
+                    style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a" }}>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: "#ededed" }}>{k.name}</p>
+                      <p className="text-xs" style={{ color: "#555", fontFamily: "monospace" }}>
+                        {k.prefix}… · {k.lastUsedAt ? `last used ${new Date(k.lastUsedAt).toLocaleDateString()}` : "never used"}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setConfirmRevokeId(k.id)}
+                      disabled={revokingId === k.id}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg flex-shrink-0"
+                      style={{ backgroundColor: "#2a1010", color: "#f87171", border: "1px solid #5a2020", opacity: revokingId === k.id ? 0.5 : 1 }}>
+                      {revokingId === k.id ? "Revoking…" : "Revoke"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
+
           {/* Danger zone — full width below */}
           <Section title="Danger zone">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -211,6 +317,33 @@ export default function SettingsPage() {
           </Section>
         </div>
       </div>
+
+      {/* Revoke API key confirm modal */}
+      {confirmRevokeId && (() => {
+        const key = apiKeys.find((k) => k.id === confirmRevokeId);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+            <div className="w-full max-w-sm rounded-2xl p-6 modal-panel" style={{ backgroundColor: "#111111", border: "1px solid #3a1a1a" }}>
+              <h2 className="text-base font-bold mb-1" style={{ color: "#f87171" }}>Revoke API key?</h2>
+              <p className="text-xs mb-5" style={{ color: "#aaaaaa" }}>
+                <strong style={{ color: "#ededed" }}>{key?.name}</strong> (<span style={{ fontFamily: "monospace" }}>{key?.prefix}…</span>) will stop working immediately. Any agent or script using it will lose access.
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmRevokeId(null)}
+                  className="flex-1 text-sm font-semibold py-2 rounded-xl"
+                  style={{ backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a" }}>
+                  Cancel
+                </button>
+                <button onClick={() => revokeApiKey(confirmRevokeId)}
+                  className="flex-1 text-sm font-semibold py-2 rounded-xl"
+                  style={{ backgroundColor: "#7f1d1d", color: "#fca5a5" }}>
+                  Revoke key
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Delete confirm modal */}
       {showDelete && (
