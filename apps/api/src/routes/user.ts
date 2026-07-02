@@ -116,7 +116,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     }
 
     await prisma.user.update({ where: { id: record.userId }, data: { emailVerified: true } });
-    await prisma.emailVerification.update({ where: { id: record.id }, data: { usedAt: new Date() } });
+    await prisma.emailVerification.delete({ where: { id: record.id } });
 
     return reply.send({ ok: true });
   });
