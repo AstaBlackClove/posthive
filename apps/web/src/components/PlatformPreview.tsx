@@ -76,6 +76,7 @@ export const PLATFORM_COLOR: Record<string, string> = {
   instagram: "#e1306c",
   mastodon: "#6364ff",
   youtube: "#ff0000",
+  facebook: "#1877f2",
 };
 
 export const PLATFORM_LIMIT: Record<string, number> = {
@@ -84,6 +85,7 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   linkedin: 3000,
   mastodon: 500,
   youtube: 5000,
+  facebook: 63206,
 };
 
 export const MAX_IMAGES = 4;

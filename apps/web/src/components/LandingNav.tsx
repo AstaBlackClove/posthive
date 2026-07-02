@@ -12,15 +12,16 @@ export const PLATFORMS_NAV = [
   { platform: "linkedin",  label: "LinkedIn",  desc: "3,000 chars, professional" },
   { platform: "mastodon",  label: "Mastodon",  desc: "500 chars, federated" },
   { platform: "youtube",   label: "YouTube",   desc: "Shorts & video, Google OAuth" },
+  { platform: "facebook",  label: "Facebook Pages", desc: "Pages, Graph API" },
 ];
 
 const FEATURES_NAV = [
-  { icon: <SunIcon />,      bg: "rgba(91,99,211,.18)",  color: "#9ba2ee", title: "Multi-platform posting",  desc: "One composer, six platforms" },
-  { icon: <InstagramIcon />,bg: "rgba(225,100,100,.18)",color: "#e86b6b", title: "Reels & Stories",         desc: "Full Instagram media support" },
-  { icon: <CalendarIcon />, bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Drag-to-reschedule",      desc: "Visual calendar view" },
-  { icon: <CommentIcon />,  bg: "rgba(220,160,60,.18)", color: "#d4a83c", title: "First comment",           desc: "Auto-reply on publish" },
-  { icon: <SlidersIcon />,  bg: "rgba(140,100,220,.18)",color: "#a07ee0", title: "Per-platform overrides",  desc: "Custom text per network" },
-  { icon: <CodeIcon />,     bg: "rgba(60,180,200,.18)", color: "#3db8c8", title: "Self-hostable",           desc: "AGPL-3.0 open source" },
+  { icon: <SunIcon />,      bg: "rgba(91,99,211,.18)",  color: "#9ba2ee", title: "Multi-platform posting",  desc: "One composer, seven platforms", slug: "multi-platform-posting" },
+  { icon: <InstagramIcon />,bg: "rgba(225,100,100,.18)",color: "#e86b6b", title: "Reels & Stories",         desc: "Full Instagram media support",  slug: "reels-and-stories" },
+  { icon: <CalendarIcon />, bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Drag-to-reschedule",      desc: "Visual calendar view",           slug: "drag-to-reschedule" },
+  { icon: <CommentIcon />,  bg: "rgba(220,160,60,.18)", color: "#d4a83c", title: "First comment",           desc: "Auto-reply on publish",          slug: "first-comment" },
+  { icon: <SlidersIcon />,  bg: "rgba(140,100,220,.18)",color: "#a07ee0", title: "Per-platform overrides",  desc: "Custom text per network",        slug: "per-platform-overrides" },
+  { icon: <CodeIcon />,     bg: "rgba(60,180,200,.18)", color: "#3db8c8", title: "Self-hostable",           desc: "AGPL-3.0 open source",           slug: "self-hostable" },
 ];
 
 interface NavBarProps {
@@ -96,7 +97,7 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
             <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8, paddingLeft: 6 }}>FEATURES</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               {FEATURES_NAV.map((f) => (
-                <a key={f.title} href="/features" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 9, textDecoration: "none", transition: "background 100ms" }}
+                <a key={f.title} href={`/features/${f.slug}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 9, textDecoration: "none", transition: "background 100ms" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.04)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "none"; }}>
                   <div style={{ width: 32, height: 32, borderRadius: 8, background: f.bg, color: f.color, display: "grid", placeItems: "center", flexShrink: 0 }}>{f.icon}</div>
@@ -117,7 +118,7 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
             <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8, paddingLeft: 6 }}>SUPPORTED PLATFORMS</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {PLATFORMS_NAV.map((p) => (
-                <a key={p.platform} href="/features" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 9, textDecoration: "none", transition: "background 100ms" }}
+                <a key={p.platform} href={`/platforms/${p.platform}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 9, textDecoration: "none", transition: "background 100ms" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.04)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "none"; }}>
                   <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(255,255,255,.06)", display: "grid", placeItems: "center", flexShrink: 0 }}>
@@ -170,7 +171,7 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
         <div style={{ position: "absolute", top: 64, left: 0, right: 0, background: "#111", borderBottom: "1px solid rgba(255,255,255,.08)", padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: 4, maxHeight: "calc(100vh - 64px)", overflowY: "auto" }}>
           <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>Features</p>
           {FEATURES_NAV.map(f => (
-            <a key={f.title} href="/features" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", textDecoration: "none" }}>
+            <a key={f.title} href={`/features/${f.slug}`} onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", textDecoration: "none" }}>
               <div style={{ width: 28, height: 28, borderRadius: 7, background: f.bg, color: f.color, display: "grid", placeItems: "center" }}>{f.icon}</div>
               <span style={{ fontSize: 14, fontWeight: 500, color: "#ededed" }}>{f.title}</span>
             </a>

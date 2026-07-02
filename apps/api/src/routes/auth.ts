@@ -25,6 +25,11 @@ const MASTODON_SCOPES = "read:accounts write:statuses write:media";
 const YT_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID!;
 const YT_CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET!;
 const YT_REDIRECT_URI = process.env.YOUTUBE_REDIRECT_URI!;
+
+const FB_APP_ID = process.env.FACEBOOK_APP_ID!;
+const FB_APP_SECRET = process.env.FACEBOOK_APP_SECRET!;
+const FB_REDIRECT_URI = process.env.FACEBOOK_REDIRECT_URI!;
+const FB_SCOPES = "pages_manage_posts,pages_show_list,pages_read_engagement";
 const YOUTUBE_SCOPES = [
   "https://www.googleapis.com/auth/youtube.upload",
   "https://www.googleapis.com/auth/youtube.readonly",
@@ -603,5 +608,144 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     console.log(`[youtube oauth] connected ${displayName} → user ${userId}`);
     return reply.redirect(buildRedirect(redirectBase, { connected: "youtube" }));
+  });
+
+  // ── Facebook Pages OAuth ───────────────────────────────────────────────────
+
+  app.get("/auth/facebook", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const nonce = randomBytes(32).toString("hex");
+    await prisma.oAuthState.create({
+      data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
+    });
+    const state = Buffer.from(JSON.stringify({ userId, nonce })).toString("base64url");
+    const params = new URLSearchParams({
+      client_id: FB_APP_ID,
+      redirect_uri: FB_REDIRECT_URI,
+      scope: FB_SCOPES,
+      response_type: "code",
+      state,
+    });
+    return reply.redirect(`https://www.facebook.com/v21.0/dialog/oauth?${params}`);
+  });
+
+  app.get("/auth/facebook/callback", async (req, reply) => {
+    const { code, error, state } = req.query as Record<string, string>;
+    const redirectBase = `${WEB_URL}/accounts`;
+
+    if (error || !code) {
+      console.error("[facebook oauth] callback error:", error);
+      return reply.redirect(buildRedirect(redirectBase, { error: error ?? "no_code" }));
+    }
+
+    let userId: string;
+    try {
+      const decoded = JSON.parse(Buffer.from(state, "base64url").toString()) as { userId: string; nonce: string };
+      userId = decoded.userId;
+      const storedState = await prisma.oAuthState.findUnique({ where: { nonce: decoded.nonce } });
+      if (!storedState || storedState.userId !== userId || storedState.expiresAt < new Date()) {
+        return reply.redirect(buildRedirect(redirectBase, { error: "invalid_or_expired_state" }));
+      }
+      await prisma.oAuthState.delete({ where: { nonce: decoded.nonce } });
+    } catch {
+      return reply.redirect(buildRedirect(redirectBase, { error: "invalid_state" }));
+    }
+
+    // Exchange code for short-lived user access token
+    const tokenParams = new URLSearchParams({
+      client_id: FB_APP_ID,
+      client_secret: FB_APP_SECRET,
+      redirect_uri: FB_REDIRECT_URI,
+      code,
+    });
+
+    let shortLivedToken: string;
+    try {
+      const tokenRes = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?${tokenParams}`);
+      const tokenText = await tokenRes.text();
+      if (!tokenRes.ok) {
+        console.error(`[facebook oauth] short-lived token exchange failed (${tokenRes.status}): ${tokenText}`);
+        throw new Error(tokenText);
+      }
+      const tokenData = JSON.parse(tokenText) as { access_token: string };
+      shortLivedToken = tokenData.access_token;
+    } catch (err) {
+      console.error("[facebook oauth] token_exchange_failed:", err);
+      return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
+    }
+
+    // Exchange for long-lived user token (~60 days)
+    let longLivedToken: string;
+    let userTokenExpiresAt: Date;
+    try {
+      const llParams = new URLSearchParams({
+        grant_type: "fb_exchange_token",
+        client_id: FB_APP_ID,
+        client_secret: FB_APP_SECRET,
+        fb_exchange_token: shortLivedToken,
+      });
+      const llRes = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?${llParams}`);
+      const llText = await llRes.text();
+      if (!llRes.ok) {
+        console.error(`[facebook oauth] long-lived token exchange failed: ${llText}`);
+        throw new Error(llText);
+      }
+      const llData = JSON.parse(llText) as { access_token: string; expires_in?: number };
+      longLivedToken = llData.access_token;
+      userTokenExpiresAt = new Date(Date.now() + ((llData.expires_in ?? 5184000) - 86400) * 1000);
+    } catch (err) {
+      console.error("[facebook oauth] long_lived_token_failed:", err);
+      return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
+    }
+
+    // Get user ID
+    let fbUserId: string;
+    try {
+      const meRes = await fetch(`https://graph.facebook.com/v21.0/me?access_token=${longLivedToken}`);
+      const meData = await meRes.json() as { id: string; name?: string };
+      fbUserId = meData.id;
+    } catch (err) {
+      console.error("[facebook oauth] /me fetch failed:", err);
+      return reply.redirect(buildRedirect(redirectBase, { error: "profile_fetch_failed" }));
+    }
+
+    // List pages the user manages
+    let pages: { id: string; name: string; access_token: string; picture?: { data?: { url?: string } } }[];
+    try {
+      const pagesRes = await fetch(
+        `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,picture&access_token=${longLivedToken}`
+      );
+      const pagesData = await pagesRes.json() as { data?: typeof pages };
+      pages = pagesData.data ?? [];
+    } catch (err) {
+      console.error("[facebook oauth] /me/accounts fetch failed:", err);
+      return reply.redirect(buildRedirect(redirectBase, { error: "pages_fetch_failed" }));
+    }
+
+    if (pages.length === 0) {
+      return reply.redirect(buildRedirect(redirectBase, { error: "no_pages" }));
+    }
+
+    // Connect all pages the user manages (or just the first one if many)
+    for (const page of pages) {
+      const credentials = encrypt(JSON.stringify({
+        pageAccessToken: page.access_token,
+        pageId: page.id,
+        userId: fbUserId,
+        userAccessToken: longLivedToken,
+      }));
+      const avatarUrl = page.picture?.data?.url ?? null;
+      const existing = await prisma.account.findFirst({
+        where: { platform: "facebook", displayName: page.name, userId },
+      });
+      await prisma.account.upsert({
+        where: { id: existing?.id ?? "new" },
+        create: { platform: "facebook", displayName: page.name, credentials, avatarUrl, expiresAt: userTokenExpiresAt, userId },
+        update: { credentials, avatarUrl, expiresAt: userTokenExpiresAt },
+      });
+      console.log(`[facebook oauth] connected page "${page.name}" → user ${userId}`);
+    }
+
+    return reply.redirect(buildRedirect(redirectBase, { connected: "facebook" }));
   });
 }

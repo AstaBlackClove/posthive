@@ -12,6 +12,7 @@ const INSTAGRAM_AUTH_URL = `${API_BASE}/auth/instagram`;
 const LINKEDIN_AUTH_URL = `${API_BASE}/auth/linkedin`;
 const MASTODON_AUTH_URL = `${API_BASE}/auth/mastodon`;
 const YOUTUBE_AUTH_URL = `${API_BASE}/auth/youtube`;
+const FACEBOOK_AUTH_URL = `${API_BASE}/auth/facebook`;
 
 const BG = "#0a0a0a";
 const SURFACE = "#111111";
@@ -33,6 +34,7 @@ const PLATFORM_META: Record<string, { label: string; brand: string }> = {
   linkedin:  { label: "LinkedIn",  brand: "#0077b5" },
   mastodon:  { label: "Mastodon",  brand: "#6364ff" },
   youtube:   { label: "YouTube",   brand: "#ff0000" },
+  facebook:  { label: "Facebook",  brand: "#1877f2" },
 };
 
 function Avatar({ account }: { account: Account }) {
@@ -336,6 +338,7 @@ export default function AccountsPage() {
   const linkedinAccounts = accounts.filter((a) => a.platform === "linkedin");
   const mastodonAccounts = accounts.filter((a) => a.platform === "mastodon");
   const youtubeAccounts = accounts.filter((a) => a.platform === "youtube");
+  const facebookAccounts = accounts.filter((a) => a.platform === "facebook");
 
   const [showMastodonDialog, setShowMastodonDialog] = useState(false);
 
@@ -662,6 +665,44 @@ export default function AccountsPage() {
               )}
               <p className="text-xs">
                 Posts as YouTube Shorts requires a video attached to every post
+              </p>
+            </div>
+          </div>
+
+          {/* ── Facebook Pages ── */}
+          <div className="rounded-2xl" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+            <div className="flex items-center gap-3 p-5 pb-0">
+              <PlatformIcon platform="facebook" size={20} />
+              <div>
+                <p className="font-semibold text-sm" style={{ color: TEXT }}>Facebook Pages</p>
+                <p className="text-xs" style={{ color: MUTED }}>Post to Facebook Pages you manage</p>
+              </div>
+            </div>
+            <div className="p-5 space-y-3">
+              {!loading && facebookAccounts.length > 0 && (
+                <div className="space-y-2">
+                  {facebookAccounts.map((a) => (
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} />
+                  ))}
+                </div>
+              )}
+              {connectDisabled ? (
+                <button disabled title={connectDisabled ? (limitMsg ?? undefined) : undefined}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="facebook" size={16} />
+                  {facebookAccounts.length > 0 ? "Add another Facebook Page" : "Connect Facebook Page"}
+                </button>
+              ) : (
+                <a href={FACEBOOK_AUTH_URL}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="facebook" size={16} />
+                  {facebookAccounts.length > 0 ? "Add another Facebook Page" : "Connect Facebook Page"}
+                </a>
+              )}
+              <p className="text-xs" style={{ color: MUTED }}>
+                You must be an admin of the Facebook Page to connect it
               </p>
             </div>
           </div>

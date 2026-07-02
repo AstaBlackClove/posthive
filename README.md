@@ -5,7 +5,7 @@
 <h1 align="center">Posthive</h1>
 
 <p align="center">
-  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, and YouTube from a single UI.<br/>
+  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages from a single UI.<br/>
   Self-hostable · Open-source · AGPL-3.0
 </p>
 
@@ -18,7 +18,7 @@
 
 ## Features
 
-- **Multi-platform scheduling** - Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube
+- **Multi-platform scheduling** - Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages
 - **First comment** - post a reply/comment immediately after the main post goes live
 - **Per-platform overrides** - customize text and comment per account
 - **Image & video support** - mixed image/video carousel (up to 10 items), alt text, Instagram Reels, Stories, YouTube Shorts
@@ -55,7 +55,7 @@ posthive/
 │   ├── api/                  # Fastify v4 API server
 │   │   ├── prisma/           # Schema and migrations
 │   │   └── src/
-│   │       ├── adapters/     # Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube
+│   │       ├── adapters/     # Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages
 │   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, billing
 │   │       ├── routes/       # auth, accounts, jobs, upload, billing, user
 │   │       ├── runner/       # Job state machine
@@ -161,6 +161,10 @@ pnpm dev
 | `YOUTUBE_CLIENT_ID` | YouTube | Google OAuth client ID (console.cloud.google.com) |
 | `YOUTUBE_CLIENT_SECRET` | YouTube | Google OAuth client secret |
 | `YOUTUBE_REDIRECT_URI` | YouTube | **Use `http://localhost:<API_PORT>/auth/youtube/callback`** — unlike the other platforms, Google rejects public tunnel domains (devtunnels.ms, ngrok, etc.) outright since it requires the redirect domain to be owned and verified. Localhost is exempt from that check. This means connecting YouTube only works from a browser on the same machine as your API server. |
+| **OAuth - Facebook Pages** | | |
+| `FACEBOOK_APP_ID` | Facebook | Meta app ID (same app as Threads/Instagram) |
+| `FACEBOOK_APP_SECRET` | Facebook | Meta app secret (same app as Threads/Instagram) |
+| `FACEBOOK_REDIRECT_URI` | Facebook | Must be public HTTPS (e.g. `https://your-domain/auth/facebook/callback`) |
 | **Billing** | | |
 | `ENABLE_BILLING` | No | Set to `true` to enable Dodo Payments and plan limits. Leave unset for self-hosted all features unlocked |
 | `DODO_ENV` | Billing | `test_mode` or `live_mode` |
@@ -222,6 +226,17 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 > Works with any Mastodon-compatible instance — mastodon.social, fosstodon.org, hachyderm.io, and more.
 
+### Facebook Pages
+1. Use the same Meta app as Threads/Instagram at [developers.facebook.com](https://developers.facebook.com)
+2. Add the **"Manage everything on your Page"** use case (grants `pages_manage_posts`, `pages_show_list`, `pages_read_engagement`)
+3. Under **Facebook Login for Business → Settings**, add `https://your-domain/auth/facebook/callback` as a valid OAuth redirect URI
+4. Set `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`, and `FACEBOOK_REDIRECT_URI` in `.env`
+5. Click **Connect Facebook Page** in the app
+
+> **Requires a Facebook Page** — the Graph API does not support posting to personal profiles (removed by Meta in 2018). Create a free Page at [facebook.com/pages/create](https://facebook.com/pages/create).
+
+> In development mode, submit for Meta App Review (`pages_manage_posts`) for public access. First comment support requires the additional `pages_manage_engagement` permission.
+
 ---
 
 ## How Scheduling Works
@@ -260,6 +275,7 @@ All plans include a **14-day free trial**. Powered by [Dodo Payments](https://do
 | LinkedIn | 3,000 characters |
 | Mastodon | 500 characters |
 | YouTube | Title: 100 characters · Description: 5,000 characters |
+| Facebook Pages | 63,206 characters |
 
 ---
 

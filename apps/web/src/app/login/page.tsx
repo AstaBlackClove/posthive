@@ -20,7 +20,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       await refresh();
-      router.replace("/");
+      router.replace("/compose");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {

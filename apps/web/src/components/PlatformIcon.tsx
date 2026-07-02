@@ -5,6 +5,7 @@ const PLATFORM_DOMAIN: Record<string, string> = {
   linkedin:  "linkedin.com",
   mastodon:  "mastodon.social",
   youtube:   "youtube.com",
+  facebook:  "facebook.com",
 };
 
 interface Props {

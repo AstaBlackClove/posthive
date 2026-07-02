@@ -18,6 +18,7 @@
 
 ### Platform Adapters
 - [ ] **Threads token auto-refresh cron** — tokens refresh on-demand before posting, but no background cron for idle accounts
+- [ ] **Facebook first comment** — requires `pages_manage_engagement` permission (pending Meta app review). Re-enable `createComment` in `apps/api/src/adapters/facebook.ts` once approved.
 
 ### Instagram Advanced
 - [ ] **Video carousel** — mix of image + video items in one carousel post
@@ -78,6 +79,7 @@
 - [x] LinkedIn OAuth + adapter (text + image posts via UGC API)
 - [x] Mastodon OAuth + adapter (any instance, text + media)
 - [x] YouTube OAuth + adapter — Google OAuth 2.0 (`youtube.upload` + `youtube.readonly` + `youtube.force-ssl` scopes), resumable video upload via YouTube Data API v3, posts as Shorts; 1h access token auto-refresh via refresh_token; `#Shorts` auto-appended to description to ensure Shorts-shelf classification
+- [x] Facebook Pages OAuth + adapter — Graph API v21.0, long-lived page access tokens (~60 days auto-refresh), text/single photo/multi-photo carousel/video posts; first comment skipped pending `pages_manage_engagement` approval
 
 ### Compose & Scheduling
 - [x] Per-platform content overrides in compose

@@ -1,37 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-
-// ─── Image slot component ───────────────────────────────────────────────────
-
-function DocImage({ alt, aspectRatio = "16/9" }: { alt: string; aspectRatio?: string }) {
-  return (
-    <div
-      style={{
-        width: "100%",
-        aspectRatio,
-        borderRadius: 12,
-        border: "2px dashed #2a2a2a",
-        background: "#111",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-        margin: "20px 0 28px",
-        color: "#444",
-      }}
-    >
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="3" width="18" height="18" rx="3" stroke="#333" strokeWidth="1.5" />
-        <circle cx="8.5" cy="8.5" r="1.5" stroke="#333" strokeWidth="1.5" />
-        <path d="M21 15l-5-5L5 21" stroke="#333" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-      <span style={{ fontSize: 12, color: "#555" }}>{alt}</span>
-    </div>
-  );
-}
 
 // ─── Sidebar data ───────────────────────────────────────────────────────────
 
@@ -53,6 +23,7 @@ const NAV = [
       { label: "LinkedIn", id: "linkedin" },
       { label: "Mastodon", id: "mastodon" },
       { label: "YouTube", id: "youtube" },
+      { label: "Facebook Pages", id: "facebook" },
     ],
   },
   {
@@ -89,6 +60,8 @@ export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("quick-start");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
+  const mainRef = useRef<HTMLElement>(null);
+  const scrollingRef = useRef(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
@@ -98,13 +71,44 @@ export default function DocsPage() {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
+  // Update active section based on scroll position inside <main>
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main) return;
+
+    const allIds = NAV.flatMap(g => g.items.map(i => i.id));
+
+    function onScroll() {
+      if (scrollingRef.current) return;
+      const mainRect = main!.getBoundingClientRect();
+      // Walk all headings bottom-up; first one whose top is above the 30% mark wins
+      let active = allIds[0];
+      for (const id of allIds) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const top = el.getBoundingClientRect().top - mainRect.top;
+        if (top <= mainRect.height * 0.3) active = id;
+      }
+      setActiveSection(active);
+    }
+
+    main.addEventListener("scroll", onScroll, { passive: true });
+    return () => main.removeEventListener("scroll", onScroll);
+  }, []);
+
   function scrollTo(id: string) {
     setActiveSection(id);
     setSidebarOpen(false);
     const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    if (!el || !mainRef.current) return;
+
+    scrollingRef.current = true;
+    const main = mainRef.current;
+    const mainRect = main.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const target = main.scrollTop + (elRect.top - mainRect.top) - 24;
+    main.scrollTo({ top: target, behavior: "smooth" });
+    setTimeout(() => { scrollingRef.current = false; }, 800);
   }
 
   return (
@@ -128,7 +132,7 @@ export default function DocsPage() {
         .doc-table tr:last-child td { border-bottom: none; }
       `}</style>
 
-      <div style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ background: "#0a0a0a", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
         {/* Top nav */}
         <nav style={{
@@ -234,18 +238,19 @@ export default function DocsPage() {
           </aside>
 
           {/* Main content */}
-          <main style={{
+          <main ref={mainRef} style={{
             marginLeft: isDesktop ? 240 : 0,
             flex: 1,
             overflowY: "auto",
             minWidth: 0,
+            height: "calc(100vh - 64px)",
           }}>
             <div style={{ maxWidth: 760, margin: "0 auto", paddingTop: 48, paddingBottom: 120 }} className="px-5 md:px-10">
 
               {/* Hero */}
               <h1 className="doc-h1">Posthive Documentation</h1>
               <p className="doc-p">
-                Posthive is an open-source social media scheduling SaaS. Write once, publish to Bluesky, Threads, Instagram, LinkedIn, Mastodon, and YouTube — all from a single clean interface. Self-hostable under AGPL-3.0.
+                Posthive is a social media scheduling platform. Write once, publish to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages — all from a single clean interface.
               </p>
 
               {/* ── Quick start ── */}
@@ -253,7 +258,7 @@ export default function DocsPage() {
               <p className="doc-p">Get Posthive running locally in under five minutes.</p>
 
               <h3 className="doc-h3">1. Clone the repository</h3>
-              <code className="doc-code">{`git clone https://github.com/posthive/posthive.git
+              <code className="doc-code">{`git clone https://github.com/AstaBlackClove/posthive.git
 cd posthive`}</code>
 
               <h3 className="doc-h3">2. Copy environment files</h3>
@@ -270,7 +275,6 @@ pnpm dev`}</code>
               <p className="doc-p">
                 This starts both the API on <span className="doc-inline-code">http://localhost:3001</span> and the web app on <span className="doc-inline-code">http://localhost:3000</span> in parallel.
               </p>
-              <DocImage alt="App running in browser — compose page" aspectRatio="16/9" />
 
               {/* ── Installation ── */}
               <h2 className="doc-h2" id="installation">Installation</h2>
@@ -278,11 +282,11 @@ pnpm dev`}</code>
               <ul className="doc-ul">
                 <li className="doc-li">Node.js ≥ 20</li>
                 <li className="doc-li">pnpm ≥ 9 (<span className="doc-inline-code">npm i -g pnpm</span>)</li>
-                <li className="doc-li">Redis — Upstash free tier or Railway Redis (required for BullMQ job queue)</li>
+                <li className="doc-li">Redis Upstash free tier or Railway Redis (required for BullMQ job queue)</li>
               </ul>
 
               <h3 className="doc-h3">Clone and install</h3>
-              <code className="doc-code">{`git clone https://github.com/posthive/posthive.git
+              <code className="doc-code">{`git clone https://github.com/AstaBlackClove/posthive.git
 cd posthive
 pnpm install`}</code>
 
@@ -324,7 +328,7 @@ pnpm install`}</code>
               {/* ── Bluesky ── */}
               <h2 className="doc-h2" id="bluesky">Bluesky</h2>
               <p className="doc-p">
-                Bluesky uses app passwords — no OAuth flow required. Connection is straightforward and does not need a public callback URL.
+                Bluesky uses app passwords no OAuth flow required. Connection is straightforward and does not need a public callback URL.
               </p>
               <h3 className="doc-h3">How to connect</h3>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
@@ -336,7 +340,6 @@ pnpm install`}</code>
               <p className="doc-p">
                 Posthive stores the app password encrypted with AES-256-GCM. Your main account password is never used or stored.
               </p>
-              <DocImage alt="Bluesky connect dialog" aspectRatio="4/3" />
 
               {/* ── Threads ── */}
               <h2 className="doc-h2" id="threads">Threads</h2>
@@ -347,14 +350,13 @@ pnpm install`}</code>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Go to <a className="doc-a" href="https://developers.facebook.com" target="_blank" rel="noreferrer">developers.facebook.com</a> and create an app.</li>
                 <li className="doc-li">Add the <strong>Threads API</strong> use case to your app.</li>
-                <li className="doc-li">Add a redirect URI matching <span className="doc-inline-code">THREADS_REDIRECT_URI</span> in your env — must be a public HTTPS URL.</li>
+                <li className="doc-li">Add a redirect URI matching <span className="doc-inline-code">THREADS_REDIRECT_URI</span> in your env must be a public HTTPS URL.</li>
                 <li className="doc-li">Copy your App ID and App Secret into <span className="doc-inline-code">THREADS_APP_ID</span> and <span className="doc-inline-code">THREADS_APP_SECRET</span>.</li>
                 <li className="doc-li">Click <strong>Connect Threads</strong> on the Accounts page and complete the OAuth flow.</li>
               </ol>
               <p className="doc-p">
                 Threads tokens expire every 60 days. Posthive automatically refreshes them before each scheduled post.
               </p>
-              <DocImage alt="Threads OAuth authorization screen" aspectRatio="4/3" />
 
               {/* ── Instagram ── */}
               <h2 className="doc-h2" id="instagram">Instagram</h2>
@@ -362,13 +364,13 @@ pnpm install`}</code>
                 Instagram publishing requires a Professional (Business or Creator) account linked to a Facebook Page, and a Meta Developer app with the Instagram product enabled.
               </p>
               <div className="doc-callout">
-                <strong>Important:</strong> <span className="doc-inline-code">PUBLIC_API_URL</span> must be a public HTTPS URL. Meta fetches your uploaded images directly from the API server when creating carousel containers — a localhost URL will not work.
+                <strong>Important:</strong> <span className="doc-inline-code">PUBLIC_API_URL</span> must be a public HTTPS URL. Meta fetches your uploaded images directly from the API server when creating carousel containers a localhost URL will not work.
               </div>
               <h3 className="doc-h3">Supported media types</h3>
               <ul className="doc-ul">
-                <li className="doc-li"><strong>Post</strong> — single image or carousel (up to 10 images on Pro/Team)</li>
-                <li className="doc-li"><strong>Reel</strong> — short video (Pro/Team plans only)</li>
-                <li className="doc-li"><strong>Story</strong> — image or video story (Pro/Team plans only)</li>
+                <li className="doc-li"><strong>Post</strong> - single image or carousel (up to 10 images on Pro/Team)</li>
+                <li className="doc-li"><strong>Reel</strong> - short video (Pro/Team plans only)</li>
+                <li className="doc-li"><strong>Story</strong> - image or video story (Pro/Team plans only)</li>
               </ul>
               <h3 className="doc-h3">Setup</h3>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
@@ -377,7 +379,6 @@ pnpm install`}</code>
                 <li className="doc-li">Fill in <span className="doc-inline-code">INSTAGRAM_APP_ID</span>, <span className="doc-inline-code">INSTAGRAM_APP_SECRET</span>, and <span className="doc-inline-code">PUBLIC_API_URL</span>.</li>
                 <li className="doc-li">Click <strong>Connect Instagram</strong> on the Accounts page.</li>
               </ol>
-              <DocImage alt="Instagram connect dialog and media type selector" aspectRatio="4/3" />
 
               {/* ── LinkedIn ── */}
               <h2 className="doc-h2" id="linkedin">LinkedIn</h2>
@@ -409,39 +410,54 @@ pnpm install`}</code>
                 <li className="doc-li">Copy the <strong>Client key</strong> and <strong>Client secret</strong>.</li>
                 <li className="doc-li">Click <strong>Connect Mastodon</strong> in Posthive, enter your instance URL and the credentials.</li>
               </ol>
-              <DocImage alt="Mastodon app settings — Development tab" aspectRatio="4/3" />
 
               {/* ── YouTube ── */}
               <h2 className="doc-h2" id="youtube">YouTube</h2>
               <p className="doc-p">
-                Posthive publishes to YouTube as <strong>Shorts</strong> (or regular videos — your choice per post) using Google OAuth 2.0 and the YouTube Data API v3. Every post requires a video attached.
+                Posthive publishes to YouTube as <strong>Shorts</strong> (or regular videos your choice per post) using Google OAuth 2.0 and the YouTube Data API v3. Every post requires a video attached.
               </p>
               <h3 className="doc-h3">How to connect</h3>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Create a project at <a className="doc-a" href="https://console.cloud.google.com" target="_blank" rel="noreferrer">console.cloud.google.com</a> and enable the <strong>YouTube Data API v3</strong>.</li>
-                <li className="doc-li">Configure the OAuth consent screen — add the <span className="doc-inline-code">youtube.upload</span>, <span className="doc-inline-code">youtube.readonly</span>, and <span className="doc-inline-code">youtube.force-ssl</span> scopes, and add your own Google account under <strong>Audience → Test users</strong> while the app is unverified.</li>
+                <li className="doc-li">Configure the OAuth consent screen add the <span className="doc-inline-code">youtube.upload</span>, <span className="doc-inline-code">youtube.readonly</span>, and <span className="doc-inline-code">youtube.force-ssl</span> scopes, and add your own Google account under <strong>Audience → Test users</strong> while the app is unverified.</li>
                 <li className="doc-li">Create an OAuth client (Web application) and copy the Client ID and Secret into <span className="doc-inline-code">YOUTUBE_CLIENT_ID</span> / <span className="doc-inline-code">YOUTUBE_CLIENT_SECRET</span>.</li>
                 <li className="doc-li">Click <strong>Connect YouTube</strong> on the Accounts page and authorize.</li>
               </ol>
               <div className="doc-warn">
-                <strong>Important:</strong> Google requires OAuth redirect domains to be owned and verified — shared tunnel domains (devtunnels.ms, ngrok, etc.) are rejected outright with <span className="doc-inline-code">Error 403: access_denied</span>. Use <span className="doc-inline-code">http://localhost:&lt;API_PORT&gt;/auth/youtube/callback</span> for <span className="doc-inline-code">YOUTUBE_REDIRECT_URI</span> instead — Google exempts localhost from domain verification. This means connecting YouTube only works from a browser on the same machine as your API server (everything else in Posthive works fine over a tunnel).
+                <strong>Important:</strong> Google requires OAuth redirect domains to be owned and verified shared tunnel domains (devtunnels.ms, ngrok, etc.) are rejected outright with <span className="doc-inline-code">Error 403: access_denied</span>. Use <span className="doc-inline-code">http://localhost:&lt;API_PORT&gt;/auth/youtube/callback</span> for <span className="doc-inline-code">YOUTUBE_REDIRECT_URI</span> instead Google exempts localhost from domain verification. This means connecting YouTube only works from a browser on the same machine as your API server (everything else in Posthive works fine over a tunnel).
               </div>
               <h3 className="doc-h3">Shorts vs. regular video</h3>
               <p className="doc-p">
-                In Compose, the YouTube section has a <strong>Short / Video</strong> toggle. YouTube classifies Shorts by the video file itself — vertical (9:16) and 60 seconds or under is the reliable threshold. Posthive auto-appends <span className="doc-inline-code">#Shorts</span> to the description when "Short" is selected, but that tag alone does nothing if the video doesn't already qualify by aspect ratio and duration. Posthive checks the attached video's dimensions and warns you in the UI if it won't actually classify as a Short.
+                In Compose, the YouTube section has a <strong>Short / Video</strong> toggle. YouTube classifies Shorts by the video file itself vertical (9:16) and 60 seconds or under is the reliable threshold. Posthive auto-appends <span className="doc-inline-code">#Shorts</span> to the description when "Short" is selected, but that tag alone does nothing if the video doesn't already qualify by aspect ratio and duration. Posthive checks the attached video's dimensions and warns you in the UI if it won't actually classify as a Short.
               </p>
               <p className="doc-p">
-                Title and description are separate dedicated fields (not the shared Post box other platforms use) — title is capped at 100 characters, description at 5,000. Selecting only YouTube accounts hides the shared Post box entirely since it isn't used.
+                Title and description are separate dedicated fields (not the shared Post box other platforms use) title is capped at 100 characters, description at 5,000. Selecting only YouTube accounts hides the shared Post box entirely since it isn't used.
               </p>
               <div className="doc-callout">
-                While the Google app stays in "Testing" publishing status, refresh tokens expire after 7 days regardless of activity — scheduled YouTube posts will start failing until you manually reconnect. Submit the app for Google verification to remove this limit and the 100-test-user cap.
+                While the Google app stays in "Testing" publishing status, refresh tokens expire after 7 days regardless of activity scheduled YouTube posts will start failing until you manually reconnect. Submit the app for Google verification to remove this limit and the 100-test-user cap.
               </div>
-              <DocImage alt="Compose page — YouTube Title/Description fields and Short/Video toggle" aspectRatio="16/9" />
+
+              {/* ── Facebook Pages ── */}
+              <h2 className="doc-h2" id="facebook">Facebook Pages</h2>
+              <p className="doc-p">
+                Posthive publishes to <strong>Facebook Pages</strong> you manage via the Graph API v21.0. Text, single photo, multi-photo carousel, and video posts are all supported. The Facebook API does not allow posting to personal profiles a Page is required.
+              </p>
+              <h3 className="doc-h3">How to connect</h3>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">At <a className="doc-a" href="https://developers.facebook.com" target="_blank" rel="noreferrer">developers.facebook.com</a>, open your Meta app and add the <strong>"Manage everything on your Page"</strong> use case this grants <span className="doc-inline-code">pages_manage_posts</span>, <span className="doc-inline-code">pages_show_list</span>, and <span className="doc-inline-code">pages_read_engagement</span>.</li>
+                <li className="doc-li">Under <strong>Facebook Login for Business → Settings</strong>, add your callback URL as a valid OAuth redirect URI: <span className="doc-inline-code">https://your-domain/auth/facebook/callback</span>.</li>
+                <li className="doc-li">Copy the main <strong>App ID</strong> and <strong>App secret</strong> into <span className="doc-inline-code">FACEBOOK_APP_ID</span> / <span className="doc-inline-code">FACEBOOK_APP_SECRET</span> (same values as Threads if using the same Meta app).</li>
+                <li className="doc-li">Create a Facebook Page at <a className="doc-a" href="https://facebook.com/pages/create" target="_blank" rel="noreferrer">facebook.com/pages/create</a> if you don&apos;t have one.</li>
+                <li className="doc-li">Click <strong>Connect Facebook Page</strong> on the Accounts page and authorise all Pages you admin will be connected automatically.</li>
+              </ol>
+              <div className="doc-callout">
+                First comment support requires the additional <span className="doc-inline-code">pages_manage_engagement</span> permission, which needs Meta app review approval. Until approved, posts publish successfully but first comments are skipped.
+              </div>
 
               {/* ── Scheduling posts ── */}
               <h2 className="doc-h2" id="scheduling-posts">Scheduling posts</h2>
               <p className="doc-p">
-                The Compose page is where you write and schedule posts. Everything happens in a single panel — no multi-step wizard.
+                The Compose page is where you write and schedule posts. Everything happens in a single panel no multi-step wizard.
               </p>
               <h3 className="doc-h3">Steps</h3>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
@@ -451,7 +467,6 @@ pnpm install`}</code>
                 <li className="doc-li">Pick a scheduled time using the date-time picker. You can also post immediately.</li>
                 <li className="doc-li">Click <strong>Schedule</strong>. The post is enqueued and will fire at the chosen time.</li>
               </ol>
-              <DocImage alt="Compose page — account picker, editor, and schedule button" aspectRatio="16/9" />
 
               {/* ── Calendar view ── */}
               <h2 className="doc-h2" id="calendar-view">Calendar view</h2>
@@ -461,7 +476,6 @@ pnpm install`}</code>
               <p className="doc-p">
                 The calendar supports month, week, and day modes. Pending posts can be <strong>dragged to a new time slot</strong> to reschedule them without opening the edit dialog.
               </p>
-              <DocImage alt="Calendar view showing scheduled posts across the month" aspectRatio="16/9" />
 
               {/* ── First comment ── */}
               <h2 className="doc-h2" id="first-comment">First comment</h2>
@@ -469,9 +483,8 @@ pnpm install`}</code>
                 The first comment field lets you attach a reply that is posted immediately after the main post goes live. This is commonly used to add hashtags without cluttering the main post body, or to add a thread continuation.
               </p>
               <p className="doc-p">
-                The comment is published per-platform — each connected account gets its own first comment published to that platform.
+                The comment is published per-platform each connected account gets its own first comment published to that platform.
               </p>
-              <DocImage alt="First comment field below the main editor" aspectRatio="3/1" />
 
               {/* ── Per-platform overrides ── */}
               <h2 className="doc-h2" id="per-platform-overrides">Per-platform overrides</h2>
@@ -481,7 +494,6 @@ pnpm install`}</code>
               <p className="doc-p">
                 Click the <strong>Customize</strong> button next to any selected account in the Compose page. A dialog opens where you can edit the content independently for that account. Accounts without an override use the main post body.
               </p>
-              <DocImage alt="Per-platform customize dialog with independent text editor" aspectRatio="4/3" />
 
               {/* ── Media uploads ── */}
               <h2 className="doc-h2" id="media-uploads">Media uploads</h2>
@@ -491,14 +503,14 @@ pnpm install`}</code>
               <ul className="doc-ul">
                 <li className="doc-li"><strong>Creator plan:</strong> up to 4 images per post (carousel).</li>
                 <li className="doc-li"><strong>Pro / Team plans:</strong> up to 10 images per carousel.</li>
-                <li className="doc-li">Alt text is supported — click any thumbnail to add descriptive text for accessibility.</li>
+                <li className="doc-li">Alt text is supported click any thumbnail to add descriptive text for accessibility.</li>
                 <li className="doc-li">In development, files are stored on local disk. In production, set <span className="doc-inline-code">STORAGE_PROVIDER=supabase</span> and configure your bucket.</li>
               </ul>
 
               {/* ── Docker setup ── */}
               <h2 className="doc-h2" id="docker-setup">Docker setup</h2>
               <p className="doc-p">
-                Posthive can be self-hosted on any platform that runs Docker containers — Railway, Render, Fly.io, or your own VPS.
+                Posthive can be self-hosted on any platform that runs Docker containers Railway, Render, Fly.io, or your own VPS.
               </p>
               <h3 className="doc-h3">Recommended stack</h3>
               <ul className="doc-ul">
@@ -524,19 +536,19 @@ datasource db {
               <code className="doc-code">{`cd apps/api
 pnpm db:migrate`}</code>
               <div className="doc-warn">
-                <strong>Warning:</strong> <span className="doc-inline-code">ENCRYPTION_KEY</span> must never change after accounts are saved. All stored OAuth tokens and app passwords are encrypted with this key — changing it renders all connected accounts permanently unusable.
+                <strong>Warning:</strong> <span className="doc-inline-code">ENCRYPTION_KEY</span> must never change after accounts are saved. All stored OAuth tokens and app passwords are encrypted with this key changing it renders all connected accounts permanently unusable.
               </div>
 
               {/* ── Redis ── */}
               <h2 className="doc-h2" id="redis">Redis</h2>
               <p className="doc-p">
-                Redis is used exclusively for the BullMQ job queue that powers scheduled post delivery. No application state is stored in Redis — it is safe to flush between deploys as long as no posts are currently queued.
+                Redis is used exclusively for the BullMQ job queue that powers scheduled post delivery. No application state is stored in Redis it is safe to flush between deploys as long as no posts are currently queued.
               </p>
               <h3 className="doc-h3">Options</h3>
               <ul className="doc-ul">
-                <li className="doc-li"><strong>Upstash</strong> — free tier is sufficient for most self-hosters. Use the <span className="doc-inline-code">rediss://</span> TLS URL.</li>
-                <li className="doc-li"><strong>Railway Redis</strong> — add the Redis plugin to your Railway project and copy the connection string.</li>
-                <li className="doc-li"><strong>Self-hosted</strong> — any Redis 6+ instance works.</li>
+                <li className="doc-li"><strong>Upstash</strong> - free tier is sufficient for most self-hosters. Use the <span className="doc-inline-code">rediss://</span> TLS URL.</li>
+                <li className="doc-li"><strong>Railway Redis</strong> - add the Redis plugin to your Railway project and copy the connection string.</li>
+                <li className="doc-li"><strong>Self-hosted</strong> - any Redis 6+ instance works.</li>
               </ul>
               <code className="doc-code">{`REDIS_URL="rediss://default:<password>@<host>:<port>"`}</code>
 
@@ -547,7 +559,7 @@ pnpm db:migrate`}</code>
               </p>
               <h3 className="doc-h3">Local storage (default)</h3>
               <code className="doc-code">{`STORAGE_PROVIDER=local`}</code>
-              <p className="doc-p">Files are written to <span className="doc-inline-code">apps/api/uploads/</span>. Not recommended for production — files are lost on redeploy.</p>
+              <p className="doc-p">Files are written to <span className="doc-inline-code">apps/api/uploads/</span>. Not recommended for production files are lost on redeploy.</p>
 
               <h3 className="doc-h3">Supabase Storage</h3>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
@@ -624,7 +636,7 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</code>
 
               <h3 className="doc-h3">Webhook secret</h3>
               <div className="doc-warn">
-                <strong>Important:</strong> Dodo Payments webhook secrets are prefixed with <span className="doc-inline-code">whsec_</span>. Strip this prefix before setting <span className="doc-inline-code">DODO_WEBHOOK_SECRET</span> — the verification code base64-decodes the raw secret and will fail if the prefix is included.
+                <strong>Important:</strong> Dodo Payments webhook secrets are prefixed with <span className="doc-inline-code">whsec_</span>. Strip this prefix before setting <span className="doc-inline-code">DODO_WEBHOOK_SECRET</span> the verification code base64-decodes the raw secret and will fail if the prefix is included.
               </div>
               <code className="doc-code">{`# Dodo dashboard shows: whsec_abc123...
 # Set in .env:

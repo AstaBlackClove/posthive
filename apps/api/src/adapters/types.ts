@@ -13,7 +13,7 @@ export interface PostResult {
 }
 
 export interface CommentResult {
-  platformCommentId: string;
+  platformCommentId: string | null;
 }
 
 /**

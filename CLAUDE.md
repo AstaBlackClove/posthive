@@ -1,6 +1,6 @@
 # Posthive — CLAUDE.md
 
-Social media scheduling SaaS. Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, and YouTube from a single UI. Self-hostable, open-source (AGPL-3.0).
+Social media scheduling SaaS. Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages from a single UI. Self-hostable, open-source (AGPL-3.0).
 
 ---
 
@@ -45,7 +45,7 @@ pnpm db:migrate   # Run pending migrations
 ### Routes
 | File | Prefix | Purpose |
 |------|--------|---------|
-| `routes/auth.ts` | `/auth/*` | JWT login/register + Threads & Instagram OAuth |
+| `routes/auth.ts` | `/auth/*` | JWT login/register + Threads, Instagram, LinkedIn, YouTube, Facebook OAuth |
 | `routes/accounts.ts` | `/accounts` | List/disconnect social accounts |
 | `routes/jobs.ts` | `/jobs` | CRUD + reschedule + delete scheduled posts |
 | `routes/upload.ts` | `/upload` | Image upload → local disk or Supabase Storage |
@@ -60,6 +60,7 @@ Each adapter implements `PlatformAdapter` from `types.ts`:
 - `linkedin.ts` — LinkedIn UGC API (OAuth 2.0, text + image posts)
 - `mastodon.ts` — Mastodon API (OAuth 2.0, any instance)
 - `youtube.ts` — YouTube Data API v3 (Google OAuth 2.0, resumable video upload as Shorts; title = first line of post text, description = rest)
+- `facebook.ts` — Facebook Graph API v21.0 (OAuth 2.0, page access tokens, text/photo/video/carousel posts to Pages)
 
 **Register adapters in `src/adapters/index.ts`** — add to the array to enable.
 
