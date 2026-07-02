@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { TrialBanner } from "./TrialBanner";
+import { useToast } from "./Toast";
 
 const NAV = [
   {
@@ -114,6 +115,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { success, error } = useToast();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
@@ -292,10 +294,18 @@ export function Sidebar() {
           <button
             onClick={async () => {
               try {
-                await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/auth/resend-verification`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/auth/resend-verification`, {
                   method: "POST", credentials: "include",
                 });
-              } catch { /* ignore */ }
+                if (res.ok) {
+                  success("Verification email sent — check your inbox.");
+                } else {
+                  const data = await res.json().catch(() => ({}));
+                  error(data.error ?? "Failed to send email. Try again.");
+                }
+              } catch {
+                error("Failed to send email. Try again.");
+              }
             }}
             className="text-xs font-semibold hover:opacity-80 transition-opacity"
             style={{ color: "#fbbf24" }}>

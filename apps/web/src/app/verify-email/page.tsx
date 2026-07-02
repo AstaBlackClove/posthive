@@ -26,7 +26,7 @@ export default function VerifyEmailPage() {
       .then(async () => {
         setState("success");
         await refresh();
-        setTimeout(() => router.replace("/"), 2500);
+        setTimeout(() => router.replace("/compose"), 2500);
       })
       .catch((err) => {
         setState("error");
