@@ -26,6 +26,7 @@ interface Account {
   displayName: string;
   avatarUrl: string | null;
   createdAt: string;
+  expiresAt: string | null;
 }
 
 const PLATFORM_META: Record<string, { label: string; brand: string }> = {
@@ -54,29 +55,64 @@ function Avatar({ account }: { account: Account }) {
   );
 }
 
+const RECONNECT_URLS: Record<string, string> = {
+  threads: `${API_BASE}/auth/threads`,
+  instagram: `${API_BASE}/auth/instagram`,
+  linkedin: `${API_BASE}/auth/linkedin`,
+  youtube: `${API_BASE}/auth/youtube`,
+  facebook: `${API_BASE}/auth/facebook`,
+  mastodon: `${API_BASE}/auth/mastodon`,
+};
+
+function tokenStatus(expiresAt: string | null): "ok" | "soon" | "expired" {
+  if (!expiresAt) return "ok";
+  const ms = new Date(expiresAt).getTime() - Date.now();
+  if (ms <= 0) return "expired";
+  if (ms < 7 * 24 * 60 * 60 * 1000) return "soon";
+  return "ok";
+}
+
 function ConnectedAccountRow({ account, onDisconnect, disconnecting }: {
   account: Account;
   onDisconnect: (id: string, name: string) => void;
   disconnecting: string | null;
 }) {
+  const status = tokenStatus(account.expiresAt);
+  const reconnectUrl = RECONNECT_URLS[account.platform];
+
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: BG, border: `1px solid ${BORDER}` }}>
-      <Avatar account={account} />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate" style={{ color: TEXT }}>
-          {account.platform === "threads" ? "@" : ""}{account.displayName}
-        </p>
-        <p className="text-xs" style={{ color: MUTED }}>
-          Connected {new Date(account.createdAt).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
-        </p>
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: BG, border: `1px solid ${status === "expired" ? "#7f1d1d" : status === "soon" ? "#78560a" : BORDER}` }}>
+      <div className="flex items-center gap-3 p-3">
+        <Avatar account={account} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold truncate" style={{ color: TEXT }}>
+            {account.platform === "threads" ? "@" : ""}{account.displayName}
+          </p>
+          <p className="text-xs" style={{ color: MUTED }}>
+            Connected {new Date(account.createdAt).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
+          </p>
+        </div>
+        <button
+          onClick={() => onDisconnect(account.id, account.displayName)}
+          disabled={disconnecting === account.id}
+          className="text-xs font-medium transition-colors disabled:opacity-50 px-2 py-1 rounded-lg hover:text-red-400"
+          style={{ color: MUTED }}>
+          {disconnecting === account.id ? "…" : "Disconnect"}
+        </button>
       </div>
-      <button
-        onClick={() => onDisconnect(account.id, account.displayName)}
-        disabled={disconnecting === account.id}
-        className="text-xs font-medium transition-colors disabled:opacity-50 px-2 py-1 rounded-lg hover:text-red-400"
-        style={{ color: MUTED }}>
-        {disconnecting === account.id ? "…" : "Disconnect"}
-      </button>
+      {status !== "ok" && reconnectUrl && (
+        <div className="flex items-center justify-between gap-2 px-3 py-2"
+          style={{ backgroundColor: status === "expired" ? "#1f0a0a" : "#1c1209", borderTop: `1px solid ${status === "expired" ? "#7f1d1d" : "#78560a"}` }}>
+          <p className="text-xs" style={{ color: status === "expired" ? "#f87171" : "#fbbf24" }}>
+            {status === "expired" ? "Token expired — posts will fail" : "Token expires soon — reconnect to avoid interruption"}
+          </p>
+          <a href={reconnectUrl}
+            className="text-xs font-semibold px-2.5 py-1 rounded-lg flex-shrink-0 transition-opacity hover:opacity-80"
+            style={{ backgroundColor: status === "expired" ? "#7f1d1d" : "#78350f", color: status === "expired" ? "#fca5a5" : "#fde68a" }}>
+            Reconnect
+          </a>
+        </div>
+      )}
     </div>
   );
 }

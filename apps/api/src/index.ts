@@ -22,6 +22,7 @@ import { billingRoutes } from "./routes/billing.js";
 import { apiKeyRoutes } from "./routes/apiKeys.js";
 import { publicApiRoutes } from "./routes/publicApi.js";
 import { startWorker } from "./lib/worker.js";
+import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
 import { withAuth } from "./lib/auth/withAuth.js";
 import type { StorageAdapter } from "./lib/storage.js";
 
@@ -148,6 +149,7 @@ async function main() {
 
   startWorker(storage);
   startOrphanCleanup(storage);
+  startTokenRefreshCron();
 }
 
 main().catch((err) => {

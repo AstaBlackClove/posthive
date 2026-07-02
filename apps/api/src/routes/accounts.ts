@@ -74,7 +74,7 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     const { id: userId } = getUser(req);
     const accounts = await prisma.account.findMany({
       where: { userId },
-      select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
+      select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true, expiresAt: true },
       orderBy: { createdAt: "asc" },
     });
     return reply.send(accounts);

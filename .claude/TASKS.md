@@ -13,11 +13,11 @@
 ### YouTube — follow-ups
 - [ ] **CRITICAL — Google app verification** — while the OAuth consent screen stays in "Testing" status, Google expires refresh tokens after 7 days regardless of activity. This silently breaks scheduled YouTube posts weekly until the account is manually reconnected. Testing mode is also capped at 100 manually-added test users — anyone outside that list is hard-blocked (`Error 403: access_denied`) before they even see a consent screen. Required for verification: privacy policy URL, terms of service URL, real app homepage domain (not a tunnel), domain ownership via Search Console, and a demo video justifying use of the `youtube.upload` / `youtube.force-ssl` sensitive scopes. Turnaround is days to weeks.
 - [ ] **Privacy status override** — currently hardcoded to `public`; expose `private`/`unlisted` as a per-platform override in the Customize dialog
-- [ ] **YouTube token expiry warning** — show warning in Accounts page when access token can't be silently refreshed (e.g. refresh_token revoked or expired due to unverified-app 7-day limit)
+- [x] **YouTube token expiry warning** — show warning in Accounts page when access token can't be silently refreshed (e.g. refresh_token revoked or expired due to unverified-app 7-day limit)
 - [ ] **Thumbnail upload** — YouTube Data API supports custom thumbnails (`thumbnails.set`); not wired up yet, auto-generated thumbnail is used
 
 ### Platform Adapters
-- [ ] **Threads token auto-refresh cron** — tokens refresh on-demand before posting, but no background cron for idle accounts
+- [x] **Token auto-refresh cron** — batched background cron (every 12h, cursor pagination, concurrency 5) for Threads, Instagram, Facebook, YouTube
 - [ ] **Facebook first comment** — requires `pages_manage_engagement` permission (pending Meta app review). Re-enable `createComment` in `apps/api/src/adapters/facebook.ts` once approved.
 
 ### Instagram Advanced
@@ -25,7 +25,7 @@
 - [ ] **Location tagging** — `location_id` on media container (requires Facebook Location Search API)
 - [ ] **User tagging** — `user_tags` array on image containers (requires username → ID resolution)
 - [ ] **Collaborator tagging** — `collaborators` field (co-author posts)
-- [ ] **Instagram token expiry warning** — show warning in Accounts page when token < 7 days left
+- [x] **Instagram token expiry warning** — show warning in Accounts page when token < 7 days left
 
 ### Compose / Scheduling
 - [ ] **Timezone support** — all times are server-local; let users pick their timezone in settings
@@ -38,7 +38,7 @@
 - [ ] **Week/Day view polish** — timegrid styling needs work at small cell heights
 
 ### Accounts
-- [ ] **Re-auth flow** — one-click reconnect when token has expired
+- [x] **Re-auth flow** — one-click reconnect when token has expired
 - [ ] **Account usage stats** — posts published per account this month
 
 ### Billing
@@ -50,22 +50,22 @@
 - [ ] **Profile page UI** — API endpoints exist (`/user/profile`, `/user/password`) but no web page yet
 
 ### Infrastructure
-- [ ] **Production deployment** — Railway / Fly.io setup with Postgres + Redis
-- [ ] **Switch DB to Postgres** for production (schema already compatible)
-- [ ] **Error monitoring** — add Sentry or similar
-- [ ] **Account health check UI** — accounts page should show warning badge when token expiry < 7 days
+- [x] **Production deployment** — deployed on Railway (API + Web + Postgres + Redis)
+- [x] **Switch DB to Postgres** for production
+- [x] **Error monitoring** — Sentry added to API worker and job runner
+- [x] **Account health check UI** — token expiry warning banner + Reconnect button on Accounts page
 
 ### Marketing & Docs
 - [ ] **`/features` page — per-feature deep sections** — each feature (multi-platform, reels, calendar, etc.) should have its own anchor section with real screenshots/GIFs once assets are ready; currently uses image slot placeholders
 - [ ] **`/docs` page — fill image slots** — placeholder `DocImage` components throughout; replace with actual screenshots when available
 - [ ] **`/docs` page — search** — add in-page search / filter across sections
-- [ ] **`/docs` page — copy code blocks** — add clipboard copy button to code snippets
+- [x] **`/docs` page — copy code blocks** — add clipboard copy button to code snippets
 - [ ] **`/pricing` page** — dedicated standalone pricing page (currently only on landing page `/#pricing`)
 - [ ] **`/changelog` page** — public changelog / release notes
 - [ ] **`/blog` page** — optional content marketing hub
 - [ ] **Landing page A/B hero** — test two hero headlines
 - [ ] **Open Graph images** — `og:image` meta for `/`, `/features`, `/docs` pages
-- [ ] **`robots.txt` + sitemap** — SEO basics for public pages
+- [x] **`robots.txt` + sitemap** — SEO basics for public pages
 
 ---
 

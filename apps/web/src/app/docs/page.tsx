@@ -3,6 +3,25 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
+function CopyCode({ children }: { children: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(children).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+  return (
+    <div style={{ position: "relative", margin: "12px 0 20px" }}>
+      <code className="doc-code" style={{ margin: 0 }}>{children}</code>
+      <button onClick={copy}
+        style={{ position: "absolute", top: 8, right: 8, background: "#2a2a2a", border: "1px solid #3a3a3a", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontSize: 11, color: copied ? "#4ade80" : "#888", fontFamily: "monospace", transition: "color .15s" }}>
+        {copied ? "Copied!" : "Copy"}
+      </button>
+    </div>
+  );
+}
+
 // ─── Sidebar data ───────────────────────────────────────────────────────────
 
 const NAV = [
@@ -293,20 +312,20 @@ export default function DocsPage() {
               <p className="doc-p">Get Posthive running locally in under five minutes.</p>
 
               <h3 className="doc-h3">1. Clone the repository</h3>
-              <code className="doc-code">{`git clone https://github.com/AstaBlackClove/posthive.git
-cd posthive`}</code>
+              <CopyCode>{`git clone https://github.com/AstaBlackClove/posthive.git
+cd posthive`}</CopyCode>
 
               <h3 className="doc-h3">2. Copy environment files</h3>
-              <code className="doc-code">{`cp apps/api/.env.example apps/api/.env
-# Edit apps/api/.env and fill in the required values`}</code>
+              <CopyCode>{`cp apps/api/.env.example apps/api/.env
+# Edit apps/api/.env and fill in the required values`}</CopyCode>
 
               <h3 className="doc-h3">3. Run database migrations</h3>
-              <code className="doc-code">{`cd apps/api
-pnpm db:migrate`}</code>
+              <CopyCode>{`cd apps/api
+pnpm db:migrate`}</CopyCode>
 
               <h3 className="doc-h3">4. Start the dev server</h3>
-              <code className="doc-code">{`# From the repo root
-pnpm dev`}</code>
+              <CopyCode>{`# From the repo root
+pnpm dev`}</CopyCode>
               <p className="doc-p">
                 This starts both the API on <span className="doc-inline-code">http://localhost:3001</span> and the web app on <span className="doc-inline-code">http://localhost:3000</span> in parallel.
               </p>
@@ -321,9 +340,9 @@ pnpm dev`}</code>
               </ul>
 
               <h3 className="doc-h3">Clone and install</h3>
-              <code className="doc-code">{`git clone https://github.com/AstaBlackClove/posthive.git
+              <CopyCode>{`git clone https://github.com/AstaBlackClove/posthive.git
 cd posthive
-pnpm install`}</code>
+pnpm install`}</CopyCode>
 
               <p className="doc-p">
                 The monorepo uses pnpm workspaces. Running <span className="doc-inline-code">pnpm install</span> at the root installs dependencies for both <span className="doc-inline-code">apps/api</span> and <span className="doc-inline-code">apps/web</span>.
@@ -554,22 +573,22 @@ pnpm install`}</code>
                 <li className="doc-li">Update the Prisma provider to <span className="doc-inline-code">postgresql</span> in <span className="doc-inline-code">apps/api/prisma/schema.prisma</span>.</li>
                 <li className="doc-li">Run <span className="doc-inline-code">pnpm db:migrate</span> as part of your release command.</li>
               </ul>
-              <code className="doc-code">{`# Example Railway / Dockerfile release command
-pnpm db:migrate && node dist/index.js`}</code>
+              <CopyCode>{`# Example Railway / Dockerfile release command
+pnpm db:migrate && node dist/index.js`}</CopyCode>
 
               {/* ── Database ── */}
               <h2 className="doc-h2" id="database">Database</h2>
               <p className="doc-p">
                 Posthive uses <strong>Prisma 5</strong> with SQLite in development and Postgres in production. Switching is a one-line change in the schema.
               </p>
-              <code className="doc-code">{`// apps/api/prisma/schema.prisma
+              <CopyCode>{`// apps/api/prisma/schema.prisma
 datasource db {
   provider = "postgresql"   // change from "sqlite"
   url      = env("DATABASE_URL")
-}`}</code>
+}`}</CopyCode>
               <p className="doc-p">Run migrations after any schema change:</p>
-              <code className="doc-code">{`cd apps/api
-pnpm db:migrate`}</code>
+              <CopyCode>{`cd apps/api
+pnpm db:migrate`}</CopyCode>
               <div className="doc-warn">
                 <strong>Warning:</strong> <span className="doc-inline-code">ENCRYPTION_KEY</span> must never change after accounts are saved. All stored OAuth tokens and app passwords are encrypted with this key changing it renders all connected accounts permanently unusable.
               </div>
@@ -585,7 +604,7 @@ pnpm db:migrate`}</code>
                 <li className="doc-li"><strong>Railway Redis</strong> - add the Redis plugin to your Railway project and copy the connection string.</li>
                 <li className="doc-li"><strong>Self-hosted</strong> - any Redis 6+ instance works.</li>
               </ul>
-              <code className="doc-code">{`REDIS_URL="rediss://default:<password>@<host>:<port>"`}</code>
+              <CopyCode>{`REDIS_URL="rediss://default:<password>@<host>:<port>"`}</CopyCode>
 
               {/* ── Storage ── */}
               <h2 className="doc-h2" id="storage">Storage</h2>
@@ -593,7 +612,7 @@ pnpm db:migrate`}</code>
                 Uploaded media can be stored locally (dev) or in Supabase Storage (prod). Switch with the <span className="doc-inline-code">STORAGE_PROVIDER</span> env variable.
               </p>
               <h3 className="doc-h3">Local storage (default)</h3>
-              <code className="doc-code">{`STORAGE_PROVIDER=local`}</code>
+              <CopyCode>{`STORAGE_PROVIDER=local`}</CopyCode>
               <p className="doc-p">Files are written to <span className="doc-inline-code">apps/api/uploads/</span>. Not recommended for production files are lost on redeploy.</p>
 
               <h3 className="doc-h3">Supabase Storage</h3>
@@ -602,9 +621,9 @@ pnpm db:migrate`}</code>
                 <li className="doc-li">In Storage, create a public bucket named <span className="doc-inline-code">media</span>.</li>
                 <li className="doc-li">Copy your project URL and service role key.</li>
               </ol>
-              <code className="doc-code">{`STORAGE_PROVIDER=supabase
+              <CopyCode>{`STORAGE_PROVIDER=supabase
 SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_SERVICE_KEY="eyJ..."`}</code>
+SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
 
               {/* ── Plans & pricing ── */}
               <h2 className="doc-h2" id="plans-pricing">Plans &amp; pricing</h2>
@@ -667,15 +686,15 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</code>
                 Posthive listens for Dodo Payments webhook events to update subscription status in real time. Configure the webhook endpoint in your Dodo dashboard.
               </p>
               <h3 className="doc-h3">Webhook URL</h3>
-              <code className="doc-code">{`POST https://your-api-url/billing/webhook`}</code>
+              <CopyCode>{`POST https://your-api-url/billing/webhook`}</CopyCode>
 
               <h3 className="doc-h3">Webhook secret</h3>
               <div className="doc-warn">
                 <strong>Important:</strong> Dodo Payments webhook secrets are prefixed with <span className="doc-inline-code">whsec_</span>. Strip this prefix before setting <span className="doc-inline-code">DODO_WEBHOOK_SECRET</span> the verification code base64-decodes the raw secret and will fail if the prefix is included.
               </div>
-              <code className="doc-code">{`# Dodo dashboard shows: whsec_abc123...
+              <CopyCode>{`# Dodo dashboard shows: whsec_abc123...
 # Set in .env:
-DODO_WEBHOOK_SECRET="abc123..."`}</code>
+DODO_WEBHOOK_SECRET="abc123..."`}</CopyCode>
 
               <h3 className="doc-h3">Handled events</h3>
               <div className="doc-table-wrap"><table className="doc-table">
@@ -704,7 +723,7 @@ DODO_WEBHOOK_SECRET="abc123..."`}</code>
               </p>
 
               <h3 className="doc-h3">Base URL</h3>
-              <code className="doc-code">{`https://your-api-url/api/v1`}</code>
+              <CopyCode>{`https://your-api-url/api/v1`}</CopyCode>
 
               <h3 className="doc-h3">Creating an API key</h3>
               <p className="doc-p">
@@ -716,29 +735,29 @@ DODO_WEBHOOK_SECRET="abc123..."`}</code>
 
               <h3 className="doc-h3">Sending requests</h3>
               <p className="doc-p">Pass the key in the <span className="doc-inline-code">Authorization</span> header of every request:</p>
-              <code className="doc-code">{`Authorization: Bearer ph_<your-key>`}</code>
+              <CopyCode>{`Authorization: Bearer ph_<your-key>`}</CopyCode>
               <div className="doc-warn">
                 <strong>Keep keys secret.</strong> Do not commit them to source control or expose them in client-side code. Revoke any compromised key from Settings → API Keys immediately — revocation takes effect within seconds.
               </div>
 
               <h3 className="doc-h3">Response format</h3>
               <p className="doc-p">All responses are JSON. Successful responses return the resource directly. Errors return an object with an <span className="doc-inline-code">error</span> string field.</p>
-              <code className="doc-code">{`# Success
+              <CopyCode>{`# Success
 { "accounts": [ ... ] }
 
 # Error
-{ "error": "One or more accountIds are invalid" }`}</code>
+{ "error": "One or more accountIds are invalid" }`}</CopyCode>
 
               {/* ── GET /accounts ── */}
               <h2 className="doc-h2" id="api-accounts">GET /accounts</h2>
               <p className="doc-p">Returns all social accounts connected to your Posthive account. Use the returned <span className="doc-inline-code">id</span> values as <span className="doc-inline-code">accountIds</span> when creating posts.</p>
 
               <h3 className="doc-h3">Request</h3>
-              <code className="doc-code">{`GET /api/v1/accounts
-Authorization: Bearer ph_<key>`}</code>
+              <CopyCode>{`GET /api/v1/accounts
+Authorization: Bearer ph_<key>`}</CopyCode>
 
               <h3 className="doc-h3">Response</h3>
-              <code className="doc-code">{`{
+              <CopyCode>{`{
   "accounts": [
     {
       "id": "cmr289odh000110a5s6rdfmzn",
@@ -748,11 +767,11 @@ Authorization: Bearer ph_<key>`}</code>
       "createdAt": "2026-07-01T15:25:53.956Z"
     }
   ]
-}`}</code>
+}`}</CopyCode>
 
               <h3 className="doc-h3">Example</h3>
-              <code className="doc-code">{`curl https://your-api-url/api/v1/accounts \\
-  -H "Authorization: Bearer ph_<key>"`}</code>
+              <CopyCode>{`curl https://your-api-url/api/v1/accounts \\
+  -H "Authorization: Bearer ph_<key>"`}</CopyCode>
 
               {/* ── POST /posts ── */}
               <h2 className="doc-h2" id="api-posts-create">POST /posts</h2>
@@ -791,7 +810,7 @@ Authorization: Bearer ph_<key>`}</code>
               </table></div>
 
               <h3 className="doc-h3">Response — 201 Created</h3>
-              <code className="doc-code">{`{
+              <CopyCode>{`{
   "id": "cmr39jppf0003iiwnt643zr91",
   "scheduledFor": "2026-07-03T10:00:00.000Z",
   "status": "pending",
@@ -802,10 +821,10 @@ Authorization: Bearer ph_<key>`}</code>
       "status": "pending"
     }
   ]
-}`}</code>
+}`}</CopyCode>
 
               <h3 className="doc-h3">Example — multi-platform with per-account overrides</h3>
-              <code className="doc-code">{`curl -X POST https://your-api-url/api/v1/posts \\
+              <CopyCode>{`curl -X POST https://your-api-url/api/v1/posts \\
   -H "Authorization: Bearer ph_<key>" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -818,10 +837,10 @@ Authorization: Bearer ph_<key>`}</code>
         "commentText": "Happy to answer questions below!"
       }
     }
-  }'`}</code>
+  }'`}</CopyCode>
 
               <h3 className="doc-h3">Example — dry run (test without posting)</h3>
-              <code className="doc-code">{`curl -X POST https://your-api-url/api/v1/posts \\
+              <CopyCode>{`curl -X POST https://your-api-url/api/v1/posts \\
   -H "Authorization: Bearer ph_<key>" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -829,7 +848,7 @@ Authorization: Bearer ph_<key>`}</code>
     "accountIds": ["<account-id>"],
     "scheduledFor": "2026-07-03T10:00:00.000Z",
     "dryRun": true
-  }'`}</code>
+  }'`}</CopyCode>
 
               {/* ── GET /posts ── */}
               <h2 className="doc-h2" id="api-posts-list">GET /posts</h2>
@@ -846,7 +865,7 @@ Authorization: Bearer ph_<key>`}</code>
               </table></div>
 
               <h3 className="doc-h3">Response</h3>
-              <code className="doc-code">{`{
+              <CopyCode>{`{
   "posts": [
     {
       "id": "cmr39jppf0003iiwnt643zr91",
@@ -859,21 +878,21 @@ Authorization: Bearer ph_<key>`}</code>
     }
   ],
   "nextCursor": "cmr39jppf0003iiwnt643zr91"  // null on last page
-}`}</code>
+}`}</CopyCode>
 
               <h3 className="doc-h3">Paginating</h3>
-              <code className="doc-code">{`# Page 1
+              <CopyCode>{`# Page 1
 GET /api/v1/posts?limit=20
 
 # Page 2 — pass the last post id as cursor
-GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</code>
+GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</CopyCode>
 
               {/* ── GET /posts/:id ── */}
               <h2 className="doc-h2" id="api-posts-get">GET /posts/:id</h2>
               <p className="doc-p">Returns a single post by ID, including full per-platform target details and any error messages.</p>
 
               <h3 className="doc-h3">Response</h3>
-              <code className="doc-code">{`{
+              <CopyCode>{`{
   "id": "cmr39jppf0003iiwnt643zr91",
   "scheduledFor": "2026-07-03T10:00:00.000Z",
   "status": "done",
@@ -890,7 +909,7 @@ GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</code>
   ],
   "createdAt": "2026-07-02T08:00:00.000Z",
   "updatedAt": "2026-07-03T10:00:05.000Z"
-}`}</code>
+}`}</CopyCode>
 
               <h3 className="doc-h3">Target statuses</h3>
               <div className="doc-table-wrap"><table className="doc-table">
@@ -906,8 +925,8 @@ GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</code>
               </table></div>
 
               <h3 className="doc-h3">Example</h3>
-              <code className="doc-code">{`curl https://your-api-url/api/v1/posts/cmr39jppf0003iiwnt643zr91 \\
-  -H "Authorization: Bearer ph_<key>"`}</code>
+              <CopyCode>{`curl https://your-api-url/api/v1/posts/cmr39jppf0003iiwnt643zr91 \\
+  -H "Authorization: Bearer ph_<key>"`}</CopyCode>
 
               {/* ── PATCH /posts/:id ── */}
               <h2 className="doc-h2" id="api-posts-patch">PATCH /posts/:id</h2>
@@ -931,30 +950,30 @@ GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</code>
               </table></div>
 
               <h3 className="doc-h3">Response — 200 OK</h3>
-              <code className="doc-code">{`{
+              <CopyCode>{`{
   "id": "cmr39jppf...",
   "scheduledFor": "2026-07-04T10:00:00.000Z",
   "status": "pending",
   "content": "Updated post text",
   "commentText": null
-}`}</code>
+}`}</CopyCode>
 
               <h3 className="doc-h3">Example — reschedule only</h3>
-              <code className="doc-code">{`curl -X PATCH https://your-api-url/api/v1/posts/cmr39jppf... \\
+              <CopyCode>{`curl -X PATCH https://your-api-url/api/v1/posts/cmr39jppf... \\
   -H "Authorization: Bearer ph_<key>" \\
   -H "Content-Type: application/json" \\
-  -d '{ "scheduledFor": "2026-07-04T10:00:00.000Z" }'`}</code>
+  -d '{ "scheduledFor": "2026-07-04T10:00:00.000Z" }'`}</CopyCode>
 
               {/* ── DELETE /posts/:id ── */}
               <h2 className="doc-h2" id="api-posts-delete">DELETE /posts/:id</h2>
               <p className="doc-p">Cancels and permanently deletes a <span className="doc-inline-code">pending</span> post. Posts with status <span className="doc-inline-code">running</span>, <span className="doc-inline-code">done</span>, or <span className="doc-inline-code">failed</span> cannot be deleted via the API.</p>
 
               <h3 className="doc-h3">Response — 200 OK</h3>
-              <code className="doc-code">{`{ "ok": true }`}</code>
+              <CopyCode>{`{ "ok": true }`}</CopyCode>
 
               <h3 className="doc-h3">Example</h3>
-              <code className="doc-code">{`curl -X DELETE https://your-api-url/api/v1/posts/cmr39jppf0003iiwnt643zr91 \\
-  -H "Authorization: Bearer ph_<key>"`}</code>
+              <CopyCode>{`curl -X DELETE https://your-api-url/api/v1/posts/cmr39jppf0003iiwnt643zr91 \\
+  -H "Authorization: Bearer ph_<key>"`}</CopyCode>
 
               {/* ── POST /upload ── */}
               <h2 className="doc-h2" id="api-upload">POST /upload</h2>
@@ -970,13 +989,13 @@ GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</code>
               </table></div>
 
               <h3 className="doc-h3">Response — 201 Created</h3>
-              <code className="doc-code">{`{
+              <CopyCode>{`{
   "url": "https://your-api-url/uploads/abc123.jpg",
   "type": "image"   // "image" | "video"
-}`}</code>
+}`}</CopyCode>
 
               <h3 className="doc-h3">Example</h3>
-              <code className="doc-code">{`curl -X POST https://your-api-url/api/v1/upload \\
+              <CopyCode>{`curl -X POST https://your-api-url/api/v1/upload \\
   -H "Authorization: Bearer ph_<key>" \\
   -F "file=@/path/to/photo.jpg"
 
@@ -989,7 +1008,7 @@ curl -X POST https://your-api-url/api/v1/posts \\
     "accountIds": ["cmr289odh..."],
     "scheduledFor": "2026-07-04T10:00:00.000Z",
     "images": ["https://your-api-url/uploads/abc123.jpg"]
-  }'`}</code>
+  }'`}</CopyCode>
 
               {/* ── Error codes ── */}
               <h2 className="doc-h2" id="api-errors">Error codes</h2>

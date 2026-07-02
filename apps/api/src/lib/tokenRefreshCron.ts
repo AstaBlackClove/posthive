@@ -1,47 +1,69 @@
 /**
- * Background cron — proactively refreshes expiring platform tokens.
- * Runs every 12 hours. Refreshes any token expiring within 7 days.
- * Currently handles: Threads (60-day tokens)
+ * Background cron — proactively refreshes tokens expiring within 7 days.
+ * Runs every 12 hours. Covers Threads, Instagram, Facebook, YouTube.
+ * LinkedIn has no silent refresh — users must reconnect manually.
  */
 
+import * as Sentry from "@sentry/node";
 import { prisma } from "./prisma.js";
-import { threadsAdapter } from "../adapters/threads.js";
+import { getAdapter } from "../adapters/index.js";
 
-const INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 hours
-const REFRESH_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const REFRESH_PLATFORMS = new Set(["threads", "instagram", "facebook", "youtube"]);
+const WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const INTERVAL_MS = 12 * 60 * 60 * 1000;    // 12 hours
+const BATCH_SIZE = 50;
+const BATCH_CONCURRENCY = 5; // refresh 5 accounts at a time within each batch
 
-async function refreshExpiringTokens() {
-  const threshold = new Date(Date.now() + REFRESH_THRESHOLD_MS);
+async function run() {
+  const cutoff = new Date(Date.now() + WINDOW_MS);
+  let cursor: string | undefined;
+  let total = 0;
 
-  const accounts = await prisma.account.findMany({
-    where: {
-      platform: "threads",
-      expiresAt: { lte: threshold },
-    },
-  });
+  while (true) {
+    const batch = await prisma.account.findMany({
+      where: {
+        platform: { in: Array.from(REFRESH_PLATFORMS) },
+        expiresAt: { lte: cutoff },
+      },
+      orderBy: { id: "asc" },
+      take: BATCH_SIZE,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    });
 
-  if (accounts.length === 0) return;
+    if (!batch.length) break;
+    cursor = batch[batch.length - 1].id;
+    total += batch.length;
 
-  console.log(`[token-refresh] Refreshing ${accounts.length} expiring Threads token(s)`);
-
-  for (const account of accounts) {
-    try {
-      await threadsAdapter.refreshTokenIfNeeded(account);
-      console.log(`[token-refresh] Refreshed token for account ${account.id} (${account.displayName})`);
-    } catch (err) {
-      console.error(`[token-refresh] Failed to refresh token for account ${account.id}:`, err);
+    // Process up to BATCH_CONCURRENCY accounts at a time
+    for (let i = 0; i < batch.length; i += BATCH_CONCURRENCY) {
+      const chunk = batch.slice(i, i + BATCH_CONCURRENCY);
+      await Promise.allSettled(
+        chunk.map(async (account) => {
+          try {
+            const adapter = getAdapter(account.platform);
+            const refreshed = await adapter.refreshTokenIfNeeded(account);
+            if (refreshed.updatedAt !== account.updatedAt) {
+              console.log(`[token-refresh] refreshed ${account.platform} account ${account.displayName}`);
+            }
+          } catch (err) {
+            console.error(`[token-refresh] failed for ${account.platform} account ${account.id}:`, err);
+            Sentry.captureException(err, {
+              tags: { component: "token-refresh", platform: account.platform },
+              extra: { accountId: account.id },
+            });
+          }
+        })
+      );
     }
+
+    if (batch.length < BATCH_SIZE) break; // last page
   }
+
+  if (total > 0) console.log(`[token-refresh] processed ${total} account(s)`);
 }
 
 export function startTokenRefreshCron() {
-  // Run once shortly after startup, then every 12 hours
-  setTimeout(() => {
-    refreshExpiringTokens().catch(console.error);
-    setInterval(() => {
-      refreshExpiringTokens().catch(console.error);
-    }, INTERVAL_MS);
-  }, 30_000); // 30s after startup to avoid race with DB connection
-
-  console.log("[token-refresh] Cron started — checks every 12 hours");
+  // Run once at startup to catch anything already near expiry
+  run().catch((e) => console.error("[token-refresh] error:", e));
+  setInterval(() => run().catch((e) => console.error("[token-refresh] error:", e)), INTERVAL_MS);
 }
