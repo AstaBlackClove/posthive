@@ -12,6 +12,7 @@
  *   Use this to verify the full scheduling flow without posting anything.
  */
 
+import * as Sentry from "@sentry/node";
 import type { PostJob, PostJobTarget, Account } from "@prisma/client";
 import { getAdapter } from "../adapters/index.js";
 import { prisma } from "../lib/prisma.js";
@@ -150,6 +151,10 @@ async function runTarget(
         : await adapter.createPost(refreshedAccount, content);
     } catch (err) {
       console.error(`[runner] createPost failed for ${target.account.platform} (account ${target.accountId}):`, err);
+      Sentry.captureException(err, {
+        tags: { component: "runner", platform: target.account.platform },
+        extra: { postJobId: target.postJobId, accountId: target.accountId },
+      });
       await setTargetStatus(target.id, "post_failed", { error: String(err) });
       return;
     }

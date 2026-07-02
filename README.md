@@ -173,6 +173,9 @@ pnpm dev
 | `DODO_PRODUCT_CREATOR` | Billing | Dodo product ID for Creator plan |
 | `DODO_PRODUCT_PRO` | Billing | Dodo product ID for Pro plan |
 | `DODO_PRODUCT_TEAM` | Billing | Dodo product ID for Team plan |
+| **Monitoring** | | |
+| `SENTRY_DSN` | No | Sentry DSN for error monitoring. Omit to disable — Sentry is fully optional |
+| `SENTRY_ENABLED` | No | Set to `true` to enable Sentry in development for testing |
 
 Generate secrets:
 ```bash

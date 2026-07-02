@@ -10,6 +10,7 @@
  * persisted to PostJobTarget.error — they don't throw up to the worker.
  */
 
+import * as Sentry from "@sentry/node";
 import { Worker } from "bullmq";
 import { prisma } from "./prisma.js";
 import { type PostJobPayload } from "./queue.js";
@@ -56,6 +57,10 @@ export function startWorker(storage: StorageAdapter): void {
 
   worker.on("failed", (job, err) => {
     console.error(`[worker] job ${job?.data.postJobId} failed:`, err.message);
+    Sentry.captureException(err, {
+      tags: { component: "worker" },
+      extra: { postJobId: job?.data.postJobId },
+    });
   });
 
   console.log("[worker] started — waiting for jobs");

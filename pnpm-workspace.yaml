@@ -5,6 +5,7 @@ packages:
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true
+  '@sentry/cli': false
   esbuild: true
   msgpackr-extract: true
   prisma: true

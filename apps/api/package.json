@@ -20,6 +20,7 @@
     "@fastify/rate-limit": "^9.1.0",
     "@fastify/static": "^7.0.4",
     "@prisma/client": "^5.16.2",
+    "@sentry/node": "^10.63.0",
     "@supabase/supabase-js": "^2.108.2",
     "@types/sharp": "^0.32.0",
     "bcryptjs": "^3.0.3",

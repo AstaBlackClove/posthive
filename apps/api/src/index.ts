@@ -1,4 +1,5 @@
-import "dotenv/config";
+import "./instrument.js";
+import * as Sentry from "@sentry/node";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
@@ -82,6 +83,17 @@ async function main() {
   await app.register(publicApiRoutes, { storage });
 
   app.get("/health", async () => ({ ok: true }));
+
+  // Global error handler — captures all unhandled Fastify errors to Sentry
+  app.setErrorHandler((err, _req, reply) => {
+    Sentry.captureException(err);
+    reply.status(err.statusCode ?? 500).send({
+      statusCode: err.statusCode ?? 500,
+      error: err.name ?? "Internal Server Error",
+      message: err.message,
+    });
+  });
+
 
   // OG preview fetch — used by compose preview
   // Requires auth; blocks SSRF to private/internal IP ranges
