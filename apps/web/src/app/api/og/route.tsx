@@ -112,9 +112,9 @@ function HomeLayout({ logo, title, desc }: { logo: string; title: string; desc: 
 
 function PricingLayout({ logo, title, desc }: { logo: string; title: string; desc: string }) {
   const plans = [
-    { name: "Creator", price: "₹550",   usd: "$9",  popular: false },
-    { name: "Pro",     price: "₹1,700", usd: "$29", popular: true  },
-    { name: "Team",    price: "₹2,600", usd: "$49", popular: false },
+    { name: "Creator", price: "$9",  sub: "/mo", popular: false },
+    { name: "Pro",     price: "$29", sub: "/mo", popular: true  },
+    { name: "Team",    price: "$49", sub: "/mo", popular: false },
   ];
   return (
     <div style={{ width: 1200, height: 630, background: "#0a0a0a", display: "flex", position: "relative", overflow: "hidden", fontFamily: "system-ui, sans-serif" }}>
@@ -131,7 +131,7 @@ function PricingLayout({ logo, title, desc }: { logo: string; title: string; des
         <div style={{ fontSize: 18, color: "#666", lineHeight: 1.5, display: "flex" }}>{desc}</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
           <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", display: "flex" }} />
-          <span style={{ fontSize: 13, color: "#4ade80" }}>7-day free trial, no card required</span>
+          <span style={{ fontSize: 13, color: "#4ade80" }}>14-day free trial, no card required</span>
         </div>
       </div>
 
@@ -152,7 +152,7 @@ function PricingLayout({ logo, title, desc }: { logo: string; title: string; des
             )}
             <span style={{ fontSize: 15, fontWeight: 700, color: p.popular ? "#c4c9ff" : "#aaa" }}>{p.name}</span>
             <span style={{ fontSize: 32, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>{p.price}</span>
-            <span style={{ fontSize: 12, color: "#555" }}>≈ {p.usd} / mo</span>
+            <span style={{ fontSize: 12, color: "#555" }}>{p.sub}</span>
           </div>
         ))}
       </div>

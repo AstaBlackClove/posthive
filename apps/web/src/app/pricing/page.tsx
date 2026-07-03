@@ -85,7 +85,7 @@ const COMPARISON = [
 const FAQ = [
   {
     q: "Is there a free trial?",
-    a: "Yes. Every new account starts with a 7-day trial with access to 3 accounts and 30 posts. No credit card required.",
+    a: "Yes. Every new account starts with a 14-day trial with access to 3 accounts and 30 posts. No credit card required.",
   },
   {
     q: "Can I switch plans at any time?",
@@ -234,7 +234,7 @@ export default function PricingPage() {
         }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#ededed", marginBottom: 4 }}>Not sure yet?</div>
-            <div style={{ fontSize: 14, color: "#666" }}>Start with a 7-day free trial — no card required. 3 accounts, 30 posts.</div>
+            <div style={{ fontSize: 14, color: "#666" }}>Start with a 14-day free trial — no card required. 3 accounts, 30 posts.</div>
           </div>
           <Link href="/register" style={{
             background: "#fff", color: "#0a0a0a", padding: "10px 24px",

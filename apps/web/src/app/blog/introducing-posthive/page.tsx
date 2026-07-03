@@ -155,7 +155,7 @@ export default function PostPage() {
           </h2>
 
           <p style={{ marginBottom: 32 }}>
-            Posthive has a 7-day free trial — no card required. If you're a developer or want to self-host, the repo is public on GitHub.
+            Posthive has a 14-day free trial — no card required. If you're a developer or want to self-host, the repo is public on GitHub.
           </p>
 
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
