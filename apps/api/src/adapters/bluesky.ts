@@ -70,7 +70,7 @@ async function buildLinkCard(
 ): Promise<AppBskyEmbedExternal.Main | undefined> {
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "Posthive/1.0 (+https://posthive.app)" },
+      headers: { "User-Agent": "Posthive/1.0 (+https://posthive.co)" },
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return undefined;

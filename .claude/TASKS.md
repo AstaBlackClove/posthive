@@ -39,18 +39,14 @@
 - [ ] **Duplicate post** — clone an existing post to reschedule without re-typing
 
 ### Accounts
-- [ ] **Multiple accounts per platform** — currently one account per platform per user; allow connecting e.g. two Bluesky handles
+- [x] **Multiple accounts per platform** — upsert key is `{platform, displayName, userId}`; connecting a different username creates a second row automatically
 - [ ] **Account groups** — tag accounts into groups (e.g. "Work", "Personal") and target a group in compose
 
 ### Marketing & Docs
-- [ ] **`/features` page — screenshots/GIFs** — replace image slot placeholders with real assets
-- [ ] **`/docs` page — search** — in-page search / filter across sections
-- [ ] **`/pricing` page** — dedicated standalone pricing page (currently only on landing `/#pricing`)
-- [ ] **`/changelog` page** — public changelog / release notes
-- [ ] **`/blog` page** — optional content marketing hub
-- [ ] **Open Graph images** — `og:image` meta for `/`, `/features`, `/docs` pages
+- [x] **`/features` page — screenshots/GIFs** — all screenshots added including bulk CSV
 - [ ] **Landing page — social proof** — testimonials or logo wall once early users available
 - [ ] **Landing page — demo video** — 60s product walkthrough embed in hero
+- [ ] **`/changelog` page** — public changelog / release notes
 
 ### Infrastructure / DevEx
 - [ ] **Webhook outbound** — fire a webhook to a user-configured URL on post publish (useful for integrations)
@@ -135,5 +131,11 @@
 - [x] `/features/bulk-csv-scheduling` feature page
 - [x] Features nav dropdown — bulk CSV scheduling entry
 - [x] `/docs` page — full docs with collapsible sidebar, copy buttons, API reference, bulk CSV + templates sections
-- [x] `robots.txt` + sitemap
+- [x] `/docs` in-page search — filter across all sections from sidebar
+- [x] `/pricing` standalone page — INR/USD toggle, plan cards, comparison table, FAQ
+- [x] `/blog` page + Introducing Posthive launch post
+- [x] Dynamic OG images — 6 unique layouts via `/api/og`; metadata on all public pages
+- [x] Site description cleaned up — no platform list, no em dash
+- [x] 14-day trial wording across all copy (was 7-day)
+- [x] `robots.txt` + sitemap (updated with /pricing, /blog, all feature slugs)
 - [x] README — comprehensive rewrite covering all features, platforms, env vars, bulk CSV format, API reference

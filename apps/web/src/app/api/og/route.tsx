@@ -261,7 +261,7 @@ function BlogLayout({ logo, title, desc }: { logo: string; title: string; desc: 
 
         {/* Bottom editorial bar */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 13, color: "#444" }}>posthive.in/blog</span>
+          <span style={{ fontSize: 13, color: "#444" }}>posthive.co/blog</span>
           <div style={{ display: "flex", gap: 8 }}>
             {["Product", "Guides", "Updates"].map((tag) => (
               <div key={tag} style={{ display: "flex", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 6, padding: "5px 12px" }}>

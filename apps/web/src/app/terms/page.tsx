@@ -103,7 +103,7 @@ export default function TermsPage() {
 
           <h3>Self-hosted</h3>
           <p>
-            Self-hosted deployments of Posthive are free of charge. These Terms do not apply to self-hosted instances only to the hosted service at posthive.app.
+            Self-hosted deployments of Posthive are free of charge. These Terms do not apply to self-hosted instances only to the hosted service at posthive.co.
           </p>
 
           <h2>7. Your content</h2>

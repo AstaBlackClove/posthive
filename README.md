@@ -265,6 +265,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | Variable | Required | Description |
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | Yes | API URL from the browser. `http://localhost:3001` in dev |
+| `NEXT_PUBLIC_WEB_URL` | Yes | Public URL of the web app. Used for OG images, sitemap, robots.txt. `http://localhost:3000` in dev, `https://yourdomain.com` in prod |
 | `NEXT_PUBLIC_ENABLE_BILLING` | No | Must match `ENABLE_BILLING` in the API |
 
 ---

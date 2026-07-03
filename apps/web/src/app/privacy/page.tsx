@@ -50,7 +50,7 @@ export default function PrivacyPage() {
         <div className="prose">
           <h2>1. Who we are</h2>
           <p>
-            Posthive is an open-source social media scheduling tool licensed under AGPL-3.0. When you use the hosted version at posthive.app, the data controller is the Posthive team. If you self-host Posthive, you are the data controller for your own instance.
+            Posthive is an open-source social media scheduling tool licensed under AGPL-3.0. When you use the hosted version at posthive.co, the data controller is the Posthive team. If you self-host Posthive, you are the data controller for your own instance.
           </p>
 
           <h2>2. What we collect</h2>

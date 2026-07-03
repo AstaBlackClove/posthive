@@ -11,7 +11,7 @@ const FEATURE_SLUGS = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.in";
+  const base = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
   const now = new Date();
 
   return [
