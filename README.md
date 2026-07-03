@@ -5,7 +5,7 @@
 <h1 align="center">Posthive</h1>
 
 <p align="center">
-  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages from a single UI.<br/>
+  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, and Pinterest from a single UI.<br/>
   Self-hostable · Open-source · AGPL-3.0
 </p>
 
@@ -19,7 +19,7 @@
 ## Features
 
 **Scheduling**
-- **Multi-platform posting** — write once, publish to all 7 platforms simultaneously
+- **Multi-platform posting** — write once, publish to all 8 platforms simultaneously
 - **Bulk CSV scheduling** — upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
 - **Post templates** — save, load, and delete reusable post drafts
 - **Dry run mode** — full pipeline test without making real API calls
@@ -30,6 +30,7 @@
 - Images (up to 4 per post; plan-gated), video (up to 100 MB)
 - Instagram Reels, Stories, and carousel (up to 10 items)
 - YouTube Shorts + long-form video with dedicated Title/Description fields
+- Pinterest Pins with dedicated Title/Description fields — image required
 - Alt text on every image
 - Clipboard paste and drag-and-drop upload
 
@@ -86,7 +87,7 @@ posthive/
 │   ├── api/                  # Fastify v4 API (Node.js, TypeScript, ESM)
 │   │   ├── prisma/           # Schema + migrations
 │   │   └── src/
-│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook)
+│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest)
 │   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, plans
 │   │       └── routes/       # auth, accounts, jobs, templates, upload, billing, user, apiKeys, publicApi
 │   └── web/                  # Next.js 16 frontend
@@ -237,6 +238,18 @@ pnpm dev
 | `FACEBOOK_APP_SECRET` | Meta app secret |
 | `FACEBOOK_REDIRECT_URI` | Must be public HTTPS |
 
+**OAuth — Pinterest**
+
+| Variable | Description |
+|---|---|
+| `PINTEREST_CLIENT_ID` | Pinterest App ID from developers.pinterest.com |
+| `PINTEREST_CLIENT_SECRET` | Pinterest App secret key |
+| `PINTEREST_REDIRECT_URI` | Must be public HTTPS |
+| `PINTEREST_SANDBOX` | Set `true` while app has Trial access — routes API calls to the sandbox |
+| `PINTEREST_SANDBOX_TOKEN` | Manually-generated sandbox token (My Apps → Generate Access Token → Sandbox). Only used when `PINTEREST_SANDBOX=true` |
+
+> Pinterest requires **Standard access** approval for production pin creation. Apply at developers.pinterest.com → My Apps → Request upgraded access. Until approved, set `PINTEREST_SANDBOX=true` and use a sandbox token.
+
 **Billing**
 
 | Variable | Required | Description |
@@ -317,6 +330,21 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 > First comment support requires `pages_manage_engagement` (pending Meta app review).
 
+### Pinterest
+1. Create an app at [developers.pinterest.com](https://developers.pinterest.com)
+2. Enable scopes: `boards:read`, `pins:read`, `pins:write`, `user_accounts:read`
+3. Set redirect URI to `https://your-domain/auth/pinterest/callback`
+4. Set `PINTEREST_CLIENT_ID` and `PINTEREST_CLIENT_SECRET` in `.env`
+
+**Trial access (default):** New apps get Trial access — pins can only be created in the sandbox.
+- Set `PINTEREST_SANDBOX=true`
+- Generate a sandbox token: My Apps → Manage → Generate Access Token → Sandbox
+- Set `PINTEREST_SANDBOX_TOKEN` to that token
+
+**Standard access (production):** Apply at developers.pinterest.com → My Apps → Request upgraded access. Once approved, set `PINTEREST_SANDBOX=false` and remove `PINTEREST_SANDBOX_TOKEN`. Users connect via normal OAuth.
+
+> Posts as Pins on the user's first board. Image is required — posts without an image are blocked at the UI level.
+
 ---
 
 ## Bulk CSV Scheduling
@@ -375,7 +403,7 @@ Save and reuse post drafts from the Compose page:
 3. Click **Templates** to open the dropdown and load any saved template
 4. Hover a template and click **✕** to delete it
 
-Templates save: post text, first comment, YouTube title/description, and YouTube type (Short/Video).
+Templates save: post text, first comment, YouTube title/description/type, and Pinterest title/description.
 
 ---
 
@@ -434,6 +462,7 @@ Set `ENABLE_BILLING=false` for self-hosted mode — all features unlocked, no pl
 | Mastodon | 500 characters |
 | YouTube | Title: 100 · Description: 5,000 |
 | Facebook Pages | 63,206 characters |
+| Pinterest | Title: 100 · Description: 500 |
 
 ---
 

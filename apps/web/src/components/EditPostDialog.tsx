@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal } from "./Modal";
 import { PlatformPreview, PLATFORM_COLOR, PLATFORM_LIMIT, MAX_IMAGES, countGraphemes } from "./PlatformPreview";
 import type { Account, UploadedImage, PerAccountOverride } from "./PlatformPreview";
@@ -25,12 +25,12 @@ interface Props {
   open: boolean;
   job: EditableJob;
   accounts: Account[];
-  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story") => Promise<void>;
+  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video") => Promise<void>;
   onClose: () => void;
 }
 
 export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) {
-  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; perAccount?: Record<string, PerAccountOverride> };
+  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; perAccount?: Record<string, PerAccountOverride> };
 
   const [text, setText] = useState(parsedContent.text);
   const [commentText, setCommentText] = useState(job.commentText ?? "");
@@ -53,6 +53,27 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   });
   const [selectedIds, setSelectedIds] = useState<string[]>(job.targets.map(t => t.accountId));
   const [perAccountOverrides, setPerAccountOverrides] = useState<Record<string, PerAccountOverride>>(parsedContent.perAccount ?? {});
+
+  // YouTube: init title/description from the first YouTube account's override
+  const initYtOverride = (() => {
+    const ytAccount = job.targets.find(t => accounts.find(a => a.id === t.accountId)?.platform === "youtube");
+    const ytText = parsedContent.perAccount?.[ytAccount?.accountId ?? ""]?.text ?? "";
+    const parts = ytText.split("\n\n");
+    return { title: parts[0] ?? "", description: parts.slice(1).join("\n\n") };
+  })();
+  const [youtubeTitle, setYoutubeTitle] = useState(initYtOverride.title);
+  const [youtubeDescription, setYoutubeDescription] = useState(initYtOverride.description);
+  const [youtubeType, setYoutubeType] = useState<"short" | "video">(parsedContent.youtubeType ?? "short");
+
+  // Pinterest: init title/description from the first Pinterest account's override
+  const initPinOverride = (() => {
+    const pinAccount = job.targets.find(t => accounts.find(a => a.id === t.accountId)?.platform === "pinterest");
+    const pinText = parsedContent.perAccount?.[pinAccount?.accountId ?? ""]?.text ?? "";
+    const parts = pinText.split("\n\n");
+    return { title: parts[0] ?? "", description: parts.slice(1).join("\n\n") };
+  })();
+  const [pinterestTitle, setPinterestTitle] = useState(initPinOverride.title);
+  const [pinterestDescription, setPinterestDescription] = useState(initPinOverride.description);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -120,7 +141,11 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   }
 
   async function handleSave() {
-    if (!text.trim() || selectedIds.length === 0) return;
+    const _noPostTextNeeded = selectedIds.length > 0 && selectedIds.every(id => {
+      const p = accounts.find(a => a.id === id)?.platform;
+      return p === "youtube" || p === "pinterest";
+    });
+    if ((!text.trim() && !_noPostTextNeeded) || selectedIds.length === 0) return;
     const [dp, tp] = scheduledFor.split("T");
     const [y, mo, d] = dp.split("-").map(Number);
     const [h, m] = (tp ?? "09:00").split(":").map(Number);
@@ -133,7 +158,8 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     const mediaUrls = video ? [video.url] : images.map(i => i.url);
     setSaving(true); setSaveError(null);
     try {
-      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined);
+      const hasYoutube = selectedAccounts.some(a => a.platform === "youtube");
+      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined);
       onClose();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message.replace(/^API PATCH.*→ \d+: /, "") : "Save failed");
@@ -144,6 +170,36 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
 
   const selectedAccounts = accounts.filter(a => selectedIds.includes(a.id));
   const instagramSelected = selectedAccounts.some(a => a.platform === "instagram");
+  const youtubeAccounts = selectedAccounts.filter(a => a.platform === "youtube");
+  const youtubeSelected = youtubeAccounts.length > 0;
+  const onlyYoutube = youtubeSelected && selectedAccounts.every(a => a.platform === "youtube");
+  const pinterestAccounts = selectedAccounts.filter(a => a.platform === "pinterest");
+  const onlyPinterest = pinterestAccounts.length > 0 && selectedAccounts.every(a => a.platform === "pinterest");
+  const noPostTextNeeded = selectedAccounts.length > 0 && selectedAccounts.every(a => a.platform === "youtube" || a.platform === "pinterest");
+
+  useEffect(() => {
+    if (youtubeAccounts.length === 0) return;
+    const combined = youtubeDescription ? `${youtubeTitle}\n\n${youtubeDescription}` : youtubeTitle;
+    setPerAccountOverrides(prev => {
+      const next = { ...prev };
+      for (const a of youtubeAccounts) { next[a.id] = { ...next[a.id], text: combined }; }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [youtubeTitle, youtubeDescription, selectedIds.join(",")]);
+
+  useEffect(() => {
+    if (pinterestAccounts.length === 0) return;
+    const combined = pinterestDescription ? `${pinterestTitle}\n\n${pinterestDescription}` : pinterestTitle;
+    setPerAccountOverrides(prev => {
+      const next = { ...prev };
+      for (const a of pinterestAccounts) {
+        next[a.id] = { ...next[a.id], text: combined };
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinterestTitle, pinterestDescription, selectedIds.join(",")]);
   const platformLimits = selectedAccounts.filter(a => a.platform !== "youtube").map(a => {
     const limit = PLATFORM_LIMIT[a.platform] ?? 500;
     const effectiveText = perAccountOverrides[a.id]?.text ?? text;
@@ -153,11 +209,17 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const overAnyLimit = platformLimits.some(p => p.over);
 
   // Footer warning logic
+  const pinterestSelected = selectedAccounts.some(a => a.platform === "pinterest");
+  const pinterestSelectedWithNoImage = pinterestSelected && images.length === 0;
+
   let mediaWarning: string | null = null;
   if (instagramSelected) {
     if (igMediaType === "story" && images.length === 0) mediaWarning = "⚠ Instagram Story requires an image";
     else if (igMediaType === "reel" && !video) mediaWarning = "⚠ Instagram Reel requires a video";
     else if (igMediaType === "post" && images.length === 0) mediaWarning = "⚠ Instagram Post requires an image";
+  }
+  if (!mediaWarning && pinterestSelectedWithNoImage) {
+    mediaWarning = "⚠ Pinterest requires an image — the Pin will be skipped without one";
   }
 
   // Group accounts by platform for the selector
@@ -246,7 +308,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           </div>
 
           {/* Caption */}
-          <div className="px-6 py-5">
+          <div className="px-6 py-5" style={{ display: noPostTextNeeded ? "none" : undefined }}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Caption</span>
               <div className="flex items-center gap-3">
@@ -275,8 +337,101 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
             )}
           </div>
 
+          {/* YouTube — dedicated Title + Description fields */}
+          {youtubeSelected && (
+            <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <PlatformIcon platform="youtube" size={13} />
+                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#ff0000" }}>YouTube</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {(["short", "video"] as const).map((t) => (
+                    <button key={t} type="button" onClick={() => setYoutubeType(t)}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all"
+                      style={youtubeType === t
+                        ? { backgroundColor: "#ff000020", color: "#ff0000", border: "1px solid #ff000050" }
+                        : { backgroundColor: "#111111", color: "#666", border: "1px solid #1f1f1f" }}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs mb-2.5" style={{ color: "#999" }}>
+                Uploads to YouTube with a separate title and description.{!onlyYoutube && " Other selected platforms use the Caption above."}
+              </p>
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Title</span>
+                  <span className="text-[10px]" style={{ color: youtubeTitle.length > 100 ? "#ef4444" : "#444" }}>{youtubeTitle.length}/100</span>
+                </div>
+                <input
+                  value={youtubeTitle} onChange={e => setYoutubeTitle(e.target.value)}
+                  placeholder="Video title"
+                  className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                  style={{ borderColor: youtubeTitle.length > 100 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Description</span>
+                  <span className="text-[10px]" style={{ color: youtubeDescription.length > 5000 ? "#ef4444" : "#444" }}>{youtubeDescription.length}/5000</span>
+                </div>
+                <textarea
+                  value={youtubeDescription} onChange={e => setYoutubeDescription(e.target.value)}
+                  placeholder="Video description…"
+                  rows={3}
+                  className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                  style={{ borderColor: youtubeDescription.length > 5000 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Pinterest — dedicated Title + Description fields */}
+          {pinterestAccounts.length > 0 && (
+            <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <div className="flex items-center gap-2 mb-1">
+                <PlatformIcon platform="pinterest" size={13} />
+                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#e60023" }}>Pinterest</span>
+              </div>
+              <p className="text-xs mb-2.5" style={{ color: "#999" }}>
+                Pins have a separate title and description.
+              </p>
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Pin title</span>
+                  <span className="text-[10px]" style={{ color: pinterestTitle.length > 100 ? "#ef4444" : "#444" }}>{pinterestTitle.length}/100</span>
+                </div>
+                <input
+                  value={pinterestTitle}
+                  onChange={(e) => setPinterestTitle(e.target.value)}
+                  placeholder="Short, catchy pin title"
+                  maxLength={100}
+                  className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                  style={{ borderColor: pinterestTitle.length > 100 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Description</span>
+                  <span className="text-[10px]" style={{ color: pinterestDescription.length > 500 ? "#ef4444" : "#444" }}>{pinterestDescription.length}/500</span>
+                </div>
+                <textarea
+                  value={pinterestDescription}
+                  onChange={(e) => setPinterestDescription(e.target.value)}
+                  placeholder="What is this Pin about?"
+                  rows={3}
+                  maxLength={500}
+                  className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                  style={{ borderColor: pinterestDescription.length > 500 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* First comment */}
-          <div className="px-6 py-5" style={{ borderBottom: "1px solid #1a1a1a" }}>
+          <div className="px-6 py-5" style={{ borderBottom: "1px solid #1a1a1a", display: onlyPinterest ? "none" : undefined }}>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>First Comment</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full"
@@ -493,7 +648,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           Cancel
         </button>
         <button onClick={handleSave}
-          disabled={saving || !text.trim() || selectedIds.length === 0 || overAnyLimit || uploading}
+          disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading}
           className="px-5 py-2 text-sm font-semibold rounded-xl disabled:opacity-40"
           style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
           {saving ? "Saving…" : "Save changes"}

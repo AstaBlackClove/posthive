@@ -139,6 +139,21 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     const { id } = req.params as { id: string };
     const account = await prisma.account.findFirst({ where: { id, userId } });
     if (!account) return reply.status(404).send({ error: "Account not found" });
+
+    // Delete PostJobs whose only target is this account — they'd be unsendable orphans.
+    // Jobs with multiple targets keep the job; only this account's target is removed below.
+    const orphanJobs = await prisma.postJob.findMany({
+      where: {
+        userId,
+        targets: { every: { accountId: id } },
+      },
+      select: { id: true },
+    });
+    if (orphanJobs.length > 0) {
+      await prisma.postJob.deleteMany({ where: { id: { in: orphanJobs.map(j => j.id) } } });
+    }
+
+    // Remove this account's targets from multi-account jobs, then delete the account.
     await prisma.postJobTarget.deleteMany({ where: { accountId: id } });
     await prisma.account.delete({ where: { id } });
     return reply.status(204).send();

@@ -58,8 +58,9 @@ function JobCard({ job, onEdit, onDelete, onRetry }: {
   job: Job;
   onEdit: () => void;
   onDelete: () => void;
-  onRetry: () => void;
+  onRetry: () => Promise<void>;
 }) {
+  const [retrying, setRetrying] = useState(false);
   const content = JSON.parse(job.content) as { text: string; mediaUrls?: string[] };
   const scheduled = new Date(job.scheduledFor);
   const isPast = scheduled < new Date();
@@ -115,9 +116,12 @@ function JobCard({ job, onEdit, onDelete, onRetry }: {
             <div className="flex items-center gap-1.5">
               <StatusBadge status={job.status} />
               {hasFailedTargets && (
-                <button onClick={onRetry} className="job-action-btn" title="Retry failed platforms"
+                <button
+                  onClick={async () => { setRetrying(true); try { await onRetry(); } finally { setRetrying(false); } }}
+                  disabled={retrying}
+                  className="job-action-btn" title="Retry failed platforms"
                   style={{ color: "#f87171" }}>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-3.5 h-3.5${retrying ? " animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
@@ -247,7 +251,7 @@ export default function JobsPage() {
     } catch (err) { toastError(String(err)); }
   }
 
-  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story") {
+  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video") {
     try {
       await apiFetch(`/jobs/${jobId}`, {
         method: "PATCH",
@@ -258,6 +262,7 @@ export default function JobsPage() {
           mediaUrls,
           mediaType,
           accountIds,
+          ...(youtubeType ? { youtubeType } : {}),
           ...(Object.keys(perAccount).length > 0 ? { perAccount } : { perAccount: {} }),
         }),
       });
@@ -329,8 +334,8 @@ export default function JobsPage() {
           open={!!editingJob}
           job={editingJob}
           accounts={accounts}
-          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType) => {
-            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType);
+          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType) => {
+            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType);
           }}
           onClose={() => setEditingJob(null)}
         />

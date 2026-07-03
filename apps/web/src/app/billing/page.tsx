@@ -71,8 +71,8 @@ const PLANS = [
     features: [
       { text: "50 connected accounts", key: true },
       { text: "Unlimited posts", key: true },
-      { text: "Reels & Stories", key: false },
-      { text: "Per-platform overrides", key: false },
+      { text: "Reels & Stories", key: true },
+      { text: "Per-platform overrides", key: true },
       { text: "Everything in Pro", key: false },
     ],
   },

@@ -77,6 +77,8 @@ export const PLATFORM_COLOR: Record<string, string> = {
   mastodon: "#6364ff",
   youtube: "#ff0000",
   facebook: "#1877f2",
+  twitter: "#e7e9ea",
+  pinterest: "#e60023",
 };
 
 export const PLATFORM_LIMIT: Record<string, number> = {
@@ -86,6 +88,8 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   mastodon: 500,
   youtube: 5000,
   facebook: 63206,
+  twitter: 280,
+  pinterest: 500,
 };
 
 export const MAX_IMAGES = 4;
@@ -628,6 +632,153 @@ function MastodonPreview({ account, text, commentText, images, video }: {
   );
 }
 
+function PinterestPreview({ account, text, images }: {
+  account: Account;
+  text: string;
+  images: UploadedImage[];
+}) {
+  const lines = text.split("\n").filter(Boolean);
+  const title = lines[0] ?? "";
+  const description = lines.slice(1).join(" ") || text;
+  const link = text.match(/https?:\/\/[^\s]+/)?.[0];
+  const initial = account.displayName[0]?.toUpperCase() ?? "?";
+
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5"
+        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #e60023", backgroundColor: "#0a0a0a" }}>
+        <PlatformIcon platform="pinterest" size={16} />
+        <span className="text-xs font-semibold" style={{ color: "#e60023" }}>Pinterest</span>
+        <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+      </div>
+
+      <div className="p-4">
+        {/* Pin card */}
+        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", maxWidth: 220, margin: "0 auto" }}>
+          {images.length > 0 ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={images[0].previewUrl} alt="" className="w-full object-cover" style={{ maxHeight: 300 }} />
+          ) : (
+            <div className="w-full flex flex-col items-center justify-center py-10" style={{ backgroundColor: "#1a1a1a", minHeight: 160 }}>
+              <svg className="w-8 h-8 mb-2 opacity-20" fill="none" stroke="#e60023" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="3" strokeWidth="1.5" />
+                <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="1.5" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 15l-5-5L5 21" />
+              </svg>
+              <p className="text-xs" style={{ color: "#555" }}>Image required for Pinterest</p>
+            </div>
+          )}
+
+          <div className="p-3 space-y-1">
+            {title && <p className="text-sm font-bold leading-snug" style={{ color: "#ededed" }}>{title}</p>}
+            {description && !title && <p className="text-xs line-clamp-3" style={{ color: "#aaa" }}>{description}</p>}
+            {title && description && <p className="text-xs line-clamp-2" style={{ color: "#aaa" }}>{description}</p>}
+            {link && <p className="text-[10px] truncate" style={{ color: "#e60023" }}>{link}</p>}
+          </div>
+
+          <div className="px-3 pb-3 flex items-center gap-2">
+            {account.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={account.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+            ) : (
+              <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                style={{ background: "#e60023" }}>{initial}</div>
+            )}
+            <span className="text-[10px]" style={{ color: "#888" }}>{account.displayName}</span>
+            <button className="ml-auto text-[10px] font-bold px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: "#e60023" }}>
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TwitterPreview({ account, text, commentText, images, video }: {
+  account: Account;
+  text: string;
+  commentText: string;
+  images: UploadedImage[];
+  video: UploadedImage | null;
+}) {
+  const initial = account.displayName[0]?.toUpperCase() ?? "?";
+  const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#000000", border: "1px solid #2f3336" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5"
+        style={{ borderBottom: "1px solid #2f3336", borderLeft: "3px solid #e7e9ea", backgroundColor: "#000000" }}>
+        <PlatformIcon platform="twitter" size={16} />
+        <span className="text-xs font-semibold" style={{ color: "#e7e9ea" }}>X (Twitter)</span>
+        <span className="text-xs ml-auto" style={{ color: "#71767b" }}>@{account.displayName}</span>
+      </div>
+
+      <div className="p-4">
+        <div className="flex gap-3">
+          {account.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-black"
+              style={{ background: "#e7e9ea" }}>
+              {initial}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-1.5 mb-1">
+              <span className="text-sm font-bold" style={{ color: "#e7e9ea" }}>{account.displayName}</span>
+              <span className="text-xs" style={{ color: "#71767b" }}>@{account.displayName} · {timeStr}</span>
+            </div>
+            {text ? (
+              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#e7e9ea" }}>{text}</p>
+            ) : (
+              <p className="text-sm italic" style={{ color: "#555" }}>Start writing your tweet…</p>
+            )}
+
+            {video && (
+              <div className="mt-2.5 rounded-xl overflow-hidden" style={{ border: "1px solid #2f3336" }}>
+                <video src={video.previewUrl} className="w-full h-48 object-cover" muted />
+              </div>
+            )}
+
+            {images.length > 0 && (
+              <div className={`mt-2.5 grid gap-1 rounded-xl overflow-hidden ${images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                {images.slice(0, 4).map((img, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={img.previewUrl} alt=""
+                    className={`w-full object-cover ${images.length === 1 ? "h-52" : "h-28"}`} />
+                ))}
+              </div>
+            )}
+
+            <div className="mt-3 flex items-center gap-5" style={{ color: "#71767b" }}>
+              {[
+                <svg key="reply" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
+                <svg key="retweet" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
+                <svg key="like" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>,
+              ].map((icon, i) => (
+                <span key={i}>{icon}</span>
+              ))}
+            </div>
+
+            {commentText && (
+              <div className="mt-3 pt-2.5 flex gap-2" style={{ borderTop: "1px solid #2f3336" }}>
+                <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-black"
+                  style={{ background: "#e7e9ea" }}>{initial}</div>
+                <div className="flex-1 rounded-lg px-3 py-2" style={{ backgroundColor: "#0d0d0d", border: "1px solid #2f3336" }}>
+                  <p className="text-xs font-semibold mb-0.5" style={{ color: "#e7e9ea" }}>@{account.displayName}</p>
+                  <p className="text-xs" style={{ color: "#aaa" }}>{commentText}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PlatformPreview({ account, text, commentText, mediaItems = [], igMediaType, youtubeType }: {
   account: Account;
   text: string;
@@ -647,6 +798,12 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   }
   if (account.platform === "mastodon") {
     return <MastodonPreview account={account} text={text} commentText={commentText} images={images} video={video} />;
+  }
+  if (account.platform === "twitter") {
+    return <TwitterPreview account={account} text={text} commentText={commentText} images={images} video={video} />;
+  }
+  if (account.platform === "pinterest") {
+    return <PinterestPreview account={account} text={text} images={images} />;
   }
   if (account.platform === "youtube") {
     return <YouTubePreview account={account} text={text} commentText={commentText} mediaItems={mediaItems} youtubeType={youtubeType ?? "short"} />;

@@ -1,7 +1,9 @@
 ﻿import { randomBytes } from "crypto";
 import type { FastifyInstance } from "fastify";
+import { TwitterApi } from "twitter-api-v2";
 import { encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
+import { getPlan } from "../lib/plans.js";
 import { withAuth, getUser } from "../lib/auth/withAuth.js";
 
 const APP_ID = process.env.THREADS_APP_ID!;
@@ -30,6 +32,15 @@ const FB_APP_ID = process.env.FACEBOOK_APP_ID!;
 const FB_APP_SECRET = process.env.FACEBOOK_APP_SECRET!;
 const FB_REDIRECT_URI = process.env.FACEBOOK_REDIRECT_URI!;
 const FB_SCOPES = "pages_manage_posts,pages_show_list,pages_read_engagement";
+
+const X_API_KEY     = process.env.X_API_KEY!;
+const X_API_SECRET  = process.env.X_API_SECRET!;
+const X_CALLBACK_URL = process.env.X_CALLBACK_URL!;
+
+const PIN_CLIENT_ID     = process.env.PINTEREST_CLIENT_ID!;
+const PIN_CLIENT_SECRET = process.env.PINTEREST_CLIENT_SECRET!;
+const PIN_REDIRECT_URI  = process.env.PINTEREST_REDIRECT_URI!;
+const PIN_SCOPES        = "boards:read,pins:read,pins:write,user_accounts:read";
 const YOUTUBE_SCOPES = [
   "https://www.googleapis.com/auth/youtube.upload",
   "https://www.googleapis.com/auth/youtube.readonly",
@@ -608,6 +619,266 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     console.log(`[youtube oauth] connected ${displayName} → user ${userId}`);
     return reply.redirect(buildRedirect(redirectBase, { connected: "youtube" }));
+  });
+
+  // ── X / Twitter OAuth 1.0a ────────────────────────────────────────────────
+
+  app.get("/auth/twitter", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { from } = req.query as Record<string, string>;
+
+    // Plan gate — only Pro & Team when billing is enabled
+    if (process.env.ENABLE_BILLING === "true") {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
+      const plan = getPlan(user?.plan ?? "cancelled");
+      if (!plan.allowTwitter) {
+        return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "twitter_pro_required" }));
+      }
+    }
+
+    const appClient = new TwitterApi({ appKey: X_API_KEY, appSecret: X_API_SECRET });
+    const { url, oauth_token, oauth_token_secret } = await appClient.generateAuthLink(X_CALLBACK_URL, { linkMode: "authorize" });
+
+    // Store request token secret alongside userId and `from` in the nonce field.
+    // Pattern: "<oauthToken>~~<secret>~~<userId>~~<from>"
+    const nonce = `${oauth_token}~~${oauth_token_secret}~~${userId}~~${from ?? ""}`;
+    await prisma.oAuthState.create({
+      data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
+    });
+
+    return reply.redirect(url);
+  });
+
+  app.get("/auth/twitter/callback", async (req, reply) => {
+    const { oauth_token, oauth_verifier, denied } = req.query as Record<string, string>;
+    const redirectBase = `${WEB_URL}/accounts`;
+
+    if (denied || !oauth_token || !oauth_verifier) {
+      return reply.redirect(buildRedirect(redirectBase, { error: denied ? "access_denied" : "missing_oauth_params" }));
+    }
+
+    // Retrieve stored request token secret
+    const stored = await prisma.oAuthState.findFirst({
+      where: { nonce: { startsWith: `${oauth_token}~~` } },
+    });
+    if (!stored || stored.expiresAt < new Date()) {
+      return reply.redirect(buildRedirect(redirectBase, { error: "invalid_or_expired_state" }));
+    }
+    await prisma.oAuthState.delete({ where: { id: stored.id } });
+
+    const parts = stored.nonce.split("~~");
+    const oauthTokenSecret = parts[1] ?? "";
+    const userId = parts[2] ?? stored.userId;
+    const from = parts[3] ?? "";
+
+    const redirectTo = from === "onboarding" ? `${WEB_URL}/onboarding?step=2` : redirectBase;
+
+    let accessToken: string;
+    let accessSecret: string;
+    try {
+      const tempClient = new TwitterApi({
+        appKey: X_API_KEY,
+        appSecret: X_API_SECRET,
+        accessToken: oauth_token,
+        accessSecret: oauthTokenSecret,
+      });
+      const result = await tempClient.login(oauth_verifier);
+      accessToken = result.accessToken;
+      accessSecret = result.accessSecret;
+    } catch (err) {
+      console.error("[twitter oauth] token exchange failed:", err);
+      return reply.redirect(buildRedirect(redirectTo, { error: "token_exchange_failed" }));
+    }
+
+    // Fetch Twitter user profile
+    let displayName = "twitter-user";
+    let twitterUserId = "";
+    let avatarUrl: string | null = null;
+    try {
+      const userClient = new TwitterApi({
+        appKey: X_API_KEY,
+        appSecret: X_API_SECRET,
+        accessToken,
+        accessSecret,
+      });
+      const { data: me } = await userClient.v2.me({ "user.fields": ["name", "username", "profile_image_url"] });
+      twitterUserId = me.id;
+      displayName = me.username ?? me.name ?? "twitter-user";
+      avatarUrl = (me as unknown as Record<string, unknown>).profile_image_url as string | null ?? null;
+    } catch (err) {
+      console.error("[twitter oauth] profile fetch failed:", err);
+    }
+
+    const credentials = encrypt(JSON.stringify({ accessToken, accessSecret, twitterUserId }));
+    const existing = await prisma.account.findFirst({ where: { platform: "twitter", displayName, userId } });
+    await prisma.account.upsert({
+      where: { id: existing?.id ?? "new" },
+      create: { platform: "twitter", displayName, credentials, avatarUrl, userId },
+      update: { credentials, avatarUrl },
+    });
+
+    console.log(`[twitter oauth] connected @${displayName} → user ${userId}`);
+    return reply.redirect(buildRedirect(redirectTo, { connected: "twitter" }));
+  });
+
+  // ── Pinterest OAuth ───────────────────────────────────────────────────────
+
+  app.get("/auth/pinterest", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { from } = req.query as Record<string, string>;
+
+    const nonce = randomBytes(32).toString("hex");
+    await prisma.oAuthState.create({
+      data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
+    });
+    const state = Buffer.from(JSON.stringify({ userId, from, nonce })).toString("base64url");
+
+    const url = new URL("https://www.pinterest.com/oauth/");
+    url.searchParams.set("client_id", PIN_CLIENT_ID);
+    url.searchParams.set("redirect_uri", PIN_REDIRECT_URI);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("scope", PIN_SCOPES);
+    url.searchParams.set("state", state);
+    return reply.redirect(url.toString());
+  });
+
+  app.get("/auth/pinterest/callback", async (req, reply) => {
+    const { code, state, error } = req.query as Record<string, string>;
+    if (error || !code || !state) {
+      return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: error ?? "missing_code_or_state" }));
+    }
+
+    let userId: string;
+    let from: string | undefined;
+    try {
+      const decoded = JSON.parse(Buffer.from(state, "base64url").toString()) as { userId: string; from?: string; nonce?: string };
+      userId = decoded.userId;
+      from = decoded.from;
+      const nonce = decoded.nonce;
+      if (!nonce) throw new Error("missing nonce");
+      const storedState = await prisma.oAuthState.findUnique({ where: { nonce } });
+      if (!storedState || storedState.userId !== userId || storedState.expiresAt < new Date()) {
+        return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "invalid_or_expired_state" }));
+      }
+      await prisma.oAuthState.delete({ where: { nonce } });
+    } catch {
+      return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "invalid_state" }));
+    }
+
+    const redirectBase = from === "onboarding" ? `${WEB_URL}/onboarding?step=2` : `${WEB_URL}/accounts`;
+
+    const sandboxToken = process.env.PINTEREST_SANDBOX === "true" ? process.env.PINTEREST_SANDBOX_TOKEN : undefined;
+    const PIN_API = sandboxToken
+      ? "https://api-sandbox.pinterest.com/v5"
+      : "https://api.pinterest.com/v5";
+
+    // When a sandbox token is available, skip the OAuth code exchange entirely
+    let accessToken: string;
+    let refreshToken = "";
+    let _expiresIn: number | undefined;
+    if (sandboxToken) {
+      accessToken = sandboxToken;
+      console.log("[pinterest oauth] sandbox mode — using PINTEREST_SANDBOX_TOKEN, skipping code exchange");
+    } else {
+      let expiresInVal: number;
+      try {
+        const tokenRes = await fetch("https://api.pinterest.com/v5/oauth/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Basic ${Buffer.from(`${PIN_CLIENT_ID}:${PIN_CLIENT_SECRET}`).toString("base64")}`,
+          },
+          body: new URLSearchParams({
+            grant_type: "authorization_code",
+            code,
+            redirect_uri: PIN_REDIRECT_URI,
+          }),
+        });
+        if (!tokenRes.ok) throw new Error(await tokenRes.text());
+        const tokenData = await tokenRes.json() as {
+          access_token: string;
+          refresh_token: string;
+          expires_in: number;
+        };
+        accessToken = tokenData.access_token;
+        refreshToken = tokenData.refresh_token;
+        expiresInVal = tokenData.expires_in;
+      } catch (err) {
+        console.error("[pinterest oauth] token exchange error:", err);
+        return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
+      }
+      _expiresIn = expiresInVal;
+    }
+
+    // Fetch Pinterest user profile
+    let pinterestUserId = "";
+    let displayName = "pinterest-user";
+    let avatarUrl: string | null = null;
+    try {
+      const meRes = await fetch(`${PIN_API}/user_account`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const me = await meRes.json() as { username?: string; profile_image?: string; id?: string };
+      pinterestUserId = me.id ?? me.username ?? "";
+      displayName = me.username ?? pinterestUserId;
+      avatarUrl = me.profile_image ?? null;
+    } catch { /* optional */ }
+
+    // Fetch boards and pick the first as the default
+    let defaultBoardId = "";
+    try {
+      const boardsRes = await fetch(`${PIN_API}/boards?page_size=1`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const boardsData = await boardsRes.json() as { items?: { id: string }[] };
+      defaultBoardId = boardsData.items?.[0]?.id ?? "";
+    } catch { /* optional */ }
+
+    // Sandbox starts with no boards — create one automatically
+    if (!defaultBoardId && sandboxToken) {
+      try {
+        const createRes = await fetch(`${PIN_API}/boards`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: "Posthive Test Board", privacy: "PUBLIC" }),
+        });
+        const created = await createRes.json() as { id?: string };
+        defaultBoardId = created.id ?? "";
+        console.log("[pinterest oauth] created sandbox board:", defaultBoardId);
+      } catch (err) {
+        console.warn("[pinterest oauth] could not create sandbox board:", err);
+      }
+    }
+
+    if (!defaultBoardId) {
+      console.warn(`[pinterest oauth] no boards found for user ${pinterestUserId}`);
+      return reply.redirect(buildRedirect(redirectBase, { error: "no_boards_found" }));
+    }
+
+    // Sandbox tokens don't expire; set a far-future date
+    const expiresAt = sandboxToken
+      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+      : new Date(Date.now() + ((_expiresIn ?? 2592000) - 300) * 1000);
+    const credentials = encrypt(JSON.stringify({
+      accessToken,
+      refreshToken,
+      expiresAt: expiresAt.toISOString(),
+      userId: pinterestUserId,
+      defaultBoardId,
+    }));
+
+    const existing = await prisma.account.findFirst({ where: { platform: "pinterest", displayName, userId } });
+    await prisma.account.upsert({
+      where: { id: existing?.id ?? "new" },
+      create: { platform: "pinterest", displayName, credentials, avatarUrl, expiresAt, userId },
+      update: { credentials, avatarUrl, expiresAt },
+    });
+
+    console.log(`[pinterest oauth] connected @${displayName} → user ${userId}`);
+    return reply.redirect(buildRedirect(redirectBase, { connected: "pinterest" }));
   });
 
   // ── Facebook Pages OAuth ───────────────────────────────────────────────────

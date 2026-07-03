@@ -43,6 +43,7 @@ const NAV = [
       { label: "Mastodon", id: "mastodon" },
       { label: "YouTube", id: "youtube" },
       { label: "Facebook Pages", id: "facebook" },
+      { label: "Pinterest", id: "pinterest" },
     ],
   },
   {
@@ -344,7 +345,7 @@ export default function DocsPage() {
               {/* Hero */}
               <h1 className="doc-h1">Posthive Documentation</h1>
               <p className="doc-p">
-                Posthive is a social media scheduling platform. Write once, publish to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages — all from a single clean interface.
+                Posthive is a social media scheduling platform. Write once, publish to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, and Pinterest — all from a single clean interface.
               </p>
 
               {/* ── Quick start ── */}
@@ -546,6 +547,42 @@ pnpm install`}</CopyCode>
               </ol>
               <div className="doc-callout">
                 First comment support requires the additional <span className="doc-inline-code">pages_manage_engagement</span> permission, which needs Meta app review approval. Until approved, posts publish successfully but first comments are skipped.
+              </div>
+
+              {/* ── Pinterest ── */}
+              <h2 className="doc-h2" id="pinterest">Pinterest</h2>
+              <p className="doc-p">
+                Posthive publishes <strong>Pins</strong> to Pinterest using the Pinterest API v5. Every Pinterest post requires an image — Pinterest is a visual platform and rejects posts without one.
+              </p>
+              <div className="doc-warn">
+                <strong>Trial access only:</strong> Pinterest Standard access (required for production posting) requires approval from Pinterest. Until approved, Posthive connects to the Pinterest sandbox environment. The connect button on the Accounts page shows <em>Pending Approval</em> and is disabled until Standard access is granted. See below for what to do once approved.
+              </div>
+              <h3 className="doc-h3">How it works</h3>
+              <ul className="doc-ul">
+                <li className="doc-li"><strong>Title</strong> — first line of your post text (max 100 chars).</li>
+                <li className="doc-li"><strong>Description</strong> — remaining lines (max 500 chars).</li>
+                <li className="doc-li"><strong>Link</strong> — if your post contains a URL, it is attached as the Pin destination.</li>
+                <li className="doc-li"><strong>Board</strong> — the Pin is created on the default board selected at connect time.</li>
+              </ul>
+              <h3 className="doc-h3">Environment variables</h3>
+              <div className="doc-table-wrap"><table className="doc-table">
+                <thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td><span className="doc-inline-code">PINTEREST_CLIENT_ID</span></td><td>Yes</td><td>OAuth app Client ID from the Pinterest developer portal.</td></tr>
+                  <tr><td><span className="doc-inline-code">PINTEREST_CLIENT_SECRET</span></td><td>Yes</td><td>OAuth app Client Secret.</td></tr>
+                  <tr><td><span className="doc-inline-code">PINTEREST_REDIRECT_URI</span></td><td>Yes</td><td>Must match the redirect URI registered in the Pinterest app settings.</td></tr>
+                  <tr><td><span className="doc-inline-code">PINTEREST_SANDBOX</span></td><td>No</td><td>Set to <code>true</code> to use the Pinterest sandbox API. Required for Trial access apps.</td></tr>
+                  <tr><td><span className="doc-inline-code">PINTEREST_SANDBOX_TOKEN</span></td><td>No</td><td>Manually generated sandbox token from the Pinterest developer dashboard. When set, bypasses the OAuth code exchange entirely (required for Trial apps whose token exchange is restricted).</td></tr>
+                </tbody>
+              </table></div>
+              <h3 className="doc-h3">Moving to production (after Standard access approval)</h3>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">Remove <span className="doc-inline-code">PINTEREST_SANDBOX=true</span> and <span className="doc-inline-code">PINTEREST_SANDBOX_TOKEN</span> from your env.</li>
+                <li className="doc-li">The Pinterest connect button on the Accounts page will be re-enabled in the next release.</li>
+                <li className="doc-li">Users connect via the normal OAuth flow — no manual token required.</li>
+              </ol>
+              <div className="doc-callout">
+                <strong>Image required:</strong> The Schedule button is disabled when Pinterest is selected and no image has been attached. Add at least one image before scheduling a Pinterest post.
               </div>
 
               {/* ── Scheduling posts ── */}
@@ -869,7 +906,7 @@ Authorization: Bearer ph_<key>`}</CopyCode>
     {
       "id": "cmr289odh000110a5s6rdfmzn",
       "platform": "bluesky",          // bluesky | threads | instagram | linkedin
-      "displayName": "you.bsky.social", //         | mastodon | youtube  | facebook
+      "displayName": "you.bsky.social", //         | mastodon | youtube  | facebook | pinterest
       "avatarUrl": "https://cdn.bsky.app/...",
       "createdAt": "2026-07-01T15:25:53.956Z"
     }
@@ -913,6 +950,7 @@ Authorization: Bearer ph_<key>`}</CopyCode>
                   <tr><td>Facebook</td><td>63,206</td></tr>
                   <tr><td>LinkedIn</td><td>3,000</td></tr>
                   <tr><td>YouTube</td><td>5,000 (description)</td></tr>
+                  <tr><td>Pinterest</td><td>100 (title) / 500 (description)</td></tr>
                 </tbody>
               </table></div>
 

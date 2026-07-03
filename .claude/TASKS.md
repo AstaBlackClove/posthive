@@ -80,6 +80,7 @@
 - [x] Mastodon OAuth + adapter (any instance, text + media)
 - [x] YouTube OAuth + adapter — resumable video upload, Shorts, 1h access token auto-refresh
 - [x] Facebook Pages OAuth + adapter — Graph API v21.0, long-lived page tokens, text/photo/video/carousel
+- [x] X/Twitter OAuth 1.0a + adapter — v2 tweets API, v1.1 media upload (up to 4 images), reply support, Pro & Team only gate, 100-tweet/month per-user cap
 
 ### Compose & Scheduling
 - [x] Per-platform content overrides in compose
@@ -127,15 +128,24 @@
 - [x] Rebrand to Posthive throughout
 - [x] Landing page — hero, features, pricing (USD + INR), how-it-works, footer, NavBar
 - [x] Landing page — bulk CSV deep-dive section + 7th feature card
-- [x] `/features` marketing page + individual feature slug pages
-- [x] `/features/bulk-csv-scheduling` feature page
+- [x] Landing page — pricing section synced with /pricing page (✓/— format, same copy)
+- [x] Landing page — Ferndesk-style footer with Features (SVG icons), Product, Company columns; X + LinkedIn social icons
+- [x] Landing page — H1 "one place." tilted purple highlight
+- [x] `/features` individual feature slug pages — unique layout per feature (split-right, split-left, center)
+- [x] Feature pages — inline JSX mockups: composer, Reels selector, calendar, first-comment thread, per-platform overrides, CSV table, terminal
+- [x] Feature pages — platform favicons via Google S2 in multi-platform + per-platform mockups
+- [x] Feature pages — full SEO: keyword-rich titles + descriptions for all 7, OG image, Twitter card, canonical URL, HowTo JSON-LD, BreadcrumbList JSON-LD
+- [x] Feature page slug rename: `reels-and-stories` → `instagram-reels-scheduler` with 301 redirect
 - [x] Features nav dropdown — bulk CSV scheduling entry
 - [x] `/docs` page — full docs with collapsible sidebar, copy buttons, API reference, bulk CSV + templates sections
 - [x] `/docs` in-page search — filter across all sections from sidebar
-- [x] `/pricing` standalone page — INR/USD toggle, plan cards, comparison table, FAQ
-- [x] `/blog` page + Introducing Posthive launch post
-- [x] Dynamic OG images — 6 unique layouts via `/api/og`; metadata on all public pages
-- [x] Site description cleaned up — no platform list, no em dash
+- [x] `/pricing` standalone page — INR/USD toggle, plan cards, comparison table, FAQ accordion, FAQPage JSON-LD
+- [x] `/blog` page + Introducing Posthive launch post (Article JSON-LD)
+- [x] Dynamic OG images — Ferndesk-style dark home layout, unique layouts for pricing/docs/features/blog/post; glow blobs removed
+- [x] `NEXT_PUBLIC_WEB_URL` env var — documented in README + .env.example; controls OG, sitemap, robots
+- [x] SEO — SoftwareApplication JSON-LD in root layout; FAQPage on pricing; Article on blog post
+- [x] SEO — keywords meta on root layout; keyword overrides per feature page
 - [x] 14-day trial wording across all copy (was 7-day)
-- [x] `robots.txt` + sitemap (updated with /pricing, /blog, all feature slugs)
+- [x] `robots.txt` + sitemap (updated with /pricing, /blog, all feature slugs, posthive.co fallback)
 - [x] README — comprehensive rewrite covering all features, platforms, env vars, bulk CSV format, API reference
+- [x] Billing page plan features synced with /pricing page (Creator/Pro/Team)

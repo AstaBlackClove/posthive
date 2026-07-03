@@ -38,6 +38,8 @@ export default function ComposePage() {
   const [youtubeTitle, setYoutubeTitle] = useState("");
   const [youtubeDescription, setYoutubeDescription] = useState("");
   const [youtubeType, setYoutubeType] = useState<"short" | "video">("short");
+  const [pinterestTitle, setPinterestTitle] = useState("");
+  const [pinterestDescription, setPinterestDescription] = useState("");
 const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -219,7 +221,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     const hasBluesky   = selectedAccounts.some((a) => a.platform === "bluesky");
 
     // Text required for everything except Instagram Story and YouTube-only (uses its own Title field)
-    if (!text.trim() && !onlyInstagramStory && !onlyYoutube) return "Write something before scheduling.";
+    if (!text.trim() && !onlyInstagramStory && !noPostTextNeeded) return "Write something before scheduling.";
 
     // Instagram-specific
     if (hasInstagram) {
@@ -284,12 +286,14 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   }
 
   function loadTemplate(tpl: { id: string; name: string; content: string }) {
-    const content = JSON.parse(tpl.content) as { text?: string; commentText?: string; youtubeTitle?: string; youtubeDescription?: string; youtubeType?: "short" | "video" };
+    const content = JSON.parse(tpl.content) as { text?: string; commentText?: string; youtubeTitle?: string; youtubeDescription?: string; youtubeType?: "short" | "video"; pinterestTitle?: string; pinterestDescription?: string };
     if (content.text !== undefined) setText(content.text);
     if (content.commentText !== undefined) setCommentText(content.commentText);
     if (content.youtubeTitle !== undefined) setYoutubeTitle(content.youtubeTitle);
     if (content.youtubeDescription !== undefined) setYoutubeDescription(content.youtubeDescription);
     if (content.youtubeType) setYoutubeType(content.youtubeType);
+    if (content.pinterestTitle !== undefined) setPinterestTitle(content.pinterestTitle);
+    if (content.pinterestDescription !== undefined) setPinterestDescription(content.pinterestDescription);
     setShowTemplates(false);
     toastSuccess(`Template "${tpl.name}" loaded.`);
   }
@@ -372,10 +376,16 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const instagramStoryWithNoImage = instagramSelected && igMediaType === "story" && mediaItems.length === 0;
   const onlyInstagramStory = instagramSelected && igMediaType === "story" && selectedAccounts.every((a) => a.platform === "instagram");
   const linkedinSelectedWithMedia = selectedAccounts.some((a) => a.platform === "linkedin") && mediaItems.length > 0;
+  const pinterestAccounts = selectedAccounts.filter((a) => a.platform === "pinterest");
+  const pinterestSelected = pinterestAccounts.length > 0;
+  const pinterestSelectedWithNoImage = pinterestSelected && images.length === 0;
   const youtubeAccounts = selectedAccounts.filter((a) => a.platform === "youtube");
   const youtubeSelected = youtubeAccounts.length > 0;
   const youtubeSelectedWithNoVideo = youtubeSelected && !video;
   const onlyYoutube = youtubeSelected && selectedAccounts.every((a) => a.platform === "youtube");
+  const onlyPinterest = pinterestSelected && selectedAccounts.every((a) => a.platform === "pinterest");
+  // True when every selected account is YouTube or Pinterest — both have their own title/description fields
+  const noPostTextNeeded = selectedAccounts.length > 0 && selectedAccounts.every((a) => a.platform === "youtube" || a.platform === "pinterest");
 
   // YouTube only treats an upload as a Short when it's vertical (9:16), ≤60s, AND
   // tagged #Shorts — the hashtag alone does nothing if the video itself doesn't
@@ -411,6 +421,21 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [youtubeTitle, youtubeDescription, selectedIds.join(",")]);
+
+  // Keep each Pinterest account's per-account override in sync with the
+  // dedicated Title/Description fields.
+  useEffect(() => {
+    if (pinterestAccounts.length === 0) return;
+    const combined = pinterestDescription ? `${pinterestTitle}\n\n${pinterestDescription}` : pinterestTitle;
+    setPerAccountOverrides(prev => {
+      const next = { ...prev };
+      for (const a of pinterestAccounts) {
+        next[a.id] = { ...next[a.id], text: combined };
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinterestTitle, pinterestDescription, selectedIds.join(",")]);
 
   const previewContent = selectedAccounts.length === 0 ? (
     <div className="rounded-2xl border-2 border-dashed p-10 text-center" style={{ borderColor: "#2a2a2a" }}>
@@ -618,12 +643,12 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           )}
 
           {/* Text editor */}
-          <div className="px-6 py-5" style={{ display: (loadingAccounts || onlyYoutube) ? "none" : undefined }}>
+          <div className="px-6 py-5" style={{ display: (loadingAccounts || noPostTextNeeded) ? "none" : undefined }}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold uppercase tracking-wide">Post</span>
               <div className="flex items-center gap-3">
                 {/* Templates — hidden when only YouTube selected */}
-                {!onlyYoutube && (
+                {!noPostTextNeeded && (
                   <div className="flex items-center gap-2" ref={templatesRef} style={{ position: "relative" }}>
                     <button type="button" onClick={() => setShowTemplates(v => !v)}
                       className="flex items-center gap-1 text-[11px] font-medium transition-opacity hover:opacity-80"
@@ -718,12 +743,12 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               </div>{/* end flex items-center gap-3 */}
 
             </div>
-            {!onlyInstagramStory && !onlyYoutube && (
+            {!onlyInstagramStory && !noPostTextNeeded && (
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="What do you want to share?"
-                required={!onlyYoutube}
+                required={!noPostTextNeeded}
                 rows={8}
                 className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"
                 style={overAnyLimit
@@ -733,7 +758,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               />
             )}
             {/* Char counters below textarea */}
-            {!onlyInstagramStory && !onlyYoutube && <div className="flex items-center gap-3 mt-1.5">
+            {!onlyInstagramStory && !noPostTextNeeded && <div className="flex items-center gap-3 mt-1.5">
               {overAnyLimit && (
                 <p className="text-xs text-red-500 flex-1">
                   {Math.abs(mostRestrictiveLimit - graphemeCount)} chars over limit
@@ -816,8 +841,52 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             </div>
           )}
 
+          {/* Pinterest — dedicated Title + Description fields */}
+          {pinterestSelected && (
+            <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a", display: loadingAccounts ? "none" : undefined }}>
+              <div className="flex items-center gap-2 mb-1">
+                <PlatformIcon platform="pinterest" size={13} />
+                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#e60023" }}>Pinterest</span>
+              </div>
+              <p className="text-xs mb-2.5" style={{ color: "#999" }}>
+                Pins have a separate title and description. Other selected platforms keep using the Post box above.
+              </p>
+
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Pin title</span>
+                  <span className="text-[10px]" style={{ color: pinterestTitle.length > 100 ? "#ef4444" : "#444" }}>{pinterestTitle.length}/100</span>
+                </div>
+                <input
+                  value={pinterestTitle}
+                  onChange={(e) => setPinterestTitle(e.target.value)}
+                  placeholder="Short, catchy pin title"
+                  maxLength={100}
+                  className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                  style={{ borderColor: pinterestTitle.length > 100 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Description</span>
+                  <span className="text-[10px]" style={{ color: pinterestDescription.length > 500 ? "#ef4444" : "#444" }}>{pinterestDescription.length}/500</span>
+                </div>
+                <textarea
+                  value={pinterestDescription}
+                  onChange={(e) => setPinterestDescription(e.target.value)}
+                  placeholder="What is this Pin about?"
+                  rows={3}
+                  maxLength={500}
+                  className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                  style={{ borderColor: pinterestDescription.length > 500 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* First comment "" right below the post text */}
-          <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a", display: loadingAccounts ? "none" : undefined }}>
+          <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a", display: (loadingAccounts || onlyPinterest) ? "none" : undefined }}>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-semibold uppercase tracking-wide">First Comment</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
@@ -1116,6 +1185,11 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ⚠️ YouTube requires a video attached before you can schedule this post
           </p>
         )}
+        {pinterestSelectedWithNoImage && (
+          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#f59e0b" }}>
+            ℹ️ Pinterest requires an image — add one or the Pin will be skipped
+          </p>
+        )}
 
         {/* Submit */}
         <div className="w-full md:w-auto order-4 md:order-none flex gap-2">
@@ -1131,7 +1205,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           <button
             type="submit"
             form=""
-            disabled={submitting || overAnyLimit || accounts.length === 0 || youtubeSelectedWithNoVideo}
+            disabled={submitting || overAnyLimit || accounts.length === 0 || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage}
             onClick={handleSubmit}
             className="flex-1 md:flex-none px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-colors hover:bg-gray-100"
             style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}

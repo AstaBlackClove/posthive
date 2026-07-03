@@ -3,12 +3,14 @@ export type PlanId = "trialing" | "creator" | "pro" | "team" | "cancelled";
 export interface Plan {
   id: PlanId;
   name: string;
-  maxAccounts: number;             // connected social accounts
-  maxSeats: number;                // team members (future)
-  maxPostsPerMonth: number | null; // null = unlimited
-  allowReels: boolean;             // Instagram Reels & Stories
-  allowOverrides: boolean;         // per-platform text/comment overrides
-  maxImagesPerPost: number;        // max carousel images per post
+  maxAccounts: number;                    // connected social accounts
+  maxSeats: number;                       // team members (future)
+  maxPostsPerMonth: number | null;        // null = unlimited
+  allowReels: boolean;                    // Instagram Reels & Stories
+  allowOverrides: boolean;                // per-platform text/comment overrides
+  maxImagesPerPost: number;               // max carousel images per post
+  allowTwitter: boolean;                  // X/Twitter posting (Pro & Team only)
+  maxTwitterPostsPerMonth: number | null; // null = unlimited; 0 = blocked
   dodoProductId: string;
 }
 
@@ -22,6 +24,8 @@ export const PLANS: Record<PlanId, Plan> = {
     allowReels: false,
     allowOverrides: false,
     maxImagesPerPost: 4,
+    allowTwitter: false,
+    maxTwitterPostsPerMonth: 0,
     dodoProductId: "",
   },
   creator: {
@@ -33,6 +37,8 @@ export const PLANS: Record<PlanId, Plan> = {
     allowReels: false,
     allowOverrides: false,
     maxImagesPerPost: 4,
+    allowTwitter: false,
+    maxTwitterPostsPerMonth: 0,
     dodoProductId: process.env.DODO_PRODUCT_CREATOR ?? "",
   },
   pro: {
@@ -44,6 +50,8 @@ export const PLANS: Record<PlanId, Plan> = {
     allowReels: true,
     allowOverrides: true,
     maxImagesPerPost: 10,
+    allowTwitter: true,
+    maxTwitterPostsPerMonth: 100,
     dodoProductId: process.env.DODO_PRODUCT_PRO ?? "",
   },
   team: {
@@ -55,6 +63,8 @@ export const PLANS: Record<PlanId, Plan> = {
     allowReels: true,
     allowOverrides: true,
     maxImagesPerPost: 10,
+    allowTwitter: true,
+    maxTwitterPostsPerMonth: 100,
     dodoProductId: process.env.DODO_PRODUCT_TEAM ?? "",
   },
   cancelled: {
@@ -66,6 +76,8 @@ export const PLANS: Record<PlanId, Plan> = {
     allowReels: false,
     allowOverrides: false,
     maxImagesPerPost: 0,
+    allowTwitter: false,
+    maxTwitterPostsPerMonth: 0,
     dodoProductId: "",
   },
 };

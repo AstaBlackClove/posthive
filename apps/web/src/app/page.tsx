@@ -16,6 +16,7 @@ const PLATFORMS_GRID = [
   { name: "Mastodon",       domain: "mastodon.social", meta: "500 chars · Federated",        accent: "#6364ff", platform: "mastodon" },
   { name: "YouTube",        domain: "youtube.com",     meta: "Shorts & video · Google OAuth", accent: "#ff0000", platform: "youtube" },
   { name: "Facebook Pages", domain: "facebook.com",    meta: "Pages · Graph API",            accent: "#1877f2", platform: "facebook" },
+  { name: "Pinterest",      domain: "pinterest.com",   meta: "Pins · image required",         accent: "#e60023", platform: "pinterest" },
 ];
 
 const PLANS = [

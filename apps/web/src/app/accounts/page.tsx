@@ -13,6 +13,8 @@ const LINKEDIN_AUTH_URL = `${API_BASE}/auth/linkedin`;
 const MASTODON_AUTH_URL = `${API_BASE}/auth/mastodon`;
 const YOUTUBE_AUTH_URL = `${API_BASE}/auth/youtube`;
 const FACEBOOK_AUTH_URL = `${API_BASE}/auth/facebook`;
+const TWITTER_AUTH_URL  = `${API_BASE}/auth/twitter`;
+const PINTEREST_AUTH_URL = `${API_BASE}/auth/pinterest`;
 
 const BG = "#0a0a0a";
 const SURFACE = "#111111";
@@ -36,6 +38,7 @@ const PLATFORM_META: Record<string, { label: string; brand: string }> = {
   mastodon:  { label: "Mastodon",  brand: "#6364ff" },
   youtube:   { label: "YouTube",   brand: "#ff0000" },
   facebook:  { label: "Facebook",  brand: "#1877f2" },
+  pinterest: { label: "Pinterest", brand: "#e60023" },
 };
 
 function Avatar({ account }: { account: Account }) {
@@ -56,12 +59,13 @@ function Avatar({ account }: { account: Account }) {
 }
 
 const RECONNECT_URLS: Record<string, string> = {
-  threads: `${API_BASE}/auth/threads`,
+  threads:   `${API_BASE}/auth/threads`,
   instagram: `${API_BASE}/auth/instagram`,
-  linkedin: `${API_BASE}/auth/linkedin`,
-  youtube: `${API_BASE}/auth/youtube`,
-  facebook: `${API_BASE}/auth/facebook`,
-  mastodon: `${API_BASE}/auth/mastodon`,
+  linkedin:  `${API_BASE}/auth/linkedin`,
+  youtube:   `${API_BASE}/auth/youtube`,
+  facebook:  `${API_BASE}/auth/facebook`,
+  mastodon:  `${API_BASE}/auth/mastodon`,
+  pinterest: `${API_BASE}/auth/pinterest`,
 };
 
 // Platforms where the token refresh cron handles silent renewal — no user action needed
@@ -388,6 +392,12 @@ export default function AccountsPage() {
   const mastodonAccounts = accounts.filter((a) => a.platform === "mastodon");
   const youtubeAccounts = accounts.filter((a) => a.platform === "youtube");
   const facebookAccounts = accounts.filter((a) => a.platform === "facebook");
+  const twitterAccounts   = accounts.filter((a) => a.platform === "twitter");
+  const pinterestAccounts = accounts.filter((a) => a.platform === "pinterest");
+
+  // Twitter is Pro & Team only (when billing is enabled)
+  const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === "true";
+  const allowTwitter = !billingEnabled || !planStatus || planStatus.planStatus === "pro" || planStatus.planStatus === "team";
 
   const [showMastodonDialog, setShowMastodonDialog] = useState(false);
 
@@ -790,6 +800,97 @@ export default function AccountsPage() {
               </p>
             </div>
           </div>
+
+          {/* ── Pinterest ── */}
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                <PlatformIcon platform="pinterest" size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm" style={{ color: TEXT }}>Pinterest</p>
+                <p className="text-xs" style={{ color: MUTED }}>OAuth 2.0 · image required</p>
+              </div>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
+            </div>
+            <div className="p-5 space-y-3">
+              {!loading && pinterestAccounts.length > 0 && (
+                <div className="space-y-2">
+                  {pinterestAccounts.map((a) => (
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                  ))}
+                </div>
+              )}
+              <button disabled
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                <PlatformIcon platform="pinterest" size={16} />
+                Connect Pinterest
+              </button>
+              <p className="text-xs" style={{ color: MUTED }}>
+                Awaiting Pinterest Standard access approval · coming soon
+              </p>
+            </div>
+          </div>
+
+          {/* ── X / Twitter ── hidden until X API pricing is viable ── */}
+          {process.env.NEXT_PUBLIC_TWITTER_ENABLED === "true" && <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                <PlatformIcon platform="twitter" size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm" style={{ color: TEXT }}>X (Twitter)</p>
+                <p className="text-xs" style={{ color: MUTED }}>OAuth 1.0a · up to 4 images</p>
+              </div>
+              {!allowTwitter ? (
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: "#1c1209", color: "#fbbf24", border: "1px solid #78560a" }}>Pro</span>
+              ) : (
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
+              )}
+            </div>
+            <div className="p-5 space-y-3">
+              {!loading && twitterAccounts.length > 0 && (
+                <div className="space-y-2">
+                  {twitterAccounts.map((a) => (
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                  ))}
+                </div>
+              )}
+              {!allowTwitter ? (
+                <div>
+                  <div className="w-full py-2.5 text-sm font-semibold rounded-xl text-center opacity-50 cursor-not-allowed"
+                    style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                    Connect X (Twitter)
+                  </div>
+                  <p className="text-xs mt-2 text-center" style={{ color: MUTED }}>
+                    X/Twitter posting is available on{" "}
+                    <a href="/billing" className="underline hover:opacity-80" style={{ color: "#fbbf24" }}>Pro and Team plans</a>.
+                  </p>
+                </div>
+              ) : connectDisabled ? (
+                <button disabled title={limitMsg ?? undefined}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="twitter" size={16} />
+                  {twitterAccounts.length > 0 ? "Add another X account" : "Connect X (Twitter)"}
+                </button>
+              ) : (
+                <a href={TWITTER_AUTH_URL}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="twitter" size={16} />
+                  {twitterAccounts.length > 0 ? "Add another X account" : "Connect X (Twitter)"}
+                </a>
+              )}
+              <p className="text-xs" style={{ color: MUTED }}>
+                100 tweets/month per account on Pro and Team plans
+              </p>
+            </div>
+          </div>}
 
         </div>}
       </div>

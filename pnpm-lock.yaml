@@ -84,6 +84,9 @@ importers:
       sharp:
         specifier: ^0.35.2
         version: 0.35.2
+      twitter-api-v2:
+        specifier: ^1.29.0
+        version: 1.29.0
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -2228,6 +2231,9 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+  twitter-api-v2@1.29.0:
+    resolution: {integrity: sha512-v473q5bwme4N+DWSg6qY+JCvfg1nSJRWwui3HUALafxfqCvVkKiYmS/5x/pVeJwTmyeBxexMbzHwnzrH4h6oYQ==}
+
   type-is@2.1.0:
     resolution: {integrity: sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA==}
     engines: {node: '>= 18'}
@@ -4273,6 +4279,8 @@ snapshots:
       esbuild: 0.28.1
     optionalDependencies:
       fsevents: 2.3.3
+
+  twitter-api-v2@1.29.0: {}
 
   type-is@2.1.0:
     dependencies:
