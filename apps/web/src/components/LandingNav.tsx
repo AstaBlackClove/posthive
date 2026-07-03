@@ -15,9 +15,9 @@ export const PLATFORMS_NAV = [
   { platform: "facebook",  label: "Facebook Pages", desc: "Pages, Graph API" },
 ];
 
-const FEATURES_NAV = [
+export const FEATURES_NAV = [
   { icon: <SunIcon />,      bg: "rgba(91,99,211,.18)",  color: "#9ba2ee", title: "Multi-platform posting",  desc: "One composer, seven platforms", slug: "multi-platform-posting" },
-  { icon: <InstagramIcon />,bg: "rgba(225,100,100,.18)",color: "#e86b6b", title: "Reels & Stories",         desc: "Full Instagram media support",  slug: "reels-and-stories" },
+  { icon: <InstagramIcon />,bg: "rgba(225,100,100,.18)",color: "#e86b6b", title: "Reels & Stories",         desc: "Full Instagram media support",  slug: "instagram-reels-scheduler" },
   { icon: <CalendarIcon />, bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Drag-to-reschedule",      desc: "Visual calendar view",           slug: "drag-to-reschedule" },
   { icon: <CommentIcon />,  bg: "rgba(220,160,60,.18)", color: "#d4a83c", title: "First comment",           desc: "Auto-reply on publish",          slug: "first-comment" },
   { icon: <SlidersIcon />,  bg: "rgba(140,100,220,.18)",color: "#a07ee0", title: "Per-platform overrides",  desc: "Custom text per network",        slug: "per-platform-overrides" },

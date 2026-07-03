@@ -1,6 +1,17 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "Introducing Posthive — Schedule posts to 7 platforms at once",
+  description: "We built Posthive because we were tired of switching between tabs just to post the same update everywhere. Here's what we shipped.",
+  datePublished: "2026-07-03",
+  author: { "@type": "Person", name: "Guna" },
+  publisher: { "@type": "Organization", name: "Posthive", url: "https://posthive.co" },
+  url: "https://posthive.co/blog/introducing-posthive",
+};
+
 export const metadata: Metadata = {
   title: "Introducing Posthive — Schedule posts to 7 platforms at once",
   description:
@@ -51,6 +62,7 @@ function BlogNav() {
 export default function PostPage() {
   return (
     <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "system-ui, sans-serif" }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <BlogNav />
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "120px 24px 100px" }}>

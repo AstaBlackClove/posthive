@@ -9,7 +9,19 @@ const OG_BASE = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 export const metadata: Metadata = {
   title: { default: "Posthive", template: "%s | Posthive" },
   description:
-    "The social media scheduling tool built for creators and teams. Write once, publish everywhere.",
+    "Posthive is a social media scheduler for creators and teams. Schedule posts to 7 platforms at once — a modern, open-source alternative to Buffer and Hootsuite.",
+  keywords: [
+    "social media scheduler",
+    "social media scheduling tool",
+    "Buffer alternative",
+    "Hootsuite alternative",
+    "schedule posts",
+    "Bluesky scheduler",
+    "Instagram Reels scheduler",
+    "bulk social media scheduling",
+    "multi-platform posting",
+    "open source social media tool",
+  ],
   icons: { icon: "/posthivemain.png", apple: "/posthivemain.png" },
   metadataBase: new URL(OG_BASE),
   openGraph: {
@@ -38,9 +50,31 @@ export const metadata: Metadata = {
   },
 };
 
+const softwareSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Posthive",
+  url: "https://posthive.co",
+  description:
+    "Social media scheduler for creators and teams. Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages from one place.",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  offers: [
+    { "@type": "Offer", name: "Creator", price: "9",  priceCurrency: "USD", description: "5 accounts, 400 posts/month" },
+    { "@type": "Offer", name: "Pro",     price: "29", priceCurrency: "USD", description: "15 accounts, unlimited posts" },
+    { "@type": "Offer", name: "Team",    price: "49", priceCurrency: "USD", description: "50 accounts, unlimited posts" },
+  ],
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full" style={{ backgroundColor: "var(--color-bg)" }}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+        />
+      </head>
       <body className="h-full font-sans antialiased">
         <AuthProvider>
           <ToastProvider>

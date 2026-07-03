@@ -1,3 +1,4 @@
+import React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -31,7 +32,7 @@ const FEATURES: Record<string, FeatureData> = {
     headline: "Write once. Post everywhere.",
     subheadline: "One composer, seven platforms. Draft your content once and send it to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages in a single click.",
     image: "/screenshots/feature-multi-platform.png",
-    imageAlt: "Posthive composer selecting multiple platforms with platform previews",
+    imageAlt: "Posthive composer selecting multiple platforms",
     why: [
       { title: "Stop the copy-paste grind", desc: "Opening seven tabs, copy-pasting the same text, adjusting for each platform. That's 20 minutes per post. Posthive collapses it to one action." },
       { title: "Native previews per platform", desc: "See exactly how your post will render on each platform before it goes live. Character count, media layout, link card all shown in real time." },
@@ -39,7 +40,7 @@ const FEATURES: Record<string, FeatureData> = {
     ],
     how: [
       { n: "01", title: "Connect your accounts", desc: "Link each platform once. Posthive securely stores encrypted credentials so you never have to re-authenticate." },
-      { n: "02", title: "Select your platforms", desc: "Check the accounts you want to post to. Mix and match post to three platforms today, all seven tomorrow." },
+      { n: "02", title: "Select your platforms", desc: "Check the accounts you want to post to. Mix and match - post to three platforms today, all seven tomorrow." },
       { n: "03", title: "Compose and schedule", desc: "Write your content, attach media, set a time. Posthive handles every platform independently at the scheduled moment." },
     ],
     usecases: [
@@ -49,7 +50,7 @@ const FEATURES: Record<string, FeatureData> = {
       "Marketers running multi-channel campaigns from one place",
     ],
   },
-  "reels-and-stories": {
+  "instagram-reels-scheduler": {
     title: "Reels & Stories",
     badge: "Instagram",
     badgeColor: "#e86b6b",
@@ -57,7 +58,7 @@ const FEATURES: Record<string, FeatureData> = {
     headline: "Full Instagram support. Reels, Stories, feed posts all scheduled.",
     subheadline: "Most schedulers support basic Instagram posts. Posthive goes further. Schedule Reels, Stories, and carousels without leaving the composer.",
     image: "/screenshots/feature-reels-stories.png",
-    imageAlt: "Posthive composer Instagram Reel scheduling with content type selector",
+    imageAlt: "Posthive Instagram Reel scheduling with content type selector",
     imageRatio: "4/3",
     why: [
       { title: "Reels are where reach happens", desc: "Reels get dramatically more reach than feed posts on Instagram. Scheduling them means you can post at peak times without being online." },
@@ -66,7 +67,7 @@ const FEATURES: Record<string, FeatureData> = {
     ],
     how: [
       { n: "01", title: "Connect your Professional account", desc: "Link your Instagram Business or Creator account via Meta OAuth. Personal accounts aren't supported by the Instagram API." },
-      { n: "02", title: "Choose your content type", desc: "Select Feed Post, Reel, or Story in the Compose page. Attach your media image or video depending on the type." },
+      { n: "02", title: "Choose your content type", desc: "Select Feed Post, Reel, or Story in the Compose page. Attach your media - image or video depending on the type." },
       { n: "03", title: "Schedule and publish", desc: "Posthive processes the media through Instagram's container API and publishes at your scheduled time automatically." },
     ],
     usecases: [
@@ -84,7 +85,7 @@ const FEATURES: Record<string, FeatureData> = {
     headline: "Your content calendar, actually visual.",
     subheadline: "See all your scheduled posts on a calendar. Drag to move them. Click to edit. No spreadsheets, no mental math. Just a clear picture of what's going live and when.",
     image: "/screenshots/feature-calendar.png",
-    imageAlt: "Posthive calendar view scheduled posts with drag-to-reschedule",
+    imageAlt: "Posthive calendar view with drag-to-reschedule",
     imageRatio: "16/9",
     why: [
       { title: "See gaps before they happen", desc: "A calendar makes it obvious when you have three posts in one day and nothing for the next five. Fix it before it becomes a problem." },
@@ -109,19 +110,19 @@ const FEATURES: Record<string, FeatureData> = {
     badgeColor: "#d4a83c",
     badgeBg: "rgba(220,160,60,.15)",
     headline: "The first comment, posted automatically.",
-    subheadline: "Drop your hashtags, a key link, or a follow-up thought in the first comment posted automatically the moment your main content goes live.",
+    subheadline: "Drop your hashtags, a key link, or a follow-up thought in the first comment - posted automatically the moment your main content goes live.",
     image: "/screenshots/feature-first-comment.png",
-    imageAlt: "Posthive composer first comment field below the main post area",
+    imageAlt: "Posthive composer first comment field",
     imageRatio: "4/3",
     why: [
       { title: "Hashtags without the clutter", desc: "On Instagram and Threads, putting hashtags in a comment keeps your caption clean while still getting the reach benefit. Posthive handles this automatically." },
       { title: "Add context without editing the post", desc: "Drop a link, a thread continuation, or a call-to-action in the first comment instead of cramming it into the caption." },
-      { title: "Timing is everything", desc: "The first comment needs to go live right when the post does before anyone else comments. Posthive publishes both in the same pipeline, seconds apart." },
+      { title: "Timing is everything", desc: "The first comment needs to go live right when the post does - before anyone else comments. Posthive publishes both in the same pipeline, seconds apart." },
     ],
     how: [
       { n: "01", title: "Write your first comment", desc: "In the Compose page, expand the First Comment section and write your comment: hashtags, links, follow-up copy, whatever you need." },
       { n: "02", title: "Schedule as normal", desc: "Set your publish time. The comment is queued together with the main post." },
-      { n: "03", title: "Auto-published on the dot", desc: "When the job runs, Posthive posts your content first, then immediately posts the comment as a reply per platform, per account." },
+      { n: "03", title: "Auto-published on the dot", desc: "When the job runs, Posthive posts your content first, then immediately posts the comment as a reply - per platform, per account." },
     ],
     usecases: [
       "Instagram creators keeping captions clean while using hashtags",
@@ -138,7 +139,7 @@ const FEATURES: Record<string, FeatureData> = {
     headline: "Different platform, different message.",
     subheadline: "LinkedIn and Bluesky have different audiences, different character limits, and different norms. Per-platform overrides let you tailor your message for each network without creating separate posts.",
     image: "/screenshots/feature-overrides.png",
-    imageAlt: "Posthive per-platform customize dialog with independent text editors",
+    imageAlt: "Posthive per-platform customize dialog",
     imageRatio: "4/3",
     why: [
       { title: "One audience isn't like another", desc: "What performs on LinkedIn reads as corporate on Bluesky. What works on Threads is too casual for LinkedIn. Overrides let you adapt without duplicating your effort." },
@@ -163,14 +164,14 @@ const FEATURES: Record<string, FeatureData> = {
     badgeColor: "#5cb88a",
     badgeBg: "rgba(80,180,120,.15)",
     headline: "Schedule hundreds of posts from a spreadsheet.",
-    subheadline: "Upload a CSV file and Posthive schedules every row automatically across multiple platforms, with images, first comments, and per-row platform exclusions.",
+    subheadline: "Upload a CSV file and Posthive schedules every row automatically across multiple platforms with images, first comments, and per-row platform exclusions.",
     image: "/screenshots/feature-bulk-csv.png",
     imageAlt: "Posthive bulk CSV scheduling modal with preview table",
     imageRatio: "16/9",
     why: [
       { title: "Batch your content creation", desc: "Write a week or month of content in a spreadsheet where you can see everything at once, then upload it in one shot. No switching tabs, no repeating the same clicks." },
-      { title: "Granular platform control per row", desc: "Each row can target different platforms. Use !instagram to skip Instagram on a text-only post, or bluesky|mastodon for a specific audience. No need to create separate posts." },
-      { title: "Validate before you commit", desc: "The preview table shows every row with a ✓ Ready or ✕ error status before anything is scheduled. Catch bad dates, missing images for Instagram, or unrecognized platform names instantly." },
+      { title: "Granular platform control per row", desc: "Each row can target different platforms. Use !instagram to skip Instagram on a text-only post, or bluesky|mastodon for a specific audience. No separate posts needed." },
+      { title: "Validate before you commit", desc: "The preview table shows every row with a ✓ Ready or ✕ error status before anything is scheduled. Catch bad dates, missing images, or unrecognized platform names instantly." },
     ],
     how: [
       { n: "01", title: "Prepare your CSV", desc: "Create a spreadsheet with columns: scheduled_for, text, accounts, comment, image_urls. Save as CSV. Each row becomes one scheduled post." },
@@ -190,17 +191,17 @@ const FEATURES: Record<string, FeatureData> = {
     badgeColor: "#3db8c8",
     badgeBg: "rgba(60,180,200,.15)",
     headline: "Run Posthive on your own infrastructure.",
-    subheadline: "Posthive is open source under AGPL-3.0. Self-host it on Railway, Fly.io, Render, or your own VPS full control, no vendor lock-in, no per-seat pricing.",
+    subheadline: "Posthive is open source under AGPL-3.0. Self-host it on Railway, Fly.io, Render, or your own VPS - full control, no vendor lock-in, no per-seat pricing.",
     image: "/screenshots/feature-self-hostable.png",
-    imageAlt: "Posthive self-hosting architecture API + Redis + Postgres + Storage",
+    imageAlt: "Posthive self-hosting architecture",
     imageRatio: "16/9",
     why: [
       { title: "Your data, your server", desc: "All OAuth credentials are AES-256-GCM encrypted at rest. In self-hosted mode, they never leave your infrastructure." },
-      { title: "No billing required", desc: "Set ENABLE_BILLING=false and every feature is unlocked for all users no plan limits, no trial, no Dodo account needed." },
+      { title: "No billing required", desc: "Set ENABLE_BILLING=false and every feature is unlocked for all users - no plan limits, no trial, no Dodo account needed." },
       { title: "Modify it freely", desc: "Add platforms, change limits, build internal tooling on top. It's your copy. AGPL-3.0 just asks you to share modifications if you run it as a public service." },
     ],
     how: [
-      { n: "01", title: "Clone and configure", desc: "Clone the repo, copy .env.example to .env, fill in your secrets Redis URL, encryption key, JWT secrets, OAuth credentials for the platforms you want." },
+      { n: "01", title: "Clone and configure", desc: "Clone the repo, copy .env.example to .env, fill in your secrets - Redis URL, encryption key, JWT secrets, OAuth credentials for the platforms you want." },
       { n: "02", title: "Run the database migration", desc: "Run pnpm db:migrate inside apps/api. Posthive supports SQLite for local dev and Postgres for production." },
       { n: "03", title: "Deploy anywhere", desc: "pnpm dev spins up both the API and the web app. For production, deploy to Railway (API) + Vercel (frontend) in under 10 minutes." },
     ],
@@ -213,18 +214,431 @@ const FEATURES: Record<string, FeatureData> = {
   },
 };
 
-// ── Page image ────────────────────────────────────────────────────────────
+// ── Inline mockup components ───────────────────────────────────────────────
 
-function PageImage({ src, alt }: { src: string; alt: string; aspectRatio?: string }) {
+const PLATFORM_DOMAINS: Record<string, string> = {
+  Bluesky: "bsky.app",
+  Threads: "threads.net",
+  LinkedIn: "linkedin.com",
+  Instagram: "instagram.com",
+  Mastodon: "mastodon.social",
+  YouTube: "youtube.com",
+  Facebook: "facebook.com",
+};
+
+function PlatformFavicon({ name, size = 14 }: { name: string; size?: number }) {
+  const domain = PLATFORM_DOMAINS[name];
+  if (!domain) return null;
   return (
-    <div style={{ width: "100%", borderRadius: 16, overflow: "hidden", border: "1px solid #2a2a2a", background: "#111" }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`} alt={name} width={size} height={size} style={{ borderRadius: 3, display: "block" }} />
+  );
+}
+
+function MultiPlatformMockup() {
+  const platforms = [
+    { name: "Bluesky", on: true },
+    { name: "Threads", on: true },
+    { name: "LinkedIn", on: true },
+    { name: "Instagram", on: false },
+    { name: "Mastodon", on: true },
+    { name: "YouTube", on: false },
+    { name: "Facebook", on: false },
+  ];
+  return (
+    <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 20, padding: 28, width: "100%", maxWidth: 480 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: "#444", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14 }}>Post to</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 22 }}>
+        {platforms.map((p) => (
+          <div key={p.name} style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "5px 11px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+            background: p.on ? "rgba(91,99,211,.15)" : "#0f0f0f",
+            border: `1px solid ${p.on ? "#5b63d388" : "#1e1e1e"}`,
+            color: p.on ? "#9ba2ee" : "#3a3a3a",
+            opacity: p.on ? 1 : 0.35,
+          }}>
+            <PlatformFavicon name={p.name} size={13} />
+            {p.name}
+          </div>
+        ))}
+      </div>
+      <div style={{ background: "#0d0d0d", borderRadius: 12, padding: "14px 16px", marginBottom: 18 }}>
+        <div style={{ fontSize: 13, color: "#333", marginBottom: 10 }}>What&apos;s on your mind?</div>
+        <div style={{ fontSize: 13.5, color: "#bbb", lineHeight: 1.65 }}>
+          Just shipped v2.0 🚀 New drag-to-reschedule calendar is live. Move posts around with one drag - no more manual edits.{" "}
+          <span style={{ color: "#5b63d3" }}>posthive.co</span>
+        </div>
+        <div style={{ marginTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 11, color: "#333" }}>142 / 300</span>
+          <div style={{ display: "flex", gap: 6 }}>
+            {["BSky", "TH", "LI", "MA"].map((t) => (
+              <span key={t} style={{ fontSize: 10, background: "rgba(91,99,211,.1)", color: "#7b83dd", borderRadius: 4, padding: "2px 6px" }}>{t}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: 12, color: "#444", display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 14 }}>📅</span> Tomorrow, 9:00 AM
+        </div>
+        <div style={{ background: "#5b63d3", color: "#fff", padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 700 }}>
+          Schedule →
+        </div>
+      </div>
     </div>
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────
+function ReelsMockup() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 460 }}>
+      <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 20, padding: 24 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: "#444", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14 }}>Instagram content type</div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+          {[
+            {
+              label: "Feed Post", active: false,
+              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>,
+            },
+            {
+              label: "Reel", active: true,
+              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+            },
+            {
+              label: "Story", active: false,
+              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>,
+            },
+            {
+              label: "Carousel", active: false,
+              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="14" height="14" rx="2"/><path d="M6 2h14a2 2 0 0 1 2 2v14"/></svg>,
+            },
+          ].map((t) => (
+            <div key={t.label} style={{
+              flex: 1, textAlign: "center", padding: "10px 6px", borderRadius: 10, cursor: "pointer",
+              background: t.active ? "rgba(232,107,107,.12)" : "#0d0d0d",
+              border: `1px solid ${t.active ? "#e86b6b66" : "#1e1e1e"}`,
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+            }}>
+              <span style={{ color: t.active ? "#e86b6b" : "#444", display: "flex" }}>{t.icon}</span>
+              <div style={{ fontSize: 10, fontWeight: 600, color: t.active ? "#e86b6b" : "#444" }}>{t.label}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: "#0d0d0d", border: "1px dashed #2a2a2a", borderRadius: 10, padding: "20px 16px", textAlign: "center" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div style={{ fontSize: 12, color: "#555" }}>Drop your Reel video here</div>
+          <div style={{ fontSize: 10, color: "#3a3a3a", marginTop: 4 }}>MP4 · up to 15 min · 9:16 recommended</div>
+        </div>
+      </div>
+      <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#e86b6b,#f5a623)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div>
+          <div style={{ fontSize: 12, color: "#ededed", fontWeight: 600 }}>Schedules at peak engagement time</div>
+          <div style={{ fontSize: 11, color: "#555" }}>Tuesday · 7:00 PM · Your timezone</div>
+        </div>
+        <div style={{ marginLeft: "auto", width: 10, height: 10, borderRadius: "50%", background: "#4ade80", flexShrink: 0 }} />
+      </div>
+    </div>
+  );
+}
+
+function CalendarMockup() {
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const posts: Record<number, { label: string; color: string; platform: string }[]> = {
+    0: [{ label: "Product update 🚀", color: "#5b63d3", platform: "BSky" }],
+    1: [{ label: "Behind the scenes", color: "#e86b6b", platform: "IG" }],
+    2: [],
+    3: [
+      { label: "Weekly tip ✨", color: "#5b63d3", platform: "LI" },
+      { label: "Thread drop", color: "#888", platform: "TH" },
+    ],
+    4: [{ label: "Friday recap", color: "#5cb88a", platform: "MA" }],
+    5: [],
+    6: [],
+  };
+  return (
+    <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 20, padding: 24, maxWidth: 480, width: "100%" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#ededed" }}>July 2026</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {["Month", "Week", "Day"].map((v, i) => (
+            <span key={v} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 6, background: i === 1 ? "#5b63d3" : "#1a1a1a", color: i === 1 ? "#fff" : "#555", fontWeight: 600 }}>{v}</span>
+          ))}
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+        {days.map((d) => (
+          <div key={d} style={{ fontSize: 10, color: "#444", textAlign: "center", paddingBottom: 8, fontWeight: 700 }}>{d}</div>
+        ))}
+        {days.map((_, i) => (
+          <div key={i} style={{ minHeight: 72, background: "#0d0d0d", borderRadius: 8, padding: 5, border: "1px solid #1a1a1a" }}>
+            <div style={{ fontSize: 10, color: "#444", marginBottom: 4 }}>{i + 7}</div>
+            {posts[i]?.map((p) => (
+              <div key={p.label} style={{ background: p.color + "22", border: `1px solid ${p.color}44`, borderRadius: 4, padding: "3px 5px", marginBottom: 3 }}>
+                <div style={{ fontSize: 9, color: p.color, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.platform}</div>
+                <div style={{ fontSize: 9, color: "#888", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.label}</div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 12, padding: "10px 14px", background: "#0d0d0d", borderRadius: 10, border: "1px dashed #2a2a2a", fontSize: 11, color: "#555", textAlign: "center" }}>
+        ↕ Drag any post to reschedule
+      </div>
+    </div>
+  );
+}
+
+function FirstCommentMockup() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0, maxWidth: 460, width: "100%" }}>
+      {/* Main post */}
+      <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "16px 16px 4px 4px", padding: 22 }}>
+        <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#5b63d3,#9ba2ee)", flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#ededed" }}>@yourhandle</div>
+            <div style={{ fontSize: 11, color: "#444" }}>Just now · via Posthive</div>
+          </div>
+          <div style={{ marginLeft: "auto", fontSize: 10, background: "rgba(74,222,128,.1)", color: "#4ade80", border: "1px solid #4ade8044", borderRadius: 6, padding: "3px 8px", alignSelf: "flex-start" }}>
+            ✓ Published
+          </div>
+        </div>
+        <div style={{ fontSize: 14, color: "#ccc", lineHeight: 1.65 }}>
+          Excited to share what we&apos;ve been building 🧵 A thread on why we chose open-source for our social scheduling tool and what it means for you.
+        </div>
+        <div style={{ marginTop: 14, display: "flex", gap: 16 }}>
+          {["❤ 24", "💬 7", "🔁 11"].map((a) => (
+            <span key={a} style={{ fontSize: 12, color: "#555" }}>{a}</span>
+          ))}
+        </div>
+      </div>
+      {/* Connector */}
+      <div style={{ display: "flex", paddingLeft: 30 }}>
+        <div style={{ width: 2, height: 16, background: "#1e1e1e" }} />
+      </div>
+      {/* First comment */}
+      <div style={{ background: "#0e0e0e", border: "1px solid #1e1e1e", borderRadius: "4px 4px 16px 16px", padding: 22, borderTop: "none" }}>
+        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#5b63d3,#9ba2ee)", flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#ededed" }}>@yourhandle</div>
+            <div style={{ fontSize: 10, color: "#333" }}>Auto-comment · 3s after publish</div>
+          </div>
+          <div style={{ marginLeft: "auto", fontSize: 10, background: "rgba(91,99,211,.15)", color: "#9ba2ee", border: "1px solid #5b63d344", borderRadius: 6, padding: "3px 8px", alignSelf: "flex-start" }}>
+            🤖 First comment
+          </div>
+        </div>
+        <div style={{ fontSize: 13, color: "#888", lineHeight: 1.65 }}>
+          👇 Links in the thread below. <span style={{ color: "#5b63d3" }}>posthive.co</span>{"\n"}
+          <span style={{ color: "#555" }}>#OpenSource #BuildInPublic #SocialMedia</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OverridesMockup() {
+  const platforms = [
+    {
+      name: "LinkedIn",
+      color: "#0a66c2",
+      text: "Thrilled to announce Posthive's v2.0 release - a major step forward in how teams manage cross-platform social media. Our drag-to-reschedule calendar and bulk CSV import have been the most requested features since launch. We built them with efficiency in mind. Looking forward to hearing how teams use them. 🔗 posthive.co",
+      chars: "312 / 3000",
+    },
+    {
+      name: "Bluesky",
+      color: "#0085ff",
+      text: "v2.0 is live 🚀 drag-to-reschedule calendar + bulk CSV scheduling. built different. posthive.co",
+      chars: "96 / 300",
+    },
+    {
+      name: "Threads",
+      color: "#ededed",
+      text: "ok v2.0 dropped. you can now drag posts around on a calendar. yes, finally. also bulk CSV if you're that kind of person 🧵",
+      chars: "122 / 500",
+    },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 500, width: "100%" }}>
+      <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 14, padding: "14px 18px" }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: "#444", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 10 }}>Base post (fallback)</div>
+        <div style={{ fontSize: 13, color: "#666", lineHeight: 1.6 }}>v2.0 is live. Drag-to-reschedule and bulk CSV scheduling. posthive.co</div>
+      </div>
+      {platforms.map((p) => (
+        <div key={p.name} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 14, padding: "14px 18px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <PlatformFavicon name={p.name} size={14} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#ededed" }}>{p.name}</span>
+              <span style={{ fontSize: 10, color: "#4ade80", background: "rgba(74,222,128,.08)", border: "1px solid #4ade8033", borderRadius: 5, padding: "1px 6px" }}>Custom</span>
+            </div>
+            <span style={{ fontSize: 10, color: "#444" }}>{p.chars}</span>
+          </div>
+          <div style={{ fontSize: 12.5, color: "#888", lineHeight: 1.6 }}>{p.text}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CsvMockup() {
+  const rows = [
+    { date: "2026-07-07 09:00", text: "Shipping v2.0 today 🚀 drag-to-reschedule is live", accounts: "bluesky|threads|linkedin", status: "ready" },
+    { date: "2026-07-08 14:00", text: "Behind the scenes: building a content scheduler in Next.js", accounts: "instagram|youtube", status: "ready" },
+    { date: "2026-07-09 10:00", text: "Weekly tip: use CSV bulk upload to schedule a full month in 10 minutes", accounts: "all", status: "ready" },
+    { date: "2026-07-10 08:30", text: "Open-source and self-hostable - why we chose AGPL-3.0", accounts: "bluesky|mastodon", status: "warn" },
+  ];
+  return (
+    <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 20, padding: 24, width: "100%", maxWidth: 720, overflowX: "auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#ededed" }}>preview.csv</div>
+          <div style={{ fontSize: 11, color: "#555" }}>4 rows · all valid</div>
+        </div>
+        <div style={{ background: "#5b63d3", color: "#fff", padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700 }}>
+          Schedule 4 posts →
+        </div>
+      </div>
+      <div style={{ minWidth: 580 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "160px 1fr 140px 80px", gap: 0 }}>
+          {["scheduled_for", "text", "accounts", "status"].map((h) => (
+            <div key={h} style={{ fontSize: 10, fontWeight: 700, color: "#444", letterSpacing: ".06em", textTransform: "uppercase", padding: "6px 10px", borderBottom: "1px solid #1e1e1e" }}>{h}</div>
+          ))}
+          {rows.map((r, i) => (
+            <React.Fragment key={i}>
+              <div style={{ fontSize: 11, color: "#666", padding: "10px 10px", borderBottom: "1px solid #111", fontFamily: "monospace" }}>{r.date}</div>
+              <div style={{ fontSize: 12, color: "#aaa", padding: "10px 10px", borderBottom: "1px solid #111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.text}</div>
+              <div style={{ fontSize: 11, color: "#666", padding: "10px 10px", borderBottom: "1px solid #111", fontFamily: "monospace" }}>{r.accounts}</div>
+              <div style={{ padding: "10px 10px", borderBottom: "1px solid #111" }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: r.status === "ready" ? "#4ade80" : "#f59e0b", background: r.status === "ready" ? "rgba(74,222,128,.08)" : "rgba(245,158,11,.08)", border: `1px solid ${r.status === "ready" ? "#4ade8033" : "#f59e0b33"}`, borderRadius: 5, padding: "2px 6px" }}>
+                  {r.status === "ready" ? "✓ Ready" : "⚠ Warn"}
+                </span>
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SelfHostMockup() {
+  const lines = [
+    { t: "comment", v: "# Clone the repo" },
+    { t: "cmd", v: "git clone https://github.com/posthive/posthive" },
+    { t: "cmd", v: "cd posthive && cp apps/api/.env.example apps/api/.env" },
+    { t: "blank", v: "" },
+    { t: "comment", v: "# Run migrations & start" },
+    { t: "cmd", v: "pnpm install" },
+    { t: "cmd", v: "cd apps/api && pnpm db:migrate" },
+    { t: "cmd", v: "pnpm dev" },
+    { t: "blank", v: "" },
+    { t: "output", v: "▶  API  ready on http://localhost:3001" },
+    { t: "output", v: "▶  Web  ready on http://localhost:3000" },
+  ];
+  return (
+    <div style={{ background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 20, overflow: "hidden", maxWidth: 560, width: "100%" }}>
+      <div style={{ background: "#111", padding: "12px 18px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid #1e1e1e" }}>
+        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#e86b6b" }} />
+        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#d4a83c" }} />
+        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#5cb88a" }} />
+        <span style={{ fontSize: 11, color: "#444", marginLeft: 8, fontFamily: "monospace" }}>Terminal</span>
+      </div>
+      <div style={{ padding: "20px 22px", fontFamily: "monospace" }}>
+        {lines.map((l, i) => (
+          <div key={i} style={{ fontSize: 12.5, lineHeight: 1.8, color: l.t === "comment" ? "#555" : l.t === "output" ? "#4ade80" : "#bbb" }}>
+            {l.t === "cmd" ? <><span style={{ color: "#5b63d3" }}>$ </span>{l.v}</> : l.v}
+          </div>
+        ))}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
+          <span style={{ color: "#5b63d3" }}>$ </span>
+          <span style={{ display: "inline-block", width: 8, height: 16, background: "#5b63d3", animation: "none", verticalAlign: "middle" }} />
+        </div>
+      </div>
+      <div style={{ background: "#0d0d0d", borderTop: "1px solid #1a1a1a", padding: "12px 22px", display: "flex", gap: 16 }}>
+        {[["SQLite / Postgres", "🗄"], ["Redis / Upstash", "⚡"], ["Any cloud", "☁"]].map(([label, icon]) => (
+          <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 13 }}>{icon}</span>
+            <span style={{ fontSize: 11, color: "#555" }}>{label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Layout variants ────────────────────────────────────────────────────────
+
+type Layout = "split-right" | "split-left" | "center";
+
+const LAYOUT_MAP: Record<string, Layout> = {
+  "multi-platform-posting": "split-right",
+  "instagram-reels-scheduler": "split-right",
+  "drag-to-reschedule": "split-left",
+  "first-comment": "split-right",
+  "per-platform-overrides": "split-left",
+  "bulk-csv-scheduling": "center",
+  "self-hostable": "center",
+};
+
+function getMockup(slug: string) {
+  switch (slug) {
+    case "multi-platform-posting": return <MultiPlatformMockup />;
+    case "instagram-reels-scheduler": return <ReelsMockup />;
+    case "drag-to-reschedule": return <CalendarMockup />;
+    case "first-comment": return <FirstCommentMockup />;
+    case "per-platform-overrides": return <OverridesMockup />;
+    case "bulk-csv-scheduling": return <CsvMockup />;
+    case "self-hostable": return <SelfHostMockup />;
+    default: return null;
+  }
+}
+
+// ── Metadata ───────────────────────────────────────────────────────────────
+
+const SLUG_OVERRIDES: Record<string, { title: string; description: string; keywords: string[] }> = {
+  "multi-platform-posting": {
+    title: "Multi-Platform Social Media Scheduler — Post to 7 Platforms at Once | Posthive",
+    description: "Write once, post everywhere. Schedule to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook in one click. The best Buffer and Hootsuite alternative.",
+    keywords: ["multi-platform social media scheduler", "post to multiple social media at once", "Buffer alternative", "Hootsuite alternative", "cross-platform posting"],
+  },
+  "instagram-reels-scheduler": {
+    title: "Instagram Reels Scheduler — Schedule Reels, Stories & Carousels | Posthive",
+    description: "Schedule Instagram Reels, Stories, carousels, and feed posts without switching tabs. The easiest Instagram Reels scheduler for creators and brands.",
+    keywords: ["Instagram Reels scheduler", "schedule Instagram Reels", "Instagram Story scheduler", "Instagram carousel scheduler", "schedule Instagram posts"],
+  },
+  "drag-to-reschedule": {
+    title: "Social Media Content Calendar with Drag-to-Reschedule | Posthive",
+    description: "Visualise your entire posting schedule on a drag-and-drop calendar. Move posts instantly, spot gaps, and never miss a publish date.",
+    keywords: ["social media content calendar", "drag and drop social media scheduler", "content calendar tool", "reschedule social media posts"],
+  },
+  "first-comment": {
+    title: "Auto First Comment Scheduling — Post Hashtags Automatically | Posthive",
+    description: "Automatically post a first comment the moment your content goes live. Keep captions clean and drop hashtags, links, or CTAs in the first comment.",
+    keywords: ["schedule first comment", "auto first comment Instagram", "LinkedIn first comment scheduling", "hashtags in first comment"],
+  },
+  "per-platform-overrides": {
+    title: "Per-Platform Social Media Overrides — Different Text Per Network | Posthive",
+    description: "Write one post, customise it for every platform. Different character limits, different audiences, different tones — all from a single composer.",
+    keywords: ["per platform social media post", "customize posts per platform", "different text per social network", "platform specific content"],
+  },
+  "bulk-csv-scheduling": {
+    title: "Bulk Social Media Scheduling via CSV — Schedule Hundreds of Posts | Posthive",
+    description: "Upload a CSV and schedule hundreds of social media posts at once across 7 platforms. The fastest way to bulk-schedule content for creators and agencies.",
+    keywords: ["bulk social media scheduling", "CSV social media scheduler", "schedule multiple posts at once", "bulk schedule Instagram", "content scheduling spreadsheet"],
+  },
+  "self-hostable": {
+    title: "Self-Hostable Open Source Social Media Scheduler | Posthive",
+    description: "Run your own social media scheduler. Posthive is open source (AGPL-3.0) and self-hostable on Railway, Fly.io, or any VPS. Full data ownership, no vendor lock-in.",
+    keywords: ["self-hosted social media scheduler", "open source social media tool", "self-host Buffer alternative", "AGPL social media scheduler"],
+  },
+};
 
 export async function generateStaticParams() {
   return Object.keys(FEATURES).map((slug) => ({ slug }));
@@ -234,67 +648,177 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const data = FEATURES[slug];
   if (!data) return {};
+  const override = SLUG_OVERRIDES[slug];
+  const title = override?.title ?? `${data.title} | Posthive`;
+  const description = override?.description ?? data.subheadline;
+  const ogImage = `/api/og?layout=features&title=${encodeURIComponent(data.headline)}&desc=${encodeURIComponent(data.badge)}&badge=${encodeURIComponent(data.badge)}`;
   return {
-    title: `${data.title} | Posthive`,
-    description: data.subheadline,
+    title,
+    description,
+    keywords: override?.keywords,
+    alternates: { canonical: `${WEB_URL}/features/${slug}` },
     openGraph: {
-      title: `${data.title} | Posthive`,
-      description: data.subheadline,
+      title,
+      description,
       url: `${WEB_URL}/features/${slug}`,
+      images: [{ url: ogImage, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
     },
   };
 }
+
+// ── Page ──────────────────────────────────────────────────────────────────
 
 export default async function FeaturePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const data = FEATURES[slug];
   if (!data) notFound();
 
+  const layout = LAYOUT_MAP[slug] ?? "center";
+  const mockup = getMockup(slug);
+  const isSplit = layout === "split-right" || layout === "split-left";
+
+  const howToSchema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: data.headline,
+    description: data.subheadline,
+    step: data.how.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.title,
+      text: s.desc,
+    })),
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Posthive", item: WEB_URL },
+      { "@type": "ListItem", position: 2, name: data.title, item: `${WEB_URL}/features/${slug}` },
+    ],
+  };
+
   return (
-    <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed" }}>
+    <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "system-ui,-apple-system,sans-serif" }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <style>{`
+        @media (max-width: 768px) {
+          .feat-hero-grid { grid-template-columns: 1fr !important; }
+          .feat-why-grid { grid-template-columns: 1fr !important; }
+          .feat-steps { flex-direction: column !important; }
+          .feat-step-connector { display: none !important; }
+        }
+      `}</style>
+
       <NavBar user={false} ctaHref="/register" navCtaLabel="Get started free" />
 
       {/* ── Hero ── */}
-      <section style={{ padding: "140px 24px 80px", textAlign: "center" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: data.badgeBg, border: `1px solid ${data.badgeColor}22`, borderRadius: 999, padding: "6px 14px", marginBottom: 28 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: data.badgeColor }}>{data.badge}</span>
+      <section style={{ padding: "120px 24px 80px" }}>
+        <div style={{
+          maxWidth: 960,
+          margin: "0 auto",
+          display: "grid",
+          gridTemplateColumns: isSplit ? "1fr 1fr" : "1fr",
+          gap: isSplit ? 64 : 0,
+          alignItems: "center",
+          flexDirection: layout === "split-left" ? "row-reverse" : undefined,
+        }} className="feat-hero-grid">
+
+          {/* Text - always first in DOM; visual order flipped via CSS for split-left */}
+          <div style={{ order: layout === "split-left" ? 2 : 1, textAlign: isSplit ? "left" : "center" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: data.badgeBg, border: `1px solid ${data.badgeColor}33`, borderRadius: 999, padding: "6px 14px", marginBottom: 24 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: data.badgeColor, letterSpacing: ".04em" }}>{data.badge}</span>
+            </div>
+            <h1 style={{ fontSize: isSplit ? "clamp(24px, 3vw, 42px)" : "clamp(28px, 4.5vw, 52px)", fontWeight: 800, letterSpacing: "-.03em", lineHeight: 1.15, color: "#ededed", margin: "0 0 20px" }}>
+              {data.headline}
+            </h1>
+            <p style={{ fontSize: "clamp(14px, 2vw, 17px)", color: "#777", lineHeight: 1.75, maxWidth: isSplit ? 480 : 560, margin: isSplit ? "0 0 36px" : "0 auto 36px" }}>
+              {data.subheadline}
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: isSplit ? "flex-start" : "center", flexWrap: "wrap", marginBottom: "22px" }}>
+              <Link href="/register" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)" }}>
+                Try it free - 14 days
+              </Link>
+              <Link href="/pricing" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
+                View pricing
+              </Link>
+            </div>
           </div>
-          <h1 style={{ fontSize: "clamp(30px, 5vw, 52px)", fontWeight: 800, letterSpacing: "-.03em", lineHeight: 1.12, color: "#ededed", margin: "0 0 20px" }}>
-            {data.headline}
-          </h1>
-          <p style={{ fontSize: "clamp(15px, 2vw, 18px)", color: "#888", lineHeight: 1.7, maxWidth: 580, margin: "0 auto 36px" }}>
-            {data.subheadline}
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/register" style={{ fontSize: 15, fontWeight: 600, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)" }}>
-              Try it free
-            </Link>
-            <Link href="/features" style={{ fontSize: 15, fontWeight: 600, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#ededed", textDecoration: "none", border: "1px solid #2a2a2a" }}>
-              All features
-            </Link>
-          </div>
+
+          {/* Mockup / image — only in hero for split layouts */}
+          {isSplit && mockup && (
+            <div style={{ order: layout === "split-left" ? 1 : 2, display: "flex", justifyContent: "center" }}>
+              {mockup}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* ── Screenshot placeholder ── */}
-      <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <PageImage src={data.image} alt={data.imageAlt} aspectRatio={data.imageRatio ?? "16/9"} />
-        </div>
-      </section>
+      {/* ── Center mockup (for "center" layout) ── */}
+      {!isSplit && mockup && (
+        <section style={{ padding: "0 24px 80px" }}>
+          <div style={{ maxWidth: 800, margin: "0 auto", display: "flex", justifyContent: "center" }}>
+            {mockup}
+          </div>
+        </section>
+      )}
+
+      {/* ── Stats strip ── */}
+      {slug === "multi-platform-posting" && (
+        <section style={{ padding: "0 24px 80px" }}>
+          <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, background: "#1e1e1e", borderRadius: 16, overflow: "hidden" }}>
+            {[
+              { n: "7", label: "platforms supported" },
+              { n: "1", label: "post to write" },
+              { n: "∞", label: "reach potential" },
+            ].map((s) => (
+              <div key={s.n} style={{ background: "#0d0d0d", padding: "32px 24px", textAlign: "center" }}>
+                <div style={{ fontSize: 48, fontWeight: 900, color: data.badgeColor, letterSpacing: "-.04em", lineHeight: 1 }}>{s.n}</div>
+                <div style={{ fontSize: 12, color: "#555", marginTop: 8, fontWeight: 600 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {slug === "self-hostable" && (
+        <section style={{ padding: "0 24px 80px" }}>
+          <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, background: "#1e1e1e", borderRadius: 16, overflow: "hidden" }}>
+            {[
+              { n: "AGPLv3", label: "open-source license" },
+              { n: "0", label: "per-seat cost" },
+              { n: "100%", label: "data ownership" },
+            ].map((s) => (
+              <div key={s.n} style={{ background: "#0d0d0d", padding: "32px 24px", textAlign: "center" }}>
+                <div style={{ fontSize: 36, fontWeight: 900, color: data.badgeColor, letterSpacing: "-.04em", lineHeight: 1 }}>{s.n}</div>
+                <div style={{ fontSize: 12, color: "#555", marginTop: 8, fontWeight: 600 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Why it matters ── */}
       <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".1em", textTransform: "uppercase", textAlign: "center", marginBottom: 40 }}>
-            WHY IT MATTERS
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
-            {data.why.map((w) => (
-              <div key={w.title} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "24px 20px" }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", marginBottom: 8 }}>{w.title}</p>
-                <p style={{ fontSize: 13.5, color: "#666", lineHeight: 1.65 }}>{w.desc}</p>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 48 }}>
+            <div style={{ width: 32, height: 3, background: data.badgeColor, borderRadius: 2 }} />
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".12em", textTransform: "uppercase", margin: 0 }}>Why it matters</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }} className="feat-why-grid">
+            {data.why.map((w, i) => (
+              <div key={w.title} style={{ borderLeft: `2px solid ${data.badgeColor}44`, paddingLeft: 20 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: data.badgeColor, letterSpacing: ".1em", marginBottom: 10 }}>0{i + 1}</div>
+                <p style={{ fontSize: 16, fontWeight: 700, color: "#ededed", marginBottom: 10, lineHeight: 1.3 }}>{w.title}</p>
+                <p style={{ fontSize: 13.5, color: "#666", lineHeight: 1.7, margin: 0 }}>{w.desc}</p>
               </div>
             ))}
           </div>
@@ -303,58 +827,91 @@ export default async function FeaturePage({ params }: { params: Promise<{ slug: 
 
       {/* ── How it works ── */}
       <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".1em", textTransform: "uppercase", textAlign: "center", marginBottom: 40 }}>
-            HOW IT WORKS
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 20 }}>
-            {data.how.map((s) => (
-              <div key={s.n} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "24px 20px" }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: data.badgeColor, letterSpacing: ".1em", marginBottom: 10 }}>{s.n}</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", marginBottom: 8 }}>{s.title}</p>
-                <p style={{ fontSize: 13.5, color: "#666", lineHeight: 1.6 }}>{s.desc}</p>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 48 }}>
+            <div style={{ width: 32, height: 3, background: "#2a2a2a", borderRadius: 2 }} />
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".12em", textTransform: "uppercase", margin: 0 }}>How it works</p>
+          </div>
+          <div style={{ display: "flex", gap: 0, position: "relative" }} className="feat-steps">
+            {data.how.map((s, i) => (
+              <div key={s.n} style={{ flex: 1, position: "relative" }}>
+                {/* Connector line */}
+                {i < data.how.length - 1 && (
+                  <div className="feat-step-connector" style={{ position: "absolute", top: 20, left: "calc(50% + 24px)", right: "calc(-50% + 24px)", height: 1, background: "#1e1e1e", zIndex: 0 }} />
+                )}
+                <div style={{ position: "relative", zIndex: 1, background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "24px 22px", margin: "0 8px" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: data.badgeBg, border: `1px solid ${data.badgeColor}33`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                    <span style={{ fontSize: 13, fontWeight: 900, color: data.badgeColor }}>{s.n}</span>
+                  </div>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", marginBottom: 8 }}>{s.title}</p>
+                  <p style={{ fontSize: 13, color: "#666", lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Use cases ── */}
+      {/* ── Who uses this ── */}
       <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".1em", textTransform: "uppercase", textAlign: "center", marginBottom: 32 }}>
-            WHO USES THIS
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 40 }}>
+            <div style={{ width: 32, height: 3, background: "#1e1e1e", borderRadius: 2 }} />
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".12em", textTransform: "uppercase", margin: 0 }}>Who uses this</p>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
             {data.usecases.map((u) => (
-              <div key={u} style={{ display: "flex", alignItems: "flex-start", gap: 12, background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "14px 16px" }}>
-                <span style={{ fontSize: 13, color: data.badgeColor, marginTop: 1, flexShrink: 0 }}>→</span>
-                <span style={{ fontSize: 14, color: "#aaa", lineHeight: 1.5 }}>{u}</span>
+              <div key={u} style={{ display: "flex", alignItems: "center", gap: 10, background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "12px 18px" }}>
+                <span style={{ fontSize: 14, color: data.badgeColor, flexShrink: 0 }}>✓</span>
+                <span style={{ fontSize: 13.5, color: "#888", lineHeight: 1.4 }}>{u}</span>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── More features strip ── */}
+      <section style={{ padding: "0 24px 80px" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 20, padding: "32px 36px", display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 6px" }}>Part of a full scheduling toolkit</p>
+              <p style={{ fontSize: 13, color: "#555", margin: 0 }}>Posthive includes multi-platform posting, a drag-to-reschedule calendar, bulk CSV upload, first comment scheduling, per-platform overrides, and self-hosting. All in one place.</p>
+            </div>
+            <Link href="/docs" style={{ fontSize: 13, fontWeight: 700, padding: "10px 20px", borderRadius: 10, background: "#1a1a1a", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a", whiteSpace: "nowrap" }}>
+              Read the docs →
+            </Link>
           </div>
         </div>
       </section>
 
       {/* ── CTA ── */}
       <section style={{ padding: "0 24px 100px" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto", background: "#111", border: "1px solid #1e1e1e", borderRadius: 20, padding: "48px 36px", textAlign: "center" }}>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: "#ededed", letterSpacing: "-.02em", marginBottom: 12 }}>
+        <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: data.badgeBg, border: `1px solid ${data.badgeColor}33`, borderRadius: 999, padding: "6px 14px", marginBottom: 24 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: data.badgeColor }}>Get started today</span>
+          </div>
+          <h2 style={{ fontSize: "clamp(22px, 3.5vw, 36px)", fontWeight: 800, color: "#ededed", letterSpacing: "-.03em", lineHeight: 1.2, marginBottom: 16 }}>
             Start scheduling for free
           </h2>
-          <p style={{ fontSize: 14.5, color: "#666", lineHeight: 1.7, marginBottom: 28 }}>
-            14-day free trial. No credit card required. Connect your first account in under a minute.
+          <p style={{ fontSize: 14.5, color: "#666", lineHeight: 1.75, marginBottom: 36, maxWidth: 460, margin: "0 auto 36px" }}>
+            14-day free trial. No credit card required. Connect your first account in under a minute and schedule your first post today.
           </p>
-          <Link href="/register" style={{ display: "inline-block", fontSize: 15, fontWeight: 600, padding: "13px 32px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)" }}>
-            Get started free →
-          </Link>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/register" style={{ display: "inline-block", fontSize: 15, fontWeight: 700, padding: "14px 32px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 12px 32px -8px rgba(91,99,211,.6)" }}>
+              Get started free →
+            </Link>
+            <Link href="/pricing" style={{ display: "inline-block", fontSize: 15, fontWeight: 700, padding: "14px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
+              Pricing
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* ── Footer ── */}
       <footer style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "40px 24px", textAlign: "center" }}>
         <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
-          {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Features", "/features"]] as [string, string][]).map(([label, href]) => (
+          {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Pricing", "/pricing"], ["Blog", "/blog"]] as [string, string][]).map(([label, href]) => (
             <Link key={label} href={href} style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>{label}</Link>
           ))}
         </div>

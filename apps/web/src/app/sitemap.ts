@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 const FEATURE_SLUGS = [
   "multi-platform-posting",
-  "reels-and-stories",
+  "instagram-reels-scheduler",
   "drag-to-reschedule",
   "first-comment",
   "per-platform-overrides",

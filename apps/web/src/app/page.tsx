@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { NavBar, PLATFORMS_NAV } from "../components/LandingNav";
+import { NavBar, PLATFORMS_NAV, FEATURES_NAV } from "../components/LandingNav";
 
 const GITHUB_URL = "https://github.com/AstaBlackClove/posthive";
 
@@ -24,23 +24,56 @@ const PLANS = [
     name: "Creator",
     desc: "For solo creators finding their rhythm.",
     inr: "₹550", usd: "$9",
-    features: ["3 connected accounts", "400 posts / month", "Calendar & drag-reschedule", "First comment scheduling", "No API access"],
+    features: [
+      { text: "5 connected accounts", included: true },
+      { text: "400 posts / month", included: true },
+      { text: "All 7 platforms", included: true },
+      { text: "Bulk CSV scheduling", included: true },
+      { text: "Post templates", included: true },
+      { text: "Calendar & drag-reschedule", included: true },
+      { text: "First comment automation", included: true },
+      { text: "Reels & Stories", included: false },
+      { text: "Per-platform overrides", included: false },
+      { text: "API access", included: false },
+    ],
     popular: false,
   },
   {
     id: "pro",
     name: "Pro",
-    desc: "For power users posting at scale.",
+    desc: "For creators who are serious about growth.",
     inr: "₹1,700", usd: "$29",
-    features: ["15 connected accounts", "Unlimited posts", "Reels & Stories support", "Per-platform overrides", "API access (3 keys)"],
+    features: [
+      { text: "15 connected accounts", included: true },
+      { text: "Unlimited posts", included: true },
+      { text: "All 7 platforms", included: true },
+      { text: "Bulk CSV scheduling", included: true },
+      { text: "Post templates", included: true },
+      { text: "Calendar & drag-reschedule", included: true },
+      { text: "First comment automation", included: true },
+      { text: "Reels & Stories", included: true },
+      { text: "Per-platform overrides", included: true },
+      { text: "API access (3 keys)", included: true },
+    ],
     popular: true,
   },
   {
     id: "team",
     name: "Team",
-    desc: "For agencies managing multiple brands.",
+    desc: "For agencies and fast-moving teams.",
     inr: "₹2,600", usd: "$49",
-    features: ["50 connected accounts", "Unlimited posts", "Team roles & approvals", "Priority support", "API access (10 keys)"],
+    features: [
+      { text: "50 connected accounts", included: true },
+      { text: "Unlimited posts", included: true },
+      { text: "All 7 platforms", included: true },
+      { text: "Bulk CSV scheduling", included: true },
+      { text: "Post templates", included: true },
+      { text: "Calendar & drag-reschedule", included: true },
+      { text: "First comment automation", included: true },
+      { text: "Reels & Stories", included: true },
+      { text: "Per-platform overrides", included: true },
+      { text: "API access (10 keys)", included: true },
+    ],
     popular: false,
   },
 ];
@@ -181,8 +214,8 @@ export default function RootPage() {
           .ph-how-grid { grid-template-columns: 1fr !important; }
           .ph-pricing-grid { grid-template-columns: 1fr !important; }
           .ph-selfhost-inner { flex-direction: column !important; }
-          .ph-footer-inner { flex-direction: column !important; gap: 40px !important; }
-          .ph-foot-cols { gap: 32px !important; }
+          .ph-footer-inner { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .ph-foot-cols { grid-template-columns: repeat(2, 1fr) !important; gap: 28px !important; }
         }
         @media (max-width: 640px) {
           .ph-features-grid { grid-template-columns: 1fr !important; }
@@ -214,7 +247,6 @@ export default function RootPage() {
           <div style={{
             position: "absolute", top: -80, left: "50%", transform: "translateX(-50%)",
             width: 900, height: 620,
-            background: "radial-gradient(ellipse at center, rgba(91,99,211,.28), rgba(91,99,211,.06) 45%, transparent 70%)",
             filter: "blur(30px)", pointerEvents: "none",
             animation: "glowpulse 6s ease-in-out infinite",
           }} />
@@ -224,7 +256,7 @@ export default function RootPage() {
 
             <h1 className="anim-2 ph-hero-h1" style={{ fontSize: 72, lineHeight: 1.03, fontWeight: 800, letterSpacing: "-0.035em", margin: "0 0 24px", color: "#f4f4f4" }}>
               Schedule to every platform.<br />
-              <span style={{ color: "#8b8b8b" }}>From one place.</span>
+              <span style={{ color: "#f4f4f4" }}>From <span style={{ display: "inline-block", background: "#5b63d3", color: "#fff", padding: "2px 16px 4px", borderRadius: 6, transform: "rotate(-1.5deg)", transformOrigin: "center" }}>one place.</span></span>
             </h1>
 
             <p className="anim-3" style={{ fontSize: 19, lineHeight: 1.6, color: "#8f8f8f", maxWidth: 600, margin: "0 auto 38px", fontWeight: 400 }}>
@@ -302,7 +334,7 @@ export default function RootPage() {
           <div className="ph-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18 }}>
             {[
               { icon: <LayersIcon />, title: "Multi-platform posting",       href: "/features/multi-platform-posting",  body: "Draft once and ship to all seven networks in a single click." },
-              { icon: <PlayIcon />,   title: "Reels & Stories scheduling",   href: "/features/reels-and-stories",       body: "Full Instagram media support plus YouTube Shorts with native previews." },
+              { icon: <PlayIcon />,   title: "Reels & Stories scheduling",   href: "/features/instagram-reels-scheduler",       body: "Full Instagram media support plus YouTube Shorts with native previews." },
               { icon: <CalGridIcon />,title: "Drag-to-reschedule calendar",  href: "/features/drag-to-reschedule",      body: "See your whole week at a glance. Drag any post to a new slot in seconds." },
               { icon: <ChatIcon />,   title: "First comment automation",     href: "/features/first-comment",           body: "Drop a reply the moment a post goes live hashtags, links, threads." },
               { icon: <PenIcon />,    title: "Per-platform text overrides",  href: "/features/per-platform-overrides",  body: "Tweak copy and media per network without leaving the composer." },
@@ -573,16 +605,16 @@ export default function RootPage() {
             <div className="feature-visual" style={{ background: "#111111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 24, direction: "ltr" }}>
               <div className="mono" style={{ fontSize: 11, color: "#555", marginBottom: 10, letterSpacing: ".06em" }}>CSV PREVIEW</div>
               {[
-                { date: "Aug 1 · 09:00", text: "Good morning 🌅", accounts: "all", status: "ready" },
-                { date: "Aug 2 · 14:30", text: "Check the blog post", accounts: "bluesky|mastodon", status: "ready" },
-                { date: "Aug 3 · 18:00", text: "Skip Instagram today", accounts: "!instagram", status: "ready" },
-                { date: "Aug 4 · 10:00", text: "Two images 🖼️", accounts: "threads", status: "ready" },
+                { date: "Aug 1 · 09:00", text: "Good morning 🌅", accounts: "all" },
+                { date: "Aug 2 · 14:30", text: "Check the blog post", accounts: "bluesky" },
+                { date: "Aug 3 · 18:00", text: "Skip Instagram today", accounts: "!instagram" },
+                { date: "Aug 4 · 10:00", text: "Two images 🖼️", accounts: "threads" },
               ].map((row, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < 3 ? "1px solid #1a1a1a" : "none" }}>
-                  <span className="mono" style={{ fontSize: 11, color: "#555", minWidth: 90 }}>{row.date}</span>
-                  <span style={{ flex: 1, fontSize: 12, color: "#bbb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.text}</span>
-                  <span className="mono" style={{ fontSize: 10, color: "#666", minWidth: 70, textAlign: "right" }}>{row.accounts}</span>
-                  <span style={{ fontSize: 11, color: "#4ade80", fontWeight: 600 }}>✓</span>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: i < 3 ? "1px solid #1a1a1a" : "none", overflow: "hidden" }}>
+                  <span className="mono" style={{ fontSize: 11, color: "#555", flexShrink: 0 }}>{row.date}</span>
+                  <span style={{ flex: 1, fontSize: 12, color: "#bbb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{row.text}</span>
+                  <span className="mono" style={{ fontSize: 10, color: "#666", flexShrink: 0 }}>{row.accounts}</span>
+                  <span style={{ fontSize: 11, color: "#4ade80", fontWeight: 600, flexShrink: 0 }}>✓</span>
                 </div>
               ))}
               <div style={{ marginTop: 16, padding: "10px 14px", borderRadius: 8, background: "rgba(91,99,211,.08)", border: "1px solid rgba(91,99,211,.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -659,13 +691,13 @@ export default function RootPage() {
             <p className="mono" style={{ fontSize: 13, color: "#888", margin: "0 0 24px" }}>frontend dev by day · indie builder by night</p>
             <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: 14 }}>
               <p style={{ fontSize: 14.5, color: "#888", lineHeight: 1.7, margin: 0 }}>
-                I was building in public — sharing updates on Bluesky, Threads, LinkedIn, and Mastodon at the same time. Copy-pasting the same post into five different apps every single day.
+                I was building in public sharing updates on Bluesky, Threads, LinkedIn, and Mastodon at the same time. Copy-pasting the same post into five different apps every single day.
               </p>
               <p style={{ fontSize: 14.5, color: "#888", lineHeight: 1.7, margin: 0 }}>
                 Every tool I tried was either too expensive, too bloated, or didn&apos;t support the platforms I actually used. None of them felt like they were built for indie builders.
               </p>
               <p style={{ fontSize: 14.5, color: "#888", lineHeight: 1.7, margin: 0 }}>
-                So I built Posthive — focused on the platforms that matter to creators. Schedule once, post everywhere.
+                So I built Posthive focused on the platforms that matter to creators. Schedule once, post everywhere.
               </p>
               <p style={{ fontSize: 14.5, color: "#ededed", lineHeight: 1.7, margin: 0, fontWeight: 500 }}>
                 if it saves you time too, that&apos;s the whole point.
@@ -683,8 +715,8 @@ export default function RootPage() {
           <div className="ph-section" style={{ maxWidth: 1120, margin: "0 auto", padding: "104px 40px" }}>
             <div style={{ textAlign: "center", marginBottom: 60 }}>
               <span className="section-label">PRICING</span>
-              <h2 style={{ fontSize: 44, fontWeight: 700, letterSpacing: "-0.03em", margin: "16px 0 14px", color: "#f2f2f2" }}>Pay for what you need</h2>
-              <p style={{ fontSize: 17, color: "#8a8a8a", margin: 0 }}>14-day free trial on every plan. Cancel anytime.</p>
+              <h2 style={{ fontSize: 44, fontWeight: 700, letterSpacing: "-0.03em", margin: "16px 0 14px", color: "#f2f2f2" }}>Simple, transparent pricing</h2>
+              <p style={{ fontSize: 17, color: "#8a8a8a", margin: 0 }}>Start free. Upgrade when you&apos;re ready. No hidden fees, no per-seat nonsense.</p>
             </div>
             <div className="ph-pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, alignItems: "start" }}>
               {PLANS.map(plan => (
@@ -699,27 +731,23 @@ export default function RootPage() {
                     <p style={{ fontSize: 13.5, color: "#888", margin: 0, lineHeight: 1.5 }}>{plan.desc}</p>
                   </div>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <span style={{ fontSize: 38, fontWeight: 700, color: "#f2f2f2", letterSpacing: "-0.02em" }}>
+                    <span style={{ fontSize: 44, fontWeight: 800, color: "#f2f2f2", letterSpacing: "-0.03em" }}>
                       {isIndia ? plan.inr : plan.usd}
                     </span>
-                    <span style={{ fontSize: 14, color: "#777" }}>/mo · {isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}</span>
+                    <span style={{ fontSize: 14, color: "#555", marginLeft: 4 }}>/mo · {isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}</span>
                   </div>
                   <Link href={ctaHref} className={plan.popular ? "ph-plan-btn-pro" : "ph-plan-btn"}>
-                    {user ? "Go to scheduler" : "Start free trial"}
+                    {user ? "Go to scheduler" : "Get started"}
                   </Link>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-                    {plan.features.map(f => {
-                      const isNo = f.startsWith("No ");
-                      return (
-                        <span key={f} style={{ display: "flex", gap: 9, alignItems: "center", fontSize: 13.5, color: isNo ? "#555" : plan.popular ? "#cfcfcf" : "#b4b4b4" }}>
-                          {isNo
-                            ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2.6"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                            : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5b63d3" strokeWidth="2.6"><path d="M5 12l5 5L20 6"/></svg>
-                          }
-                          {f}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {plan.features.map(f => (
+                      <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 14, color: f.included ? "#4ade80" : "#333", flexShrink: 0 }}>
+                          {f.included ? "✓" : "—"}
                         </span>
-                      );
-                    })}
+                        <span style={{ fontSize: 13.5, color: f.included ? (plan.popular ? "#cfcfcf" : "#b4b4b4") : "#444" }}>{f.text}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -752,33 +780,100 @@ export default function RootPage() {
 
         {/* ── FOOTER ── */}
         <footer style={{ borderTop: "1px solid #161616", background: "#0a0a0a" }}>
-          <div className="ph-footer-inner" style={{ maxWidth: 1120, margin: "0 auto", padding: "56px 40px 40px", display: "flex", justifyContent: "space-between", gap: 48, flexWrap: "wrap" }}>
-            <div style={{ maxWidth: 280 }}>
+          <div style={{ maxWidth: 1120, margin: "0 auto", padding: "64px 40px 48px", display: "grid", gridTemplateColumns: "260px 1fr", gap: 64, flexWrap: "wrap" }} className="ph-footer-inner">
+
+            {/* Brand column */}
+            <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                <Image src="/posthivemain.png" alt="Posthive" width={26} height={26} style={{ objectFit: "contain" }} />
+                <Image src="/posthivemain.png" alt="Posthive" width={28} height={28} style={{ objectFit: "contain" }} />
                 <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.02em" }}>Posthive</span>
               </div>
-              <p style={{ fontSize: 13.5, color: "#7a7a7a", lineHeight: 1.6, margin: 0 }}>
-                Schedule to every platform from a single composer. Built for creators and teams.
+              <p style={{ fontSize: 13.5, color: "#555", lineHeight: 1.65, margin: "0 0 24px" }}>
+                The social media scheduler built for creators and teams. Write once, publish everywhere.
               </p>
+              <div style={{ display: "flex", gap: 10 }}>
+                {[
+                  {
+                    href: "https://github.com/AstaBlackClove/posthive",
+                    label: "GitHub",
+                    icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>,
+                  },
+                  {
+                    href: "https://x.com/gunaa_dev",
+                    label: "X",
+                    icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.912-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
+                  },
+                  {
+                    href: "https://www.linkedin.com/in/guna-sheelan-aa5325254/",
+                    label: "LinkedIn",
+                    icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>,
+                  },
+                ].map(({ href, label, icon }) => (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" title={label}
+                    style={{ width: 34, height: 34, borderRadius: 8, border: "1px solid #222", display: "flex", alignItems: "center", justifyContent: "center", color: "#555", textDecoration: "none", transition: "all 150ms" }}
+                    onMouseEnter={e => { e.currentTarget.style.color = "#ededed"; e.currentTarget.style.borderColor = "#444"; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = "#555"; e.currentTarget.style.borderColor = "#222"; }}>
+                    {icon}
+                  </a>
+                ))}
+              </div>
             </div>
-            <div className="ph-foot-cols" style={{ display: "flex", gap: 64, flexWrap: "wrap" }}>
-              <FootCol title="PRODUCT" links={[
-                { label: "Pricing",      href: "/#pricing" },
-                { label: "Docs",         href: "/docs" },
-              ]} />
-              <FootCol title="PLATFORMS" links={PLATFORMS_NAV.map(p => ({ label: p.label, href: `/platforms/${p.platform}` }))} />
-              <FootCol title="COMPANY" links={[
-                { label: "Contact", href: "mailto:gunasheelan208@gmail.com", external: true },
-                { label: "Privacy", href: "/privacy" },
-                { label: "Terms",   href: "/terms" },
-              ]} />
+
+            {/* Link columns */}
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 40 }} className="ph-foot-cols">
+
+              {/* Features */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <span className="mono" style={{ fontSize: 11, letterSpacing: ".1em", color: "#444", fontWeight: 700, marginBottom: 6, textTransform: "uppercase" }}>Features</span>
+                {FEATURES_NAV.map(f => (
+                  <Link key={f.slug} href={`/features/${f.slug}`} style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "#666", fontSize: 13.5 }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#ededed")} onMouseLeave={e => (e.currentTarget.style.color = "#666")}>
+                    <span style={{ color: f.color, display: "flex", flexShrink: 0 }}>{f.icon}</span>
+                    {f.title}
+                  </Link>
+                ))}
+              </div>
+
+              {/* Product */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <span className="mono" style={{ fontSize: 11, letterSpacing: ".1em", color: "#444", fontWeight: 700, marginBottom: 6, textTransform: "uppercase" }}>Product</span>
+                {([
+                  ["/pricing", "Pricing"],
+                  ["/blog", "Blog"],
+                  ["/docs", "Docs"],
+                  ["https://github.com/AstaBlackClove/posthive", "GitHub"],
+                ] as [string, string][]).map(([href, label]) => (
+                  <a key={label} href={href} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+                    style={{ textDecoration: "none", color: "#666", fontSize: 13.5 }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#ededed")} onMouseLeave={e => (e.currentTarget.style.color = "#666")}>
+                    {label}
+                  </a>
+                ))}
+              </div>
+
+              {/* Company */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <span className="mono" style={{ fontSize: 11, letterSpacing: ".1em", color: "#444", fontWeight: 700, marginBottom: 6, textTransform: "uppercase" }}>Company</span>
+                {([
+                  ["mailto:gunasheelan208@gmail.com", "Contact us"],
+                  ["/privacy", "Privacy policy"],
+                  ["/terms", "Terms of service"],
+                ] as [string, string][]).map(([href, label]) => (
+                  <a key={label} href={href}
+                    style={{ textDecoration: "none", color: "#666", fontSize: 13.5 }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#ededed")} onMouseLeave={e => (e.currentTarget.style.color = "#666")}>
+                    {label}
+                  </a>
+                ))}
+              </div>
+
             </div>
           </div>
+
           <div style={{ borderTop: "1px solid #161616" }}>
             <div style={{ maxWidth: 1120, margin: "0 auto", padding: "20px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-              <span className="mono" style={{ fontSize: 12.5, color: "#666" }}>© 2026 Posthive. All rights reserved.</span>
-              <span className="mono" style={{ fontSize: 12.5, color: "#666" }}>Built for creators, by an indie builder.</span>
+              <span className="mono" style={{ fontSize: 12.5, color: "#444" }}>© 2026 Posthive. All rights reserved.</span>
+              <span className="mono" style={{ fontSize: 12.5, color: "#444" }}>Open-source · AGPL-3.0 · Built by an indie builder.</span>
             </div>
           </div>
         </footer>

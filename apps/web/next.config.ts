@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // All API calls go through apps/api — no Next.js API routes for business logic.
+  async redirects() {
+    return [
+      {
+        source: "/features/reels-and-stories",
+        destination: "/features/instagram-reels-scheduler",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
