@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     description: "Product updates, guides, and creator insights from the Posthive team.",
     images: [
       {
-        url: "/api/og?title=Posthive%20Blog&desc=Product%20updates%2C%20guides%2C%20and%20creator%20insights.&badge=Blog",
+        url: "/api/og?layout=blog&title=Posthive%20Blog&desc=Product%20updates%2C%20guides%2C%20and%20creator%20insights.&badge=Blog",
         width: 1200,
         height: 630,
       },

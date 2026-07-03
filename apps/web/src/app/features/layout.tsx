@@ -10,7 +10,7 @@ export const metadata: Metadata = {
       "Multi-platform posting, bulk CSV scheduling, drag-to-reschedule calendar, Reels & Stories, per-platform overrides, first comment automation, and more.",
     images: [
       {
-        url: "/api/og?title=Posthive%20Features&desc=Multi-platform%20posting%2C%20bulk%20CSV%2C%20calendar%2C%20Reels%20%26%20Stories%2C%20per-platform%20overrides%2C%20and%20more.&badge=Features",
+        url: "/api/og?layout=features&title=Posthive%20Features&desc=Multi-platform%20posting%2C%20bulk%20CSV%2C%20calendar%2C%20Reels%20%26%20Stories%2C%20per-platform%20overrides%2C%20and%20more.&badge=Features",
         width: 1200,
         height: 630,
       },

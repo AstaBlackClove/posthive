@@ -11,7 +11,7 @@ export const metadata: Metadata = {
       "We built Posthive because we were tired of switching between tabs just to post the same update everywhere. Here's what we shipped.",
     images: [
       {
-        url: "/api/og?title=Introducing%20Posthive&desc=Schedule%20posts%20to%20Bluesky%2C%20Threads%2C%20Instagram%2C%20LinkedIn%2C%20Mastodon%2C%20YouTube%20%26%20Facebook%20from%20one%20place.&badge=Blog",
+        url: "/api/og?layout=post&title=Introducing%20Posthive&desc=Schedule%20posts%20to%20Bluesky%2C%20Threads%2C%20Instagram%2C%20LinkedIn%2C%20Mastodon%2C%20YouTube%20and%20Facebook%20from%20one%20place.&badge=Blog",
         width: 1200,
         height: 630,
       },

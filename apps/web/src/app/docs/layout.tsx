@@ -10,7 +10,7 @@ export const metadata: Metadata = {
       "Quick start, platform setup, bulk CSV scheduling, post templates, self-hosting, and the full REST API reference.",
     images: [
       {
-        url: "/api/og?title=Posthive%20Documentation&desc=Quick%20start%2C%20platform%20setup%2C%20API%20reference%2C%20and%20self-hosting%20guides.&badge=Docs",
+        url: "/api/og?layout=docs&title=Posthive%20Documentation&desc=Quick%20start%2C%20platform%20setup%2C%20API%20reference%2C%20and%20self-hosting%20guides.&badge=Docs",
         width: 1200,
         height: 630,
       },
