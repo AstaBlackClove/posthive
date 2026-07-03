@@ -135,8 +135,8 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
           </div>
         </div>
 
-        <Link href="/#pricing" style={{ ...btnStyle, textDecoration: "none" }}>Pricing</Link>
-        <Link href="/#how" style={{ ...btnStyle, textDecoration: "none" }}>How it works</Link>
+        <Link href="/pricing" style={{ ...btnStyle, textDecoration: "none" }}>Pricing</Link>
+        <Link href="/blog" style={{ ...btnStyle, textDecoration: "none" }}>Blog</Link>
         <Link href="/docs" style={{ ...btnStyle, textDecoration: "none" }}>Docs</Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: 8 }}>
@@ -178,7 +178,7 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
             </a>
           ))}
           <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", margin: "12px 0" }} />
-          {([["/#pricing", "Pricing"], ["/#how", "How it works"], ["/docs", "Docs"]] as [string, string][]).map(([href, label]) => (
+          {([["/pricing", "Pricing"], ["/blog", "Blog"], ["/docs", "Docs"]] as [string, string][]).map(([href, label]) => (
             <a key={label} href={href} onClick={() => setMobileOpen(false)} style={{ padding: "9px 4px", fontSize: 14, fontWeight: 500, color: "#888", textDecoration: "none" }}>{label}</a>
           ))}
           {!user && (

@@ -95,9 +95,17 @@ export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("quick-start");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
+  const [search, setSearch] = useState("");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(NAV.filter(g => g.section !== "Getting Started").map(g => [g.section, true]))
   );
+
+  const filteredNav = search.trim()
+    ? NAV.map(g => ({
+        ...g,
+        items: g.items.filter(i => i.label.toLowerCase().includes(search.toLowerCase())),
+      })).filter(g => g.items.length > 0)
+    : NAV;
   const mainRef = useRef<HTMLElement>(null);
   const scrollingRef = useRef(false);
 
@@ -225,14 +233,42 @@ export default function DocsPage() {
               left: 0,
               borderRight: "1px solid #2a2a2a",
               overflowY: "auto",
-              padding: "24px 0",
+              padding: "16px 0 24px",
               background: "#0a0a0a",
               zIndex: 46,
               transform: isDesktop || sidebarOpen ? "translateX(0)" : "translateX(-100%)",
               transition: "transform 0.2s ease",
             }}>
-            {NAV.map((group) => {
-              const isCollapsed = collapsed[group.section] ?? false;
+            {/* Search */}
+            <div style={{ padding: "0 14px 14px" }}>
+              <div style={{ position: "relative" }}>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#555", pointerEvents: "none" }}>
+                  <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.6"/>
+                  <path d="M10.5 10.5l3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                </svg>
+                <input
+                  type="search"
+                  placeholder="Search docs…"
+                  value={search}
+                  onChange={e => {
+                    setSearch(e.target.value);
+                    if (e.target.value.trim()) {
+                      setCollapsed(Object.fromEntries(NAV.map(g => [g.section, false])));
+                    }
+                  }}
+                  style={{
+                    width: "100%", paddingLeft: 30, paddingRight: 10, paddingTop: 7, paddingBottom: 7,
+                    background: "#111", border: "1px solid #2a2a2a", borderRadius: 8,
+                    fontSize: 12.5, color: "#ededed", outline: "none", boxSizing: "border-box",
+                  }}
+                />
+              </div>
+            </div>
+            {filteredNav.length === 0 && (
+              <p style={{ padding: "0 20px", fontSize: 12, color: "#555" }}>No results for &ldquo;{search}&rdquo;</p>
+            )}
+            {filteredNav.map((group) => {
+              const isCollapsed = search.trim() ? false : (collapsed[group.section] ?? false);
               const hasActive = group.items.some(i => i.id === activeSection);
               return (
                 <div key={group.section}>

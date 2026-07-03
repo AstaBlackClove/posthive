@@ -6,8 +6,8 @@ import { AuthGuard } from "./AuthGuard";
 import { PlanGuard } from "./PlanGuard";
 
 // No auth, no sidebar — public pages (exact) or prefixes
-const PUBLIC_EXACT = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/privacy", "/terms", "/features", "/docs", "/verify-email"];
-const PUBLIC_PREFIXES = ["/features/", "/platforms/", "/docs/"];
+const PUBLIC_EXACT = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/privacy", "/terms", "/features", "/docs", "/verify-email", "/pricing", "/blog"];
+const PUBLIC_PREFIXES = ["/features/", "/platforms/", "/docs/", "/blog/"];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
