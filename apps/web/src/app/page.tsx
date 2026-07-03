@@ -240,7 +240,7 @@ export default function RootPage() {
             </div>
 
             {!user && (
-              <p className="anim-5 mono" style={{ fontSize: 13, color: "#666", margin: "0 0 52px" }}>14-day free trial · no card required</p>
+              <p className="anim-5 mono" style={{ fontSize: 13, color: "#666", margin: "0 0 52px" }}>14-day free trial</p>
             )}
 
             <div className="anim-5" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18, flexWrap: "wrap", marginTop: user ? 52 : 0 }}>
@@ -745,7 +745,7 @@ export default function RootPage() {
               <Link href="/docs" className="ph-btn-secondary" style={{ fontSize: 16, padding: "15px 28px" }}>View docs</Link>
             </div>
             <p className="mono" style={{ fontSize: 12, color: "#444", marginTop: 20 }}>
-              14-day free trial · no card required · <a href={GITHUB_URL} target="_blank" rel="noopener" style={{ color: "#444", textDecoration: "none" }}>open source</a>
+              14-day free trial · <a href={GITHUB_URL} target="_blank" rel="noopener" style={{ color: "#444", textDecoration: "none" }}>open source</a>
             </p>
           </div>
         </section>

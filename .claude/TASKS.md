@@ -27,22 +27,36 @@
 ### Compose / Scheduling
 - [ ] **Timezone support** — already works via browser local time; may need server-side timezone awareness for recurring posts
 - [ ] **Recurring posts** — schedule a post to repeat daily/weekly
-- [x] **Post templates** — save/load/delete templates from compose; Templates dropdown + Save button
-- [x] **Bulk scheduling** — CSV upload modal on Posts page; preview table, per-row validation, progress bar
+- [x] **Post templates** — save/load/delete templates from compose; Templates dropdown + Save button; YouTube fields; duplicate name guard
+- [x] **Bulk scheduling** — CSV upload modal on Compose + Posts pages; `!platform` exclusion syntax; Instagram image validation; preview table; progress bar
 - [ ] **Queue / Best time to post** — auto-schedule to next available optimal slot
+- [ ] **AI caption assist** — "Generate caption" button powered by Claude API; platform-aware char limits
+- [ ] **Draft posts** — save a compose state as draft without scheduling; list in Posts page
 
 ### Posts / Calendar
 - [x] **Week/Day view polish** — timegrid event cards, slot height, now indicator, today column highlight
+- [ ] **Post analytics** — view engagement stats (likes, replies, reposts) pulled from each platform after publishing
+- [ ] **Duplicate post** — clone an existing post to reschedule without re-typing
+
+### Accounts
+- [ ] **Multiple accounts per platform** — currently one account per platform per user; allow connecting e.g. two Bluesky handles
+- [ ] **Account groups** — tag accounts into groups (e.g. "Work", "Personal") and target a group in compose
 
 ### Marketing & Docs
 - [ ] **`/features` page — screenshots/GIFs** — replace image slot placeholders with real assets
-- [ ] **`/docs` page — fill image slots** — replace `DocImage` placeholders with actual screenshots
 - [ ] **`/docs` page — search** — in-page search / filter across sections
 - [ ] **`/pricing` page** — dedicated standalone pricing page (currently only on landing `/#pricing`)
 - [ ] **`/changelog` page** — public changelog / release notes
 - [ ] **`/blog` page** — optional content marketing hub
 - [ ] **Open Graph images** — `og:image` meta for `/`, `/features`, `/docs` pages
-- [ ] **Landing page A/B hero** — test two hero headlines
+- [ ] **Landing page — social proof** — testimonials or logo wall once early users available
+- [ ] **Landing page — demo video** — 60s product walkthrough embed in hero
+
+### Infrastructure / DevEx
+- [ ] **Webhook outbound** — fire a webhook to a user-configured URL on post publish (useful for integrations)
+- [ ] **Zapier / Make integration** — trigger via webhook; document in API reference
+- [ ] **Multi-user / team workspaces** — Team plan currently single-user; add workspace invite + member roles
+- [ ] **Audit log** — track schedule/edit/delete actions per user for Team plan
 
 ---
 
@@ -116,6 +130,10 @@
 ### Branding & Marketing
 - [x] Rebrand to Posthive throughout
 - [x] Landing page — hero, features, pricing (USD + INR), how-it-works, footer, NavBar
-- [x] `/features` marketing page
-- [x] `/docs` page — full docs with collapsible sidebar, copy buttons, API reference
+- [x] Landing page — bulk CSV deep-dive section + 7th feature card
+- [x] `/features` marketing page + individual feature slug pages
+- [x] `/features/bulk-csv-scheduling` feature page
+- [x] Features nav dropdown — bulk CSV scheduling entry
+- [x] `/docs` page — full docs with collapsible sidebar, copy buttons, API reference, bulk CSV + templates sections
 - [x] `robots.txt` + sitemap
+- [x] README — comprehensive rewrite covering all features, platforms, env vars, bulk CSV format, API reference

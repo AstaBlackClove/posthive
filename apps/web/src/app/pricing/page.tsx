@@ -234,7 +234,7 @@ export default function PricingPage() {
         }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#ededed", marginBottom: 4 }}>Not sure yet?</div>
-            <div style={{ fontSize: 14, color: "#666" }}>Start with a 14-day free trial — no card required. 3 accounts, 30 posts.</div>
+            <div style={{ fontSize: 14, color: "#666" }}>Start with a 14-day free trial. 3 accounts, 30 posts.</div>
           </div>
           <Link href="/register" style={{
             background: "#fff", color: "#0a0a0a", padding: "10px 24px",

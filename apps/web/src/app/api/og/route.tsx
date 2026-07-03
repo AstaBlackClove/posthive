@@ -131,7 +131,7 @@ function PricingLayout({ logo, title, desc }: { logo: string; title: string; des
         <div style={{ fontSize: 18, color: "#666", lineHeight: 1.5, display: "flex" }}>{desc}</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
           <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", display: "flex" }} />
-          <span style={{ fontSize: 13, color: "#4ade80" }}>14-day free trial, no card required</span>
+          <span style={{ fontSize: 13, color: "#4ade80" }}>14-day free trial</span>
         </div>
       </div>
 

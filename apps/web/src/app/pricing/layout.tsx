@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Simple, transparent pricing for Posthive. Start free — no card required. Upgrade to Creator, Pro, or Team when you're ready.",
+    "Simple, transparent pricing for Posthive. Start free. Upgrade to Creator, Pro, or Team when you're ready.",
   openGraph: {
     title: "Posthive Pricing — Simple, transparent plans",
     description:
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Posthive Pricing — Simple, transparent plans",
-    description: "Start free. No card required. Creator · Pro · Team.",
+    description: "Start free. Creator · Pro · Team.",
   },
 };
 

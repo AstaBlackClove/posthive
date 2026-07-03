@@ -9,18 +9,18 @@ const OG_BASE = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.in";
 export const metadata: Metadata = {
   title: { default: "Posthive", template: "%s | Posthive" },
   description:
-    "Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages — all from one clean interface.",
+    "The social media scheduling tool built for creators and teams. Write once, publish everywhere.",
   icons: { icon: "/posthivemain.png", apple: "/posthivemain.png" },
   metadataBase: new URL(OG_BASE),
   openGraph: {
     type: "website",
     siteName: "Posthive",
-    title: "Posthive — Schedule posts to 7 platforms at once",
+    title: "Posthive: Social media scheduling for creators and teams",
     description:
-      "Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages — all from one clean interface.",
+      "The social media scheduling tool built for creators and teams. Write once, publish everywhere.",
     images: [
       {
-        url: "/api/og?title=Posthive%20%E2%80%94%20Schedule%20posts%20to%207%20platforms&desc=Write%20once%2C%20publish%20everywhere.%20Bluesky%2C%20Threads%2C%20Instagram%2C%20LinkedIn%2C%20Mastodon%2C%20YouTube%20%26%20Facebook.",
+        url: "/api/og?title=Posthive&desc=The%20social%20media%20scheduling%20tool%20built%20for%20creators%20and%20teams.%20Write%20once%2C%20publish%20everywhere.",
         width: 1200,
         height: 630,
         alt: "Posthive — Social media scheduling",
@@ -29,11 +29,11 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Posthive — Schedule posts to 7 platforms at once",
+    title: "Posthive — Social media scheduling for creators and teams",
     description:
-      "Write once, publish everywhere. Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube & Facebook.",
+      "The social media scheduling tool built for creators and teams. Write once, publish everywhere.",
     images: [
-      "/api/og?title=Posthive%20%E2%80%94%20Schedule%20posts%20to%207%20platforms&desc=Write%20once%2C%20publish%20everywhere.%20Bluesky%2C%20Threads%2C%20Instagram%2C%20LinkedIn%2C%20Mastodon%2C%20YouTube%20%26%20Facebook.",
+      "/api/og?title=Posthive&desc=The%20social%20media%20scheduling%20tool%20built%20for%20creators%20and%20teams.%20Write%20once%2C%20publish%20everywhere.",
     ],
   },
 };

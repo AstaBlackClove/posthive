@@ -735,7 +735,7 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
               {/* ── Plans & pricing ── */}
               <h2 className="doc-h2" id="plans-pricing">Plans &amp; pricing</h2>
               <p className="doc-p">
-                Posthive has four tiers. The trial is available immediately after sign-up with no card required.
+                Posthive has four tiers. The trial is available immediately after sign-up.
               </p>
               <div className="doc-table-wrap"><table className="doc-table">
                 <thead>
