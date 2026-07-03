@@ -32,10 +32,11 @@ const PLANS = [
     maxPostsPerMonth: 400,
     features: [
       { text: "5 connected accounts", key: true },
-      { text: "400 scheduled posts / month", key: true },
-      { text: "Up to 4 images per post", key: false },
-      { text: "Per-platform content customization", key: false },
-      { text: "Content calendar view", key: false },
+      { text: "400 posts / month", key: true },
+      { text: "All 7 platforms", key: false },
+      { text: "Bulk CSV scheduling", key: false },
+      { text: "Calendar & drag-reschedule", key: false },
+      { text: "First comment automation", key: false },
     ],
   },
   {
@@ -51,9 +52,10 @@ const PLANS = [
     popular: true,
     features: [
       { text: "15 connected accounts", key: true },
-      { text: "Unlimited scheduled posts", key: true },
+      { text: "Unlimited posts", key: true },
+      { text: "Reels & Stories", key: true },
+      { text: "Per-platform overrides", key: true },
       { text: "Everything in Creator", key: false },
-      { text: "Priority support", key: false },
     ],
   },
   {
@@ -68,8 +70,9 @@ const PLANS = [
     maxPostsPerMonth: null,
     features: [
       { text: "50 connected accounts", key: true },
-      { text: "Unlimited scheduled posts", key: true },
-      { text: "3 team seats", key: true },
+      { text: "Unlimited posts", key: true },
+      { text: "Reels & Stories", key: false },
+      { text: "Per-platform overrides", key: false },
       { text: "Everything in Pro", key: false },
     ],
   },
