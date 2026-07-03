@@ -14,15 +14,15 @@
 - [ ] **Facebook first comment** — requires `pages_manage_engagement` permission (pending Meta app review). Re-enable `createComment` in `apps/api/src/adapters/facebook.ts` once approved.
 - [ ] **CRITICAL — Google app verification** — refresh tokens expire after 7 days in Testing mode. In progress (4–6 weeks). Required: privacy policy, ToS, domain ownership, demo video for sensitive scopes.
 
-### YouTube
-- [ ] **Privacy status override** — hardcoded to `public`; expose `private`/`unlisted` as per-platform override in Customize dialog
-- [ ] **Thumbnail upload** — YouTube Data API supports custom thumbnails (`thumbnails.set`); not wired up yet
+### YouTube (deferred until user growth)
+- [ ] **Privacy status override** — hardcoded to `public`; expose `private`/`unlisted` as per-platform override. Scope already present (`youtube.force-ssl`); deferred.
+- [ ] **Thumbnail upload** — `thumbnails.set` API, scope already present; deferred until Google app verification completes.
 
-### Instagram Advanced
-- [ ] **Video carousel** — mix of image + video items in one carousel post
-- [ ] **Location tagging** — `location_id` on media container (requires Facebook Location Search API)
-- [ ] **User tagging** — `user_tags` array on image containers (requires username → ID resolution)
-- [ ] **Collaborator tagging** — `collaborators` field (co-author posts)
+### Instagram Advanced (blocked on Meta app review)
+- [x] **Video carousel** — mixed image + video carousel already supported in adapter
+- [ ] **Location tagging** — `location_id` on media container (requires Facebook Location Search API; pending Meta approval)
+- [ ] **User tagging** — `user_tags` array on image containers (pending Meta approval)
+- [ ] **Collaborator tagging** — `collaborators` field (pending Meta approval)
 
 ### Compose / Scheduling
 - [ ] **Timezone support** — already works via browser local time; may need server-side timezone awareness for recurring posts

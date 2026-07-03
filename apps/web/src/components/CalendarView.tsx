@@ -28,7 +28,62 @@ function EventCard({ info }: { info: EventContentArg }) {
   const job = info.event.extendedProps.job as Job;
   const content = JSON.parse(job.content) as { text: string };
   const style = STATUS_STYLE[job.status] ?? STATUS_STYLE.pending;
+  const isTimegrid = info.view.type.startsWith("timeGrid");
 
+  if (isTimegrid) {
+    return (
+      <div style={{
+        background: style.bg,
+        border: `1px solid ${style.border}`,
+        borderLeft: `3px solid ${style.dot}`,
+        borderRadius: 8,
+        padding: "3px 7px",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        cursor: job.status === "pending" ? "grab" : "default",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        gap: 2,
+        boxSizing: "border-box",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={{ fontSize: 10, color: style.text, fontWeight: 700, opacity: 0.9, whiteSpace: "nowrap", flexShrink: 0 }}>
+            {info.timeText}
+          </span>
+          <span style={{ display: "flex", gap: 2, marginLeft: "auto", flexShrink: 0 }}>
+            {job.targets.slice(0, 4).map((t, i) => (
+              <span key={i} style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+                {t.account?.avatarUrl ? (
+                  <img src={t.account.avatarUrl} alt={t.account.displayName}
+                    style={{ width: 13, height: 13, borderRadius: "50%", objectFit: "cover" }} />
+                ) : (
+                  <span style={{ width: 13, height: 13, borderRadius: "50%", backgroundColor: "#333",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 7, fontWeight: 700, color: "#888" }}>
+                    {t.account?.displayName?.[0]?.toUpperCase() ?? "?"}
+                  </span>
+                )}
+                <span style={{ position: "absolute", bottom: -1, right: -1,
+                  width: 8, height: 8, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 0 }}>
+                  <PlatformIcon platform={t.account?.platform ?? "unknown"} size={7} />
+                </span>
+              </span>
+            ))}
+          </span>
+        </div>
+        <p style={{
+          fontSize: 11, fontWeight: 600, color: style.text, lineHeight: 1.3,
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0,
+        }}>
+          {content.text}
+        </p>
+      </div>
+    );
+  }
+
+  // Month view card
   return (
     <div style={{
       background: style.bg,
@@ -159,11 +214,24 @@ const DARK_CSS = `
   .fc-dark .fc-toolbar { margin-bottom: 16px !important; align-items: center; }
 
   /* Timegrid */
-  .fc-dark .fc-timegrid-slot { background: #111 !important; border-color: #222 !important; height: 44px !important; }
-  .fc-dark .fc-timegrid-slot-label { color: #555 !important; font-size: 0.68rem !important; }
-  .fc-dark .fc-timegrid-axis { background: #111 !important; }
-  .fc-dark .fc-timegrid-now-indicator-line { border-color: #5b63d3 !important; }
-  .fc-dark .fc-timegrid-now-indicator-arrow { border-color: #5b63d3 !important; }
+  .fc-dark .fc-timegrid-slot { background: #111 !important; border-color: #1e1e1e !important; height: 48px !important; }
+  .fc-dark .fc-timegrid-slot-minor { border-color: #181818 !important; }
+  .fc-dark .fc-timegrid-slot-label { color: #555 !important; font-size: 0.68rem !important; vertical-align: top; padding-top: 4px !important; }
+  .fc-dark .fc-timegrid-axis { background: #111 !important; border-color: #1e1e1e !important; }
+  .fc-dark .fc-timegrid-col { background: #111 !important; }
+  .fc-dark .fc-timegrid-col.fc-day-today { background: #13132a !important; }
+  .fc-dark .fc-timegrid-now-indicator-line { border-color: #5b63d3 !important; border-width: 2px !important; }
+  .fc-dark .fc-timegrid-now-indicator-arrow { border-top-color: #5b63d3 !important; border-bottom-color: #5b63d3 !important; }
+
+  /* Timegrid events */
+  .fc-dark .fc-timegrid-event { border-radius: 8px !important; border: none !important; background: transparent !important; box-shadow: none !important; }
+  .fc-dark .fc-timegrid-event .fc-event-main { padding: 0 !important; height: 100%; }
+  .fc-dark .fc-timegrid-event-harness { margin: 1px 2px !important; }
+
+  /* Week view column headers — show day number prominently */
+  .fc-dark .fc-timegrid-axis-cushion { font-size: 0.62rem !important; color: #444 !important; }
+  .fc-dark .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { color: #818cf8 !important; }
+  .fc-dark .fc-col-header-cell.fc-day-today { border-bottom: 2px solid #5b63d3 !important; }
 
   /* Scrollgrid */
   .fc-dark .fc-scrollgrid-section-header th { border-color: #2a2a2a !important; }
@@ -337,6 +405,11 @@ export function CalendarView({ jobs, onReschedule, onEdit }: Props) {
         eventContent={(info) => <EventCard info={info} />}
         height="auto"
         dayMaxEvents={3}
+        scrollTime="08:00:00"
+        slotMinTime="00:00:00"
+        slotMaxTime="24:00:00"
+        allDaySlot={false}
+        nowIndicator={true}
         eventDidMount={(info) => {
           const job = info.event.extendedProps.job as Job;
           const content = JSON.parse(job.content) as { text: string };

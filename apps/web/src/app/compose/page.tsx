@@ -37,7 +37,7 @@ export default function ComposePage() {
   const [youtubeTitle, setYoutubeTitle] = useState("");
   const [youtubeDescription, setYoutubeDescription] = useState("");
   const [youtubeType, setYoutubeType] = useState<"short" | "video">("short");
-  const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(null);
+const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dryRun, setDryRun] = useState(false);
@@ -639,6 +639,7 @@ export default function ComposePage() {
                   style={{ borderColor: youtubeDescription.length > 5000 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
                 />
               </div>
+
             </div>
           )}
 
