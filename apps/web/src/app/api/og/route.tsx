@@ -25,14 +25,8 @@ function Grid() {
   );
 }
 
-function Glow({ top = -160, left = -160, size = 600, opacity = 0.28 }: { top?: number; left?: number; size?: number; opacity?: number }) {
-  return (
-    <div style={{
-      position: "absolute", top, left, width: size, height: size,
-      borderRadius: "50%", display: "flex",
-      background: `radial-gradient(circle, rgba(91,99,211,${opacity}) 0%, transparent 65%)`,
-    }} />
-  );
+function Glow(_props: { top?: number; left?: number; size?: number; opacity?: number }) {
+  return null;
 }
 
 function TopBar() {
@@ -44,11 +38,11 @@ function TopBar() {
   );
 }
 
-function Logo({ src, size = 40 }: { src: string; size?: number }) {
+function Logo({ src, size = 48 }: { src: string; size?: number }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      <img src={src} alt="" width={size} height={size} style={{ borderRadius: 9, display: "flex" }} />
-      <span style={{ fontSize: 18, fontWeight: 700, color: "#ededed", letterSpacing: "-0.01em" }}>Posthive</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <img src={src} alt="" width={size} height={size} style={{ borderRadius: 11, display: "flex" }} />
+      <span style={{ fontSize: 22, fontWeight: 700, color: "#ededed", letterSpacing: "-0.01em" }}>Posthive</span>
     </div>
   );
 }
@@ -58,7 +52,7 @@ function Badge({ text }: { text: string }) {
     <div style={{
       display: "flex", background: "rgba(91,99,211,0.18)",
       border: "1px solid rgba(91,99,211,0.4)", borderRadius: 20,
-      padding: "5px 16px", fontSize: 11, fontWeight: 700,
+      padding: "7px 20px", fontSize: 13, fontWeight: 700,
       color: "#9ba2ee", letterSpacing: "0.1em", textTransform: "uppercase",
     }}>
       {text}
@@ -69,40 +63,43 @@ function Badge({ text }: { text: string }) {
 // ── Layout: home (default) ───────────────────────────────────────────────────
 
 function HomeLayout({ logo, title, desc }: { logo: string; title: string; desc: string }) {
-  const fontSize = title.length > 38 ? 54 : title.length > 28 ? 62 : 72;
+  const fontSize = title.length > 40 ? 72 : title.length > 28 ? 84 : 96;
   return (
     <div style={{ width: 1200, height: 630, background: "#0a0a0a", display: "flex", position: "relative", overflow: "hidden", fontFamily: "system-ui, sans-serif" }}>
       <Grid />
-      <Glow top={-160} left={-160} size={600} opacity={0.28} />
-      <Glow top={300} left={600} size={400} opacity={0.12} />
-      <TopBar />
+      <Glow top={-200} left={-100} size={700} opacity={0.22} />
+      <Glow top={350} left={700} size={500} opacity={0.1} />
 
-      {/* Left content */}
-      <div style={{ display: "flex", flexDirection: "column", padding: "60px 80px", flex: 1, justifyContent: "space-between" }}>
-        <Logo src={logo} />
+      <div style={{ display: "flex", flexDirection: "column", padding: "64px 80px", flex: 1, justifyContent: "space-between" }}>
+
+        {/* Top — logo + brand label */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <Logo src={logo} />
+          <div style={{ width: 1, height: 24, background: "#2a2a2a", display: "flex" }} />
+          <span style={{ fontSize: 15, color: "#5b63d3", fontWeight: 600, letterSpacing: "0.02em" }}>Social media scheduling</span>
+        </div>
+
+        {/* Middle — headline */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ fontSize, fontWeight: 800, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.03em", maxWidth: 760, display: "flex", flexWrap: "wrap" }}>{title}</div>
-          <div style={{ fontSize: 20, color: "#666", maxWidth: 680, display: "flex" }}>{desc}</div>
-        </div>
-        {/* Platform dots */}
-        <div style={{ display: "flex", gap: 10 }}>
-          {PLATFORMS.map((p) => (
-            <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "6px 12px" }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: p.color, display: "flex", boxShadow: `0 0 6px ${p.color}` }} />
-              <span style={{ fontSize: 11, color: "#777", fontWeight: 500 }}>{p.name}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Right stat panel */}
-      <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 280, background: "rgba(91,99,211,0.05)", borderLeft: "1px solid rgba(91,99,211,0.12)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: "0 32px" }}>
-        {[{ n: "7", label: "Platforms" }, { n: "1×", label: "Write" }, { n: "∞", label: "Reach" }].map((s) => (
-          <div key={s.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "18px 0", width: "100%" }}>
-            <span style={{ fontSize: 36, fontWeight: 800, color: "#9ba2ee", letterSpacing: "-0.02em" }}>{s.n}</span>
-            <span style={{ fontSize: 11, color: "#555", marginTop: 4, letterSpacing: "0.06em", textTransform: "uppercase" }}>{s.label}</span>
+          <div style={{ fontSize, fontWeight: 800, color: "#ffffff", lineHeight: 1.05, letterSpacing: "-0.04em", display: "flex", flexWrap: "wrap", maxWidth: 1040 }}>
+            {title}
           </div>
-        ))}
+          <div style={{ fontSize: 26, color: "#555", display: "flex", maxWidth: 800 }}>{desc}</div>
+        </div>
+
+        {/* Bottom — platform pills + domain */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", gap: 8 }}>
+            {PLATFORMS.map((p) => (
+              <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "7px 13px" }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: p.color, display: "flex", boxShadow: `0 0 7px ${p.color}` }} />
+                <span style={{ fontSize: 12, color: "#666", fontWeight: 500 }}>{p.name}</span>
+              </div>
+            ))}
+          </div>
+          <span style={{ fontSize: 15, color: "#333", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}>POSTHIVE.CO</span>
+        </div>
+
       </div>
     </div>
   );
@@ -174,23 +171,26 @@ function DocsLayout({ logo, title, desc }: { logo: string; title: string; desc: 
   return (
     <div style={{ width: 1200, height: 630, background: "#0a0a0a", display: "flex", position: "relative", overflow: "hidden", fontFamily: "system-ui, sans-serif" }}>
       <Grid />
-      <Glow top={-80} left={400} size={500} opacity={0.15} />
+      <Glow top={-80} left={300} size={600} opacity={0.18} />
       <TopBar />
 
       {/* Left */}
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 72px", width: 560, gap: 24 }}>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "64px 72px", width: 580 }}>
         <Logo src={logo} />
-        <Badge text="Documentation" />
-        <div style={{ fontSize: 56, fontWeight: 800, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.03em", display: "flex", flexWrap: "wrap" }}>{title}</div>
-        <div style={{ fontSize: 18, color: "#666", lineHeight: 1.5, display: "flex" }}>{desc}</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <Badge text="Documentation" />
+          <div style={{ fontSize: 68, fontWeight: 800, color: "#fff", lineHeight: 1.05, letterSpacing: "-0.04em", display: "flex", flexWrap: "wrap" }}>{title}</div>
+          <div style={{ fontSize: 22, color: "#555", lineHeight: 1.5, display: "flex" }}>{desc}</div>
+        </div>
+        <span style={{ fontSize: 15, color: "#333", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}>POSTHIVE.CO</span>
       </div>
 
       {/* Right — doc section list */}
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", flex: 1, padding: "60px 60px 60px 0", gap: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", flex: 1, padding: "64px 64px 64px 0", gap: 12 }}>
         {sections.map((s) => (
-          <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 14, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "14px 20px" }}>
-            <div style={{ width: 4, height: 32, borderRadius: 4, background: s.color, display: "flex", flexShrink: 0 }} />
-            <span style={{ fontSize: 15, fontWeight: 600, color: "#ccc" }}>{s.label}</span>
+          <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "18px 24px" }}>
+            <div style={{ width: 4, height: 36, borderRadius: 4, background: s.color, display: "flex", flexShrink: 0 }} />
+            <span style={{ fontSize: 18, fontWeight: 600, color: "#ccc" }}>{s.label}</span>
           </div>
         ))}
       </div>
