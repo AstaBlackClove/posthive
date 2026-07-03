@@ -4,10 +4,15 @@ import { NextRequest } from "next/server";
 export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+  const { searchParams, origin } = new URL(request.url);
   const title = searchParams.get("title") ?? "Posthive";
   const desc = searchParams.get("desc") ?? "Schedule posts to 7 platforms from one place.";
   const badge = searchParams.get("badge") ?? "";
+
+  // Fetch the logo as base64 so next/og can embed it
+  const logoSrc = await fetch(`${origin}/posthivemain.png`)
+    .then((r) => r.arrayBuffer())
+    .then((buf) => `data:image/png;base64,${Buffer.from(buf).toString("base64")}`);
 
   return new ImageResponse(
     (
@@ -50,21 +55,8 @@ export async function GET(request: NextRequest) {
 
         {/* Logo row */}
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48 }}>
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 10,
-              background: "#5b63d3",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 22,
-              color: "#fff",
-            }}
-          >
-            P
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={logoSrc} alt="Posthive" width={44} height={44} style={{ borderRadius: 10 }} />
           <span style={{ fontSize: 22, fontWeight: 700, color: "#ededed", letterSpacing: "-0.02em" }}>
             Posthive
           </span>
