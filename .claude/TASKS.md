@@ -33,6 +33,9 @@
 - [ ] **AI caption assist** — "Generate caption" button powered by Claude API; platform-aware char limits
 - [ ] **Draft posts** — save a compose state as draft without scheduling; list in Posts page
 
+### Edit Dialog
+- [ ] **Video replacement in edit** — `uploadFiles` in `EditPostDialog.tsx` only processes images; selecting a video file in Reel mode or YouTube upload mode silently does nothing. Users must delete and repost to change a video. Fix: handle `video/*` files in `uploadFiles` for reel mode, and add a video file input to the YouTube upload-mode section.
+
 ### Posts / Calendar
 - [x] **Week/Day view polish** — timegrid event cards, slot height, now indicator, today column highlight
 - [ ] **Post analytics** — view engagement stats (likes, replies, reposts) pulled from each platform after publishing

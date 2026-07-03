@@ -251,7 +251,7 @@ export default function JobsPage() {
     } catch (err) { toastError(String(err)); }
   }
 
-  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video") {
+  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string) {
     try {
       await apiFetch(`/jobs/${jobId}`, {
         method: "PATCH",
@@ -263,6 +263,8 @@ export default function JobsPage() {
           mediaType,
           accountIds,
           ...(youtubeType ? { youtubeType } : {}),
+          ...(youtubeVideoMode ? { youtubeVideoMode } : {}),
+          ...(youtubeVideoUrl !== undefined ? { youtubeVideoUrl } : {}),
           ...(Object.keys(perAccount).length > 0 ? { perAccount } : { perAccount: {} }),
         }),
       });
@@ -334,8 +336,8 @@ export default function JobsPage() {
           open={!!editingJob}
           job={editingJob}
           accounts={accounts}
-          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType) => {
-            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType);
+          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl) => {
+            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl);
           }}
           onClose={() => setEditingJob(null)}
         />

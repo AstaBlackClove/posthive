@@ -87,14 +87,20 @@ export const youtubeAdapter: PlatformAdapter = {
     return refreshIfNeeded(account);
   },
 
-  async createPost(account, { text, mediaUrls, youtubeType }) {
+  async createPost(account, { text, mediaUrls, youtubeType, youtubeVideoUrl }) {
     const { accessToken } = getCredentials(account);
 
     const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "";
-    const absoluteUrls = (mediaUrls ?? []).map((url) =>
-      url.startsWith("http") ? url : `${PUBLIC_API_URL}${url}`
-    );
-    const videoUrl = absoluteUrls.find(isVideoUrl);
+    let videoUrl: string | undefined;
+    if (youtubeVideoUrl) {
+      // External URL pasted by user — use directly, no extension check needed
+      videoUrl = youtubeVideoUrl.startsWith("http") ? youtubeVideoUrl : `${PUBLIC_API_URL}${youtubeVideoUrl}`;
+    } else {
+      const absoluteUrls = (mediaUrls ?? []).map((url) =>
+        url.startsWith("http") ? url : `${PUBLIC_API_URL}${url}`
+      );
+      videoUrl = absoluteUrls.find(isVideoUrl);
+    }
     if (!videoUrl) throw new Error("YouTube requires a video file to upload.");
 
     const asShort = youtubeType !== "video"; // defaults to Short unless explicitly "video"

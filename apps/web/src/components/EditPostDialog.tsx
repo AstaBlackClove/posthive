@@ -25,12 +25,12 @@ interface Props {
   open: boolean;
   job: EditableJob;
   accounts: Account[];
-  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video") => Promise<void>;
+  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string) => Promise<void>;
   onClose: () => void;
 }
 
 export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) {
-  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; perAccount?: Record<string, PerAccountOverride> };
+  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; youtubeVideoMode?: "upload" | "url"; youtubeVideoUrl?: string; perAccount?: Record<string, PerAccountOverride> };
 
   const [text, setText] = useState(parsedContent.text);
   const [commentText, setCommentText] = useState(job.commentText ?? "");
@@ -38,8 +38,9 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const [igMediaType, setIgMediaType] = useState<"post" | "reel" | "story">(parsedContent.mediaType ?? "post");
   const [images, setImages] = useState<UploadedImage[]>(() => {
     const urls = parsedContent.mediaUrls ?? [];
+    const ytVideoUrl = parsedContent.youtubeVideoUrl ?? "";
     const isVideo = (u: string) => /\.(mp4|mov|quicktime)$/i.test(u);
-    return urls.filter(u => !isVideo(u)).map(url => ({
+    return urls.filter(u => u !== ytVideoUrl && !isVideo(u)).map(url => ({
       url,
       previewUrl: url.startsWith("http") ? url : `${API_BASE}${url}`,
       name: url.split("/").pop() ?? "image",
@@ -47,8 +48,9 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   });
   const [video, setVideo] = useState<{ url: string; previewUrl: string; name: string } | null>(() => {
     const urls = parsedContent.mediaUrls ?? [];
+    const ytVideoUrl = parsedContent.youtubeVideoUrl ?? "";
     const isVideo = (u: string) => /\.(mp4|mov|quicktime)$/i.test(u);
-    const vUrl = urls.find(isVideo);
+    const vUrl = urls.filter(u => u !== ytVideoUrl).find(isVideo);
     return vUrl ? { url: vUrl, previewUrl: vUrl.startsWith("http") ? vUrl : `${API_BASE}${vUrl}`, name: vUrl.split("/").pop() ?? "video" } : null;
   });
   const [selectedIds, setSelectedIds] = useState<string[]>(job.targets.map(t => t.accountId));
@@ -64,6 +66,8 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const [youtubeTitle, setYoutubeTitle] = useState(initYtOverride.title);
   const [youtubeDescription, setYoutubeDescription] = useState(initYtOverride.description);
   const [youtubeType, setYoutubeType] = useState<"short" | "video">(parsedContent.youtubeType ?? "short");
+  const [youtubeVideoMode, setYoutubeVideoMode] = useState<"upload" | "url">(parsedContent.youtubeVideoMode ?? "upload");
+  const [youtubeVideoUrl, setYoutubeVideoUrl] = useState(parsedContent.youtubeVideoUrl ?? "");
 
   // Pinterest: init title/description from the first Pinterest account's override
   const initPinOverride = (() => {
@@ -155,11 +159,12 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
       Object.entries(perAccountOverrides).filter(([id]) => selectedIds.includes(id))
     );
     const hasInstagram = selectedAccounts.some(a => a.platform === "instagram");
+    const hasYoutube = selectedAccounts.some(a => a.platform === "youtube");
+    // mediaUrls = non-YouTube media (images for other platforms, or uploaded reel video)
     const mediaUrls = video ? [video.url] : images.map(i => i.url);
     setSaving(true); setSaveError(null);
     try {
-      const hasYoutube = selectedAccounts.some(a => a.platform === "youtube");
-      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined);
+      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined, hasYoutube ? youtubeVideoMode : undefined, hasYoutube ? (youtubeVideoMode === "url" ? youtubeVideoUrl.trim() : "") : undefined);
       onClose();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message.replace(/^API PATCH.*→ \d+: /, "") : "Save failed");
@@ -176,6 +181,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const pinterestAccounts = selectedAccounts.filter(a => a.platform === "pinterest");
   const onlyPinterest = pinterestAccounts.length > 0 && selectedAccounts.every(a => a.platform === "pinterest");
   const noPostTextNeeded = selectedAccounts.length > 0 && selectedAccounts.every(a => a.platform === "youtube" || a.platform === "pinterest");
+  const youtubeSelectedWithNoVideo = youtubeSelected && (youtubeVideoMode === "upload" ? !video : !youtubeVideoUrl.trim());
 
   useEffect(() => {
     if (youtubeAccounts.length === 0) return;
@@ -200,7 +206,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pinterestTitle, pinterestDescription, selectedIds.join(",")]);
-  const platformLimits = selectedAccounts.filter(a => a.platform !== "youtube").map(a => {
+  const platformLimits = selectedAccounts.filter(a => a.platform !== "youtube" && a.platform !== "pinterest").map(a => {
     const limit = PLATFORM_LIMIT[a.platform] ?? 500;
     const effectiveText = perAccountOverrides[a.id]?.text ?? text;
     const effectiveCount = countGraphemes(effectiveText);
@@ -372,7 +378,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
                   style={{ borderColor: youtubeTitle.length > 100 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
                 />
               </div>
-              <div>
+              <div className="mb-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Description</span>
                   <span className="text-[10px]" style={{ color: youtubeDescription.length > 5000 ? "#ef4444" : "#444" }}>{youtubeDescription.length}/5000</span>
@@ -384,6 +390,42 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
                   className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
                   style={{ borderColor: youtubeDescription.length > 5000 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
                 />
+              </div>
+
+              {/* Video source — upload or external URL */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Video</span>
+                  <div className="flex items-center gap-1">
+                    {(["upload", "url"] as const).map((m) => (
+                      <button key={m} type="button" onClick={() => setYoutubeVideoMode(m)}
+                        className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                        style={youtubeVideoMode === m
+                          ? { backgroundColor: "#ff000020", color: "#ff0000", border: "1px solid #ff000050" }
+                          : { backgroundColor: "#111111", color: "#666", border: "1px solid #1f1f1f" }}>
+                        {m === "upload" ? "Upload file" : "Paste URL"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {youtubeVideoMode === "url" ? (
+                  <div>
+                    <input
+                      value={youtubeVideoUrl}
+                      onChange={e => setYoutubeVideoUrl(e.target.value)}
+                      placeholder="https://your-cdn.com/video.mp4"
+                      className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                      style={{ borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                    />
+                    <p className="text-xs mt-1.5" style={{ color: "#555" }}>
+                      Any public URL — S3, Supabase, Cloudflare R2, direct CDN. No file size limit.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs" style={{ color: video ? "#4ade80" : "#555" }}>
+                    {video ? `✓ ${video.name}` : "No video attached. Switch to Paste URL for large files."}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -448,8 +490,8 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
             />
           </div>
 
-          {/* Media */}
-          <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #1a1a1a" }}>
+          {/* Media — hidden when only YouTube is selected in URL mode (video URL lives in the YouTube section) */}
+          <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #1a1a1a", display: (onlyYoutube && youtubeVideoMode === "url") ? "none" : undefined }}>
             {/* Header row with Instagram format toggle */}
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Media</span>
@@ -540,15 +582,15 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
             )}
           </div>
 
-          {/* Per-platform overrides */}
-          {selectedAccounts.length > 1 && (
+          {/* Per-platform overrides — YouTube and Pinterest have dedicated fields above, exclude them here */}
+          {selectedAccounts.filter(a => a.platform !== "youtube" && a.platform !== "pinterest").length > 1 && (
             <div className="px-6 py-5">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Customize per platform</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
               </div>
               <div className="space-y-2">
-                {selectedAccounts.map(a => {
+                {selectedAccounts.filter(a => a.platform !== "youtube" && a.platform !== "pinterest").map(a => {
                   const hasOverride = a.id in perAccountOverrides;
                   const override = perAccountOverrides[a.id];
                   const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
@@ -648,7 +690,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           Cancel
         </button>
         <button onClick={handleSave}
-          disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading}
+          disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage}
           className="px-5 py-2 text-sm font-semibold rounded-xl disabled:opacity-40"
           style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
           {saving ? "Saving…" : "Save changes"}

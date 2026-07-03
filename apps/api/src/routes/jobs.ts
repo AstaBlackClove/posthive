@@ -27,6 +27,8 @@ const createJobBody = z.object({
     altTexts: z.array(z.string()).optional(),
     mediaType: z.enum(["post", "reel", "story"]).optional(),
     youtubeType: z.enum(["short", "video"]).optional(),
+    youtubeVideoMode: z.enum(["upload", "url"]).optional(),
+    youtubeVideoUrl: z.string().optional(),
     locationId: z.string().optional(),
     userTags: z.array(z.string()).optional(),
     collaborators: z.array(z.string()).optional(),
@@ -199,6 +201,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       mediaUrls: z.array(z.string()).optional(),
       mediaType: z.enum(["post", "reel", "story"]).optional(),
       youtubeType: z.enum(["short", "video"]).optional(),
+      youtubeVideoMode: z.enum(["upload", "url"]).optional(),
+      youtubeVideoUrl: z.string().optional(),
       accountIds: z.array(z.string().cuid()).min(1).optional(),
       perAccount: z.record(z.string().cuid(), perAccountOverrideSchema).optional(),
     }).safeParse(req.body);
@@ -215,14 +219,16 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (body.data.scheduledFor) {
       updateData.scheduledFor = new Date(body.data.scheduledFor);
     }
-    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.perAccount !== undefined) {
-      const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; youtubeType?: string; perAccount?: Record<string, unknown> };
+    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.youtubeVideoMode !== undefined || body.data.youtubeVideoUrl !== undefined || body.data.perAccount !== undefined) {
+      const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; youtubeType?: string; youtubeVideoMode?: string; youtubeVideoUrl?: string; perAccount?: Record<string, unknown> };
       updateData.content = JSON.stringify({
         ...existing,
         ...(body.data.text !== undefined ? { text: body.data.text } : {}),
         ...(body.data.mediaUrls !== undefined ? { mediaUrls: body.data.mediaUrls } : {}),
         ...(body.data.mediaType !== undefined ? { mediaType: body.data.mediaType } : {}),
         ...(body.data.youtubeType !== undefined ? { youtubeType: body.data.youtubeType } : {}),
+        ...(body.data.youtubeVideoMode !== undefined ? { youtubeVideoMode: body.data.youtubeVideoMode } : {}),
+        ...(body.data.youtubeVideoUrl !== undefined ? { youtubeVideoUrl: body.data.youtubeVideoUrl } : {}),
         ...(body.data.perAccount !== undefined ? { perAccount: body.data.perAccount } : {}),
       });
     }

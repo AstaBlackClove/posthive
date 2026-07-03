@@ -38,6 +38,8 @@ export default function ComposePage() {
   const [youtubeTitle, setYoutubeTitle] = useState("");
   const [youtubeDescription, setYoutubeDescription] = useState("");
   const [youtubeType, setYoutubeType] = useState<"short" | "video">("short");
+  const [youtubeVideoMode, setYoutubeVideoMode] = useState<"upload" | "url">("upload");
+  const [youtubeVideoUrl, setYoutubeVideoUrl] = useState("");
   const [pinterestTitle, setPinterestTitle] = useState("");
   const [pinterestDescription, setPinterestDescription] = useState("");
 const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(null);
@@ -241,10 +243,15 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     // Threads "" text required, video supported (single video only)
     if (hasThreads && !text.trim()) return "Threads requires a caption.";
 
-    // YouTube "" title required, video required
+    // YouTube — title required, video required (either uploaded or external URL)
     if (youtubeSelected) {
       if (!youtubeTitle.trim()) return "YouTube requires a title.";
-      if (!video) return "YouTube requires a video attached.";
+      if (youtubeVideoMode === "url") {
+        if (!youtubeVideoUrl.trim()) return "YouTube requires a video URL.";
+        try { new URL(youtubeVideoUrl); } catch { return "Please enter a valid video URL (must start with https://)."; }
+      } else {
+        if (!video) return "YouTube requires a video attached.";
+      }
     }
 
     // Character limits
@@ -331,7 +338,8 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             mediaUrls,
             ...(altTexts.some(Boolean) ? { altTexts } : {}),
             ...(hasInstagram && igMediaType !== "post" ? { mediaType: igMediaType } : {}),
-            ...(youtubeSelected ? { youtubeType } : {}),
+            ...(youtubeSelected ? { youtubeType, youtubeVideoMode } : {}),
+            ...(youtubeSelected && youtubeVideoMode === "url" && youtubeVideoUrl.trim() ? { youtubeVideoUrl: youtubeVideoUrl.trim() } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -346,8 +354,11 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         setTimeout(() => confetti({ particleCount: 80, spread: 120, origin: { y: 0.55 }, zIndex: 9999 }), 300);
       }
       setText(""); setCommentText(""); setScheduledFor(defaultScheduledFor());
+      setIgMediaType("post");
       setYoutubeTitle(""); setYoutubeDescription(""); setYoutubeType("short");
-      setPerAccountOverrides({});
+      setYoutubeVideoMode("upload"); setYoutubeVideoUrl("");
+      setPinterestTitle(""); setPinterestDescription("");
+      setPerAccountOverrides({}); setShowCustomize(false); setUploadError(null);
       mediaItems.forEach(m => URL.revokeObjectURL(m.previewUrl));
       setMediaItems([]); setAltTexts([]);
     } catch (err) {
@@ -361,7 +372,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const selectedAccounts = accounts.filter((a) => selectedIds.includes(a.id));
   // YouTube doesn't use the shared Post box — it has its own dedicated Title/Description
   // counters — so it's excluded here to avoid showing a misleading/duplicate limit.
-  const platformLimits = selectedAccounts.filter((a) => a.platform !== "youtube").map((a) => {
+  const platformLimits = selectedAccounts.filter((a) => a.platform !== "youtube" && a.platform !== "pinterest").map((a) => {
     const limit = PLATFORM_LIMIT[a.platform] ?? 300;
     const effectiveText = perAccountOverrides[a.id]?.text ?? text;
     const effectiveCount = countGraphemes(effectiveText);
@@ -381,7 +392,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const pinterestSelectedWithNoImage = pinterestSelected && images.length === 0;
   const youtubeAccounts = selectedAccounts.filter((a) => a.platform === "youtube");
   const youtubeSelected = youtubeAccounts.length > 0;
-  const youtubeSelectedWithNoVideo = youtubeSelected && !video;
+  const youtubeSelectedWithNoVideo = youtubeSelected && (youtubeVideoMode === "upload" ? !video : !youtubeVideoUrl.trim());
   const onlyYoutube = youtubeSelected && selectedAccounts.every((a) => a.platform === "youtube");
   const onlyPinterest = pinterestSelected && selectedAccounts.every((a) => a.platform === "pinterest");
   // True when every selected account is YouTube or Pinterest — both have their own title/description fields
@@ -823,7 +834,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                 />
               </div>
 
-              <div>
+              <div className="mb-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Description</span>
                   <span className="text-[10px]" style={{ color: youtubeDescription.length > 5000 ? "#ef4444" : "#444" }}>{youtubeDescription.length}/5000</span>
@@ -836,6 +847,42 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                   className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
                   style={{ borderColor: youtubeDescription.length > 5000 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
                 />
+              </div>
+
+              {/* Video source — upload or external URL */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Video</span>
+                  <div className="flex items-center gap-1">
+                    {(["upload", "url"] as const).map((m) => (
+                      <button key={m} type="button" onClick={() => setYoutubeVideoMode(m)}
+                        className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                        style={youtubeVideoMode === m
+                          ? { backgroundColor: "#ff000020", color: "#ff0000", border: "1px solid #ff000050" }
+                          : { backgroundColor: "#111111", color: "#666", border: "1px solid #1f1f1f" }}>
+                        {m === "upload" ? "Upload file" : "Paste URL"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {youtubeVideoMode === "url" ? (
+                  <div>
+                    <input
+                      value={youtubeVideoUrl}
+                      onChange={(e) => setYoutubeVideoUrl(e.target.value)}
+                      placeholder="https://your-cdn.com/video.mp4"
+                      className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                      style={{ borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                    />
+                    <p className="text-xs mt-1.5" style={{ color: "#555" }}>
+                      Any public URL — S3, Supabase, Cloudflare R2, direct CDN. No file size limit.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs" style={{ color: video ? "#4ade80" : "#555" }}>
+                    {video ? `✓ ${video.name}` : "Attach a video using the 📎 button below. Max 100 MB for uploaded files — use Paste URL for larger videos."}
+                  </p>
+                )}
               </div>
 
             </div>
@@ -903,8 +950,8 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           </div>
 
 
-          {/* Media + upload row */}
-          <div className="px-6 pt-4 pb-5" style={{ borderBottom: "1px solid #2a2a2a", display: loadingAccounts ? "none" : undefined }}>
+          {/* Media + upload row — hidden when only YouTube is selected in URL mode (video URL lives in the YouTube section) */}
+          <div className="px-6 pt-4 pb-5" style={{ borderBottom: "1px solid #2a2a2a", display: (loadingAccounts || (onlyYoutube && youtubeVideoMode === "url")) ? "none" : undefined }}>
 
             {/* Section header */}
             <div className="flex items-center justify-between mb-3">
@@ -954,44 +1001,52 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               </div>
             )}
 
-            <div className="flex items-center gap-3">
-              <input ref={fileInputRef} type="file"
-                accept={igMediaType === "reel"
-                  ? "video/mp4,video/quicktime"
-                  : igMediaType === "story"
-                  ? "image/jpeg,image/png,video/mp4,video/quicktime"
-                  : "image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"}
-                multiple={igMediaType === "post"}
-                onChange={handleFileChange} className="hidden" id="media-upload" />
-              <label htmlFor="media-upload"
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all hover:border-opacity-60 ${uploading ? "opacity-50 pointer-events-none" : ""}`}
-                style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d={igMediaType === "reel"
-                      ? "M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      : "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"} />
-                </svg>
-                {uploading ? "Uploading…" :
-                  igMediaType === "reel" ? (mediaItems.length > 0 ? "Change video" : "Add video") :
-                  igMediaType === "story" ? (mediaItems.length > 0 ? "Change media" : "Add story image / video") :
-                  mediaItems.length > 0 ? `${mediaItems.length} item${mediaItems.length > 1 ? "s" : ""}` : "Add photo / video"}
-              </label>
-              {mediaItems.length === 0 && (
-                <span className="text-xs" style={{ color: "#999" }}>or Ctrl+V to paste</span>
-              )}
-            </div>
-            <p className="mt-1.5 text-[11px]" style={{ color: "#555" }}>
-              Images up to {MAX_IMAGE_SIZE_MB}MB · Videos up to {MAX_VIDEO_SIZE_MB}MB
-            </p>
-            {uploadError && <p className="mt-2 text-xs text-red-500 rounded-lg px-3 py-2" style={{ backgroundColor: "#1f0a0a", border: "1px solid #3a1a1a" }}>{uploadError}</p>}
+            {/* Hide file upload when only YouTube is selected and user chose Paste URL — the video URL lives in the YouTube section above */}
+            {!(onlyYoutube && youtubeVideoMode === "url") && (
+              <>
+                <div className="flex items-center gap-3">
+                  <input ref={fileInputRef} type="file"
+                    accept={igMediaType === "reel"
+                      ? "video/mp4,video/quicktime"
+                      : igMediaType === "story"
+                      ? "image/jpeg,image/png,video/mp4,video/quicktime"
+                      : "image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"}
+                    multiple={igMediaType === "post"}
+                    onChange={handleFileChange} className="hidden" id="media-upload" />
+                  <label htmlFor="media-upload"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all hover:border-opacity-60 ${uploading ? "opacity-50 pointer-events-none" : ""}`}
+                    style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d={igMediaType === "reel"
+                          ? "M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          : "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"} />
+                    </svg>
+                    {uploading ? "Uploading…" :
+                      igMediaType === "reel" ? (mediaItems.length > 0 ? "Change video" : "Add video") :
+                      igMediaType === "story" ? (mediaItems.length > 0 ? "Change media" : "Add story image / video") :
+                      mediaItems.length > 0 ? `${mediaItems.length} item${mediaItems.length > 1 ? "s" : ""}` : "Add photo / video"}
+                  </label>
+                  {mediaItems.length === 0 && (
+                    <span className="text-xs" style={{ color: "#999" }}>or Ctrl+V to paste</span>
+                  )}
+                </div>
+                <p className="mt-1.5 text-[11px]" style={{ color: "#555" }}>
+                  Images up to {MAX_IMAGE_SIZE_MB}MB · Videos up to {MAX_VIDEO_SIZE_MB}MB
+                </p>
+                {uploadError && <p className="mt-2 text-xs text-red-500 rounded-lg px-3 py-2" style={{ backgroundColor: "#1f0a0a", border: "1px solid #3a1a1a" }}>{uploadError}</p>}
+              </>
+            )}
 
             {/* Option buttons row */}
             {(instagramSelected || selectedAccounts.length > 1) && (
               <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: "1px solid #1a1a1a" }}>
-                {selectedAccounts.length > 1 && (() => {
+                {selectedAccounts.filter(a => a.platform !== "youtube" && a.platform !== "pinterest").length > 1 && (() => {
                   const customizableOverrideCount = Object.keys(perAccountOverrides)
-                    .filter(id => !youtubeAccounts.some(a => a.id === id)).length;
+                    .filter(id => {
+                      const acc = selectedAccounts.find(a => a.id === id);
+                      return acc && acc.platform !== "youtube" && acc.platform !== "pinterest";
+                    }).length;
                   return (
                   <button type="button" onClick={() => {
                     if (!allowOverrides) {
@@ -1076,7 +1131,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               </button>
             </div>
             <div className="space-y-2">
-              {selectedAccounts.filter(a => a.platform !== "youtube").map(a => {
+              {selectedAccounts.filter(a => a.platform !== "youtube" && a.platform !== "pinterest").map(a => {
                 const hasOverride = a.id in perAccountOverrides;
                 const override = perAccountOverrides[a.id];
                 const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
