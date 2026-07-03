@@ -36,6 +36,7 @@ model User {
   refreshTokens RefreshToken[]
   apiKeys       ApiKey[]
   emailVerifications EmailVerification[]
+  templates     Template[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -170,6 +171,19 @@ model ApiKey {
 
   @@index([userId])
   @@index([keyHash])
+}
+
+// Saved post template — reusable content for compose.
+model Template {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  content   String   // JSON: { text, commentText, mediaUrls, altTexts, mediaType, youtubeType }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 // Cancellation feedback submitted when a user cancels their subscription.

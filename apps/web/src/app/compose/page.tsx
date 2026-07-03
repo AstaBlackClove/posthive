@@ -7,6 +7,7 @@ import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
 import { DateTimePicker } from "../../components/DateTimePicker";
 import { PlatformIcon } from "../../components/PlatformIcon";
+import { BulkScheduleModal } from "../../components/BulkScheduleModal";
 import {
   PlatformPreview,
   PLATFORM_COLOR, PLATFORM_LIMIT, MAX_IMAGES, countGraphemes,
@@ -49,9 +50,27 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const [allowReels, setAllowReels] = useState(true); // optimistic; corrected after fetch
   const [maxImagesPerPost, setMaxImagesPerPost] = useState(10); // optimistic; corrected after fetch
   const { success: toastSuccess, error: toastError, warning: toastWarning } = useToast();
+  const [templates, setTemplates] = useState<{ id: string; name: string; content: string }[]>([]);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [saveTemplateDialog, setSaveTemplateDialog] = useState(false);
+  const [saveTemplateName, setSaveTemplateName] = useState("");
+  const [deleteTemplateTarget, setDeleteTemplateTarget] = useState<{ id: string; name: string } | null>(null);
+  const templatesRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaItemsRef = useRef(mediaItems);
   useEffect(() => { mediaItemsRef.current = mediaItems; }, [mediaItems]);
+
+  // Close templates dropdown on outside click
+  useEffect(() => {
+    if (!showTemplates) return;
+    const handler = (e: MouseEvent) => {
+      if (templatesRef.current && !templatesRef.current.contains(e.target as Node)) setShowTemplates(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showTemplates]);
 
   // Delete any unsubmitted uploads if the user navigates away
   useEffect(() => {
@@ -89,6 +108,10 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     apiFetch<Account[]>("/accounts")
       .then((data) => { setAccounts(data); })
       .finally(() => setLoadingAccounts(false));
+
+    apiFetch<{ templates: { id: string; name: string; content: string }[] }>("/templates")
+      .then((data) => setTemplates(data.templates))
+      .catch(() => {});
   }, []);
 
   function toggleAccount(id: string) {
@@ -233,6 +256,57 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     return null;
   }
 
+  async function saveTemplate() {
+    const name = saveTemplateName.trim();
+    if (!name) return;
+    if (templates.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+      toastError(`A template named "${name}" already exists.`);
+      return;
+    }
+    setSavingTemplate(true);
+    setSaveTemplateDialog(false);
+    setSaveTemplateName("");
+    try {
+      const res = await apiFetch<{ template: { id: string; name: string; content: string } }>("/templates", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          content: { text, commentText: commentText || undefined, mediaUrls: mediaItems.map(m => m.url), altTexts: altTexts.some(Boolean) ? altTexts : undefined, youtubeTitle: youtubeTitle || undefined, youtubeDescription: youtubeDescription || undefined, youtubeType },
+        }),
+      });
+      setTemplates(prev => [res.template, ...prev]);
+      toastSuccess("Template saved!");
+    } catch {
+      toastError("Failed to save template.");
+    } finally {
+      setSavingTemplate(false);
+    }
+  }
+
+  function loadTemplate(tpl: { id: string; name: string; content: string }) {
+    const content = JSON.parse(tpl.content) as { text?: string; commentText?: string; youtubeTitle?: string; youtubeDescription?: string; youtubeType?: "short" | "video" };
+    if (content.text !== undefined) setText(content.text);
+    if (content.commentText !== undefined) setCommentText(content.commentText);
+    if (content.youtubeTitle !== undefined) setYoutubeTitle(content.youtubeTitle);
+    if (content.youtubeDescription !== undefined) setYoutubeDescription(content.youtubeDescription);
+    if (content.youtubeType) setYoutubeType(content.youtubeType);
+    setShowTemplates(false);
+    toastSuccess(`Template "${tpl.name}" loaded.`);
+  }
+
+  async function deleteTemplate() {
+    if (!deleteTemplateTarget) return;
+    const { id, name } = deleteTemplateTarget;
+    setDeleteTemplateTarget(null);
+    try {
+      await apiFetch(`/templates/${id}`, { method: "DELETE" });
+      setTemplates(prev => prev.filter(t => t.id !== id));
+      toastSuccess(`Template "${name}" deleted.`);
+    } catch {
+      toastError("Failed to delete template.");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const validationError = validateBeforeSubmit();
@@ -360,7 +434,62 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   );
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <><div className="flex flex-col h-full overflow-hidden">
+
+      {/* Save template dialog */}
+      {saveTemplateDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+            <div className="px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <h3 className="text-sm font-bold" style={{ color: "#ededed" }}>Save as template</h3>
+              <p className="text-xs mt-0.5" style={{ color: "#888" }}>Give this template a name to reuse it later.</p>
+            </div>
+            <div className="px-5 py-4">
+              <input
+                autoFocus
+                value={saveTemplateName}
+                onChange={e => setSaveTemplateName(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") saveTemplate(); if (e.key === "Escape") setSaveTemplateDialog(false); }}
+                placeholder="e.g. Weekly update, Product launch…"
+                className="w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none"
+                style={{ backgroundColor: "#0d0d0d", borderColor: "#2a2a2a", color: "#ededed" }}
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 pb-4">
+              <button type="button" onClick={() => setSaveTemplateDialog(false)}
+                className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-70 transition-opacity"
+                style={{ color: "#888" }}>Cancel</button>
+              <button type="button" onClick={saveTemplate} disabled={!saveTemplateName.trim()}
+                className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 disabled:opacity-40"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete template confirm dialog */}
+      {deleteTemplateTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+            <div className="px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <h3 className="text-sm font-bold" style={{ color: "#ededed" }}>Delete template</h3>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-sm" style={{ color: "#888" }}>
+                Delete <span className="font-semibold" style={{ color: "#ededed" }}>&ldquo;{deleteTemplateTarget.name}&rdquo;</span>? This cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 pb-4">
+              <button type="button" onClick={() => setDeleteTemplateTarget(null)}
+                className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-70 transition-opacity"
+                style={{ color: "#888" }}>Cancel</button>
+              <button type="button" onClick={deleteTemplate}
+                className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
+                style={{ backgroundColor: "#ef4444", color: "#fff" }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Top bar */}
       <div className="flex items-center justify-between pl-16 pr-4 md:px-8" style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
@@ -492,8 +621,51 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           <div className="px-6 py-5" style={{ display: (loadingAccounts || onlyYoutube) ? "none" : undefined }}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold uppercase tracking-wide">Post</span>
-              {/* Instagram format toggle in Post header */}
-              {instagramSelected && (
+              <div className="flex items-center gap-3">
+                {/* Templates — hidden when only YouTube selected */}
+                {!onlyYoutube && (
+                  <div className="flex items-center gap-2" ref={templatesRef} style={{ position: "relative" }}>
+                    <button type="button" onClick={() => setShowTemplates(v => !v)}
+                      className="flex items-center gap-1 text-[11px] font-medium transition-opacity hover:opacity-80"
+                      style={{ color: "#888" }}>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      Templates
+                    </button>
+                    <button type="button" onClick={() => { setSaveTemplateName(""); setSaveTemplateDialog(true); }} disabled={savingTemplate || !text.trim()}
+                      className="text-[11px] font-medium transition-opacity hover:opacity-80 disabled:opacity-30"
+                      style={{ color: "#5b63d3" }}>
+                      {savingTemplate ? "Saving…" : "+ Save"}
+                    </button>
+                    {showTemplates && (
+                      <div className="absolute top-6 right-0 z-30 w-56 rounded-xl overflow-hidden shadow-xl"
+                        style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a" }}>
+                        <div className="px-3 py-2 border-b" style={{ borderColor: "#2a2a2a" }}>
+                          <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Templates</span>
+                        </div>
+                        {templates.length === 0 ? (
+                          <p className="px-3 py-4 text-xs text-center" style={{ color: "#555" }}>No templates yet. Write something and click + Save.</p>
+                        ) : (
+                          <ul className="max-h-64 overflow-y-auto">
+                            {templates.map(tpl => (
+                              <li key={tpl.id} className="flex items-center group px-3 py-2.5 border-b last:border-0 hover:bg-white/5 transition-colors cursor-pointer"
+                                style={{ borderColor: "#1f1f1f" }}
+                                onClick={() => loadTemplate(tpl)}>
+                                <span className="flex-1 text-xs font-medium truncate" style={{ color: "#ededed" }}>{tpl.name}</span>
+                                <button type="button" onClick={(e) => { e.stopPropagation(); setShowTemplates(false); setDeleteTemplateTarget({ id: tpl.id, name: tpl.name }); }}
+                                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs hover:text-red-400"
+                                  style={{ color: "#555" }}>✕</button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* Instagram format toggle */}
+                {instagramSelected && (
                 <div className="flex items-center gap-1.5">
                   <div className="relative group/iginfo">
                     <Info size={13} style={{ color: "#999", opacity: 0.7 }} className="cursor-default" />
@@ -543,6 +715,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                   ))}
                 </div>
               )}
+              </div>{/* end flex items-center gap-3 */}
 
             </div>
             {!onlyInstagramStory && !onlyYoutube && (
@@ -945,17 +1118,39 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         )}
 
         {/* Submit */}
-        <button
-          type="submit"
-          form=""
-          disabled={submitting || overAnyLimit || accounts.length === 0 || youtubeSelectedWithNoVideo}
-          onClick={handleSubmit}
-          className="w-full md:w-auto order-4 md:order-none px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-colors hover:bg-gray-100"
-          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
-        >
-          {submitting ? "Scheduling…" : dryRun ? "Schedule Dry Run" : "Schedule Post"}
-        </button>
+        <div className="w-full md:w-auto order-4 md:order-none flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowBulk(true)}
+            className="px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80"
+            style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
+            title="Bulk schedule from CSV"
+          >
+            Bulk CSV
+          </button>
+          <button
+            type="submit"
+            form=""
+            disabled={submitting || overAnyLimit || accounts.length === 0 || youtubeSelectedWithNoVideo}
+            onClick={handleSubmit}
+            className="flex-1 md:flex-none px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-colors hover:bg-gray-100"
+            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+          >
+            {submitting ? "Scheduling…" : dryRun ? "Schedule Dry Run" : "Schedule Post"}
+          </button>
+        </div>
       </div>
     </div>
+    {showBulk && (
+      <BulkScheduleModal
+        accounts={accounts}
+        onClose={() => setShowBulk(false)}
+        onScheduled={(count) => {
+          setShowBulk(false);
+          toastSuccess(`${count} post${count !== 1 ? "s" : ""} scheduled!`);
+        }}
+      />
+    )}
+    </>
   );
 }

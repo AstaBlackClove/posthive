@@ -20,6 +20,7 @@ import { uploadRoutes } from "./routes/upload.js";
 import { userRoutes } from "./routes/user.js";
 import { billingRoutes } from "./routes/billing.js";
 import { apiKeyRoutes } from "./routes/apiKeys.js";
+import { templateRoutes } from "./routes/templates.js";
 import { publicApiRoutes } from "./routes/publicApi.js";
 import { startWorker } from "./lib/worker.js";
 import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
@@ -81,6 +82,7 @@ async function main() {
   await app.register(uploadRoutes, { storage });
   if (process.env.ENABLE_BILLING === "true") await app.register(billingRoutes);
   await app.register(apiKeyRoutes);
+  await app.register(templateRoutes);
   await app.register(publicApiRoutes, { storage });
 
   app.get("/health", async () => ({ ok: true }));

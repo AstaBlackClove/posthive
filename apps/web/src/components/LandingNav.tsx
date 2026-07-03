@@ -21,6 +21,7 @@ const FEATURES_NAV = [
   { icon: <CalendarIcon />, bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Drag-to-reschedule",      desc: "Visual calendar view",           slug: "drag-to-reschedule" },
   { icon: <CommentIcon />,  bg: "rgba(220,160,60,.18)", color: "#d4a83c", title: "First comment",           desc: "Auto-reply on publish",          slug: "first-comment" },
   { icon: <SlidersIcon />,  bg: "rgba(140,100,220,.18)",color: "#a07ee0", title: "Per-platform overrides",  desc: "Custom text per network",        slug: "per-platform-overrides" },
+  { icon: <CsvNavIcon />,  bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Bulk CSV scheduling",      desc: "Schedule hundreds from a file",  slug: "bulk-csv-scheduling" },
   { icon: <CodeIcon />,     bg: "rgba(60,180,200,.18)", color: "#3db8c8", title: "Self-hostable",           desc: "AGPL-3.0 open source",           slug: "self-hostable" },
 ];
 
@@ -220,4 +221,7 @@ function SlidersIcon() {
 }
 function CodeIcon() {
   return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>;
+}
+function CsvNavIcon() {
+  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg>;
 }

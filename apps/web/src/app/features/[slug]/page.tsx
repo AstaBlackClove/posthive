@@ -157,6 +157,33 @@ const FEATURES: Record<string, FeatureData> = {
       "Varying the CTA depending on where the audience is",
     ],
   },
+  "bulk-csv-scheduling": {
+    title: "Bulk CSV scheduling",
+    badge: "Power feature",
+    badgeColor: "#5cb88a",
+    badgeBg: "rgba(80,180,120,.15)",
+    headline: "Schedule hundreds of posts from a spreadsheet.",
+    subheadline: "Upload a CSV file and Posthive schedules every row automatically across multiple platforms, with images, first comments, and per-row platform exclusions.",
+    image: "/screenshots/feature-bulk-csv.png",
+    imageAlt: "Posthive bulk CSV scheduling modal with preview table",
+    imageRatio: "16/9",
+    why: [
+      { title: "Batch your content creation", desc: "Write a week or month of content in a spreadsheet where you can see everything at once, then upload it in one shot. No switching tabs, no repeating the same clicks." },
+      { title: "Granular platform control per row", desc: "Each row can target different platforms. Use !instagram to skip Instagram on a text-only post, or bluesky|mastodon for a specific audience. No need to create separate posts." },
+      { title: "Validate before you commit", desc: "The preview table shows every row with a ✓ Ready or ✕ error status before anything is scheduled. Catch bad dates, missing images for Instagram, or unrecognized platform names instantly." },
+    ],
+    how: [
+      { n: "01", title: "Prepare your CSV", desc: "Create a spreadsheet with columns: scheduled_for, text, accounts, comment, image_urls. Save as CSV. Each row becomes one scheduled post." },
+      { n: "02", title: "Upload and preview", desc: "Open Bulk CSV from the Posts page or Compose page. Upload your file or paste the CSV. Click Preview to validate every row before scheduling." },
+      { n: "03", title: "Schedule all at once", desc: "Review the preview table, fix any errors, then click Schedule N posts. Posthive enqueues each valid row and shows a progress bar as they're submitted." },
+    ],
+    usecases: [
+      "Content managers scheduling a month of posts from a content calendar",
+      "Agencies onboarding a new client and front-loading their first month",
+      "Indie hackers scheduling a product launch drip across platforms",
+      "Creators batching content in one session to stay consistent all week",
+    ],
+  },
   "self-hostable": {
     title: "Self-hostable",
     badge: "Open source",

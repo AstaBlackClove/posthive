@@ -7,6 +7,7 @@ import { PlatformIcon } from "../../components/PlatformIcon";
 import { EditPostDialog } from "../../components/EditPostDialog";
 import { DeleteConfirmDialog } from "../../components/DeleteConfirmDialog";
 import { useToast } from "../../components/Toast";
+import { BulkScheduleModal } from "../../components/BulkScheduleModal";
 import type { Account, PerAccountOverride } from "../../components/PlatformPreview";
 
 interface Target {
@@ -213,6 +214,7 @@ export default function JobsPage() {
 
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [deletingJob, setDeletingJob] = useState<Job | null>(null);
+  const [showBulk, setShowBulk] = useState(false);
   const [platformFilter, setPlatformFilter] = useState<string>("all");
 
   useEffect(() => {
@@ -347,6 +349,19 @@ export default function JobsPage() {
         />
       )}
 
+      {/* Bulk schedule modal */}
+      {showBulk && (
+        <BulkScheduleModal
+          accounts={accounts}
+          onClose={() => setShowBulk(false)}
+          onScheduled={(count) => {
+            setShowBulk(false);
+            success(`${count} post${count !== 1 ? "s" : ""} scheduled!`);
+            apiFetch<Job[]>("/jobs").then(setJobs).catch(() => {});
+          }}
+        />
+      )}
+
       {/* Top bar */}
       <div className="flex items-center justify-between pl-16 pr-4 md:px-8 flex-shrink-0"
         style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#111111" }}>
@@ -357,14 +372,24 @@ export default function JobsPage() {
             {lastRefresh ? `Live · updated ${lastRefresh.toLocaleTimeString()}` : "Connecting…"}
           </p>
         </div>
-        <a href="/"
-          className="inline-flex items-center gap-1.5 px-3 md:px-4 py-2 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 flex-shrink-0"
-          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span className="hidden sm:inline">New Post</span>
-        </a>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button onClick={() => setShowBulk(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl transition-colors hover:opacity-80"
+            style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            <span className="hidden sm:inline">Bulk</span>
+          </button>
+          <a href="/compose"
+            className="inline-flex items-center gap-1.5 px-3 md:px-4 py-2 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="hidden sm:inline">New Post</span>
+          </a>
+        </div>
       </div>
 
       {/* Toolbar */}

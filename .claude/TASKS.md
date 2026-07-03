@@ -27,12 +27,12 @@
 ### Compose / Scheduling
 - [ ] **Timezone support** — already works via browser local time; may need server-side timezone awareness for recurring posts
 - [ ] **Recurring posts** — schedule a post to repeat daily/weekly
-- [ ] **Post templates** — save draft content as reusable templates
-- [ ] **Bulk scheduling** — upload CSV to schedule many posts at once
+- [x] **Post templates** — save/load/delete templates from compose; Templates dropdown + Save button
+- [x] **Bulk scheduling** — CSV upload modal on Posts page; preview table, per-row validation, progress bar
 - [ ] **Queue / Best time to post** — auto-schedule to next available optimal slot
 
 ### Posts / Calendar
-- [ ] **Week/Day view polish** — timegrid styling needs work at small cell heights
+- [x] **Week/Day view polish** — timegrid event cards, slot height, now indicator, today column highlight
 
 ### Marketing & Docs
 - [ ] **`/features` page — screenshots/GIFs** — replace image slot placeholders with real assets

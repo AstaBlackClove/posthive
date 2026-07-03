@@ -304,9 +304,10 @@ export default function RootPage() {
               { icon: <LayersIcon />, title: "Multi-platform posting",       href: "/features/multi-platform-posting",  body: "Draft once and ship to all seven networks in a single click." },
               { icon: <PlayIcon />,   title: "Reels & Stories scheduling",   href: "/features/reels-and-stories",       body: "Full Instagram media support plus YouTube Shorts with native previews." },
               { icon: <CalGridIcon />,title: "Drag-to-reschedule calendar",  href: "/features/drag-to-reschedule",      body: "See your whole week at a glance. Drag any post to a new slot in seconds." },
-              { icon: <ChatIcon />,   title: "First comment automation",     href: "/features/first-comment",           body: "Drop a reply the moment a post goes live — hashtags, links, threads." },
-              { icon: <PenIcon />,    title: "Per-platform text overrides",  href: "/features/per-platform-overrides",  body: "Tweak copy and media per network — without leaving the composer." },
+              { icon: <ChatIcon />,   title: "First comment automation",     href: "/features/first-comment",           body: "Drop a reply the moment a post goes live hashtags, links, threads." },
+              { icon: <PenIcon />,    title: "Per-platform text overrides",  href: "/features/per-platform-overrides",  body: "Tweak copy and media per network without leaving the composer." },
               { icon: <ServerIcon />, title: "Reliable scheduling",          href: "/features/multi-platform-posting",  body: "Posts fire at the exact second. BullMQ-backed queue with automatic retries." },
+              { icon: <CsvIcon />,    title: "Bulk CSV scheduling",          href: "/features/bulk-csv-scheduling",     body: "Upload a CSV and schedule hundreds of posts at once. Exclude platforms per row with !platform syntax." },
             ].map(({ icon, title, href, body }) => (
               <Link key={title} href={href} className="ph-feature-card" style={{ display: "block" }}>
                 <div style={{ width: 44, height: 44, borderRadius: 11, background: "#17172a", border: "1px solid #26264a", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20, color: "#8b91e8" }}>
@@ -328,7 +329,7 @@ export default function RootPage() {
               </div>
               <h2 style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.025em", margin: "0 0 16px", color: "#f2f2f2", lineHeight: 1.2 }}>Write once,<br />post everywhere</h2>
               <p style={{ color: "#888", lineHeight: 1.75, fontSize: 16, marginBottom: 28 }}>
-                Compose your post in a single editor and publish to every connected account simultaneously. Each platform renders its own preview — character limits, hashtags, and link handling all accounted for.
+                Compose your post in a single editor and publish to every connected account simultaneously. Each platform renders its own preview character limits, hashtags, and link handling all accounted for.
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {PLATFORMS_GRID.map(p => (
@@ -372,10 +373,10 @@ export default function RootPage() {
               </div>
               <h2 style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.025em", margin: "0 0 16px", color: "#f2f2f2", lineHeight: 1.2 }}>Reels, Stories,<br />and Carousels</h2>
               <p style={{ color: "#888", lineHeight: 1.75, fontSize: 16, marginBottom: 24 }}>
-                Full Instagram media support baked in. Schedule a Reel, a Story, or a carousel with up to 10 slides — all from the same composer.
+                Full Instagram media support baked in. Schedule a Reel, a Story, or a carousel with up to 10 slides all from the same composer.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {["Reel — short-form video with caption", "Story — image or video, 24-hour expiry", "Post — static or carousel up to 10 images"].map(item => (
+                {["Reel - short-form video with caption", "Story - image or video, 24-hour expiry", "Post - static or carousel up to 10 images"].map(item => (
                   <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#ccc" }}>
                     <CheckCircleIcon />{item}
                   </div>
@@ -541,6 +542,53 @@ export default function RootPage() {
                 </div>
               ))}
               <div className="mono" style={{ textAlign: "center", fontSize: 11, color: "#555" }}>+ 3 more accounts using global copy</div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FEATURE DEEP-DIVE: 6 BULK CSV ── */}
+        <section style={{ borderTop: "1px solid #161616" }}>
+          <div className="ph-feature-detail-row ph-section" style={{ maxWidth: 1100, margin: "0 auto", padding: "88px 40px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center", direction: "rtl" }}>
+            <div style={{ direction: "ltr" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 12px", border: "1px solid #26264a", background: "#17172a", borderRadius: 999, marginBottom: 20 }}>
+                <span className="mono" style={{ fontSize: 11.5, color: "#8b91e8", fontWeight: 600, letterSpacing: ".08em" }}>BULK SCHEDULING</span>
+              </div>
+              <h2 style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.025em", margin: "0 0 16px", color: "#f2f2f2", lineHeight: 1.2 }}>Schedule hundreds<br />of posts from a CSV</h2>
+              <p style={{ color: "#888", lineHeight: 1.75, fontSize: 16, marginBottom: 24 }}>
+                Upload a spreadsheet and Posthive schedules every row automatically. Mix platforms per row, attach images, exclude specific networks all from a single file.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {[
+                  "Schedule dozens of posts in seconds with a CSV upload",
+                  "Exclude platforms per row !instagram, !linkedin",
+                  "Attach image URLs per row (up to 4, semicolon-separated)",
+                  "Preview table shows ✓ Ready or ✕ error before sending",
+                ].map(item => (
+                  <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#ccc" }}>
+                    <CheckCircleIcon />{item}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="feature-visual" style={{ background: "#111111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 24, direction: "ltr" }}>
+              <div className="mono" style={{ fontSize: 11, color: "#555", marginBottom: 10, letterSpacing: ".06em" }}>CSV PREVIEW</div>
+              {[
+                { date: "Aug 1 · 09:00", text: "Good morning 🌅", accounts: "all", status: "ready" },
+                { date: "Aug 2 · 14:30", text: "Check the blog post", accounts: "bluesky|mastodon", status: "ready" },
+                { date: "Aug 3 · 18:00", text: "Skip Instagram today", accounts: "!instagram", status: "ready" },
+                { date: "Aug 4 · 10:00", text: "Two images 🖼️", accounts: "threads", status: "ready" },
+              ].map((row, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < 3 ? "1px solid #1a1a1a" : "none" }}>
+                  <span className="mono" style={{ fontSize: 11, color: "#555", minWidth: 90 }}>{row.date}</span>
+                  <span style={{ flex: 1, fontSize: 12, color: "#bbb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.text}</span>
+                  <span className="mono" style={{ fontSize: 10, color: "#666", minWidth: 70, textAlign: "right" }}>{row.accounts}</span>
+                  <span style={{ fontSize: 11, color: "#4ade80", fontWeight: 600 }}>✓</span>
+                </div>
+              ))}
+              <div style={{ marginTop: 16, padding: "10px 14px", borderRadius: 8, background: "rgba(91,99,211,.08)", border: "1px solid rgba(91,99,211,.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 12, color: "#9ba2ee" }}>4 valid · 0 errors</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#fff", background: "#5b63d3", padding: "5px 14px", borderRadius: 6 }}>Schedule 4 posts</span>
+              </div>
             </div>
           </div>
         </section>
@@ -778,4 +826,7 @@ function PenIcon() {
 }
 function ServerIcon() {
   return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>;
+}
+function CsvIcon() {
+  return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg>;
 }

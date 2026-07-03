@@ -1,0 +1,6 @@
+scheduled_for,text,accounts,comment,image_urls
+2026-08-01 09:00,Good morning from bulk schedule! 🌅 #test,all,,
+2026-08-02 14:30,Afternoon post on Bluesky and Mastodon only,bluesky|mastodon,Check the first comment!,
+2026-08-03 18:00,LinkedIn update with an image,linkedin,,https://yt3.ggpht.com/U8W7tkvmBy5kwwlqf96nW4TvsFysHG9tATgpbDJtBooQrRTt1AxbSsCYv519die7dViWDL6d6pI=s88-c-k-c0x00ffffff-no-rj
+2026-08-04 10:00,Multi-image post 🖼️,bluesky|threads,,https://yt3.ggpht.com/U8W7tkvmBy5kwwlqf96nW4TvsFysHG9tATgpbDJtBooQrRTt1AxbSsCYv519die7dViWDL6d6pI=s88-c-k-c0x00ffffff-no-rj;https://yt3.ggpht.com/U8W7tkvmBy5kwwlqf96nW4TvsFysHG9tATgpbDJtBooQrRTt1AxbSsCYv519die7dViWDL6d6pI=s88-c-k-c0x00ffffff-no-rj
+not-a-date,This row has a bad date,all,,

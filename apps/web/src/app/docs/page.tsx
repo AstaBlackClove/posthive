@@ -49,6 +49,8 @@ const NAV = [
     section: "Features",
     items: [
       { label: "Scheduling posts", id: "scheduling-posts" },
+      { label: "Post templates", id: "post-templates" },
+      { label: "Bulk CSV scheduling", id: "bulk-csv" },
       { label: "Calendar view", id: "calendar-view" },
       { label: "First comment", id: "first-comment" },
       { label: "Per-platform overrides", id: "per-platform-overrides" },
@@ -93,7 +95,9 @@ export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("quick-start");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(NAV.filter(g => g.section !== "Getting Started").map(g => [g.section, true]))
+  );
   const mainRef = useRef<HTMLElement>(null);
   const scrollingRef = useRef(false);
 
@@ -241,7 +245,7 @@ export default function DocsPage() {
                       width: "100%",
                       fontSize: 10.5,
                       fontWeight: 700,
-                      color: hasActive ? "#9ba2ee" : "#444",
+                      color: hasActive ? "#9ba2ee" : "#999",
                       letterSpacing: ".08em",
                       textTransform: "uppercase",
                       padding: "16px 20px 6px",
@@ -271,7 +275,7 @@ export default function DocsPage() {
                           fontSize: 13,
                           padding: "6px 20px",
                           cursor: "pointer",
-                          color: active ? "#ededed" : "#666",
+                          color: active ? "#ededed" : "#777",
                           background: active ? "rgba(91,99,211,.06)" : "transparent",
                           borderTop: "none",
                           borderRight: "none",
@@ -520,6 +524,73 @@ pnpm install`}</CopyCode>
                 <li className="doc-li">Optionally attach images or video using the media button.</li>
                 <li className="doc-li">Pick a scheduled time using the date-time picker. You can also post immediately.</li>
                 <li className="doc-li">Click <strong>Schedule</strong>. The post is enqueued and will fire at the chosen time.</li>
+              </ol>
+
+              {/* ── Post templates ── */}
+              <h2 className="doc-h2" id="post-templates">Post templates</h2>
+              <p className="doc-p">
+                Templates let you save and reuse post content from the Compose page. Useful for recurring formats like weekly updates, product announcements, or thread starters.
+              </p>
+              <h3 className="doc-h3">Saving a template</h3>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">Write your post in the Compose page.</li>
+                <li className="doc-li">Click <strong>+ Save</strong> in the POST section header.</li>
+                <li className="doc-li">Enter a name and press Enter or click Save. Template names must be unique.</li>
+              </ol>
+              <h3 className="doc-h3">Loading a template</h3>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">Click <strong>Templates</strong> in the POST section header to open the dropdown.</li>
+                <li className="doc-li">Click any template name — the text and first comment are instantly populated.</li>
+              </ol>
+              <p className="doc-p">
+                Templates save: post text, first comment, and YouTube title/description (if YouTube fields were filled). Templates are not shown when only YouTube is selected.
+              </p>
+              <h3 className="doc-h3">Deleting a template</h3>
+              <p className="doc-p">
+                Hover over a template in the dropdown and click the <strong>✕</strong> that appears on the right. A confirmation dialog will ask you to confirm before deleting.
+              </p>
+
+              {/* ── Bulk CSV ── */}
+              <h2 className="doc-h2" id="bulk-csv">Bulk CSV scheduling</h2>
+              <p className="doc-p">
+                Bulk scheduling lets you upload a CSV file to schedule tens or hundreds of posts at once. Available from both the <strong>Posts page</strong> (Bulk button in the top bar) and the <strong>Compose page</strong> (Bulk CSV button next to Schedule).
+              </p>
+              <h3 className="doc-h3">CSV format</h3>
+              <p className="doc-p">The CSV must have a header row with these columns (in order):</p>
+              <CopyCode>{`scheduled_for,text,accounts,comment,image_urls`}</CopyCode>
+              <ul className="doc-ul">
+                <li className="doc-li"><span className="doc-inline-code">scheduled_for</span> — date and time in <span className="doc-inline-code">YYYY-MM-DD HH:MM</span> format or ISO 8601. Must be in the future.</li>
+                <li className="doc-li"><span className="doc-inline-code">text</span> — post body text (required).</li>
+                <li className="doc-li"><span className="doc-inline-code">accounts</span> — which platforms to post to (see below).</li>
+                <li className="doc-li"><span className="doc-inline-code">comment</span> — first comment text (optional, leave blank).</li>
+                <li className="doc-li"><span className="doc-inline-code">image_urls</span> — public image URLs separated by <span className="doc-inline-code">;</span> (optional, up to 4).</li>
+              </ul>
+              <h3 className="doc-h3">Accounts column syntax</h3>
+              <ul className="doc-ul">
+                <li className="doc-li"><span className="doc-inline-code">all</span> — post to all connected accounts (excluding YouTube).</li>
+                <li className="doc-li"><span className="doc-inline-code">bluesky|mastodon</span> — post to specific platforms, separated by <span className="doc-inline-code">|</span>.</li>
+                <li className="doc-li"><span className="doc-inline-code">!instagram</span> — post to all platforms except Instagram (and YouTube).</li>
+                <li className="doc-li"><span className="doc-inline-code">all|!instagram|!linkedin</span> — all except Instagram and LinkedIn.</li>
+              </ul>
+              <p className="doc-p">
+                Supported platform names: <span className="doc-inline-code">bluesky</span>, <span className="doc-inline-code">threads</span>, <span className="doc-inline-code">instagram</span>, <span className="doc-inline-code">linkedin</span>, <span className="doc-inline-code">mastodon</span>, <span className="doc-inline-code">facebook</span>. YouTube is not supported in bulk scheduling — it requires a video file. Use the Compose page for YouTube posts.
+              </p>
+              <p className="doc-p">
+                Instagram rows must include at least one URL in <span className="doc-inline-code">image_urls</span>. Rows missing an image for Instagram will show an error in the preview and be skipped.
+              </p>
+              <h3 className="doc-h3">Example CSV</h3>
+              <CopyCode>{`scheduled_for,text,accounts,comment,image_urls
+2026-08-01 09:00,Good morning 🌅,all,,
+2026-08-02 14:30,Check the blog post,bluesky|mastodon,Link in first comment,
+2026-08-03 18:00,LinkedIn update,linkedin,,https://example.com/image.jpg
+2026-08-04 10:00,Skip Instagram today,!instagram,,
+2026-08-05 12:00,Two images 🖼️,bluesky|threads,,https://img1.jpg;https://img2.jpg`}</CopyCode>
+              <h3 className="doc-h3">Preview and scheduling</h3>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">Paste your CSV or upload a <span className="doc-inline-code">.csv</span> file.</li>
+                <li className="doc-li">Click <strong>Preview</strong> — each row is validated and shown in a table with its status (✓ Ready or ✕ error).</li>
+                <li className="doc-li">Review the results. Error rows are skipped automatically.</li>
+                <li className="doc-li">Click <strong>Schedule N posts</strong> to enqueue all valid rows. Posts are scheduled one at a time with a progress bar.</li>
               </ol>
 
               {/* ── Calendar view ── */}

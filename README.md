@@ -18,19 +18,47 @@
 
 ## Features
 
-- **Multi-platform scheduling** - Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages
-- **First comment** - post a reply/comment immediately after the main post goes live
-- **Per-platform overrides** - customize text and comment per account
-- **Image & video support** - mixed image/video carousel (up to 10 items), alt text, Instagram Reels, Stories, YouTube Shorts
-- **Calendar view** - drag-and-drop to reschedule pending posts
-- **Live status updates** - Server-Sent Events, no polling
-- **Dry run mode** - full pipeline test without making real API calls
-- **Onboarding flow** - guided setup after registration
-- **Billing** - Dodo Payments integration with 14-day free trial, plan upgrades/downgrades
-- **Settings** - profile, password change, delete account
-- **Password reset** - forgot password email flow via Resend
-- **Credentials encrypted at rest** - AES-256-GCM, never stored in plaintext
-- SQLite locally, drop-in Postgres for production
+**Scheduling**
+- **Multi-platform posting** — write once, publish to all 7 platforms simultaneously
+- **Bulk CSV scheduling** — upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
+- **Post templates** — save, load, and delete reusable post drafts
+- **Dry run mode** — full pipeline test without making real API calls
+- **First comment scheduling** — auto-reply immediately after the main post goes live
+- **Per-platform overrides** — custom text and first comment per account (Pro+)
+
+**Media**
+- Images (up to 4 per post; plan-gated), video (up to 100 MB)
+- Instagram Reels, Stories, and carousel (up to 10 items)
+- YouTube Shorts + long-form video with dedicated Title/Description fields
+- Alt text on every image
+- Clipboard paste and drag-and-drop upload
+
+**Calendar & Posts**
+- FullCalendar month/week/day views with drag-to-reschedule
+- Real-time job status via Server-Sent Events
+- Platform filter in list and calendar views
+- Retry failed platforms (re-queues only failed targets; skips already-successful ones)
+- Inline edit and reschedule from list view
+
+**Auth & Accounts**
+- Email + password auth (JWT, bcrypt, silent refresh)
+- Email verification and password reset via Resend
+- API keys for programmatic access (Pro/Team plans)
+- Token expiry warnings with one-click reconnect
+- Background token auto-refresh (Threads, Instagram, Facebook, YouTube — every 12h)
+
+**Infrastructure**
+- BullMQ queue backed by Redis (Upstash or Railway)
+- AES-256-GCM encryption for all stored OAuth credentials
+- Sentry error monitoring
+- Orphan upload cleanup cron (every 6h)
+- Rate limiting per route
+- CSRF nonce on all OAuth flows
+
+**Billing (optional)**
+- Dodo Payments — Creator, Pro, Team plans
+- 14-day free trial; INR/USD currency detection
+- Set `ENABLE_BILLING=false` for self-hosted mode — all features unlocked, no plan limits
 
 ---
 
@@ -38,12 +66,15 @@
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16 (App Router), Tailwind CSS |
-| Backend | Fastify v4, TypeScript ESM |
-| Database | Prisma ORM SQLite (dev) / Supabase (prod) |
-| Queue | BullMQ + Redis (Upstash or Railway) |
-| Billing | Dodo Payments |
+| Frontend | Next.js 16 (App Router), React 18, Tailwind CSS |
+| Backend | Fastify v4, TypeScript ESM, Node.js |
+| Database | Prisma 5 — SQLite (dev) / Postgres (prod) |
+| Queue | BullMQ 5 + Redis (Upstash or Railway) |
+| Email | Resend |
 | Storage | Local disk (dev) / Supabase Storage (prod) |
+| Billing | Dodo Payments |
+| Monitoring | Sentry |
+| Calendar | FullCalendar 6 |
 
 ---
 
@@ -52,18 +83,16 @@
 ```
 posthive/
 ├── apps/
-│   ├── api/                  # Fastify v4 API server
-│   │   ├── prisma/           # Schema and migrations
+│   ├── api/                  # Fastify v4 API (Node.js, TypeScript, ESM)
+│   │   ├── prisma/           # Schema + migrations
 │   │   └── src/
-│   │       ├── adapters/     # Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages
-│   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, billing
-│   │       ├── routes/       # auth, accounts, jobs, upload, billing, user
-│   │       ├── runner/       # Job state machine
-│   │       └── scheduler/    # Token refresh and cleanup crons
-│   └── web/                  # Next.js frontend
+│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook)
+│   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, plans
+│   │       └── routes/       # auth, accounts, jobs, templates, upload, billing, user, apiKeys, publicApi
+│   └── web/                  # Next.js 16 frontend
 │       └── src/
-│           ├── app/          # Pages: compose, jobs, accounts, billing, settings, auth
-│           └── components/   # Sidebar, Calendar, Previews, Toast, Modals
+│           ├── app/          # Pages: compose, jobs, accounts, billing, settings, docs, features, platforms
+│           └── components/   # Sidebar, CalendarView, BulkScheduleModal, Toast, PlatformPreview, etc.
 └── package.json              # pnpm workspace root
 ```
 
@@ -72,8 +101,8 @@ posthive/
 ## Prerequisites
 
 - **Node.js** >= 20
-- **pnpm** >= 9 `npm install -g pnpm`
-- **Redis** [Upstash](https://upstash.com) free tier or Railway Redis
+- **pnpm** >= 9 — `npm install -g pnpm`
+- **Redis** — [Upstash](https://upstash.com) free tier or Railway Redis
 
 ---
 
@@ -87,30 +116,34 @@ cd posthive
 pnpm install
 ```
 
-### 2. Set up environment variables
+### 2. Configure environment
 
 ```bash
 cp apps/api/.env.example apps/api/.env
 ```
 
-Fill in the values see [Environment Variables](#environment-variables) below.
+Fill in the values — see [Environment Variables](#environment-variables) below.
 
 ### 3. Set up the database
 
 ```bash
 cd apps/api
 pnpm db:migrate
-pnpm prisma generate
+npx prisma generate
 ```
 
 ### 4. Run dev servers
 
 ```bash
+# from project root
 pnpm dev
 ```
 
-- Web: http://localhost:3000
-- API: http://localhost:3001
+| Service | URL |
+|---|---|
+| Web | http://localhost:3000 |
+| API | http://localhost:3001 |
+| Prisma Studio | `pnpm db:studio` → http://localhost:5555 |
 
 ---
 
@@ -118,64 +151,109 @@ pnpm dev
 
 ### `apps/api/.env`
 
+**Core**
+
 | Variable | Required | Description |
 |---|---|---|
-| `NODE_ENV` | No | Set to `production` in production enables secure cookie behaviour |
 | `PORT` | No | API port. Defaults to `3001` |
-| `DATABASE_URL` | Yes | Prisma DB URL. Use `file:./dev.db` for SQLite, Postgres URL in prod |
-| `ENCRYPTION_KEY` | Yes | 64-char hex AES-256-GCM key. **Never change after data is written** |
-| `REDIS_URL` | Yes | Redis connection string (Upstash or Railway) |
-| `WEB_URL` | Yes | Web app URL for CORS and OAuth redirects. `http://localhost:3000` in dev |
-| `SECURE_COOKIES` | Prod | Set to `true` in production so auth cookies require HTTPS |
-| **Auth** | | |
-| `AUTH_PROVIDER` | No | `local` (default, JWT + bcrypt) or `supabase` |
-| `JWT_ACCESS_SECRET` | local auth | 64-char hex string for access token signing |
-| `JWT_REFRESH_SECRET` | local auth | 64-char hex string for refresh token signing |
+| `DATABASE_URL` | Yes | `file:./dev.db` for SQLite; Postgres URL in prod |
+| `ENCRYPTION_KEY` | Yes | 64-char hex. AES-256-GCM key for credentials. **Never change after data is written** |
+| `REDIS_URL` | Yes | Upstash or Railway Redis URL |
+| `WEB_URL` | Yes | Frontend origin for CORS + OAuth redirects. `http://localhost:3000` in dev |
+| `NODE_ENV` | Prod | Set to `production` |
+| `SECURE_COOKIES` | Prod | Set to `true` to require HTTPS for auth cookies |
+
+**Auth**
+
+| Variable | Required | Description |
+|---|---|---|
+| `AUTH_PROVIDER` | No | `local` (default) or `supabase` |
+| `JWT_ACCESS_SECRET` | local auth | 64-char hex |
+| `JWT_REFRESH_SECRET` | local auth | 64-char hex |
 | `SUPABASE_URL` | Supabase | `https://your-project.supabase.co` |
-| `SUPABASE_ANON_KEY` | Supabase | Supabase anon/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Supabase service role key (admin operations) |
-| **Storage** | | |
-| `STORAGE_PROVIDER` | No | `local` (default, disk) or `supabase` (required for prod/multi-instance) |
-| `SUPABASE_STORAGE_BUCKET` | Supabase storage | Bucket name create a public bucket in Supabase dashboard. Defaults to `media` |
-| **Email** | | |
-| `RESEND_API_KEY` | No | [Resend](https://resend.com) API key for password reset emails. Falls back to console logging in dev |
-| `EMAIL_FROM` | No | From address must be a domain verified in Resend. Defaults to `Posthive <noreply@posthive.app>` |
-| **OAuth - Threads** | | |
-| `THREADS_APP_ID` | Threads | Meta app ID |
-| `THREADS_APP_SECRET` | Threads | Meta app secret |
-| `THREADS_REDIRECT_URI` | Threads | Must be public HTTPS (use a tunnel in dev) |
-| **OAuth - Instagram** | | |
-| `INSTAGRAM_APP_ID` | Instagram | Meta app ID |
-| `INSTAGRAM_APP_SECRET` | Instagram | Meta app secret |
-| `INSTAGRAM_REDIRECT_URI` | Instagram | Must be public HTTPS |
-| `PUBLIC_API_URL` | Instagram | Public HTTPS URL of the API — Meta fetches uploaded images from here |
-| **OAuth - LinkedIn** | | |
-| `LINKEDIN_CLIENT_ID` | LinkedIn | LinkedIn app client ID |
-| `LINKEDIN_CLIENT_SECRET` | LinkedIn | LinkedIn app client secret |
-| `LINKEDIN_REDIRECT_URI` | LinkedIn | Must be public HTTPS |
-| **OAuth - Mastodon** | | |
-| `MASTODON_CLIENT_ID` | Mastodon | Client key from your Mastodon app settings |
-| `MASTODON_CLIENT_SECRET` | Mastodon | Client secret from your Mastodon app settings |
-| `MASTODON_REDIRECT_URI` | Mastodon | Must be public HTTPS |
-| **OAuth - YouTube** | | |
-| `YOUTUBE_CLIENT_ID` | YouTube | Google OAuth client ID (console.cloud.google.com) |
-| `YOUTUBE_CLIENT_SECRET` | YouTube | Google OAuth client secret |
-| `YOUTUBE_REDIRECT_URI` | YouTube | **Use `http://localhost:<API_PORT>/auth/youtube/callback`** — unlike the other platforms, Google rejects public tunnel domains (devtunnels.ms, ngrok, etc.) outright since it requires the redirect domain to be owned and verified. Localhost is exempt from that check. This means connecting YouTube only works from a browser on the same machine as your API server. |
-| **OAuth - Facebook Pages** | | |
-| `FACEBOOK_APP_ID` | Facebook | Meta app ID (same app as Threads/Instagram) |
-| `FACEBOOK_APP_SECRET` | Facebook | Meta app secret (same app as Threads/Instagram) |
-| `FACEBOOK_REDIRECT_URI` | Facebook | Must be public HTTPS (e.g. `https://your-domain/auth/facebook/callback`) |
-| **Billing** | | |
-| `ENABLE_BILLING` | No | Set to `true` to enable Dodo Payments and plan limits. Leave unset for self-hosted all features unlocked |
+| `SUPABASE_ANON_KEY` | Supabase | Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Supabase service role key |
+
+**Email**
+
+| Variable | Required | Description |
+|---|---|---|
+| `RESEND_API_KEY` | No | [Resend](https://resend.com) API key. Falls back to console in dev |
+| `EMAIL_FROM` | No | Verified sender address. e.g. `Posthive <noreply@posthive.co>` |
+
+**Storage**
+
+| Variable | Required | Description |
+|---|---|---|
+| `STORAGE_PROVIDER` | No | `supabase` for prod; unset = local disk |
+| `SUPABASE_STORAGE_BUCKET` | Supabase | Bucket name. Defaults to `media` |
+| `PUBLIC_API_URL` | Instagram | Public HTTPS URL of the API — Meta fetches images from here |
+
+**OAuth — Threads**
+
+| Variable | Description |
+|---|---|
+| `THREADS_APP_ID` | Meta app ID |
+| `THREADS_APP_SECRET` | Meta app secret |
+| `THREADS_REDIRECT_URI` | Must be public HTTPS |
+
+**OAuth — Instagram**
+
+| Variable | Description |
+|---|---|
+| `INSTAGRAM_APP_ID` | Meta app ID |
+| `INSTAGRAM_APP_SECRET` | Meta app secret |
+| `INSTAGRAM_REDIRECT_URI` | Must be public HTTPS |
+
+**OAuth — LinkedIn**
+
+| Variable | Description |
+|---|---|
+| `LINKEDIN_CLIENT_ID` | LinkedIn app client ID |
+| `LINKEDIN_CLIENT_SECRET` | LinkedIn app client secret |
+| `LINKEDIN_REDIRECT_URI` | Must be public HTTPS |
+
+**OAuth — Mastodon**
+
+| Variable | Description |
+|---|---|
+| `MASTODON_CLIENT_ID` | Client key from Mastodon app settings |
+| `MASTODON_CLIENT_SECRET` | Client secret from Mastodon app settings |
+| `MASTODON_REDIRECT_URI` | Must be public HTTPS |
+
+**OAuth — YouTube**
+
+| Variable | Description |
+|---|---|
+| `YOUTUBE_CLIENT_ID` | Google OAuth client ID |
+| `YOUTUBE_CLIENT_SECRET` | Google OAuth client secret |
+| `YOUTUBE_REDIRECT_URI` | Use `http://localhost:3001/auth/youtube/callback` — Google rejects tunnel domains; localhost is exempt |
+
+**OAuth — Facebook Pages**
+
+| Variable | Description |
+|---|---|
+| `FACEBOOK_APP_ID` | Meta app ID |
+| `FACEBOOK_APP_SECRET` | Meta app secret |
+| `FACEBOOK_REDIRECT_URI` | Must be public HTTPS |
+
+**Billing**
+
+| Variable | Required | Description |
+|---|---|---|
+| `ENABLE_BILLING` | No | Set to `true` to enable Dodo Payments and plan limits |
 | `DODO_ENV` | Billing | `test_mode` or `live_mode` |
-| `DODO_API_KEY` | Billing | Dodo Payments API key |
-| `DODO_WEBHOOK_SECRET` | Billing | Dodo webhook signing secret (`whsec_...`) |
+| `DODO_API_KEY` | Billing | Dodo API key |
+| `DODO_WEBHOOK_SECRET` | Billing | `whsec_...` webhook signing secret |
 | `DODO_PRODUCT_CREATOR` | Billing | Dodo product ID for Creator plan |
 | `DODO_PRODUCT_PRO` | Billing | Dodo product ID for Pro plan |
 | `DODO_PRODUCT_TEAM` | Billing | Dodo product ID for Team plan |
-| **Monitoring** | | |
-| `SENTRY_DSN` | No | Sentry DSN for error monitoring. Omit to disable — Sentry is fully optional |
-| `SENTRY_ENABLED` | No | Set to `true` to enable Sentry in development for testing |
+
+**Monitoring**
+
+| Variable | Required | Description |
+|---|---|---|
+| `SENTRY_DSN` | No | Sentry DSN. Omit to disable |
 
 Generate secrets:
 ```bash
@@ -186,8 +264,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 | Variable | Required | Description |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | Yes | API URL as seen from the browser. `http://localhost:3001` in dev |
-| `NEXT_PUBLIC_ENABLE_BILLING` | No | Must match `ENABLE_BILLING` in the API. `false` for self-hosted, `true` for SaaS |
+| `NEXT_PUBLIC_API_URL` | Yes | API URL from the browser. `http://localhost:3001` in dev |
+| `NEXT_PUBLIC_ENABLE_BILLING` | No | Must match `ENABLE_BILLING` in the API |
 
 ---
 
@@ -197,15 +275,14 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 1. Go to **Accounts** in the app
 2. Enter your handle (e.g. `you.bsky.social`)
 3. Generate an app password at [bsky.app](https://bsky.app) → Settings → App Passwords
-4. Enter it and click Connect no OAuth needed
+4. Enter it and click Connect — no OAuth needed
 
 ### Threads
 1. Create an app at [developers.facebook.com](https://developers.facebook.com) and add the Threads use case
 2. Set the OAuth redirect URI to `https://your-domain/auth/threads/callback`
-3. Add your App ID and Secret to `.env`
-4. Click **Connect with Threads** in the app
+3. Add `THREADS_APP_ID` and `THREADS_APP_SECRET` to `.env`
 
-> In development mode, only Threads Testers can connect. Submit for Meta App Review (`threads_basic` + `threads_content_publish`) for public access.
+> In development mode only Threads Testers can connect. Submit for Meta App Review (`threads_basic` + `threads_content_publish`) for public access.
 
 ### Instagram
 1. Add the Instagram product to your Meta app
@@ -215,56 +292,133 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ### LinkedIn
 1. Create an app at [developer.linkedin.com](https://developer.linkedin.com)
 2. Add the **Share on LinkedIn** and **Sign In with LinkedIn using OpenID Connect** products
-3. Set the OAuth redirect URI to `https://your-domain/auth/linkedin/callback`
-4. Add your Client ID and Secret to `.env`
-5. Click **Connect LinkedIn** in the app
+3. Set redirect URI to `https://your-domain/auth/linkedin/callback`
 
 ### Mastodon
-1. Log in to your Mastodon instance (e.g. mastodon.social)
-2. Go to **Settings → Development → New Application**
-3. Set the redirect URI to `https://your-domain/auth/mastodon/callback`
-4. Select scopes: `read:accounts`, `write:statuses`, `write:media`
-5. Copy the **Client key** and **Client secret** to `.env`
-6. Click **Connect Mastodon** in the app and enter your instance URL
+1. Log in to your Mastodon instance → Settings → Development → New Application
+2. Scopes: `read:accounts`, `write:statuses`, `write:media`
+3. Set redirect URI to `https://your-domain/auth/mastodon/callback`
 
-> Works with any Mastodon-compatible instance — mastodon.social, fosstodon.org, hachyderm.io, and more.
+> Works with any Mastodon-compatible instance — mastodon.social, fosstodon.org, hachyderm.io, etc.
+
+### YouTube
+1. Create a project in [Google Cloud Console](https://console.cloud.google.com)
+2. Enable the YouTube Data API v3
+3. Create OAuth 2.0 credentials; set redirect URI to `http://localhost:3001/auth/youtube/callback`
+
+> Google requires app verification for production. Until verified, refresh tokens expire after 7 days.
 
 ### Facebook Pages
-1. Use the same Meta app as Threads/Instagram at [developers.facebook.com](https://developers.facebook.com)
-2. Add the **"Manage everything on your Page"** use case (grants `pages_manage_posts`, `pages_show_list`, `pages_read_engagement`)
-3. Under **Facebook Login for Business → Settings**, add `https://your-domain/auth/facebook/callback` as a valid OAuth redirect URI
-4. Set `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`, and `FACEBOOK_REDIRECT_URI` in `.env`
-5. Click **Connect Facebook Page** in the app
+1. Use the same Meta app as Threads/Instagram
+2. Add **Manage everything on your Page** use case
+3. Set redirect URI to `https://your-domain/auth/facebook/callback`
+4. Requires a **Facebook Page** — personal profiles are not supported by the Graph API
 
-> **Requires a Facebook Page** — the Graph API does not support posting to personal profiles (removed by Meta in 2018). Create a free Page at [facebook.com/pages/create](https://facebook.com/pages/create).
+> First comment support requires `pages_manage_engagement` (pending Meta app review).
 
-> In development mode, submit for Meta App Review (`pages_manage_posts`) for public access. First comment support requires the additional `pages_manage_engagement` permission.
+---
+
+## Bulk CSV Scheduling
+
+Upload a CSV to schedule multiple posts at once. Available from the **Posts** page (Bulk button) and the **Compose** page (Bulk CSV button).
+
+**CSV format:**
+```
+scheduled_for,text,accounts,comment,image_urls
+2026-08-01 09:00,Good morning 🌅,all,,
+2026-08-02 14:30,Blog post link,bluesky|mastodon,Link in first comment,
+2026-08-03 18:00,Skip Instagram today,!instagram,,
+2026-08-04 10:00,With an image,linkedin,,https://example.com/image.jpg
+2026-08-05 12:00,Two images,bluesky|threads,,https://img1.jpg;https://img2.jpg
+```
+
+**Accounts column syntax:**
+- `all` — all connected accounts except YouTube
+- `bluesky|mastodon` — specific platforms, pipe-separated
+- `!instagram` — all platforms except Instagram (and YouTube)
+- `all|!instagram|!linkedin` — all except Instagram and LinkedIn
+
+> YouTube is not supported in bulk scheduling — it requires a video file. Use Compose instead.
+> Instagram rows must include at least one image URL.
 
 ---
 
 ## How Scheduling Works
 
 1. Write a post in Compose, pick accounts, set a time
-2. API creates a `PostJob` in the DB and queues a BullMQ job with exact delay
+2. API creates a `PostJob` in the DB and enqueues a BullMQ delayed job
 3. At the scheduled time BullMQ fires the job (~1 second accuracy)
-4. The runner processes each platform independently:
+4. The worker processes each platform independently:
    - Refreshes OAuth tokens if needed
    - Posts the main content
    - Posts the first comment as a reply (if provided)
-5. Each step is persisted before the next crash-safe and resumable
-6. Jobs page receives real-time updates via Server-Sent Events
+5. Each step is persisted before the next — crash-safe and resumable
+6. Real-time status updates via Server-Sent Events on the Posts page
+
+### Job state machine (per PostJobTarget)
+
+```
+pending → running → post_done → comment_done  (= done)
+                 ↘ post_failed
+                              ↘ comment_failed
+```
+
+---
+
+## Post Templates
+
+Save and reuse post drafts from the Compose page:
+
+1. Write a post and click **+ Save** in the POST section header
+2. Give it a name (must be unique)
+3. Click **Templates** to open the dropdown and load any saved template
+4. Hover a template and click **✕** to delete it
+
+Templates save: post text, first comment, YouTube title/description, and YouTube type (Short/Video).
+
+---
+
+## API Reference
+
+Posthive includes a full public REST API for Pro and Team plans (or all users when billing is disabled).
+
+**Base URL:** `https://your-api-domain/api/v1`
+
+**Authentication:** Bearer token — create an API key in Settings.
+
+```
+Authorization: Bearer ph_your_api_key
+```
+
+**Endpoints:**
+
+| Method | Path | Description |
+|---|---|---|
+| GET | /accounts | List connected accounts |
+| POST | /posts | Schedule a post |
+| GET | /posts | List posts (cursor-paginated) |
+| GET | /posts/:id | Get single post |
+| PATCH | /posts/:id | Update/reschedule pending post |
+| DELETE | /posts/:id | Delete post |
+| POST | /upload | Upload media file |
+| GET | /templates | List templates |
+| POST | /templates | Create template |
+
+See the full [documentation](https://posthive.co/docs) for request/response schemas.
 
 ---
 
 ## Plans
 
-| Plan | Accounts | Posts/month |
-|---|---|---|
-| Creator | 3 | 400 |
-| Pro | 15 | Unlimited |
-| Team | 50 | Unlimited |
+| Plan | Accounts | Posts/month | API Keys |
+|---|---|---|---|
+| Creator | 3 | 400 | — |
+| Pro | 15 | Unlimited | 3 |
+| Team | 50 | Unlimited | 10 |
 
 All plans include a **14-day free trial**. Powered by [Dodo Payments](https://dodopayments.com).
+
+Set `ENABLE_BILLING=false` for self-hosted mode — all features unlocked, no plan limits, no Dodo account needed.
 
 ---
 
@@ -277,18 +431,16 @@ All plans include a **14-day free trial**. Powered by [Dodo Payments](https://do
 | Instagram | 2,200 characters |
 | LinkedIn | 3,000 characters |
 | Mastodon | 500 characters |
-| YouTube | Title: 100 characters · Description: 5,000 characters |
+| YouTube | Title: 100 · Description: 5,000 |
 | Facebook Pages | 63,206 characters |
 
 ---
 
 ## Self-Hosting
 
-Posthive is designed to be self-hosted. By default, billing is **disabled** no Dodo account needed, no plan limits, all features unlocked for all users.
+Posthive is designed to be self-hosted. Billing is optional.
 
-**Both the API and web env vars must match setting only one will cause errors.**
-
-To run without billing:
+**Without billing (default):**
 ```env
 # apps/api/.env
 ENABLE_BILLING=false
@@ -296,105 +448,70 @@ ENABLE_BILLING=false
 # apps/web/.env.local
 NEXT_PUBLIC_ENABLE_BILLING=false
 ```
-- No Dodo account needed, no plan limits, all features unlocked
-- Onboarding skips the plan selection step
-- Billing page shows a "Self-hosted mode" message
+All features are unlocked for all users. No Dodo account needed. Onboarding skips plan selection.
 
-To run as a SaaS with billing:
+**With billing:**
 ```env
-# apps/api/.env
 ENABLE_BILLING=true
-
-# apps/web/.env.local
 NEXT_PUBLIC_ENABLE_BILLING=true
 ```
-- Create a [Dodo Payments](https://dodopayments.com) account and fill in all `DODO_*` env vars
-- Users go through a 14-day free trial on signup
+Create a [Dodo Payments](https://dodopayments.com) account and fill in all `DODO_*` env vars. Users get a 14-day free trial on signup.
 
 ---
 
 ## Production Deployment
 
-The recommended stack: **Railway** (API + Redis) · **Supabase** (Postgres + Storage) · **Vercel** (Next.js frontend)
+Recommended stack: **Railway** (API + Redis) · **Supabase** (Postgres + Storage) · **Vercel** (Next.js)
 
-### 1. Supabase setup
+### 1. Supabase
 
 1. Create a project at [supabase.com](https://supabase.com)
-2. Go to **Storage** → create a bucket named `media` → set it to **Public**
-3. Go to **Settings → Database → Connect → Session pooler** → copy the connection URI (port 5432)
-4. Set a strong alphanumeric database password (no special characters — they break the URL)
+2. Storage → create a bucket named `media` → set it to **Public**
+3. Settings → Database → Connection String → Session pooler (port 5432) → copy URI
 
-### 2. Railway — API service
+### 2. Railway — API
 
-1. New project → **Deploy from GitHub** → select your repo → set **Root Directory** to `apps/api`
-2. Add a **Redis** service → copy its private URL as `${{ Redis.REDIS_URL }}`
-3. Set these in the API service **Variables**:
-
-| Variable | Value |
-|---|---|
-| `DATABASE_URL` | Supabase session pooler URI (port 5432) |
-| `REDIS_URL` | `${{ Redis.REDIS_URL }}` |
-| `NODE_ENV` | `production` |
-| `SECURE_COOKIES` | `true` |
-| `WEB_URL` | your frontend URL (e.g. `https://posthive.co`) |
-| `PUBLIC_API_URL` | your API URL (e.g. `https://api.posthive.co`) |
-| `STORAGE_PROVIDER` | `supabase` |
-| `SUPABASE_URL` | `https://<ref>.supabase.co` |
-| `SUPABASE_ANON_KEY` | Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
-| `SUPABASE_STORAGE_BUCKET` | `media` |
-| `ENCRYPTION_KEY` | 64-char hex (generate once, never change) |
-| `JWT_ACCESS_SECRET` | 64-char hex |
-| `JWT_REFRESH_SECRET` | 64-char hex |
-| All OAuth vars | Platform client IDs/secrets with production redirect URIs |
-
-4. Set **Build Command**: `npm install && npx prisma generate && npm run build`
-5. Set **Start Command**: `npx prisma migrate deploy && node dist/index.js`
-6. Add a custom domain under **Networking** → set port to `3001`
-
-> **Important:** The `prisma/schema.prisma` provider is set to `postgresql` and `prisma/migrations/migration_lock.toml` is set to `postgresql`. Never change these back to `sqlite` in production branches.
+1. New project → Deploy from GitHub → Root Directory: `apps/api`
+2. Add a Redis service → copy private URL as `${{ Redis.REDIS_URL }}`
+3. Set environment variables (see table above)
+4. **Build Command:** `npm install && npx prisma generate && npm run build`
+5. **Start Command:** `npx prisma migrate deploy && node dist/index.js`
+6. Add custom domain → set port to `3001`
 
 ### 3. Vercel — Frontend
 
-1. Import the same GitHub repo → set **Root Directory** to `apps/web`
-2. Vercel auto-detects Next.js — leave Build & Output Settings as default
-3. Add environment variables:
+1. Import same repo → Root Directory: `apps/web`
+2. Add env vars: `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_ENABLE_BILLING`
 
-| Variable | Value |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | Your Railway API URL |
-| `NEXT_PUBLIC_ENABLE_BILLING` | `true` or `false` |
+### 4. Migrations
 
-### 4. Database migrations
-
-Migrations run automatically on every deploy via `prisma migrate deploy` in the start command. To create a new migration locally after a schema change:
+Migrations run automatically on deploy via `prisma migrate deploy`. To create a migration locally:
 
 ```bash
 cd apps/api
-# Temporarily point DATABASE_URL to your Supabase direct connection URL
 npx prisma migrate dev --name describe_your_change
-# Revert DATABASE_URL back to file:./dev.db
 git add prisma/migrations
 git commit -m "db: add <describe_your_change> migration"
 ```
 
-> **Note:** Use the **direct connection** URL (not the pooler) when running `prisma migrate dev` locally — the session pooler can block migration connections.
+> Use the **direct connection** URL (not the pooler) when running `prisma migrate dev` locally.
 
 ---
 
 ## Adding a New Platform
 
 1. Create `apps/api/src/adapters/<platform>.ts` implementing `PlatformAdapter`
-2. Register it in `apps/api/src/adapters/index.ts`
+2. Register in `apps/api/src/adapters/index.ts`
 3. Add OAuth routes in `apps/api/src/routes/auth.ts`
-4. Add the platform card to `apps/web/src/app/accounts/page.tsx`
+4. Add platform card in `apps/web/src/app/accounts/page.tsx`
 5. Add favicon domain in `apps/web/src/components/PlatformIcon.tsx`
 6. Add char limit in `PLATFORM_LIMIT` in `apps/web/src/app/compose/page.tsx`
+7. Add preview component in `PlatformPreview` in `apps/web/src/app/compose/page.tsx`
 
 ---
 
 ## License
 
-GNU Affero General Public License v3.0 see [LICENSE](LICENSE) for details.
+GNU Affero General Public License v3.0 — see [LICENSE](LICENSE) for details.
 
 If you modify this project and run it as a network service, you must make your modified source code available to users of that service.
