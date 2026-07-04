@@ -34,12 +34,12 @@
 - [ ] **Draft posts** — save a compose state as draft without scheduling; list in Posts page
 
 ### Edit Dialog
-- [ ] **Video replacement in edit** — `uploadFiles` in `EditPostDialog.tsx` only processes images; selecting a video file in Reel mode or YouTube upload mode silently does nothing. Users must delete and repost to change a video. Fix: handle `video/*` files in `uploadFiles` for reel mode, and add a video file input to the YouTube upload-mode section.
+- [x] **Video replacement in edit** — separate `uploadVideo` function handles video uploads; reel mode and YouTube upload mode both have a working video file input in the edit dialog.
 
 ### Posts / Calendar
 - [x] **Week/Day view polish** — timegrid event cards, slot height, now indicator, today column highlight
 - [ ] **Post analytics** — view engagement stats (likes, replies, reposts) pulled from each platform after publishing
-- [ ] **Duplicate post** — clone an existing post to reschedule without re-typing
+- [x] **Duplicate post** — clone any post from the Posts page; pre-fills compose with text, accounts, YouTube/Pinterest fields, per-platform overrides, and external video URLs
 
 ### Accounts
 - [x] **Multiple accounts per platform** — upsert key is `{platform, displayName, userId}`; connecting a different username creates a second row automatically

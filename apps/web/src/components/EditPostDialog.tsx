@@ -83,6 +83,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   function toggleOverride(accountId: string, defaultText: string, defaultComment: string) {
     setPerAccountOverrides(prev => {
@@ -134,6 +135,29 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  async function uploadVideo(file: File) {
+    setUploading(true); setUploadError(null);
+    const previewUrl = URL.createObjectURL(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({})) as { error?: string };
+        setUploadError(b.error ?? "Upload failed");
+        URL.revokeObjectURL(previewUrl);
+      } else {
+        const { url } = await res.json() as { url: string };
+        setVideo({ url, previewUrl, name: file.name });
+      }
+    } catch {
+      setUploadError("Upload failed — is the API running?");
+      URL.revokeObjectURL(previewUrl);
+    }
+    setUploading(false);
+    if (videoInputRef.current) videoInputRef.current.value = "";
   }
 
   function removeImage(i: number) {
@@ -422,9 +446,24 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
                     </p>
                   </div>
                 ) : (
-                  <p className="text-xs" style={{ color: video ? "#4ade80" : "#555" }}>
-                    {video ? `✓ ${video.name}` : "No video attached. Switch to Paste URL for large files."}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <input ref={videoInputRef} type="file"
+                      accept="video/mp4,video/quicktime,video/webm"
+                      className="hidden" id="edit-dialog-yt-video-upload"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) uploadVideo(f); }} />
+                    <label htmlFor="edit-dialog-yt-video-upload"
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${uploading ? "opacity-40 pointer-events-none" : "hover:border-white/20"}`}
+                      style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+                      </svg>
+                      {uploading ? "Uploading…" : video ? "Change video" : "Add video"}
+                    </label>
+                    {video && (
+                      <span className="text-xs" style={{ color: "#4ade80" }}>✓ {video.name}</span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -555,25 +594,40 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
 
             {/* Upload button */}
             <div className="flex items-center gap-3">
+              {/* Video input — reel mode */}
+              <input ref={videoInputRef} type="file"
+                accept="video/mp4,video/quicktime,video/webm"
+                className="hidden" id="edit-dialog-video-upload"
+                onChange={e => { const f = e.target.files?.[0]; if (f) uploadVideo(f); }} />
+              {/* Image input — post / story mode */}
               <input ref={fileInputRef} type="file"
-                accept={igMediaType === "reel" ? "video/mp4,video/quicktime" : "image/jpeg,image/png,image/gif,image/webp"}
-                multiple={igMediaType !== "reel" && igMediaType !== "story"}
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                multiple={igMediaType !== "story"}
                 className="hidden" id="edit-dialog-media-upload"
                 onChange={e => uploadFiles(Array.from(e.target.files ?? []))} />
-              <label htmlFor="edit-dialog-media-upload"
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${uploading || (igMediaType !== "reel" && images.length >= MAX_IMAGES) || (igMediaType === "story" && images.length >= 1) || (igMediaType === "reel" && !!video) ? "opacity-40 pointer-events-none" : "hover:border-white/20"}`}
-                style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d={igMediaType === "reel"
-                      ? "M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"
-                      : "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"} />
-                </svg>
-                {uploading ? "Uploading…"
-                  : igMediaType === "reel" ? (video ? "Change video" : "Add video")
-                  : igMediaType === "story" ? (images.length > 0 ? "Change image" : "Add story image")
-                  : images.length > 0 ? `${images.length}/${MAX_IMAGES} photos` : "Add photo"}
-              </label>
+              {igMediaType === "reel" ? (
+                <label htmlFor="edit-dialog-video-upload"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${uploading ? "opacity-40 pointer-events-none" : "hover:border-white/20"}`}
+                  style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                  {uploading ? "Uploading…" : video ? "Change video" : "Add video"}
+                </label>
+              ) : (
+                <label htmlFor="edit-dialog-media-upload"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${uploading || (igMediaType !== "story" && images.length >= MAX_IMAGES) || (igMediaType === "story" && images.length >= 1) ? "opacity-40 pointer-events-none" : "hover:border-white/20"}`}
+                  style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  {uploading ? "Uploading…"
+                    : igMediaType === "story" ? (images.length > 0 ? "Change image" : "Add story image")
+                    : images.length > 0 ? `${images.length}/${MAX_IMAGES} photos` : "Add photo"}
+                </label>
+              )}
             </div>
             {uploadError && (
               <p className="mt-2 text-xs rounded-lg px-3 py-2" style={{ color: "#f87171", backgroundColor: "#1f0a0a", border: "1px solid #3a1a1a" }}>

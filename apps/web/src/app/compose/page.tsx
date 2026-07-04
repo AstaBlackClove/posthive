@@ -76,6 +76,42 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     return () => document.removeEventListener("mousedown", handler);
   }, [showTemplates]);
 
+  // Pre-fill compose from a duplicated post
+  useEffect(() => {
+    const raw = sessionStorage.getItem("posthive_duplicate_draft");
+    if (!raw) return;
+    sessionStorage.removeItem("posthive_duplicate_draft");
+    try {
+      const draft = JSON.parse(raw) as {
+        text: string;
+        commentText: string;
+        accountIds: string[];
+        mediaType?: "post" | "reel" | "story";
+        youtubeType?: "short" | "video";
+        youtubeVideoMode?: "upload" | "url";
+        youtubeVideoUrl?: string;
+        youtubeTitle?: string;
+        youtubeDescription?: string;
+        pinterestTitle?: string;
+        pinterestDescription?: string;
+        perAccount?: Record<string, { text?: string; commentText?: string }>;
+      };
+      setText(draft.text);
+      setCommentText(draft.commentText);
+      setSelectedIds(draft.accountIds);
+      if (draft.mediaType) setIgMediaType(draft.mediaType);
+      if (draft.youtubeType) setYoutubeType(draft.youtubeType);
+      if (draft.youtubeVideoMode) setYoutubeVideoMode(draft.youtubeVideoMode);
+      if (draft.youtubeVideoUrl) setYoutubeVideoUrl(draft.youtubeVideoUrl);
+      if (draft.youtubeTitle !== undefined) setYoutubeTitle(draft.youtubeTitle);
+      if (draft.youtubeDescription !== undefined) setYoutubeDescription(draft.youtubeDescription);
+      if (draft.pinterestTitle !== undefined) setPinterestTitle(draft.pinterestTitle);
+      if (draft.pinterestDescription !== undefined) setPinterestDescription(draft.pinterestDescription);
+      if (draft.perAccount) setPerAccountOverrides(draft.perAccount);
+    } catch { /* malformed draft — ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Delete any unsubmitted uploads if the user navigates away
   useEffect(() => {
     return () => {
@@ -318,6 +354,17 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     }
   }
 
+  function resetForm() {
+    setText(""); setCommentText(""); setScheduledFor(defaultScheduledFor());
+    setIgMediaType("post");
+    setYoutubeTitle(""); setYoutubeDescription(""); setYoutubeType("short");
+    setYoutubeVideoMode("upload"); setYoutubeVideoUrl("");
+    setPinterestTitle(""); setPinterestDescription("");
+    setPerAccountOverrides({}); setShowCustomize(false); setUploadError(null);
+    mediaItems.forEach(m => URL.revokeObjectURL(m.previewUrl));
+    setMediaItems([]); setAltTexts([]);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const validationError = validateBeforeSubmit();
@@ -353,14 +400,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         confetti({ particleCount: 160, spread: 80, origin: { y: 0.6 }, zIndex: 9999 });
         setTimeout(() => confetti({ particleCount: 80, spread: 120, origin: { y: 0.55 }, zIndex: 9999 }), 300);
       }
-      setText(""); setCommentText(""); setScheduledFor(defaultScheduledFor());
-      setIgMediaType("post");
-      setYoutubeTitle(""); setYoutubeDescription(""); setYoutubeType("short");
-      setYoutubeVideoMode("upload"); setYoutubeVideoUrl("");
-      setPinterestTitle(""); setPinterestDescription("");
-      setPerAccountOverrides({}); setShowCustomize(false); setUploadError(null);
-      mediaItems.forEach(m => URL.revokeObjectURL(m.previewUrl));
-      setMediaItems([]); setAltTexts([]);
+      resetForm();
     } catch (err) {
       const msg = err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err);
       toastError(msg.replace(/^Error: API POST \/jobs → \d+: /, "").replace(/^\{"error":"/, "").replace(/"\}$/, ""));
@@ -1256,6 +1296,15 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             title="Bulk schedule from CSV"
           >
             Bulk CSV
+          </button>
+          <button
+            type="button"
+            onClick={resetForm}
+            className="px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80"
+            style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
+            title="Clear all inputs"
+          >
+            Clear
           </button>
           <button
             type="submit"

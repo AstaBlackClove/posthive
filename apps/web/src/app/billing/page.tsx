@@ -33,10 +33,14 @@ const PLANS = [
     features: [
       { text: "5 connected accounts", key: true },
       { text: "400 posts / month", key: true },
-      { text: "All 7 platforms", key: false },
-      { text: "Bulk CSV scheduling", key: false },
-      { text: "Calendar & drag-reschedule", key: false },
-      { text: "First comment automation", key: false },
+      { text: "All 7 platforms", key: true },
+      { text: "Bulk CSV scheduling", key: true },
+      { text: "Post templates", key: true },
+      { text: "Calendar & drag-reschedule", key: true },
+      { text: "First comment automation", key: true },
+      { text: "Reels & Stories", key: false },
+      { text: "Per-platform overrides", key: false },
+      { text: "API access", key: false },
     ],
   },
   {
@@ -53,9 +57,14 @@ const PLANS = [
     features: [
       { text: "15 connected accounts", key: true },
       { text: "Unlimited posts", key: true },
+      { text: "All 7 platforms", key: true },
+      { text: "Bulk CSV scheduling", key: true },
+      { text: "Post templates", key: true },
+      { text: "Calendar & drag-reschedule", key: true },
+      { text: "First comment automation", key: true },
       { text: "Reels & Stories", key: true },
       { text: "Per-platform overrides", key: true },
-      { text: "Everything in Creator", key: false },
+      { text: "API access (3 keys)", key: true },
     ],
   },
   {
@@ -71,9 +80,14 @@ const PLANS = [
     features: [
       { text: "50 connected accounts", key: true },
       { text: "Unlimited posts", key: true },
+      { text: "All 7 platforms", key: true },
+      { text: "Bulk CSV scheduling", key: true },
+      { text: "Post templates", key: true },
+      { text: "Calendar & drag-reschedule", key: true },
+      { text: "First comment automation", key: true },
       { text: "Reels & Stories", key: true },
       { text: "Per-platform overrides", key: true },
-      { text: "Everything in Pro", key: false },
+      { text: "API access (10 keys)", key: true },
     ],
   },
 ];
@@ -670,7 +684,6 @@ export default function BillingPage() {
           {[
             { path: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z", text: "Secure checkout via Dodo" },
             { path: "M6 18L18 6M6 6l12 12", text: "Cancel anytime" },
-            { path: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4", text: "Self-hostable & open source" },
           ].map(({ path, text }) => (
             <div key={text} className="flex items-center gap-2 text-xs">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

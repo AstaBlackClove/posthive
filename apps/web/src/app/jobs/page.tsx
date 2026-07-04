@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 import { CalendarView } from "../../components/CalendarView";
 import { PlatformIcon } from "../../components/PlatformIcon";
@@ -54,11 +55,12 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function JobCard({ job, onEdit, onDelete, onRetry }: {
+function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate }: {
   job: Job;
   onEdit: () => void;
   onDelete: () => void;
   onRetry: () => Promise<void>;
+  onDuplicate: () => void;
 }) {
   const [retrying, setRetrying] = useState(false);
   const content = JSON.parse(job.content) as { text: string; mediaUrls?: string[] };
@@ -135,6 +137,12 @@ function JobCard({ job, onEdit, onDelete, onRetry }: {
                   </svg>
                 </button>
               )}
+              <button onClick={onDuplicate} className="job-action-btn" title="Duplicate post">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </button>
               <button onClick={onDelete} className="job-action-btn job-action-btn--danger" title="Delete post">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -207,6 +215,7 @@ type ViewTab = "list" | "calendar";
 type FilterTab = "all" | "pending" | "done" | "failed";
 
 export default function JobsPage() {
+  const router = useRouter();
   const { success, error: toastError } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -249,6 +258,55 @@ export default function JobsPage() {
       await apiFetch(`/jobs/${jobId}/retry-failed`, { method: "POST" });
       success("Retrying failed platforms…");
     } catch (err) { toastError(String(err)); }
+  }
+
+  function duplicateJob(job: Job) {
+    const content = JSON.parse(job.content) as {
+      text: string;
+      mediaType?: "post" | "reel" | "story";
+      youtubeType?: "short" | "video";
+      youtubeVideoMode?: "upload" | "url";
+      youtubeVideoUrl?: string;
+      perAccount?: Record<string, { text?: string; commentText?: string }>;
+    };
+
+    // Extract YouTube title/description from its perAccount override
+    const ytAccountId = job.targets.find(t => accounts.find(a => a.id === t.accountId)?.platform === "youtube")?.accountId;
+    const ytText = content.perAccount?.[ytAccountId ?? ""]?.text ?? "";
+    const ytParts = ytText.split("\n\n");
+    const youtubeTitle = ytParts[0] ?? "";
+    const youtubeDescription = ytParts.slice(1).join("\n\n");
+
+    // Extract Pinterest title/description from its perAccount override
+    const pinAccountId = job.targets.find(t => accounts.find(a => a.id === t.accountId)?.platform === "pinterest")?.accountId;
+    const pinText = content.perAccount?.[pinAccountId ?? ""]?.text ?? "";
+    const pinParts = pinText.split("\n\n");
+    const pinterestTitle = pinParts[0] ?? "";
+    const pinterestDescription = pinParts.slice(1).join("\n\n");
+
+    // Keep manual per-platform overrides (exclude YouTube and Pinterest — compose re-populates those)
+    const perAccount = Object.fromEntries(
+      Object.entries(content.perAccount ?? {}).filter(([id]) => {
+        const platform = accounts.find(a => a.id === id)?.platform;
+        return platform !== "youtube" && platform !== "pinterest";
+      })
+    );
+
+    sessionStorage.setItem("posthive_duplicate_draft", JSON.stringify({
+      text: content.text,
+      commentText: job.commentText ?? "",
+      accountIds: job.targets.map(t => t.accountId),
+      mediaType: content.mediaType,
+      youtubeType: content.youtubeType,
+      youtubeVideoMode: content.youtubeVideoMode,
+      youtubeVideoUrl: content.youtubeVideoUrl,
+      youtubeTitle,
+      youtubeDescription,
+      pinterestTitle,
+      pinterestDescription,
+      ...(Object.keys(perAccount).length > 0 ? { perAccount } : {}),
+    }));
+    router.push("/compose");
   }
 
   async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string) {
@@ -515,7 +573,8 @@ export default function JobsPage() {
                     <JobCard key={job.id} job={job}
                       onEdit={() => setEditingJob(job)}
                       onDelete={() => setDeletingJob(job)}
-                      onRetry={() => retryFailed(job.id)} />
+                      onRetry={() => retryFailed(job.id)}
+                      onDuplicate={() => duplicateJob(job)} />
                   ))}
                 </div>
               </section>
@@ -534,7 +593,8 @@ export default function JobsPage() {
                     <JobCard key={job.id} job={job}
                       onEdit={() => setEditingJob(job)}
                       onDelete={() => setDeletingJob(job)}
-                      onRetry={() => retryFailed(job.id)} />
+                      onRetry={() => retryFailed(job.id)}
+                      onDuplicate={() => duplicateJob(job)} />
                   ))}
                 </div>
               </section>
