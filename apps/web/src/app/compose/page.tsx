@@ -440,8 +440,15 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
 
   const twitterSelected = selectedAccounts.some((a) => a.platform === "twitter");
   const urlPattern = /https?:\/\/\S+|(?<![/@\w])(?:www\.)\S+|(?<![/@\w])\b[\w-]+(?:\.[\w-]+)*\.[a-z]{2,6}\b(?:[/?#]\S*)?/i;
-  const twitterTextHasLink = twitterSelected && urlPattern.test(text);
-  const twitterCommentHasLink = twitterSelected && urlPattern.test(commentText);
+  const twitterAccounts = selectedAccounts.filter((a) => a.platform === "twitter");
+  const twitterTextHasLink = twitterSelected && twitterAccounts.some((a) => {
+    const effectiveText = perAccountOverrides[a.id]?.text ?? text;
+    return urlPattern.test(effectiveText);
+  });
+  const twitterCommentHasLink = twitterSelected && twitterAccounts.some((a) => {
+    const effectiveComment = perAccountOverrides[a.id]?.commentText ?? commentText;
+    return urlPattern.test(effectiveComment);
+  });
   const twitterHasLink = twitterTextHasLink || twitterCommentHasLink;
 
   // YouTube only treats an upload as a Short when it's vertical (9:16), ≤60s, AND
