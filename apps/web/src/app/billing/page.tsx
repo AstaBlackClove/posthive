@@ -41,6 +41,7 @@ const PLANS = [
       { text: "Reels & Stories", key: false },
       { text: "Per-platform overrides", key: false },
       { text: "API access", key: false },
+      { text: "Webhook outbound", key: false },
     ],
   },
   {
@@ -65,6 +66,7 @@ const PLANS = [
       { text: "Reels & Stories", key: true },
       { text: "Per-platform overrides", key: true },
       { text: "API access (3 keys)", key: true },
+      { text: "Webhook outbound", key: true },
     ],
   },
   {
@@ -88,6 +90,7 @@ const PLANS = [
       { text: "Reels & Stories", key: true },
       { text: "Per-platform overrides", key: true },
       { text: "API access (10 keys)", key: true },
+      { text: "Webhook outbound", key: true },
     ],
   },
 ];
