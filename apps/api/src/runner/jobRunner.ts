@@ -98,6 +98,29 @@ export async function runJob(
   const finalStatus = allDone && !anyFailed ? "done" : anyFailed ? "failed" : "running";
   await prisma.postJob.update({ where: { id: job.id }, data: { status: finalStatus } });
 
+  // Fire outbound webhook (silent fail — never affects job status)
+  if (!job.dryRun) {
+    const userRow = await prisma.user.findUnique({ where: { id: job.userId }, select: { webhookUrl: true } });
+    if (userRow?.webhookUrl) {
+      const platforms = job.targets.map(t => t.account.platform);
+      fetch(userRow.webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "post.published",
+          postId: job.id,
+          status: finalStatus,
+          scheduledFor: job.scheduledFor,
+          platforms,
+          text: content.text,
+        }),
+        signal: AbortSignal.timeout(10_000),
+      }).catch((err) => {
+        console.warn(`[runner] webhook delivery failed for job ${job.id}:`, err.message);
+      });
+    }
+  }
+
   // Clean up stored media once the job is fully done (not dry-run, not failed)
   if (finalStatus === "done" && !job.dryRun && storage && content.mediaUrls?.length) {
     await Promise.allSettled(

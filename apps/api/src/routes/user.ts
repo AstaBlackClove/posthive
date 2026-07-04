@@ -231,6 +231,27 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ ok: true });
   });
 
+  // ── Webhook ───────────────────────────────────────────────────────────────
+
+  // Get webhook URL
+  app.get("/user/webhook", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { webhookUrl: true } });
+    return reply.send({ webhookUrl: user?.webhookUrl ?? null });
+  });
+
+  // Set / clear webhook URL
+  app.patch("/user/webhook", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { webhookUrl } = req.body as { webhookUrl?: string };
+    const url = webhookUrl?.trim() || null;
+    if (url && !/^https?:\/\/.+/.test(url)) {
+      return reply.status(400).send({ error: "Webhook URL must start with http:// or https://" });
+    }
+    await prisma.user.update({ where: { id: userId }, data: { webhookUrl: url } });
+    return reply.send({ ok: true });
+  });
+
   // Delete account
   app.delete("/user", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);

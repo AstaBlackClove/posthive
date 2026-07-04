@@ -30,6 +30,7 @@ model User {
   dodoSubId      String?   @unique
 
   emailVerified Boolean   @default(false)
+  webhookUrl    String?   // outbound webhook fired on post publish
 
   accounts      Account[]
   postJobs      PostJob[]

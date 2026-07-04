@@ -31,6 +31,7 @@
 - [x] **Bulk scheduling** — CSV upload modal on Compose + Posts pages; `!platform` exclusion syntax; Instagram image validation; preview table; progress bar
 - [ ] **Queue / Best time to post** — auto-schedule to next available optimal slot
 - [ ] **AI caption assist** — "Generate caption" button powered by Claude API; platform-aware char limits
+- [x] **Clear button in compose** — resets text, media, YouTube/Pinterest fields, and overrides; preserves selected accounts and dry run mode
 - [ ] **Draft posts** — save a compose state as draft without scheduling; list in Posts page
 
 ### Edit Dialog

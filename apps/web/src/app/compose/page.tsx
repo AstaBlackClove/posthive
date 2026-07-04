@@ -912,11 +912,19 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                       onChange={(e) => setYoutubeVideoUrl(e.target.value)}
                       placeholder="https://your-cdn.com/video.mp4"
                       className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
-                      style={{ borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                      style={{
+                        borderColor: youtubeVideoUrl.trim() && (() => { try { new URL(youtubeVideoUrl); return false; } catch { return true; } })() ? "#ef4444" : "#2a2a2a",
+                        backgroundColor: "#111111",
+                        color: "#ededed",
+                      }}
                     />
-                    <p className="text-xs mt-1.5" style={{ color: "#555" }}>
-                      Any public URL — S3, Supabase, Cloudflare R2, direct CDN. No file size limit.
-                    </p>
+                    {youtubeVideoUrl.trim() && (() => { try { new URL(youtubeVideoUrl); return false; } catch { return true; } })() ? (
+                      <p className="text-xs mt-1.5" style={{ color: "#ef4444" }}>Invalid URL — must start with https://</p>
+                    ) : (
+                      <p className="text-xs mt-1.5" style={{ color: "#555" }}>
+                        Any public URL — S3, Supabase, Cloudflare R2, direct CDN. No file size limit.
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-xs" style={{ color: video ? "#4ade80" : "#555" }}>

@@ -72,9 +72,17 @@ export default function SettingsPage() {
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
 
+  // Webhook
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [webhookLoading, setWebhookLoading] = useState(false);
+  const [confirmDeleteWebhook, setConfirmDeleteWebhook] = useState(false);
+
   useEffect(() => {
     apiFetch<{ keys: typeof apiKeys }>("/user/api-keys")
       .then((d) => setApiKeys(d.keys ?? []))
+      .catch(() => {});
+    apiFetch<{ webhookUrl: string | null }>("/user/webhook")
+      .then((d) => setWebhookUrl(d.webhookUrl ?? ""))
       .catch(() => {});
   }, []);
 
@@ -163,6 +171,33 @@ export default function SettingsPage() {
       toast(err instanceof Error ? err.message : "Failed to revoke key", "error");
     } finally {
       setRevokingId(null);
+    }
+  }
+
+  async function saveWebhook(e: React.FormEvent) {
+    e.preventDefault();
+    setWebhookLoading(true);
+    try {
+      await apiFetch("/user/webhook", { method: "PATCH", body: JSON.stringify({ webhookUrl: webhookUrl.trim() || null }) });
+      toast("Webhook URL saved", "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to save webhook", "error");
+    } finally {
+      setWebhookLoading(false);
+    }
+  }
+
+  async function deleteWebhook() {
+    setWebhookLoading(true);
+    try {
+      await apiFetch("/user/webhook", { method: "PATCH", body: JSON.stringify({ webhookUrl: null }) });
+      setWebhookUrl("");
+      setConfirmDeleteWebhook(false);
+      toast("Webhook removed", "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to remove webhook", "error");
+    } finally {
+      setWebhookLoading(false);
     }
   }
 
@@ -299,6 +334,53 @@ export default function SettingsPage() {
             )}
           </Section>
 
+          {/* Webhook */}
+          <Section title="Webhook" description="Posthive will POST to this URL every time a post is published. Leave blank to disable.">
+            <form onSubmit={saveWebhook} className="space-y-4">
+              <Field label="Webhook URL">
+                <input
+                  type="url"
+                  value={webhookUrl}
+                  onChange={e => setWebhookUrl(e.target.value)}
+                  placeholder="https://hooks.zapier.com/hooks/catch/…"
+                  style={{
+                    ...inputStyle,
+                    borderColor: webhookUrl.trim() && !/^https?:\/\/.+/.test(webhookUrl.trim()) ? "#ef4444" : "#2a2a2a",
+                  }}
+                />
+                {webhookUrl.trim() && !/^https?:\/\/.+/.test(webhookUrl.trim()) && (
+                  <p className="text-xs mt-1.5" style={{ color: "#ef4444" }}>Invalid URL — must start with http:// or https://</p>
+                )}
+              </Field>
+              <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#888" }}>
+                <p className="font-semibold" style={{ color: "#aaa" }}>Payload example</p>
+                <pre className="overflow-x-auto" style={{ fontFamily: "monospace", fontSize: 11, color: "#666" }}>{`{
+  "event": "post.published",
+  "postId": "clxyz…",
+  "status": "done",
+  "scheduledFor": "2026-07-04T10:00:00.000Z",
+  "platforms": ["bluesky", "threads"],
+  "text": "Hello world!"
+}`}</pre>
+              </div>
+              <div className="flex justify-between items-center pt-1">
+                {webhookUrl.trim() ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteWebhook(true)}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                    style={{ backgroundColor: "#2a1010", color: "#f87171", border: "1px solid #5a2020" }}
+                  >
+                    Remove webhook
+                  </button>
+                ) : <span />}
+                <button type="submit" disabled={webhookLoading || !webhookUrl.trim() || !/^https?:\/\/.+/.test(webhookUrl.trim())} style={{ ...btnStyle, opacity: (webhookLoading || !webhookUrl.trim() || !/^https?:\/\/.+/.test(webhookUrl.trim())) ? 0.5 : 1 }}>
+                  {webhookLoading ? "Saving…" : "Save webhook"}
+                </button>
+              </div>
+            </form>
+          </Section>
+
           {/* Danger zone — full width below */}
           <Section title="Danger zone">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -317,6 +399,30 @@ export default function SettingsPage() {
           </Section>
         </div>
       </div>
+
+      {/* Remove webhook confirm modal */}
+      {confirmDeleteWebhook && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+          <div className="w-full max-w-sm rounded-2xl p-6 modal-panel" style={{ backgroundColor: "#111111", border: "1px solid #3a1a1a" }}>
+            <h2 className="text-base font-bold mb-1" style={{ color: "#f87171" }}>Remove webhook?</h2>
+            <p className="text-xs mb-5" style={{ color: "#aaaaaa" }}>
+              Posthive will stop sending publish events to your webhook URL. You can re-add it at any time.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmDeleteWebhook(false)}
+                className="flex-1 text-sm font-semibold py-2 rounded-xl"
+                style={{ backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a" }}>
+                Cancel
+              </button>
+              <button onClick={deleteWebhook} disabled={webhookLoading}
+                className="flex-1 text-sm font-semibold py-2 rounded-xl transition-opacity"
+                style={{ backgroundColor: "#7f1d1d", color: "#fca5a5", opacity: webhookLoading ? 0.5 : 1 }}>
+                {webhookLoading ? "Removing…" : "Remove webhook"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Revoke API key confirm modal */}
       {confirmRevokeId && (() => {
