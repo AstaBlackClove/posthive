@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "../context/AuthContext";
 import { AppShell } from "../components/AppShell";
 import { ToastProvider } from "../components/Toast";
@@ -81,6 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AppShell>{children}</AppShell>
           </ToastProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );

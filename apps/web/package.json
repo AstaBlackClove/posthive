@@ -13,6 +13,7 @@
     "@fullcalendar/interaction": "^6.1.21",
     "@fullcalendar/react": "^6.1.21",
     "@fullcalendar/timegrid": "^6.1.21",
+    "@vercel/analytics": "^2.0.1",
     "canvas-confetti": "^1.9.4",
     "js-cookie": "^3.0.8",
     "lucide-react": "^1.21.0",
