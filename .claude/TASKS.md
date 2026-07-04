@@ -32,6 +32,7 @@
 - [ ] **Queue / Best time to post** — auto-schedule to next available optimal slot
 - [ ] **AI caption assist** — "Generate caption" button powered by Claude API; platform-aware char limits
 - [x] **Clear button in compose** — resets text, media, YouTube/Pinterest fields, and overrides; preserves selected accounts and dry run mode
+- [x] **X/Twitter link block** — schedule button disabled when Twitter selected + post/comment contains a URL; broad regex catches bare domains (posthive.co, datafa.st)
 - [ ] **Draft posts** — save a compose state as draft without scheduling; list in Posts page
 
 ### Edit Dialog
@@ -153,3 +154,5 @@
 - [x] `robots.txt` + sitemap (updated with /pricing, /blog, all feature slugs, posthive.co fallback)
 - [x] README — comprehensive rewrite covering all features, platforms, env vars, bulk CSV format, API reference
 - [x] Billing page plan features synced with /pricing page (Creator/Pro/Team)
+- [x] X/Twitter added to platform nav dropdown, /platforms/twitter page, landing page cards, billing/pricing plan tables
+- [x] Webhook outbound added to billing/pricing/landing plan tables (Pro & Team only)

@@ -295,6 +295,7 @@ function MastodonDialog({ onClose }: { onClose: () => void }) {
 }
 
 interface PlanStatus {
+  plan: string;
   maxAccounts: number;
   accountsUsed: number;
   planStatus: string;
@@ -397,7 +398,7 @@ export default function AccountsPage() {
 
   // Twitter is Pro & Team only (when billing is enabled)
   const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === "true";
-  const allowTwitter = !billingEnabled || !planStatus || planStatus.planStatus === "pro" || planStatus.planStatus === "team";
+  const allowTwitter = !billingEnabled || !planStatus || planStatus.plan === "pro" || planStatus.plan === "team";
 
   const [showMastodonDialog, setShowMastodonDialog] = useState(false);
 
