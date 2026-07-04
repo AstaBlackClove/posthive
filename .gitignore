@@ -34,3 +34,5 @@ Thumbs.db
 
 # Claude Code agent worktrees — temporary, never commit
 .claude/worktrees/
+
+posthive-daily-playbook.md

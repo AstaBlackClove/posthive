@@ -29,7 +29,7 @@ const PLANS = [
     features: [
       { text: "5 connected accounts", included: true },
       { text: "400 posts / month", included: true },
-      { text: "All 7 platforms", included: true },
+      { text: "All core platforms", included: true },
       { text: "Bulk CSV scheduling", included: true },
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
@@ -50,14 +50,14 @@ const PLANS = [
     features: [
       { text: "15 connected accounts", included: true },
       { text: "Unlimited posts", included: true },
-      { text: "All 7 platforms", included: true },
+      { text: "All core platforms", included: true },
       { text: "Bulk CSV scheduling", included: true },
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
-      { text: "X/Twitter posting (100/mo, no links)", included: true },
+      { text: "X/Twitter posting (100/mo, no links)*", included: true },
       { text: "API access (3 keys)", included: true },
       { text: "Webhook outbound", included: true },
     ],
@@ -71,14 +71,14 @@ const PLANS = [
     features: [
       { text: "50 connected accounts", included: true },
       { text: "Unlimited posts", included: true },
-      { text: "All 7 platforms", included: true },
+      { text: "All core platforms", included: true },
       { text: "Bulk CSV scheduling", included: true },
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
-      { text: "X/Twitter posting (100/mo, no links)", included: true },
+      { text: "X/Twitter posting (100/mo, no links)*", included: true },
       { text: "API access (10 keys)", included: true },
       { text: "Webhook outbound", included: true },
     ],
@@ -263,12 +263,12 @@ export default function RootPage() {
           <div style={{ maxWidth: 920, margin: "0 auto", textAlign: "center", position: "relative" }}>
 
             <h1 className="anim-2 ph-hero-h1" style={{ fontSize: 72, lineHeight: 1.03, fontWeight: 800, letterSpacing: "-0.035em", margin: "0 0 24px", color: "#f4f4f4" }}>
-              Schedule to every platform.<br />
-              <span style={{ color: "#f4f4f4" }}>From <span style={{ display: "inline-block", background: "#5b63d3", color: "#fff", padding: "2px 16px 4px", borderRadius: 6, transform: "rotate(-1.5deg)", transformOrigin: "center" }}>one place.</span></span>
+              The open-source scheduler<br />
+              <span style={{ color: "#f4f4f4" }}>for the <span style={{ display: "inline-block", background: "#5b63d3", color: "#fff", padding: "2px 16px 4px", borderRadius: 6, transform: "rotate(-1.5deg)", transformOrigin: "center" }}>new social web.</span></span>
             </h1>
 
-            <p className="anim-3" style={{ fontSize: 19, lineHeight: 1.6, color: "#8f8f8f", maxWidth: 600, margin: "0 auto 38px", fontWeight: 400 }}>
-              Write once and publish everywhere. One composer, one calendar, zero tab-switching.
+            <p className="anim-3" style={{ fontSize: 19, lineHeight: 1.6, color: "#8f8f8f", maxWidth: 640, margin: "0 auto 38px", fontWeight: 400 }}>
+              Schedule the post + the first comment everywhere in one click, not five tabs. One flat price for every channel.
             </p>
 
             <div className="anim-4 ph-hero-cta" style={{ display: "flex", gap: 14, justifyContent: "center", alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
@@ -320,7 +320,7 @@ export default function RootPage() {
         {/* ── SOCIAL PROOF BAR ── */}
         <section style={{ borderTop: "1px solid #161616", borderBottom: "1px solid #161616", background: "#0c0c0c" }}>
           <div className="ph-proof-bar" style={{ maxWidth: 1120, margin: "0 auto", padding: "22px 40px", display: "flex", alignItems: "center", justifyContent: "center", gap: 36, flexWrap: "wrap" }}>
-            {[["7", " platforms"], ["1", " composer"], ["14-day", " free trial"], ["No card", " required"]].map(([val, label]) => (
+            {[["9", " platforms"], ["1", " composer"], ["14-day", " free trial"], ["No card", " required"]].map(([val, label]) => (
               <span key={label} className="mono" style={{ fontSize: 13.5, color: "#9a9a9a" }}>
                 <span style={{ color: "#ededed", fontWeight: 500 }}>{val}</span>{label}
               </span>
@@ -341,10 +341,10 @@ export default function RootPage() {
           </div>
           <div className="ph-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18 }}>
             {[
-              { icon: <LayersIcon />, title: "Multi-platform posting",       href: "/features/multi-platform-posting",  body: "Draft once and ship to all seven networks in a single click." },
+              { icon: <ChatIcon />,   title: "First comment automation",     href: "/features/first-comment",           body: "Schedule a reply that fires the second your post goes live — on Bluesky, Threads, Mastodon, and LinkedIn. Other tools do this only on Instagram. We do it everywhere." },
+              { icon: <LayersIcon />, title: "Multi-platform posting",       href: "/features/multi-platform-posting",  body: "Draft once and ship to all nine networks in a single click." },
               { icon: <PlayIcon />,   title: "Reels & Stories scheduling",   href: "/features/instagram-reels-scheduler",       body: "Full Instagram media support plus YouTube Shorts with native previews." },
               { icon: <CalGridIcon />,title: "Drag-to-reschedule calendar",  href: "/features/drag-to-reschedule",      body: "See your whole week at a glance. Drag any post to a new slot in seconds." },
-              { icon: <ChatIcon />,   title: "First comment automation",     href: "/features/first-comment",           body: "Drop a reply the moment a post goes live hashtags, links, threads." },
               { icon: <PenIcon />,    title: "Per-platform text overrides",  href: "/features/per-platform-overrides",  body: "Tweak copy and media per network without leaving the composer." },
               { icon: <ServerIcon />, title: "Reliable scheduling",          href: "/features/multi-platform-posting",  body: "Posts fire at the exact second. BullMQ-backed queue with automatic retries." },
               { icon: <CsvIcon />,    title: "Bulk CSV scheduling",          href: "/features/bulk-csv-scheduling",     body: "Upload a CSV and schedule hundreds of posts at once. Exclude platforms per row with !platform syntax." },
@@ -504,12 +504,12 @@ export default function RootPage() {
               <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 12px", border: "1px solid #26264a", background: "#17172a", borderRadius: 999, marginBottom: 20 }}>
                 <span className="mono" style={{ fontSize: 11.5, color: "#8b91e8", fontWeight: 600, letterSpacing: ".08em" }}>FIRST COMMENT</span>
               </div>
-              <h2 style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.025em", margin: "0 0 16px", color: "#f2f2f2", lineHeight: 1.2 }}>Auto-post the<br />perfect reply</h2>
+              <h2 style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.025em", margin: "0 0 16px", color: "#f2f2f2", lineHeight: 1.2 }}>First comment.<br />On every platform.</h2>
               <p style={{ color: "#888", lineHeight: 1.75, fontSize: 16, marginBottom: 24 }}>
-                Add a first comment that fires immediately after your post goes live. Use it for hashtag stacks, affiliate links, thread continuations, or CTAs you don&apos;t want cluttering your main copy.
+                Buffer and Hootsuite do first comments on Instagram. That&apos;s it. Posthive fires a reply the second your post goes live on Bluesky, Threads, Mastodon, and LinkedIn too. Hashtag stacks, affiliate links, thread continuations — without cluttering your main copy.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {["Fires within seconds of the main post", "Per-platform override supported", "Perfect for hashtag stacking on Instagram"].map(item => (
+                {["Works on Bluesky, Threads, Mastodon & LinkedIn", "Fires within seconds of the main post", "Per-platform override — different comment per network"].map(item => (
                   <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#ccc" }}>
                     <CheckCircleIcon />{item}
                   </div>
@@ -639,7 +639,7 @@ export default function RootPage() {
             <div style={{ textAlign: "center", marginBottom: 56 }}>
               <span className="section-label">SUPPORTED PLATFORMS</span>
               <h2 style={{ fontSize: 44, fontWeight: 700, letterSpacing: "-0.03em", margin: "16px 0 14px", color: "#f2f2f2" }}>
-                Seven networks. One workflow.
+                Nine networks. One workflow.
               </h2>
               <p style={{ fontSize: 17, color: "#8a8a8a", maxWidth: 520, margin: "0 auto", lineHeight: 1.6 }}>
                 Native support for the platforms creators and indie builders actually use.
@@ -677,7 +677,7 @@ export default function RootPage() {
           </div>
           <div className="ph-how-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
             {[
-              { n: "01", title: "Connect your accounts",  desc: "Authenticate all seven networks in a couple of clicks. OAuth, encrypted at rest." },
+              { n: "01", title: "Connect your accounts",  desc: "Authenticate all your networks in a couple of clicks. OAuth, encrypted at rest." },
               { n: "02", title: "Compose & tailor",       desc: "Write once, then fine-tune copy and media per platform. Preview exactly what each network shows." },
               { n: "03", title: "Set it and forget it",   desc: "Pick a date and time. Posthive fires on the second. Drag to reschedule from the calendar." },
             ].map(({ n, title, desc }) => (
@@ -724,7 +724,12 @@ export default function RootPage() {
             <div style={{ textAlign: "center", marginBottom: 60 }}>
               <span className="section-label">PRICING</span>
               <h2 style={{ fontSize: 44, fontWeight: 700, letterSpacing: "-0.03em", margin: "16px 0 14px", color: "#f2f2f2" }}>Simple, transparent pricing</h2>
-              <p style={{ fontSize: 17, color: "#8a8a8a", margin: 0 }}>Start free. Upgrade when you&apos;re ready. No hidden fees, no per-seat nonsense.</p>
+              <p style={{ fontSize: 17, color: "#8a8a8a", margin: "0 0 32px" }}>Start free. Upgrade when you&apos;re ready. No hidden fees, no per-channel tax.</p>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 0, border: "1px solid #2a2a2a", borderRadius: 12, overflow: "hidden", fontSize: 13.5 }}>
+                <span style={{ padding: "10px 20px", background: "#111", color: "#666" }}>7 channels on Buffer: <span style={{ color: "#ef4444", fontWeight: 600 }}>$42/mo</span></span>
+                <span style={{ padding: "10px 20px", background: "#17172a", color: "#9ba2ee", borderLeft: "1px solid #2a2a2a", borderRight: "1px solid #2a2a2a", fontWeight: 600 }}>Posthive: $9/mo</span>
+                <span style={{ padding: "10px 20px", background: "#111", color: "#555" }}>Same channels.</span>
+              </div>
             </div>
             <div className="ph-pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, alignItems: "start" }}>
               {PLANS.map(plan => (
@@ -760,6 +765,9 @@ export default function RootPage() {
                 </div>
               ))}
             </div>
+            <p className="mono" style={{ textAlign: "center", marginTop: 28, fontSize: 12, color: "#555" }}>
+              * The 100/mo cap and no-link restriction are X API limitations, not Posthive limitations.
+            </p>
           </div>
         </section>
 

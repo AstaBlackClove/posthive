@@ -299,6 +299,8 @@ interface PlanStatus {
   maxAccounts: number;
   accountsUsed: number;
   planStatus: string;
+  twitterPostsThisMonth: number;
+  maxTwitterPostsPerMonth: number | null;
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
@@ -887,9 +889,29 @@ export default function AccountsPage() {
                   {twitterAccounts.length > 0 ? "Add another X account" : "Connect X (Twitter)"}
                 </a>
               )}
-              <p className="text-xs" style={{ color: MUTED }}>
-                100 tweets/month per account on Pro and Team plans
-              </p>
+              {allowTwitter && planStatus && planStatus.maxTwitterPostsPerMonth && planStatus.maxTwitterPostsPerMonth > 0 ? (() => {
+                const used = planStatus.twitterPostsThisMonth;
+                const max = planStatus.maxTwitterPostsPerMonth;
+                const remaining = Math.max(0, max - used);
+                const pct = Math.min(100, (used / max) * 100);
+                const color = remaining === 0 ? "#ef4444" : remaining <= 20 ? "#f59e0b" : "#4ade80";
+                return (
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs" style={{ color: MUTED }}>X quota this month</span>
+                      <span className="text-xs font-semibold" style={{ color }}>{remaining} / {max} remaining</span>
+                    </div>
+                    <div style={{ height: 4, borderRadius: 999, background: "#1e1e1e" }}>
+                      <div style={{ height: 4, borderRadius: 999, background: color, width: `${pct}%`, transition: "width .3s" }} />
+                    </div>
+                    <p className="text-xs mt-1" style={{ color: MUTED }}>Resets on the 1st of each month</p>
+                  </div>
+                );
+              })() : (
+                <p className="text-xs" style={{ color: MUTED }}>
+                  100 tweets/month per account on Pro and Team plans
+                </p>
+              )}
             </div>
           </div>
 

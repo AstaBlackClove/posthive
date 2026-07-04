@@ -27,15 +27,22 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       : 0;
     const trialExpired = user.planStatus === "trialing" && user.trialEndsAt && user.trialEndsAt < now;
 
-    const [accountsUsed, postsThisMonth] = await Promise.all([
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const [accountsUsed, postsThisMonth, twitterPostsThisMonth] = await Promise.all([
       prisma.account.count({ where: { userId: u.id } }),
       prisma.postJob.count({
         where: {
           userId: u.id,
-          createdAt: {
-            gte: new Date(now.getFullYear(), now.getMonth(), 1),
-            lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
-          },
+          createdAt: { gte: startOfMonth, lt: startOfNextMonth },
+        },
+      }),
+      prisma.postJobTarget.count({
+        where: {
+          account: { userId: u.id, platform: "twitter" },
+          status: { in: ["post_done", "comment_done"] },
+          createdAt: { gte: startOfMonth, lt: startOfNextMonth },
         },
       }),
     ]);
@@ -47,11 +54,13 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       maxAccounts: plan.maxAccounts,
       maxSeats: plan.maxSeats,
       maxPostsPerMonth: plan.maxPostsPerMonth,
+      maxTwitterPostsPerMonth: plan.maxTwitterPostsPerMonth,
       allowReels: plan.allowReels,
       allowOverrides: plan.allowOverrides,
       maxImagesPerPost: plan.maxImagesPerPost,
       accountsUsed,
       postsThisMonth,
+      twitterPostsThisMonth,
       trialDaysLeft,
       trialExpired,
       trialEndsAt: user.trialEndsAt,
