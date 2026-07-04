@@ -88,7 +88,7 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   mastodon: 500,
   youtube: 5000,
   facebook: 63206,
-  twitter: 280,
+  twitter: 25000,
   pinterest: 500,
 };
 
