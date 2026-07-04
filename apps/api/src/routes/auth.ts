@@ -701,10 +701,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         accessToken,
         accessSecret,
       });
-      const { data: me } = await userClient.v2.me({ "user.fields": ["name", "username", "profile_image_url"] });
-      twitterUserId = me.id;
-      displayName = me.username ?? me.name ?? "twitter-user";
-      avatarUrl = (me as unknown as Record<string, unknown>).profile_image_url as string | null ?? null;
+      const me = await userClient.v1.verifyCredentials({ include_email: false, skip_status: true });
+      twitterUserId = me.id_str;
+      displayName = me.screen_name ?? me.name ?? "twitter-user";
+      avatarUrl = me.profile_image_url_https?.replace("_normal", "") ?? null;
     } catch (err) {
       console.error("[twitter oauth] profile fetch failed:", err);
     }

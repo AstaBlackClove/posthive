@@ -202,6 +202,28 @@ const PLATFORMS: Record<string, PlatformData> = {
     image: "/screenshots/platform-facebook.png",
     imageAlt: "Posthive composer Facebook Page post with image",
   },
+  twitter: {
+    name: "X (Twitter)",
+    domain: "x.com",
+    color: "#e7e7e7",
+    headline: "Schedule tweets without watching the clock",
+    subheadline: "Stop posting in real time. Write your tweets ahead of time, schedule them for peak hours, and let Posthive publish while you focus on everything else.",
+    supports: [
+      { label: "Text tweets up to 280 chars", icon: "text" as IconKey },
+      { label: "Up to 4 images per tweet", icon: "image" as IconKey },
+      { label: "First comment / reply on publish", icon: "comment" as IconKey },
+      { label: "Per-account text override", icon: "override" as IconKey },
+      { label: "100 tweets/month (Pro & Team)", icon: "lock" as IconKey },
+      { label: "OAuth 1.0a secure connection", icon: "lock" as IconKey },
+    ],
+    steps: [
+      { n: "01", title: "Connect your X account", desc: "Click Connect X in Posthive's Accounts page. Approve the OAuth prompt and your account is linked instantly." },
+      { n: "02", title: "Write your tweet", desc: "Compose in Posthive's editor. The 280-character counter updates live. Attach up to 4 images if needed." },
+      { n: "03", title: "Schedule and publish", desc: "Pick your publish time. Posthive posts via the X API at the exact second. No links allowed — X charges $0.20 per tweet with a URL." },
+    ],
+    image: "/screenshots/platform-bluesky.png",
+    imageAlt: "Posthive composer X Twitter post scheduling",
+  },
 };
 
 // ── Shared page image ─────────────────────────────────────────────────────

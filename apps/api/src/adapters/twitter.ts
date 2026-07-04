@@ -77,7 +77,9 @@ async function enforcePlanGate(account: Account): Promise<void> {
 async function uploadImages(client: TwitterApi, mediaUrls: string[]): Promise<string[]> {
   const mediaIds: string[] = [];
 
-  for (const url of mediaUrls.slice(0, 4)) {
+  const port = process.env.PORT ?? "3001";
+  for (const rawUrl of mediaUrls.slice(0, 4)) {
+    const url = rawUrl.startsWith("http") ? rawUrl : `http://localhost:${port}${rawUrl}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Failed to fetch media: ${url}`);
 

@@ -17,6 +17,7 @@ const PLATFORMS_GRID = [
   { name: "YouTube",        domain: "youtube.com",     meta: "Shorts & video · Google OAuth", accent: "#ff0000", platform: "youtube" },
   { name: "Facebook Pages", domain: "facebook.com",    meta: "Pages · Graph API",            accent: "#1877f2", platform: "facebook" },
   { name: "Pinterest",      domain: "pinterest.com",   meta: "Pins · image required",         accent: "#e60023", platform: "pinterest" },
+  { name: "X (Twitter)",    domain: "x.com",           meta: "100 tweets/mo · Pro & Team",    accent: "#e7e7e7", platform: "twitter" },
 ];
 
 const PLANS = [
@@ -35,6 +36,7 @@ const PLANS = [
       { text: "First comment automation", included: true },
       { text: "Reels & Stories", included: false },
       { text: "Per-platform overrides", included: false },
+      { text: "X/Twitter posting", included: false },
       { text: "API access", included: false },
       { text: "Webhook outbound", included: false },
     ],
@@ -55,6 +57,7 @@ const PLANS = [
       { text: "First comment automation", included: true },
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
+      { text: "X/Twitter posting (100/mo, no links)", included: true },
       { text: "API access (3 keys)", included: true },
       { text: "Webhook outbound", included: true },
     ],
@@ -75,6 +78,7 @@ const PLANS = [
       { text: "First comment automation", included: true },
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
+      { text: "X/Twitter posting (100/mo, no links)", included: true },
       { text: "API access (10 keys)", included: true },
       { text: "Webhook outbound", included: true },
     ],

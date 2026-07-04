@@ -13,6 +13,7 @@ export const PLATFORMS_NAV = [
   { platform: "mastodon",  label: "Mastodon",  desc: "500 chars, federated" },
   { platform: "youtube",   label: "YouTube",   desc: "Shorts & video, Google OAuth" },
   { platform: "facebook",  label: "Facebook Pages", desc: "Pages, Graph API" },
+  { platform: "twitter",   label: "X (Twitter)",    desc: "100 tweets/mo, Pro & Team" },
 ];
 
 export const FEATURES_NAV = [

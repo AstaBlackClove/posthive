@@ -834,8 +834,8 @@ export default function AccountsPage() {
             </div>
           </div>
 
-          {/* ── X / Twitter ── hidden until X API pricing is viable ── */}
-          {process.env.NEXT_PUBLIC_TWITTER_ENABLED === "true" && <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+          {/* ── X / Twitter ── */}
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                 <PlatformIcon platform="twitter" size={20} />
@@ -890,7 +890,7 @@ export default function AccountsPage() {
                 100 tweets/month per account on Pro and Team plans
               </p>
             </div>
-          </div>}
+          </div>
 
         </div>}
       </div>

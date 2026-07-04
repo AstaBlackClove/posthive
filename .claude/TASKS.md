@@ -53,7 +53,7 @@
 - [ ] **`/changelog` page** — public changelog / release notes
 
 ### Infrastructure / DevEx
-- [ ] **Webhook outbound** — fire a webhook to a user-configured URL on post publish (useful for integrations)
+- [x] **Webhook outbound** — fire a webhook to a user-configured URL on post publish; Pro/Team only; inline URL validation; n8n/Zapier/Make compatible
 - [ ] **Zapier / Make integration** — trigger via webhook; document in API reference
 - [ ] **Multi-user / team workspaces** — Team plan currently single-user; add workspace invite + member roles
 - [ ] **Audit log** — track schedule/edit/delete actions per user for Team plan

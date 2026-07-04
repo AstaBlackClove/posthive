@@ -438,6 +438,12 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   // True when every selected account is YouTube or Pinterest — both have their own title/description fields
   const noPostTextNeeded = selectedAccounts.length > 0 && selectedAccounts.every((a) => a.platform === "youtube" || a.platform === "pinterest");
 
+  const twitterSelected = selectedAccounts.some((a) => a.platform === "twitter");
+  const urlPattern = /https?:\/\/\S+|(?<![/@\w])(?:www\.)\S+|(?<![/@\w])\b[\w-]+(?:\.[\w-]+)*\.[a-z]{2,6}\b(?:[/?#]\S*)?/i;
+  const twitterTextHasLink = twitterSelected && urlPattern.test(text);
+  const twitterCommentHasLink = twitterSelected && urlPattern.test(commentText);
+  const twitterHasLink = twitterTextHasLink || twitterCommentHasLink;
+
   // YouTube only treats an upload as a Short when it's vertical (9:16), ≤60s, AND
   // tagged #Shorts — the hashtag alone does nothing if the video itself doesn't
   // qualify. Probe the actual file's dimensions/duration so we can warn upfront
@@ -1293,6 +1299,11 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ℹ️ Pinterest requires an image — add one or the Pin will be skipped
           </p>
         )}
+        {twitterHasLink && (
+          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#ef4444" }}>
+            ⚠️ X/Twitter charges $0.20 per tweet containing a link — remove the URL to schedule
+          </p>
+        )}
 
         {/* Submit */}
         <div className="w-full md:w-auto order-4 md:order-none flex gap-2">
@@ -1317,7 +1328,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           <button
             type="submit"
             form=""
-            disabled={submitting || overAnyLimit || accounts.length === 0 || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage}
+            disabled={submitting || overAnyLimit || accounts.length === 0 || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink}
             onClick={handleSubmit}
             className="flex-1 md:flex-none px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-colors hover:bg-gray-100"
             style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
