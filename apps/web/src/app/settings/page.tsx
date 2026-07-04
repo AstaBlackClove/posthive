@@ -76,13 +76,14 @@ export default function SettingsPage() {
   const [webhookUrl, setWebhookUrl] = useState("");
   const [webhookLoading, setWebhookLoading] = useState(false);
   const [confirmDeleteWebhook, setConfirmDeleteWebhook] = useState(false);
+  const [webhookLocked, setWebhookLocked] = useState(false);
 
   useEffect(() => {
     apiFetch<{ keys: typeof apiKeys }>("/user/api-keys")
       .then((d) => setApiKeys(d.keys ?? []))
       .catch(() => {});
-    apiFetch<{ webhookUrl: string | null }>("/user/webhook")
-      .then((d) => setWebhookUrl(d.webhookUrl ?? ""))
+    apiFetch<{ webhookUrl: string | null; locked: boolean }>("/user/webhook")
+      .then((d) => { setWebhookUrl(d.webhookUrl ?? ""); setWebhookLocked(d.locked ?? false); })
       .catch(() => {});
   }, []);
 
@@ -336,6 +337,13 @@ export default function SettingsPage() {
 
           {/* Webhook */}
           <Section title="Webhook" description="Posthive will POST to this URL every time a post is published. Leave blank to disable.">
+            {webhookLocked ? (
+              <div className="rounded-xl px-4 py-5 flex flex-col gap-2 items-start" style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a" }}>
+                <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Pro & Team feature</p>
+                <p className="text-xs" style={{ color: "#888" }}>Upgrade to Pro or Team to connect a webhook and integrate with n8n, Zapier, or Make.</p>
+                <a href="/billing" className="mt-1 text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#5b63d3", color: "#fff" }}>Upgrade plan</a>
+              </div>
+            ) : (
             <form onSubmit={saveWebhook} className="space-y-4">
               <Field label="Webhook URL">
                 <input
@@ -379,6 +387,7 @@ export default function SettingsPage() {
                 </button>
               </div>
             </form>
+            )}
           </Section>
 
           {/* Danger zone — full width below */}

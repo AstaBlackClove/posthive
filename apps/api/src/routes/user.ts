@@ -233,16 +233,29 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ── Webhook ───────────────────────────────────────────────────────────────
 
+  function canUseWebhook(plan: string, planStatus: string): boolean {
+    if (process.env.ENABLE_BILLING !== "true") return true;
+    if (planStatus !== "active") return false;
+    return plan === "pro" || plan === "team";
+  }
+
   // Get webhook URL
   app.get("/user/webhook", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { webhookUrl: true } });
-    return reply.send({ webhookUrl: user?.webhookUrl ?? null });
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { webhookUrl: true, plan: true, planStatus: true } });
+    if (!canUseWebhook(user?.plan ?? "", user?.planStatus ?? "")) {
+      return reply.send({ webhookUrl: null, locked: true });
+    }
+    return reply.send({ webhookUrl: user?.webhookUrl ?? null, locked: false });
   });
 
   // Set / clear webhook URL
   app.patch("/user/webhook", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true, planStatus: true } });
+    if (!canUseWebhook(user?.plan ?? "", user?.planStatus ?? "")) {
+      return reply.status(403).send({ error: "Webhook requires a Pro or Team plan.", upgrade: true });
+    }
     const { webhookUrl } = req.body as { webhookUrl?: string };
     const url = webhookUrl?.trim() || null;
     if (url && !/^https?:\/\/.+/.test(url)) {
