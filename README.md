@@ -69,7 +69,7 @@
 |---|---|
 | Frontend | Next.js 16 (App Router), React 18, Tailwind CSS |
 | Backend | Fastify v4, TypeScript ESM, Node.js |
-| Database | Prisma 5 — SQLite (dev) / Postgres (prod) |
+| Database | Prisma 5 — Postgres (dev via Docker or local install) / Postgres (prod) |
 | Queue | BullMQ 5 + Redis (Upstash or Railway) |
 | Email | Resend |
 | Storage | Local disk (dev) / Supabase Storage (prod) |
@@ -104,6 +104,7 @@ posthive/
 - **Node.js** >= 20
 - **pnpm** >= 9 — `npm install -g pnpm`
 - **Redis** — [Upstash](https://upstash.com) free tier or Railway Redis
+- **Postgres** — Docker (recommended, zero config) or a local Postgres install
 
 ---
 
@@ -125,20 +126,54 @@ cp apps/api/.env.example apps/api/.env
 
 Fill in the values — see [Environment Variables](#environment-variables) below.
 
-### 3. Set up the database
+### 3. Database
+
+**Option A — Docker (recommended, no Postgres install needed)**
+
+```bash
+# Start a Postgres container (creates it on first run, starts it on subsequent runs)
+pnpm dev:db
+```
+
+Use this `DATABASE_URL` in `apps/api/.env`:
+```
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
+```
+
+The container is named `posthive-pg`. Stop it with `pnpm db:stop`, restart with `pnpm db:start`.
+
+**Option B — SQLite (no Docker, quickest setup)**
+
+Change the provider in `apps/api/prisma/schema.prisma`:
+```prisma
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+```
+
+Use this `DATABASE_URL` in `apps/api/.env`:
+```
+DATABASE_URL="file:./dev.db"
+```
+
+> SQLite is fine for local development and self-hosting on a single server. Use Postgres in production for reliability and concurrent writes.
+
+### 4. Run migrations
 
 ```bash
 cd apps/api
 pnpm db:migrate
-npx prisma generate
 ```
 
-### 4. Run dev servers
+### 5. Run dev servers
 
 ```bash
-# from project root
+# from project root — starts Docker Postgres + API + Web in parallel
 pnpm dev
 ```
+
+> If you chose SQLite (Option B), skip `pnpm dev:db` — just run `pnpm dev:api` and `pnpm dev:web` separately, or use `pnpm dev` after commenting out the `dev:db` step.
 
 | Service | URL |
 |---|---|
@@ -157,7 +192,7 @@ pnpm dev
 | Variable | Required | Description |
 |---|---|---|
 | `PORT` | No | API port. Defaults to `3001` |
-| `DATABASE_URL` | Yes | `file:./dev.db` for SQLite; Postgres URL in prod |
+| `DATABASE_URL` | Yes | `postgresql://postgres:postgres@localhost:5432/postgres` (Docker dev) or `file:./dev.db` (SQLite dev) or Postgres URL in prod |
 | `ENCRYPTION_KEY` | Yes | 64-char hex. AES-256-GCM key for credentials. **Never change after data is written** |
 | `REDIS_URL` | Yes | Upstash or Railway Redis URL |
 | `WEB_URL` | Yes | Frontend origin for CORS + OAuth redirects. `http://localhost:3000` in dev |
