@@ -104,7 +104,7 @@ posthive/
 - **Node.js** >= 20
 - **pnpm** >= 9 — `npm install -g pnpm`
 - **Redis** — [Upstash](https://upstash.com) free tier or Railway Redis
-- **Postgres** — Docker (recommended, zero config) or a local Postgres install
+- **Postgres** — [Docker Desktop](https://www.docker.com/products/docker-desktop/) (recommended, zero config — `pnpm dev:db` pulls `postgres:15` automatically on first run) or a local Postgres install
 
 ---
 
