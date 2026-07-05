@@ -209,6 +209,8 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const pinterestAccounts = selectedAccounts.filter(a => a.platform === "pinterest");
   const onlyPinterest = pinterestAccounts.length > 0 && selectedAccounts.every(a => a.platform === "pinterest");
   const noPostTextNeeded = selectedAccounts.length > 0 && selectedAccounts.every(a => a.platform === "youtube" || a.platform === "pinterest");
+  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram"]);
+  const noCommentSupport = selectedAccounts.length > 0 && selectedAccounts.every(a => NO_COMMENT_PLATFORMS.has(a.platform));
   const youtubeSelectedWithNoVideo = youtubeSelected && (youtubeVideoMode === "upload" ? !video : !youtubeVideoUrl.trim());
 
   useEffect(() => {
@@ -524,7 +526,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           )}
 
           {/* First comment */}
-          <div className="px-6 py-5" style={{ borderBottom: "1px solid #1a1a1a", display: onlyPinterest ? "none" : undefined }}>
+          <div className="px-6 py-5" style={{ borderBottom: "1px solid #1a1a1a", display: noCommentSupport ? "none" : undefined }}>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>First Comment</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full"

@@ -55,7 +55,7 @@
 
 ### Infrastructure / DevEx
 - [x] **Webhook outbound** — fire a webhook to a user-configured URL on post publish; Pro/Team only; inline URL validation; n8n/Zapier/Make compatible
-- [ ] **Zapier / Make integration** — trigger via webhook; document in API reference
+- [x] **Zapier / Make integration** — outbound webhook docs added to /docs with payload reference, n8n, Zapier, Make setup guides
 - [ ] **Multi-user / team workspaces** — Team plan currently single-user; add workspace invite + member roles
 - [ ] **Audit log** — track schedule/edit/delete actions per user for Team plan
 

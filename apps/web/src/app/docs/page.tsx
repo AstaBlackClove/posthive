@@ -44,6 +44,7 @@ const NAV = [
       { label: "YouTube", id: "youtube" },
       { label: "Facebook Pages", id: "facebook" },
       { label: "Pinterest", id: "pinterest" },
+      { label: "Telegram", id: "telegram" },
     ],
   },
   {
@@ -146,6 +147,16 @@ export default function DocsPage() {
         if (top <= mainRect.height * 0.3) active = id;
       }
       setActiveSection(active);
+      // Auto-expand the section that contains the active item, collapse others
+      setCollapsed(prev => {
+        const next = { ...prev };
+        for (const group of NAV) {
+          const contains = group.items.some(i => i.id === active);
+          if (contains) next[group.section] = false;
+          else if (!next[group.section]) next[group.section] = true;
+        }
+        return next;
+      });
     }
 
     main.addEventListener("scroll", onScroll, { passive: true });
@@ -354,7 +365,7 @@ export default function DocsPage() {
               {/* Hero */}
               <h1 className="doc-h1">Posthive Documentation</h1>
               <p className="doc-p">
-                Posthive is a social media scheduling platform. Write once, publish to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, and Pinterest — all from a single clean interface.
+                Posthive is a social media scheduling platform. Write once, publish to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, and Telegram — all from a single clean interface.
               </p>
 
               {/* ── Quick start ── */}
@@ -594,6 +605,35 @@ pnpm install`}</CopyCode>
                 <strong>Image required:</strong> The Schedule button is disabled when Pinterest is selected and no image has been attached. Add at least one image before scheduling a Pinterest post.
               </div>
 
+              {/* ── Telegram ── */}
+              <h2 className="doc-h2" id="telegram">Telegram</h2>
+              <p className="doc-p">
+                Posthive publishes to <strong>Telegram channels</strong> via the Telegram Bot API. No OAuth flow is required — connection uses a bot token you generate yourself. Text, images (up to 10), and video posts are supported. First comments are not available on Telegram channels.
+              </p>
+              <h3 className="doc-h3">How to connect</h3>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">Open Telegram and message <strong>@BotFather</strong> → send <span className="doc-inline-code">/newbot</span> → follow the prompts. BotFather gives you a <strong>bot token</strong> (looks like <span className="doc-inline-code">123456789:ABCdef...</span>).</li>
+                <li className="doc-li">Create a Telegram channel — public or private.</li>
+                <li className="doc-li">Add your bot to the channel as an <strong>Administrator</strong>: open the channel → Administrators → Add Administrator → search your bot → enable <strong>Post Messages</strong> → Done.</li>
+                <li className="doc-li">Go to <strong>Accounts</strong> in Posthive and click <strong>Connect Telegram Channel</strong>.</li>
+                <li className="doc-li">Paste the bot token and your channel identifier, then click Connect.</li>
+              </ol>
+              <h3 className="doc-h3">Channel identifier</h3>
+              <ul className="doc-ul">
+                <li className="doc-li"><strong>Public channels</strong> — use the username: <span className="doc-inline-code">@mychannel</span></li>
+                <li className="doc-li"><strong>Private channels</strong> — use the numeric chat ID: <span className="doc-inline-code">-1001234567890</span>. To find it, forward any message from the channel to <strong>@userinfobot</strong> on Telegram.</li>
+              </ul>
+              <div className="doc-callout">
+                <strong>No environment variables needed.</strong> Unlike OAuth platforms, Telegram requires no server-side app credentials. Each user provides their own bot token which is stored encrypted per-user. One bot can serve multiple channels — connect each channel separately on the Accounts page.
+              </div>
+              <h3 className="doc-h3">What gets posted</h3>
+              <ul className="doc-ul">
+                <li className="doc-li"><strong>Text only</strong> — sent as a plain message.</li>
+                <li className="doc-li"><strong>Single image</strong> — sent via <span className="doc-inline-code">sendPhoto</span> with caption.</li>
+                <li className="doc-li"><strong>Multiple images</strong> — sent as a media group (<span className="doc-inline-code">sendMediaGroup</span>, up to 10).</li>
+                <li className="doc-li"><strong>Video</strong> — sent via <span className="doc-inline-code">sendVideo</span> with caption.</li>
+              </ul>
+
               {/* ── Scheduling posts ── */}
               <h2 className="doc-h2" id="scheduling-posts">Scheduling posts</h2>
               <p className="doc-p">
@@ -655,7 +695,7 @@ pnpm install`}</CopyCode>
                 <li className="doc-li"><span className="doc-inline-code">all|!instagram|!linkedin</span> — all except Instagram and LinkedIn.</li>
               </ul>
               <p className="doc-p">
-                Supported platform names: <span className="doc-inline-code">bluesky</span>, <span className="doc-inline-code">threads</span>, <span className="doc-inline-code">instagram</span>, <span className="doc-inline-code">linkedin</span>, <span className="doc-inline-code">mastodon</span>, <span className="doc-inline-code">facebook</span>. YouTube is not supported in bulk scheduling — it requires a video file. Use the Compose page for YouTube posts.
+                Supported platform names: <span className="doc-inline-code">bluesky</span>, <span className="doc-inline-code">threads</span>, <span className="doc-inline-code">instagram</span>, <span className="doc-inline-code">linkedin</span>, <span className="doc-inline-code">mastodon</span>, <span className="doc-inline-code">facebook</span>, <span className="doc-inline-code">telegram</span>. YouTube is not supported in bulk scheduling — it requires a video file. Use the Compose page for YouTube posts.
               </p>
               <p className="doc-p">
                 Instagram rows must include at least one URL in <span className="doc-inline-code">image_urls</span>. Rows missing an image for Instagram will show an error in the preview and be skipped.
@@ -987,7 +1027,7 @@ Authorization: Bearer ph_<key>`}</CopyCode>
                   <tr><td><span className="doc-inline-code">accountIds</span></td><td>string[]</td><td>Yes</td><td>One or more account IDs from <span className="doc-inline-code">GET /accounts</span>. All must belong to your account.</td></tr>
                   <tr><td><span className="doc-inline-code">scheduledFor</span></td><td>string (ISO 8601)</td><td>Yes</td><td>Future UTC datetime to publish.</td></tr>
                   <tr><td><span className="doc-inline-code">commentText</span></td><td>string</td><td>No</td><td>First comment/reply posted immediately after the main post. Override per-platform via <span className="doc-inline-code">perAccount</span>.</td></tr>
-                  <tr><td><span className="doc-inline-code">images</span></td><td>string[]</td><td>No</td><td>Image URLs from <span className="doc-inline-code">POST /upload</span>. Supported on Bluesky, Mastodon, Threads, Instagram, LinkedIn, Facebook.</td></tr>
+                  <tr><td><span className="doc-inline-code">images</span></td><td>string[]</td><td>No</td><td>Image URLs from <span className="doc-inline-code">POST /upload</span>. Supported on Bluesky, Mastodon, Threads, Instagram, LinkedIn, Facebook, Telegram.</td></tr>
                   <tr><td><span className="doc-inline-code">altTexts</span></td><td>string[]</td><td>No</td><td>Alt text for each image, matched by index. Improves accessibility.</td></tr>
                   <tr><td><span className="doc-inline-code">mediaType</span></td><td><span className="doc-inline-code">&quot;post&quot; | &quot;reel&quot; | &quot;story&quot;</span></td><td>No</td><td>Instagram/Facebook media format. Defaults to <span className="doc-inline-code">&quot;post&quot;</span>.</td></tr>
                   <tr><td><span className="doc-inline-code">youtubeType</span></td><td><span className="doc-inline-code">&quot;short&quot; | &quot;video&quot;</span></td><td>No</td><td>YouTube upload format. Defaults to <span className="doc-inline-code">&quot;short&quot;</span>.</td></tr>
@@ -1009,6 +1049,7 @@ Authorization: Bearer ph_<key>`}</CopyCode>
                   <tr><td>LinkedIn</td><td>3,000</td></tr>
                   <tr><td>YouTube</td><td>5,000 (description)</td></tr>
                   <tr><td>Pinterest</td><td>100 (title) / 500 (description)</td></tr>
+                  <tr><td>Telegram</td><td>4,096</td></tr>
                 </tbody>
               </table></div>
 

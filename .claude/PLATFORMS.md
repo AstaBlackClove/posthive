@@ -16,6 +16,7 @@ Status: ✅ Live | 🟡 Built / Pending Approval | 🔵 Planned | ⬜ Not starte
 | YouTube | Google OAuth 2.0, Shorts + video, resumable upload, pending Google verification |
 | Facebook Pages | Graph API v21.0, text/photo/video/carousel |
 | X / Twitter | OAuth 1.0a, v2 API, Pro & Team only, 100 tweets/mo cap |
+| Telegram | Bot API, no OAuth — bot token + channel ID; text, images, video |
 
 ---
 
@@ -34,7 +35,7 @@ Status: ✅ Live | 🟡 Built / Pending Approval | 🔵 Planned | ⬜ Not starte
 |---|---|---|---|
 | TikTok | Massive creator reach | 2–3 days | Video only — same pattern as YouTube; needs developer app + app review for DIRECT_POST |
 | Reddit | Large communities, text-native | 2–3 days | OAuth 2.0, post to subreddits, flair support |
-| Telegram | Channels — broadcast use case | 1–2 days | Bot API, no OAuth needed — just bot token |
+| ~~Telegram~~ | ~~Channels — broadcast use case~~ | ~~1–2 days~~ | ~~Bot API, no OAuth needed — just bot token~~ ✅ Done |
 | Discord | Community servers | 2 days | Webhook-based (no OAuth needed) or Bot API |
 | Medium | Long-form publishing | 1–2 days | REST API, OAuth 2.0, markdown posts |
 | Hashnode | Developer blogging | 1 day | GraphQL API, PAT auth |

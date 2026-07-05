@@ -93,7 +93,7 @@ const COMPARISON = [
 const FAQ = [
   {
     q: "Is there a free trial?",
-    a: "Yes. Every new account starts with a 14-day trial with access to 3 accounts and 30 posts. No credit card required.",
+    a: "Yes. Every new account starts with a 14-day trial with access to 3 accounts and 30 posts.",
   },
   {
     q: "Can I switch plans at any time?",
@@ -101,15 +101,15 @@ const FAQ = [
   },
   {
     q: "What platforms are supported?",
-    a: "Bluesky, Threads, Instagram (Posts, Reels, Stories), LinkedIn, Mastodon, YouTube (Shorts & video), and Facebook Pages. All plans include all platforms.",
+    a: "Bluesky, Threads, Instagram (Posts, Reels, Stories), LinkedIn, Mastodon, YouTube (Shorts & video), and Facebook Pages and more. All plans include all platforms.",
   },
   {
     q: "Can I self-host Posthive?",
-    a: "Yes. Posthive is open-source (AGPL-3.0). You can run your own instance — billing is disabled by default for self-hosted deployments.",
+    a: "Yes. Posthive is open-source (AGPL-3.0). You can run your own instance billing is disabled by default for self-hosted deployments.",
   },
   {
     q: "What is the API used for?",
-    a: "The Posthive REST API lets you schedule posts programmatically — from AI agents, automation scripts, or custom integrations. Available on Pro and Team plans.",
+    a: "The Posthive REST API lets you schedule posts programmatically from AI agents, automation scripts, or custom integrations. Available on Pro and Team plans.",
   },
   {
     q: "What payment methods are accepted?",

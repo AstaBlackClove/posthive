@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { NavBar, PLATFORMS_NAV, FEATURES_NAV } from "../components/LandingNav";
+import { PlatformIcon } from "../components/PlatformIcon";
 
 const GITHUB_URL = "https://github.com/AstaBlackClove/posthive";
 
@@ -18,6 +19,7 @@ const PLATFORMS_GRID = [
   { name: "Facebook Pages", domain: "facebook.com",    meta: "Pages · Graph API",            accent: "#1877f2", platform: "facebook" },
   { name: "Pinterest",      domain: "pinterest.com",   meta: "Pins · image required",         accent: "#e60023", platform: "pinterest" },
   { name: "X (Twitter)",    domain: "x.com",           meta: "100 tweets/mo · Pro & Team",    accent: "#e7e7e7", platform: "twitter" },
+  { name: "Telegram",      domain: "telegram.org",    meta: "4,096 chars · Bot API",         accent: "#229ED9", platform: "telegram" },
 ];
 
 const PLANS = [
@@ -288,8 +290,7 @@ export default function RootPage() {
               {PLATFORMS_GRID.map(p => (
                 <span key={p.platform} style={{ display: "inline-flex", alignItems: "center" }}>
                   <span style={{ width: 30, height: 30, borderRadius: 8, background: "#131313", border: "1px solid #1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https://www.google.com/s2/favicons?domain=${p.domain}&sz=64`} alt={p.name} width={17} height={17} style={{ display: "block" }} />
+                    <PlatformIcon platform={p.platform} size={17} />
                   </span>
                 </span>
               ))}
@@ -381,26 +382,7 @@ export default function RootPage() {
                 ))}
               </div>
             </div>
-            <div className="feature-visual" style={{ background: "#111111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 28 }}>
-              <div style={{ background: "#0a0a0a", borderRadius: 10, border: "1px solid #1e1e1e", padding: 20, marginBottom: 16 }}>
-                <div style={{ fontSize: 13, color: "#ededed", lineHeight: 1.65, minHeight: 80 }}>
-                  Just shipped a new feature 🚀 Thread-safe scheduling across all your favorite platforms. No more copy-paste marathons.
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-                {["bsky.app", "threads.net", "instagram.com"].map(d => (
-                  <div key={d} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 6, background: "rgba(91,99,211,.1)", border: "1px solid rgba(91,99,211,.2)", fontSize: 12 }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https://www.google.com/s2/favicons?domain=${d}&sz=32`} alt={d} width={12} height={12} />
-                    <span style={{ color: "#9ba2ee" }}>{d.split(".")[0]}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span className="mono" style={{ fontSize: 12, color: "#888" }}>287 / 300 chars</span>
-                <div style={{ background: "#5b63d3", color: "#fff", fontSize: 12, fontWeight: 600, padding: "7px 18px", borderRadius: 8 }}>Schedule</div>
-              </div>
-            </div>
+            <ComposeTypingMockup />
           </div>
         </section>
 
@@ -423,30 +405,7 @@ export default function RootPage() {
                 ))}
               </div>
             </div>
-            <div className="feature-visual" style={{ background: "#111111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 28, direction: "ltr" }}>
-              <div style={{ marginBottom: 20 }}>
-                <div className="mono" style={{ fontSize: 11, color: "#666", marginBottom: 10, letterSpacing: ".08em" }}>POST TYPE</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {["Post", "Reel", "Story"].map((t, i) => (
-                    <div key={t} style={{ flex: 1, textAlign: "center", padding: "10px 0", borderRadius: 8, border: i === 1 ? "1px solid rgba(91,99,211,.4)" : "1px solid #1e1e1e", background: i === 1 ? "rgba(91,99,211,.1)" : "transparent", fontSize: 13, color: i === 1 ? "#9ba2ee" : "#666", fontWeight: i === 1 ? 600 : 400 }}>
-                      {t}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div style={{ border: "1px dashed #2a2a2a", borderRadius: 10, height: 110, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 20 }}>
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="2" y="2" width="24" height="24" rx="4" stroke="#333" strokeWidth="1.5"/><path d="M10 14l3 3 5-6" stroke="#5b63d3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                <span className="mono" style={{ fontSize: 11, color: "#555" }}>Drop video here</span>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                {[1, 2, 3].map(n => (
-                  <div key={n} style={{ flex: 1, height: 48, borderRadius: 6, background: `rgba(91,99,211,${0.05 * n + 0.05})`, border: "1px solid #1e1e1e" }} />
-                ))}
-                <div style={{ width: 48, height: 48, borderRadius: 6, border: "1px dashed #2a2a2a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ color: "#444", fontSize: 20, lineHeight: 1 }}>+</span>
-                </div>
-              </div>
-            </div>
+            <InstagramMediaMockup />
           </div>
         </section>
 
@@ -469,31 +428,7 @@ export default function RootPage() {
                 ))}
               </div>
             </div>
-            <div className="feature-visual" style={{ background: "#111111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 24 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#ededed" }}>June 2026</span>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 4 }}>
-                {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
-                  <div key={d} style={{ textAlign: "center", fontSize: 10, color: "#555", padding: "4px 0" }}>{d}</div>
-                ))}
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3 }}>
-                {Array.from({ length: 35 }, (_, i) => {
-                  const num = i + 1;
-                  const hasPost = [3, 7, 10, 15, 17, 22, 24, 28].includes(num);
-                  const isToday = num === 29;
-                  return (
-                    <div key={i} style={{ minHeight: 34, borderRadius: 6, background: isToday ? "rgba(91,99,211,.18)" : "rgba(255,255,255,.015)", border: isToday ? "1px solid rgba(91,99,211,.4)" : "1px solid transparent", padding: 3, display: "flex", flexDirection: "column", gap: 2 }}>
-                      <span style={{ fontSize: 9, color: isToday ? "#9ba2ee" : num > 30 ? "#2a2a2a" : "#555", textAlign: "right", lineHeight: 1 }}>{num <= 30 ? num : num - 30}</span>
-                      {hasPost && num <= 30 && (
-                        <div style={{ height: 3, borderRadius: 2, background: num % 3 === 0 ? "#5b63d3" : num % 3 === 1 ? "#0085ff" : "#e1306c" }} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <DragCalendarMockup />
           </div>
         </section>
 
@@ -516,34 +451,7 @@ export default function RootPage() {
                 ))}
               </div>
             </div>
-            <div className="feature-visual" style={{ background: "#111111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 28, direction: "ltr" }}>
-              <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#5b63d3,#9ba2ee)", flexShrink: 0 }} />
-                  <div style={{ width: 2, flex: 1, background: "#1e1e1e", marginTop: 6 }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#ededed" }}>yourhandle <span style={{ fontWeight: 400, color: "#666" }}>· just now</span></div>
-                  <div style={{ fontSize: 13, color: "#bbb", lineHeight: 1.6 }}>
-                    Shipping features faster than ever with Posthive. The async workflow is a game-changer.
-                  </div>
-                  <div style={{ marginTop: 10, display: "flex", gap: 16 }}>
-                    {[["♥","24"],["↩","6"],["⇅","3"]].map(([icon, count]) => (
-                      <span key={icon} style={{ fontSize: 12, color: "#555", display: "flex", alignItems: "center", gap: 4 }}>{icon} {count}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 12 }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#5b63d3,#9ba2ee)", flexShrink: 0 }} />
-                <div style={{ flex: 1, background: "rgba(91,99,211,.07)", border: "1px solid rgba(91,99,211,.2)", borderRadius: 10, padding: "10px 14px" }}>
-                  <div className="mono" style={{ fontSize: 11, color: "#8b91e8", fontWeight: 600, marginBottom: 6, letterSpacing: ".04em" }}>FIRST COMMENT · AUTO-POSTED</div>
-                  <div style={{ fontSize: 12, color: "#aaa", lineHeight: 1.6 }}>
-                    #buildinpublic #saas #indiedev #productivity #scheduling
-                  </div>
-                </div>
-              </div>
-            </div>
+            <FirstCommentMockup />
           </div>
         </section>
 
@@ -566,23 +474,7 @@ export default function RootPage() {
                 ))}
               </div>
             </div>
-            <div className="feature-visual" style={{ background: "#111111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 28 }}>
-              {[
-                { domain: "bsky.app", label: "Bluesky", active: true, text: "Long-form thoughts on async content workflows and why scheduling beats publishing live..." },
-                { domain: "threads.net", label: "Threads", active: false, text: "Hot take: scheduled posts perform better than live ones. Here's why 👇" },
-              ].map(p => (
-                <div key={p.label} style={{ marginBottom: 14, borderRadius: 10, border: p.active ? "1px solid rgba(91,99,211,.35)" : "1px solid #1e1e1e", background: p.active ? "rgba(91,99,211,.06)" : "transparent", padding: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https://www.google.com/s2/favicons?domain=${p.domain}&sz=32`} alt={p.label} width={14} height={14} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: p.active ? "#9ba2ee" : "#777" }}>{p.label}</span>
-                    {p.active && <span className="mono" style={{ marginLeft: "auto", fontSize: 10, color: "#8b91e8", background: "rgba(91,99,211,.12)", padding: "2px 8px", borderRadius: 999, letterSpacing: ".04em" }}>OVERRIDE ACTIVE</span>}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#777", lineHeight: 1.6 }}>{p.text}</div>
-                </div>
-              ))}
-              <div className="mono" style={{ textAlign: "center", fontSize: 11, color: "#555" }}>+ 3 more accounts using global copy</div>
-            </div>
+            <PerPlatformMockup />
           </div>
         </section>
 
@@ -610,26 +502,7 @@ export default function RootPage() {
                 ))}
               </div>
             </div>
-            <div className="feature-visual" style={{ background: "#111111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 24, direction: "ltr" }}>
-              <div className="mono" style={{ fontSize: 11, color: "#555", marginBottom: 10, letterSpacing: ".06em" }}>CSV PREVIEW</div>
-              {[
-                { date: "Aug 1 · 09:00", text: "Good morning 🌅", accounts: "all" },
-                { date: "Aug 2 · 14:30", text: "Check the blog post", accounts: "bluesky" },
-                { date: "Aug 3 · 18:00", text: "Skip Instagram today", accounts: "!instagram" },
-                { date: "Aug 4 · 10:00", text: "Two images 🖼️", accounts: "threads" },
-              ].map((row, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: i < 3 ? "1px solid #1a1a1a" : "none", overflow: "hidden" }}>
-                  <span className="mono" style={{ fontSize: 11, color: "#555", flexShrink: 0 }}>{row.date}</span>
-                  <span style={{ flex: 1, fontSize: 12, color: "#bbb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{row.text}</span>
-                  <span className="mono" style={{ fontSize: 10, color: "#666", flexShrink: 0 }}>{row.accounts}</span>
-                  <span style={{ fontSize: 11, color: "#4ade80", fontWeight: 600, flexShrink: 0 }}>✓</span>
-                </div>
-              ))}
-              <div style={{ marginTop: 16, padding: "10px 14px", borderRadius: 8, background: "rgba(91,99,211,.08)", border: "1px solid rgba(91,99,211,.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 12, color: "#9ba2ee" }}>4 valid · 0 errors</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#fff", background: "#5b63d3", padding: "5px 14px", borderRadius: 6 }}>Schedule 4 posts</span>
-              </div>
-            </div>
+            <BulkCsvMockup />
           </div>
         </section>
 
@@ -650,8 +523,7 @@ export default function RootPage() {
                 <Link key={p.platform} href={`/platforms/${p.platform}`} className="ph-platform-card">
                   <span style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: p.accent }} />
                   <span style={{ width: 42, height: 42, borderRadius: 11, background: "#181818", border: "1px solid #232323", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https://www.google.com/s2/favicons?domain=${p.domain}&sz=64`} alt={p.name} width={22} height={22} style={{ display: "block" }} />
+                    <PlatformIcon platform={p.platform} size={22} />
                   </span>
                   <div>
                     <h3 style={{ fontSize: 15.5, fontWeight: 600, margin: "0 0 4px", color: "#ededed" }}>{p.name}</h3>
@@ -907,6 +779,656 @@ function FootCol({ title, links }: { title: string; links: { label: string; href
         ? <a key={l.label} href={l.href} target="_blank" rel="noopener" className="foot-link">{l.label}</a>
         : <Link key={l.label} href={l.href} className="foot-link">{l.label}</Link>
       )}
+    </div>
+  );
+}
+
+function BulkCsvMockup() {
+  const ROWS = [
+    { date: "Aug 1 · 09:00", text: "Good morning 🌅",      accounts: "all" },
+    { date: "Aug 2 · 14:30", text: "Check the blog post",  accounts: "bluesky" },
+    { date: "Aug 3 · 18:00", text: "Skip Instagram today", accounts: "!instagram" },
+    { date: "Aug 4 · 10:00", text: "Two images 🖼️",        accounts: "threads" },
+  ];
+
+  const [visibleRows, setVisibleRows] = useState(0);
+  const [showFooter, setShowFooter]   = useState(false);
+  const [phase, setPhase]             = useState<"parsing"|"ready"|"scheduling"|"done"|"reset">("parsing");
+
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout>;
+    if (phase === "parsing") {
+      if (visibleRows < ROWS.length) {
+        t = setTimeout(() => setVisibleRows(v => v + 1), 480);
+      } else {
+        t = setTimeout(() => { setShowFooter(true); setPhase("ready"); }, 400);
+      }
+    } else if (phase === "ready") {
+      t = setTimeout(() => setPhase("scheduling"), 1400);
+    } else if (phase === "scheduling") {
+      t = setTimeout(() => setPhase("done"), 900);
+    } else if (phase === "done") {
+      t = setTimeout(() => setPhase("reset"), 2200);
+    } else {
+      t = setTimeout(() => { setVisibleRows(0); setShowFooter(false); setPhase("parsing"); }, 500);
+    }
+    return () => clearTimeout(t);
+  }, [phase, visibleRows]);
+
+  const isScheduling = phase === "scheduling";
+  const isDone       = phase === "done" || phase === "reset";
+
+  return (
+    <div className="feature-visual" style={{ background:"#111111", border:"1px solid #1e1e1e", borderRadius:16, padding:24, direction:"ltr" }}>
+      <div className="mono" style={{ fontSize:11, color:"#555", marginBottom:10, letterSpacing:".06em" }}>CSV PREVIEW</div>
+
+      {ROWS.map((row, i) => (
+        <div key={i} style={{
+          display:"flex", alignItems:"center", gap:8,
+          padding:"8px 0", borderBottom: i < ROWS.length - 1 ? "1px solid #1a1a1a" : "none",
+          overflow:"hidden",
+          opacity: visibleRows > i ? 1 : 0,
+          transform: visibleRows > i ? "translateY(0)" : "translateY(6px)",
+          transition:"opacity .25s ease, transform .25s ease",
+        }}>
+          <span className="mono" style={{ fontSize:11, color:"#555", flexShrink:0 }}>{row.date}</span>
+          <span style={{ flex:1, fontSize:12, color:"#bbb", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", minWidth:0 }}>{row.text}</span>
+          <span className="mono" style={{ fontSize:10, color: row.accounts.startsWith("!") ? "#f59e0b" : "#666", flexShrink:0 }}>{row.accounts}</span>
+          <span style={{
+            fontSize:11, fontWeight:600, flexShrink:0,
+            color: isDone ? "#5b63d3" : "#4ade80",
+            transition:"color .4s ease",
+          }}>{isDone ? "⬆" : "✓"}</span>
+        </div>
+      ))}
+
+      <div style={{
+        marginTop:16, padding:"10px 14px", borderRadius:8,
+        background:"rgba(91,99,211,.08)", border:"1px solid rgba(91,99,211,.2)",
+        display:"flex", justifyContent:"space-between", alignItems:"center",
+        opacity: showFooter ? 1 : 0,
+        transform: showFooter ? "translateY(0)" : "translateY(6px)",
+        transition:"opacity .3s ease, transform .3s ease",
+      }}>
+        <span style={{ fontSize:12, color: isDone ? "#4ade80" : "#9ba2ee", transition:"color .4s ease" }}>
+          {isDone ? "✓ 4 posts scheduled!" : "4 valid · 0 errors"}
+        </span>
+        <span style={{
+          fontSize:12, fontWeight:600, padding:"5px 14px", borderRadius:6,
+          color:"#fff",
+          background: isDone ? "rgba(74,222,128,.15)" : isScheduling ? "rgba(91,99,211,.6)" : "#5b63d3",
+          border: isDone ? "1px solid rgba(74,222,128,.3)" : "none",
+          transition:"background .4s ease",
+        }}>
+          {isDone ? "✓ Scheduled!" : isScheduling ? "Scheduling…" : "Schedule 4 posts"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function PerPlatformMockup() {
+  const PLATFORMS = [
+    { domain: "bsky.app",      label: "Bluesky",   text: "Long-form thoughts on async content workflows and why scheduling beats publishing live..." },
+    { domain: "threads.net",   label: "Threads",   text: "Hot take: scheduled posts perform better than live ones. Here's why 👇" },
+    { domain: "linkedin.com",  label: "LinkedIn",  text: "3 lessons learned from automating our content pipeline with Posthive 🚀" },
+  ];
+
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [typed, setTyped]         = useState(PLATFORMS[0].text);
+  const [phase, setPhase]         = useState<"show"|"clearing"|"typing">("show");
+
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout>;
+    if (phase === "show") {
+      t = setTimeout(() => setPhase("clearing"), 2200);
+    } else if (phase === "clearing") {
+      const next = (activeIdx + 1) % PLATFORMS.length;
+      setActiveIdx(next);
+      setTyped("");
+      setPhase("typing");
+    } else {
+      const target = PLATFORMS[activeIdx].text;
+      if (typed.length < target.length) {
+        t = setTimeout(() => setTyped(target.slice(0, typed.length + 1)), 28);
+      } else {
+        t = setTimeout(() => setPhase("show"), 300);
+      }
+    }
+    return () => clearTimeout(t);
+  }, [phase, typed, activeIdx]);
+
+  return (
+    <div className="feature-visual" style={{ background:"#111111", border:"1px solid #1e1e1e", borderRadius:16, padding:28 }}>
+      {PLATFORMS.map((p, i) => {
+        const active = i === activeIdx;
+        return (
+          <div key={p.label} style={{
+            marginBottom:14, borderRadius:10, padding:16,
+            border: active ? "1px solid rgba(91,99,211,.35)" : "1px solid #1e1e1e",
+            background: active ? "rgba(91,99,211,.06)" : "transparent",
+            transition:"border-color .35s ease, background .35s ease",
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`https://www.google.com/s2/favicons?domain=${p.domain}&sz=32`} alt={p.label} width={14} height={14} />
+              <span style={{ fontSize:13, fontWeight:600, color: active ? "#9ba2ee" : "#555", transition:"color .35s ease" }}>{p.label}</span>
+              <span className="mono" style={{
+                marginLeft:"auto", fontSize:10, padding:"2px 8px", borderRadius:999, letterSpacing:".04em",
+                color: active ? "#8b91e8" : "#333",
+                background: active ? "rgba(91,99,211,.12)" : "transparent",
+                border: active ? "none" : "1px solid #222",
+                transition:"all .35s ease",
+              }}>
+                {active ? "OVERRIDE ACTIVE" : "global copy"}
+              </span>
+            </div>
+            <div style={{ fontSize:12, lineHeight:1.6, color: active ? "#999" : "#444", minHeight:38, transition:"color .35s ease" }}>
+              {active ? (
+                <>
+                  {typed}
+                  {phase === "typing" && (
+                    <span style={{ display:"inline-block", width:1.5, height:11, background:"#5b63d3", verticalAlign:"middle", marginLeft:1, animation:"ph-blink .75s step-end infinite" }} />
+                  )}
+                </>
+              ) : p.text}
+            </div>
+          </div>
+        );
+      })}
+      <div className="mono" style={{ textAlign:"center", fontSize:11, color:"#555" }}>+ 2 more accounts using global copy</div>
+    </div>
+  );
+}
+
+function FirstCommentMockup() {
+  const COMMENT = "#buildinpublic #saas #indiedev #productivity #scheduling";
+  const [phase, setPhase] = useState<"post"|"delay"|"typing"|"done"|"reset">("post");
+  const [typed, setTyped] = useState("");
+
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout>;
+    if (phase === "post") {
+      t = setTimeout(() => setPhase("delay"), 1800);
+    } else if (phase === "delay") {
+      t = setTimeout(() => setPhase("typing"), 700);
+    } else if (phase === "typing") {
+      if (typed.length < COMMENT.length) {
+        t = setTimeout(() => setTyped(COMMENT.slice(0, typed.length + 1)), 32);
+      } else {
+        t = setTimeout(() => setPhase("done"), 400);
+      }
+    } else if (phase === "done") {
+      t = setTimeout(() => setPhase("reset"), 2800);
+    } else {
+      t = setTimeout(() => { setTyped(""); setPhase("post"); }, 400);
+    }
+    return () => clearTimeout(t);
+  }, [phase, typed]);
+
+  const showComment = phase === "typing" || phase === "done" || phase === "reset";
+  const isDone      = phase === "done" || phase === "reset";
+
+  return (
+    <div className="feature-visual" style={{ background:"#111111", border:"1px solid #1e1e1e", borderRadius:16, padding:28, direction:"ltr" }}>
+
+      {/* Main post */}
+      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
+          <div style={{ width:36, height:36, borderRadius:"50%", background:"linear-gradient(135deg,#5b63d3,#9ba2ee)", flexShrink:0 }} />
+          <div style={{ width:2, flex:1, background:"#1e1e1e", marginTop:6 }} />
+        </div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:13, fontWeight:600, marginBottom:6, color:"#ededed" }}>
+            yourhandle <span style={{ fontWeight:400, color:"#666" }}>· just now</span>
+            {isDone && (
+              <span style={{ marginLeft:8, fontSize:10, color:"#4ade80", background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.2)", borderRadius:4, padding:"1px 6px", fontWeight:500, verticalAlign:"middle" }}>
+                ✓ posted
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize:13, color:"#bbb", lineHeight:1.6 }}>
+            Shipping features faster than ever with Posthive. The async workflow is a game-changer.
+          </div>
+          <div style={{ marginTop:10, display:"flex", gap:16 }}>
+            {[["♥","24"],["↩","6"],["⇅","3"]].map(([icon, count]) => (
+              <span key={icon} style={{ fontSize:12, color:"#555", display:"flex", alignItems:"center", gap:4 }}>{icon} {count}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* First comment — slides in */}
+      <div style={{
+        display:"flex", gap:12,
+        opacity: showComment ? 1 : 0,
+        transform: showComment ? "translateY(0)" : "translateY(8px)",
+        transition:"opacity .3s ease, transform .3s ease",
+      }}>
+        <div style={{ width:28, height:28, borderRadius:"50%", background:"linear-gradient(135deg,#5b63d3,#9ba2ee)", flexShrink:0 }} />
+        <div style={{ flex:1, background:"rgba(91,99,211,.07)", border:"1px solid rgba(91,99,211,.2)", borderRadius:10, padding:"10px 14px" }}>
+          <div className="mono" style={{ fontSize:11, color:"#8b91e8", fontWeight:600, marginBottom:6, letterSpacing:".04em", display:"flex", alignItems:"center", gap:8 }}>
+            FIRST COMMENT · AUTO-POSTED
+            {isDone && <span style={{ color:"#4ade80", fontWeight:400, fontSize:10 }}>⚡ fired instantly</span>}
+          </div>
+          <div style={{ fontSize:12, color:"#aaa", lineHeight:1.6, minHeight:18, wordBreak:"break-word" }}>
+            {typed}
+            {phase === "typing" && (
+              <span style={{ display:"inline-block", width:1.5, height:11, background:"#5b63d3", verticalAlign:"middle", marginLeft:1, animation:"ph-blink .75s step-end infinite" }} />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InstagramMediaMockup() {
+  const TABS = ["Post", "Reel", "Story"] as const;
+  type Tab = typeof TABS[number];
+
+  const [tabIdx, setTabIdx] = useState(1); // start on Reel
+  const [slideCount, setSlideCount]   = useState(0);
+  const [uploadPct, setUploadPct]     = useState(0);
+  const [storyReady, setStoryReady]   = useState(false);
+  const tab: Tab = TABS[tabIdx];
+
+  // Reset per-tab state on tab change
+  useEffect(() => {
+    setSlideCount(0);
+    setUploadPct(0);
+    setStoryReady(false);
+  }, [tabIdx]);
+
+  // Post: slides appear one by one, then move to Reel
+  useEffect(() => {
+    if (tab !== "Post") return;
+    if (slideCount >= 3) {
+      const t = setTimeout(() => setTabIdx(1), 1400);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setSlideCount(c => c + 1), 480);
+    return () => clearTimeout(t);
+  }, [tab, slideCount]);
+
+  // Reel: progress bar fills, then move to Story
+  useEffect(() => {
+    if (tab !== "Reel") return;
+    if (uploadPct >= 100) {
+      const t = setTimeout(() => setTabIdx(2), 1100);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setUploadPct(p => Math.min(100, p + 3)), 50);
+    return () => clearTimeout(t);
+  }, [tab, uploadPct]);
+
+  // Story: brief pause, image "fades in", then back to Post
+  useEffect(() => {
+    if (tab !== "Story") return;
+    const t1 = setTimeout(() => setStoryReady(true), 500);
+    const t2 = setTimeout(() => setTabIdx(0), 2800);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [tab]);
+
+  const SLIDE_COLORS = ["rgba(91,99,211,.18)", "rgba(225,48,108,.14)", "rgba(255,184,0,.12)"];
+
+  return (
+    <div className="feature-visual" style={{ background:"#111111", border:"1px solid #1e1e1e", borderRadius:16, padding:28, direction:"ltr" }}>
+
+      {/* Tab strip */}
+      <div style={{ marginBottom:20 }}>
+        <div className="mono" style={{ fontSize:11, color:"#666", marginBottom:10, letterSpacing:".08em" }}>POST TYPE</div>
+        <div style={{ display:"flex", gap:8 }}>
+          {TABS.map((t) => {
+            const active = t === tab;
+            return (
+              <div key={t} style={{
+                flex:1, textAlign:"center", padding:"10px 0", borderRadius:8, fontSize:13,
+                border: active ? "1px solid rgba(91,99,211,.4)" : "1px solid #1e1e1e",
+                background: active ? "rgba(91,99,211,.1)" : "transparent",
+                color: active ? "#9ba2ee" : "#555",
+                fontWeight: active ? 600 : 400,
+                transition:"all .3s ease",
+              }}>{t}</div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Drop zone */}
+      <div style={{
+        border: tab === "Reel" && uploadPct > 0 && uploadPct < 100
+          ? "1px dashed rgba(91,99,211,.6)"
+          : "1px dashed #2a2a2a",
+        borderRadius:10, height:110,
+        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+        gap:8, marginBottom:20, position:"relative", overflow:"hidden",
+        transition:"border-color .3s ease",
+        background: tab === "Story" && storyReady ? "rgba(225,48,108,.06)" : "transparent",
+      }}>
+
+        {/* Post tab: placeholder */}
+        {tab === "Post" && (
+          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="#333" strokeWidth="1.4"/>
+              <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="#333" strokeWidth="1.4"/>
+              <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="#333" strokeWidth="1.4"/>
+              <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="#333" strokeWidth="1.4"/>
+            </svg>
+            <span className="mono" style={{ fontSize:11, color:"#555" }}>Carousel / single image</span>
+          </div>
+        )}
+
+        {/* Reel tab: upload progress */}
+        {tab === "Reel" && (
+          <>
+            {uploadPct < 100 ? (
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, width:"100%", padding:"0 28px", boxSizing:"border-box" }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ opacity:.7 }}>
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="#5b63d3" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div style={{ width:"100%", height:4, background:"#1e1e1e", borderRadius:2, overflow:"hidden" }}>
+                  <div style={{ height:"100%", width:`${uploadPct}%`, background:"linear-gradient(90deg,#5b63d3,#9ba2ee)", borderRadius:2, transition:"width .05s linear" }} />
+                </div>
+                <span className="mono" style={{ fontSize:10, color:"#555" }}>Uploading… {uploadPct}%</span>
+              </div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                  <rect x="2" y="2" width="24" height="24" rx="4" stroke="#333" strokeWidth="1.5"/>
+                  <path d="M9 14l3.5 3.5 6-7" stroke="#4ade80" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="mono" style={{ fontSize:11, color:"#4ade80" }}>Upload complete</span>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Story tab: portrait frame */}
+        {tab === "Story" && (
+          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
+            <div style={{
+              width:38, height:60, borderRadius:5,
+              border: storyReady ? "1.5px solid rgba(225,48,108,.7)" : "1.5px dashed #333",
+              background: storyReady ? "rgba(225,48,108,.1)" : "transparent",
+              transition:"all .4s ease",
+              display:"flex", alignItems:"center", justifyContent:"center",
+            }}>
+              {storyReady && <div style={{ width:18, height:28, borderRadius:3, background:"rgba(225,48,108,.25)" }} />}
+            </div>
+            <span className="mono" style={{ fontSize:10, color: storyReady ? "#e1306c" : "#555", transition:"color .4s" }}>9:16 · 15s max</span>
+          </div>
+        )}
+      </div>
+
+      {/* Thumbnail strip */}
+      <div style={{ display:"flex", gap:8 }}>
+        {[0,1,2].map(n => (
+          <div key={n} style={{
+            flex:1, height:48, borderRadius:6,
+            background: tab === "Post" && slideCount > n ? SLIDE_COLORS[n] : "rgba(255,255,255,.03)",
+            border:"1px solid #1e1e1e",
+            transition:"background .35s ease",
+          }}>
+            {tab === "Post" && slideCount > n && (
+              <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <div style={{ width:16, height:16, borderRadius:3, background:SLIDE_COLORS[n].replace(".18","1").replace(".14","1").replace(".12","1"), opacity:.4 }} />
+              </div>
+            )}
+          </div>
+        ))}
+        <div style={{
+          width:48, height:48, borderRadius:6, border:"1px dashed #2a2a2a",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          opacity: tab === "Post" && slideCount >= 3 ? 1 : 0.3,
+          transition:"opacity .4s ease",
+        }}>
+          <span style={{ color:"#444", fontSize:20, lineHeight:1 }}>+</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ComposeTypingMockup() {
+  const TEXT = "Just shipped a new feature 🚀 Thread-safe scheduling across all your favorite platforms. No more copy-paste marathons.";
+  const MAX = 300;
+  const PLATFORMS = [
+    { domain: "bsky.app",       label: "bsky" },
+    { domain: "threads.net",    label: "threads" },
+    { domain: "instagram.com",  label: "instagram" },
+  ];
+
+  const [displayed, setDisplayed] = useState("");
+  const [pillsVisible, setPillsVisible] = useState(0);
+  const [phase, setPhase] = useState<"typing"|"pills"|"ready"|"scheduled"|"clearing">("typing");
+
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout>;
+    if (phase === "typing") {
+      if (displayed.length < TEXT.length) {
+        t = setTimeout(() => setDisplayed(TEXT.slice(0, displayed.length + 1)), 36);
+      } else {
+        t = setTimeout(() => setPhase("pills"), 400);
+      }
+    } else if (phase === "pills") {
+      if (pillsVisible < PLATFORMS.length) {
+        t = setTimeout(() => setPillsVisible(v => v + 1), 260);
+      } else {
+        t = setTimeout(() => setPhase("ready"), 500);
+      }
+    } else if (phase === "ready") {
+      t = setTimeout(() => setPhase("scheduled"), 1100);
+    } else if (phase === "scheduled") {
+      t = setTimeout(() => setPhase("clearing"), 1400);
+    } else {
+      t = setTimeout(() => { setDisplayed(""); setPillsVisible(0); setPhase("typing"); }, 500);
+    }
+    return () => clearTimeout(t);
+  }, [phase, displayed, pillsVisible]);
+
+  const isReady     = phase === "ready" || phase === "scheduled" || phase === "clearing";
+  const isScheduled = phase === "scheduled" || phase === "clearing";
+
+  return (
+    <div className="feature-visual" style={{ background:"#111111", border:"1px solid #1e1e1e", borderRadius:16, padding:28 }}>
+      <style>{`@keyframes ph-blink { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
+
+      {/* Compose box */}
+      <div style={{ background:"#0a0a0a", borderRadius:10, border:"1px solid #1e1e1e", padding:20, marginBottom:16, minHeight:100 }}>
+        <div style={{ fontSize:13, color:"#ededed", lineHeight:1.65, minHeight:80, wordBreak:"break-word" }}>
+          {displayed}
+          {phase === "typing" && (
+            <span style={{ display:"inline-block", width:1.5, height:13, background:"#5b63d3", verticalAlign:"middle", marginLeft:1, animation:"ph-blink .75s step-end infinite" }} />
+          )}
+        </div>
+      </div>
+
+      {/* Platform pills */}
+      <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:16, minHeight:30 }}>
+        {PLATFORMS.map((p, i) => (
+          <div key={p.domain} style={{
+            display:"flex", alignItems:"center", gap:6,
+            padding:"4px 10px", borderRadius:6, fontSize:12,
+            background:"rgba(91,99,211,.1)", border:"1px solid rgba(91,99,211,.2)",
+            opacity: pillsVisible > i ? 1 : 0,
+            transform: pillsVisible > i ? "translateY(0)" : "translateY(5px)",
+            transition:"opacity .22s ease, transform .22s ease",
+          }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`https://www.google.com/s2/favicons?domain=${p.domain}&sz=32`} alt={p.label} width={12} height={12} />
+            <span style={{ color:"#9ba2ee" }}>{p.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <span className="mono" style={{ fontSize:12, color: displayed.length > MAX * 0.9 ? "#e1306c" : "#888" }}>
+          {displayed.length} / {MAX} chars
+        </span>
+        <div style={{
+          fontSize:12, fontWeight:600, padding:"7px 18px", borderRadius:8,
+          background: isScheduled ? "rgba(74,222,128,.12)" : isReady ? "#5b63d3" : "#1e1e1e",
+          color: isScheduled ? "#4ade80" : "#fff",
+          boxShadow: isReady && !isScheduled ? "0 0 18px rgba(91,99,211,.45)" : "none",
+          transition:"background .35s ease, color .35s ease, box-shadow .35s ease",
+        }}>
+          {isScheduled ? "✓ Scheduled!" : "Schedule"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DragCalendarMockup() {
+  // Row geometry is fixed pixels; column geometry is percentage-based (fills container)
+  const CELL_H = 36;
+  const GAP    = 3;
+  const ROWS   = 5;
+
+  // SRC = cell index 2  → row 0, col 2  (Jun 3)
+  // DST = cell index 18 → row 2, col 4  (Jun 19)
+  const SRC_COL = 2; const SRC_ROW = 0;
+  const DST_COL = 4; const DST_ROW = 2;
+
+  // Percentage X-centers of each column (7 columns, gaps negligible for %)
+  const pct = (col: number) => `${(col + 0.5) / 7 * 100}%`;
+  // Pixel Y-centers of each row
+  const rowY = (row: number) => row * (CELL_H + GAP) + CELL_H / 2;
+
+  const srcX = pct(SRC_COL); const srcY = rowY(SRC_ROW); // 18px
+  const dstX = pct(DST_COL); const dstY = rowY(DST_ROW); // 92px
+
+  // Card: left edge of source cell in % (same percentage scheme)
+  const srcCellLeft = `${SRC_COL / 7 * 100}%`;
+  const dstCellLeft = `${DST_COL / 7 * 100}%`;
+  const srcCellTop  = SRC_ROW * (CELL_H + GAP) + 12;
+  const dstCellTop  = DST_ROW * (CELL_H + GAP) + 12;
+
+  const gridH = ROWS * (CELL_H + GAP) - GAP;
+
+  const days = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+  const dots: Record<number, string> = {
+    5: "#5b63d3", 8: "#e1306c",
+    11: "#0085ff", 14: "#5b63d3",
+    23: "#e1306c", 27: "#0085ff",
+  };
+
+  return (
+    <div className="feature-visual" style={{ background:"#111111", border:"1px solid #1e1e1e", borderRadius:16, padding:24, overflow:"hidden" }}>
+      <style>{`
+        @keyframes ph-card {
+          0%,15%   { left:${srcCellLeft}; top:${srcCellTop}px; }
+          40%,65%  { left:${dstCellLeft}; top:${dstCellTop}px; }
+          90%,100% { left:${srcCellLeft}; top:${srcCellTop}px; }
+        }
+        @keyframes ph-ghost {
+          0%,18%   { opacity:0; }
+          22%,65%  { opacity:0.3; }
+          88%,100% { opacity:0; }
+        }
+        @keyframes ph-cursor {
+          0%,12%   { left:${srcX}; top:${srcY}px; transform:scale(1); }
+          15%      { left:${srcX}; top:${srcY}px; transform:scale(0.78); }
+          19%      { left:${srcX}; top:${srcY}px; transform:scale(1); }
+          42%,65%  { left:${dstX}; top:${dstY}px; transform:scale(1); }
+          68%      { left:${dstX}; top:${dstY}px; transform:scale(0.78); }
+          71%      { left:${dstX}; top:${dstY}px; transform:scale(1); }
+          90%,100% { left:${srcX}; top:${srcY}px; transform:scale(1); }
+        }
+        @keyframes ph-glow {
+          0%,55%   { box-shadow:none; background:rgba(255,255,255,.015); }
+          60%,70%  { box-shadow:0 0 0 2px #5b63d3; background:rgba(91,99,211,.14); }
+          85%,100% { box-shadow:none; background:rgba(255,255,255,.015); }
+        }
+        @keyframes ph-toast {
+          0%,65%   { opacity:0; transform:translateY(5px); }
+          72%,78%  { opacity:1; transform:translateY(0); }
+          88%,100% { opacity:0; transform:translateY(5px); }
+        }
+      `}</style>
+
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+        <span style={{ fontSize:13, fontWeight:600, color:"#ededed" }}>June 2026</span>
+        <span style={{ fontSize:11, color:"#555" }}>Month</span>
+      </div>
+
+      {/* Day headers — percentage columns, fills full width */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:GAP, marginBottom:GAP }}>
+        {days.map(d => <div key={d} style={{ textAlign:"center", fontSize:9, color:"#555", padding:"3px 0" }}>{d}</div>)}
+      </div>
+
+      {/* Grid — percentage columns, fixed row heights, position:relative for overlays */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:GAP, position:"relative", height:gridH }}>
+        {Array.from({ length:35 }, (_,i) => {
+          const col = i % 7;
+          const row = Math.floor(i / 7);
+          const num = i + 1;
+          const isToday = num === 21;
+          const isDst   = col === DST_COL && row === DST_ROW;
+          return (
+            <div key={i} style={{
+              height:CELL_H, borderRadius:6, padding:"3px 4px",
+              boxSizing:"border-box",
+              background: isToday ? "rgba(91,99,211,.18)" : "rgba(255,255,255,.015)",
+              border: isToday ? "1px solid rgba(91,99,211,.4)" : "1px solid transparent",
+              animation: isDst ? "ph-glow 3.8s ease-in-out infinite" : undefined,
+            }}>
+              <span style={{ fontSize:8, display:"block", textAlign:"right", lineHeight:1,
+                color: isToday ? "#9ba2ee" : num > 30 ? "#2a2a2a" : "#555" }}>
+                {num <= 30 ? num : num - 30}
+              </span>
+              {dots[i] && !(col === SRC_COL && row === SRC_ROW) && (
+                <div style={{ height:3, marginTop:3, borderRadius:2, background:dots[i] }} />
+              )}
+            </div>
+          );
+        })}
+
+        {/* Ghost dot — stays at source */}
+        <div style={{
+          position:"absolute", pointerEvents:"none",
+          left:srcCellLeft, top:srcCellTop,
+          width:"calc(100% / 7 - 4px)", height:3,
+          borderRadius:2, background:"#0085ff",
+          opacity:0, animation:"ph-ghost 3.8s ease-in-out infinite",
+        }} />
+
+        {/* Dragging card dot */}
+        <div style={{
+          position:"absolute", pointerEvents:"none", zIndex:10,
+          left:srcCellLeft, top:srcCellTop,
+          width:"calc(100% / 7 - 4px)", height:3,
+          borderRadius:2, background:"#0085ff",
+          boxShadow:"0 4px 12px rgba(0,133,255,.55)",
+          animation:"ph-card 3.8s ease-in-out infinite",
+        }} />
+
+        {/* Cursor — left/top animated directly so percentages work */}
+        <div style={{
+          position:"absolute", pointerEvents:"none", zIndex:20,
+          left:srcX, top:srcY,
+          transformOrigin:"3px 2px",
+          animation:"ph-cursor 3.8s ease-in-out infinite",
+          marginLeft:-8, marginTop:-6,
+        }}>
+          <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
+            <path d="M1 1l4.5 14 2.5-4.5 4.5-2.5L1 1z" fill="white" stroke="#1a1a1a" strokeWidth="1.2" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      </div>
+
+      {/* Toast */}
+      <div style={{
+        marginTop:10, padding:"6px 12px", borderRadius:8,
+        background:"rgba(91,99,211,.12)", border:"1px solid rgba(91,99,211,.25)",
+        fontSize:11.5, color:"#9ba2ee", display:"flex", alignItems:"center", gap:6,
+        opacity:0, animation:"ph-toast 3.8s ease-in-out infinite",
+      }}>
+        <span>✓</span> Post rescheduled to Jun 19 — saved instantly
+      </div>
     </div>
   );
 }

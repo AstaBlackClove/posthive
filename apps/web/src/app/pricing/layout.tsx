@@ -30,7 +30,7 @@ const faqSchema = {
     {
       "@type": "Question",
       name: "Is there a free trial?",
-      acceptedAnswer: { "@type": "Answer", text: "Yes. Every new account starts with a 14-day trial with access to 3 accounts and 30 posts. No credit card required." },
+      acceptedAnswer: { "@type": "Answer", text: "Yes. Every new account starts with a 14-day trial with access to 3 accounts and 30 posts." },
     },
     {
       "@type": "Question",
@@ -40,12 +40,12 @@ const faqSchema = {
     {
       "@type": "Question",
       name: "What platforms are supported?",
-      acceptedAnswer: { "@type": "Answer", text: "Bluesky, Threads, Instagram (Posts, Reels, Stories), LinkedIn, Mastodon, YouTube (Shorts & video), and Facebook Pages. All plans include all platforms." },
+      acceptedAnswer: { "@type": "Answer", text: "Bluesky, Threads, Instagram (Posts, Reels, Stories), LinkedIn, Mastodon, YouTube (Shorts & video), and Facebook Pages and more. All plans include all platforms." },
     },
     {
       "@type": "Question",
       name: "Can I self-host Posthive?",
-      acceptedAnswer: { "@type": "Answer", text: "Yes. Posthive is open-source (AGPL-3.0). You can run your own instance — billing is disabled by default for self-hosted deployments." },
+      acceptedAnswer: { "@type": "Answer", text: "Yes. Posthive is open-source (AGPL-3.0). You can run your own instance billing is disabled by default for self-hosted deployments." },
     },
     {
       "@type": "Question",

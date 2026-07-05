@@ -39,6 +39,7 @@ const PLATFORM_META: Record<string, { label: string; brand: string }> = {
   youtube:   { label: "YouTube",   brand: "#ff0000" },
   facebook:  { label: "Facebook",  brand: "#1877f2" },
   pinterest: { label: "Pinterest", brand: "#e60023" },
+  telegram:  { label: "Telegram",  brand: "#229ED9" },
 };
 
 function Avatar({ account }: { account: Account }) {
@@ -226,6 +227,101 @@ function BlueskyDialog({ onClose, onConnected }: { onClose: () => void; onConnec
   );
 }
 
+// ── Telegram connect dialog ───────────────────────────────────────────────────
+function TelegramDialog({ onClose, onConnected }: { onClose: () => void; onConnected: () => void }) {
+  const [botToken, setBotToken] = useState("");
+  const [chatId, setChatId] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setConnecting(true); setError(null);
+    try {
+      await apiFetch("/auth/telegram", {
+        method: "POST",
+        body: JSON.stringify({ botToken: botToken.trim(), chatId: chatId.trim() }),
+      });
+      onConnected();
+      onClose();
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
+        style={{ backgroundColor: "#161616", border: `1px solid ${BORDER}` }}>
+
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center">
+              <PlatformIcon platform="telegram" size={18} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm" style={{ color: TEXT }}>Connect Telegram Channel</p>
+              <p className="text-xs" style={{ color: MUTED }}>Bot token · no OAuth needed</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 transition-colors hover:bg-white/5"
+            style={{ color: MUTED }}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <input
+              placeholder="Bot token — e.g. 123456789:ABC-DEF..."
+              value={botToken} onChange={(e) => setBotToken(e.target.value)}
+              required autoFocus
+              className={inputCls} style={inputStyle} />
+            <p className="text-xs mt-1.5" style={{ color: "#555" }}>
+              Create a bot via @BotFather on Telegram, then add it as admin to your channel
+            </p>
+          </div>
+          <div>
+            <input
+              placeholder="Channel — e.g. @mychannel or -100123456789"
+              value={chatId} onChange={(e) => setChatId(e.target.value)}
+              required
+              className={inputCls} style={inputStyle} />
+            <p className="text-xs mt-1.5" style={{ color: "#555" }}>
+              Use the channel username (@mychannel) or numeric chat ID
+            </p>
+          </div>
+
+          {error && (
+            <p className="text-xs rounded-lg px-3 py-2" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1a1a", color: "#f87171" }}>
+              {error}
+            </p>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+              style={{ backgroundColor: "#1a1a1a", color: MUTED, border: `1px solid ${BORDER}` }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={connecting}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 hover:bg-gray-100"
+              style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+              {connecting ? "Connecting…" : "Connect"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ── Mastodon connect dialog ───────────────────────────────────────────────────
 function MastodonDialog({ onClose }: { onClose: () => void }) {
   const [instance, setInstance] = useState("mastodon.social");
@@ -312,6 +408,7 @@ export default function AccountsPage() {
   const [planStatus, setPlanStatus] = useState<PlanStatus | null>(null);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [showBlueskyDialog, setShowBlueskyDialog] = useState(false);
+  const [showTelegramDialog, setShowTelegramDialog] = useState(false);
   const [disconnectTarget, setDisconnectTarget] = useState<{ id: string; displayName: string } | null>(null);
 
   const [threadsToken, setThreadsToken] = useState("");
@@ -772,6 +869,54 @@ export default function AccountsPage() {
             </div>
           </div>
 
+          {/* ── Telegram ── */}
+          {(() => {
+            const telegramAccounts = accounts.filter(a => a.platform === "telegram");
+            return (
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+                <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <PlatformIcon platform="telegram" size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm" style={{ color: TEXT }}>Telegram</p>
+                    <p className="text-xs" style={{ color: MUTED }}>Bot API · channel broadcasting</p>
+                  </div>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
+                </div>
+                <div className="p-5 space-y-3">
+                  {!loading && telegramAccounts.length > 0 && (
+                    <div className="space-y-2">
+                      {telegramAccounts.map((a) => (
+                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                      ))}
+                    </div>
+                  )}
+                  {connectDisabled ? (
+                    <button disabled title={limitMsg ?? undefined}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                      style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                      <PlatformIcon platform="telegram" size={16} />
+                      {telegramAccounts.length > 0 ? "Add another channel" : "Connect Telegram Channel"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setShowTelegramDialog(true)}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                      style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                      <PlatformIcon platform="telegram" size={16} />
+                      {telegramAccounts.length > 0 ? "Add another channel" : "Connect Telegram Channel"}
+                    </button>
+                  )}
+                  <p className="text-xs" style={{ color: MUTED }}>
+                    Post to Telegram channels · text, images, and video
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* ── X / Twitter ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
@@ -853,6 +998,7 @@ export default function AccountsPage() {
         </div>}
       </div>
 
+      {showTelegramDialog && <TelegramDialog onClose={() => setShowTelegramDialog(false)} onConnected={() => { fetchAccounts(); success("Telegram channel connected!"); }} />}
       {showMastodonDialog && <MastodonDialog onClose={() => setShowMastodonDialog(false)} />}
 
       {/* Disconnect confirm dialog */}

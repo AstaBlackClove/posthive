@@ -79,6 +79,7 @@ export const PLATFORM_COLOR: Record<string, string> = {
   facebook: "#1877f2",
   twitter: "#e7e9ea",
   pinterest: "#e60023",
+  telegram: "#229ED9",
 };
 
 export const PLATFORM_LIMIT: Record<string, number> = {
@@ -90,6 +91,7 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   facebook: 63206,
   twitter: 25000,
   pinterest: 500,
+  telegram: 4096,
 };
 
 export const MAX_IMAGES = 4;
@@ -779,6 +781,73 @@ function TwitterPreview({ account, text, commentText, images, video }: {
   );
 }
 
+function TelegramPreview({ account, text, images, video }: {
+  account: Account;
+  text: string;
+  images: UploadedImage[];
+  video: UploadedImage | null;
+}) {
+  const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const hasMedia = images.length > 0 || video !== null;
+
+  return (
+    <div className="rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5"
+        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #229ED9", backgroundColor: "#0a0a0a" }}>
+        <PlatformIcon platform="telegram" size={16} />
+        <span className="text-xs font-semibold" style={{ color: "#229ED9" }}>Telegram</span>
+        <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+      </div>
+
+      <div className="p-4" style={{ backgroundColor: "#17212B" }}>
+        <div className="flex justify-end">
+          <div className="max-w-[85%] rounded-2xl rounded-tr-sm overflow-hidden" style={{ backgroundColor: "#2B5278" }}>
+            {/* Media */}
+            {video ? (
+              <div className="relative w-full" style={{ aspectRatio: "9/16", maxHeight: 240, backgroundColor: "#1a1a1a" }}>
+                <video src={video.previewUrl} className="w-full h-full object-cover" muted />
+                <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                  style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#fff" }}>▶ Video</div>
+              </div>
+            ) : images.length === 1 ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={images[0].previewUrl} alt="" className="w-full object-cover" style={{ maxHeight: 240 }} />
+            ) : images.length > 1 ? (
+              <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(${Math.min(images.length, 2)}, 1fr)` }}>
+                {images.slice(0, 4).map((img, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <div key={i} className="relative">
+                    <img src={img.previewUrl} alt="" className="w-full object-cover" style={{ height: 100 }} />
+                    {i === 3 && images.length > 4 && (
+                      <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white"
+                        style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>+{images.length - 4}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Text */}
+            {text && (
+              <div className={`px-3 ${hasMedia ? "py-2" : "pt-2 pb-1"}`}>
+                <p className="text-sm whitespace-pre-wrap break-words" style={{ color: "#e8e8e8" }}>{text}</p>
+                <div className="flex justify-end mt-1">
+                  <span className="text-[10px]" style={{ color: "#7d9bb9" }}>{timeStr} ✓✓</span>
+                </div>
+              </div>
+            )}
+            {!text && (
+              <div className="flex justify-end px-2 pb-1">
+                <span className="text-[10px]" style={{ color: "#7d9bb9" }}>{timeStr} ✓✓</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PlatformPreview({ account, text, commentText, mediaItems = [], igMediaType, youtubeType }: {
   account: Account;
   text: string;
@@ -807,6 +876,9 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   }
   if (account.platform === "youtube") {
     return <YouTubePreview account={account} text={text} commentText={commentText} mediaItems={mediaItems} youtubeType={youtubeType ?? "short"} />;
+  }
+  if (account.platform === "telegram") {
+    return <TelegramPreview account={account} text={text} images={images} video={video} />;
   }
 
   const color = PLATFORM_COLOR[account.platform] ?? "#6b7280";

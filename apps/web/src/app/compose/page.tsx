@@ -471,6 +471,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const onlyPinterest = pinterestSelected && selectedAccounts.every((a) => a.platform === "pinterest");
   // True when every selected account is YouTube or Pinterest — both have their own title/description fields
   const noPostTextNeeded = selectedAccounts.length > 0 && selectedAccounts.every((a) => a.platform === "youtube" || a.platform === "pinterest");
+  // Telegram channels don't support first comments — hide the field when all selected accounts don't support comments
+  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram"]);
+  const noCommentSupport = selectedAccounts.length > 0 && selectedAccounts.every((a) => NO_COMMENT_PLATFORMS.has(a.platform));
 
   const twitterSelected = selectedAccounts.some((a) => a.platform === "twitter");
   const urlPattern = /https?:\/\/\S+|(?<![/@\w])(?:www\.)\S+|(?<![/@\w])\b[\w-]+(?:\.[\w-]+)*\.[a-z]{2,6}\b(?:[/?#]\S*)?/i;
@@ -1028,7 +1031,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           )}
 
           {/* First comment "" right below the post text */}
-          <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a", display: (loadingAccounts || onlyPinterest) ? "none" : undefined }}>
+          <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a", display: (loadingAccounts || noCommentSupport) ? "none" : undefined }}>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-semibold uppercase tracking-wide">First Comment</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>

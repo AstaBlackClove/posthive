@@ -1019,4 +1019,28 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     return reply.redirect(buildRedirect(redirectBase, { connected: "facebook" }));
   });
+
+  // ── Telegram connect ────────────────────────────────────────────────────────
+  app.post("/auth/telegram", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { botToken, chatId } = req.body as { botToken?: string; chatId?: string };
+    if (!botToken?.trim() || !chatId?.trim()) {
+      return reply.status(400).send({ error: "botToken and chatId are required" });
+    }
+    try {
+      const { encryptTelegramCredentials } = await import("../adapters/telegram.js");
+      const { credentials, displayName, avatarUrl } = await encryptTelegramCredentials(botToken.trim(), chatId.trim());
+      const existing = await prisma.account.findFirst({ where: { platform: "telegram", displayName, userId } });
+      await prisma.account.upsert({
+        where: { id: existing?.id ?? "new" },
+        create: { platform: "telegram", displayName, credentials, avatarUrl, userId },
+        update: { credentials, avatarUrl },
+      });
+      console.log(`[telegram] connected "${displayName}" → user ${userId}`);
+      return reply.send({ ok: true, displayName });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Connection failed";
+      return reply.status(400).send({ error: msg });
+    }
+  });
 }

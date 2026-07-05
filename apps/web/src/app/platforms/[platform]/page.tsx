@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { NavBar } from "../../../components/LandingNav";
+import { PlatformIcon } from "../../../components/PlatformIcon";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -202,6 +203,29 @@ const PLATFORMS: Record<string, PlatformData> = {
     image: "/screenshots/platform-facebook.png",
     imageAlt: "Posthive composer Facebook Page post with image",
   },
+  telegram: {
+    name: "Telegram",
+    domain: "telegram.org",
+    color: "#229ED9",
+    headline: "Schedule Telegram channel posts without staying online",
+    subheadline: "Broadcast to your Telegram channel on a consistent schedule. Write your messages in Posthive, set a time, and let it publish — no OAuth, no complexity.",
+    supports: [
+      { label: "Text posts up to 4,096 chars", icon: "text" as IconKey },
+      { label: "Single image with caption", icon: "image" as IconKey },
+      { label: "Up to 10 images as media group", icon: "carousel" as IconKey },
+      { label: "Video posts with caption", icon: "video" as IconKey },
+      { label: "Public and private channels", icon: "lock" as IconKey },
+      { label: "Per-account text override", icon: "override" as IconKey },
+    ],
+    steps: [
+      { n: "01", title: "Create a bot via @BotFather", desc: "Message @BotFather on Telegram, send /newbot, and follow the prompts. You get a bot token — copy it." },
+      { n: "02", title: "Add the bot to your channel", desc: "Open your channel → Administrators → Add Administrator → search your bot → enable Post Messages → Done." },
+      { n: "03", title: "Connect in Posthive and schedule", desc: "Paste the bot token and your channel username (or numeric ID for private channels) into Posthive. Start scheduling immediately." },
+    ],
+    note: "No OAuth redirect or server-side app credentials needed. Each user brings their own bot token, stored encrypted. One bot can serve multiple channels.",
+    image: "/screenshots/platform-telegram.png",
+    imageAlt: "Posthive composer Telegram channel post scheduling",
+  },
   twitter: {
     name: "X (Twitter)",
     domain: "x.com",
@@ -221,7 +245,7 @@ const PLATFORMS: Record<string, PlatformData> = {
       { n: "02", title: "Write your tweet", desc: "Compose in Posthive's editor. The 280-character counter updates live. Attach up to 4 images if needed." },
       { n: "03", title: "Schedule and publish", desc: "Pick your publish time. Posthive posts via the X API at the exact second. No links allowed — X charges $0.20 per tweet with a URL." },
     ],
-    image: "/screenshots/platform-bluesky.png",
+    image: "/screenshots/platform-twitter.png",
     imageAlt: "Posthive composer X Twitter post scheduling",
   },
 };
@@ -285,8 +309,7 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           {/* Platform badge */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#111", border: "1px solid #2a2a2a", borderRadius: 999, padding: "6px 14px", marginBottom: 28 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`https://www.google.com/s2/favicons?domain=${data.domain}&sz=32`} alt={data.name} width={16} height={16} />
+            <PlatformIcon platform={platform} size={16} />
             <span style={{ fontSize: 13, fontWeight: 600, color: data.color }}>{data.name}</span>
           </div>
 
@@ -351,24 +374,35 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
         </div>
       </section>
 
+      {/* ── Note callout (optional) ── */}
+      {data.note && (
+        <section style={{ padding: "0 24px 48px" }}>
+          <div style={{ maxWidth: 860, margin: "0 auto" }}>
+            <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 12, padding: "16px 20px", display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>ℹ️</span>
+              <p style={{ fontSize: 13.5, color: "#888", lineHeight: 1.6, margin: 0 }}>{data.note}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Works with everything else ── */}
       <section style={{ padding: "0 24px 80px" }}>
         <div style={{ maxWidth: 640, margin: "0 auto", background: "#111", border: "1px solid #1e1e1e", borderRadius: 20, padding: "40px 36px", textAlign: "center" }}>
           <p style={{ fontSize: 13, fontWeight: 600, color: "#5b63d3", marginBottom: 12, letterSpacing: ".04em" }}>PART OF A BIGGER PICTURE</p>
           <h2 style={{ fontSize: 24, fontWeight: 800, color: "#ededed", letterSpacing: "-.02em", marginBottom: 12 }}>
-            {data.name} is one of seven platforms
+            {data.name} is one of nine platforms
           </h2>
           <p style={{ fontSize: 14.5, color: "#666", lineHeight: 1.7, marginBottom: 28 }}>
-            Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages all from the same composer. Write once, choose your platforms, done.
+            Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, and Telegram — all from the same composer. Write once, choose your platforms, done.
           </p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
-            {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube", "facebook"] as const)
+            {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube", "facebook", "pinterest", "telegram", "twitter"] as const)
               .filter(p => p !== platform)
               .map(p => (
                 <Link key={p} href={`/platforms/${p}`} style={{ display: "flex", alignItems: "center", gap: 6, background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 999, padding: "5px 12px", textDecoration: "none" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`https://www.google.com/s2/favicons?domain=${PLATFORMS[p].domain}&sz=32`} alt={PLATFORMS[p].name} width={13} height={13} />
-                  <span style={{ fontSize: 12, color: "#888", fontWeight: 500 }}>{PLATFORMS[p].name}</span>
+                  <PlatformIcon platform={p} size={13} />
+                  <span style={{ fontSize: 12, color: "#888", fontWeight: 500 }}>{PLATFORMS[p]?.name ?? p}</span>
                 </Link>
               ))}
           </div>

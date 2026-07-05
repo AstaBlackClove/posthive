@@ -10,6 +10,16 @@ const PLATFORM_DOMAIN: Record<string, string> = {
   pinterest: "pinterest.com",
 };
 
+// Platforms whose Google S2 favicon has a white background — use inline SVG instead
+function TelegramSvg({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="12" fill="#229ED9" />
+      <path d="M17.93 6.47L15.5 17.5c-.18.8-.65 1-1.32.63l-3.64-2.68-1.76 1.7c-.2.19-.36.35-.73.35l.26-3.7 6.7-6.05c.29-.26-.06-.4-.45-.14L6.1 13.47 2.52 12.36c-.79-.25-.8-.79.16-1.16L16.96 5.36c.66-.24 1.23.16.97 1.11z" fill="white" />
+    </svg>
+  );
+}
+
 interface Props {
   platform: string;
   size?: number;
@@ -17,6 +27,8 @@ interface Props {
 }
 
 export function PlatformIcon({ platform, size = 16, className }: Props) {
+  if (platform === "telegram") return <TelegramSvg size={size} />;
+
   const domain = PLATFORM_DOMAIN[platform];
   if (!domain) return <span style={{ fontSize: size * 0.75 }}>🌐</span>;
 

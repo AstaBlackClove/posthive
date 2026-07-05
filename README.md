@@ -5,7 +5,7 @@
 <h1 align="center">Posthive</h1>
 
 <p align="center">
-  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, and Pinterest from a single UI.<br/>
+  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, and Telegram from a single UI.<br/>
   Self-hostable · Open-source · AGPL-3.0
 </p>
 
@@ -19,7 +19,7 @@
 ## Features
 
 **Scheduling**
-- **Multi-platform posting** - write once, publish to all 8 platforms simultaneously
+- **Multi-platform posting** - write once, publish to all 9 platforms simultaneously
 - **Bulk CSV scheduling** - upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
 - **Post templates** - save, load, and delete reusable post drafts
 - **Dry run mode** - full pipeline test without making real API calls
@@ -87,7 +87,7 @@ posthive/
 │   ├── api/                  # Fastify v4 API (Node.js, TypeScript, ESM)
 │   │   ├── prisma/           # Schema + migrations
 │   │   └── src/
-│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest)
+│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram)
 │   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, plans
 │   │       └── routes/       # auth, accounts, jobs, templates, upload, billing, user, apiKeys, publicApi
 │   └── web/                  # Next.js 16 frontend
@@ -379,6 +379,19 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 **Standard access (production):** Apply at developers.pinterest.com → My Apps → Request upgraded access. Once approved, set `PINTEREST_SANDBOX=false` and remove `PINTEREST_SANDBOX_TOKEN`. Users connect via normal OAuth.
 
 > Posts as Pins on the user's first board. Image is required posts without an image are blocked at the UI level.
+
+### Telegram
+No OAuth needed — uses the Telegram Bot API directly.
+
+1. Open Telegram and message **@BotFather** → `/newbot` → follow the prompts to get a **bot token**
+2. Create a Telegram **channel** (public or private)
+3. Add your bot to the channel as an **Administrator** with at least the **Post Messages** permission
+4. Go to **Accounts** in Posthive → **Connect Telegram Channel**
+5. Paste the bot token and your channel username (e.g. `@mychannel`) or numeric chat ID (e.g. `-1001234567890`)
+
+> Private channels: use the numeric chat ID. Forward any message from the channel to [@userinfobot](https://t.me/userinfobot) to get it.
+> One bot can serve multiple channels — connect each channel separately in Posthive.
+> No environment variables needed. Credentials are stored encrypted per-user.
 
 ---
 

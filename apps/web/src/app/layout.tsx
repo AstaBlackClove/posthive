@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "../context/AuthContext";
@@ -79,11 +80,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
         />
-        <script dangerouslySetInnerHTML={{ __html: `
-          console.log('%c Posthive ', 'background:#5b63d3;color:#fff;font-size:16px;font-weight:700;padding:6px 14px;border-radius:6px;font-family:sans-serif;');
-          console.log('%cHey Posthive is open source (AGPL-3.0).', 'font-size:13px;color:#ededed;');
-          console.log('%c⭐ Star us → https://github.com/AstaBlackClove/posthive', 'font-size:12px;color:#888;');
-        `}} />
       </head>
       <body className="h-full font-sans antialiased">
         <AuthProvider>
@@ -92,6 +88,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </ToastProvider>
         </AuthProvider>
         <Analytics />
+        <Script id="posthive-console" strategy="afterInteractive">{`
+          console.log('%c Posthive ','background:#5b63d3;color:#fff;font-size:16px;font-weight:700;padding:6px 14px;border-radius:6px;font-family:sans-serif;');
+          console.log('%cHey! Posthive is open source (AGPL-3.0).','font-size:13px;color:#ededed;');
+          console.log('%c⭐ Star us → https://github.com/AstaBlackClove/posthive','font-size:12px;color:#888;');
+        `}</Script>
       </body>
     </html>
   );
