@@ -72,7 +72,15 @@ const NAV = [
     items: [
       { label: "Plans & pricing", id: "plans-pricing" },
       { label: "Webhooks (billing)", id: "webhooks" },
-      { label: "Outbound Webhooks", id: "outbound-webhooks" },
+    ],
+  },
+  {
+    section: "Outbound Webhooks",
+    items: [
+      { label: "Setup & payload", id: "outbound-webhooks" },
+      { label: "n8n", id: "outbound-webhook-n8n" },
+      { label: "Zapier", id: "outbound-webhook-zapier" },
+      { label: "Make", id: "outbound-webhook-make" },
     ],
   },
   {
@@ -898,16 +906,16 @@ DODO_WEBHOOK_SECRET="abc123..."`}</CopyCode>
                 Delivery is best-effort with a 10-second timeout. Posthive does not retry failed webhook deliveries — if your endpoint is down, the event is lost. Build your handler to be idempotent.
               </div>
 
-              <h3 className="doc-h3">n8n — Webhook trigger</h3>
+              <h3 className="doc-h3" id="outbound-webhook-n8n">n8n — Webhook trigger</h3>
               <p className="doc-p">1. Add a <strong>Webhook</strong> node in n8n and copy the URL. 2. Paste it into Posthive Settings → Webhook. 3. Connect downstream nodes — e.g. send a Slack message, log to a Google Sheet, or notify a Notion database.</p>
               <CopyCode>{`// Example: filter for only successful posts in n8n Function node
 if ($json.status !== "done") return [];
 return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode>
 
-              <h3 className="doc-h3">Zapier — Catch Hook</h3>
+              <h3 className="doc-h3" id="outbound-webhook-zapier">Zapier — Catch Hook</h3>
               <p className="doc-p">1. Create a new Zap → Trigger: <strong>Webhooks by Zapier → Catch Hook</strong>. 2. Copy the Zapier webhook URL and paste it into Posthive Settings → Webhook. 3. Schedule a test post in Posthive to send a sample payload. 4. Use the fields (<span className="doc-inline-code">postId</span>, <span className="doc-inline-code">platforms</span>, <span className="doc-inline-code">text</span>) in your Zap actions.</p>
 
-              <h3 className="doc-h3">Make (Integromat) — Custom Webhook</h3>
+              <h3 className="doc-h3" id="outbound-webhook-make">Make (Integromat) — Custom Webhook</h3>
               <p className="doc-p">1. Add a <strong>Webhooks → Custom webhook</strong> module as the trigger. 2. Copy the URL and paste it into Posthive Settings → Webhook. 3. Run a test post — Make will auto-detect the payload structure. 4. Connect downstream modules.</p>
 
               {/* ── API REFERENCE ── */}
