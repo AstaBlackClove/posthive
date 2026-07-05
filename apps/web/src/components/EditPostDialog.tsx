@@ -742,26 +742,30 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
       </div>
 
       {/* Footer */}
-      <div className="flex items-center gap-3 px-6 py-4 flex-shrink-0"
+      <div className="flex flex-col gap-2 px-6 py-4 flex-shrink-0"
         style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
-        <DateTimePicker value={scheduledFor} onChange={setScheduledFor} />
-        <div className="flex-1" />
-        {mediaWarning && (
-          <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>{mediaWarning}</p>
+        {(mediaWarning || saveError || twitterHasLink) && (
+          <div className="flex flex-col gap-1">
+            {mediaWarning && <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>{mediaWarning}</p>}
+            {twitterHasLink && <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>⚠ X/Twitter post contains a link — links cost $0.20 each via the X API. Remove the link to schedule, or use a different platform.</p>}
+            {saveError && <p className="text-xs" style={{ color: "#ef4444" }}>{saveError}</p>}
+          </div>
         )}
-        {saveError && <p className="text-xs" style={{ color: "#ef4444" }}>{saveError}</p>}
-        {twitterHasLink && <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>⚠ X/Twitter post contains a link — links cost $0.20 each via the X API. Remove the link to schedule, or use a different platform.</p>}
-        <button onClick={onClose} disabled={saving}
-          className="px-4 py-2 text-sm rounded-xl font-medium disabled:opacity-40"
-          style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
-          Cancel
-        </button>
-        <button onClick={handleSave}
-          disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink}
-          className="px-5 py-2 text-sm font-semibold rounded-xl disabled:opacity-40"
-          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-          {saving ? (isDraft ? "Scheduling…" : "Saving…") : isDraft ? "Schedule Post" : "Save changes"}
-        </button>
+        <div className="flex items-center gap-3">
+          <DateTimePicker value={scheduledFor} onChange={setScheduledFor} />
+          <div className="flex-1" />
+          <button onClick={onClose} disabled={saving}
+            className="px-4 py-2 text-sm rounded-xl font-medium disabled:opacity-40"
+            style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+            Cancel
+          </button>
+          <button onClick={handleSave}
+            disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink}
+            className="px-5 py-2 text-sm font-semibold rounded-xl disabled:opacity-40"
+            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+            {saving ? (isDraft ? "Scheduling…" : "Saving…") : isDraft ? "Schedule Post" : "Save changes"}
+          </button>
+        </div>
       </div>
     </Modal>
   );
