@@ -19,18 +19,18 @@
 ## Features
 
 **Scheduling**
-- **Multi-platform posting** — write once, publish to all 8 platforms simultaneously
-- **Bulk CSV scheduling** — upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
-- **Post templates** — save, load, and delete reusable post drafts
-- **Dry run mode** — full pipeline test without making real API calls
-- **First comment scheduling** — auto-reply immediately after the main post goes live
-- **Per-platform overrides** — custom text and first comment per account (Pro+)
+- **Multi-platform posting** - write once, publish to all 8 platforms simultaneously
+- **Bulk CSV scheduling** - upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
+- **Post templates** - save, load, and delete reusable post drafts
+- **Dry run mode** - full pipeline test without making real API calls
+- **First comment scheduling** - auto-reply immediately after the main post goes live
+- **Per-platform overrides** - custom text and first comment per account (Pro+)
 
 **Media**
 - Images (up to 4 per post; plan-gated), video (up to 100 MB)
 - Instagram Reels, Stories, and carousel (up to 10 items)
 - YouTube Shorts + long-form video with dedicated Title/Description fields
-- Pinterest Pins with dedicated Title/Description fields — image required
+- Pinterest Pins with dedicated Title/Description fields image required
 - Alt text on every image
 - Clipboard paste and drag-and-drop upload
 
@@ -46,7 +46,7 @@
 - Email verification and password reset via Resend
 - API keys for programmatic access (Pro/Team plans)
 - Token expiry warnings with one-click reconnect
-- Background token auto-refresh (Threads, Instagram, Facebook, YouTube — every 12h)
+- Background token auto-refresh (Threads, Instagram, Facebook, YouTube every 12h)
 
 **Infrastructure**
 - BullMQ queue backed by Redis (Upstash or Railway)
@@ -57,9 +57,9 @@
 - CSRF nonce on all OAuth flows
 
 **Billing (optional)**
-- Dodo Payments — Creator, Pro, Team plans
+- Dodo Payments - Creator, Pro, Team plans
 - 14-day free trial; INR/USD currency detection
-- Set `ENABLE_BILLING=false` for self-hosted mode — all features unlocked, no plan limits
+- Set `ENABLE_BILLING=false` for self-hosted mode all features unlocked, no plan limits
 
 ---
 
@@ -69,7 +69,7 @@
 |---|---|
 | Frontend | Next.js 16 (App Router), React 18, Tailwind CSS |
 | Backend | Fastify v4, TypeScript ESM, Node.js |
-| Database | Prisma 5 — Postgres (dev via Docker or local install) / Postgres (prod) |
+| Database | Prisma 5 - Postgres (dev via Docker or local install) / Postgres (prod) |
 | Queue | BullMQ 5 + Redis (Upstash or Railway) |
 | Email | Resend |
 | Storage | Local disk (dev) / Supabase Storage (prod) |
@@ -102,9 +102,9 @@ posthive/
 ## Prerequisites
 
 - **Node.js** >= 20
-- **pnpm** >= 9 — `npm install -g pnpm`
-- **Redis** — [Upstash](https://upstash.com) free tier or Railway Redis
-- **Postgres** — [Docker Desktop](https://www.docker.com/products/docker-desktop/) (recommended, zero config — `pnpm dev:db` pulls `postgres:15` automatically on first run) or a local Postgres install
+- **pnpm** >= 9 - `npm install -g pnpm`
+- **Redis** - [Upstash](https://upstash.com) free tier or Railway Redis
+- **Postgres** - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (recommended, zero config `pnpm dev:db` pulls `postgres:15` automatically on first run) or a local Postgres install
 
 ---
 
@@ -124,11 +124,11 @@ pnpm install
 cp apps/api/.env.example apps/api/.env
 ```
 
-Fill in the values — see [Environment Variables](#environment-variables) below.
+Fill in the values see [Environment Variables](#environment-variables) below.
 
 ### 3. Database
 
-**Option A — Docker (recommended, no Postgres install needed)**
+**Option A - Docker (recommended, no Postgres install needed)**
 
 ```bash
 # Start a Postgres container (creates it on first run, starts it on subsequent runs)
@@ -142,7 +142,7 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
 
 The container is named `posthive-pg`. Stop it with `pnpm db:stop`, restart with `pnpm db:start`.
 
-**Option B — SQLite (no Docker, quickest setup)**
+**Option B - SQLite (no Docker, quickest setup)**
 
 Change the provider in `apps/api/prisma/schema.prisma`:
 ```prisma
@@ -169,11 +169,11 @@ pnpm db:migrate
 ### 5. Run dev servers
 
 ```bash
-# from project root — starts Docker Postgres + API + Web in parallel
+# from project root starts Docker Postgres + API + Web in parallel
 pnpm dev
 ```
 
-> If you chose SQLite (Option B), skip `pnpm dev:db` — just run `pnpm dev:api` and `pnpm dev:web` separately, or use `pnpm dev` after commenting out the `dev:db` step.
+> If you chose SQLite (Option B), skip `pnpm dev:db` just run `pnpm dev:api` and `pnpm dev:web` separately, or use `pnpm dev` after commenting out the `dev:db` step.
 
 | Service | URL |
 |---|---|
@@ -223,9 +223,9 @@ pnpm dev
 |---|---|---|
 | `STORAGE_PROVIDER` | No | `supabase` for prod; unset = local disk |
 | `SUPABASE_STORAGE_BUCKET` | Supabase | Bucket name. Defaults to `media` |
-| `PUBLIC_API_URL` | Instagram | Public HTTPS URL of the API — Meta fetches images from here |
+| `PUBLIC_API_URL` | Instagram | Public HTTPS URL of the API Meta fetches images from here |
 
-**OAuth — Threads**
+**OAuth - Threads**
 
 | Variable | Description |
 |---|---|
@@ -233,7 +233,7 @@ pnpm dev
 | `THREADS_APP_SECRET` | Meta app secret |
 | `THREADS_REDIRECT_URI` | Must be public HTTPS |
 
-**OAuth — Instagram**
+**OAuth - Instagram**
 
 | Variable | Description |
 |---|---|
@@ -241,7 +241,7 @@ pnpm dev
 | `INSTAGRAM_APP_SECRET` | Meta app secret |
 | `INSTAGRAM_REDIRECT_URI` | Must be public HTTPS |
 
-**OAuth — LinkedIn**
+**OAuth - LinkedIn**
 
 | Variable | Description |
 |---|---|
@@ -249,7 +249,7 @@ pnpm dev
 | `LINKEDIN_CLIENT_SECRET` | LinkedIn app client secret |
 | `LINKEDIN_REDIRECT_URI` | Must be public HTTPS |
 
-**OAuth — Mastodon**
+**OAuth - Mastodon**
 
 | Variable | Description |
 |---|---|
@@ -257,15 +257,15 @@ pnpm dev
 | `MASTODON_CLIENT_SECRET` | Client secret from Mastodon app settings |
 | `MASTODON_REDIRECT_URI` | Must be public HTTPS |
 
-**OAuth — YouTube**
+**OAuth - YouTube**
 
 | Variable | Description |
 |---|---|
 | `YOUTUBE_CLIENT_ID` | Google OAuth client ID |
 | `YOUTUBE_CLIENT_SECRET` | Google OAuth client secret |
-| `YOUTUBE_REDIRECT_URI` | Use `http://localhost:3001/auth/youtube/callback` — Google rejects tunnel domains; localhost is exempt |
+| `YOUTUBE_REDIRECT_URI` | Use `http://localhost:3001/auth/youtube/callback` Google rejects tunnel domains; localhost is exempt |
 
-**OAuth — Facebook Pages**
+**OAuth - Facebook Pages**
 
 | Variable | Description |
 |---|---|
@@ -273,14 +273,14 @@ pnpm dev
 | `FACEBOOK_APP_SECRET` | Meta app secret |
 | `FACEBOOK_REDIRECT_URI` | Must be public HTTPS |
 
-**OAuth — Pinterest**
+**OAuth - Pinterest**
 
 | Variable | Description |
 |---|---|
 | `PINTEREST_CLIENT_ID` | Pinterest App ID from developers.pinterest.com |
 | `PINTEREST_CLIENT_SECRET` | Pinterest App secret key |
 | `PINTEREST_REDIRECT_URI` | Must be public HTTPS |
-| `PINTEREST_SANDBOX` | Set `true` while app has Trial access — routes API calls to the sandbox |
+| `PINTEREST_SANDBOX` | Set `true` while app has Trial access routes API calls to the sandbox |
 | `PINTEREST_SANDBOX_TOKEN` | Manually-generated sandbox token (My Apps → Generate Access Token → Sandbox). Only used when `PINTEREST_SANDBOX=true` |
 
 > Pinterest requires **Standard access** approval for production pin creation. Apply at developers.pinterest.com → My Apps → Request upgraded access. Until approved, set `PINTEREST_SANDBOX=true` and use a sandbox token.
@@ -324,7 +324,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 1. Go to **Accounts** in the app
 2. Enter your handle (e.g. `you.bsky.social`)
 3. Generate an app password at [bsky.app](https://bsky.app) → Settings → App Passwords
-4. Enter it and click Connect — no OAuth needed
+4. Enter it and click Connect no OAuth needed
 
 ### Threads
 1. Create an app at [developers.facebook.com](https://developers.facebook.com) and add the Threads use case
@@ -348,7 +348,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 2. Scopes: `read:accounts`, `write:statuses`, `write:media`
 3. Set redirect URI to `https://your-domain/auth/mastodon/callback`
 
-> Works with any Mastodon-compatible instance — mastodon.social, fosstodon.org, hachyderm.io, etc.
+> Works with any Mastodon-compatible instance mastodon.social, fosstodon.org, hachyderm.io, etc.
 
 ### YouTube
 1. Create a project in [Google Cloud Console](https://console.cloud.google.com)
@@ -361,7 +361,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 1. Use the same Meta app as Threads/Instagram
 2. Add **Manage everything on your Page** use case
 3. Set redirect URI to `https://your-domain/auth/facebook/callback`
-4. Requires a **Facebook Page** — personal profiles are not supported by the Graph API
+4. Requires a **Facebook Page** personal profiles are not supported by the Graph API
 
 > First comment support requires `pages_manage_engagement` (pending Meta app review).
 
@@ -371,14 +371,14 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 3. Set redirect URI to `https://your-domain/auth/pinterest/callback`
 4. Set `PINTEREST_CLIENT_ID` and `PINTEREST_CLIENT_SECRET` in `.env`
 
-**Trial access (default):** New apps get Trial access — pins can only be created in the sandbox.
+**Trial access (default):** New apps get Trial access pins can only be created in the sandbox.
 - Set `PINTEREST_SANDBOX=true`
 - Generate a sandbox token: My Apps → Manage → Generate Access Token → Sandbox
 - Set `PINTEREST_SANDBOX_TOKEN` to that token
 
 **Standard access (production):** Apply at developers.pinterest.com → My Apps → Request upgraded access. Once approved, set `PINTEREST_SANDBOX=false` and remove `PINTEREST_SANDBOX_TOKEN`. Users connect via normal OAuth.
 
-> Posts as Pins on the user's first board. Image is required — posts without an image are blocked at the UI level.
+> Posts as Pins on the user's first board. Image is required posts without an image are blocked at the UI level.
 
 ---
 
@@ -397,12 +397,12 @@ scheduled_for,text,accounts,comment,image_urls
 ```
 
 **Accounts column syntax:**
-- `all` — all connected accounts except YouTube
-- `bluesky|mastodon` — specific platforms, pipe-separated
-- `!instagram` — all platforms except Instagram (and YouTube)
-- `all|!instagram|!linkedin` — all except Instagram and LinkedIn
+- `all` - all connected accounts except YouTube
+- `bluesky|mastodon` - specific platforms, pipe-separated
+- `!instagram` - all platforms except Instagram (and YouTube)
+- `all|!instagram|!linkedin` - all except Instagram and LinkedIn
 
-> YouTube is not supported in bulk scheduling — it requires a video file. Use Compose instead.
+> YouTube is not supported in bulk scheduling it requires a video file. Use Compose instead.
 > Instagram rows must include at least one image URL.
 
 ---
@@ -416,7 +416,7 @@ scheduled_for,text,accounts,comment,image_urls
    - Refreshes OAuth tokens if needed
    - Posts the main content
    - Posts the first comment as a reply (if provided)
-5. Each step is persisted before the next — crash-safe and resumable
+5. Each step is persisted before the next crash-safe and resumable
 6. Real-time status updates via Server-Sent Events on the Posts page
 
 ### Job state machine (per PostJobTarget)
@@ -448,7 +448,7 @@ Posthive includes a full public REST API for Pro and Team plans (or all users wh
 
 **Base URL:** `https://your-api-domain/api/v1`
 
-**Authentication:** Bearer token — create an API key in Settings.
+**Authentication:** Bearer token create an API key in Settings.
 
 ```
 Authorization: Bearer ph_your_api_key
@@ -476,13 +476,13 @@ See the full [documentation](https://posthive.co/docs) for request/response sche
 
 | Plan | Accounts | Posts/month | API Keys |
 |---|---|---|---|
-| Creator | 3 | 400 | — |
+| Creator | 3 | 400 | - |
 | Pro | 15 | Unlimited | 3 |
 | Team | 50 | Unlimited | 10 |
 
 All plans include a **14-day free trial**. Powered by [Dodo Payments](https://dodopayments.com).
 
-Set `ENABLE_BILLING=false` for self-hosted mode — all features unlocked, no plan limits, no Dodo account needed.
+Set `ENABLE_BILLING=false` for self-hosted mode all features unlocked, no plan limits, no Dodo account needed.
 
 ---
 
@@ -534,7 +534,7 @@ Recommended stack: **Railway** (API + Redis) · **Supabase** (Postgres + Storage
 2. Storage → create a bucket named `media` → set it to **Public**
 3. Settings → Database → Connection String → Session pooler (port 5432) → copy URI
 
-### 2. Railway — API
+### 2. Railway - API
 
 1. New project → Deploy from GitHub → Root Directory: `apps/api`
 2. Add a Redis service → copy private URL as `${{ Redis.REDIS_URL }}`
@@ -543,7 +543,7 @@ Recommended stack: **Railway** (API + Redis) · **Supabase** (Postgres + Storage
 5. **Start Command:** `npx prisma migrate deploy && node dist/index.js`
 6. Add custom domain → set port to `3001`
 
-### 3. Vercel — Frontend
+### 3. Vercel - Frontend
 
 1. Import same repo → Root Directory: `apps/web`
 2. Add env vars: `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_ENABLE_BILLING`
@@ -577,6 +577,6 @@ git commit -m "db: add <describe_your_change> migration"
 
 ## License
 
-GNU Affero General Public License v3.0 — see [LICENSE](LICENSE) for details.
+GNU Affero General Public License v3.0 see [LICENSE](LICENSE) for details.
 
 If you modify this project and run it as a network service, you must make your modified source code available to users of that service.
