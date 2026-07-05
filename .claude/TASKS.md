@@ -33,7 +33,7 @@
 - [ ] **AI caption assist** — "Generate caption" button powered by Claude API; platform-aware char limits
 - [x] **Clear button in compose** — resets text, media, YouTube/Pinterest fields, and overrides; preserves selected accounts and dry run mode
 - [x] **X/Twitter link block** — schedule button disabled when Twitter selected + post/comment contains a URL; broad regex catches bare domains (posthive.co, datafa.st)
-- [ ] **Draft posts** — save a compose state as draft without scheduling; list in Posts page
+- [x] **Draft posts** — save a compose state as draft without scheduling; list in Posts page; schedule from edit dialog
 
 ### Edit Dialog
 - [x] **Video replacement in edit** — separate `uploadVideo` function handles video uploads; reel mode and YouTube upload mode both have a working video file input in the edit dialog.
