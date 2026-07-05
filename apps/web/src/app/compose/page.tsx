@@ -366,7 +366,6 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   }
 
   async function handleSaveDraft() {
-    if (!text.trim() && !selectedIds.length) { toastWarning("Add some text or select accounts before saving a draft."); return; }
     setSubmitting(true);
     try {
       const cleanOverrides = Object.fromEntries(
@@ -1369,7 +1368,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           </button>
           <button
             type="button"
-            disabled={submitting}
+            disabled={submitting || selectedIds.length === 0 || (!text.trim() && !noPostTextNeeded) || overAnyLimit || twitterHasLink}
             onClick={handleSaveDraft}
             className="px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
