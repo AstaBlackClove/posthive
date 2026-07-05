@@ -1,0 +1,16 @@
+# Hey, you found the robots.txt 👋
+# We're open source: https://github.com/AstaBlackClove/posthive
+# Built by an indie dev. If you like it, give it a star ⭐
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /compose
+Disallow: /jobs
+Disallow: /accounts
+Disallow: /settings
+Disallow: /billing
+Disallow: /onboarding
+Disallow: /verify-email
+
+Sitemap: https://posthive.co/sitemap.xml
