@@ -15,7 +15,8 @@ function toLocalInput(d: Date) {
 }
 
 interface EditableJob {
-  scheduledFor: string;
+  scheduledFor: string | null;
+  status: string;
   content: string;
   commentText: string | null;
   targets: Array<{ accountId: string }>;
@@ -34,7 +35,10 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
 
   const [text, setText] = useState(parsedContent.text);
   const [commentText, setCommentText] = useState(job.commentText ?? "");
-  const [scheduledFor, setScheduledFor] = useState(toLocalInput(new Date(job.scheduledFor)));
+  const isDraft = job.status === "draft";
+  const [scheduledFor, setScheduledFor] = useState(
+    job.scheduledFor ? toLocalInput(new Date(job.scheduledFor)) : toLocalInput(new Date(Date.now() + 60 * 60 * 1000))
+  );
   const [igMediaType, setIgMediaType] = useState<"post" | "reel" | "story">(parsedContent.mediaType ?? "post");
   const [images, setImages] = useState<UploadedImage[]>(() => {
     const urls = parsedContent.mediaUrls ?? [];
@@ -237,6 +241,14 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     return { platform: a.platform, limit, effectiveCount, over: effectiveCount > limit };
   });
   const overAnyLimit = platformLimits.some(p => p.over);
+
+  // Twitter link block
+  const urlPattern = /https?:\/\/[^\s]+|(?<![a-zA-Z0-9])(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+(?:com|co|io|ai|app|dev|net|org|xyz|me|gg|tv|fm|so|sh|ly|link|pro|studio|online|site|shop|store|tech|club|news|live|blog|media|social|chat|run|tools|uk|us|ca|au|de|fr|jp|br|in|nl|se|no|fi|dk|it|es|pl|ru|id|mx|ar|za|ph|sg|my|th|vn|eg|ng|ke|gh|tz|rw)[/a-zA-Z0-9._~:/?#[\]@!$&'()*+,;=%]*/i;
+  const twitterAccounts = selectedAccounts.filter(a => a.platform === "twitter");
+  const twitterSelected = twitterAccounts.length > 0;
+  const twitterTextHasLink = twitterSelected && twitterAccounts.some(a => urlPattern.test(perAccountOverrides[a.id]?.text ?? text));
+  const twitterCommentHasLink = twitterSelected && twitterAccounts.some(a => urlPattern.test(perAccountOverrides[a.id]?.commentText ?? commentText));
+  const twitterHasLink = twitterTextHasLink || twitterCommentHasLink;
 
   // Footer warning logic
   const pinterestSelected = selectedAccounts.some(a => a.platform === "pinterest");
@@ -738,16 +750,17 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>{mediaWarning}</p>
         )}
         {saveError && <p className="text-xs" style={{ color: "#ef4444" }}>{saveError}</p>}
+        {twitterHasLink && <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>⚠ X/Twitter post contains a link — links cost $0.20 each via the X API. Remove the link to schedule, or use a different platform.</p>}
         <button onClick={onClose} disabled={saving}
           className="px-4 py-2 text-sm rounded-xl font-medium disabled:opacity-40"
           style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
           Cancel
         </button>
         <button onClick={handleSave}
-          disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage}
+          disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink}
           className="px-5 py-2 text-sm font-semibold rounded-xl disabled:opacity-40"
           style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-          {saving ? "Saving…" : "Save changes"}
+          {saving ? (isDraft ? "Scheduling…" : "Saving…") : isDraft ? "Schedule Post" : "Save changes"}
         </button>
       </div>
     </Modal>

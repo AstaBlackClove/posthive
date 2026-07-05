@@ -20,7 +20,8 @@ const perAccountOverrideSchema = z.object({
 });
 
 const createJobBody = z.object({
-  scheduledFor: z.string().datetime(),
+  scheduledFor: z.string().datetime().optional(),
+  draft: z.boolean().default(false),
   content: z.object({
     text: z.string().default(""),
     mediaUrls: z.array(z.string()).default([]),
@@ -51,7 +52,17 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const parsed = createJobBody.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
 
-    const { scheduledFor, content, commentText, accountIds, dryRun } = parsed.data;
+    const { scheduledFor, draft, content, commentText, accountIds, dryRun } = parsed.data;
+
+    if (!draft && !scheduledFor) {
+      return reply.status(400).send({ error: "scheduledFor is required when not saving as draft" });
+    }
+
+    // Gates only apply when scheduling (not drafting)
+    if (!draft) {
+      const blocked = await enforcePlan(userId, "scheduling");
+      if (blocked) return reply.status(402).send(blocked);
+    }
 
     // Gate: Reels & Stories (Pro+)
     if (content.mediaType === "reel" || content.mediaType === "story") {
@@ -89,7 +100,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     const job = await prisma.postJob.create({
       data: {
-        scheduledFor: new Date(scheduledFor),
+        scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
+        status: draft ? "draft" : "pending",
         content: JSON.stringify(content),
         commentText: commentText ?? null,
         dryRun,
@@ -99,7 +111,9 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       include: { targets: { select: TARGET_SELECT } },
     });
 
-    await schedulePostJob(job.id, new Date(scheduledFor));
+    if (!draft) {
+      await schedulePostJob(job.id, new Date(scheduledFor!));
+    }
 
     // Mark uploaded files as claimed so the orphan cron leaves them alone
     if (content.mediaUrls?.length) {
@@ -210,7 +224,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     const job = await prisma.postJob.findFirst({ where: { id, userId }, select: { status: true, content: true } });
     if (!job) return reply.status(404).send({ error: "Job not found" });
-    if (job.status !== "pending") {
+    if (job.status !== "pending" && job.status !== "draft") {
       return reply.status(409).send({ error: `Cannot edit a job with status "${job.status}"` });
     }
 
@@ -266,6 +280,31 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       await schedulePostJob(id, new Date(body.data.scheduledFor));
     }
 
+    return reply.send(updated);
+  });
+
+  // Promote a draft to a scheduled job
+  app.post("/jobs/:id/schedule", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { id } = req.params as { id: string };
+    const body = z.object({ scheduledFor: z.string().datetime() }).safeParse(req.body);
+    if (!body.success) return reply.status(400).send({ error: "scheduledFor is required" });
+
+    const job = await prisma.postJob.findFirst({ where: { id, userId }, select: { status: true } });
+    if (!job) return reply.status(404).send({ error: "Job not found" });
+    if (job.status !== "draft") return reply.status(409).send({ error: "Only draft jobs can be scheduled" });
+
+    const blocked = await enforcePlan(userId, "scheduling");
+    if (blocked) return reply.status(402).send(blocked);
+
+    const scheduledFor = new Date(body.data.scheduledFor);
+    const updated = await prisma.postJob.update({
+      where: { id },
+      data: { status: "pending", scheduledFor },
+      include: { targets: { select: TARGET_SELECT } },
+    });
+
+    await schedulePostJob(id, scheduledFor);
     return reply.send(updated);
   });
 

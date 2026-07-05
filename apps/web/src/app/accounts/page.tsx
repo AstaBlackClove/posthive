@@ -540,7 +540,7 @@ export default function AccountsPage() {
                 <p className="text-xs" style={{ color: MUTED }}>Meta OAuth 2.0</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
+                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
             </div>
 
             <div className="p-5 space-y-3">
@@ -551,56 +551,15 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-
-              {connectDisabled ? (
-                <button disabled
-                  title={connectDisabled ? (limitMsg ?? undefined) : undefined}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="threads" size={16} />
-                  {threadsAccounts.length > 0 ? "Add another Threads account" : "Connect with Threads"}
-                </button>
-              ) : (
-                <a href={THREADS_AUTH_URL}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="threads" size={16} />
-                  {threadsAccounts.length > 0 ? "Add another Threads account" : "Connect with Threads"}
-                </a>
-              )}
-
-              {!connectDisabled && (
-                <button type="button" onClick={() => setShowManualToken((v) => !v)}
-                  className="w-full text-xs transition-colors py-1 hover:opacity-70"
-                  >
-                  {showManualToken ? "▲ Hide" : "OAuth not working? Paste an access token instead"}
-                </button>
-              )}
-
-              {showManualToken && (
-                <form onSubmit={connectThreadsManual} className="space-y-3 pt-2" style={{ borderTop: `1px solid ${BORDER}` }}>
-                  <p className="text-xs" style={{ color: MUTED }}>
-                    Get a token from the{" "}
-                    <a href="https://developers.facebook.com" target="_blank" rel="noreferrer"
-                      className="underline hover:opacity-70">Meta developer dashboard</a>
-                    {" "}→ Use cases → Customize → User Token Generator.
-                  </p>
-                  <input type="password" placeholder="Paste Threads access token"
-                    value={threadsToken} onChange={(e) => setThreadsToken(e.target.value)} required
-                    className={inputCls} style={inputStyle} />
-                  {threadsError && (
-                    <p className="text-xs rounded-lg px-3 py-2"
-                      style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1a1a", color: "#f87171" }}>
-                      {threadsError}
-                    </p>
-                  )}
-                  <button type="submit" disabled={connectingThreads || !threadsToken.trim()}
-                    className="w-full py-2.5 disabled:opacity-50 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
-                    style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                    {connectingThreads ? "Connecting…" : "Connect via Token"}
-                  </button>
-                </form>
-              )}
+              <button disabled
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                <PlatformIcon platform="threads" size={16} />
+                Connect with Threads
+              </button>
+              <p className="text-xs" style={{ color: MUTED }}>
+                Pending Meta app review · new connections temporarily disabled
+              </p>
             </div>
           </div>
 
@@ -615,7 +574,7 @@ export default function AccountsPage() {
                 <p className="text-xs" style={{ color: MUTED }}>Instagram Login · images required</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
+                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
             </div>
             <div className="p-5 space-y-3">
               {!loading && instagramAccounts.length > 0 && (
@@ -625,24 +584,14 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              {connectDisabled ? (
-                <button disabled
-                  title={connectDisabled ? (limitMsg ?? undefined) : undefined}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="instagram" size={16} />
-                  {instagramAccounts.length > 0 ? "Add another Instagram account" : "Connect Instagram"}
-                </button>
-              ) : (
-                <a href={INSTAGRAM_AUTH_URL}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="instagram" size={16} />
-                  {instagramAccounts.length > 0 ? "Add another Instagram account" : "Connect Instagram"}
-                </a>
-              )}
-              <p className="text-xs">
-                Requires a Professional (Business or Creator) Instagram account
+              <button disabled
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                <PlatformIcon platform="instagram" size={16} />
+                Connect Instagram
+              </button>
+              <p className="text-xs" style={{ color: MUTED }}>
+                Pending Meta app review · new connections temporarily disabled
               </p>
             </div>
           </div>
@@ -700,7 +649,7 @@ export default function AccountsPage() {
                 <p className="text-xs" style={{ color: MUTED }}>Google OAuth 2.0 · Shorts</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
+                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
             </div>
             <div className="p-5 space-y-3">
               {!loading && youtubeAccounts.length > 0 && (
@@ -710,35 +659,30 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              {connectDisabled ? (
-                <button disabled title={connectDisabled ? (limitMsg ?? undefined) : undefined}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="youtube" size={16} />
-                  {youtubeAccounts.length > 0 ? "Add another YouTube channel" : "Connect YouTube"}
-                </button>
-              ) : (
-                <a href={YOUTUBE_AUTH_URL}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="youtube" size={16} />
-                  {youtubeAccounts.length > 0 ? "Add another YouTube channel" : "Connect YouTube"}
-                </a>
-              )}
-              <p className="text-xs">
-                Posts as YouTube Shorts requires a video attached to every post
+              <button disabled
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                <PlatformIcon platform="youtube" size={16} />
+                Connect YouTube
+              </button>
+              <p className="text-xs" style={{ color: MUTED }}>
+                Pending Google app verification · new connections temporarily disabled
               </p>
             </div>
           </div>
 
           {/* ── Facebook Pages ── */}
-          <div className="rounded-2xl" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
-            <div className="flex items-center gap-3 p-5 pb-0">
-              <PlatformIcon platform="facebook" size={20} />
-              <div>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                <PlatformIcon platform="facebook" size={20} />
+              </div>
+              <div className="flex-1">
                 <p className="font-semibold text-sm" style={{ color: TEXT }}>Facebook Pages</p>
                 <p className="text-xs" style={{ color: MUTED }}>Post to Facebook Pages you manage</p>
               </div>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
             </div>
             <div className="p-5 space-y-3">
               {!loading && facebookAccounts.length > 0 && (
@@ -748,23 +692,14 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              {connectDisabled ? (
-                <button disabled title={connectDisabled ? (limitMsg ?? undefined) : undefined}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="facebook" size={16} />
-                  {facebookAccounts.length > 0 ? "Add another Facebook Page" : "Connect Facebook Page"}
-                </button>
-              ) : (
-                <a href={FACEBOOK_AUTH_URL}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="facebook" size={16} />
-                  {facebookAccounts.length > 0 ? "Add another Facebook Page" : "Connect Facebook Page"}
-                </a>
-              )}
+              <button disabled
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                <PlatformIcon platform="facebook" size={16} />
+                Connect Facebook Page
+              </button>
               <p className="text-xs" style={{ color: MUTED }}>
-                You must be an admin of the Facebook Page to connect it
+                Pending Meta app review · new connections temporarily disabled
               </p>
             </div>
           </div>

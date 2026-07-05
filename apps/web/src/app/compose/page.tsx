@@ -365,6 +365,41 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setMediaItems([]); setAltTexts([]);
   }
 
+  async function handleSaveDraft() {
+    if (!text.trim() && !selectedIds.length) { toastWarning("Add some text or select accounts before saving a draft."); return; }
+    setSubmitting(true);
+    try {
+      const cleanOverrides = Object.fromEntries(
+        Object.entries(perAccountOverrides).filter(([id]) => selectedIds.includes(id))
+      );
+      const mediaUrls = mediaItems.map(m => m.url);
+      const hasInstagram = selectedAccounts.some((a) => a.platform === "instagram");
+      await apiFetch("/jobs", {
+        method: "POST",
+        body: JSON.stringify({
+          draft: true,
+          content: {
+            text,
+            mediaUrls,
+            ...(altTexts.some(Boolean) ? { altTexts } : {}),
+            ...(hasInstagram && igMediaType !== "post" ? { mediaType: igMediaType } : {}),
+            ...(youtubeSelected ? { youtubeType, youtubeVideoMode } : {}),
+            ...(youtubeSelected && youtubeVideoMode === "url" && youtubeVideoUrl.trim() ? { youtubeVideoUrl: youtubeVideoUrl.trim() } : {}),
+            ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
+          },
+          commentText: commentText.trim() || undefined,
+          accountIds: selectedIds,
+          dryRun: false,
+        }),
+      });
+      toastSuccess("Draft saved — find it in Posts → Drafts.");
+      resetForm();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err);
+      toastError(msg.replace(/^Error: API POST \/jobs → \d+: /, "").replace(/^\{"error":"/, "").replace(/"\}$/, ""));
+    } finally { setSubmitting(false); }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const validationError = validateBeforeSubmit();
@@ -1331,6 +1366,16 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             title="Clear all inputs"
           >
             Clear
+          </button>
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={handleSaveDraft}
+            className="px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
+            title="Save as draft — schedule later from Posts page"
+          >
+            Save Draft
           </button>
           <button
             type="submit"

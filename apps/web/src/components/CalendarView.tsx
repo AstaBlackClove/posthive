@@ -325,10 +325,10 @@ export function CalendarView({ jobs, onReschedule, onEdit }: Props) {
   const dragNavTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDragging = useRef(false);
 
-  const events = jobs.map((job) => ({
+  const events = jobs.filter((job) => job.status !== "draft" && job.scheduledFor).map((job) => ({
     id: job.id,
     title: JSON.parse(job.content).text,
-    start: job.scheduledFor,
+    start: job.scheduledFor!,
     backgroundColor: "transparent",
     borderColor: "transparent",
     editable: job.status === "pending",

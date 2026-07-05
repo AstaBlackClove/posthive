@@ -74,9 +74,9 @@ model Account {
 
 // A scheduled post job.
 model PostJob {
-  id           String   @id @default(cuid())
-  scheduledFor DateTime
-  status       String   @default("pending")
+  id           String    @id @default(cuid())
+  scheduledFor DateTime?
+  status       String    @default("pending")
   content      String
   commentText  String?
   dryRun       Boolean  @default(false)

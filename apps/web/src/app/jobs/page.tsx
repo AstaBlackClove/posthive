@@ -23,7 +23,7 @@ interface Target {
 
 export interface Job {
   id: string;
-  scheduledFor: string;
+  scheduledFor: string | null;
   status: string;
   content: string;
   commentText: string | null;
@@ -33,6 +33,7 @@ export interface Job {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string }> = {
+  draft:          { label: "Draft",        dot: "bg-gray-400",   badge: "bg-stone-100 text-stone-500 border-stone-200" },
   pending:        { label: "Scheduled",    dot: "bg-amber-400",  badge: "bg-amber-50 text-amber-700 border-amber-200" },
   running:        { label: "Posting…",     dot: "bg-blue-400 animate-pulse", badge: "bg-blue-50 text-blue-700 border-blue-200" },
   done:           { label: "Published",    dot: "bg-green-400",  badge: "bg-green-50 text-green-700 border-green-200" },
@@ -64,13 +65,15 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate }: {
 }) {
   const [retrying, setRetrying] = useState(false);
   const content = JSON.parse(job.content) as { text: string; mediaUrls?: string[] };
-  const scheduled = new Date(job.scheduledFor);
-  const isPast = scheduled < new Date();
-  const isToday = scheduled.toDateString() === new Date().toDateString();
-  const canEdit = job.status === "pending";
+  const isDraft = job.status === "draft";
+  const scheduled = job.scheduledFor ? new Date(job.scheduledFor) : null;
+  const isPast = scheduled ? scheduled < new Date() : false;
+  const isToday = scheduled ? scheduled.toDateString() === new Date().toDateString() : false;
+  const canEdit = job.status === "pending" || isDraft;
   const hasFailedTargets = job.targets.some((t) => t.status === "post_failed");
 
   function formatScheduled() {
+    if (!scheduled) return "No date set";
     if (isToday) return `Today at ${scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
     return scheduled.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" }) +
       " · " + scheduled.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -212,7 +215,7 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate }: {
 }
 
 type ViewTab = "list" | "calendar";
-type FilterTab = "all" | "pending" | "done" | "failed";
+type FilterTab = "all" | "draft" | "pending" | "done" | "failed";
 
 export default function JobsPage() {
   const router = useRouter();
@@ -309,14 +312,15 @@ export default function JobsPage() {
     router.push("/compose");
   }
 
-  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string) {
+  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, isDraft?: boolean) {
     try {
+      // Always patch content/accounts first
       await apiFetch(`/jobs/${jobId}`, {
         method: "PATCH",
         body: JSON.stringify({
           text,
           commentText: commentText || undefined,
-          scheduledFor: scheduledFor.toISOString(),
+          ...(!isDraft ? { scheduledFor: scheduledFor.toISOString() } : {}),
           mediaUrls,
           mediaType,
           accountIds,
@@ -326,10 +330,17 @@ export default function JobsPage() {
           ...(Object.keys(perAccount).length > 0 ? { perAccount } : { perAccount: {} }),
         }),
       });
+      // If it was a draft, promote it to scheduled
+      if (isDraft) {
+        await apiFetch(`/jobs/${jobId}/schedule`, {
+          method: "POST",
+          body: JSON.stringify({ scheduledFor: scheduledFor.toISOString() }),
+        });
+      }
       const updated = await apiFetch<Job>(`/jobs/${jobId}`);
       setJobs((prev) => prev.map((j) => j.id === jobId ? updated : j));
-      success("Post updated.");
-    } catch (err) { toastError(String(err)); throw err; } // rethrow so dialog stays open on failure
+      success(isDraft ? "Draft scheduled!" : "Post updated.");
+    } catch (err) { toastError(String(err)); throw err; }
   }
 
   useEffect(() => {
@@ -365,6 +376,7 @@ export default function JobsPage() {
 
   const counts = {
     all: jobs.length,
+    draft: jobs.filter((j) => j.status === "draft").length,
     pending: jobs.filter((j) => j.status === "pending" || j.status === "running").length,
     done: jobs.filter((j) => j.status === "done").length,
     failed: jobs.filter((j) => j.status === "failed").length,
@@ -381,6 +393,7 @@ export default function JobsPage() {
     return true;
   });
 
+  const drafts = filteredJobs.filter((j) => j.status === "draft");
   const upcoming = filteredJobs.filter((j) => j.status === "pending" || j.status === "running");
   const past = filteredJobs.filter((j) => j.status === "done" || j.status === "failed");
 
@@ -395,7 +408,7 @@ export default function JobsPage() {
           job={editingJob}
           accounts={accounts}
           onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl) => {
-            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl);
+            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, editingJob.status === "draft");
           }}
           onClose={() => setEditingJob(null)}
         />
@@ -482,6 +495,7 @@ export default function JobsPage() {
             <div className="flex gap-1.5 flex-wrap">
               {([
                 { id: "all",     label: "All",       dot: null,       activeColor: "#ededed", activeBg: "#2a2a2a" },
+                { id: "draft",   label: "Drafts",    dot: "#6b7280",  activeColor: "#9ca3af", activeBg: "#1a1a1a" },
                 { id: "pending", label: "Scheduled",  dot: "#f59e0b", activeColor: "#fbbf24", activeBg: "#1c1a10" },
                 { id: "done",    label: "Published",  dot: "#22c55e", activeColor: "#4ade80", activeBg: "#0a1f12" },
                 { id: "failed",  label: "Failed",     dot: "#ef4444", activeColor: "#f87171", activeBg: "#1f0a0a" },
@@ -558,6 +572,26 @@ export default function JobsPage() {
                   </a>
                 )}
               </div>
+            )}
+
+            {drafts.length > 0 && (
+              <section className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-2 h-2 rounded-full bg-gray-500" />
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Drafts · {drafts.length}
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {drafts.map((job) => (
+                    <JobCard key={job.id} job={job}
+                      onEdit={() => setEditingJob(job)}
+                      onDelete={() => setDeletingJob(job)}
+                      onRetry={() => retryFailed(job.id)}
+                      onDuplicate={() => duplicateJob(job)} />
+                  ))}
+                </div>
+              </section>
             )}
 
             {upcoming.length > 0 && (
