@@ -747,7 +747,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
         {(mediaWarning || saveError || twitterHasLink) && (
           <div className="flex flex-col gap-1">
             {mediaWarning && <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>{mediaWarning}</p>}
-            {twitterHasLink && <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>⚠ X/Twitter post contains a link — links cost $0.20 each via the X API. Remove the link to schedule, or use a different platform.</p>}
+            {twitterHasLink && <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>⚠ X/Twitter post contains a link links cost $0.20 each via the X API. Remove the link to schedule, or use a different platform.</p>}
             {saveError && <p className="text-xs" style={{ color: "#ef4444" }}>{saveError}</p>}
           </div>
         )}
