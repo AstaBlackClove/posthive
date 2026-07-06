@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { NavBar, PLATFORMS_NAV, FEATURES_NAV } from "../components/LandingNav";
 import { PlatformIcon } from "../components/PlatformIcon";
@@ -101,9 +101,21 @@ function useIsIndia() {
   return india;
 }
 
+function useScrollReveal() {
+  useEffect(() => {
+    const els = document.querySelectorAll<HTMLElement>(".scroll-hidden");
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { (e.target as HTMLElement).classList.add("scroll-visible"); io.unobserve(e.target); } });
+    }, { threshold: 0.15 });
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+}
+
 export default function RootPage() {
   const { user } = useAuth();
   const isIndia = useIsIndia();
+  useScrollReveal();
   const ctaHref = user ? "/compose" : "/register";
   const ctaLabel = user ? "Go to scheduler" : "Get started free";
   const navCtaLabel = user ? "Go to scheduler" : "Get started free";
@@ -140,6 +152,14 @@ export default function RootPage() {
         .anim-3 { animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .2s both; }
         .anim-4 { animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .3s both; }
         .anim-5 { animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .4s both; }
+
+        .scroll-hidden { opacity: 0; transform: translateY(28px); transition: opacity .65s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1); }
+        .scroll-hidden.scroll-visible { opacity: 1; transform: translateY(0); }
+        .scroll-hidden.d1 { transition-delay: .05s; }
+        .scroll-hidden.d2 { transition-delay: .15s; }
+        .scroll-hidden.d3 { transition-delay: .25s; }
+        .scroll-hidden.d4 { transition-delay: .35s; }
+        .scroll-hidden.d5 { transition-delay: .45s; }
 
         .mono { font-family: 'JetBrains Mono', monospace; }
         .section-label { font-size: 12px; letter-spacing: .16em; color: #5b63d3; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
@@ -270,7 +290,7 @@ export default function RootPage() {
             </h1>
 
             <p className="anim-3" style={{ fontSize: 19, lineHeight: 1.6, color: "#8f8f8f", maxWidth: 640, margin: "0 auto 38px", fontWeight: 400 }}>
-              Schedule the post + the first comment everywhere in one click, not five tabs. One flat price for every channel.
+              Schedule posts everywhere in one click and let Claude, Cursor, or any AI agent do it for you via MCP. One flat price for every channel.
             </p>
 
             <div className="anim-4 ph-hero-cta" style={{ display: "flex", gap: 14, justifyContent: "center", alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
@@ -504,6 +524,67 @@ export default function RootPage() {
               </div>
             </div>
             <BulkCsvMockup />
+          </div>
+        </section>
+
+        {/* ── MCP / AI AGENTS ── */}
+        <section style={{ borderTop: "1px solid #161616", background: "#0c0c0c" }}>
+          <div className="ph-section" style={{ maxWidth: 1100, margin: "0 auto", padding: "104px 40px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }} className="ph-feature-detail-row">
+              {/* Left — copy */}
+              <div>
+                <span className="section-label scroll-hidden d1">AI-NATIVE</span>
+                <h2 className="scroll-hidden d2" style={{ fontSize: 44, fontWeight: 700, letterSpacing: "-0.03em", margin: "16px 0 16px", color: "#f2f2f2", lineHeight: 1.1 }}>
+                  Use with Claude,<br />Cursor, or any AI agent.
+                </h2>
+                <p className="scroll-hidden d3" style={{ color: "#888", fontSize: 17, lineHeight: 1.7, margin: "0 0 32px" }}>
+                  Posthive speaks MCP the Model Context Protocol. Connect your AI agent once and let it draft, schedule, and manage posts across all your accounts without leaving the chat.
+                </p>
+                <div className="scroll-hidden d4" style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 36 }}>
+                  {[
+                    "Schedule posts from Claude or Cursor",
+                    "Approve drafts without opening the app",
+                    "Works with any MCP-compatible client",
+                    "Pro & Team plans one URL to connect",
+                  ].map(item => (
+                    <div key={item} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="9" fill="#5b63d3" fillOpacity=".15"/><path d="M5.5 9l2.5 2.5 4.5-5" stroke="#5b63d3" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <span style={{ color: "#ccc", fontSize: 15 }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <a href="/docs#mcp-overview" className="scroll-hidden d5" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#fff", color: "#0a0a0a", padding: "11px 22px", borderRadius: 8, fontWeight: 600, fontSize: 14, textDecoration: "none" }}>
+                  Read MCP docs
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="#0a0a0a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </a>
+              </div>
+              {/* Right — code snippet */}
+              <div className="scroll-hidden d3" style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "28px 32px", fontFamily: "'JetBrains Mono', monospace", fontSize: 13, lineHeight: 1.7, color: "#ccc" }}>
+                <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#333", display: "inline-block" }}/>
+                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#333", display: "inline-block" }}/>
+                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#333", display: "inline-block" }}/>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <span style={{ color: "#5b63d3" }}># Claude Code — one command</span>
+                </div>
+                <div style={{ marginBottom: 24 }}>
+                  <span style={{ color: "#888" }}>$ </span>
+                  <span style={{ color: "#f2f2f2" }}>claude mcp add posthive \</span>
+                  <br />
+                  <span style={{ color: "#f2f2f2" }}>&nbsp;&nbsp;--transport http \</span>
+                  <br />
+                  <span style={{ color: "#f2f2f2" }}>&nbsp;&nbsp;--url https://api.posthive.co/mcp/<span style={{ color: "#5b63d3" }}>ph_your_key</span></span>
+                </div>
+                <div style={{ borderTop: "1px solid #1e1e1e", paddingTop: 16, color: "#888" }}>
+                  <span style={{ color: "#5b63d3" }}># Or connect via claude.ai</span>
+                  <br />
+                  <span>Settings → Connectors → Add custom</span>
+                  <br />
+                  <span style={{ color: "#f2f2f2" }}>https://api.posthive.co/mcp</span>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
