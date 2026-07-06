@@ -1,0 +1,107 @@
+# Posthive
+
+> Open-source social media scheduling SaaS. Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, and Telegram from a single UI. Self-hostable, AGPL-3.0.
+
+## Product
+
+Posthive lets individuals and teams write once and publish everywhere. Key capabilities:
+
+- Multi-platform posting across 9 networks simultaneously
+- First comment scheduling (auto-reply immediately after the post goes live)
+- Per-platform content overrides (custom text per account, Pro+)
+- Bulk CSV scheduling (hundreds of posts from a spreadsheet)
+- Post templates (save and reuse drafts)
+- FullCalendar drag-to-reschedule view
+- Instagram Reels, Stories, carousels; YouTube Shorts + long-form video
+- Pinterest Pins, Telegram channels
+- MCP server — AI agents can schedule and manage posts directly
+- Public REST API (Pro/Team plans)
+- Billing optional — set ENABLE_BILLING=false for self-hosted, all features unlocked
+
+## MCP Integration (AI Agents)
+
+Posthive has a native MCP (Model Context Protocol) server. AI agents can connect and manage posts without opening the app.
+
+**Requires:** Pro or Team plan
+
+### Connect from Claude Code
+
+```bash
+claude mcp add posthive --transport http --url https://api.posthive.co/mcp/ph_your_key
+```
+
+### Connect from Cursor
+
+Add to `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "posthive": {
+      "transport": "http",
+      "url": "https://api.posthive.co/mcp/ph_your_key"
+    }
+  }
+}
+```
+
+### Connect from Claude.ai
+
+Settings → Connectors → Add custom connector → enter `https://api.posthive.co/mcp` → complete OAuth approval.
+
+### Available MCP Tools
+
+- `list_accounts` — list all connected social accounts
+- `create_post` — create a scheduled or draft post (supports media_urls, media_type, youtube_type)
+- `get_post` — get a single post by ID
+- `list_scheduled_posts` — list posts with optional status filter
+- `approve_draft` — promote a draft to scheduled
+- `update_post` — update content or reschedule a pending post
+- `duplicate_post` — clone a post as a new draft
+- `delete_post` — delete a post
+- `list_templates` — list saved post templates
+- `create_from_template` — create a post from a saved template
+
+All MCP-created posts default to draft. Binary media upload is not possible via MCP — upload via `POST /api/v1/upload` first and pass the returned URL to `create_post`.
+
+## REST API
+
+**Base URL:** `https://api.posthive.co/api/v1`
+**Auth:** `Authorization: Bearer ph_your_api_key`
+**Plans:** Pro or Team (or all users when billing is disabled)
+
+Endpoints: accounts, posts (CRUD + approve + duplicate), upload, templates.
+
+Full docs: https://posthive.co/docs
+
+## Platforms Supported
+
+| Platform | Notes |
+|---|---|
+| Bluesky | App password auth, 300 grapheme limit |
+| Threads | OAuth 2.0, 60-day tokens, 500 char limit |
+| Instagram | OAuth 2.0, post / reel / story / carousel, image required |
+| LinkedIn | OAuth 2.0, 3,000 char limit |
+| Mastodon | OAuth 2.0, any instance, 500 char limit |
+| YouTube | Google OAuth 2.0, short or long-form video, resumable upload |
+| Facebook Pages | OAuth 2.0, text / photo / video / carousel |
+| Pinterest | OAuth 2.0, image required, sandbox mode for trial access |
+| Telegram | Bot token + channel username, no OAuth |
+
+## Plans
+
+| Plan | Accounts | Posts/month | API + MCP |
+|---|---|---|---|
+| Creator | 3 | 400 | No |
+| Pro | 15 | Unlimited | Yes (3 keys) |
+| Team | 50 | Unlimited | Yes (10 keys) |
+
+14-day free trial. Self-hosted deployments can disable billing entirely.
+
+## Links
+
+- Website: https://posthive.co
+- Docs: https://posthive.co/docs
+- MCP docs: https://posthive.co/docs#mcp-overview
+- GitHub: https://github.com/AstaBlackClove/posthive
+- Pricing: https://posthive.co/#pricing
