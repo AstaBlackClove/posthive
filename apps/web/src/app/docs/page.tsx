@@ -85,6 +85,21 @@ const NAV = [
     ],
   },
   {
+    section: "MCP Server",
+    items: [
+      { label: "Overview", id: "mcp-overview" },
+      { label: "Plan requirements", id: "mcp-plans" },
+      { label: "Installation", id: "mcp-install" },
+      { label: "Claude Code setup", id: "mcp-claude-code" },
+      { label: "Cursor setup", id: "mcp-cursor" },
+      { label: "Claude.ai connector", id: "mcp-claudeai" },
+      { label: "Other HTTP clients", id: "mcp-url-key" },
+      { label: "Available tools", id: "mcp-tools" },
+      { label: "Media & formats", id: "mcp-media" },
+      { label: "Example prompts", id: "mcp-examples" },
+    ],
+  },
+  {
     section: "API Reference",
     items: [
       { label: "Authentication", id: "api-authentication" },
@@ -957,6 +972,210 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
 
               <h3 className="doc-h3" id="outbound-webhook-make">Make (Integromat) — Custom Webhook</h3>
               <p className="doc-p">1. Add a <strong>Webhooks → Custom webhook</strong> module as the trigger. 2. Copy the URL and paste it into Posthive Settings → Webhook. 3. Run a test post — Make will auto-detect the payload structure. 4. Connect downstream modules.</p>
+
+              {/* ── MCP SERVER ── */}
+              <h2 className="doc-h2" id="mcp-overview">MCP Server</h2>
+              <p className="doc-p">
+                Posthive ships a built-in MCP (Model Context Protocol) server that exposes your scheduling queue as tools any AI agent can call — Claude Code, Cursor, Claude.ai, or your own pipeline. Two transports are available:
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "16px 0 24px" }}>
+                {[
+                  { label: "stdio", badge: "Claude Code / Cursor", desc: "Local binary, runs alongside your editor. Reads POSTHIVE_API_KEY from env." },
+                  { label: "Streamable HTTP", badge: "Claude.ai connector", desc: "No install needed. Hit POST /mcp with your Bearer token — OAuth handled automatically." },
+                ].map(t => (
+                  <div key={t.label} style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 10, padding: "16px 18px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <span className="doc-inline-code" style={{ fontSize: 12 }}>{t.label}</span>
+                      <span style={{ fontSize: 10, color: "#5b63d3", background: "rgba(91,99,211,.12)", border: "1px solid rgba(91,99,211,.2)", borderRadius: 4, padding: "2px 6px", fontWeight: 600 }}>{t.badge}</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: "#777", margin: 0, lineHeight: 1.6 }}>{t.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="doc-warn">
+                <strong>Human-in-the-loop by default.</strong> Agent-created posts are saved as <strong>drafts</strong> and require your review before anything publishes. Open Posthive → Posts to approve, edit, or schedule them. Use <span className="doc-inline-code">schedule_directly: true</span> only when you explicitly want to skip the review step.
+              </div>
+
+              <h3 className="doc-h3" id="mcp-plans">Plan requirements</h3>
+              <p className="doc-p">MCP access is available on <strong>Pro</strong> and <strong>Team</strong> plans. Self-hosters with billing disabled always have full access. The <span className="doc-inline-code">/mcp</span> endpoint returns <span className="doc-inline-code">403</span> with a clear message if your plan does not include it.</p>
+              <div style={{ overflowX: "auto", margin: "12px 0 24px" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #1e1e1e" }}>
+                      {["Plan", "MCP access", "API keys"].map(h => (
+                        <th key={h} style={{ textAlign: "left", padding: "8px 12px", color: "#666", fontWeight: 600, fontSize: 11, letterSpacing: ".06em" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ["Creator", "✗", "—"],
+                      ["Pro", "✓", "Up to 3"],
+                      ["Team", "✓", "Up to 10"],
+                      ["Self-hosted", "✓", "Up to 10"],
+                    ].map(([plan, mcp, keys]) => (
+                      <tr key={plan} style={{ borderBottom: "1px solid #111" }}>
+                        <td style={{ padding: "10px 12px", color: "#ededed" }}>{plan}</td>
+                        <td style={{ padding: "10px 12px", color: mcp === "✓" ? "#4ade80" : "#ef4444" }}>{mcp}</td>
+                        <td style={{ padding: "10px 12px", color: "#888" }}>{keys}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 className="doc-h3" id="mcp-install">Installation (stdio)</h3>
+              <p className="doc-p">Clone the repo and build the MCP server binary:</p>
+              <CopyCode>{`# From the posthive repo root
+pnpm install
+cd apps/mcp && pnpm build
+# Binary: apps/mcp/dist/index.js`}</CopyCode>
+              <p className="doc-p">Set your credentials as environment variables:</p>
+              <CopyCode>{`POSTHIVE_API_KEY=ph_...        # Settings → API Keys
+POSTHIVE_API_URL=https://api.posthive.co`}</CopyCode>
+
+              <h3 className="doc-h3" id="mcp-claude-code">Claude Code setup</h3>
+              <p className="doc-p">Add to your project&apos;s <span className="doc-inline-code">.claude/mcp.json</span> or global <span className="doc-inline-code">~/.claude/mcp.json</span>:</p>
+              <CopyCode>{`{
+  "mcpServers": {
+    "posthive": {
+      "command": "node",
+      "args": ["/absolute/path/to/posthive/apps/mcp/dist/index.js"],
+      "env": {
+        "POSTHIVE_API_KEY": "ph_your_key_here",
+        "POSTHIVE_API_URL": "https://api.posthive.co"
+      }
+    }
+  }
+}`}</CopyCode>
+              <p className="doc-p">Restart Claude Code. Run <span className="doc-inline-code">/mcp</span> in the terminal to confirm <span className="doc-inline-code">posthive</span> appears in the connected servers list.</p>
+
+              <h3 className="doc-h3" id="mcp-cursor">Cursor setup</h3>
+              <p className="doc-p">Go to <strong>Cursor Settings → MCP → Add new server</strong> and use the same JSON config above. Cursor reads the same <span className="doc-inline-code">mcpServers</span> format.</p>
+
+              <h3 className="doc-h3" id="mcp-claudeai">Claude.ai connector (no install needed)</h3>
+              <p className="doc-p">The Posthive API exposes a Streamable HTTP MCP endpoint — no local binary required. Claude.ai handles OAuth automatically.</p>
+              <p className="doc-p"><strong>Steps:</strong></p>
+              <p className="doc-p">1. Go to <strong>Claude.ai → Settings → Connectors → Add custom connector</strong></p>
+              <p className="doc-p">2. Enter your Posthive API URL as the connector URL:</p>
+              <CopyCode>{`https://api.posthive.co/mcp`}</CopyCode>
+              <p className="doc-p">3. Claude.ai will open a Posthive authorization page — log in and click <strong>Allow access</strong>.</p>
+              <p className="doc-p">4. Claude.ai discovers all tools automatically. You can revoke access anytime from <strong>Settings → API Keys</strong>.</p>
+              <div className="doc-warn">
+                Self-hosters: replace <span className="doc-inline-code">https://api.posthive.co</span> with your own API URL. The OAuth flow and <span className="doc-inline-code">/mcp</span> endpoint are included in every deployment.
+              </div>
+
+              <h3 className="doc-h3" id="mcp-url-key">Any other HTTP MCP client (one URL, no config)</h3>
+              <p className="doc-p">For Cursor, Claude Code remote, Windsurf, or any HTTP-capable MCP client — embed your API key directly in the URL. No headers, no config files beyond the URL itself:</p>
+              <CopyCode>{`https://api.posthive.co/mcp/ph_your_api_key_here`}</CopyCode>
+              <p className="doc-p">Paste that as the MCP server URL in your agent settings. The agent discovers all 10 tools automatically.</p>
+              <p className="doc-p"><strong>Cursor:</strong> Settings → MCP → Add server → Type: HTTP → URL: paste above.</p>
+              <p className="doc-p"><strong>Claude Code:</strong></p>
+              <CopyCode>{`claude mcp add posthive --transport http --url https://api.posthive.co/mcp/ph_your_api_key_here`}</CopyCode>
+              <div className="doc-warn">
+                Keep this URL private — it contains your API key. Revoke and regenerate from <strong>Settings → API Keys</strong> if it leaks.
+              </div>
+
+              <h3 className="doc-h3" id="mcp-tools">Available tools</h3>
+              <p className="doc-p">All tools are available on both transports. The full set:</p>
+              <div style={{ overflowX: "auto", margin: "16px 0 24px" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #1e1e1e" }}>
+                      {["Tool", "Description", "Key params"].map(h => (
+                        <th key={h} style={{ textAlign: "left", padding: "8px 12px", color: "#666", fontWeight: 600, fontSize: 11, letterSpacing: ".06em" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ["list_accounts", "List all connected social accounts and their IDs", "—"],
+                      ["create_post", "Create a post (draft by default — nothing publishes without approval)", "content, account_ids, schedule_directly, scheduled_time, per_account, first_comment"],
+                      ["get_post", "Get full details + per-platform publish status for a single post", "post_id"],
+                      ["list_scheduled_posts", "List queue — filter by status, limit results", "status, limit"],
+                      ["approve_draft", "Promote a draft to scheduled — closes the agent → review → publish loop", "post_id, scheduled_time"],
+                      ["update_post", "Update content, time, or per-account overrides on pending/draft posts", "post_id, content, scheduled_time, first_comment, per_account"],
+                      ["duplicate_post", "Clone any post as a new draft", "post_id"],
+                      ["delete_post", "Delete a pending or draft post", "post_id"],
+                      ["list_templates", "List saved post templates", "—"],
+                      ["create_from_template", "Draft or schedule a post from a saved template (with optional overrides)", "template_id, account_ids, content_override, schedule_directly, scheduled_time"],
+                    ].map(([tool, desc, params]) => (
+                      <tr key={tool} style={{ borderBottom: "1px solid #111" }}>
+                        <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }}><span className="doc-inline-code">{tool}</span></td>
+                        <td style={{ padding: "10px 12px", color: "#888" }}>{desc}</td>
+                        <td style={{ padding: "10px 12px", color: "#555", fontSize: 12, fontFamily: "monospace" }}>{params}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 className="doc-h3" id="mcp-media">Media, video types & platform formats</h3>
+              <p className="doc-p">The <span className="doc-inline-code">create_post</span> tool supports images, videos, and platform-specific formats via three optional fields:</p>
+              <div style={{ overflowX: "auto", margin: "12px 0 20px" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #1e1e1e" }}>
+                      {["Field", "Values", "Platform"].map(h => (
+                        <th key={h} style={{ textAlign: "left", padding: "8px 12px", color: "#666", fontWeight: 600, fontSize: 11, letterSpacing: ".06em" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ["media_urls", "Array of uploaded file URLs", "All platforms"],
+                      ["media_type", '"post" | "reel" | "story"', "Instagram only"],
+                      ["youtube_type", '"short" | "video"', "YouTube only"],
+                    ].map(([field, values, platform]) => (
+                      <tr key={field} style={{ borderBottom: "1px solid #111" }}>
+                        <td style={{ padding: "10px 12px" }}><span className="doc-inline-code">{field}</span></td>
+                        <td style={{ padding: "10px 12px", color: "#888", fontFamily: "monospace", fontSize: 12 }}>{values}</td>
+                        <td style={{ padding: "10px 12px", color: "#666" }}>{platform}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="doc-warn" style={{ borderColor: "rgba(239,68,68,.2)", background: "rgba(239,68,68,.06)" }}>
+                <strong>Media upload limitation.</strong> MCP tools cannot transfer binary files — you cannot upload an image or video directly through an agent prompt. To attach media to an MCP-created post:
+                <ol style={{ margin: "10px 0 0 16px", padding: 0, lineHeight: 2 }}>
+                  <li>Upload the file via <span className="doc-inline-code">POST /api/v1/upload</span> (multipart, see API Reference).</li>
+                  <li>Copy the <span className="doc-inline-code">url</span> from the response.</li>
+                  <li>Pass it in <span className="doc-inline-code">media_urls</span> when calling <span className="doc-inline-code">create_post</span>.</li>
+                </ol>
+                A media library UI for uploading assets and copying URLs without writing code is on the roadmap.
+              </div>
+
+              <h3 className="doc-h3" id="mcp-examples">Example prompts</h3>
+              <p className="doc-p">Once connected, use natural language — the agent picks the right tools automatically:</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, margin: "20px 0" }}>
+                {[
+                  {
+                    label: "Draft from scratch",
+                    prompt: `List my accounts, then save a draft for Bluesky, Threads, and LinkedIn with platform-native copy — punchy hook for Threads (under 280 chars), thread format for Bluesky, long-form for LinkedIn. I'll review and schedule them myself.\n\nPost topic: "We just shipped Posthive MCP — your AI agent can now manage your entire content queue."`,
+                  },
+                  {
+                    label: "Review & approve",
+                    prompt: `List my current drafts and show me what's waiting for review. For any drafts that look ready, approve them and schedule them for tomorrow at 9am IST.`,
+                  },
+                  {
+                    label: "Template workflow",
+                    prompt: `Load my "Product launch" template, customise the copy for today's announcement, and save a draft to all my accounts. Add the product URL in the first comment.`,
+                  },
+                  {
+                    label: "Full queue management",
+                    prompt: `Show me everything scheduled for this week. Reschedule any posts that land on Saturday or Sunday to the following Monday at 10am. Delete any drafts older than 7 days.`,
+                  },
+                ].map((item, i) => (
+                  <div key={i} style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 10, padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <div className="mono" style={{ fontSize: 10, color: "#5b63d3", letterSpacing: ".06em" }}>EXAMPLE {i + 1}</div>
+                      <span style={{ fontSize: 11, color: "#555" }}>— {item.label}</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: "#bbb", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" }}>&ldquo;{item.prompt}&rdquo;</p>
+                  </div>
+                ))}
+              </div>
 
               {/* ── API REFERENCE ── */}
               <h2 className="doc-h2" id="api-authentication">Authentication</h2>

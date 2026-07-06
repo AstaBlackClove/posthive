@@ -25,13 +25,14 @@ export async function publicApiRoutes(
     return reply.send({ accounts });
   });
 
-  // POST /api/v1/posts — schedule a post
+  // POST /api/v1/posts — schedule or draft a post
   app.post("/api/v1/posts", { preHandler }, async (req, reply) => {
     const userId = req.apiKeyUser!.id;
     const body = req.body as {
       content: string;
       accountIds: string[];
-      scheduledFor: string;
+      scheduledFor?: string;
+      draft?: boolean;
       commentText?: string;
       images?: string[];
       altTexts?: string[];
@@ -45,9 +46,16 @@ export async function publicApiRoutes(
     if (!Array.isArray(body.accountIds) || body.accountIds.length === 0)
       return reply.status(400).send({ error: "accountIds must be a non-empty array" });
 
-    const scheduledFor = new Date(body.scheduledFor);
-    if (isNaN(scheduledFor.getTime()) || scheduledFor <= new Date())
-      return reply.status(400).send({ error: "scheduledFor must be a future ISO date string" });
+    const isDraft = body.draft === true;
+
+    // scheduledFor required unless saving as draft
+    let scheduledFor: Date | null = null;
+    if (!isDraft) {
+      if (!body.scheduledFor) return reply.status(400).send({ error: "scheduledFor is required when draft is false" });
+      scheduledFor = new Date(body.scheduledFor);
+      if (isNaN(scheduledFor.getTime()) || scheduledFor <= new Date())
+        return reply.status(400).send({ error: "scheduledFor must be a future ISO date string" });
+    }
 
     if (body.mediaType && !["post", "reel", "story"].includes(body.mediaType))
       return reply.status(400).send({ error: "mediaType must be 'post', 'reel', or 'story'" });
@@ -74,7 +82,8 @@ export async function publicApiRoutes(
     const job = await prisma.postJob.create({
       data: {
         userId,
-        scheduledFor,
+        scheduledFor: scheduledFor ?? new Date(0),
+        status: isDraft ? "draft" : "pending",
         content: contentPayload,
         commentText: body.commentText ?? null,
         dryRun: body.dryRun ?? false,
@@ -87,12 +96,13 @@ export async function publicApiRoutes(
       },
     });
 
-    await schedulePostJob(job.id, scheduledFor);
+    if (!isDraft) await schedulePostJob(job.id, scheduledFor!);
 
     return reply.status(201).send({
       id: job.id,
-      scheduledFor: job.scheduledFor,
+      scheduledFor: isDraft ? null : job.scheduledFor,
       status: job.status,
+      draft: isDraft,
       dryRun: job.dryRun,
       targets: job.targets,
     });
@@ -253,19 +263,158 @@ export async function publicApiRoutes(
     });
   });
 
-  // DELETE /api/v1/posts/:id — cancel a pending post
+  // DELETE /api/v1/posts/:id — cancel a pending or draft post
   app.delete("/api/v1/posts/:id", { preHandler }, async (req, reply) => {
     const userId = req.apiKeyUser!.id;
     const { id } = req.params as { id: string };
 
     const job = await prisma.postJob.findUnique({ where: { id } });
     if (!job || job.userId !== userId) return reply.status(404).send({ error: "Post not found" });
-    if (job.status !== "pending") {
-      return reply.status(400).send({ error: "Only pending posts can be cancelled" });
+    if (job.status !== "pending" && job.status !== "draft") {
+      return reply.status(400).send({ error: `Cannot delete a post with status "${job.status}". Only pending or draft posts can be deleted.` });
     }
 
     await prisma.postJob.delete({ where: { id } });
     return reply.send({ ok: true });
+  });
+
+  // POST /api/v1/posts/:id/approve — promote a draft to scheduled
+  app.post("/api/v1/posts/:id/approve", { preHandler }, async (req, reply) => {
+    const userId = req.apiKeyUser!.id;
+    const { id } = req.params as { id: string };
+    const body = req.body as { scheduledFor: string };
+
+    if (!body.scheduledFor) return reply.status(400).send({ error: "scheduledFor is required" });
+
+    const scheduledFor = new Date(body.scheduledFor);
+    if (isNaN(scheduledFor.getTime()) || scheduledFor <= new Date())
+      return reply.status(400).send({ error: "scheduledFor must be a future ISO date string" });
+
+    const job = await prisma.postJob.findUnique({ where: { id } });
+    if (!job || job.userId !== userId) return reply.status(404).send({ error: "Post not found" });
+    if (job.status !== "draft") return reply.status(409).send({ error: `Post status is '${job.status}' — only drafts can be approved` });
+
+    const updated = await prisma.postJob.update({
+      where: { id },
+      data: { status: "pending", scheduledFor },
+    });
+    await schedulePostJob(updated.id, scheduledFor);
+
+    return reply.send({
+      id: updated.id,
+      status: updated.status,
+      scheduledFor: updated.scheduledFor,
+    });
+  });
+
+  // POST /api/v1/posts/:id/duplicate — clone a post as a new draft
+  app.post("/api/v1/posts/:id/duplicate", { preHandler }, async (req, reply) => {
+    const userId = req.apiKeyUser!.id;
+    const { id } = req.params as { id: string };
+
+    const job = await prisma.postJob.findUnique({
+      where: { id },
+      include: { targets: { select: { accountId: true } } },
+    });
+    if (!job || job.userId !== userId) return reply.status(404).send({ error: "Post not found" });
+
+    const duplicate = await prisma.postJob.create({
+      data: {
+        userId,
+        scheduledFor: new Date(0),
+        status: "draft",
+        content: job.content,
+        commentText: job.commentText,
+        dryRun: false,
+        targets: { create: job.targets.map((t) => ({ accountId: t.accountId })) },
+      },
+      include: { targets: { select: { id: true, accountId: true, status: true } } },
+    });
+
+    return reply.status(201).send({
+      id: duplicate.id,
+      status: duplicate.status,
+      draft: true,
+      scheduledFor: null,
+      targets: duplicate.targets,
+    });
+  });
+
+  // GET /api/v1/templates — list saved templates
+  app.get("/api/v1/templates", { preHandler }, async (req, reply) => {
+    const userId = req.apiKeyUser!.id;
+    const templates = await prisma.template.findMany({
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
+      select: { id: true, name: true, content: true, createdAt: true, updatedAt: true },
+    });
+    return reply.send({
+      templates: templates.map((t) => {
+        const c = (() => { try { return JSON.parse(t.content) as Record<string, unknown>; } catch { return {}; } })();
+        return { id: t.id, name: t.name, text: (c.text as string) ?? "", firstComment: (c.commentText as string) ?? null, createdAt: t.createdAt, updatedAt: t.updatedAt };
+      }),
+    });
+  });
+
+  // POST /api/v1/templates/:id/use — create a post from a template
+  app.post("/api/v1/templates/:id/use", { preHandler }, async (req, reply) => {
+    const userId = req.apiKeyUser!.id;
+    const { id } = req.params as { id: string };
+    const body = req.body as {
+      accountIds: string[];
+      contentOverride?: string;
+      firstCommentOverride?: string;
+      scheduledFor?: string;
+      draft?: boolean;
+    };
+
+    if (!Array.isArray(body.accountIds) || body.accountIds.length === 0)
+      return reply.status(400).send({ error: "accountIds must be a non-empty array" });
+
+    const template = await prisma.template.findUnique({ where: { id } });
+    if (!template || template.userId !== userId) return reply.status(404).send({ error: "Template not found" });
+
+    const tc = (() => { try { return JSON.parse(template.content) as Record<string, unknown>; } catch { return {}; } })();
+
+    const isDraft = body.draft !== false && !body.scheduledFor;
+    let scheduledFor = new Date(0);
+    if (!isDraft) {
+      if (!body.scheduledFor) return reply.status(400).send({ error: "scheduledFor is required when draft is false" });
+      scheduledFor = new Date(body.scheduledFor);
+      if (isNaN(scheduledFor.getTime()) || scheduledFor <= new Date())
+        return reply.status(400).send({ error: "scheduledFor must be a future ISO date string" });
+    }
+
+    const accounts = await prisma.account.findMany({ where: { id: { in: body.accountIds }, userId }, select: { id: true } });
+    if (accounts.length !== body.accountIds.length)
+      return reply.status(400).send({ error: "One or more accountIds are invalid" });
+
+    const text = body.contentOverride ?? (tc.text as string) ?? "";
+    const commentText = body.firstCommentOverride ?? (tc.commentText as string | undefined) ?? null;
+
+    const job = await prisma.postJob.create({
+      data: {
+        userId,
+        scheduledFor,
+        status: isDraft ? "draft" : "pending",
+        content: JSON.stringify({ ...tc, text, commentText }),
+        commentText,
+        dryRun: false,
+        targets: { create: body.accountIds.map((accountId) => ({ accountId })) },
+      },
+      include: { targets: { select: { id: true, accountId: true, status: true } } },
+    });
+
+    if (!isDraft) await schedulePostJob(job.id, scheduledFor);
+
+    return reply.status(201).send({
+      id: job.id,
+      status: job.status,
+      draft: isDraft,
+      scheduledFor: isDraft ? null : job.scheduledFor,
+      templateUsed: template.name,
+      targets: job.targets,
+    });
   });
 
   // POST /api/v1/upload — upload an image or video, returns a URL for use in posts

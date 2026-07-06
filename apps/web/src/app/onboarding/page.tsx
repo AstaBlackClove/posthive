@@ -60,7 +60,7 @@ const PLANS = [
       "First comment automation",
       "Reels & Stories",
       "Per-platform overrides",
-      "API access (3 keys)",
+      "API access (3 keys) & MCP",
     ],
   },
   {
@@ -82,7 +82,7 @@ const PLANS = [
       "First comment automation",
       "Reels & Stories",
       "Per-platform overrides",
-      "API access (10 keys)",
+      "API access (10 keys) & MCP",
     ],
   },
 ];

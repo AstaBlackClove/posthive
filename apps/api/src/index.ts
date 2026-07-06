@@ -23,6 +23,8 @@ import { billingRoutes } from "./routes/billing.js";
 import { apiKeyRoutes } from "./routes/apiKeys.js";
 import { templateRoutes } from "./routes/templates.js";
 import { publicApiRoutes } from "./routes/publicApi.js";
+import { mcpRoutes } from "./routes/mcp.js";
+import { oauthRoutes } from "./routes/oauth.js";
 import { startWorker } from "./lib/worker.js";
 import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
 import { withAuth } from "./lib/auth/withAuth.js";
@@ -43,7 +45,7 @@ async function main() {
   setTelegramStorage(storage);
 
   const app = Fastify({
-    logger: { redact: ["req.query.token"] },
+    logger: { redact: ["req.query.token", "req.params.apiKey"] },
     bodyLimit: 1_048_576, // 1 MB
   });
 
@@ -86,6 +88,8 @@ async function main() {
   await app.register(apiKeyRoutes);
   await app.register(templateRoutes);
   await app.register(publicApiRoutes, { storage });
+  await app.register(mcpRoutes);
+  await app.register(oauthRoutes);
 
   app.get("/health", async () => ({ ok: true }));
 

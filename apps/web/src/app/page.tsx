@@ -60,7 +60,7 @@ const PLANS = [
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting (100/mo, no links)*", included: true },
-      { text: "API access (3 keys)", included: true },
+      { text: "API access (3 keys) & MCP", included: true },
       { text: "Webhook outbound", included: true },
     ],
     popular: true,
@@ -81,7 +81,7 @@ const PLANS = [
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting (100/mo, no links)*", included: true },
-      { text: "API access (10 keys)", included: true },
+      { text: "API access (10 keys) & MCP", included: true },
       { text: "Webhook outbound", included: true },
     ],
     popular: false,
@@ -349,6 +349,7 @@ export default function RootPage() {
               { icon: <PenIcon />,    title: "Per-platform text overrides",  href: "/features/per-platform-overrides",  body: "Tweak copy and media per network without leaving the composer." },
               { icon: <ServerIcon />, title: "Reliable scheduling",          href: "/features/multi-platform-posting",  body: "Posts fire at the exact second. BullMQ-backed queue with automatic retries." },
               { icon: <CsvIcon />,    title: "Bulk CSV scheduling",          href: "/features/bulk-csv-scheduling",     body: "Upload a CSV and schedule hundreds of posts at once. Exclude platforms per row with !platform syntax." },
+              { icon: <McpIcon />,    title: "Give your agents hands",        href: "/docs#mcp-overview",                body: "Drive Posthive from Claude Code or Cursor via MCP. Your agent drafts and schedules — nothing publishes without your approval." },
             ].map(({ icon, title, href, body }) => (
               <Link key={title} href={href} className="ph-feature-card" style={{ display: "block" }}>
                 <div style={{ width: 44, height: 44, borderRadius: 11, background: "#17172a", border: "1px solid #26264a", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20, color: "#8b91e8" }}>
@@ -1462,4 +1463,7 @@ function ServerIcon() {
 }
 function CsvIcon() {
   return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg>;
+}
+function McpIcon() {
+  return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><path d="M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>;
 }

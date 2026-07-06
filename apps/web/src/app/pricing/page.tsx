@@ -24,7 +24,7 @@ const PLANS = [
       { text: "Reels & Stories", included: false },
       { text: "Per-platform overrides", included: false },
       { text: "X/Twitter posting", included: false },
-      { text: "API access", included: false },
+      { text: "API access & MCP", included: false },
       { text: "Webhook outbound", included: false },
     ],
   },
@@ -46,7 +46,7 @@ const PLANS = [
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting (100/mo, no links)", included: true },
-      { text: "API access (3 keys)", included: true },
+      { text: "API access & MCP (3 keys)", included: true },
       { text: "Webhook outbound", included: true },
     ],
   },
@@ -68,7 +68,7 @@ const PLANS = [
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting (100/mo, no links)", included: true },
-      { text: "API access (10 keys)", included: true },
+      { text: "API access & MCP (10 keys)", included: true },
       { text: "Webhook outbound", included: true },
     ],
   },
@@ -86,7 +86,7 @@ const COMPARISON = [
   { feature: "Reels & Stories",         trial: "—",       creator: "—",        pro: "✓",        team: "✓" },
   { feature: "Per-platform overrides",  trial: "—",       creator: "—",        pro: "✓",        team: "✓" },
   { feature: "X/Twitter posting",       trial: "—",       creator: "—",        pro: "100/mo",   team: "100/mo" },
-  { feature: "API access",              trial: "—",       creator: "—",        pro: "3 keys",   team: "10 keys" },
+  { feature: "API access & MCP",        trial: "—",       creator: "—",        pro: "3 keys",   team: "10 keys" },
   { feature: "Webhook outbound",        trial: "—",       creator: "—",        pro: "✓",        team: "✓" },
 ];
 
@@ -108,8 +108,8 @@ const FAQ = [
     a: "Yes. Posthive is open-source (AGPL-3.0). You can run your own instance billing is disabled by default for self-hosted deployments.",
   },
   {
-    q: "What is the API used for?",
-    a: "The Posthive REST API lets you schedule posts programmatically from AI agents, automation scripts, or custom integrations. Available on Pro and Team plans.",
+    q: "What is the API & MCP used for?",
+    a: "The Posthive REST API and MCP server let you schedule posts programmatically from AI agents (Claude, Cursor), automation scripts, or custom integrations. Connect Claude.ai directly as a custom connector — no install needed. Available on Pro and Team plans.",
   },
   {
     q: "What payment methods are accepted?",

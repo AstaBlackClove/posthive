@@ -16,8 +16,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // Onboarding: needs auth but no sidebar, no plan guard (user IS inactive here)
-  if (pathname === "/onboarding") {
+  // Auth-only pages — no sidebar, no plan guard
+  if (pathname === "/onboarding" || pathname === "/mcp-connect") {
     return <AuthGuard>{children}</AuthGuard>;
   }
 
