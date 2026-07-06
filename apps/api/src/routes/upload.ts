@@ -21,6 +21,9 @@ export async function uploadRoutes(
     if (!url || typeof url !== "string") {
       return reply.status(400).send({ error: "url is required" });
     }
+    // Verify ownership before touching storage
+    const record = await prisma.upload.findFirst({ where: { url, userId } });
+    if (!record) return reply.status(404).send({ error: "Upload not found" });
     try {
       await storage.delete(url);
       await prisma.upload.deleteMany({ where: { url, userId } });

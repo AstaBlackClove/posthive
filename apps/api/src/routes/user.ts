@@ -88,7 +88,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // Refresh — explicitly refresh tokens (called by frontend if needed)
-  app.post("/auth/refresh", async (req, reply) => {
+  app.post("/auth/refresh", { config: { rateLimit: { max: 20, timeWindow: "15 minutes" } } }, async (req, reply) => {
     const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
     if (!refreshToken) return reply.status(401).send({ error: "No refresh token" });
 

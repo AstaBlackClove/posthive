@@ -133,8 +133,14 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
         .createHmac("sha256", Buffer.from(rawSecret, "base64"))
         .update(toSign)
         .digest("base64");
+      const expectedBuf = Buffer.from(expected);
       const sigParts = signature.split(" ").map((s) => s.split(",")[1]);
-      if (!sigParts.some((s) => s === expected)) {
+      if (!sigParts.some((s) => {
+        try {
+          const b = Buffer.from(s ?? "");
+          return b.length === expectedBuf.length && crypto.timingSafeEqual(b, expectedBuf);
+        } catch { return false; }
+      })) {
         return reply.status(401).send({ error: "Invalid signature" });
       }
 

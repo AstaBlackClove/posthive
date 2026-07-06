@@ -96,10 +96,13 @@ async function main() {
   // Global error handler — captures all unhandled Fastify errors to Sentry
   app.setErrorHandler((err, _req, reply) => {
     Sentry.captureException(err);
-    reply.status(err.statusCode ?? 500).send({
-      statusCode: err.statusCode ?? 500,
+    const status = err.statusCode ?? 500;
+    // Don't leak internal error details for server errors
+    const message = status >= 500 ? "Internal Server Error" : err.message;
+    reply.status(status).send({
+      statusCode: status,
       error: err.name ?? "Internal Server Error",
-      message: err.message,
+      message,
     });
   });
 

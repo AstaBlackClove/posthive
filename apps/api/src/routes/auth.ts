@@ -110,7 +110,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     try {
       const decoded = JSON.parse(Buffer.from(state, "base64url").toString()) as { userId: string; from?: string; nonce?: string };
       userId = decoded.userId;
-      from = decoded.from;
+      from = decoded.from === "onboarding" ? "onboarding" : undefined;
       const nonce = decoded.nonce;
       if (!nonce) throw new Error("missing nonce");
       const storedState = await prisma.oAuthState.findUnique({ where: { nonce } });
@@ -215,7 +215,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     try {
       const decoded = JSON.parse(Buffer.from(state, "base64url").toString()) as { userId: string; from?: string; nonce?: string };
       userId = decoded.userId;
-      from = decoded.from;
+      from = decoded.from === "onboarding" ? "onboarding" : undefined;
       const nonce = decoded.nonce;
       if (!nonce) throw new Error("missing nonce");
       const storedState = await prisma.oAuthState.findUnique({ where: { nonce } });
@@ -323,7 +323,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     try {
       const decoded = JSON.parse(Buffer.from(state, "base64url").toString()) as { userId: string; from?: string; nonce?: string };
       userId = decoded.userId;
-      from = decoded.from;
+      from = decoded.from === "onboarding" ? "onboarding" : undefined;
       const nonce = decoded.nonce;
       if (!nonce) throw new Error("missing nonce");
       const storedState = await prisma.oAuthState.findUnique({ where: { nonce } });
@@ -435,6 +435,29 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     const instanceUrl = instance.startsWith("http") ? instance.replace(/\/$/, "") : `https://${instance.replace(/\/$/, "")}`;
 
+    // SSRF protection — block private/internal hosts
+    let parsedInstance: URL;
+    try { parsedInstance = new URL(instanceUrl); } catch {
+      return reply.status(400).send({ error: "Invalid Mastodon instance URL" });
+    }
+    if (parsedInstance.protocol !== "https:") {
+      return reply.status(400).send({ error: "Mastodon instance must use HTTPS" });
+    }
+    const hostname = parsedInstance.hostname;
+    if (
+      hostname === "localhost" ||
+      /^127\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+      hostname === "169.254.169.254" ||
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal") ||
+      hostname === "0.0.0.0"
+    ) {
+      return reply.status(400).send({ error: "Invalid Mastodon instance" });
+    }
+
     const nonce = randomBytes(32).toString("hex");
     await prisma.oAuthState.create({
       data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
@@ -537,7 +560,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     try {
       const decoded = JSON.parse(Buffer.from(state, "base64url").toString()) as { userId: string; from?: string; nonce?: string };
       userId = decoded.userId;
-      from = decoded.from;
+      from = decoded.from === "onboarding" ? "onboarding" : undefined;
       const nonce = decoded.nonce;
       if (!nonce) throw new Error("missing nonce");
       const storedState = await prisma.oAuthState.findUnique({ where: { nonce } });
@@ -753,7 +776,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     try {
       const decoded = JSON.parse(Buffer.from(state, "base64url").toString()) as { userId: string; from?: string; nonce?: string };
       userId = decoded.userId;
-      from = decoded.from;
+      from = decoded.from === "onboarding" ? "onboarding" : undefined;
       const nonce = decoded.nonce;
       if (!nonce) throw new Error("missing nonce");
       const storedState = await prisma.oAuthState.findUnique({ where: { nonce } });

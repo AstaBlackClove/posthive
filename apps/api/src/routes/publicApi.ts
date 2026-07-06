@@ -43,8 +43,14 @@ export async function publicApiRoutes(
     };
 
     if (!body.content?.trim()) return reply.status(400).send({ error: "content is required" });
+    if (typeof body.content !== "string" || body.content.length > 50_000)
+      return reply.status(400).send({ error: "content must be a string under 50,000 characters" });
     if (!Array.isArray(body.accountIds) || body.accountIds.length === 0)
       return reply.status(400).send({ error: "accountIds must be a non-empty array" });
+    if (body.accountIds.length > 50)
+      return reply.status(400).send({ error: "accountIds must contain at most 50 accounts" });
+    if (body.images && (!Array.isArray(body.images) || body.images.length > 10))
+      return reply.status(400).send({ error: "images must be an array of at most 10 URLs" });
 
     const isDraft = body.draft === true;
 
@@ -117,11 +123,14 @@ export async function publicApiRoutes(
       cursor?: string;
     };
 
+    const VALID_STATUSES = ["pending", "draft", "running", "done", "failed"] as const;
+    const statusFilter = status && (VALID_STATUSES as readonly string[]).includes(status) ? status : undefined;
+
     const take = Math.min(Number(limitStr ?? 20), 100);
     const jobs = await prisma.postJob.findMany({
       where: {
         userId,
-        ...(status ? { status } : {}),
+        ...(statusFilter ? { status: statusFilter } : {}),
         ...(cursor ? { id: { lt: cursor } } : {}),
       },
       orderBy: { scheduledFor: "desc" },

@@ -30,6 +30,9 @@ interface PendingCode {
 
 const codeStore = new Map<string, PendingCode>();
 
+// In-memory client registry (populated on dynamic client registration)
+const clientStore = new Map<string, { redirectUris: string[] }>();
+
 setInterval(() => {
   const now = Date.now();
   for (const [code, data] of codeStore.entries()) {
@@ -38,11 +41,9 @@ setInterval(() => {
 }, 60_000).unref();
 
 function verifyPkce(verifier: string, challenge: string, method: string): boolean {
-  if (method === "S256") {
-    const hash = crypto.createHash("sha256").update(verifier).digest("base64url");
-    return hash === challenge;
-  }
-  return verifier === challenge; // plain
+  if (method !== "S256") return false; // only S256 accepted
+  const hash = crypto.createHash("sha256").update(verifier).digest("base64url");
+  return hash === challenge;
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -71,7 +72,7 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
       registration_endpoint: `${API_URL}/oauth/register`,
       response_types_supported: ["code"],
       grant_types_supported: ["authorization_code"],
-      code_challenge_methods_supported: ["S256", "plain"],
+      code_challenge_methods_supported: ["S256"],
       token_endpoint_auth_methods_supported: ["none"],
     });
   });
@@ -80,14 +81,20 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
   app.post("/oauth/register", async (req, reply) => {
     const body = (req.body ?? {}) as Record<string, unknown>;
 
-    // Generate a client_id for this registration — we don't validate it later
-    // since we use PKCE + user session for security, not client secrets
+    const redirectUris = Array.isArray(body.redirect_uris)
+      ? (body.redirect_uris as string[]).filter((u) => {
+          try { const p = new URL(u); return p.protocol === "https:" || p.hostname === "localhost"; }
+          catch { return false; }
+        })
+      : [];
+
     const clientId = `posthive_${crypto.randomBytes(16).toString("hex")}`;
+    clientStore.set(clientId, { redirectUris });
 
     return reply.status(201).send({
       client_id: clientId,
       client_secret_expires_at: 0,  // never expires
-      redirect_uris: body.redirect_uris ?? [],
+      redirect_uris: redirectUris,
       grant_types: ["authorization_code"],
       response_types: ["code"],
       token_endpoint_auth_method: "none",
@@ -102,6 +109,14 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
 
     if (!redirect_uri) return reply.status(400).send({ error: "redirect_uri is required" });
     if (!code_challenge) return reply.status(400).send({ error: "PKCE code_challenge is required" });
+
+    // Validate redirect_uri against registered client (if client_id was registered)
+    if (client_id) {
+      const client = clientStore.get(client_id);
+      if (client && client.redirectUris.length > 0 && !client.redirectUris.includes(redirect_uri)) {
+        return reply.status(400).send({ error: "redirect_uri not registered for this client" });
+      }
+    }
 
     const params = new URLSearchParams({
       redirect_uri,

@@ -32,17 +32,23 @@ export async function apiKeyRoutes(app: FastifyInstance): Promise<void> {
     const { name } = req.body as { name?: string };
     if (!name?.trim()) return reply.status(400).send({ error: "Key name is required" });
 
-    const existing = await prisma.apiKey.count({ where: { userId, revokedAt: null } });
     const limit = maxApiKeys(plan);
-    if (existing >= limit) {
-      return reply.status(403).send({ error: `Your plan allows a maximum of ${limit} API keys.` });
-    }
-
     const { raw, hash, prefix } = generateApiKey();
 
-    await prisma.apiKey.create({
-      data: { userId, name: name.trim(), keyHash: hash, prefix },
-    });
+    try {
+      await prisma.$transaction(async (tx) => {
+        const existing = await tx.apiKey.count({ where: { userId, revokedAt: null } });
+        if (existing >= limit) {
+          throw Object.assign(new Error(`Your plan allows a maximum of ${limit} API keys.`), { code: "LIMIT" });
+        }
+        await tx.apiKey.create({ data: { userId, name: name.trim(), keyHash: hash, prefix } });
+      });
+    } catch (err) {
+      if ((err as { code?: string }).code === "LIMIT") {
+        return reply.status(403).send({ error: (err as Error).message });
+      }
+      throw err;
+    }
 
     // Return the raw key only once — we never store it
     return reply.status(201).send({ key: raw, prefix, name: name.trim() });

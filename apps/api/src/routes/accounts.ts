@@ -27,8 +27,8 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     let encryptedCredentials: string;
     try {
       encryptedCredentials = await encryptBlueskyCredentials(handle, appPassword);
-    } catch (err) {
-      console.error("[bluesky] connect error:", err);
+    } catch {
+      // Don't log err — it may contain the submitted app password
       return reply.status(400).send({
         error: "Failed to authenticate with Bluesky — check your handle and app password",
       });
