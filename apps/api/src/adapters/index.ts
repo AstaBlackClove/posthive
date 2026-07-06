@@ -8,6 +8,7 @@ import { facebookAdapter } from "./facebook.js";
 import { twitterAdapter } from "./twitter.js";
 import { pinterestAdapter } from "./pinterest.js";
 import { telegramAdapter } from "./telegram.js";
+import { nostrAdapter } from "./nostr.js";
 import type { PlatformAdapter } from "./types.js";
 
 const adapters: PlatformAdapter[] = [
@@ -21,6 +22,7 @@ const adapters: PlatformAdapter[] = [
   twitterAdapter,
   pinterestAdapter,
   telegramAdapter,
+  nostrAdapter,
 ];
 
 /** Look up an adapter by platform name. Throws if not found. */

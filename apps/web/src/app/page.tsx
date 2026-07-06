@@ -20,6 +20,7 @@ const PLATFORMS_GRID = [
   { name: "Pinterest",      domain: "pinterest.com",   meta: "Pins · image required",         accent: "#e60023", platform: "pinterest" },
   { name: "X (Twitter)",    domain: "x.com",           meta: "100 tweets/mo · Pro & Team",    accent: "#e7e7e7", platform: "twitter" },
   { name: "Telegram",      domain: "telegram.org",    meta: "4,096 chars · Bot API",         accent: "#229ED9", platform: "telegram" },
+  { name: "Nostr",         domain: "nostr.com",       meta: "Keypair · decentralized · no approval", accent: "#8B5CF6", platform: "nostr" },
 ];
 
 const PLANS = [

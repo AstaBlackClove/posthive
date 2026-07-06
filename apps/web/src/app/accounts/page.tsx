@@ -29,6 +29,7 @@ interface Account {
   avatarUrl: string | null;
   createdAt: string;
   expiresAt: string | null;
+  npub?: string; // Nostr only — public key in bech32, safe to expose
 }
 
 const PLATFORM_META: Record<string, { label: string; brand: string }> = {
@@ -40,17 +41,32 @@ const PLATFORM_META: Record<string, { label: string; brand: string }> = {
   facebook:  { label: "Facebook",  brand: "#1877f2" },
   pinterest: { label: "Pinterest", brand: "#e60023" },
   telegram:  { label: "Telegram",  brand: "#229ED9" },
+  nostr:     { label: "Nostr",     brand: "#8B5CF6" },
 };
 
+function NostrFallbackAvatar() {
+  return (
+    <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
+      style={{ boxShadow: `0 0 0 2px ${SURFACE}` }}>
+      <PlatformIcon platform="nostr" size={40} />
+    </div>
+  );
+}
+
 function Avatar({ account }: { account: Account }) {
+  const [imgError, setImgError] = useState(false);
   const meta = PLATFORM_META[account.platform];
-  if (account.avatarUrl) {
+
+  if (account.avatarUrl && !imgError) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img src={account.avatarUrl} alt={account.displayName}
-        className="w-10 h-10 rounded-full object-cover" style={{ boxShadow: `0 0 0 2px ${SURFACE}` }} />
+        className="w-10 h-10 rounded-full object-cover"
+        style={{ boxShadow: `0 0 0 2px ${SURFACE}` }}
+        onError={() => setImgError(true)} />
     );
   }
+  if (account.platform === "nostr") return <NostrFallbackAvatar />;
   return (
     <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
       style={{ backgroundColor: meta?.brand ?? "#6b7280" }}>
@@ -80,14 +96,29 @@ function tokenStatus(platform: string, expiresAt: string | null): "ok" | "soon" 
   return "ok";
 }
 
-function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMonth }: {
+function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMonth, onAvatarRefreshed }: {
   account: Account;
-  onDisconnect: (id: string, name: string) => void;
+  onDisconnect: (id: string, name: string, platform?: string) => void;
   disconnecting: string | null;
   postsThisMonth?: number;
+  onAvatarRefreshed?: (id: string, avatarUrl: string | null) => void;
 }) {
+  const [refreshing, setRefreshing] = useState(false);
   const status = tokenStatus(account.platform, account.expiresAt);
   const reconnectUrl = RECONNECT_URLS[account.platform];
+
+  async function refreshNostrAvatar() {
+    setRefreshing(true);
+    try {
+      const res = await fetch(`${API_BASE}/accounts/nostr/${account.id}/refresh-avatar`, {
+        method: "POST", credentials: "include",
+      });
+      if (res.ok) {
+        const updated = await res.json() as Account;
+        onAvatarRefreshed?.(account.id, updated.avatarUrl);
+      }
+    } finally { setRefreshing(false); }
+  }
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: BG, border: `1px solid ${status === "expired" ? "#7f1d1d" : status === "soon" ? "#78560a" : BORDER}` }}>
@@ -105,10 +136,28 @@ function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMo
                 {postsThisMonth} post{postsThisMonth !== 1 ? "s" : ""} this month
               </span>
             )}
+            {account.platform === "nostr" && (
+              <>
+                <a
+                  href={`https://primal.net/p/${account.npub ?? account.displayName}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="transition-opacity hover:opacity-80"
+                  style={{ color: "#7B5EA7" }}>
+                  View on Primal ↗
+                </a>
+                <button
+                  onClick={refreshNostrAvatar}
+                  disabled={refreshing}
+                  className="transition-opacity hover:opacity-80 disabled:opacity-40"
+                  style={{ color: "#888888" }}>
+                  {refreshing ? "Refreshing…" : "Refresh photo"}
+                </button>
+              </>
+            )}
           </p>
         </div>
         <button
-          onClick={() => onDisconnect(account.id, account.displayName)}
+          onClick={() => onDisconnect(account.id, account.displayName, account.platform)}
           disabled={disconnecting === account.id}
           className="text-xs font-medium transition-colors disabled:opacity-50 px-2 py-1 rounded-lg hover:text-red-400"
           style={{ color: MUTED }}>
@@ -390,6 +439,110 @@ function MastodonDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
+function NostrDialog({ onClose, onConnected }: { onClose: () => void; onConnected: () => void }) {
+  const [nsec, setNsec] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generated, setGenerated] = useState<{ nsecBech32: string; npubBech32: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleGenerate() {
+    setGenerating(true); setError(null);
+    try {
+      const data = await apiFetch("/accounts/nostr/generate", { method: "POST" }) as { nsecBech32: string; npubBech32: string };
+      setGenerated(data);
+      setNsec(data.nsecBech32);
+    } catch (err) { setError(String(err)); }
+    finally { setGenerating(false); }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setConnecting(true); setError(null);
+    try {
+      await apiFetch("/accounts/nostr", { method: "POST", body: JSON.stringify({ nsec: nsec.trim() }) });
+      onConnected();
+      onClose();
+    } catch (err) { setError(String(err)); }
+    finally { setConnecting(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
+        style={{ backgroundColor: "#161616", border: `1px solid ${BORDER}` }}>
+
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center">
+              <PlatformIcon platform="nostr" size={18} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm" style={{ color: TEXT }}>Connect Nostr</p>
+              <p className="text-xs" style={{ color: MUTED }}>Keypair · no OAuth, no approval</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 transition-colors hover:bg-white/5" style={{ color: MUTED }}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Private key (nsec)</label>
+            <input
+              placeholder="nsec1… or 64-char hex"
+              value={nsec} onChange={(e) => setNsec(e.target.value)}
+              required autoFocus
+              className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/10 font-mono"
+              style={{ backgroundColor: "#0a0a0a", border: `1px solid ${BORDER}`, color: TEXT }} />
+            <p className="text-xs mt-1.5" style={{ color: "#555" }}>
+              Stored encrypted. Never shared or logged.
+            </p>
+          </div>
+
+          {generated && (
+            <div className="rounded-xl p-3 space-y-1" style={{ backgroundColor: "#0a1a0a", border: "1px solid #14532d" }}>
+              <p className="text-xs font-semibold" style={{ color: "#4ade80" }}>Keypair generated — save your nsec!</p>
+              <p className="text-[11px] font-mono break-all" style={{ color: "#888" }}>npub: {generated.npubBech32}</p>
+              <p className="text-xs mt-1" style={{ color: "#555" }}>Copy your nsec above and store it somewhere safe before connecting.</p>
+            </div>
+          )}
+
+          {error && (
+            <p className="text-xs rounded-lg px-3 py-2" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1a1a", color: "#f87171" }}>
+              {error}
+            </p>
+          )}
+
+          <button type="button" onClick={handleGenerate} disabled={generating}
+            className="w-full py-2 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50"
+            style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: `1px solid ${BORDER}` }}>
+            {generating ? "Generating…" : "Generate a new keypair for me"}
+          </button>
+
+          <div className="flex gap-2 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+              style={{ backgroundColor: "#1a1a1a", color: MUTED, border: `1px solid ${BORDER}` }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={connecting || !nsec.trim()}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 hover:bg-gray-100"
+              style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+              {connecting ? "Connecting…" : "Connect"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 interface PlanStatus {
   plan: string;
   maxAccounts: number;
@@ -409,7 +562,8 @@ export default function AccountsPage() {
   const [stats, setStats] = useState<Record<string, number>>({});
   const [showBlueskyDialog, setShowBlueskyDialog] = useState(false);
   const [showTelegramDialog, setShowTelegramDialog] = useState(false);
-  const [disconnectTarget, setDisconnectTarget] = useState<{ id: string; displayName: string } | null>(null);
+  const [showNostrDialog, setShowNostrDialog] = useState(false);
+  const [disconnectTarget, setDisconnectTarget] = useState<{ id: string; displayName: string; platform: string } | null>(null);
 
   const [threadsToken, setThreadsToken] = useState("");
   const [connectingThreads, setConnectingThreads] = useState(false);
@@ -462,8 +616,8 @@ export default function AccountsPage() {
     finally { setConnectingThreads(false); }
   }
 
-  async function disconnect(id: string, displayName: string) {
-    setDisconnectTarget({ id, displayName });
+  async function disconnect(id: string, displayName: string, platform?: string) {
+    setDisconnectTarget({ id, displayName, platform: platform ?? "" });
   }
 
   async function confirmDisconnect() {
@@ -474,7 +628,7 @@ export default function AccountsPage() {
     try {
       await apiFetch(`/accounts/${id}`, { method: "DELETE" });
       await fetchAccounts();
-      success(`@${displayName} disconnected.`);
+      success(`${disconnectTarget?.platform === "nostr" ? displayName : "@" + displayName} disconnected.`);
     } catch (err) { toastError(String(err)); }
     finally { setDisconnecting(null); }
   }
@@ -917,6 +1071,55 @@ export default function AccountsPage() {
             );
           })()}
 
+          {/* ── Nostr ── */}
+          {(() => {
+            const nostrAccounts = accounts.filter(a => a.platform === "nostr");
+            return (
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+                <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <PlatformIcon platform="nostr" size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm" style={{ color: TEXT }}>Nostr</p>
+                    <p className="text-xs" style={{ color: MUTED }}>Keypair · decentralized · no approval</p>
+                  </div>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
+                </div>
+                <div className="p-5 space-y-3">
+                  {!loading && nostrAccounts.length > 0 && (
+                    <div className="space-y-2">
+                      {nostrAccounts.map((a) => (
+                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]}
+                          onAvatarRefreshed={(id, avatarUrl) => setAccounts(prev => prev.map(acc => acc.id === id ? { ...acc, avatarUrl } : acc))} />
+                      ))}
+                    </div>
+                  )}
+                  {connectDisabled ? (
+                    <button disabled title={limitMsg ?? undefined}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                      style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                      <PlatformIcon platform="nostr" size={16} />
+                      {nostrAccounts.length > 0 ? "Add another Nostr key" : "Connect Nostr"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setShowNostrDialog(true)}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                      style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                      <PlatformIcon platform="nostr" size={16} />
+                      {nostrAccounts.length > 0 ? "Add another Nostr key" : "Connect Nostr"}
+                    </button>
+                  )}
+                  <p className="text-xs" style={{ color: MUTED }}>
+                    Post to Nostr relays · text and images · no app review needed
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* ── X / Twitter ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
@@ -1000,6 +1203,7 @@ export default function AccountsPage() {
 
       {showTelegramDialog && <TelegramDialog onClose={() => setShowTelegramDialog(false)} onConnected={() => { fetchAccounts(); success("Telegram channel connected!"); }} />}
       {showMastodonDialog && <MastodonDialog onClose={() => setShowMastodonDialog(false)} />}
+      {showNostrDialog && <NostrDialog onClose={() => setShowNostrDialog(false)} onConnected={() => { fetchAccounts(); success("Nostr account connected!"); }} />}
 
       {/* Disconnect confirm dialog */}
       {disconnectTarget && (
@@ -1009,7 +1213,11 @@ export default function AccountsPage() {
           <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
             <h2 className="text-base font-bold mb-1" style={{ color: "#ededed" }}>Disconnect account?</h2>
             <p className="text-sm mb-5" style={{ color: "#888" }}>
-              <span style={{ color: "#ededed" }}>@{disconnectTarget.displayName}  </span> will be removed.
+              <span style={{ color: "#ededed" }}>
+                {disconnectTarget.platform === "nostr"
+                  ? disconnectTarget.displayName
+                  : `@${disconnectTarget.displayName}`}
+              </span>{" "}will be removed.
               Already-scheduled posts won&apos;t be affected.
             </p>
             <div className="flex gap-3">

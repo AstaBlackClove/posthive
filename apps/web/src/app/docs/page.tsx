@@ -45,6 +45,7 @@ const NAV = [
       { label: "Facebook Pages", id: "facebook" },
       { label: "Pinterest", id: "pinterest" },
       { label: "Telegram", id: "telegram" },
+      { label: "Nostr", id: "nostr" },
     ],
   },
   {
@@ -648,6 +649,33 @@ pnpm install`}</CopyCode>
                 <li className="doc-li"><strong>Multiple images</strong> — sent as a media group (<span className="doc-inline-code">sendMediaGroup</span>, up to 10).</li>
                 <li className="doc-li"><strong>Video</strong> — sent via <span className="doc-inline-code">sendVideo</span> with caption.</li>
               </ul>
+
+              {/* ── Nostr ── */}
+              <h2 className="doc-h2" id="nostr">Nostr</h2>
+              <p className="doc-p">
+                Posthive publishes <strong>Kind 1 notes</strong> to Nostr relays using your keypair. No OAuth, no app approval — just paste your <span className="doc-inline-code">nsec</span> private key. Text and images are supported. Images are appended as URLs in the note content and use NIP-92 imeta tags for clients that support inline rendering.
+              </p>
+              <h3 className="doc-h3">Setup</h3>
+              <ol className="doc-ol">
+                <li className="doc-li">Go to <strong>Accounts</strong> in Posthive and click <strong>Connect Nostr</strong>.</li>
+                <li className="doc-li">Paste your <span className="doc-inline-code">nsec1...</span> private key — or click <strong>Generate a new keypair</strong> to create a fresh one.</li>
+                <li className="doc-li">Your public key (<span className="doc-inline-code">npub</span>) and profile photo are fetched automatically from relays.</li>
+              </ol>
+              <div className="doc-callout">
+                <strong>No environment variables needed.</strong> Nostr uses keypairs — there is no server-side app registration or OAuth flow. Your <span className="doc-inline-code">nsec</span> is stored AES-256-GCM encrypted per-user, never logged or exposed.
+              </div>
+              <h3 className="doc-h3">Relays</h3>
+              <p className="doc-p">Posts are published to four well-known high-uptime relays by default:</p>
+              <ul className="doc-ul">
+                <li className="doc-li"><span className="doc-inline-code">wss://relay.damus.io</span></li>
+                <li className="doc-li"><span className="doc-inline-code">wss://relay.nostr.band</span></li>
+                <li className="doc-li"><span className="doc-inline-code">wss://nos.lol</span></li>
+                <li className="doc-li"><span className="doc-inline-code">wss://relay.snort.social</span></li>
+              </ul>
+              <h3 className="doc-h3">Images</h3>
+              <p className="doc-p">
+                Images must be publicly accessible URLs — they are appended to the note text so Nostr clients can fetch and render them inline. Make sure <span className="doc-inline-code">PUBLIC_API_URL</span> is set to your public API URL (not localhost) so uploaded images resolve correctly on the Nostr network.
+              </p>
 
               {/* ── Scheduling posts ── */}
               <h2 className="doc-h2" id="scheduling-posts">Scheduling posts</h2>

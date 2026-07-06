@@ -1,10 +1,13 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { encryptBlueskyCredentials } from "../adapters/bluesky.js";
-import { decrypt } from "../lib/encryption.js";
+import { decodeNsec, generateNostrKeypair, fetchNostrProfile } from "../adapters/nostr.js";
+import { nip19 } from "nostr-tools";
+import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import { withAuth, getUser } from "../lib/auth/withAuth.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
+import type { StorageAdapter } from "../lib/storage.js";
 
 const connectBlueskyBody = z.object({
   handle: z.string().min(1),
@@ -14,7 +17,8 @@ const connectBlueskyBody = z.object({
   ),
 });
 
-export async function accountRoutes(app: FastifyInstance): Promise<void> {
+export async function accountRoutes(app: FastifyInstance, opts: { storage: StorageAdapter }): Promise<void> {
+  const { storage } = opts;
 
   // Connect a Bluesky account
   app.post("/accounts/bluesky", { preHandler: [withAuth] }, async (req, reply) => {
@@ -69,15 +73,105 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     return reply.status(201).send(account);
   });
 
+  // Generate a fresh Nostr keypair (no credentials needed — returns nsec/npub bech32)
+  app.post("/accounts/nostr/generate", { preHandler: [withAuth] }, async (_req, reply) => {
+    const keypair = generateNostrKeypair();
+    return reply.send({ nsecBech32: keypair.nsecBech32, npubBech32: keypair.npubBech32 });
+  });
+
+  // Connect a Nostr account via nsec (bech32 or raw hex)
+  app.post("/accounts/nostr", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { nsec } = req.body as { nsec?: string };
+    if (!nsec?.trim()) return reply.status(400).send({ error: "nsec is required" });
+
+    let nsecHex: string;
+    let npubHex: string;
+    let npubBech32: string;
+    try {
+      ({ nsecHex, npubHex, npubBech32 } = decodeNsec(nsec.trim()));
+    } catch {
+      return reply.status(400).send({ error: "Invalid nsec — must be a bech32 nsec1... or 64-char hex key" });
+    }
+
+    const credentials = encrypt(JSON.stringify({ nsec: nsecHex, npub: npubHex }));
+
+    // Fetch profile metadata from relays (best-effort)
+    let avatarUrl: string | null = null;
+    let displayName = npubBech32;
+    try {
+      const profile = await fetchNostrProfile(npubHex);
+      if (profile.name) displayName = profile.name;
+      avatarUrl = profile.picture;
+    } catch { /* optional */ }
+
+    // Dedup by npub (not displayName, which may change)
+    const nostrAccounts = await prisma.account.findMany({ where: { userId, platform: "nostr" } });
+    const existing = nostrAccounts.find(a => {
+      try { return (JSON.parse(decrypt(a.credentials)) as { npub: string }).npub === npubHex; } catch { return false; }
+    });
+    if (existing) {
+      const updated = await prisma.account.update({
+        where: { id: existing.id },
+        data: { credentials, avatarUrl, displayName },
+        select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
+      });
+      return reply.status(200).send(updated);
+    }
+
+    const blocked = await enforcePlan(userId, "accounts");
+    if (blocked) return reply.status(402).send(blocked);
+
+    const account = await prisma.account.create({
+      data: { platform: "nostr", displayName, credentials, avatarUrl, userId },
+      select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
+    });
+    return reply.status(201).send(account);
+  });
+
+  // Refresh Nostr avatar from relays without reconnecting
+  app.post("/accounts/nostr/:id/refresh-avatar", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { id } = req.params as { id: string };
+
+    const account = await prisma.account.findFirst({ where: { id, userId, platform: "nostr" } });
+    if (!account) return reply.status(404).send({ error: "Account not found" });
+
+    const { npub: npubHex } = JSON.parse(decrypt(account.credentials)) as { nsec: string; npub: string };
+    let avatarUrl: string | null = null;
+    let displayName: string | undefined;
+    try {
+      const profile = await fetchNostrProfile(npubHex);
+      avatarUrl = profile.picture;
+      if (profile.name) displayName = profile.name;
+    } catch { /* optional */ }
+
+    const updated = await prisma.account.update({
+      where: { id },
+      data: { avatarUrl, ...(displayName ? { displayName } : {}) },
+      select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
+    });
+    return reply.send(updated);
+  });
+
   // List accounts for current user
   app.get("/accounts", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
     const accounts = await prisma.account.findMany({
       where: { userId },
-      select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true, expiresAt: true },
+      select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true, expiresAt: true, credentials: true },
       orderBy: { createdAt: "asc" },
     });
-    return reply.send(accounts);
+    // Expose npub for Nostr accounts (public key — not sensitive), strip credentials from response
+    return reply.send(accounts.map(({ credentials, ...a }) => {
+      if (a.platform === "nostr") {
+        try {
+          const { npub } = JSON.parse(decrypt(credentials)) as { npub: string };
+          return { ...a, npub: nip19.npubEncode(npub) };
+        } catch { /* fall through */ }
+      }
+      return a;
+    }));
   });
 
   // Instagram location search — proxies Facebook Places API using user's IG token
@@ -156,6 +250,12 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     // Remove this account's targets from multi-account jobs, then delete the account.
     await prisma.postJobTarget.deleteMany({ where: { accountId: id } });
     await prisma.account.delete({ where: { id } });
+
+    // Clean up stored avatar (e.g. Telegram channel photo we uploaded)
+    if (account.avatarUrl && !account.avatarUrl.startsWith("http")) {
+      try { await storage.delete(account.avatarUrl); } catch { /* already gone */ }
+    }
+
     return reply.status(204).send();
   });
 }

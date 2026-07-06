@@ -80,6 +80,7 @@ export const PLATFORM_COLOR: Record<string, string> = {
   twitter: "#e7e9ea",
   pinterest: "#e60023",
   telegram: "#229ED9",
+  nostr: "#7B5EA7",
 };
 
 export const PLATFORM_LIMIT: Record<string, number> = {
@@ -92,6 +93,7 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   twitter: 25000,
   pinterest: 500,
   telegram: 4096,
+  nostr: 10000,
 };
 
 export const MAX_IMAGES = 4;
@@ -848,6 +850,58 @@ function TelegramPreview({ account, text, images, video }: {
   );
 }
 
+function NostrPreview({ account, text, images }: {
+  account: Account;
+  text: string;
+  images: UploadedImage[];
+}) {
+  const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return (
+    <div className="rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5"
+        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #7B5EA7", backgroundColor: "#0a0a0a" }}>
+        <PlatformIcon platform="nostr" size={16} />
+        <span className="text-xs font-semibold" style={{ color: "#7B5EA7" }}>Nostr</span>
+        <span className="text-xs ml-auto truncate max-w-[140px]" style={{ color: "#666" }}>{account.displayName}</span>
+      </div>
+      <div className="p-4" style={{ backgroundColor: "#0f0f0f" }}>
+        <div className="flex gap-3">
+          {account.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={account.avatarUrl} alt={account.displayName}
+              className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
+              style={{ background: "#7B5EA7", color: "#fff" }}>
+              {account.displayName[0]?.toUpperCase() ?? "N"}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-sm font-semibold" style={{ color: "#ededed" }}>{account.displayName}</span>
+              <span className="text-xs" style={{ color: "#555" }}>{timeStr}</span>
+            </div>
+            {text && <p className="text-sm whitespace-pre-wrap break-words" style={{ color: "#ccc" }}>{text}</p>}
+            {images.length > 0 && (
+              <div className="mt-2 grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(images.length, 2)}, 1fr)` }}>
+                {images.slice(0, 4).map((img, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={img.previewUrl} alt="" className="w-full rounded object-cover" style={{ height: 120 }} />
+                ))}
+              </div>
+            )}
+            <div className="flex gap-5 mt-3">
+              {["↩ Reply", "⚡ Zap", "♡ Like", "↗ Boost"].map(a => (
+                <span key={a} className="text-xs" style={{ color: "#555" }}>{a}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PlatformPreview({ account, text, commentText, mediaItems = [], igMediaType, youtubeType }: {
   account: Account;
   text: string;
@@ -879,6 +933,9 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   }
   if (account.platform === "telegram") {
     return <TelegramPreview account={account} text={text} images={images} video={video} />;
+  }
+  if (account.platform === "nostr") {
+    return <NostrPreview account={account} text={text} images={images} />;
   }
 
   const color = PLATFORM_COLOR[account.platform] ?? "#6b7280";

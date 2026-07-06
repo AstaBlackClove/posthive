@@ -81,7 +81,7 @@ async function main() {
   await app.register(authRoutes); // Threads OAuth
 
   // App routes (auth required — withAuth applied per-route)
-  await app.register(accountRoutes);
+  await app.register(accountRoutes, { storage });
   await app.register(jobRoutes);
   await app.register(uploadRoutes, { storage });
   if (process.env.ENABLE_BILLING === "true") await app.register(billingRoutes);

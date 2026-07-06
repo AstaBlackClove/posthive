@@ -144,10 +144,10 @@ export async function encryptTelegramCredentials(
   const channelName = chat.result?.title ?? chat.result?.username ?? chatId;
   const credentials = encrypt(JSON.stringify({ botToken, chatId }));
 
-  // Fetch channel photo if available
+  // Download and permanently store the channel photo so the URL never expires
   let avatarUrl: string | null = null;
   const smallFileId = chat.result?.photo?.small_file_id;
-  if (smallFileId) {
+  if (smallFileId && storageAdapter) {
     try {
       const fileRes = await fetch(`${TELEGRAM_API}/bot${botToken}/getFile`, {
         method: "POST",
@@ -157,7 +157,19 @@ export async function encryptTelegramCredentials(
       });
       const file = await fileRes.json() as { ok: boolean; result?: { file_path?: string } };
       if (file.ok && file.result?.file_path) {
-        avatarUrl = `${TELEGRAM_API}/file/bot${botToken}/${file.result.file_path}`;
+        const imgRes = await fetch(
+          `${TELEGRAM_API}/file/bot${botToken}/${file.result.file_path}`,
+          { signal: AbortSignal.timeout(15_000) }
+        );
+        if (imgRes.ok) {
+          const buf = Buffer.from(await imgRes.arrayBuffer());
+          const ct = imgRes.headers.get("content-type") ?? "";
+          const mime = ct.startsWith("image/") ? ct : "image/jpeg";
+          const path = await storageAdapter.upload(buf, mime);
+          // If the storage returns a relative path, prefix with the API base URL
+          const apiBase = process.env.PUBLIC_API_URL ?? `http://localhost:${process.env.PORT ?? 3001}`;
+          avatarUrl = path.startsWith("http") ? path : `${apiBase}${path}`;
+        }
       }
     } catch { /* avatar is optional — ignore */ }
   }

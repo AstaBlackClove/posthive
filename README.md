@@ -5,7 +5,7 @@
 <h1 align="center">Posthive</h1>
 
 <p align="center">
-  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, and Telegram from a single UI.<br/>
+  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, and Nostr from a single UI.<br/>
   Self-hostable · Open-source · AGPL-3.0
 </p>
 
@@ -19,7 +19,7 @@
 ## Features
 
 **Scheduling**
-- **Multi-platform posting** - write once, publish to all 9 platforms simultaneously
+- **Multi-platform posting** - write once, publish to all 10 platforms simultaneously
 - **Bulk CSV scheduling** - upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
 - **Post templates** - save, load, and delete reusable post drafts
 - **Dry run mode** - full pipeline test without making real API calls
@@ -95,7 +95,7 @@ posthive/
 │   ├── api/                  # Fastify v4 API (Node.js, TypeScript, ESM)
 │   │   ├── prisma/           # Schema + migrations
 │   │   └── src/
-│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram)
+│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr)
 │   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, plans
 │   │       └── routes/       # auth, accounts, jobs, templates, upload, billing, user, apiKeys, publicApi
 │   └── web/                  # Next.js 16 frontend
@@ -401,6 +401,16 @@ No OAuth needed — uses the Telegram Bot API directly.
 > One bot can serve multiple channels — connect each channel separately in Posthive.
 > No environment variables needed. Credentials are stored encrypted per-user.
 
+### Nostr
+No OAuth, no app registration — uses your keypair directly.
+
+1. Go to **Accounts** in Posthive → **Connect Nostr**
+2. Paste your `nsec1...` private key — or click **Generate a new keypair** to create a fresh one
+3. Your profile name and photo are fetched automatically from relays
+
+> Your `nsec` is stored AES-256-GCM encrypted and never exposed. Posts publish as **Kind 1 notes** to four default relays (Damus, Nostr.band, nos.lol, Snort). Images are appended as URLs in the note content and tagged with NIP-92 imeta for clients that support inline rendering.
+> No environment variables needed.
+
 ---
 
 ## Bulk CSV Scheduling
@@ -575,6 +585,8 @@ Set `ENABLE_BILLING=false` for self-hosted mode all features unlocked, no plan l
 | YouTube | Title: 100 · Description: 5,000 |
 | Facebook Pages | 63,206 characters |
 | Pinterest | Title: 100 · Description: 500 |
+| Telegram | 4,096 characters |
+| Nostr | 10,000 characters |
 
 ---
 
