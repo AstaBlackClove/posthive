@@ -26,6 +26,14 @@
 - **First comment scheduling** - auto-reply immediately after the main post goes live
 - **Per-platform overrides** - custom text and first comment per account (Pro+)
 
+**AI & MCP**
+- **MCP server** - connect Claude, Cursor, or any MCP-compatible AI agent via a single URL
+- **Claude.ai connector** - full OAuth 2.0 + PKCE flow; connect from Settings → Connectors
+- **Key-in-URL** - `POST /mcp/ph_your_key` for frictionless connection from Claude Code and Cursor
+- **10 MCP tools** - list accounts, create/get/update/delete posts, approve drafts, duplicate, list/use templates
+- **Media type support** - Instagram media type (post/reel/story) and YouTube type (short/video) via MCP
+- **Plan-gated** - MCP access requires Pro or Team plan
+
 **Media**
 - Images (up to 4 per post; plan-gated), video (up to 100 MB)
 - Instagram Reels, Stories, and carousel (up to 10 items)
@@ -461,7 +469,7 @@ Posthive includes a full public REST API for Pro and Team plans (or all users wh
 
 **Base URL:** `https://your-api-domain/api/v1`
 
-**Authentication:** Bearer token create an API key in Settings.
+**Authentication:** Bearer token — create an API key in Settings.
 
 ```
 Authorization: Bearer ph_your_api_key
@@ -476,12 +484,68 @@ Authorization: Bearer ph_your_api_key
 | GET | /posts | List posts (cursor-paginated) |
 | GET | /posts/:id | Get single post |
 | PATCH | /posts/:id | Update/reschedule pending post |
+| POST | /posts/:id/approve | Promote a draft to scheduled |
+| POST | /posts/:id/duplicate | Clone a post as a new draft |
 | DELETE | /posts/:id | Delete post |
 | POST | /upload | Upload media file |
 | GET | /templates | List templates |
 | POST | /templates | Create template |
 
 See the full [documentation](https://posthive.co/docs) for request/response schemas.
+
+---
+
+## MCP — AI Agent Integration
+
+Posthive exposes an MCP (Model Context Protocol) server so AI agents can schedule and manage posts directly.
+
+**Requires:** Pro or Team plan · Rate limit: 60 req/min
+
+### Connect from Claude Code or Cursor
+
+```bash
+claude mcp add posthive --transport http --url https://your-api/mcp/ph_your_key
+```
+
+Or add to `~/.cursor/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "posthive": {
+      "transport": "http",
+      "url": "https://your-api/mcp/ph_your_key"
+    }
+  }
+}
+```
+
+### Connect from Claude.ai
+
+1. Settings → Connectors → Add custom connector
+2. Enter `https://your-api/mcp`
+3. Complete the OAuth approval flow
+
+### Available Tools
+
+| Tool | Description |
+|---|---|
+| `list_accounts` | List all connected social accounts |
+| `create_post` | Create a scheduled or draft post |
+| `get_post` | Get a single post by ID |
+| `list_scheduled_posts` | List posts with optional status filter |
+| `approve_draft` | Promote a draft to scheduled |
+| `update_post` | Update content or reschedule a pending post |
+| `duplicate_post` | Clone a post as a new draft |
+| `delete_post` | Delete a post |
+| `list_templates` | List saved post templates |
+| `create_from_template` | Create a post from a template |
+
+### Media via MCP
+
+MCP tools accept `media_urls` (array of public URLs). Binary upload is not possible via MCP — upload files first via `POST /api/v1/upload` and pass the returned URLs to `create_post`.
+
+Instagram `media_type`: `post` · `reel` · `story`
+YouTube `youtube_type`: `short` · `video`
 
 ---
 
