@@ -1262,16 +1262,16 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                                   <span className="text-[10px]" style={{ color: overrideCount > limit ? "#ef4444" : "#444" }}>{overrideCount}/{limit}</span>
                                 </div>
                                 <textarea value={override?.text ?? ""} onChange={e => setOverrideField(a.id, "text", e.target.value)}
-                                  rows={3} placeholder={`Custom caption for ${a.displayName}…`}
-                                  className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
-                                  style={{ backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }} />
+                                  rows={6} placeholder={`Custom caption for ${a.displayName}…`}
+                                  className="w-full resize-y rounded-lg px-3 py-2 text-xs focus:outline-none"
+                                  style={{ backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed", minHeight: 100 }} />
                               </div>
                               <div>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "#555" }}>First Comment</span>
                                 <textarea value={override?.commentText ?? ""} onChange={e => setOverrideField(a.id, "commentText", e.target.value)}
-                                  rows={2} placeholder={`Custom first comment for ${a.displayName}…`}
-                                  className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
-                                  style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }} />
+                                  rows={3} placeholder={`Custom first comment for ${a.displayName}…`}
+                                  className="w-full resize-y rounded-lg px-3 py-2 text-xs focus:outline-none"
+                                  style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed", minHeight: 60 }} />
                               </div>
                             </>
                           )}
