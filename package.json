@@ -12,9 +12,12 @@
     "dev:web": "pnpm --filter web dev",
     "build": "pnpm --filter api build && pnpm --filter web build",
     "start": "pnpm --parallel --filter api --filter web start",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
     "typescript": "^5.5.4"
   },
   "engines": {
