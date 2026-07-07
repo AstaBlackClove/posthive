@@ -200,7 +200,6 @@ export default function BufferAlternativePage() {
               { title: "Bulk CSV scheduling", desc: "Upload a spreadsheet and schedule hundreds of posts at once. Specify different platforms per row with pipe-separated account names." },
               { title: "First comment automation", desc: "Post a first comment — hashtags, a link, a CTA — automatically the moment your content goes live. Buffer has no equivalent." },
               { title: "Per-platform overrides", desc: "Write one base post and customise the text independently per platform. LinkedIn gets the long version, Bluesky gets the 300-char summary." },
-              { title: "MCP integration", desc: "Posthive has a full MCP server. AI agents (Claude Code, Cursor) can create and schedule posts directly via tool calls. Buffer has no AI agent integration." },
               { title: "Drag-to-reschedule calendar", desc: "A visual content calendar where you can drag posts to new dates instantly. No form-filling, no dropdowns." },
             ].map((f) => (
               <div key={f.title} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "16px 20px" }}>

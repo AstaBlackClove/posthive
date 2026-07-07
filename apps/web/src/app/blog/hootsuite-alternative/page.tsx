@@ -176,7 +176,6 @@ export default function HootsuiteAlternativePage() {
                   ["Bulk CSV scheduling", "Higher plans only", "✓ All plans"],
                   ["First comment scheduling", "✕", "✓"],
                   ["Per-platform overrides", "✕", "✓"],
-                  ["MCP / AI agent integration", "✕", "✓"],
                   ["Drag-to-reschedule calendar", "✓", "✓"],
                   ["Instagram Reels & Stories", "✓", "✓"],
                 ].map(([feature, hootsuite, posthive]) => (
