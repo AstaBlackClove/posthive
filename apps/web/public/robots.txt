@@ -12,5 +12,6 @@ Disallow: /settings
 Disallow: /billing
 Disallow: /onboarding
 Disallow: /verify-email
+Disallow: /mcp-connect
 
 Sitemap: https://posthive.co/sitemap.xml

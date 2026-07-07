@@ -308,10 +308,24 @@ export async function generateMetadata({ params }: { params: Promise<{ platform:
   return {
     title: `${data.name} Scheduler | Posthive`,
     description: data.subheadline,
+    alternates: { canonical: `${WEB_URL}/platforms/${platform}` },
     openGraph: {
       title: `${data.name} Scheduler | Posthive`,
       description: data.subheadline,
       url: `${WEB_URL}/platforms/${platform}`,
+      images: [
+        {
+          url: `/api/og?title=${encodeURIComponent(data.name + " Scheduler")}&desc=${encodeURIComponent(data.subheadline)}`,
+          width: 1200,
+          height: 630,
+          alt: `${data.name} Scheduler — Posthive`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title: `${data.name} Scheduler | Posthive`,
+      description: data.subheadline,
     },
   };
 }
@@ -414,13 +428,13 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
         <div style={{ maxWidth: 640, margin: "0 auto", background: "#111", border: "1px solid #1e1e1e", borderRadius: 20, padding: "40px 36px", textAlign: "center" }}>
           <p style={{ fontSize: 13, fontWeight: 600, color: "#5b63d3", marginBottom: 12, letterSpacing: ".04em" }}>PART OF A BIGGER PICTURE</p>
           <h2 style={{ fontSize: 24, fontWeight: 800, color: "#ededed", letterSpacing: "-.02em", marginBottom: 12 }}>
-            {data.name} is one of nine platforms
+            {data.name} is one of eleven platforms
           </h2>
           <p style={{ fontSize: 14.5, color: "#666", lineHeight: 1.7, marginBottom: 28 }}>
-            Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, and Telegram — all from the same composer. Write once, choose your platforms, done.
+            Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, and Nostr — all from the same composer. Write once, choose your platforms, done.
           </p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
-            {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube", "facebook", "pinterest", "telegram", "twitter"] as const)
+            {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube", "facebook", "pinterest", "telegram", "twitter", "nostr"] as const)
               .filter(p => p !== platform)
               .map(p => (
                 <Link key={p} href={`/platforms/${p}`} style={{ display: "flex", alignItems: "center", gap: 6, background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 999, padding: "5px 12px", textDecoration: "none" }}>

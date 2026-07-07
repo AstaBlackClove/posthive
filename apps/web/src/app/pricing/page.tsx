@@ -16,7 +16,7 @@ const PLANS = [
     features: [
       { text: "5 connected accounts", included: true },
       { text: "400 posts / month", included: true },
-      { text: "All 7 platforms", included: true },
+      { text: "All platforms", included: true },
       { text: "Bulk CSV scheduling", included: true },
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
@@ -38,7 +38,7 @@ const PLANS = [
     features: [
       { text: "15 connected accounts", included: true },
       { text: "Unlimited posts", included: true },
-      { text: "All 7 platforms", included: true },
+      { text: "All platforms", included: true },
       { text: "Bulk CSV scheduling", included: true },
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
@@ -60,7 +60,7 @@ const PLANS = [
     features: [
       { text: "50 connected accounts", included: true },
       { text: "Unlimited posts", included: true },
-      { text: "All 7 platforms", included: true },
+      { text: "All platforms", included: true },
       { text: "Bulk CSV scheduling", included: true },
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
@@ -77,7 +77,7 @@ const PLANS = [
 const COMPARISON = [
   { feature: "Connected accounts",      trial: "3",       creator: "5",        pro: "15",       team: "50" },
   { feature: "Posts per month",         trial: "30",      creator: "400",      pro: "Unlimited", team: "Unlimited" },
-  { feature: "All 7 platforms",         trial: "✓",       creator: "✓",        pro: "✓",        team: "✓" },
+  { feature: "All platforms",         trial: "✓",       creator: "✓",        pro: "✓",        team: "✓" },
   { feature: "Bulk CSV scheduling",     trial: "✓",       creator: "✓",        pro: "✓",        team: "✓" },
   { feature: "Post templates",          trial: "✓",       creator: "✓",        pro: "✓",        team: "✓" },
   { feature: "Calendar view",           trial: "✓",       creator: "✓",        pro: "✓",        team: "✓" },
@@ -117,6 +117,16 @@ const FAQ = [
   },
 ];
 
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
+
 export default function PricingPage() {
   const { user } = useAuth();
   const ctaHref = user ? "/compose" : "/register";
@@ -126,6 +136,7 @@ export default function PricingPage() {
 
   return (
     <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "system-ui, sans-serif" }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <NavBar user={!!user} ctaHref={ctaHref} navCtaLabel={navCtaLabel} />
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "120px 24px 100px" }}>

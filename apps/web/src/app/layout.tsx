@@ -9,9 +9,9 @@ import { ToastProvider } from "../components/Toast";
 const OG_BASE = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
 export const metadata: Metadata = {
-  title: { default: "Posthive — Open-source scheduler for Bluesky, Threads & Mastodon", template: "%s | Posthive" },
+  title: { default: "Posthive — Open-source Social Media Scheduler", template: "%s | Posthive" },
   description:
-    "The open-source social media scheduler for the new social web. Schedule posts AND first comments on Bluesky, Threads, Mastodon, LinkedIn, Instagram, and more. Flat price, self-hostable.",
+    "The open-source social media scheduler for Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, and Nostr. Schedule posts and first comments from one place. Flat price, self-hostable.",
   keywords: [
     "open source social media scheduler",
     "Bluesky scheduler",
@@ -33,25 +33,25 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Posthive",
-    title: "Posthive — Open-source scheduler for the new social web",
+    title: "Posthive — Open-source Social Media Scheduler",
     description:
-      "Schedule posts AND first comments on Bluesky, Threads, Mastodon, LinkedIn, and more. Flat price. Self-host if you want.",
+      "Schedule posts and first comments on Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram & Nostr. Flat price. Self-host if you want.",
     images: [
       {
-        url: "/api/og?title=Posthive&desc=The%20open-source%20scheduler%20for%20Bluesky%2C%20Threads%20%26%20Mastodon.%20Schedule%20first%20comments%20too.",
+        url: "/api/og?title=Posthive&desc=Open-source%20scheduler%20for%2011%20platforms.%20Schedule%20posts%20%26%20first%20comments%20from%20one%20place.",
         width: 1200,
         height: 630,
-        alt: "Posthive — Open-source social media scheduler",
+        alt: "Posthive — Open-source social media scheduler for 11 platforms",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Posthive — Open-source scheduler for the new social web",
+    title: "Posthive — Open-source Social Media Scheduler",
     description:
-      "Schedule posts AND first comments on Bluesky, Threads, Mastodon, LinkedIn, and more. Flat price. Self-host if you want.",
+      "Schedule posts and first comments on Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram & Nostr. Flat price. Self-host if you want.",
     images: [
-      "/api/og?title=Posthive&desc=The%20open-source%20scheduler%20for%20Bluesky%2C%20Threads%20%26%20Mastodon.%20Schedule%20first%20comments%20too.",
+      "/api/og?title=Posthive&desc=Open-source%20scheduler%20for%2011%20platforms.%20Schedule%20posts%20%26%20first%20comments%20from%20one%20place.",
     ],
   },
 };

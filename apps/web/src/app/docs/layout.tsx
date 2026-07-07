@@ -1,28 +1,51 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Documentation",
+const docsSchema = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  name: "Posthive Documentation",
   description:
-    "Posthive documentation — quick start, platform setup, bulk CSV scheduling, post templates, self-hosting, API reference and more.",
+    "Complete documentation for Posthive — the open-source social media scheduler. Learn how to self-host, connect platforms, use the REST API, and integrate with Claude via MCP.",
+  url: "https://posthive.co/docs",
+  publisher: {
+    "@type": "Organization",
+    name: "Posthive",
+    url: "https://posthive.co",
+  },
+  about: [
+    { "@type": "SoftwareApplication", name: "Posthive" },
+    { "@type": "Thing", name: "Social media scheduling" },
+    { "@type": "Thing", name: "MCP server" },
+    { "@type": "Thing", name: "Self-hosted social scheduler" },
+  ],
+};
+
+export const metadata: Metadata = {
+  title: "Docs",
+  description:
+    "Complete documentation for Posthive. Self-host with Docker, connect Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, and Nostr. REST API and MCP server reference included.",
   openGraph: {
-    title: "Posthive Documentation",
+    title: "Posthive Docs — Setup, Platforms & API Reference",
     description:
-      "Quick start, platform setup, bulk CSV scheduling, post templates, self-hosting, and the full REST API reference.",
-    images: [
-      {
-        url: "/api/og?layout=docs&title=Posthive%20Documentation&desc=Quick%20start%2C%20platform%20setup%2C%20API%20reference%2C%20and%20self-hosting%20guides.&badge=Docs",
-        width: 1200,
-        height: 630,
-      },
-    ],
+      "Self-host guide, platform setup, REST API, and MCP server reference for Posthive.",
+    url: "https://posthive.co/docs",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Posthive Documentation",
-    description: "Quick start, platform setup, API reference, and self-hosting guides.",
+    title: "Posthive Docs — Setup, Platforms & API Reference",
+    description:
+      "Self-host guide, platform setup, REST API, and MCP server reference for Posthive.",
   },
 };
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(docsSchema) }}
+      />
+      {children}
+    </>
+  );
 }

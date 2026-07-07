@@ -342,7 +342,7 @@ export default function RootPage() {
         {/* ── SOCIAL PROOF BAR ── */}
         <section style={{ borderTop: "1px solid #161616", borderBottom: "1px solid #161616", background: "#0c0c0c" }}>
           <div className="ph-proof-bar" style={{ maxWidth: 1120, margin: "0 auto", padding: "22px 40px", display: "flex", alignItems: "center", justifyContent: "center", gap: 36, flexWrap: "wrap" }}>
-            {[["9", " platforms"], ["1", " composer"], ["14-day", " free trial"], ["No card", " required"]].map(([val, label]) => (
+            {[["11", " platforms"], ["1", " composer"], ["14-day", " free trial"], ["No card", " required"]].map(([val, label]) => (
               <span key={label} className="mono" style={{ fontSize: 13.5, color: "#9a9a9a" }}>
                 <span style={{ color: "#ededed", fontWeight: 500 }}>{val}</span>{label}
               </span>

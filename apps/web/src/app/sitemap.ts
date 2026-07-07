@@ -19,6 +19,9 @@ const PLATFORM_SLUGS = [
   "youtube",
   "facebook",
   "twitter",
+  "pinterest",
+  "telegram",
+  "nostr",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

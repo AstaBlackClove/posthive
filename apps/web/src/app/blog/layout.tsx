@@ -2,19 +2,20 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Blog",
-  description: "Product updates, guides, and creator insights from the Posthive team.",
+  description:
+    "Product updates, creator guides, and insights from the Posthive team. Learn how to schedule smarter across Bluesky, Threads, Instagram, LinkedIn, and more.",
   openGraph: {
-    title: "Posthive Blog",
-    description: "Product updates, guides, and creator insights from the Posthive team.",
-    images: [
-      {
-        url: "/api/og?layout=blog&title=Posthive%20Blog&desc=Product%20updates%2C%20guides%2C%20and%20creator%20insights.&badge=Blog",
-        width: 1200,
-        height: 630,
-      },
-    ],
+    title: "Posthive Blog — Updates & Insights",
+    description:
+      "Product updates, creator guides, and insights from the Posthive team.",
+    url: "https://posthive.co/blog",
   },
-  twitter: { card: "summary_large_image" },
+  twitter: {
+    card: "summary_large_image",
+    title: "Posthive Blog — Updates & Insights",
+    description:
+      "Product updates, creator guides, and insights from the Posthive team.",
+  },
 };
 
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
