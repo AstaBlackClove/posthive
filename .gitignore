@@ -1,6 +1,9 @@
 node_modules/
 dist/
 
+# Claude Code internal planning — keep private
+.claude/
+
 # Environment variables — never commit real secrets
 .env
 .env.local
