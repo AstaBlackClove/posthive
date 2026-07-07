@@ -46,6 +46,8 @@ interface PlatformData {
   note?: string;
   image: string;
   imageAlt: string;
+  why?: { title: string; desc: string }[];
+  faq?: { q: string; a: string }[];
 }
 
 const PLATFORMS: Record<string, PlatformData> = {
@@ -70,6 +72,17 @@ const PLATFORMS: Record<string, PlatformData> = {
     ],
     image: "/screenshots/platform-bluesky.png",
     imageAlt: "Posthive composer Bluesky post with image and character count",
+    why: [
+      { title: "Bluesky is growing fast — consistency wins", desc: "Bluesky crossed 30 million users and is still accelerating. The accounts that grow fastest are the ones that show up every day. Posthive makes that effortless — batch a week of content in one session, schedule it, and let it run." },
+      { title: "No other scheduler does Bluesky this well", desc: "Buffer and Hootsuite still don't support Bluesky. Posthive was built for the new social web from day one — AT Protocol, app passwords, link cards, and first comment are all handled natively." },
+      { title: "First comment automation is a Bluesky superpower", desc: "Schedule a reply to your own post that fires the moment it goes live. Use it for a link you couldn't fit in 300 chars, a thread continuation, or a CTA. No other tool does this on Bluesky." },
+    ],
+    faq: [
+      { q: "Does Posthive support Bluesky threads?", a: "Posthive supports first comment automation on Bluesky — you can schedule a reply that posts immediately after your main post. Full thread scheduling (multiple replies in sequence) is on the roadmap." },
+      { q: "Do I need to share my Bluesky password?", a: "No. You generate an app password inside Bluesky settings (Settings → Privacy and Security → App Passwords). This is a separate, revocable credential — your main password is never shared." },
+      { q: "What happens if my post fails to publish?", a: "Posthive retries automatically. If the post still fails, the job is marked as failed and you get a visible error in your Posts dashboard so you can re-schedule." },
+      { q: "Can I schedule images on Bluesky?", a: "Yes — up to 4 images per post. You can also add alt text to each image directly in the Posthive composer." },
+    ],
   },
   threads: {
     name: "Threads",
@@ -92,6 +105,16 @@ const PLATFORMS: Record<string, PlatformData> = {
     ],
     image: "/screenshots/platform-threads.png",
     imageAlt: "Posthive composer Threads post preview with image",
+    why: [
+      { title: "Threads punishes inconsistency", desc: "The Threads algorithm heavily favours accounts that post regularly. Missing a day tanks your reach. Posthive lets you batch a week of content in one sitting and schedule it so you never go dark." },
+      { title: "60-day OAuth tokens handled automatically", desc: "Threads access tokens expire every 60 days. Posthive refreshes them silently in the background — you never get an unexpected 'account disconnected' failure mid-schedule." },
+      { title: "Write once, post everywhere", desc: "Posthive lets you write one post and push it to Threads and nine other platforms simultaneously. Tweak the copy per-platform with overrides if you need to — no copy-pasting required." },
+    ],
+    faq: [
+      { q: "Does Posthive support Threads carousels?", a: "Threads carousels are not yet supported via the API. Posthive supports text posts and single image/video posts on Threads." },
+      { q: "How does Threads OAuth work?", a: "Posthive redirects you to Meta's OAuth page where you approve access. The token is encrypted and stored securely. Posthive refreshes it automatically before it expires." },
+      { q: "Can I schedule Threads posts with images?", a: "Yes — attach an image or video in the Posthive composer and it will be included in your Threads post at the scheduled time." },
+    ],
   },
   instagram: {
     name: "Instagram",
@@ -136,6 +159,17 @@ const PLATFORMS: Record<string, PlatformData> = {
     ],
     image: "/screenshots/platform-linkedin.png",
     imageAlt: "Posthive composer LinkedIn post with image preview",
+    why: [
+      { title: "LinkedIn reach is highest in the first hour", desc: "The LinkedIn algorithm judges a post's reach by its early engagement. If you're posting at 2am when nobody's online, you're wasting it. Posthive lets you schedule for 8am Tuesday when your audience is actually active." },
+      { title: "First comment is a LinkedIn growth hack", desc: "LinkedIn's algorithm counts comments heavily. Many creators post their main content, then immediately add a first comment with hashtags or a question to drive replies. Posthive automates this — the comment fires the second the post goes live." },
+      { title: "3,000 characters — use them", desc: "LinkedIn posts that tell a full story consistently outperform short ones. Posthive's composer gives you the full 3,000 character limit with a live counter, so you can write thoughtful long-form content without being cut off." },
+    ],
+    faq: [
+      { q: "Can I schedule LinkedIn articles with Posthive?", a: "Posthive schedules LinkedIn posts (feed updates) via the UGC API. Full LinkedIn articles (long-form content) are not supported via the LinkedIn API at this time." },
+      { q: "How does first comment work on LinkedIn?", a: "Write your first comment in the dedicated field in the Posthive composer. When your post goes live, Posthive immediately posts the comment as a reply from the same account." },
+      { q: "Does Posthive support LinkedIn company pages?", a: "Posthive connects to LinkedIn personal profiles via OAuth. Company page scheduling requires LinkedIn's Marketing Developer Platform access, which is on the roadmap." },
+      { q: "What happens to my LinkedIn token after 60 days?", a: "Posthive stores your LinkedIn OAuth token and refreshes it automatically before it expires. You won't get disconnected mid-campaign." },
+    ],
   },
   mastodon: {
     name: "Mastodon",
@@ -158,6 +192,17 @@ const PLATFORMS: Record<string, PlatformData> = {
     ],
     image: "/screenshots/platform-mastodon.png",
     imageAlt: "Posthive composer Mastodon post with instance selector",
+    why: [
+      { title: "Any instance, no configuration headaches", desc: "Posthive works with any Mastodon-compatible server. Enter your instance URL, approve OAuth, and you're posting. Whether you're on mastodon.social, fosstodon.org, hachyderm.io, or a private instance — it just works." },
+      { title: "The only scheduler that also does Bluesky and Nostr", desc: "If you're building a presence across the fediverse and the open social web, Posthive is the only tool that handles Mastodon, Bluesky, and Nostr from one composer. Cross-post to all three in a single click." },
+      { title: "First comment on Mastodon", desc: "Schedule a reply to your own toot that fires immediately after the main post. Use it for content warnings, links, or a thread continuation — exactly the way power users do it manually, but automated." },
+    ],
+    faq: [
+      { q: "Which Mastodon instances does Posthive support?", a: "Any instance running Mastodon 3.0 or later. This includes mastodon.social, fosstodon.org, hachyderm.io, infosec.exchange, and thousands of others. Posthive registers an OAuth app on your instance automatically." },
+      { q: "Is my Mastodon account safe?", a: "Yes. Posthive uses standard OAuth — no password is ever shared. You approve access directly on your instance's login page. You can revoke access anytime from your Mastodon settings." },
+      { q: "Can I connect multiple Mastodon accounts from different instances?", a: "Yes. Each account is connected separately. You can have accounts on mastodon.social, fosstodon.org, and any other instance all active in Posthive at the same time." },
+      { q: "What character limit does Posthive use for Mastodon?", a: "Posthive respects your instance's character limit, which is 500 characters on most instances. The composer shows a live counter so you never go over." },
+    ],
   },
   youtube: {
     name: "YouTube",
@@ -225,6 +270,17 @@ const PLATFORMS: Record<string, PlatformData> = {
     note: "Pinterest requires an image for every Pin — text-only posts are not supported. Sandbox mode is available for testing without publishing to live boards.",
     image: "/screenshots/platform-pinterest.png",
     imageAlt: "Posthive composer Pinterest Pin scheduling with image",
+    why: [
+      { title: "Pinterest rewards volume — scheduling makes it sustainable", desc: "Pinterest's algorithm favours accounts that Pin consistently over time. Most creators burn out trying to post daily manually. Posthive lets you batch 30 Pins in one session and drip them out over a month automatically." },
+      { title: "Every Pin is a link back to your site", desc: "Unlike other platforms, Pinterest Pins have a destination URL built in. Every scheduled Pin is also a scheduled backlink. Posthive makes it easy to attach your URL to every post without extra steps." },
+      { title: "Flat price, no per-seat nonsense", desc: "Pinterest schedulers like Tailwind charge per seat and lock features behind higher tiers. Posthive is a flat monthly price — Creator, Pro, or Team — with all platforms included on every plan." },
+    ],
+    faq: [
+      { q: "Does Pinterest scheduling require an image?", a: "Yes. Pinterest requires an image for every Pin — text-only posts are not supported by the Pinterest API. Attach an image in the Posthive composer before scheduling." },
+      { q: "Which Pinterest boards can I post to?", a: "Posthive can post to any board on your connected Pinterest account. Select the target board in the compose screen before scheduling." },
+      { q: "What is Pinterest sandbox mode?", a: "Pinterest sandbox mode lets you test the full scheduling flow — connecting your account, composing Pins, and triggering publish — without creating real Pins on your live boards. Useful for testing integrations." },
+      { q: "How do I connect my Pinterest account?", a: "Click Connect Pinterest in the Accounts page. You're redirected to Pinterest's OAuth page where you approve Posthive's access. The token is encrypted and stored securely." },
+    ],
   },
   telegram: {
     name: "Telegram",
@@ -248,6 +304,17 @@ const PLATFORMS: Record<string, PlatformData> = {
     note: "No OAuth redirect or server-side app credentials needed. Each user brings their own bot token, stored encrypted. One bot can serve multiple channels.",
     image: "/screenshots/platform-telegram.png",
     imageAlt: "Posthive composer Telegram channel post scheduling",
+    why: [
+      { title: "No OAuth, no waiting, no approval process", desc: "Telegram scheduling via Posthive requires no Meta app review, no OAuth redirect, and no API key approval. Create a bot via @BotFather in two minutes, add it to your channel, and start scheduling immediately." },
+      { title: "4,096 characters — more room than any other platform", desc: "Telegram channels are where people share long-form updates, deep dives, and newsletters. Posthive gives you the full 4,096 character limit with media support so nothing gets cut off." },
+      { title: "Media groups — 10 images in one post", desc: "Send up to 10 images as a single media group post. Perfect for product showcases, step-by-step guides, or photo essays. Posthive handles the Telegram media group API automatically." },
+    ],
+    faq: [
+      { q: "Do I need a Telegram account to use this?", a: "Yes. You need a Telegram account to create a bot via @BotFather. The bot is what Posthive uses to post to your channel — no OAuth or Meta approval required." },
+      { q: "Can I post to private Telegram channels?", a: "Yes. Private channels work with their numeric ID (e.g. -1001234567890) instead of a username. Posthive accepts both formats." },
+      { q: "What media types does Posthive support on Telegram?", a: "Single images with captions, multi-image media groups (up to 10), and video posts with captions. Text-only posts are also supported up to 4,096 characters." },
+      { q: "Can one bot post to multiple channels?", a: "Yes. A single Telegram bot can be added as an admin to multiple channels. In Posthive, connect each channel as a separate account using the same bot token with different channel usernames." },
+    ],
   },
   nostr: {
     name: "Nostr",
@@ -271,6 +338,17 @@ const PLATFORMS: Record<string, PlatformData> = {
     note: "No OAuth redirect or server-side app credentials needed. Your nsec is stored AES-256-GCM encrypted per-user and never logged or exposed.",
     image: "/screenshots/platform-nostr.png",
     imageAlt: "Posthive composer Nostr note scheduling",
+    why: [
+      { title: "No approval, no OAuth, no gatekeeping", desc: "Nostr is a keypair-based protocol. There's no company to approve your app, no OAuth scopes to request, no API key waiting list. Paste your nsec, and you're posting. Posthive is one of the only schedulers in the world that supports Nostr." },
+      { title: "Publish to multiple relays simultaneously", desc: "A Nostr note is only as visible as the relays it reaches. Posthive broadcasts to Damus, Nostr.band, nos.lol, and Snort relay simultaneously — maximising reach without any extra effort on your part." },
+      { title: "Your keys stay yours", desc: "Posthive stores your nsec encrypted with AES-256-GCM — the same standard used in banking. It is never logged, never exposed in API responses, and never visible to anyone but you. You can also self-host Posthive if you want complete control." },
+    ],
+    faq: [
+      { q: "What is a Nostr scheduler?", a: "A Nostr scheduler is a tool that lets you write Nostr notes (Kind 1 events) in advance and publish them to relays at a scheduled time. Posthive is one of the only social media schedulers that supports Nostr." },
+      { q: "Is it safe to paste my nsec into Posthive?", a: "Your nsec is encrypted with AES-256-GCM before being stored. It is never logged or returned in API responses. If you prefer zero trust, you can self-host Posthive on your own server — the source code is fully open on GitHub." },
+      { q: "Can I generate a new Nostr keypair in Posthive?", a: "Yes. If you don't have a Nostr keypair yet, Posthive can generate one for you. Your new npub and nsec are shown once — save them in a password manager before closing the dialog." },
+      { q: "Which relays does Posthive publish to?", a: "Posthive publishes to relay.damus.io, relay.nostr.band, nos.lol, and relay.snort.social by default. These are among the highest-uptime public relays on the network." },
+    ],
   },
   twitter: {
     name: "X (Twitter)",
@@ -441,6 +519,44 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
             <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 12, padding: "16px 20px", display: "flex", gap: 12, alignItems: "flex-start" }}>
               <span style={{ fontSize: 16, flexShrink: 0 }}>ℹ️</span>
               <p style={{ fontSize: 13.5, color: "#888", lineHeight: 1.6, margin: 0 }}>{data.note}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Why section ── */}
+      {data.why && data.why.length > 0 && (
+        <section style={{ padding: "0 24px 80px" }}>
+          <div style={{ maxWidth: 860, margin: "0 auto" }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".1em", textTransform: "uppercase", textAlign: "center", marginBottom: 48 }}>
+              WHY USE POSTHIVE FOR {data.name.toUpperCase()}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {data.why.map((w) => (
+                <div key={w.title} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "28px 32px" }}>
+                  <h3 style={{ fontSize: 17, fontWeight: 700, color: "#ededed", marginBottom: 10, letterSpacing: "-.01em" }}>{w.title}</h3>
+                  <p style={{ fontSize: 14.5, color: "#666", lineHeight: 1.75, margin: 0 }}>{w.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── FAQ ── */}
+      {data.faq && data.faq.length > 0 && (
+        <section style={{ padding: "0 24px 80px" }}>
+          <div style={{ maxWidth: 680, margin: "0 auto" }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".1em", textTransform: "uppercase", textAlign: "center", marginBottom: 48 }}>
+              FREQUENTLY ASKED QUESTIONS
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {data.faq.map((item) => (
+                <div key={item.q} style={{ border: "1px solid #1e1e1e", borderRadius: 12, padding: "20px 24px" }}>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", marginBottom: 8 }}>{item.q}</p>
+                  <p style={{ fontSize: 14, color: "#666", lineHeight: 1.7, margin: 0 }}>{item.a}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
