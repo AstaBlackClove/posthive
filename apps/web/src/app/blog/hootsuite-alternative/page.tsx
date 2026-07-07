@@ -26,7 +26,7 @@ const faqSchema = {
     {
       "@type": "Question",
       name: "What is the cheapest Hootsuite alternative?",
-      acceptedAnswer: { "@type": "Answer", text: "If you self-host Posthive, the cost is effectively zero — just your hosting infrastructure. The hosted Posthive plan starts at ₹550/month with no per-account pricing." },
+      acceptedAnswer: { "@type": "Answer", text: "If you self-host Posthive, the cost is effectively zero — just your hosting infrastructure. The hosted Posthive plan starts at $9/month with no per-account pricing." },
     },
     {
       "@type": "Question",

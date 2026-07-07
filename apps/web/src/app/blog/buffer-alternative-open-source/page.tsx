@@ -36,7 +36,7 @@ const faqSchema = {
     {
       "@type": "Question",
       name: "How much does Posthive cost compared to Buffer?",
-      acceptedAnswer: { "@type": "Answer", text: "Posthive's hosted plans start at ₹550/month. Buffer's Essentials plan starts at $6/month per channel — costs scale quickly with multiple accounts. Self-hosted Posthive is free." },
+      acceptedAnswer: { "@type": "Answer", text: "Posthive's hosted plans start at $9/month. Buffer's Essentials plan starts at $6/month per channel — costs scale quickly with multiple accounts. Self-hosted Posthive is free." },
     },
   ],
 };
@@ -176,7 +176,7 @@ export default function BufferAlternativePage() {
           </p>
 
           <p style={{ marginBottom: 24 }}>
-            Posthive&apos;s hosted plan starts at ₹550/month with no per-channel pricing. Or self-host it for free — your only cost is the VPS or cloud instance, which can be near-zero on Railway&apos;s or Fly.io&apos;s hobby tier.
+            Posthive&apos;s hosted plan starts at $9/month with no per-channel pricing. Or self-host it for free — your only cost is the VPS or cloud instance, which can be near-zero on Railway&apos;s or Fly.io&apos;s hobby tier.
           </p>
 
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
