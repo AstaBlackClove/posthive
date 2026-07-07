@@ -129,7 +129,7 @@ export default function HootsuiteAlternativePage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "32px 0" }}>
             {[
               { label: "Hootsuite Professional", price: "$99/mo", sub: "1 user · 10 accounts", color: "#e86b6b" },
-              { label: "Posthive Creator", price: "₹550/mo", sub: "All platforms · no per-account fee", color: "#5cb88a" },
+              { label: "Posthive Creator", price: "$9/mo", sub: "All platforms · no per-account fee", color: "#5cb88a" },
             ].map((p) => (
               <div key={p.label} style={{ background: "#111", border: `1px solid ${p.color}33`, borderRadius: 14, padding: "20px 18px", textAlign: "center" }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#555", marginBottom: 8 }}>{p.label}</div>
@@ -166,7 +166,7 @@ export default function HootsuiteAlternativePage() {
               </thead>
               <tbody>
                 {[
-                  ["Starting price", "$99/mo", "₹550/mo"],
+                  ["Starting price", "$99/mo", "$9/mo"],
                   ["Self-hostable", "✕", "✓"],
                   ["Open source", "✕", "✓ (AGPL-3.0)"],
                   ["Bluesky support", "✕", "✓"],
