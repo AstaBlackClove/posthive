@@ -137,6 +137,17 @@ const PLATFORMS: Record<string, PlatformData> = {
     ],
     image: "/screenshots/platform-instagram.png",
     imageAlt: "Posthive composer Instagram Reel scheduling with preview",
+    why: [
+      { title: "Reels, Stories, and feed posts — all from one place", desc: "Most schedulers support Instagram feed posts and stop there. Posthive handles the full content mix: feed posts, carousels up to 10 images, Reels, and Stories. You don't need a separate app for each content type." },
+      { title: "Consistency is what the Instagram algorithm rewards", desc: "Instagram's algorithm heavily favours accounts that post at regular intervals. Going dark for a few days tanks your reach. Posthive lets you batch a week of content in one session and schedule it so your profile stays active even when you're not." },
+      { title: "Stop posting manually at peak hours", desc: "You know 7pm Tuesday gets the best engagement — but you're not always free at 7pm Tuesday. Posthive fires the post at the exact second you schedule it, so you capture peak-hour reach without being glued to your phone." },
+    ],
+    faq: [
+      { q: "Does Posthive support Instagram Reels scheduling?", a: "Yes. Posthive supports scheduling Instagram Reels via the Instagram Graph API. Attach your video in the composer, write your caption, and set a publish time. Posthive handles the media container upload and publish automatically." },
+      { q: "Can I schedule Instagram carousels?", a: "Yes. Posthive supports carousels of up to 10 images. Attach multiple images in the composer and Posthive will publish them as a single carousel post." },
+      { q: "What type of Instagram account do I need?", a: "You need an Instagram Professional account — either Business or Creator. Personal accounts are not supported by the Instagram Graph API. Switching to a Professional account is free and takes about 30 seconds in the Instagram app." },
+      { q: "Can I schedule Instagram Stories?", a: "Yes. Posthive supports Instagram Stories scheduling via the Graph API. Attach your Story image or video and select Story as the content type in the composer." },
+    ],
   },
   linkedin: {
     name: "LinkedIn",
@@ -225,6 +236,17 @@ const PLATFORMS: Record<string, PlatformData> = {
     ],
     image: "/screenshots/platform-youtube.png",
     imageAlt: "Posthive composer YouTube Shorts scheduling with title and description fields",
+    why: [
+      { title: "Schedule Shorts at peak hours without staying up late", desc: "YouTube Shorts get the most traction when published during peak viewing windows — typically evenings and weekends. Posthive lets you upload your video and set an exact publish time so you hit those windows every time without being at your desk." },
+      { title: "Dedicated title and description fields", desc: "YouTube is different from every other platform — it needs a title, a description, and a video file. Posthive has dedicated fields for all three, separate from your main post content, so nothing gets mixed up between platforms." },
+      { title: "Resumable upload API — no dropped uploads", desc: "Posthive uses YouTube's resumable upload API to push video files. If the connection hiccups mid-upload, it resumes from where it left off. Large video files don't fail silently." },
+    ],
+    faq: [
+      { q: "Can I schedule YouTube Shorts with Posthive?", a: "Yes. Posthive supports YouTube Shorts scheduling. Toggle the Short option in the composer and Posthive automatically adds the #Shorts tag and sets the correct video parameters for the Shorts feed." },
+      { q: "What video formats does Posthive support for YouTube?", a: "Posthive uploads video files to YouTube using the resumable upload API. Standard formats like MP4, MOV, and AVI are supported. YouTube processes the video after upload, which may take a few minutes." },
+      { q: "How do I connect my YouTube channel?", a: "Click Connect YouTube in the Accounts page. You're redirected to Google's OAuth page where you approve access to your YouTube channel. The token is stored encrypted and refreshed automatically." },
+      { q: "Can I schedule regular YouTube videos (not just Shorts)?", a: "Yes. Posthive supports both YouTube Shorts and regular video uploads. Toggle between Short and Video in the composer. Regular videos include a full title and description field." },
+    ],
   },
   facebook: {
     name: "Facebook Pages",
@@ -247,6 +269,17 @@ const PLATFORMS: Record<string, PlatformData> = {
     ],
     image: "/screenshots/platform-facebook.png",
     imageAlt: "Posthive composer Facebook Page post with image",
+    why: [
+      { title: "Facebook Pages die without consistency", desc: "Organic reach on Facebook Pages is already low — posting irregularly makes it worse. The algorithm deprioritises Pages that go quiet. Posthive keeps your Page active on autopilot so you maintain whatever reach you've built." },
+      { title: "All your Pages in one place", desc: "If you manage multiple Facebook Pages — for different brands, clients, or projects — Posthive connects all of them in one account. Switch between Pages in the composer without logging in and out of Business Manager." },
+      { title: "Text, photo, video, and carousel all supported", desc: "Facebook Pages support a wider range of post types than most platforms. Posthive handles text posts, single photos, multi-photo carousels, and video posts via the Graph API — so you're not limited to just text." },
+    ],
+    faq: [
+      { q: "Does Posthive support Facebook personal profiles?", a: "No. Facebook's API only allows posting to Pages, not personal profiles. You need a Facebook Page to use Posthive. Creating a Page is free and takes about two minutes." },
+      { q: "Can I manage multiple Facebook Pages with Posthive?", a: "Yes. When you connect via Facebook OAuth, Posthive lists all Pages you administer. Connect each Page as a separate account and post to them independently or simultaneously." },
+      { q: "Does Posthive support Facebook video posts?", a: "Yes. Posthive supports video posts to Facebook Pages via the Graph API. Attach your video file in the composer and schedule it like any other post." },
+      { q: "What is the character limit for Facebook posts?", a: "Facebook Pages support up to 63,206 characters per post. Posthive's composer shows a live counter so you always know how much space you have left." },
+    ],
   },
   pinterest: {
     name: "Pinterest",
@@ -371,6 +404,17 @@ const PLATFORMS: Record<string, PlatformData> = {
     ],
     image: "/screenshots/platform-twitter.png",
     imageAlt: "Posthive composer X Twitter post scheduling",
+    why: [
+      { title: "Post at peak hours without watching the clock", desc: "X engagement spikes at specific windows — early morning, lunch, and early evening in your audience's timezone. Posthive lets you write your tweets whenever inspiration hits and schedule them to go live exactly when your audience is most active." },
+      { title: "100 tweets/month included on Pro and Team", desc: "X's API pricing is steep. Posthive absorbs the API cost and includes 100 tweets per month on Pro and Team plans — no extra billing, no per-tweet charges. Links are not supported due to X's API restrictions on the Basic tier." },
+      { title: "Cross-post to 10 other platforms simultaneously", desc: "If you're on X, you're probably also on Bluesky, LinkedIn, or Threads. Posthive lets you write once and post to all of them in one click. Use per-platform overrides to tweak the copy for each network without creating separate posts." },
+    ],
+    faq: [
+      { q: "Why can't I include links in X posts via Posthive?", a: "X charges significantly more for API access that allows link posting. Posthive uses the Basic API tier, which does not support tweets containing URLs. This is an X API restriction, not a Posthive limitation." },
+      { q: "How many tweets can I schedule per month?", a: "Pro and Team plans include 100 tweets per month. This resets on your billing cycle. The limit is shared across all connected X accounts on your plan." },
+      { q: "Can I schedule X threads with Posthive?", a: "Posthive currently supports individual tweets and first comment (reply) automation. Full thread scheduling — multiple sequential replies — is on the roadmap." },
+      { q: "How do I connect my X account?", a: "Click Connect X in the Accounts page. You're redirected to X's OAuth page to approve access. The connection uses OAuth 1.0a, which is what X requires for posting via the API." },
+    ],
   },
 };
 
