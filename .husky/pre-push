@@ -1,0 +1,9 @@
+echo "🔨 Running build before push..."
+pnpm build
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "  ✗ Build failed. Fix the errors above before pushing."
+  echo ""
+  exit 1
+fi
+echo "✓ Build passed."
