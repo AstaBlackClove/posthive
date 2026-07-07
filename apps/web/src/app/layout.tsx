@@ -10,8 +10,7 @@ const OG_BASE = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
 export const metadata: Metadata = {
   title: { default: "Posthive — Open-source Social Media Scheduler", template: "%s | Posthive" },
-  description:
-    "The open-source social media scheduler for Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, and Nostr. Schedule posts and first comments from one place. Flat price, self-hostable.",
+  description: "Open-source social media scheduler for Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube & more. Write once, post to 11 platforms. Self-hostable.",
   keywords: [
     "open source social media scheduler",
     "Bluesky scheduler",

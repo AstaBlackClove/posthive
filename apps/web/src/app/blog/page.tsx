@@ -5,6 +5,30 @@ import Link from "next/link";
 
 const POSTS = [
   {
+    slug: "best-social-media-scheduler",
+    title: "The Best Social Media Scheduler in 2026 (Free and Paid)",
+    date: "July 7, 2026",
+    readTime: "10 min read",
+    category: "Comparison",
+    excerpt: "A no-fluff comparison of the best social media schedulers in 2026. Pricing, platform support, and who each tool is actually built for.",
+  },
+  {
+    slug: "how-to-schedule-instagram-reels",
+    title: "How to Schedule Instagram Reels in 2026 (Step-by-Step Guide)",
+    date: "July 7, 2026",
+    readTime: "8 min read",
+    category: "Guide",
+    excerpt: "Learn how to schedule Instagram Reels in advance using Posthive. Save hours every week by batching your content and publishing automatically at peak times.",
+  },
+  {
+    slug: "canva-social-media-scheduler-alternative",
+    title: "The Best Canva Social Media Scheduler Alternative in 2026",
+    date: "July 7, 2026",
+    readTime: "7 min read",
+    category: "Comparison",
+    excerpt: "Canva scheduler is limited to 8 platforms and locked behind Pro. Here is a better alternative that covers 11 platforms including Bluesky, Threads, and Mastodon.",
+  },
+  {
     slug: "hootsuite-alternative",
     title: "The Best Hootsuite Alternative in 2026 — Cheaper, Open Source, More Platforms",
     date: "July 7, 2026",
@@ -95,8 +119,8 @@ export default function BlogPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                   <span style={{
                     fontSize: 11, fontWeight: 700,
-                    color: post.category === "Comparison" ? "#5cb88a" : "#9ba2ee",
-                    background: post.category === "Comparison" ? "rgba(80,180,120,.1)" : "rgba(91,99,211,.1)",
+                    color: post.category === "Comparison" ? "#5cb88a" : post.category === "Guide" ? "#e86b6b" : "#9ba2ee",
+                    background: post.category === "Comparison" ? "rgba(80,180,120,.1)" : post.category === "Guide" ? "rgba(232,107,107,.1)" : "rgba(91,99,211,.1)",
                     borderRadius: 6, padding: "3px 9px", letterSpacing: ".04em",
                   }}>
                     {post.category}
