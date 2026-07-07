@@ -5,8 +5,24 @@ import Link from "next/link";
 
 const POSTS = [
   {
+    slug: "hootsuite-alternative",
+    title: "The Best Hootsuite Alternative in 2026 — Cheaper, Open Source, More Platforms",
+    date: "July 7, 2026",
+    readTime: "6 min read",
+    category: "Comparison",
+    excerpt: "Hootsuite costs $99/month minimum. Posthive does the same job across 11 platforms for a fraction of the price — and it's open source.",
+  },
+  {
+    slug: "buffer-alternative-open-source",
+    title: "The Best Open-Source Buffer Alternative in 2026",
+    date: "July 7, 2026",
+    readTime: "7 min read",
+    category: "Comparison",
+    excerpt: "Looking for a Buffer alternative that's open source, self-hostable, and supports more platforms? Posthive does everything Buffer does and more for less.",
+  },
+  {
     slug: "introducing-posthive",
-    title: "Introducing Posthive — Schedule posts to 7 platforms at once",
+    title: "Introducing Posthive Schedule posts to 11 platforms at once",
     date: "July 3, 2026",
     readTime: "5 min read",
     category: "Product",
@@ -62,7 +78,7 @@ export default function BlogPage() {
         </div>
 
         {/* Posts */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {POSTS.map((post) => (
             <Link
               key={post.slug}
@@ -78,9 +94,10 @@ export default function BlogPage() {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                   <span style={{
-                    fontSize: 11, fontWeight: 700, color: "#9ba2ee",
-                    background: "rgba(91,99,211,.1)", borderRadius: 6, padding: "3px 9px",
-                    letterSpacing: ".04em",
+                    fontSize: 11, fontWeight: 700,
+                    color: post.category === "Comparison" ? "#5cb88a" : "#9ba2ee",
+                    background: post.category === "Comparison" ? "rgba(80,180,120,.1)" : "rgba(91,99,211,.1)",
+                    borderRadius: 6, padding: "3px 9px", letterSpacing: ".04em",
                   }}>
                     {post.category}
                   </span>

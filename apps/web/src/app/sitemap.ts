@@ -33,7 +33,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/pricing`,     lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: `${base}/docs`,        lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
     { url: `${base}/blog`,        lastModified: now, changeFrequency: "weekly",  priority: 0.7 },
-    { url: `${base}/blog/introducing-posthive`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${base}/blog/introducing-posthive`,        lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${base}/blog/buffer-alternative-open-source`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/blog/hootsuite-alternative`,       lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/for-developers`,                   lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/privacy`,     lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
     { url: `${base}/terms`,       lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
     ...FEATURE_SLUGS.map(slug => ({

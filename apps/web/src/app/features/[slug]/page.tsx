@@ -21,6 +21,7 @@ interface FeatureData {
   why: { title: string; desc: string }[];
   how: { n: string; title: string; desc: string }[];
   usecases: string[];
+  faq?: { q: string; a: string }[];
 }
 
 const FEATURES: Record<string, FeatureData> = {
@@ -30,7 +31,7 @@ const FEATURES: Record<string, FeatureData> = {
     badgeColor: "#9ba2ee",
     badgeBg: "rgba(91,99,211,.15)",
     headline: "Write once. Post everywhere.",
-    subheadline: "One composer, seven platforms. Draft your content once and send it to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages in a single click.",
+    subheadline: "One composer, eleven platforms. Draft your content once and send it to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr, and X in a single click.",
     image: "/screenshots/feature-multi-platform.png",
     imageAlt: "Posthive composer selecting multiple platforms",
     why: [
@@ -48,6 +49,12 @@ const FEATURES: Record<string, FeatureData> = {
       "Creators cross-posting to grow on multiple networks",
       "Founders maintaining visibility while shipping",
       "Marketers running multi-channel campaigns from one place",
+    ],
+    faq: [
+      { q: "How many platforms does Posthive support?", a: "Posthive currently supports 11 platforms: Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, and X (Twitter)." },
+      { q: "Can I post different content to each platform?", a: "Yes. Posthive's per-platform override feature lets you write a base post and then customise the text, media, and first comment independently for each account." },
+      { q: "Is Posthive a good Buffer or Hootsuite alternative?", a: "Yes. Posthive covers all major platforms, costs significantly less, and is open source — you can self-host it if you prefer full data control." },
+      { q: "Do I need a separate account for each platform?", a: "No. Connect all your social accounts once from the Accounts page and they're available in every compose session. You just tick which ones to post to." },
     ],
   },
   "instagram-reels-scheduler": {
@@ -76,6 +83,12 @@ const FEATURES: Record<string, FeatureData> = {
       "Photographers scheduling carousel portfolios",
       "Coaches delivering educational carousel content on a schedule",
     ],
+    faq: [
+      { q: "Can I schedule Instagram Reels with Posthive?", a: "Yes. Posthive supports Instagram Reels scheduling via the official Instagram Content Publishing API. Connect a Business or Creator account and choose 'Reel' in the composer." },
+      { q: "Does Posthive support Instagram Stories?", a: "Yes. You can schedule Stories from the composer — just select 'Story' as the content type and upload an image or short video." },
+      { q: "Why can't I connect a personal Instagram account?", a: "Meta's Instagram API only allows publishing to Business and Creator accounts. Personal accounts are not supported by the API — you'll need to switch your account type in Instagram settings." },
+      { q: "Can I schedule Instagram carousels?", a: "Yes. Select 'Carousel' in the composer and upload up to 10 images. Each image supports its own alt text for accessibility." },
+    ],
   },
   "drag-to-reschedule": {
     title: "Drag-to-reschedule",
@@ -102,6 +115,12 @@ const FEATURES: Record<string, FeatureData> = {
       "Founders batching a week of posts and spreading them out visually",
       "Social media managers handling multiple clients",
       "Anyone who thinks visually about their publishing cadence",
+    ],
+    faq: [
+      { q: "Can I drag posts to reschedule them?", a: "Yes. The calendar view on the Posts page lets you drag any scheduled post to a new date and Posthive updates the publish time instantly." },
+      { q: "What calendar views are available?", a: "Month, week, and day views are all available. Switch between them with a single click at the top of the calendar." },
+      { q: "Can I filter the calendar by platform?", a: "Yes. Use the platform filter to show only posts going to specific accounts, so you can focus on one channel at a time." },
+      { q: "Does the calendar sync in real time?", a: "Yes. Any change you make — a new post, a reschedule, a deletion — appears on the calendar immediately without a page refresh." },
     ],
   },
   "first-comment": {
@@ -130,6 +149,12 @@ const FEATURES: Record<string, FeatureData> = {
       "Threads users starting a reply thread automatically",
       "Bluesky users adding context or a CTA below the main post",
     ],
+    faq: [
+      { q: "Which platforms support first comment scheduling?", a: "First comment scheduling works on Instagram, Threads, LinkedIn, Bluesky, and Mastodon. Facebook first comment support is pending Meta app review." },
+      { q: "How long after the main post does the first comment go live?", a: "The first comment is posted within a few seconds of the main post going live — in the same job run, immediately after the post is confirmed published." },
+      { q: "Can I put hashtags in the first comment to avoid cluttering my caption?", a: "Yes. This is one of the most popular use cases. Write your hashtags in the first comment field and Posthive posts them as the first reply, keeping your caption clean." },
+      { q: "Can the first comment contain a link?", a: "Yes. You can put any text in the first comment, including URLs. This is especially useful on LinkedIn where posts with links in the caption get less reach." },
+    ],
   },
   "per-platform-overrides": {
     title: "Per-platform overrides",
@@ -156,6 +181,12 @@ const FEATURES: Record<string, FeatureData> = {
       "Fitting a long post into Bluesky's 300-char limit with a summarized version",
       "Using different hashtags per platform",
       "Varying the CTA depending on where the audience is",
+    ],
+    faq: [
+      { q: "What are per-platform overrides?", a: "Per-platform overrides let you write a custom version of your post for any specific account. The override replaces the base post for that platform only — all other platforms use the base." },
+      { q: "Can I override the first comment per platform too?", a: "Yes. The override editor also has a first comment field, so you can have platform-specific first comments alongside platform-specific post text." },
+      { q: "What happens if I don't set an override for a platform?", a: "If no override is set, Posthive uses the base post text for that platform. Overrides are optional and only apply where you explicitly configure them." },
+      { q: "Is per-platform overrides available on the free plan?", a: "Per-platform overrides are available on the Pro and Team plans." },
     ],
   },
   "bulk-csv-scheduling": {
@@ -184,6 +215,12 @@ const FEATURES: Record<string, FeatureData> = {
       "Indie hackers scheduling a product launch drip across platforms",
       "Creators batching content in one session to stay consistent all week",
     ],
+    faq: [
+      { q: "What columns does the CSV need?", a: "The required columns are: scheduled_for (ISO datetime), text, and accounts. Optional columns are comment (first comment text) and image_urls (comma-separated URLs)." },
+      { q: "How do I target specific platforms per row?", a: "Set the accounts column to a pipe-separated list of platform names, e.g. bluesky|linkedin|threads. Use all to post to every connected account, or prefix with ! to exclude a platform." },
+      { q: "Is there a row limit?", a: "There is no hard row limit in the app, but we recommend keeping batches under 500 rows for reliable preview performance. Larger batches can be split across multiple uploads." },
+      { q: "Can I include images in the CSV?", a: "Yes. Add an image_urls column with one or more public image URLs per row (comma-separated). Posthive fetches and attaches them at publish time." },
+    ],
   },
   "self-hostable": {
     title: "Self-hostable",
@@ -210,6 +247,12 @@ const FEATURES: Record<string, FeatureData> = {
       "Teams running internal social media tools without SaaS fees",
       "Privacy-conscious users who don't want credentials on third-party servers",
       "Engineers building on top of Posthive for custom workflows",
+    ],
+    faq: [
+      { q: "What does self-hostable mean?", a: "Self-hostable means you can run the entire Posthive application on your own server or cloud account. Your data — including encrypted OAuth credentials — stays on your infrastructure." },
+      { q: "What infrastructure do I need to self-host Posthive?", a: "You need a Node.js server (or a platform like Railway or Fly.io), a Postgres or SQLite database, and a Redis instance (Upstash works well on a free tier)." },
+      { q: "Is self-hosted Posthive free?", a: "Yes. The code is free under AGPL-3.0. You only pay for your hosting costs (which can be near-zero on hobby plans). Set ENABLE_BILLING=false to unlock all features." },
+      { q: "Can I modify Posthive and run it privately?", a: "Yes, with one caveat: AGPL-3.0 requires you to share your modifications if you run a modified version as a public service. For private internal use, you can modify it freely." },
     ],
   },
 };
@@ -604,8 +647,8 @@ function getMockup(slug: string) {
 
 const SLUG_OVERRIDES: Record<string, { title: string; description: string; keywords: string[] }> = {
   "multi-platform-posting": {
-    title: "Multi-Platform Social Media Scheduler — Post to 7 Platforms at Once | Posthive",
-    description: "Write once, post everywhere. Schedule to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook in one click. The best Buffer and Hootsuite alternative.",
+    title: "Multi-Platform Social Media Scheduler — Post to 11 Platforms at Once | Posthive",
+    description: "Write once, post everywhere. Schedule to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr, and X in one click. The best Buffer and Hootsuite alternative.",
     keywords: ["multi-platform social media scheduler", "post to multiple social media at once", "Buffer alternative", "Hootsuite alternative", "cross-platform posting"],
   },
   "instagram-reels-scheduler": {
@@ -630,7 +673,7 @@ const SLUG_OVERRIDES: Record<string, { title: string; description: string; keywo
   },
   "bulk-csv-scheduling": {
     title: "Bulk Social Media Scheduling via CSV — Schedule Hundreds of Posts | Posthive",
-    description: "Upload a CSV and schedule hundreds of social media posts at once across 7 platforms. The fastest way to bulk-schedule content for creators and agencies.",
+    description: "Upload a CSV and schedule hundreds of social media posts at once across 11 platforms. The fastest way to bulk-schedule content for creators and agencies.",
     keywords: ["bulk social media scheduling", "CSV social media scheduler", "schedule multiple posts at once", "bulk schedule Instagram", "content scheduling spreadsheet"],
   },
   "self-hostable": {
@@ -705,10 +748,21 @@ export default async function FeaturePage({ params }: { params: Promise<{ slug: 
     ],
   };
 
+  const faqSchema = data.faq && data.faq.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: data.faq.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  } : null;
+
   return (
     <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "system-ui,-apple-system,sans-serif" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
       <style>{`
         @media (max-width: 768px) {
           .feat-hero-grid { grid-template-columns: 1fr !important; }
@@ -776,7 +830,7 @@ export default async function FeaturePage({ params }: { params: Promise<{ slug: 
         <section style={{ padding: "0 24px 80px" }}>
           <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, background: "#1e1e1e", borderRadius: 16, overflow: "hidden" }}>
             {[
-              { n: "7", label: "platforms supported" },
+              { n: "11", label: "platforms supported" },
               { n: "1", label: "post to write" },
               { n: "∞", label: "reach potential" },
             ].map((s) => (
@@ -869,6 +923,26 @@ export default async function FeaturePage({ params }: { params: Promise<{ slug: 
           </div>
         </div>
       </section>
+
+      {/* ── FAQ ── */}
+      {data.faq && data.faq.length > 0 && (
+        <section style={{ padding: "0 24px 80px" }}>
+          <div style={{ maxWidth: 720, margin: "0 auto" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 48 }}>
+              <div style={{ width: 32, height: 3, background: "#2a2a2a", borderRadius: 2 }} />
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".12em", textTransform: "uppercase", margin: 0 }}>Frequently asked questions</p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {data.faq.map((item) => (
+                <div key={item.q} style={{ borderBottom: "1px solid #1a1a1a", padding: "22px 0" }}>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>{item.q}</p>
+                  <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── More features strip ── */}
       <section style={{ padding: "0 24px 80px" }}>
