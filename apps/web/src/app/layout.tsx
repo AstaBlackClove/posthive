@@ -9,7 +9,7 @@ import { ToastProvider } from "../components/Toast";
 const OG_BASE = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
 export const metadata: Metadata = {
-  title: { default: "Posthive — Open-source Social Media Scheduler", template: "%s | Posthive" },
+  title: { default: "Posthive - Agentic Social Media Scheduler", template: "%s | Posthive" },
   description: "Open-source social media scheduler for Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube & more. Write once, post to 11 platforms. Self-hostable.",
   keywords: [
     "open source social media scheduler",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Posthive",
-    title: "Posthive — Open-source Social Media Scheduler",
+    title: "Posthive - Agentic Social Media Scheduler",
     description:
       "Schedule posts and first comments on Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram & Nostr. Flat price. Self-host if you want.",
     images: [
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Posthive — Open-source Social Media Scheduler",
+    title: "Posthive - Agentic Social Media Scheduler",
     description:
       "Schedule posts and first comments on Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram & Nostr. Flat price. Self-host if you want.",
     images: ["/og/landingogimage.png"],
