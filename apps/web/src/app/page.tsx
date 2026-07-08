@@ -23,6 +23,35 @@ const PLATFORMS_GRID = [
   { name: "Nostr",         domain: "nostr.com",       meta: "Keypair · decentralized · no approval", accent: "#8B5CF6", platform: "nostr" },
 ];
 
+// Hero card cycling data — one array per card slot
+const HERO_CARD_SCHEDULED = [
+  { platform: "bluesky",   name: "Bluesky",        text: "Write once, post to 11 platforms. This is the tool I have been waiting for.", pill: "Fires in 2h", pillBg: "#fef3c7", pillColor: "#92400e", time: "9:00 AM" },
+  { platform: "mastodon",  name: "Mastodon",        text: "Finally a scheduler that supports the fediverse. Set it and forget it.", pill: "Fires in 45m", pillBg: "#fef3c7", pillColor: "#92400e", time: "10:15 AM" },
+  { platform: "twitter",   name: "X (Twitter)",     text: "Scheduled 30 tweets for the whole week in under 10 minutes.", pill: "Tomorrow 8AM", pillBg: "#ede9fe", pillColor: "#5b21b6", time: "8:00 AM" },
+  { platform: "pinterest", name: "Pinterest",        text: "Pinned my product catalogue to 6 boards on autopilot every morning.", pill: "Fires in 1h", pillBg: "#fef3c7", pillColor: "#92400e", time: "7:30 AM" },
+];
+
+const HERO_CARD_FIRST_COMMENT = [
+  { platform: "threads",   name: "Threads",         text: "First comment fires automatically right after the post goes live.", pill: "Sent", pillBg: "#dcfce7", pillColor: "#166534", time: "Just now" },
+  { platform: "linkedin",  name: "LinkedIn",         text: "Added my link in the first comment automatically. Algorithm loves it.", pill: "Sent", pillBg: "#dcfce7", pillColor: "#166534", time: "2m ago" },
+  { platform: "instagram", name: "Instagram",        text: "Drop hashtags in the first comment without cluttering the caption.", pill: "Sent", pillBg: "#dcfce7", pillColor: "#166534", time: "Just now" },
+  { platform: "facebook",  name: "Facebook",         text: "First comment auto-posted with the full article link seconds after.", pill: "Sent", pillBg: "#dcfce7", pillColor: "#166534", time: "1m ago" },
+];
+
+const HERO_CARD_POSTED = [
+  { platform: "linkedin",  name: "LinkedIn",         text: "Bulk scheduled 30 days of content in one afternoon with CSV upload.", pill: "Live", pillBg: "#dcfce7", pillColor: "#166534", time: "8:47 AM" },
+  { platform: "youtube",   name: "YouTube Short",    text: "Short went live at peak hour. Views are already rolling in.", pill: "Live", pillBg: "#dcfce7", pillColor: "#166534", time: "12:00 PM" },
+  { platform: "facebook",  name: "Facebook Page",    text: "Posted to 3 Facebook Pages at once from a single compose window.", pill: "Live", pillBg: "#dcfce7", pillColor: "#166534", time: "9:00 AM" },
+  { platform: "nostr",     name: "Nostr",            text: "Decentralized post published. No algorithm, no gatekeeping.", pill: "Live", pillBg: "#dcfce7", pillColor: "#166534", time: "11:22 AM" },
+];
+
+const HERO_CARD_RESCHEDULED = [
+  { platform: "instagram", name: "Instagram Reel",   text: "Dragged to a better time slot on the calendar. Done in 2 seconds.", pill: "Tomorrow 9AM", pillBg: "#ede9fe", pillColor: "#5b21b6", time: "" },
+  { platform: "telegram",  name: "Telegram",         text: "Moved the channel broadcast to Friday peak hours in one tap.", pill: "Fri 6:00 PM", pillBg: "#ede9fe", pillColor: "#5b21b6", time: "" },
+  { platform: "bluesky",   name: "Bluesky",          text: "Rescheduled after spotting a typo. No stress, just drag and drop.", pill: "Mon 8:00 AM", pillBg: "#ede9fe", pillColor: "#5b21b6", time: "" },
+  { platform: "twitter",   name: "X (Twitter)",      text: "Shifted the thread to avoid the weekend lull. Better reach guaranteed.", pill: "Next Mon", pillBg: "#ede9fe", pillColor: "#5b21b6", time: "" },
+];
+
 const PLANS = [
   {
     id: "creator",
@@ -121,6 +150,32 @@ export default function RootPage() {
   const ctaLabel = user ? "Go to scheduler" : "Get started free";
   const navCtaLabel = user ? "Go to scheduler" : "Get started free";
 
+  const [cardIdx, setCardIdx] = useState([0, 0, 0, 0]);
+  const [fade, setFade] = useState([true, true, true, true]);
+
+  useEffect(() => {
+    const SLOTS = [HERO_CARD_SCHEDULED, HERO_CARD_FIRST_COMMENT, HERO_CARD_POSTED, HERO_CARD_RESCHEDULED];
+    const OFFSETS = [0, 900, 1800, 2700]; // stagger per card
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    SLOTS.forEach((slot, i) => {
+      const cycle = () => {
+        setFade(f => { const n = [...f]; n[i] = false; return n; });
+        timers.push(setTimeout(() => {
+          setCardIdx(c => { const n = [...c]; n[i] = (n[i] + 1) % slot.length; return n; });
+          setFade(f => { const n = [...f]; n[i] = true; return n; });
+        }, 350));
+      };
+      timers.push(setTimeout(() => {
+        cycle();
+        const interval = setInterval(cycle, 3600);
+        timers.push(interval as unknown as ReturnType<typeof setTimeout>);
+      }, OFFSETS[i] + 3600));
+    });
+
+    return () => timers.forEach(t => clearTimeout(t));
+  }, []);
+
   return (
     <>
       <style>{`
@@ -139,6 +194,9 @@ export default function RootPage() {
         a { color: inherit; text-decoration: none; }
         ::selection { background: rgba(91,99,211,.35); }
 
+        .hero-card-inner { transition: opacity .35s ease; }
+        .hero-card-inner.fade-out { opacity: 0; }
+
         @keyframes glowpulse {
           0%, 100% { opacity: .85; }
           50% { opacity: 1; }
@@ -146,6 +204,45 @@ export default function RootPage() {
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes floatA {
+          from { transform: translateY(0px); }
+          to   { transform: translateY(-12px); }
+        }
+        @keyframes floatB {
+          from { transform: translateY(-12px); }
+          to   { transform: translateY(0px); }
+        }
+        .hero-float-a { animation: floatA 3.4s ease-in-out infinite alternate; }
+        .hero-float-b { animation: floatB 3.4s ease-in-out infinite alternate; }
+        .hero-card {
+          background: #fff; border-radius: 14px; padding: 16px 18px; width: 220px;
+          border: 2px dashed #555; box-shadow: 0 4px 24px rgba(0,0,0,.35);
+          font-family: 'Inter', system-ui, sans-serif;
+        }
+        .hero-card-platform { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
+        .hero-card-platform span { font-size: 12.5px; font-weight: 700; color: #111; }
+        .hero-card-text { font-size: 12px; color: #444; line-height: 1.5; margin-bottom: 11px; }
+        .hero-card-footer { display: flex; align-items: center; justify-content: space-between; }
+        .hero-status { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+        .hero-time { font-size: 10.5px; color: #999; }
+        .hero-arrow-label {
+          font-size: 11.5px; font-weight: 600; color: #aaa; display: flex; align-items: center; gap: 4px; margin-bottom: 6px;
+        }
+        /* medium: smaller columns + smaller H1 so text doesn't break */
+        @media (min-width: 1101px) and (max-width: 1440px) {
+          .ph-hero-grid { grid-template-columns: 220px 1fr 220px !important; gap: 24px !important; }
+          .ph-hero-h1 { font-size: 56px !important; }
+          .hero-card { width: 200px !important; }
+        }
+        /* ≤1100px: hide side cards, center takes full width */
+        @media (max-width: 1100px) {
+          .ph-hero-cards { display: none !important; }
+          .ph-hero-grid { display: block !important; }
+        }
+        /* mobile: tighten hero padding */
+        @media (max-width: 640px) {
+          .ph-hero-grid { padding: 0 4px !important; }
         }
 
         .anim-1 { animation: fadeUp .6s cubic-bezier(.22,1,.36,1) both; }
@@ -274,7 +371,7 @@ export default function RootPage() {
       <div style={{ paddingTop: 64 }}>
 
         {/* ── HERO ── */}
-        <section className="ph-section" style={{ position: "relative", overflow: "hidden", padding: "110px 40px 80px" }}>
+        <section className="ph-section" style={{ position: "relative", overflow: "hidden", padding: "110px 24px 80px" }}>
           <div style={{
             position: "absolute", top: -80, left: "50%", transform: "translateX(-50%)",
             width: 900, height: 620,
@@ -283,39 +380,127 @@ export default function RootPage() {
           }} />
           <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 50% 0%, rgba(255,255,255,.03), transparent 40%)", pointerEvents: "none" }} />
 
-          <div style={{ maxWidth: 920, margin: "0 auto", textAlign: "center", position: "relative" }}>
+          <div className="ph-hero-grid" style={{ maxWidth: 1600, margin: "0 auto", display: "grid", gridTemplateColumns: "280px 1fr 280px", alignItems: "center", gap: 40, position: "relative" }}>
 
-            <h1 className="anim-2 ph-hero-h1" style={{ fontSize: 72, lineHeight: 1.03, fontWeight: 800, letterSpacing: "-0.035em", margin: "0 0 24px", color: "#f4f4f4" }}>
-              The open-source scheduler<br />
-              <span style={{ color: "#f4f4f4" }}>for the <span style={{ display: "inline-block", background: "#5b63d3", color: "#fff", padding: "2px 16px 4px", borderRadius: 6, transform: "rotate(-1.5deg)", transformOrigin: "center" }}>new social web.</span></span>
-            </h1>
-
-            <p className="anim-3" style={{ fontSize: 19, lineHeight: 1.6, color: "#8f8f8f", maxWidth: 640, margin: "0 auto 38px", fontWeight: 400 }}>
-              Schedule posts everywhere in one click and let Claude, Cursor, or any AI agent do it for you via MCP. One flat price for every channel.
-            </p>
-
-            <div className="anim-4 ph-hero-cta" style={{ display: "flex", gap: 14, justifyContent: "center", alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
-              <Link href={ctaHref} className="ph-btn-primary">
-                {ctaLabel}
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-              </Link>
-              <Link href="/docs" className="ph-btn-secondary">View docs</Link>
+            {/* Left floating cards */}
+            <div className="ph-hero-cards" style={{ display: "flex", flexDirection: "column", gap: 20, alignItems: "center" }}>
+              <div className="hero-float-a" style={{ alignSelf: "flex-start" }}>
+                <div className="hero-arrow-label">
+                  <svg width="10" height="12" viewBox="0 0 10 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M5 1 C2 1 1 4 2 7 L2 11 M2 11 L4 9 M2 11 L0 9"/></svg>
+                  Scheduled
+                </div>
+                <div className="hero-card" style={{ transform: "rotate(-3deg)" }}>
+                  <div className={`hero-card-inner${fade[0] ? "" : " fade-out"}`}>
+                    <div className="hero-card-platform">
+                      <PlatformIcon platform={HERO_CARD_SCHEDULED[cardIdx[0]].platform} size={16} />
+                      <span>{HERO_CARD_SCHEDULED[cardIdx[0]].name}</span>
+                    </div>
+                    <p className="hero-card-text">{HERO_CARD_SCHEDULED[cardIdx[0]].text}</p>
+                    <div className="hero-card-footer">
+                      <span className="hero-status" style={{ background: HERO_CARD_SCHEDULED[cardIdx[0]].pillBg, color: HERO_CARD_SCHEDULED[cardIdx[0]].pillColor }}>{HERO_CARD_SCHEDULED[cardIdx[0]].pill}</span>
+                      {HERO_CARD_SCHEDULED[cardIdx[0]].time && <span className="hero-time">{HERO_CARD_SCHEDULED[cardIdx[0]].time}</span>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="hero-float-b" style={{ alignSelf: "flex-end" }}>
+                <div className="hero-arrow-label">
+                  <svg width="10" height="12" viewBox="0 0 10 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M5 1 C2 1 1 4 2 7 L2 11 M2 11 L4 9 M2 11 L0 9"/></svg>
+                  First comment
+                </div>
+                <div className="hero-card" style={{ transform: "rotate(2deg)" }}>
+                  <div className={`hero-card-inner${fade[1] ? "" : " fade-out"}`}>
+                    <div className="hero-card-platform">
+                      <PlatformIcon platform={HERO_CARD_FIRST_COMMENT[cardIdx[1]].platform} size={16} />
+                      <span>{HERO_CARD_FIRST_COMMENT[cardIdx[1]].name}</span>
+                    </div>
+                    <p className="hero-card-text">{HERO_CARD_FIRST_COMMENT[cardIdx[1]].text}</p>
+                    <div className="hero-card-footer">
+                      <span className="hero-status" style={{ background: HERO_CARD_FIRST_COMMENT[cardIdx[1]].pillBg, color: HERO_CARD_FIRST_COMMENT[cardIdx[1]].pillColor }}>{HERO_CARD_FIRST_COMMENT[cardIdx[1]].pill}</span>
+                      {HERO_CARD_FIRST_COMMENT[cardIdx[1]].time && <span className="hero-time">{HERO_CARD_FIRST_COMMENT[cardIdx[1]].time}</span>}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {!user && (
-              <p className="anim-5 mono" style={{ fontSize: 13, color: "#666", margin: "0 0 52px" }}>14-day free trial</p>
-            )}
+            {/* Center — untouched */}
+            <div style={{ textAlign: "center" }}>
+              <h1 className="anim-2 ph-hero-h1" style={{ fontSize: 72, lineHeight: 1.03, fontWeight: 800, letterSpacing: "-0.035em", margin: "0 0 24px", color: "#f4f4f4" }}>
+                <span style={{ display: "block", marginBottom: 14 }}>The open-source scheduler</span>
+                <span style={{ color: "#f4f4f4" }}>for the <span style={{ display: "inline-block", background: "#5b63d3", color: "#fff", padding: "2px 16px 4px", borderRadius: 6, transform: "rotate(-1.5deg)", transformOrigin: "center" }}>new social web.</span></span>
+              </h1>
 
-            <div className="anim-5" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18, flexWrap: "wrap", marginTop: user ? 52 : 0 }}>
-              <span className="mono" style={{ fontSize: 11, letterSpacing: ".14em", color: "#5f5f5f", fontWeight: 600 }}>PUBLISH TO</span>
-              {PLATFORMS_GRID.map(p => (
-                <span key={p.platform} style={{ display: "inline-flex", alignItems: "center" }}>
-                  <span style={{ width: 30, height: 30, borderRadius: 8, background: "#131313", border: "1px solid #1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <PlatformIcon platform={p.platform} size={17} />
+              <p className="anim-3" style={{ fontSize: 19, lineHeight: 1.6, color: "#8f8f8f", maxWidth: 640, margin: "0 auto 38px", fontWeight: 400 }}>
+                Schedule posts everywhere in one click and let Claude, Cursor, or any AI agent do it for you via MCP. One flat price for every channel.
+              </p>
+
+              <div className="anim-4 ph-hero-cta" style={{ display: "flex", gap: 14, justifyContent: "center", alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
+                <Link href={ctaHref} className="ph-btn-primary">
+                  {ctaLabel}
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </Link>
+                <Link href="/docs" className="ph-btn-secondary">View docs</Link>
+              </div>
+
+              {!user && (
+                <p className="anim-5 mono" style={{ fontSize: 13, color: "#666", margin: "0 0 52px" }}>14-day free trial</p>
+              )}
+
+              <div className="anim-5" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18, flexWrap: "wrap", marginTop: user ? 52 : 0 }}>
+                <span className="mono" style={{ fontSize: 11, letterSpacing: ".14em", color: "#5f5f5f", fontWeight: 600 }}>PUBLISH TO</span>
+                {PLATFORMS_GRID.map(p => (
+                  <span key={p.platform} style={{ display: "inline-flex", alignItems: "center" }}>
+                    <span style={{ width: 30, height: 30, borderRadius: 8, background: "#131313", border: "1px solid #1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <PlatformIcon platform={p.platform} size={17} />
+                    </span>
                   </span>
-                </span>
-              ))}
+                ))}
+              </div>
             </div>
+
+            {/* Right floating cards */}
+            <div className="ph-hero-cards" style={{ display: "flex", flexDirection: "column", gap: 20, alignItems: "center" }}>
+              <div className="hero-float-b" style={{ alignSelf: "flex-start" }}>
+                <div className="hero-arrow-label">
+                  <svg width="10" height="12" viewBox="0 0 10 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M5 1 C2 1 1 4 2 7 L2 11 M2 11 L4 9 M2 11 L0 9"/></svg>
+                  Posted
+                </div>
+                <div className="hero-card" style={{ transform: "rotate(3deg)" }}>
+                  <div className={`hero-card-inner${fade[2] ? "" : " fade-out"}`}>
+                    <div className="hero-card-platform">
+                      <PlatformIcon platform={HERO_CARD_POSTED[cardIdx[2]].platform} size={16} />
+                      <span>{HERO_CARD_POSTED[cardIdx[2]].name}</span>
+                    </div>
+                    <p className="hero-card-text">{HERO_CARD_POSTED[cardIdx[2]].text}</p>
+                    <div className="hero-card-footer">
+                      <span className="hero-status" style={{ background: HERO_CARD_POSTED[cardIdx[2]].pillBg, color: HERO_CARD_POSTED[cardIdx[2]].pillColor }}>{HERO_CARD_POSTED[cardIdx[2]].pill}</span>
+                      {HERO_CARD_POSTED[cardIdx[2]].time && <span className="hero-time">{HERO_CARD_POSTED[cardIdx[2]].time}</span>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="hero-float-a" style={{ alignSelf: "flex-end" }}>
+                <div className="hero-arrow-label">
+                  <svg width="10" height="12" viewBox="0 0 10 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M5 1 C2 1 1 4 2 7 L2 11 M2 11 L4 9 M2 11 L0 9"/></svg>
+                  Rescheduled
+                </div>
+                <div className="hero-card" style={{ transform: "rotate(-2deg)" }}>
+                  <div className={`hero-card-inner${fade[3] ? "" : " fade-out"}`}>
+                    <div className="hero-card-platform">
+                      <PlatformIcon platform={HERO_CARD_RESCHEDULED[cardIdx[3]].platform} size={16} />
+                      <span>{HERO_CARD_RESCHEDULED[cardIdx[3]].name}</span>
+                    </div>
+                    <p className="hero-card-text">{HERO_CARD_RESCHEDULED[cardIdx[3]].text}</p>
+                    <div className="hero-card-footer">
+                      <span className="hero-status" style={{ background: HERO_CARD_RESCHEDULED[cardIdx[3]].pillBg, color: HERO_CARD_RESCHEDULED[cardIdx[3]].pillColor }}>{HERO_CARD_RESCHEDULED[cardIdx[3]].pill}</span>
+                      {HERO_CARD_RESCHEDULED[cardIdx[3]].time && <span className="hero-time">{HERO_CARD_RESCHEDULED[cardIdx[3]].time}</span>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           {/* product screenshot */}
@@ -342,7 +527,7 @@ export default function RootPage() {
         {/* ── SOCIAL PROOF BAR ── */}
         <section style={{ borderTop: "1px solid #161616", borderBottom: "1px solid #161616", background: "#0c0c0c" }}>
           <div className="ph-proof-bar" style={{ maxWidth: 1120, margin: "0 auto", padding: "22px 40px", display: "flex", alignItems: "center", justifyContent: "center", gap: 36, flexWrap: "wrap" }}>
-            {[["11", " platforms"], ["1", " composer"], ["14-day", " free trial"], ["No card", " required"]].map(([val, label]) => (
+            {[["11", " platforms"], ["1", " composer"], ["14-day", " free trial"]].map(([val, label]) => (
               <span key={label} className="mono" style={{ fontSize: 13.5, color: "#9a9a9a" }}>
                 <span style={{ color: "#ededed", fontWeight: 500 }}>{val}</span>{label}
               </span>
