@@ -6,7 +6,7 @@
 
 Posthive lets individuals and teams write once and publish everywhere. Key capabilities:
 
-- Multi-platform posting across 9 networks simultaneously
+- Multi-platform posting across 11 networks simultaneously
 - First comment scheduling (auto-reply immediately after the post goes live)
 - Per-platform content overrides (custom text per account, Pro+)
 - Bulk CSV scheduling (hundreds of posts from a spreadsheet)
@@ -72,7 +72,7 @@ All MCP-created posts default to draft. Binary media upload is not possible via 
 
 Endpoints: accounts, posts (CRUD + approve + duplicate), upload, templates.
 
-Full docs: https://posthive.co/docs
+Full docs: [https://posthive.co/docs](https://posthive.co/docs)
 
 ## Platforms Supported
 
@@ -100,8 +100,10 @@ Full docs: https://posthive.co/docs
 
 ## Links
 
-- Website: https://posthive.co
-- Docs: https://posthive.co/docs
-- MCP docs: https://posthive.co/docs#mcp-overview
-- GitHub: https://github.com/AstaBlackClove/posthive
-- Pricing: https://posthive.co/#pricing
+- [Website](https://posthive.co)
+- [Docs](https://posthive.co/docs)
+- [MCP docs](https://posthive.co/docs#mcp-overview)
+- [Pricing](https://posthive.co/pricing)
+- [Blog](https://posthive.co/blog)
+- [For Developers](https://posthive.co/for-developers)
+- [GitHub](https://github.com/AstaBlackClove/posthive)
