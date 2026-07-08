@@ -6,7 +6,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { EventDropArg, EventContentArg } from "@fullcalendar/core";
 import type { CalendarApi } from "@fullcalendar/core";
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import type { Job } from "../app/jobs/page";
 import { PlatformIcon } from "./PlatformIcon";
 
@@ -41,7 +41,7 @@ function EventCard({ info }: { info: EventContentArg }) {
         width: "100%",
         height: "100%",
         overflow: "hidden",
-        cursor: job.status === "pending" ? "grab" : "default",
+        cursor: "pointer",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -324,6 +324,11 @@ export function CalendarView({ jobs, onReschedule, onEdit }: Props) {
   const calendarRef = useRef<FullCalendar>(null);
   const dragNavTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDragging = useRef(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
+  }, []);
 
   const events = jobs.filter((job) => job.status !== "draft" && job.scheduledFor).map((job) => ({
     id: job.id,
@@ -391,7 +396,7 @@ export function CalendarView({ jobs, onReschedule, onEdit }: Props) {
         }}
         buttonText={{ month: "Month", week: "Week", day: "Day", today: "Today" }}
         events={events}
-        editable={true}
+        editable={!isTouchDevice}
         eventDragStart={() => { isDragging.current = true; }}
         eventDragStop={() => {
           isDragging.current = false;
@@ -410,6 +415,7 @@ export function CalendarView({ jobs, onReschedule, onEdit }: Props) {
         slotMaxTime="24:00:00"
         allDaySlot={false}
         nowIndicator={true}
+        longPressDelay={isTouchDevice ? 9999 : 1000}
         eventDidMount={(info) => {
           const job = info.event.extendedProps.job as Job;
           const content = JSON.parse(job.content) as { text: string };
@@ -417,6 +423,14 @@ export function CalendarView({ jobs, onReschedule, onEdit }: Props) {
           if (job.status !== "pending") info.el.style.opacity = "0.8";
         }}
       />
+      {isTouchDevice && (
+        <p style={{
+          textAlign: "center", fontSize: 12, color: "#555",
+          marginTop: 12, marginBottom: 0,
+        }}>
+          Tap any post to edit or reschedule
+        </p>
+      )}
     </div>
   );
 }

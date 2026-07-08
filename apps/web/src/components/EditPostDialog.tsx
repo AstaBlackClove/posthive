@@ -86,6 +86,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
@@ -281,13 +282,21 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           <h2 className="text-base font-bold" style={{ color: "#ededed" }}>Edit Post</h2>
           <p className="text-xs mt-0.5" style={{ color: "#555" }}>Edits apply to the pending scheduled post</p>
         </div>
-        <button onClick={onClose}
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
-          style={{ color: "#666" }}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setPreviewOpen(true)}
+            className="sm:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+            style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Preview
+          </button>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
+            style={{ color: "#666" }}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Body — editor left, preview right */}
@@ -714,8 +723,8 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           )}
         </div>
 
-        {/* Right: live previews */}
-        <div className="w-[400px] flex-shrink-0 flex flex-col overflow-y-auto" style={{ backgroundColor: "#0a0a0a" }}>
+        {/* Right: live previews — hidden on mobile, shown on sm+ */}
+        <div className="hidden sm:flex flex-shrink-0 flex-col overflow-y-auto" style={{ width: 400, backgroundColor: "#0a0a0a" }}>
           <div className="px-5 pt-5 pb-3">
             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Preview</p>
           </div>
@@ -753,22 +762,68 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
             {saveError && <p className="text-xs" style={{ color: "#ef4444" }}>{saveError}</p>}
           </div>
         )}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <DateTimePicker value={scheduledFor} onChange={setScheduledFor} />
           <div className="flex-1" />
-          <button onClick={onClose} disabled={saving}
-            className="px-4 py-2 text-sm rounded-xl font-medium disabled:opacity-40"
-            style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
-            Cancel
-          </button>
-          <button onClick={handleSave}
-            disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink}
-            className="px-5 py-2 text-sm font-semibold rounded-xl disabled:opacity-40"
-            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-            {saving ? (isDraft ? "Scheduling…" : "Saving…") : isDraft ? "Schedule Post" : "Save changes"}
-          </button>
+          <div className="flex items-center gap-2 justify-end">
+            <button onClick={onClose} disabled={saving}
+              className="px-4 py-2 text-sm rounded-xl font-medium disabled:opacity-40"
+              style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+              Cancel
+            </button>
+            <button onClick={handleSave}
+              disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink}
+              className="px-5 py-2 text-sm font-semibold rounded-xl disabled:opacity-40"
+              style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+              {saving ? (isDraft ? "Scheduling…" : "Saving…") : isDraft ? "Schedule Post" : "Save changes"}
+            </button>
+          </div>
         </div>
       </div>
+      {/* Mobile preview bottom sheet */}
+      {previewOpen && (
+        <div className="sm:hidden fixed inset-0 z-[1100]" onClick={() => setPreviewOpen(false)}>
+          <div className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,.6)" }} />
+          <div
+            className="absolute inset-x-0 bottom-0 rounded-t-2xl flex flex-col"
+            style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderBottom: "none", maxHeight: "80vh" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-center pt-2.5 pb-1 flex-shrink-0">
+              <div className="w-9 h-1 rounded-full" style={{ backgroundColor: "#2a2a2a" }} />
+            </div>
+            <div className="flex items-center justify-between px-5 pt-1 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Preview</p>
+              <button type="button" onClick={() => setPreviewOpen(false)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/5"
+                style={{ color: "#666" }}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto px-5 py-4 space-y-4">
+              {selectedAccounts.length === 0 ? (
+                <p className="text-sm text-center py-8" style={{ color: "#444" }}>Select an account to see a preview</p>
+              ) : (
+                selectedAccounts.map(a => {
+                  const ov = perAccountOverrides[a.id];
+                  return (
+                    <PlatformPreview
+                      key={a.id}
+                      account={a}
+                      text={ov?.text !== undefined ? ov.text : text}
+                      commentText={ov?.commentText !== undefined ? ov.commentText : commentText}
+                      mediaItems={[...images, ...(video ? [{ ...video, isVideo: true }] : [])]}
+                      igMediaType={a.platform === "instagram" ? igMediaType : undefined}
+                    />
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }

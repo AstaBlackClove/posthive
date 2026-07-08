@@ -1291,8 +1291,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         </div>
       )}
 
-      {/* Bottom footer bar "" full width */}
+      {/* Bottom footer bar — full width */}
       <div className="px-4 md:px-8 py-3 md:py-4 flex flex-wrap items-center gap-3 md:gap-4" style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0a0a0a", display: loadingAccounts ? "none" : undefined }}>
+
         {/* Dry run toggle */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setDryRun((v) => !v)}>
           <div className={`relative w-9 h-5 rounded-full transition-colors ${dryRun ? "bg-violet-500" : "bg-gray-300"}`}>
@@ -1314,47 +1315,47 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         {/* Schedule datetime */}
         <DateTimePicker value={scheduledFor} onChange={setScheduledFor} />
 
-        {/* Spacer — desktop only */}
+        {/* Spacer — pushes buttons to the right on desktop */}
         <div className="flex-1 hidden md:block" />
 
-        {/* Inline media warnings only */}
+        {/* Inline media warnings — full width on mobile */}
         {instagramSelectedWithNoMedia && (
-          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#f59e0b" }}>
+          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#f59e0b" }}>
             ℹ️ {igMediaType === "reel" ? "Add a video for this Reel" : "Instagram requires an image"}
           </p>
         )}
         {instagramStoryWithNoImage && (
-          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#f59e0b" }}>
+          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#f59e0b" }}>
             ℹ️ Add an image for the Instagram Story
           </p>
         )}
         {linkedinSelectedWithMedia && (
-          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#888" }}>
+          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#888" }}>
             ℹ️ LinkedIn will post text only image/video support requires elevated API access
           </p>
         )}
         {youtubeSelectedWithNoVideo && (
-          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#ef4444" }}>
+          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#ef4444" }}>
             ⚠️ YouTube requires a video attached before you can schedule this post
           </p>
         )}
         {pinterestSelectedWithNoImage && (
-          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#f59e0b" }}>
+          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#f59e0b" }}>
             ℹ️ Pinterest requires an image — add one or the Pin will be skipped
           </p>
         )}
         {twitterHasLink && (
-          <p className="text-xs font-medium w-full md:w-auto order-3 md:order-none" style={{ color: "#ef4444" }}>
+          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#ef4444" }}>
             ⚠️ X/Twitter charges $0.20 per tweet containing a link — remove the URL to schedule
           </p>
         )}
 
-        {/* Submit */}
-        <div className="w-full md:w-auto order-4 md:order-none flex gap-2">
+        {/* Action buttons — full width on mobile, auto on desktop */}
+        <div className="w-full md:w-auto flex gap-2">
           <button
             type="button"
             onClick={() => setShowBulk(true)}
-            className="px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80"
+            className="flex-1 md:flex-none px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80"
             style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
             title="Bulk schedule from CSV"
           >
@@ -1363,7 +1364,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           <button
             type="button"
             onClick={resetForm}
-            className="px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80"
+            className="flex-1 md:flex-none px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80"
             style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
             title="Clear all inputs"
           >
@@ -1373,7 +1374,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             type="button"
             disabled={submitting || selectedIds.length === 0 || (!text.trim() && !noPostTextNeeded) || overAnyLimit || twitterHasLink}
             onClick={handleSaveDraft}
-            className="px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 md:flex-none px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
             title="Save as draft — schedule later from Posts page"
           >
