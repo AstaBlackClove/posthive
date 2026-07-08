@@ -9,12 +9,21 @@ export const metadata: Metadata = {
     description:
       "Start free. Upgrade when you're ready. Creator $9, Pro $29, Team $49. All plans include all 11 platforms.",
     url: "https://posthive.co/pricing",
+    images: [
+      {
+        url: "/og/pricingogimage.png",
+        width: 1200,
+        height: 630,
+        alt: "Posthive Pricing — Simple & Transparent",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Posthive Pricing — Simple & Transparent",
     description:
       "Start free. Upgrade when you're ready. Creator $9, Pro $29, Team $49. All plans include all 11 platforms.",
+    images: ["/og/pricingogimage.png"],
   },
 };
 

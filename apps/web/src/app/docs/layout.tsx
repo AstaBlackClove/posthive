@@ -29,12 +29,21 @@ export const metadata: Metadata = {
     description:
       "Self-host guide, platform setup, REST API, and MCP server reference for Posthive.",
     url: "https://posthive.co/docs",
+    images: [
+      {
+        url: "/og/docsogimage.png",
+        width: 1200,
+        height: 630,
+        alt: "Posthive Docs — Setup, Platforms & API Reference",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Posthive Docs — Setup, Platforms & API Reference",
     description:
       "Self-host guide, platform setup, REST API, and MCP server reference for Posthive.",
+    images: ["/og/docsogimage.png"],
   },
 };
 

@@ -9,12 +9,21 @@ export const metadata: Metadata = {
     description:
       "Product updates, creator guides, and insights from the Posthive team.",
     url: "https://posthive.co/blog",
+    images: [
+      {
+        url: "/og/blogogimage.png",
+        width: 1200,
+        height: 630,
+        alt: "Posthive Blog — Updates & Insights",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Posthive Blog — Updates & Insights",
     description:
       "Product updates, creator guides, and insights from the Posthive team.",
+    images: ["/og/blogogimage.png"],
   },
 };
 

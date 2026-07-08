@@ -37,7 +37,7 @@ export const metadata: Metadata = {
       "Schedule posts and first comments on Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram & Nostr. Flat price. Self-host if you want.",
     images: [
       {
-        url: "/api/og?title=Posthive&desc=Open-source%20scheduler%20for%2011%20platforms.%20Schedule%20posts%20%26%20first%20comments%20from%20one%20place.",
+        url: "/og/landingogimage.png",
         width: 1200,
         height: 630,
         alt: "Posthive — Open-source social media scheduler for 11 platforms",
@@ -49,9 +49,7 @@ export const metadata: Metadata = {
     title: "Posthive — Open-source Social Media Scheduler",
     description:
       "Schedule posts and first comments on Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram & Nostr. Flat price. Self-host if you want.",
-    images: [
-      "/api/og?title=Posthive&desc=Open-source%20scheduler%20for%2011%20platforms.%20Schedule%20posts%20%26%20first%20comments%20from%20one%20place.",
-    ],
+    images: ["/og/landingogimage.png"],
   },
 };
 
