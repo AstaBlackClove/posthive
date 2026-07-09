@@ -9,11 +9,9 @@ Schedule posts to 11 social platforms from the command line. Every command outpu
 
 ## Setup
 
-Requires two environment variables:
-
 ```bash
-export POSTHIVE_API_KEY=ph_xxx        # Posthive → Settings → API Keys (Pro/Team plan)
-export POSTHIVE_API_URL=https://api.posthive.co   # or your self-hosted URL
+export POSTHIVE_API_KEY=ph_xxx        # required — Posthive → Settings → API Keys (Pro/Team plan)
+export POSTHIVE_API_URL=http://localhost:3001   # optional — only for self-hosted Posthive, defaults to https://api.posthive.co
 ```
 
 Run commands with `npx posthive-cli` or `posthive` if installed globally (`npm i -g posthive-cli`).

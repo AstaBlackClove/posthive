@@ -22,7 +22,9 @@ You need a Posthive account and an API key ([posthive.co](https://posthive.co) â
 
 ```bash
 export POSTHIVE_API_KEY=ph_your_key_here
-export POSTHIVE_API_URL=https://api.posthive.co   # or your self-hosted URL
+
+# Optional â€” only needed for self-hosted Posthive. Defaults to https://api.posthive.co
+export POSTHIVE_API_URL=http://localhost:3001
 ```
 
 ## Usage

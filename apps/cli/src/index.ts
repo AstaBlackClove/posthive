@@ -7,9 +7,10 @@
  *
  * Every command outputs structured JSON for easy parsing by LLMs and scripts.
  *
- * Required env vars:
- *   POSTHIVE_API_KEY  — API key from Posthive Settings → API Keys
- *   POSTHIVE_API_URL  — Base URL of the Posthive API (default: https://api.posthive.co)
+ * Env vars:
+ *   POSTHIVE_API_KEY  — required. API key from Posthive Settings → API Keys
+ *   POSTHIVE_API_URL  — optional. Base URL of the Posthive API (default: https://api.posthive.co).
+ *                       Set this for self-hosted deployments.
  */
 
 import { readFile } from "node:fs/promises";
