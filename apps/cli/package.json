@@ -1,13 +1,14 @@
 {
-  "name": "posthive-mcp",
+  "name": "posthive-cli",
   "version": "0.1.0",
-  "description": "MCP server for Posthive — schedule posts to 11 social platforms from Claude, Cursor, Windsurf, or any MCP-compatible AI agent",
+  "description": "Posthive CLI — schedule posts to 11 social platforms from the command line or any AI agent (Claude Code, OpenClaw, Cursor)",
   "type": "module",
   "bin": {
-    "posthive-mcp": "./dist/index.js"
+    "posthive": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "scripts": {
     "build": "tsc",
@@ -16,19 +17,19 @@
     "prepublishOnly": "tsc"
   },
   "keywords": [
-    "mcp",
-    "model-context-protocol",
     "posthive",
+    "cli",
     "social-media",
     "scheduler",
+    "ai-agent",
+    "skill",
+    "claude",
+    "openclaw",
     "bluesky",
     "threads",
     "linkedin",
     "instagram",
-    "mastodon",
-    "claude",
-    "cursor",
-    "ai-agent"
+    "mastodon"
   ],
   "author": "Posthive",
   "license": "AGPL-3.0",
@@ -39,9 +40,6 @@
   },
   "bugs": {
     "url": "https://github.com/AstaBlackClove/posthive/issues"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1"
   },
   "devDependencies": {
     "typescript": "^5.5.4",
