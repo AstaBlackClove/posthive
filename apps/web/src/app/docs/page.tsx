@@ -95,6 +95,7 @@ const NAV = [
       { label: "Cursor setup", id: "mcp-cursor" },
       { label: "Claude.ai connector", id: "mcp-claudeai" },
       { label: "Other HTTP clients", id: "mcp-url-key" },
+      { label: "CLI for shell agents", id: "mcp-cli" },
       { label: "Available tools", id: "mcp-tools" },
       { label: "Media & formats", id: "mcp-media" },
       { label: "Example prompts", id: "mcp-examples" },
@@ -1053,11 +1054,10 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
               </div>
 
               <h3 className="doc-h3" id="mcp-install">Installation (stdio)</h3>
-              <p className="doc-p">Clone the repo and build the MCP server binary:</p>
-              <CopyCode>{`# From the posthive repo root
-pnpm install
-cd apps/mcp && pnpm build
-# Binary: apps/mcp/dist/index.js`}</CopyCode>
+              <p className="doc-p">The MCP server is published as <span className="doc-inline-code">posthive-mcp</span> on npm — no cloning or building required. Run it directly with npx from your MCP client config, or install it globally:</p>
+              <CopyCode>{`npx posthive-mcp
+# or
+npm i -g posthive-mcp`}</CopyCode>
               <p className="doc-p">Set your credentials as environment variables:</p>
               <CopyCode>{`POSTHIVE_API_KEY=ph_...        # Settings → API Keys
 POSTHIVE_API_URL=https://api.posthive.co`}</CopyCode>
@@ -1067,8 +1067,8 @@ POSTHIVE_API_URL=https://api.posthive.co`}</CopyCode>
               <CopyCode>{`{
   "mcpServers": {
     "posthive": {
-      "command": "node",
-      "args": ["/absolute/path/to/posthive/apps/mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["posthive-mcp"],
       "env": {
         "POSTHIVE_API_KEY": "ph_your_key_here",
         "POSTHIVE_API_URL": "https://api.posthive.co"
@@ -1076,6 +1076,8 @@ POSTHIVE_API_URL=https://api.posthive.co`}</CopyCode>
     }
   }
 }`}</CopyCode>
+              <p className="doc-p">Or from the CLI:</p>
+              <CopyCode>{`claude mcp add posthive -e POSTHIVE_API_KEY=ph_your_key_here -e POSTHIVE_API_URL=https://api.posthive.co -- npx posthive-mcp`}</CopyCode>
               <p className="doc-p">Restart Claude Code. Run <span className="doc-inline-code">/mcp</span> in the terminal to confirm <span className="doc-inline-code">posthive</span> appears in the connected servers list.</p>
 
               <h3 className="doc-h3" id="mcp-cursor">Cursor setup</h3>
@@ -1102,6 +1104,24 @@ POSTHIVE_API_URL=https://api.posthive.co`}</CopyCode>
               <CopyCode>{`claude mcp add posthive --transport http --url https://api.posthive.co/mcp/ph_your_api_key_here`}</CopyCode>
               <div className="doc-warn">
                 Keep this URL private — it contains your API key. Revoke and regenerate from <strong>Settings → API Keys</strong> if it leaks.
+              </div>
+
+              <h3 className="doc-h3" id="mcp-cli">CLI for shell agents (OpenClaw, custom pipelines)</h3>
+              <p className="doc-p">
+                Not every agent speaks MCP. For agents that run shell commands — OpenClaw, custom automation, or scripts — install <span className="doc-inline-code">posthive-cli</span>, a thin command-line wrapper over the same public API:
+              </p>
+              <CopyCode>{`npx posthive-cli help`}</CopyCode>
+              <CopyCode>{`export POSTHIVE_API_KEY=ph_your_key_here
+export POSTHIVE_API_URL=https://api.posthive.co
+
+npx posthive-cli accounts:list
+npx posthive-cli posts:create --content "Hello" --accounts acc_1,acc_2
+npx posthive-cli posts:list --status draft`}</CopyCode>
+              <p className="doc-p">
+                Every command outputs structured JSON. The package ships a bundled <span className="doc-inline-code">skills/posthive/SKILL.md</span> that teaches agents the full command set, platform character limits, and the draft-first workflow — so capable agents can self-discover usage without extra prompting.
+              </p>
+              <div className="doc-warn">
+                Same safety model as MCP: posts default to drafts. Pass <span className="doc-inline-code">--schedule</span> explicitly to schedule directly instead of saving as a draft.
               </div>
 
               <h3 className="doc-h3" id="mcp-tools">Available tools</h3>

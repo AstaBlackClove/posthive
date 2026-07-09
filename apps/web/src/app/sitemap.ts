@@ -40,6 +40,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/blog/buffer-alternative-open-source`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/blog/hootsuite-alternative`,       lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/for-developers`,                   lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/agent`,                            lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/privacy`,     lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
     { url: `${base}/terms`,       lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
     ...FEATURE_SLUGS.map(slug => ({
