@@ -5,9 +5,10 @@
  * Exposes Posthive's scheduling API as MCP tools for use with Claude Code,
  * Cursor, or any MCP-compatible agent.
  *
- * Required env vars:
- *   POSTHIVE_API_KEY  — API key from Posthive Settings → API Keys
- *   POSTHIVE_API_URL  — Base URL of your Posthive API (e.g. https://api.posthive.co)
+ * Env vars:
+ *   POSTHIVE_API_KEY  — required. API key from Posthive Settings → API Keys
+ *   POSTHIVE_API_URL  — optional. Base URL of your Posthive API (default: https://api.posthive.co).
+ *                       Set this for self-hosted deployments.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -18,14 +19,10 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 
 const API_KEY = process.env.POSTHIVE_API_KEY;
-const API_URL = (process.env.POSTHIVE_API_URL ?? "").replace(/\/$/, "");
+const API_URL = (process.env.POSTHIVE_API_URL ?? "https://api.posthive.co").replace(/\/$/, "");
 
 if (!API_KEY) {
   process.stderr.write("Error: POSTHIVE_API_KEY environment variable is required\n");
-  process.exit(1);
-}
-if (!API_URL) {
-  process.stderr.write("Error: POSTHIVE_API_URL environment variable is required\n");
   process.exit(1);
 }
 

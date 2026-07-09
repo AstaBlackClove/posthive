@@ -21,8 +21,7 @@ Add this to your `claude_desktop_config.json`:
       "command": "npx",
       "args": ["posthive-mcp"],
       "env": {
-        "POSTHIVE_API_KEY": "ph_your_key_here",
-        "POSTHIVE_API_URL": "https://api.posthive.co"
+        "POSTHIVE_API_KEY": "ph_your_key_here"
       }
     }
   }
@@ -32,7 +31,7 @@ Add this to your `claude_desktop_config.json`:
 ### Claude Code (CLI)
 
 ```bash
-claude mcp add posthive -e POSTHIVE_API_KEY=ph_xxx -e POSTHIVE_API_URL=https://api.posthive.co -- npx posthive-mcp
+claude mcp add posthive -e POSTHIVE_API_KEY=ph_xxx -- npx posthive-mcp
 ```
 
 ### Cursor / Windsurf
@@ -46,8 +45,7 @@ Add to your MCP config (`.cursor/mcp.json` or `.windsurf/mcp.json`):
       "command": "npx",
       "args": ["posthive-mcp"],
       "env": {
-        "POSTHIVE_API_KEY": "ph_your_key_here",
-        "POSTHIVE_API_URL": "https://api.posthive.co"
+        "POSTHIVE_API_KEY": "ph_your_key_here"
       }
     }
   }
@@ -56,7 +54,7 @@ Add to your MCP config (`.cursor/mcp.json` or `.windsurf/mcp.json`):
 
 ### Self-hosted Posthive
 
-Replace `https://api.posthive.co` with your own API URL (e.g. `http://localhost:3001`).
+Set `POSTHIVE_API_URL` to your own API URL (e.g. `http://localhost:3001`). Omit it to use the hosted Posthive API at `https://api.posthive.co`.
 
 ---
 
@@ -65,7 +63,7 @@ Replace `https://api.posthive.co` with your own API URL (e.g. `http://localhost:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `POSTHIVE_API_KEY` | Yes | API key from Posthive Settings → API Keys |
-| `POSTHIVE_API_URL` | Yes | Base URL of your Posthive API |
+| `POSTHIVE_API_URL` | No | Base URL of your Posthive API. Defaults to `https://api.posthive.co`. Set this only for self-hosted deployments. |
 
 ---
 
