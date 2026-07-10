@@ -5,7 +5,7 @@
 <h1 align="center">Posthive</h1>
 
 <p align="center">
-  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, X (Twitter), Telegram, and Nostr from a single UI.<br/>
+  Open-source social media scheduling platform. Plan, create, and publish posts across every major social network with built-in MCP support for Claude, Cursor, ChatGPT and AI agents.<br/>
   Self-hostable · Open-source · AGPL-3.0
 </p>
 
@@ -19,6 +19,7 @@
 ## Features
 
 **Scheduling**
+
 - **Multi-platform posting** - write once, publish to all 11 platforms simultaneously
 - **Bulk CSV scheduling** - upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
 - **Post templates** - save, load, and delete reusable post drafts
@@ -27,6 +28,7 @@
 - **Per-platform overrides** - custom text and first comment per account (Pro+)
 
 **AI & Agents**
+
 - **MCP server** - connect Claude, ChatGPT, Cursor, VS Code, Claude Code, Codex, OpenClaw, Hermes Agent, or any MCP-compatible agent via one bare URL
 - **OAuth 2.0 + PKCE** - full dynamic client registration flow; no API key to paste for any client — the agent opens your browser to sign in
 - **`posthive-cli`** - shell CLI (`npx posthive-cli`) with `login`/`logout`/`whoami`, mirrors the full public API, ships a bundled `SKILL.md` for agent self-discovery
@@ -37,6 +39,7 @@
 - **Plan-gated** - MCP/API access requires Pro or Team plan (self-hosted with billing disabled: unlimited)
 
 **Media**
+
 - Images (up to 4 per post; plan-gated), video (up to 100 MB)
 - Instagram Reels, Stories, and carousel (up to 10 items)
 - YouTube Shorts + long-form video with dedicated Title/Description fields
@@ -45,6 +48,7 @@
 - Clipboard paste and drag-and-drop upload
 
 **Calendar & Posts**
+
 - FullCalendar month/week/day views with drag-to-reschedule
 - Real-time job status via Server-Sent Events
 - Platform filter in list and calendar views
@@ -52,6 +56,7 @@
 - Inline edit and reschedule from list view
 
 **Auth & Accounts**
+
 - Email + password auth (JWT, bcrypt, silent refresh)
 - Email verification and password reset via Resend
 - API keys for programmatic access (Pro/Team plans)
@@ -59,6 +64,7 @@
 - Background token auto-refresh (Threads, Instagram, Facebook, YouTube every 12h)
 
 **Infrastructure**
+
 - BullMQ queue backed by Redis (Upstash or Railway)
 - AES-256-GCM encryption for all stored OAuth credentials
 - Sentry error monitoring
@@ -67,6 +73,7 @@
 - CSRF nonce on all OAuth flows
 
 **Billing (optional)**
+
 - Dodo Payments - Creator, Pro, Team plans
 - 14-day free trial; INR/USD currency detection
 - Set `ENABLE_BILLING=false` for self-hosted mode all features unlocked, no plan limits
@@ -75,17 +82,17 @@
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 16 (App Router), React 18, Tailwind CSS |
-| Backend | Fastify v4, TypeScript ESM, Node.js |
-| Database | Prisma 5 - Postgres (dev via Docker or local install) / Postgres (prod) |
-| Queue | BullMQ 5 + Redis (Upstash or Railway) |
-| Email | Resend |
-| Storage | Local disk (dev) / Supabase Storage (prod) |
-| Billing | Dodo Payments |
-| Monitoring | Sentry |
-| Calendar | FullCalendar 6 |
+| Layer      | Technology                                                              |
+| ---------- | ----------------------------------------------------------------------- |
+| Frontend   | Next.js 16 (App Router), React 18, Tailwind CSS                         |
+| Backend    | Fastify v4, TypeScript ESM, Node.js                                     |
+| Database   | Prisma 5 - Postgres (dev via Docker or local install) / Postgres (prod) |
+| Queue      | BullMQ 5 + Redis (Upstash or Railway)                                   |
+| Email      | Resend                                                                  |
+| Storage    | Local disk (dev) / Supabase Storage (prod)                              |
+| Billing    | Dodo Payments                                                           |
+| Monitoring | Sentry                                                                  |
+| Calendar   | FullCalendar 6                                                          |
 
 ---
 
@@ -148,6 +155,7 @@ pnpm dev:db
 ```
 
 Use this `DATABASE_URL` in `apps/api/.env`:
+
 ```
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
 ```
@@ -157,6 +165,7 @@ The container is named `posthive-pg`. Stop it with `pnpm db:stop`, restart with 
 **Option B - SQLite (no Docker, quickest setup)**
 
 Change the provider in `apps/api/prisma/schema.prisma`:
+
 ```prisma
 datasource db {
   provider = "sqlite"
@@ -165,6 +174,7 @@ datasource db {
 ```
 
 Use this `DATABASE_URL` in `apps/api/.env`:
+
 ```
 DATABASE_URL="file:./dev.db"
 ```
@@ -187,10 +197,10 @@ pnpm dev
 
 > If you chose SQLite (Option B), skip `pnpm dev:db` just run `pnpm dev:api` and `pnpm dev:web` separately, or use `pnpm dev` after commenting out the `dev:db` step.
 
-| Service | URL |
-|---|---|
-| Web | http://localhost:3000 |
-| API | http://localhost:3001 |
+| Service       | URL                                      |
+| ------------- | ---------------------------------------- |
+| Web           | http://localhost:3000                    |
+| API           | http://localhost:3001                    |
 | Prisma Studio | `pnpm db:studio` → http://localhost:5555 |
 
 ---
@@ -201,154 +211,157 @@ pnpm dev
 
 **Core**
 
-| Variable | Required | Description |
-|---|---|---|
-| `PORT` | No | API port. Defaults to `3001` |
-| `DATABASE_URL` | Yes | `postgresql://postgres:postgres@localhost:5432/postgres` (Docker dev) or `file:./dev.db` (SQLite dev) or Postgres URL in prod |
-| `ENCRYPTION_KEY` | Yes | 64-char hex. AES-256-GCM key for credentials. **Never change after data is written** |
-| `REDIS_URL` | Yes | Upstash or Railway Redis URL |
-| `WEB_URL` | Yes | Frontend origin for CORS + OAuth redirects. `http://localhost:3000` in dev |
-| `NODE_ENV` | Prod | Set to `production` |
-| `SECURE_COOKIES` | Prod | Set to `true` to require HTTPS for auth cookies |
+| Variable         | Required | Description                                                                                                                   |
+| ---------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`           | No       | API port. Defaults to `3001`                                                                                                  |
+| `DATABASE_URL`   | Yes      | `postgresql://postgres:postgres@localhost:5432/postgres` (Docker dev) or `file:./dev.db` (SQLite dev) or Postgres URL in prod |
+| `ENCRYPTION_KEY` | Yes      | 64-char hex. AES-256-GCM key for credentials. **Never change after data is written**                                          |
+| `REDIS_URL`      | Yes      | Upstash or Railway Redis URL                                                                                                  |
+| `WEB_URL`        | Yes      | Frontend origin for CORS + OAuth redirects. `http://localhost:3000` in dev                                                    |
+| `NODE_ENV`       | Prod     | Set to `production`                                                                                                           |
+| `SECURE_COOKIES` | Prod     | Set to `true` to require HTTPS for auth cookies                                                                               |
 
 **Auth**
 
-| Variable | Required | Description |
-|---|---|---|
-| `AUTH_PROVIDER` | No | `local` (default) or `supabase` |
-| `JWT_ACCESS_SECRET` | local auth | 64-char hex |
-| `JWT_REFRESH_SECRET` | local auth | 64-char hex |
-| `SUPABASE_URL` | Supabase | `https://your-project.supabase.co` |
-| `SUPABASE_ANON_KEY` | Supabase | Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Supabase service role key |
+| Variable                    | Required   | Description                        |
+| --------------------------- | ---------- | ---------------------------------- |
+| `AUTH_PROVIDER`             | No         | `local` (default) or `supabase`    |
+| `JWT_ACCESS_SECRET`         | local auth | 64-char hex                        |
+| `JWT_REFRESH_SECRET`        | local auth | 64-char hex                        |
+| `SUPABASE_URL`              | Supabase   | `https://your-project.supabase.co` |
+| `SUPABASE_ANON_KEY`         | Supabase   | Supabase anon key                  |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase   | Supabase service role key          |
 
 **Email**
 
-| Variable | Required | Description |
-|---|---|---|
-| `RESEND_API_KEY` | No | [Resend](https://resend.com) API key. Falls back to console in dev |
-| `EMAIL_FROM` | No | Verified sender address. e.g. `Posthive <noreply@posthive.co>` |
+| Variable         | Required | Description                                                        |
+| ---------------- | -------- | ------------------------------------------------------------------ |
+| `RESEND_API_KEY` | No       | [Resend](https://resend.com) API key. Falls back to console in dev |
+| `EMAIL_FROM`     | No       | Verified sender address. e.g. `Posthive <noreply@posthive.co>`     |
 
 **Storage**
 
-| Variable | Required | Description |
-|---|---|---|
-| `STORAGE_PROVIDER` | No | `supabase` for prod; unset = local disk |
-| `SUPABASE_STORAGE_BUCKET` | Supabase | Bucket name. Defaults to `media` |
-| `PUBLIC_API_URL` | Instagram | Public HTTPS URL of the API Meta fetches images from here |
+| Variable                  | Required  | Description                                               |
+| ------------------------- | --------- | --------------------------------------------------------- |
+| `STORAGE_PROVIDER`        | No        | `supabase` for prod; unset = local disk                   |
+| `SUPABASE_STORAGE_BUCKET` | Supabase  | Bucket name. Defaults to `media`                          |
+| `PUBLIC_API_URL`          | Instagram | Public HTTPS URL of the API Meta fetches images from here |
 
 **OAuth - Threads**
 
-| Variable | Description |
-|---|---|
-| `THREADS_APP_ID` | Meta app ID |
-| `THREADS_APP_SECRET` | Meta app secret |
+| Variable               | Description          |
+| ---------------------- | -------------------- |
+| `THREADS_APP_ID`       | Meta app ID          |
+| `THREADS_APP_SECRET`   | Meta app secret      |
 | `THREADS_REDIRECT_URI` | Must be public HTTPS |
 
 **OAuth - Instagram**
 
-| Variable | Description |
-|---|---|
-| `INSTAGRAM_APP_ID` | Meta app ID |
-| `INSTAGRAM_APP_SECRET` | Meta app secret |
+| Variable                 | Description          |
+| ------------------------ | -------------------- |
+| `INSTAGRAM_APP_ID`       | Meta app ID          |
+| `INSTAGRAM_APP_SECRET`   | Meta app secret      |
 | `INSTAGRAM_REDIRECT_URI` | Must be public HTTPS |
 
 **OAuth - LinkedIn**
 
-| Variable | Description |
-|---|---|
-| `LINKEDIN_CLIENT_ID` | LinkedIn app client ID |
+| Variable                 | Description                |
+| ------------------------ | -------------------------- |
+| `LINKEDIN_CLIENT_ID`     | LinkedIn app client ID     |
 | `LINKEDIN_CLIENT_SECRET` | LinkedIn app client secret |
-| `LINKEDIN_REDIRECT_URI` | Must be public HTTPS |
+| `LINKEDIN_REDIRECT_URI`  | Must be public HTTPS       |
 
 **OAuth - Mastodon**
 
-| Variable | Description |
-|---|---|
-| `MASTODON_CLIENT_ID` | Client key from Mastodon app settings |
+| Variable                 | Description                              |
+| ------------------------ | ---------------------------------------- |
+| `MASTODON_CLIENT_ID`     | Client key from Mastodon app settings    |
 | `MASTODON_CLIENT_SECRET` | Client secret from Mastodon app settings |
-| `MASTODON_REDIRECT_URI` | Must be public HTTPS |
+| `MASTODON_REDIRECT_URI`  | Must be public HTTPS                     |
 
 **OAuth - YouTube**
 
-| Variable | Description |
-|---|---|
-| `YOUTUBE_CLIENT_ID` | Google OAuth client ID |
-| `YOUTUBE_CLIENT_SECRET` | Google OAuth client secret |
-| `YOUTUBE_REDIRECT_URI` | Use `http://localhost:3001/auth/youtube/callback` Google rejects tunnel domains; localhost is exempt |
+| Variable                | Description                                                                                          |
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| `YOUTUBE_CLIENT_ID`     | Google OAuth client ID                                                                               |
+| `YOUTUBE_CLIENT_SECRET` | Google OAuth client secret                                                                           |
+| `YOUTUBE_REDIRECT_URI`  | Use `http://localhost:3001/auth/youtube/callback` Google rejects tunnel domains; localhost is exempt |
 
 **OAuth - Facebook Pages**
 
-| Variable | Description |
-|---|---|
-| `FACEBOOK_APP_ID` | Meta app ID |
-| `FACEBOOK_APP_SECRET` | Meta app secret |
+| Variable                | Description          |
+| ----------------------- | -------------------- |
+| `FACEBOOK_APP_ID`       | Meta app ID          |
+| `FACEBOOK_APP_SECRET`   | Meta app secret      |
 | `FACEBOOK_REDIRECT_URI` | Must be public HTTPS |
 
 **OAuth - Pinterest**
 
-| Variable | Description |
-|---|---|
-| `PINTEREST_CLIENT_ID` | Pinterest App ID from developers.pinterest.com |
-| `PINTEREST_CLIENT_SECRET` | Pinterest App secret key |
-| `PINTEREST_REDIRECT_URI` | Must be public HTTPS |
-| `PINTEREST_SANDBOX` | Set `true` while app has Trial access routes API calls to the sandbox |
+| Variable                  | Description                                                                                                           |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `PINTEREST_CLIENT_ID`     | Pinterest App ID from developers.pinterest.com                                                                        |
+| `PINTEREST_CLIENT_SECRET` | Pinterest App secret key                                                                                              |
+| `PINTEREST_REDIRECT_URI`  | Must be public HTTPS                                                                                                  |
+| `PINTEREST_SANDBOX`       | Set `true` while app has Trial access routes API calls to the sandbox                                                 |
 | `PINTEREST_SANDBOX_TOKEN` | Manually-generated sandbox token (My Apps → Generate Access Token → Sandbox). Only used when `PINTEREST_SANDBOX=true` |
 
 > Pinterest requires **Standard access** approval for production pin creation. Apply at developers.pinterest.com → My Apps → Request upgraded access. Until approved, set `PINTEREST_SANDBOX=true` and use a sandbox token.
 
 **OAuth - X (Twitter)**
 
-| Variable | Description |
-|---|---|
-| `X_API_KEY` | API Key (Consumer Key) from developer.x.com |
-| `X_API_SECRET` | API Key Secret (Consumer Secret) |
+| Variable         | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `X_API_KEY`      | API Key (Consumer Key) from developer.x.com    |
+| `X_API_SECRET`   | API Key Secret (Consumer Secret)               |
 | `X_CALLBACK_URL` | Must be public HTTPS — OAuth 1.0a callback URL |
 
 > Uses OAuth 1.0a (not 2.0). Requires Pro or Team plan when billing is enabled.
 
 **Billing**
 
-| Variable | Required | Description |
-|---|---|---|
-| `ENABLE_BILLING` | No | Set to `true` to enable Dodo Payments and plan limits |
-| `DODO_ENV` | Billing | `test_mode` or `live_mode` |
-| `DODO_API_KEY` | Billing | Dodo API key |
-| `DODO_WEBHOOK_SECRET` | Billing | `whsec_...` webhook signing secret |
-| `DODO_PRODUCT_CREATOR` | Billing | Dodo product ID for Creator plan |
-| `DODO_PRODUCT_PRO` | Billing | Dodo product ID for Pro plan |
-| `DODO_PRODUCT_TEAM` | Billing | Dodo product ID for Team plan |
+| Variable               | Required | Description                                           |
+| ---------------------- | -------- | ----------------------------------------------------- |
+| `ENABLE_BILLING`       | No       | Set to `true` to enable Dodo Payments and plan limits |
+| `DODO_ENV`             | Billing  | `test_mode` or `live_mode`                            |
+| `DODO_API_KEY`         | Billing  | Dodo API key                                          |
+| `DODO_WEBHOOK_SECRET`  | Billing  | `whsec_...` webhook signing secret                    |
+| `DODO_PRODUCT_CREATOR` | Billing  | Dodo product ID for Creator plan                      |
+| `DODO_PRODUCT_PRO`     | Billing  | Dodo product ID for Pro plan                          |
+| `DODO_PRODUCT_TEAM`    | Billing  | Dodo product ID for Team plan                         |
 
 **Monitoring**
 
-| Variable | Required | Description |
-|---|---|---|
-| `SENTRY_DSN` | No | Sentry DSN. Omit to disable |
+| Variable     | Required | Description                 |
+| ------------ | -------- | --------------------------- |
+| `SENTRY_DSN` | No       | Sentry DSN. Omit to disable |
 
 Generate secrets:
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 ### `apps/web/.env.local`
 
-| Variable | Required | Description |
-|---|---|---|
-| `NEXT_PUBLIC_API_URL` | Yes | API URL from the browser. `http://localhost:3001` in dev |
-| `NEXT_PUBLIC_WEB_URL` | Yes | Public URL of the web app. Used for OG images, sitemap, robots.txt. `http://localhost:3000` in dev, `https://yourdomain.com` in prod |
-| `NEXT_PUBLIC_ENABLE_BILLING` | No | Must match `ENABLE_BILLING` in the API |
+| Variable                     | Required | Description                                                                                                                          |
+| ---------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_API_URL`        | Yes      | API URL from the browser. `http://localhost:3001` in dev                                                                             |
+| `NEXT_PUBLIC_WEB_URL`        | Yes      | Public URL of the web app. Used for OG images, sitemap, robots.txt. `http://localhost:3000` in dev, `https://yourdomain.com` in prod |
+| `NEXT_PUBLIC_ENABLE_BILLING` | No       | Must match `ENABLE_BILLING` in the API                                                                                               |
 
 ---
 
 ## Connecting Platforms
 
 ### Bluesky
+
 1. Go to **Accounts** in the app
 2. Enter your handle (e.g. `you.bsky.social`)
 3. Generate an app password at [bsky.app](https://bsky.app) → Settings → App Passwords
 4. Enter it and click Connect no OAuth needed
 
 ### Threads
+
 1. Create an app at [developers.facebook.com](https://developers.facebook.com) and add the Threads use case
 2. Set the OAuth redirect URI to `https://your-domain/auth/threads/callback`
 3. Add `THREADS_APP_ID` and `THREADS_APP_SECRET` to `.env`
@@ -356,16 +369,19 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > In development mode only Threads Testers can connect. Submit for Meta App Review (`threads_basic` + `threads_content_publish`) for public access.
 
 ### Instagram
+
 1. Add the Instagram product to your Meta app
 2. Set the OAuth redirect URI to `https://your-domain/auth/instagram/callback`
 3. Requires a **Professional** (Business or Creator) Instagram account
 
 ### LinkedIn
+
 1. Create an app at [developer.linkedin.com](https://developer.linkedin.com)
 2. Add the **Share on LinkedIn** and **Sign In with LinkedIn using OpenID Connect** products
 3. Set redirect URI to `https://your-domain/auth/linkedin/callback`
 
 ### Mastodon
+
 1. Log in to your Mastodon instance → Settings → Development → New Application
 2. Scopes: `read:accounts`, `write:statuses`, `write:media`
 3. Set redirect URI to `https://your-domain/auth/mastodon/callback`
@@ -373,6 +389,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > Works with any Mastodon-compatible instance mastodon.social, fosstodon.org, hachyderm.io, etc.
 
 ### YouTube
+
 1. Create a project in [Google Cloud Console](https://console.cloud.google.com)
 2. Enable the YouTube Data API v3
 3. Create OAuth 2.0 credentials; set redirect URI to `http://localhost:3001/auth/youtube/callback`
@@ -380,6 +397,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > Google requires app verification for production. Until verified, refresh tokens expire after 7 days.
 
 ### Facebook Pages
+
 1. Use the same Meta app as Threads/Instagram
 2. Add **Manage everything on your Page** use case
 3. Set redirect URI to `https://your-domain/auth/facebook/callback`
@@ -388,12 +406,14 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > First comment support requires `pages_manage_engagement` (pending Meta app review).
 
 ### Pinterest
+
 1. Create an app at [developers.pinterest.com](https://developers.pinterest.com)
 2. Enable scopes: `boards:read`, `pins:read`, `pins:write`, `user_accounts:read`
 3. Set redirect URI to `https://your-domain/auth/pinterest/callback`
 4. Set `PINTEREST_CLIENT_ID` and `PINTEREST_CLIENT_SECRET` in `.env`
 
 **Trial access (default):** New apps get Trial access pins can only be created in the sandbox.
+
 - Set `PINTEREST_SANDBOX=true`
 - Generate a sandbox token: My Apps → Manage → Generate Access Token → Sandbox
 - Set `PINTEREST_SANDBOX_TOKEN` to that token
@@ -403,6 +423,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > Posts as Pins on the user's first board. Image is required posts without an image are blocked at the UI level.
 
 ### X (Twitter)
+
 1. Create a project + app at [developer.x.com](https://developer.x.com)
 2. Set App permissions to **Read and write**
 3. Enable **OAuth 1.0a** and set the callback URL to `https://your-domain/auth/twitter/callback`
@@ -411,6 +432,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > Requires Pro or Team plan when billing is enabled. Uses OAuth 1.0a, not OAuth 2.0.
 
 ### Telegram
+
 No OAuth needed — uses the Telegram Bot API directly.
 
 1. Open Telegram and message **@BotFather** → `/newbot` → follow the prompts to get a **bot token**
@@ -424,6 +446,7 @@ No OAuth needed — uses the Telegram Bot API directly.
 > No environment variables needed. Credentials are stored encrypted per-user.
 
 ### Nostr
+
 No OAuth, no app registration — uses your keypair directly.
 
 1. Go to **Accounts** in Posthive → **Connect Nostr**
@@ -440,6 +463,7 @@ No OAuth, no app registration — uses your keypair directly.
 Upload a CSV to schedule multiple posts at once. Available from the **Posts** page (Bulk button) and the **Compose** page (Bulk CSV button).
 
 **CSV format:**
+
 ```
 scheduled_for,text,accounts,comment,image_urls
 2026-08-01 09:00,Good morning 🌅,all,,
@@ -450,6 +474,7 @@ scheduled_for,text,accounts,comment,image_urls
 ```
 
 **Accounts column syntax:**
+
 - `all` - all connected accounts except YouTube
 - `bluesky|mastodon` - specific platforms, pipe-separated
 - `!instagram` - all platforms except Instagram (and YouTube)
@@ -509,20 +534,20 @@ Authorization: Bearer ph_your_api_key
 
 **Endpoints:**
 
-| Method | Path | Description |
-|---|---|---|
-| GET | /me | Identify the authenticated user (used by CLI/MCP login) |
-| GET | /accounts | List connected accounts |
-| POST | /posts | Schedule a post |
-| GET | /posts | List posts (cursor-paginated) |
-| GET | /posts/:id | Get single post |
-| PATCH | /posts/:id | Update/reschedule pending post |
-| POST | /posts/:id/approve | Promote a draft to scheduled |
-| POST | /posts/:id/duplicate | Clone a post as a new draft |
-| DELETE | /posts/:id | Delete post |
-| POST | /upload | Upload media file |
-| GET | /templates | List templates |
-| POST | /templates | Create template |
+| Method | Path                 | Description                                             |
+| ------ | -------------------- | ------------------------------------------------------- |
+| GET    | /me                  | Identify the authenticated user (used by CLI/MCP login) |
+| GET    | /accounts            | List connected accounts                                 |
+| POST   | /posts               | Schedule a post                                         |
+| GET    | /posts               | List posts (cursor-paginated)                           |
+| GET    | /posts/:id           | Get single post                                         |
+| PATCH  | /posts/:id           | Update/reschedule pending post                          |
+| POST   | /posts/:id/approve   | Promote a draft to scheduled                            |
+| POST   | /posts/:id/duplicate | Clone a post as a new draft                             |
+| DELETE | /posts/:id           | Delete post                                             |
+| POST   | /upload              | Upload media file                                       |
+| GET    | /templates           | List templates                                          |
+| POST   | /templates           | Create template                                         |
 
 See the full [documentation](https://posthive.co/docs) for request/response schemas.
 
@@ -551,6 +576,7 @@ The first tool call opens your browser to sign in.
 ### Cursor
 
 Add to `.cursor/mcp.json`:
+
 ```json
 {
   "mcpServers": {
@@ -562,6 +588,7 @@ Add to `.cursor/mcp.json`:
 ### VS Code (GitHub Copilot Chat)
 
 Add to `.vscode/mcp.json`:
+
 ```json
 {
   "servers": {
@@ -573,6 +600,7 @@ Add to `.vscode/mcp.json`:
 ### Codex
 
 Add to `~/.codex/config.toml`:
+
 ```toml
 [mcp_servers.posthive]
 url = "https://your-api/mcp"
@@ -587,6 +615,7 @@ openclaw mcp set posthive '{"url":"https://your-api/mcp","transport":"streamable
 ### Hermes Agent
 
 Add to `~/.hermes/config.yaml`:
+
 ```yaml
 mcp_servers:
   posthive:
@@ -611,18 +640,18 @@ For a client that doesn't support OAuth discovery, embed the key directly instea
 
 ### Available Tools
 
-| Tool | Description |
-|---|---|
-| `list_accounts` | List all connected social accounts |
-| `create_post` | Create a scheduled or draft post |
-| `get_post` | Get a single post by ID |
-| `list_scheduled_posts` | List posts with optional status filter |
-| `approve_draft` | Promote a draft to scheduled |
-| `update_post` | Update content or reschedule a pending post |
-| `duplicate_post` | Clone a post as a new draft |
-| `delete_post` | Delete a post |
-| `list_templates` | List saved post templates |
-| `create_from_template` | Create a post from a template |
+| Tool                   | Description                                 |
+| ---------------------- | ------------------------------------------- |
+| `list_accounts`        | List all connected social accounts          |
+| `create_post`          | Create a scheduled or draft post            |
+| `get_post`             | Get a single post by ID                     |
+| `list_scheduled_posts` | List posts with optional status filter      |
+| `approve_draft`        | Promote a draft to scheduled                |
+| `update_post`          | Update content or reschedule a pending post |
+| `duplicate_post`       | Clone a post as a new draft                 |
+| `delete_post`          | Delete a post                               |
+| `list_templates`       | List saved post templates                   |
+| `create_from_template` | Create a post from a template               |
 
 ### Media via MCP
 
@@ -635,11 +664,11 @@ YouTube `youtube_type`: `short` · `video`
 
 ## Plans
 
-| Plan | Accounts | Posts/month | API Keys |
-|---|---|---|---|
-| Creator | 3 | 400 | - |
-| Pro | 15 | Unlimited | Unlimited |
-| Team | 50 | Unlimited | Unlimited |
+| Plan    | Accounts | Posts/month | API Keys  |
+| ------- | -------- | ----------- | --------- |
+| Creator | 3        | 400         | -         |
+| Pro     | 15       | Unlimited   | Unlimited |
+| Team    | 50       | Unlimited   | Unlimited |
 
 All plans include a **14-day free trial**. Powered by [Dodo Payments](https://dodopayments.com).
 
@@ -649,19 +678,19 @@ Set `ENABLE_BILLING=false` for self-hosted mode all features unlocked, no plan l
 
 ## Character Limits
 
-| Platform | Limit |
-|---|---|
-| Bluesky | 300 graphemes |
-| Threads | 500 characters |
-| Instagram | 2,200 characters |
-| LinkedIn | 3,000 characters |
-| Mastodon | 500 characters |
-| YouTube | Title: 100 · Description: 5,000 |
-| Facebook Pages | 63,206 characters |
-| Pinterest | Title: 100 · Description: 500 |
-| X (Twitter) | 280 characters |
-| Telegram | 4,096 characters |
-| Nostr | 10,000 characters |
+| Platform       | Limit                           |
+| -------------- | ------------------------------- |
+| Bluesky        | 300 graphemes                   |
+| Threads        | 500 characters                  |
+| Instagram      | 2,200 characters                |
+| LinkedIn       | 3,000 characters                |
+| Mastodon       | 500 characters                  |
+| YouTube        | Title: 100 · Description: 5,000 |
+| Facebook Pages | 63,206 characters               |
+| Pinterest      | Title: 100 · Description: 500   |
+| X (Twitter)    | 280 characters                  |
+| Telegram       | 4,096 characters                |
+| Nostr          | 10,000 characters               |
 
 ---
 
@@ -670,6 +699,7 @@ Set `ENABLE_BILLING=false` for self-hosted mode all features unlocked, no plan l
 Posthive is designed to be self-hosted. Billing is optional.
 
 **Without billing (default):**
+
 ```env
 # apps/api/.env
 ENABLE_BILLING=false
@@ -677,13 +707,16 @@ ENABLE_BILLING=false
 # apps/web/.env.local
 NEXT_PUBLIC_ENABLE_BILLING=false
 ```
+
 All features are unlocked for all users. No Dodo account needed. Onboarding skips plan selection.
 
 **With billing:**
+
 ```env
 ENABLE_BILLING=true
 NEXT_PUBLIC_ENABLE_BILLING=true
 ```
+
 Create a [Dodo Payments](https://dodopayments.com) account and fill in all `DODO_*` env vars. Users get a 14-day free trial on signup.
 
 ---
