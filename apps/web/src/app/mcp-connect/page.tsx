@@ -43,6 +43,7 @@ export default function McpConnectPage() {
           state,
           code_challenge: codeChallenge,
           code_challenge_method: codeChallengeMethod,
+          client_id: clientId,
         }),
       });
       window.location.href = res.redirect;

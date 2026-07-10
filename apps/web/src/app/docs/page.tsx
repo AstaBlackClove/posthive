@@ -1041,9 +1041,9 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
                   <tbody>
                     {[
                       ["Creator", "✗", "—"],
-                      ["Pro", "✓", "Up to 3"],
-                      ["Team", "✓", "Up to 10"],
-                      ["Self-hosted", "✓", "Up to 10"],
+                      ["Pro", "✓", "Unlimited"],
+                      ["Team", "✓", "Unlimited"],
+                      ["Self-hosted", "✓", "Unlimited"],
                     ].map(([plan, mcp, keys]) => (
                       <tr key={plan} style={{ borderBottom: "1px solid #111" }}>
                         <td style={{ padding: "10px 12px", color: "#ededed" }}>{plan}</td>

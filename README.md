@@ -638,8 +638,8 @@ YouTube `youtube_type`: `short` · `video`
 | Plan | Accounts | Posts/month | API Keys |
 |---|---|---|---|
 | Creator | 3 | 400 | - |
-| Pro | 15 | Unlimited | 3 |
-| Team | 50 | Unlimited | 10 |
+| Pro | 15 | Unlimited | Unlimited |
+| Team | 50 | Unlimited | Unlimited |
 
 All plans include a **14-day free trial**. Powered by [Dodo Payments](https://dodopayments.com).
 

@@ -25,6 +25,7 @@ interface PendingCode {
   redirectUri: string;
   codeChallenge: string;
   codeChallengeMethod: string;
+  clientName: string;
   expiresAt: number;
 }
 
@@ -133,11 +134,13 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
   app.post("/oauth/approve", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
     const body = req.body as Record<string, string>;
-    const { redirect_uri, state, code_challenge, code_challenge_method } = body;
+    const { redirect_uri, state, code_challenge, code_challenge_method, client_id } = body;
 
     if (!redirect_uri || !code_challenge) {
       return reply.status(400).send({ error: "redirect_uri and code_challenge are required" });
     }
+
+    const clientName = client_id?.trim().slice(0, 100) || "MCP connector";
 
     const code = crypto.randomBytes(32).toString("base64url");
     codeStore.set(code, {
@@ -145,6 +148,7 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
       redirectUri: redirect_uri,
       codeChallenge: code_challenge,
       codeChallengeMethod: code_challenge_method ?? "S256",
+      clientName,
       expiresAt: Date.now() + 5 * 60 * 1000,
     });
 
@@ -188,7 +192,7 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
         userId: stored.userId,
         keyHash: hash,
         prefix,
-        name: "Claude.ai MCP connector",
+        name: `${stored.clientName} (MCP)`,
       },
     });
 

@@ -55,13 +55,6 @@ export function canUseApi(plan: string, planStatus: string): boolean {
   return plan === "pro" || plan === "team";
 }
 
-/** Max API keys per plan. */
-export function maxApiKeys(plan: string): number {
-  if (process.env.ENABLE_BILLING !== "true") return 10;
-  if (plan === "team") return 10;
-  if (plan === "pro") return 3;
-  return 0;
-}
 
 export function generateApiKey(): { raw: string; hash: string; prefix: string } {
   const secret = crypto.randomBytes(32).toString("hex");

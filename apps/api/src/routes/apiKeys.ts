@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../lib/prisma.js";
 import { withAuth, getUser } from "../lib/auth/withAuth.js";
-import { generateApiKey, canUseApi, maxApiKeys } from "../lib/auth/withApiKey.js";
+import { generateApiKey, canUseApi } from "../lib/auth/withApiKey.js";
 
 export async function apiKeyRoutes(app: FastifyInstance): Promise<void> {
 
@@ -32,23 +32,8 @@ export async function apiKeyRoutes(app: FastifyInstance): Promise<void> {
     const { name } = req.body as { name?: string };
     if (!name?.trim()) return reply.status(400).send({ error: "Key name is required" });
 
-    const limit = maxApiKeys(plan);
     const { raw, hash, prefix } = generateApiKey();
-
-    try {
-      await prisma.$transaction(async (tx) => {
-        const existing = await tx.apiKey.count({ where: { userId, revokedAt: null } });
-        if (existing >= limit) {
-          throw Object.assign(new Error(`Your plan allows a maximum of ${limit} API keys.`), { code: "LIMIT" });
-        }
-        await tx.apiKey.create({ data: { userId, name: name.trim(), keyHash: hash, prefix } });
-      });
-    } catch (err) {
-      if ((err as { code?: string }).code === "LIMIT") {
-        return reply.status(403).send({ error: (err as Error).message });
-      }
-      throw err;
-    }
+    await prisma.apiKey.create({ data: { userId, name: name.trim(), keyHash: hash, prefix } });
 
     // Return the raw key only once — we never store it
     return reply.status(201).send({ key: raw, prefix, name: name.trim() });

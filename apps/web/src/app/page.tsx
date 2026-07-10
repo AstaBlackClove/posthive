@@ -90,7 +90,7 @@ const PLANS = [
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting (100/mo, no links)*", included: true },
-      { text: "API access (3 keys) & MCP", included: true },
+      { text: "API access & MCP", included: true },
       { text: "Webhook outbound", included: true },
     ],
     popular: true,
@@ -111,7 +111,6 @@ const PLANS = [
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting (100/mo, no links)*", included: true },
-      { text: "API access (10 keys) & MCP", included: true },
       { text: "Webhook outbound", included: true },
     ],
     popular: false,
@@ -427,12 +426,12 @@ export default function RootPage() {
             {/* Center — untouched */}
             <div style={{ textAlign: "center" }}>
               <h1 className="anim-2 ph-hero-h1" style={{ fontSize: 72, lineHeight: 1.03, fontWeight: 800, letterSpacing: "-0.035em", margin: "0 0 24px", color: "#f4f4f4" }}>
-                <span style={{ display: "block", marginBottom: 14 }}>The open-source scheduler</span>
+                <span style={{ display: "block", marginBottom: 14 }}>The agentic scheduler</span>
                 <span style={{ color: "#f4f4f4" }}>for the <span style={{ display: "inline-block", background: "#5b63d3", color: "#fff", padding: "2px 16px 4px", borderRadius: 6, transform: "rotate(-1.5deg)", transformOrigin: "center" }}>new social web.</span></span>
               </h1>
 
               <p className="anim-3" style={{ fontSize: 19, lineHeight: 1.6, color: "#8f8f8f", maxWidth: 640, margin: "0 auto 38px", fontWeight: 400 }}>
-                Schedule posts everywhere in one click and let Claude, Cursor, or any AI agent do it for you via MCP. One flat price for every channel.
+                Plan, create, review, and schedule posts across every major social network. Connect Claude, Cursor, Codex, ChatGPT or any MCP-compatible AI agent to automate your social media workflow.
               </p>
 
               <div className="anim-4 ph-hero-cta" style={{ display: "flex", gap: 14, justifyContent: "center", alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
@@ -780,7 +779,7 @@ export default function RootPage() {
             <div style={{ textAlign: "center", marginBottom: 56 }}>
               <span className="section-label">SUPPORTED PLATFORMS</span>
               <h2 style={{ fontSize: 44, fontWeight: 700, letterSpacing: "-0.03em", margin: "16px 0 14px", color: "#f2f2f2" }}>
-                Nine networks. One workflow.
+                Mutliple networks. One workflow.
               </h2>
               <p style={{ fontSize: 17, color: "#8a8a8a", maxWidth: 520, margin: "0 auto", lineHeight: 1.6 }}>
                 Native support for the platforms creators and indie builders actually use.
