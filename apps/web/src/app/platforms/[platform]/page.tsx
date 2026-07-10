@@ -6,6 +6,39 @@ import { PlatformIcon } from "../../../components/PlatformIcon";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
+function buildSchemas(platform: string, data: PlatformData) {
+  const url = `${WEB_URL}/platforms/${platform}`;
+  const softwareApp = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Posthive",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    description: `Schedule ${data.name} posts automatically. ${data.subheadline}`,
+    url,
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "14-day free trial" },
+  };
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: WEB_URL },
+      { "@type": "ListItem", position: 2, name: "Platforms", item: `${WEB_URL}/platforms` },
+      { "@type": "ListItem", position: 3, name: `${data.name} Scheduler`, item: url },
+    ],
+  };
+  const faqPage = data.faq && data.faq.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: data.faq.map(f => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  } : null;
+  return { softwareApp, breadcrumb, faqPage };
+}
+
 // ── Platform content data ──────────────────────────────────────────────────
 
 // ── SVG icon keys ─────────────────────────────────────────────────────────
@@ -482,8 +515,13 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
 
   const registerUrl = `${process.env.NEXT_PUBLIC_API_URL ? "" : ""}/register`;
 
+  const { softwareApp, breadcrumb, faqPage } = buildSchemas(platform, data);
+
   return (
     <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed" }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApp) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      {faqPage && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPage) }} />}
       <NavBar user={false} ctaHref="/register" navCtaLabel="Get started free" />
 
       {/* ── Hero ── */}
@@ -635,7 +673,7 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
       {/* ── Footer ── */}
       <footer style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "40px 24px", textAlign: "center" }}>
         <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
-          {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"]] as [string, string][]).map(([label, href]) => (
+          {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Pricing", "/pricing"], ["Blog", "/blog"]] as [string, string][]).map(([label, href]) => (
             <Link key={label} href={href} style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>{label}</Link>
           ))}
         </div>

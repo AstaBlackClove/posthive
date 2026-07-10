@@ -142,7 +142,7 @@ function useScrollReveal() {
 }
 
 export default function RootPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const isIndia = useIsIndia();
   useScrollReveal();
   const ctaHref = user ? "/compose" : "/register";
@@ -365,7 +365,7 @@ export default function RootPage() {
         }
       `}</style>
 
-      <NavBar user={!!user} ctaHref={ctaHref} navCtaLabel={navCtaLabel} />
+      <NavBar user={!!user} ctaHref={ctaHref} navCtaLabel={navCtaLabel} loading={authLoading} />
 
       <div style={{ paddingTop: 64 }}>
 
@@ -435,10 +435,14 @@ export default function RootPage() {
               </p>
 
               <div className="anim-4 ph-hero-cta" style={{ display: "flex", gap: 14, justifyContent: "center", alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
-                <Link href={ctaHref} className="ph-btn-primary">
-                  {ctaLabel}
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                </Link>
+                {authLoading ? (
+                  <span className="ph-cta-skeleton" style={{ display: "inline-block", width: 168, height: 47, borderRadius: 11, background: "#161822" }} />
+                ) : (
+                  <Link href={ctaHref} className="ph-btn-primary">
+                    {ctaLabel}
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </Link>
+                )}
                 <Link href="/docs" className="ph-btn-secondary">View docs</Link>
               </div>
 

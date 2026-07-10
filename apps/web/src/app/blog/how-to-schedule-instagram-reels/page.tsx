@@ -341,6 +341,24 @@ export default function HowToScheduleInstagramReelsPage() {
             </div>
           </div>
 
+          {/* Related reading */}
+          <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 48, paddingTop: 36 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 16 }}>Related reading</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[
+                { href: "/platforms/instagram", label: "Instagram scheduler: Reels, Stories, carousels, and feed posts" },
+                { href: "/blog/best-social-media-scheduler", label: "The best social media schedulers in 2026 compared" },
+                { href: "/blog/canva-social-media-scheduler-alternative", label: "Canva social media scheduler alternative" },
+                { href: "/platforms/facebook", label: "Keep your Facebook Page active on autopilot" },
+                { href: "/platforms/youtube", label: "Schedule YouTube Shorts without opening YouTube Studio" },
+              ].map(({ href, label }) => (
+                <Link key={href} href={href} style={{ fontSize: 14, color: "#5b63d3", textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: "#333" }}>→</span> {label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
 

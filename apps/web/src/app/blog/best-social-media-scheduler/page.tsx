@@ -441,6 +441,24 @@ export default function BestSocialMediaSchedulerPage() {
             </div>
           </div>
 
+          {/* Related reading */}
+          <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 48, paddingTop: 36 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 16 }}>Related reading</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[
+                { href: "/blog/hootsuite-alternative", label: "Hootsuite alternatives: cheaper, open source, more platforms" },
+                { href: "/blog/buffer-alternative-open-source", label: "The best open-source Buffer alternative in 2026" },
+                { href: "/blog/how-to-schedule-instagram-reels", label: "How to schedule Instagram Reels in 2026 (step-by-step)" },
+                { href: "/platforms/bluesky", label: "Schedule Bluesky posts — a platform most schedulers don't support" },
+                { href: "/platforms/instagram", label: "Schedule Instagram Reels, Stories, and carousels" },
+              ].map(({ href, label }) => (
+                <Link key={href} href={href} style={{ fontSize: 14, color: "#5b63d3", textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: "#333" }}>→</span> {label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
 

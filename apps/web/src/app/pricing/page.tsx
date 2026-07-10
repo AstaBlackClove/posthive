@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavBar } from "../../components/LandingNav";
 import { useAuth } from "../../context/AuthContext";
+import { apiFetch } from "../../lib/api";
+
+interface BillingStatus {
+  plan: string;
+  planStatus: string;
+  planName: string;
+}
 
 const PLANS = [
   {
@@ -132,6 +139,12 @@ export default function PricingPage() {
   const navCtaLabel = user ? "Go to scheduler" : "Get started free";
   const [isIndia, setIsIndia] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
+
+  useEffect(() => {
+    if (!user) { setBillingStatus(null); return; }
+    apiFetch<BillingStatus>("/billing/status").then(setBillingStatus).catch(() => {});
+  }, [user]);
 
   return (
     <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "system-ui, sans-serif" }}>
@@ -179,12 +192,14 @@ export default function PricingPage() {
         {/* Plan cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 80 }}
           className="pricing-grid">
-          {PLANS.map((plan) => (
+          {PLANS.map((plan) => {
+            const isCurrent = billingStatus?.planStatus === "active" && billingStatus?.plan === plan.id;
+            return (
             <div
               key={plan.id}
               style={{
                 background: plan.popular ? "#0e0e1a" : "#111",
-                border: `1px solid ${plan.popular ? "#3730a3" : "#2a2a2a"}`,
+                border: isCurrent ? "1px solid #4ade80" : `1px solid ${plan.popular ? "#3730a3" : "#2a2a2a"}`,
                 borderRadius: 16,
                 padding: "32px 28px",
                 position: "relative",
@@ -192,7 +207,16 @@ export default function PricingPage() {
                 flexDirection: "column",
               }}
             >
-              {plan.popular && (
+              {isCurrent ? (
+                <div style={{
+                  position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
+                  background: "#4ade80", color: "#0a0a0a", fontSize: 11, fontWeight: 700,
+                  padding: "4px 14px", borderRadius: 20, letterSpacing: ".06em", textTransform: "uppercase",
+                  whiteSpace: "nowrap",
+                }}>
+                  Current plan
+                </div>
+              ) : plan.popular && (
                 <div style={{
                   position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
                   background: "#5b63d3", color: "#fff", fontSize: 11, fontWeight: 700,
@@ -218,16 +242,17 @@ export default function PricingPage() {
               </div>
 
               <Link
-                href="/register"
+                href={isCurrent ? "/billing" : user ? "/billing" : "/register"}
                 style={{
                   display: "block", textAlign: "center", padding: "11px 0", borderRadius: 10,
                   fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 28,
-                  background: plan.popular ? "#5b63d3" : "#fff",
-                  color: plan.popular ? "#fff" : "#0a0a0a",
+                  background: isCurrent ? "#1a2e22" : plan.popular ? "#5b63d3" : "#fff",
+                  color: isCurrent ? "#4ade80" : plan.popular ? "#fff" : "#0a0a0a",
+                  border: isCurrent ? "1px solid #2d5a3d" : "none",
                   transition: "opacity .15s",
                 }}
               >
-                Get started
+                {isCurrent ? "Current plan" : user ? "Manage plan" : "Get started"}
               </Link>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
@@ -241,7 +266,8 @@ export default function PricingPage() {
                 ))}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Trial callout */}

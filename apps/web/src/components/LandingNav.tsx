@@ -33,9 +33,10 @@ interface NavBarProps {
   user: boolean;
   ctaHref: string;
   navCtaLabel: string;
+  loading?: boolean;
 }
 
-export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
+export function NavBar({ user, ctaHref, navCtaLabel, loading }: NavBarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [featOpen, setFeatOpen] = useState(false);
   const [platOpen, setPlatOpen] = useState(false);
@@ -145,25 +146,35 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
         <Link href="/docs" style={{ ...btnStyle, textDecoration: "none" }}>Docs</Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: 8 }}>
-          {!user && <Link href="/login" style={{ fontSize: 14, color: "#888", padding: "9px 12px", textDecoration: "none" }}>Sign in</Link>}
-          <Link href={ctaHref} style={{
-            fontSize: 14, fontWeight: 600, padding: "9px 18px", borderRadius: 8,
+          {loading ? (
+            <span style={{ width: 96, height: 34, borderRadius: 8, background: "#1a1a1a", display: "inline-block" }} className="ph-cta-skeleton" />
+          ) : (
+            <>
+              {!user && <Link href="/login" style={{ fontSize: 14, color: "#888", padding: "9px 12px", textDecoration: "none" }}>Sign in</Link>}
+              <Link href={ctaHref} style={{
+                fontSize: 14, fontWeight: 600, padding: "9px 18px", borderRadius: 8,
+                background: "#5b63d3", color: "#fff",
+                boxShadow: "0 0 0 1px rgba(255,255,255,.08), 0 8px 24px -8px rgba(91,99,211,.75)",
+              }}>
+                {navCtaLabel}
+              </Link>
+            </>
+          )}
+        </div>
+        </div>
+
+        {/* Mobile-only: CTA stays visible outside the hamburger menu */}
+        {loading ? (
+          <span className="ph-mobile-cta ph-cta-skeleton" style={{ display: "none", width: 88, height: 30, borderRadius: 8, background: "#1a1a1a" }} />
+        ) : (
+          <Link href={ctaHref} className="ph-mobile-cta" style={{
+            display: "none", fontSize: 13.5, fontWeight: 600, padding: "8px 14px", borderRadius: 8,
             background: "#5b63d3", color: "#fff",
             boxShadow: "0 0 0 1px rgba(255,255,255,.08), 0 8px 24px -8px rgba(91,99,211,.75)",
           }}>
             {navCtaLabel}
           </Link>
-        </div>
-        </div>
-
-        {/* Mobile-only: CTA stays visible outside the hamburger menu */}
-        <Link href={ctaHref} className="ph-mobile-cta" style={{
-          display: "none", fontSize: 13.5, fontWeight: 600, padding: "8px 14px", borderRadius: 8,
-          background: "#5b63d3", color: "#fff",
-          boxShadow: "0 0 0 1px rgba(255,255,255,.08), 0 8px 24px -8px rgba(91,99,211,.75)",
-        }}>
-          {navCtaLabel}
-        </Link>
+        )}
 
         <button onClick={() => setMobileOpen(o => !o)} style={{ display: "none", background: "none", border: "none", cursor: "pointer", padding: 8, color: "#ededed" }} className="ph-hamburger" aria-label="Menu">
           {mobileOpen
@@ -197,6 +208,8 @@ export function NavBar({ user, ctaHref, navCtaLabel }: NavBarProps) {
 
       <style>{`
         .ph-nav { padding: 0 40px; }
+        .ph-cta-skeleton { animation: ph-pulse 1.4s ease-in-out infinite; }
+        @keyframes ph-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
         @media (max-width: 768px) {
           .ph-nav { padding: 0 16px; }
           .ph-nav-right { gap: 10px !important; }

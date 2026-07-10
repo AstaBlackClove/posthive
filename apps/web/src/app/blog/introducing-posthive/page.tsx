@@ -1,23 +1,26 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
+
 const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Introducing Posthive Schedule posts to 11 platforms at once",
+  headline: "Introducing Posthive: Schedule Posts to 11 Platforms at Once",
   description: "We built Posthive because we were tired of switching between tabs just to post the same update everywhere. Here's what we shipped.",
   datePublished: "2026-07-03",
   author: { "@type": "Person", name: "Guna" },
-  publisher: { "@type": "Organization", name: "Posthive", url: "https://posthive.co" },
-  url: "https://posthive.co/blog/introducing-posthive",
+  publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
+  url: `${WEB_URL}/blog/introducing-posthive`,
 };
 
 export const metadata: Metadata = {
-  title: "Introducing Posthive Schedule posts to 11 platforms at once",
+  title: "Introducing Posthive: Schedule Posts to 11 Platforms at Once | Posthive",
   description:
     "We built Posthive because we were tired of switching between tabs just to post the same update everywhere. Here's what we shipped.",
+  alternates: { canonical: `${WEB_URL}/blog/introducing-posthive` },
   openGraph: {
-    title: "Introducing Posthive Schedule posts to 11 platforms at once",
+    title: "Introducing Posthive: Schedule Posts to 11 Platforms at Once",
     description:
       "We built Posthive because we were tired of switching between tabs just to post the same update everywhere. Here's what we shipped.",
     images: [
@@ -30,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Introducing Posthive Schedule posts to 11 platforms at once",
+    title: "Introducing Posthive: Schedule Posts to 11 Platforms at Once",
     description:
       "We built Posthive because we were tired of switching between tabs just to post the same update everywhere.",
   },
@@ -86,7 +89,7 @@ export default function PostPage() {
 
         {/* Title */}
         <h1 style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15, margin: "0 0 24px", color: "#ededed" }}>
-          Introducing Posthive Schedule posts to 11 platforms at once
+          Introducing Posthive: Schedule posts to 11 platforms at once
         </h1>
 
         {/* Author */}
@@ -114,7 +117,18 @@ export default function PostPage() {
           </h2>
 
           <p style={{ marginBottom: 24 }}>
-            Posthive is a single composer where you write once and schedule to all seven major platforms: <strong style={{ color: "#cfcfcf" }}>Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, and Facebook Pages</strong>. Pick a time, hit Schedule — done. The post goes out at the exact second you chose, handled by a BullMQ job queue that retries automatically if a platform hiccups.
+            Posthive is a single composer where you write once and schedule to all eleven platforms:{" "}
+            <Link href="/platforms/bluesky" style={{ color: "#9ba2ee", textDecoration: "none" }}>Bluesky</Link>,{" "}
+            <Link href="/platforms/threads" style={{ color: "#9ba2ee", textDecoration: "none" }}>Threads</Link>,{" "}
+            <Link href="/platforms/instagram" style={{ color: "#9ba2ee", textDecoration: "none" }}>Instagram</Link>,{" "}
+            <Link href="/platforms/linkedin" style={{ color: "#9ba2ee", textDecoration: "none" }}>LinkedIn</Link>,{" "}
+            <Link href="/platforms/mastodon" style={{ color: "#9ba2ee", textDecoration: "none" }}>Mastodon</Link>,{" "}
+            <Link href="/platforms/youtube" style={{ color: "#9ba2ee", textDecoration: "none" }}>YouTube</Link>,{" "}
+            <Link href="/platforms/facebook" style={{ color: "#9ba2ee", textDecoration: "none" }}>Facebook Pages</Link>,{" "}
+            <Link href="/platforms/pinterest" style={{ color: "#9ba2ee", textDecoration: "none" }}>Pinterest</Link>,{" "}
+            <Link href="/platforms/telegram" style={{ color: "#9ba2ee", textDecoration: "none" }}>Telegram</Link>,{" "}
+            <Link href="/platforms/nostr" style={{ color: "#9ba2ee", textDecoration: "none" }}>Nostr</Link>, and{" "}
+            <Link href="/platforms/twitter" style={{ color: "#9ba2ee", textDecoration: "none" }}>X</Link>. Pick a time, hit Schedule — done. The post goes out at the exact second you chose, handled by a BullMQ job queue that retries automatically if a platform hiccups.
           </p>
 
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
@@ -187,11 +201,36 @@ export default function PostPage() {
           </div>
         </div>
 
-        {/* Footer nav */}
-        <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 64, paddingTop: 32 }}>
-          <Link href="/blog" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>← Back to all posts</Link>
+        {/* Related reading */}
+        <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 64, paddingTop: 40 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 20 }}>Related reading</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[
+              { href: "/blog/best-social-media-scheduler", label: "The best social media schedulers in 2026 compared" },
+              { href: "/blog/buffer-alternative-open-source", label: "The best open-source Buffer alternative" },
+              { href: "/blog/hootsuite-alternative", label: "Hootsuite alternatives: cheaper, open source, more platforms" },
+              { href: "/platforms/instagram", label: "Schedule Instagram Reels, Stories, and carousels with Posthive" },
+              { href: "/platforms/bluesky", label: "Schedule Bluesky posts without the tab-switching" },
+            ].map(({ href, label }) => (
+              <Link key={href} href={href} style={{ fontSize: 14, color: "#5b63d3", textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ color: "#333" }}>→</span> {label}
+              </Link>
+            ))}
+          </div>
+          <div style={{ marginTop: 32 }}>
+            <Link href="/blog" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>← Back to all posts</Link>
+          </div>
         </div>
       </div>
+
+      <footer style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "40px 24px", textAlign: "center" }}>
+        <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+          {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Pricing", "/pricing"], ["Blog", "/blog"]] as [string, string][]).map(([label, href]) => (
+            <Link key={label} href={href} style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>{label}</Link>
+          ))}
+        </div>
+        <p style={{ fontSize: 12, color: "#444" }}>© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
+      </footer>
     </div>
   );
 }
