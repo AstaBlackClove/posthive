@@ -5,8 +5,12 @@
  * Exposes Posthive's scheduling API as MCP tools for use with Claude Code,
  * Cursor, or any MCP-compatible agent.
  *
+ * Auth: if POSTHIVE_API_KEY isn't set, falls back to the credentials stored by
+ * `npx posthive-cli login` in ~/.posthive/config.json — sign in once with the
+ * CLI and both it and this MCP server share the same login.
+ *
  * Env vars:
- *   POSTHIVE_API_KEY  — required. API key from Posthive Settings → API Keys
+ *   POSTHIVE_API_KEY  — optional if already logged in via posthive-cli. API key from Posthive Settings → API Keys
  *   POSTHIVE_API_URL  — optional. Base URL of your Posthive API (default: https://api.posthive.co).
  *                       Set this for self-hosted deployments.
  */
@@ -17,12 +21,15 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { readCredentials } from "./credentials.js";
 
-const API_KEY = process.env.POSTHIVE_API_KEY;
-const API_URL = (process.env.POSTHIVE_API_URL ?? "https://api.posthive.co").replace(/\/$/, "");
+const stored = process.env.POSTHIVE_API_KEY ? null : await readCredentials();
+
+const API_KEY = process.env.POSTHIVE_API_KEY ?? stored?.apiKey;
+const API_URL = (process.env.POSTHIVE_API_URL ?? stored?.apiUrl ?? "https://api.posthive.co").replace(/\/$/, "");
 
 if (!API_KEY) {
-  process.stderr.write("Error: POSTHIVE_API_KEY environment variable is required\n");
+  process.stderr.write("Error: not logged in. Run `npx posthive-cli login`, or set POSTHIVE_API_KEY.\n");
   process.exit(1);
 }
 

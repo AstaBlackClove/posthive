@@ -1110,16 +1110,19 @@ POSTHIVE_API_URL=https://api.posthive.co`}</CopyCode>
               <p className="doc-p">
                 Not every agent speaks MCP. For agents that run shell commands — OpenClaw, custom automation, or scripts — install <span className="doc-inline-code">posthive-cli</span>, a thin command-line wrapper over the same public API:
               </p>
-              <CopyCode>{`npx posthive-cli help`}</CopyCode>
-              <CopyCode>{`export POSTHIVE_API_KEY=ph_your_key_here
-export POSTHIVE_API_URL=https://api.posthive.co
-
-npx posthive-cli accounts:list
+              <CopyCode>{`npx posthive-cli login`}</CopyCode>
+              <p className="doc-p">
+                Opens your browser to sign in — no API key to copy or paste. Credentials are stored in <span className="doc-inline-code">~/.posthive/config.json</span>, shared automatically with <span className="doc-inline-code">posthive-mcp</span> too. Use <span className="doc-inline-code">posthive whoami</span> to check who's logged in, or <span className="doc-inline-code">posthive logout</span> to sign out.
+              </p>
+              <CopyCode>{`npx posthive-cli accounts:list
 npx posthive-cli posts:create --content "Hello" --accounts acc_1,acc_2
 npx posthive-cli posts:list --status draft`}</CopyCode>
               <p className="doc-p">
                 Every command outputs structured JSON. The package ships a bundled <span className="doc-inline-code">skills/posthive/SKILL.md</span> that teaches agents the full command set, platform character limits, and the draft-first workflow — so capable agents can self-discover usage without extra prompting.
               </p>
+              <div className="doc-warn">
+                Prefer env vars for CI or scripts? <span className="doc-inline-code">POSTHIVE_API_KEY</span> and <span className="doc-inline-code">POSTHIVE_API_URL</span> always override the stored login when set.
+              </div>
               <div className="doc-warn">
                 Same safety model as MCP: posts default to drafts. Pass <span className="doc-inline-code">--schedule</span> explicitly to schedule directly instead of saving as a draft.
               </div>

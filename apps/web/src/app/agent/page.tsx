@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { NavBar } from "../../components/LandingNav";
+import { AgentSetupTabs } from "../../components/AgentSetupTabs";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -125,11 +126,11 @@ export default function AgentPage() {
             <span style={{ color: "#5b63d3" }}>run your socials.</span>
           </h1>
           <p style={{ fontSize: "clamp(15px, 2vw, 18px)", color: "#666", lineHeight: 1.75, maxWidth: 620, margin: "0 auto 40px" }}>
-            Claude, Cursor, OpenClaw, or any agent that can call a tool or run a shell command can now schedule posts across 11 platforms — with you approving everything before it goes live.
+            Claude, Cursor, OpenClaw, or any agent that can call a tool or run a shell command can now schedule posts across 11 platforms with you approving everything before it goes live.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/docs#mcp-overview" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)" }}>
-              Read the MCP docs →
+              Read the MCP docs
             </Link>
             <Link href="https://github.com/AstaBlackClove/posthive" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
               View on GitHub
@@ -152,6 +153,17 @@ export default function AgentPage() {
               <div style={{ fontSize: 12, color: "#555", marginTop: 8, fontWeight: 600 }}>{s.label}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Setup ── */}
+      <section style={{ padding: "0 24px 80px" }}>
+        <div style={{ maxWidth: 1040, margin: "0 auto", textAlign: "center" }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "#5b63d3", letterSpacing: ".14em", textTransform: "uppercase", margin: "0 0 12px" }}>Setup</p>
+          <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 800, color: "#ededed", letterSpacing: "-0.03em", margin: "0 0 40px" }}>
+            Connect in three steps
+          </h2>
+          <AgentSetupTabs />
         </div>
       </section>
 
@@ -230,7 +242,7 @@ export default function AgentPage() {
                 It ships with a bundled skill file so agents that support Claude Code-style skills discover the full command set, platform character limits, and best practices automatically.
               </p>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(60,180,200,.08)", border: "1px solid rgba(60,180,200,.25)", borderRadius: 8, padding: "8px 14px" }}>
-                <span style={{ fontSize: 13, color: "#3db8c8" }}>Install with <code style={{ color: "#3db8c8" }}>npx posthive-cli</code> or <code style={{ color: "#3db8c8" }}>npm i -g posthive-cli</code></span>
+                <span style={{ fontSize: 13, color: "#3db8c8" }}>Install with <code style={{ color: "#3db8c8" }}>npx posthive-cli</code>, <code style={{ color: "#3db8c8" }}>npm i -g posthive-cli</code>, or as a skill via <code style={{ color: "#3db8c8" }}>npx skills add AstaBlackClove/posthive</code></span>
               </div>
             </div>
           </div>

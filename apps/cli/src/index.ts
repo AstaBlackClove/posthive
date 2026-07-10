@@ -7,17 +7,24 @@
  *
  * Every command outputs structured JSON for easy parsing by LLMs and scripts.
  *
- * Env vars:
- *   POSTHIVE_API_KEY  — required. API key from Posthive Settings → API Keys
- *   POSTHIVE_API_URL  — optional. Base URL of the Posthive API (default: https://api.posthive.co).
+ * Auth: run `posthive login` once to sign in via your browser (no API key
+ * copy-paste needed) — credentials are stored in ~/.posthive/config.json.
+ * Or set env vars directly, which always take priority:
+ *   POSTHIVE_API_KEY  — API key from Posthive Settings → API Keys
+ *   POSTHIVE_API_URL  — Base URL of the Posthive API (default: https://api.posthive.co).
  *                       Set this for self-hosted deployments.
  */
 
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
+import { readCredentials } from "./credentials.js";
+import { runLogin, runLogout } from "./login.js";
 
-const API_KEY = process.env.POSTHIVE_API_KEY;
-const API_URL = (process.env.POSTHIVE_API_URL ?? "https://api.posthive.co").replace(/\/$/, "");
+const DEFAULT_API_URL = "https://api.posthive.co";
+const stored = process.env.POSTHIVE_API_KEY ? null : await readCredentials();
+
+const API_KEY = process.env.POSTHIVE_API_KEY ?? stored?.apiKey;
+const API_URL = (process.env.POSTHIVE_API_URL ?? stored?.apiUrl ?? DEFAULT_API_URL).replace(/\/$/, "");
 
 // ─── Output helpers ──────────────────────────────────────────────────────────
 
@@ -111,11 +118,15 @@ async function api(method: string, path: string, body?: unknown): Promise<unknow
 
 const HELP = {
   usage: "posthive <command> [args] [--flags]",
+  auth: "Run `posthive login` once to sign in via your browser. No API key copy-paste needed.",
   env: {
-    POSTHIVE_API_KEY: "required — API key from Posthive Settings → API Keys",
+    POSTHIVE_API_KEY: "optional — overrides stored login. API key from Posthive Settings → API Keys",
     POSTHIVE_API_URL: "optional — API base URL (default: https://api.posthive.co)",
   },
   commands: {
+    "login": "Sign in via your browser. Stores credentials in ~/.posthive/config.json. [--api-url <url>] for self-hosted.",
+    "logout": "Clear stored login credentials",
+    "whoami": "Show the currently logged-in account",
     "accounts:list": "List connected social accounts and their IDs",
     "posts:create": "Create a post. --content <text> --accounts <id,id> [--schedule <ISO>] [--first-comment <text>] [--media <url,url>] [--media-type post|reel|story] [--youtube-type short|video] [--dry-run]. Saved as DRAFT unless --schedule is given.",
     "posts:list": "List posts. [--status pending|draft|done|failed] [--limit <n>]",
@@ -144,8 +155,27 @@ if (command === "help" || command === "--help" || command === "-h") {
   out(HELP);
 }
 
+if (command === "login") {
+  const loginUrl = (str(flags, "api-url") ?? process.env.POSTHIVE_API_URL ?? DEFAULT_API_URL).replace(/\/$/, "");
+  try {
+    await runLogin(loginUrl);
+    process.exit(0);
+  } catch (err) {
+    fail(err instanceof Error ? err.message : String(err));
+  }
+}
+
+if (command === "logout") {
+  await runLogout();
+  process.exit(0);
+}
+
 if (!API_KEY) {
-  fail("POSTHIVE_API_KEY environment variable is required. Get a key at Posthive → Settings → API Keys.");
+  fail("Not logged in. Run `posthive login`, or set POSTHIVE_API_KEY for CI/scripts.");
+}
+
+if (command === "whoami") {
+  out(await api("GET", "/api/v1/me"));
 }
 
 switch (command) {

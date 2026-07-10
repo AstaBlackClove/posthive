@@ -18,7 +18,17 @@ npx posthive-cli help
 
 ## Setup
 
-You need a Posthive account and an API key ([posthive.co](https://posthive.co) → Settings → API Keys, Pro/Team plan).
+Sign in once with your browser — no API key copy-pasting:
+
+```bash
+posthive login
+```
+
+This opens your browser to sign in to Posthive, then stores credentials in `~/.posthive/config.json`. Run `posthive logout` to sign out, or `posthive whoami` to check who's currently logged in.
+
+Self-hosted Posthive: `posthive login --api-url http://localhost:3001`
+
+Prefer env vars (CI, scripts, or a manually generated key from Settings → API Keys)? They always take priority over the stored login:
 
 ```bash
 export POSTHIVE_API_KEY=ph_your_key_here

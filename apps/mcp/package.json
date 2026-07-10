@@ -1,6 +1,6 @@
 {
   "name": "posthive-mcp",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "MCP server for Posthive — schedule posts to 11 social platforms from Claude, Cursor, Windsurf, or any MCP-compatible AI agent",
   "type": "module",
   "bin": {

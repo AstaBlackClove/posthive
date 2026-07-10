@@ -14,6 +14,17 @@ export async function publicApiRoutes(
   app: FastifyInstance,
   { storage }: { storage: StorageAdapter }
 ): Promise<void> {
+  // GET /api/v1/me — identify the authenticated user (used by CLI/MCP login)
+  app.get("/api/v1/me", { preHandler }, async (req, reply) => {
+    const userId = req.apiKeyUser!.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true, plan: true, planStatus: true },
+    });
+    if (!user) return reply.status(404).send({ error: "User not found" });
+    return reply.send({ user });
+  });
+
   // GET /api/v1/accounts — list connected social accounts
   app.get("/api/v1/accounts", { preHandler }, async (req, reply) => {
     const userId = req.apiKeyUser!.id;

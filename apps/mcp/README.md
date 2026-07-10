@@ -8,7 +8,13 @@ MCP server for [Posthive](https://posthive.co) — schedule posts to 11 social p
 
 ## Quick start
 
-You need a Posthive account and an API key. Get one at [posthive.co](https://posthive.co) → Settings → API Keys (Pro/Team plan).
+Sign in once with [`posthive-cli`](https://www.npmjs.com/package/posthive-cli) and this MCP server picks up the same login automatically — no API key needed:
+
+```bash
+npx posthive-cli login
+```
+
+That's it. If you'd rather use an API key directly (CI, self-hosted, or without installing the CLI), generate one at [posthive.co](https://posthive.co) → Settings → API Keys (Pro/Team plan) and set `POSTHIVE_API_KEY` as shown below — it always overrides the stored login.
 
 ### Claude Desktop
 
@@ -62,7 +68,7 @@ Set `POSTHIVE_API_URL` to your own API URL (e.g. `http://localhost:3001`). Omit 
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `POSTHIVE_API_KEY` | Yes | API key from Posthive Settings → API Keys |
+| `POSTHIVE_API_KEY` | No, if logged in via `posthive-cli login` | API key from Posthive Settings → API Keys. Overrides the stored login when set. |
 | `POSTHIVE_API_URL` | No | Base URL of your Posthive API. Defaults to `https://api.posthive.co`. Set this only for self-hosted deployments. |
 
 ---
