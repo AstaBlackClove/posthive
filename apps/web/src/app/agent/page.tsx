@@ -1,7 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { NavBar } from "../../components/LandingNav";
 import { AgentSetupTabs } from "../../components/AgentSetupTabs";
+import { PlatformIcon } from "../../components/PlatformIcon";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -111,6 +113,9 @@ export default function AgentPage() {
           .agent-grid-2 { grid-template-columns: 1fr !important; }
           .agent-grid-3 { grid-template-columns: 1fr !important; }
         }
+        @media (max-width: 480px) {
+          .agent-chat-demo { padding: 14px 14px !important; }
+        }
       `}</style>
 
       <NavBar user={false} ctaHref="/register" navCtaLabel="Get started free" />
@@ -118,23 +123,65 @@ export default function AgentPage() {
       {/* ── Hero ── */}
       <section style={{ padding: "120px 24px 80px", textAlign: "center" }}>
         <div style={{ maxWidth: 780, margin: "0 auto" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(91,99,211,.1)", border: "1px solid rgba(91,99,211,.25)", borderRadius: 999, padding: "6px 16px", marginBottom: 28 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#9ba2ee", letterSpacing: ".06em" }}>MCP · CLI · SKILL</span>
-          </div>
-          <h1 className="agent-hero" style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 900, letterSpacing: "-0.04em", lineHeight: 1.1, color: "#ededed", margin: "0 0 20px" }}>
-            Let your AI agent<br />
-            <span style={{ color: "#5b63d3" }}>run your socials.</span>
+          <h1 className="agent-hero" style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 900, letterSpacing: "-0.04em", lineHeight: 1.1, color: "#ededed", margin: "0 0 24px" }}>
+            <span style={{ display: "block", marginBottom: 14 }}>
+              Let your <span style={{ display: "inline-block", background: "#5b63d3", color: "#fff", padding: "2px 16px 4px", borderRadius: 6, transform: "rotate(-1.5deg)", transformOrigin: "center" }}>AI agent</span>
+            </span>
+            <span style={{ display: "block" }}>run your socials.</span>
           </h1>
           <p style={{ fontSize: "clamp(15px, 2vw, 18px)", color: "#666", lineHeight: 1.75, maxWidth: 620, margin: "0 auto 40px" }}>
             Claude, Cursor, OpenClaw, or any agent that can call a tool or run a shell command can now schedule posts across 11 platforms with you approving everything before it goes live.
           </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/docs#mcp-overview" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)" }}>
-              Read the MCP docs
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 56 }}>
+            <Link href="#setup" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)" }}>
+              Set up Posthive MCP
             </Link>
-            <Link href="https://github.com/AstaBlackClove/posthive" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
-              View on GitHub
+            <Link href="/docs#api-authentication" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
+              Use the API
             </Link>
+          </div>
+
+          {/* Chat demo card */}
+          <div className="agent-chat-demo" style={{ maxWidth: 560, margin: "0 auto", textAlign: "left", background: "#111111", border: "1px solid #2a2a2a", borderRadius: 16, padding: "18px 20px", boxShadow: "0 20px 60px -20px rgba(0,0,0,.6)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, paddingBottom: 14, borderBottom: "1px solid #1e1e1e" }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#e86b6b" }} />
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#d4a83c" }} />
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#5cb88a" }} />
+              <span style={{ fontSize: 11, color: "#555", fontFamily: "monospace", marginLeft: 6 }}>Claude Code</span>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+              <div style={{ maxWidth: "82%", background: "#1e2140", border: "1px solid #2e3266", borderRadius: "12px 12px 2px 12px", padding: "10px 14px" }}>
+                <p style={{ fontSize: 13.5, color: "#dcdeff", margin: 0, lineHeight: 1.6 }}>
+                  Schedule a post about our launch for tomorrow at 9am
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <span style={{ width: 26, height: 26, borderRadius: 7, background: "#131313", border: "1px solid #2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                <Image src="/posthivemain.png" alt="" width={15} height={15} />
+              </span>
+              <div style={{ maxWidth: "82%", background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: "12px 12px 12px 2px", padding: "10px 14px" }}>
+                <p style={{ fontSize: 13.5, color: "#ccc", margin: "0 0 10px", lineHeight: 1.6 }}>
+                  Draft created for tomorrow 9:00 AM. Review it before it goes live:
+                </p>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {["bluesky", "threads", "linkedin"].map(p => (
+                    <span key={p} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#131313", border: "1px solid #2a2a2a", borderRadius: 999, padding: "3px 9px 3px 6px" }}>
+                      <span style={{ width: 14, height: 14, borderRadius: 4, overflow: "hidden", display: "flex" }}>
+                        <PlatformIcon platform={p} size={14} />
+                      </span>
+                      <span style={{ fontSize: 10.5, color: "#999", fontWeight: 600, textTransform: "capitalize" }}>{p}</span>
+                    </span>
+                  ))}
+                  <span style={{ display: "inline-flex", alignItems: "center", fontSize: 10.5, fontWeight: 700, color: "#d4a83c", background: "rgba(212,168,60,.1)", border: "1px solid rgba(212,168,60,.25)", borderRadius: 999, padding: "3px 9px" }}>
+                    DRAFT
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -157,7 +204,7 @@ export default function AgentPage() {
       </section>
 
       {/* ── Setup ── */}
-      <section style={{ padding: "0 24px 80px" }}>
+      <section id="setup" style={{ padding: "0 24px 80px" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", textAlign: "center" }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: "#5b63d3", letterSpacing: ".14em", textTransform: "uppercase", margin: "0 0 12px" }}>Setup</p>
           <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 800, color: "#ededed", letterSpacing: "-0.03em", margin: "0 0 40px" }}>

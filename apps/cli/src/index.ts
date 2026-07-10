@@ -151,6 +151,7 @@ const HELP = {
 
 const { command, positional, flags } = parseArgs(process.argv.slice(2));
 
+async function main(): Promise<void> {
 if (command === "help" || command === "--help" || command === "-h") {
   out(HELP);
 }
@@ -159,15 +160,19 @@ if (command === "login") {
   const loginUrl = (str(flags, "api-url") ?? process.env.POSTHIVE_API_URL ?? DEFAULT_API_URL).replace(/\/$/, "");
   try {
     await runLogin(loginUrl);
-    process.exit(0);
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
   }
+  // No explicit process.exit() here — the local callback server used during
+  // login is already closed by this point, so returning lets Node exit
+  // naturally once the event loop drains. Forcing an early exit races with
+  // libuv's handle cleanup on Windows and crashes with a native assertion.
+  return;
 }
 
 if (command === "logout") {
   await runLogout();
-  process.exit(0);
+  return;
 }
 
 if (!API_KEY) {
@@ -341,3 +346,6 @@ switch (command) {
   default:
     fail(`Unknown command: ${command}. Run "posthive help" for usage.`);
 }
+}
+
+await main();

@@ -99,16 +99,40 @@ function TerminalMock({ comment, command }: { comment: string; command: string }
   );
 }
 
+function EditorMock({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <CardShell>
+      <FileHeader icon={icon} label={label} />
+      <div style={{ padding: "14px 16px", flex: 1, fontFamily: "monospace", fontSize: 11, color: "#333" }}>
+        {[1, 2, 3, 4, 5].map(n => (
+          <div key={n} style={{ display: "flex", gap: 10, padding: "2px 0", borderBottom: "1px solid #141414" }}>
+            <span style={{ color: "#444", width: 12 }}>{n}</span>
+            <span>{n === 1 ? <span style={{ color: "#666" }}>▌</span> : ""}</span>
+          </div>
+        ))}
+      </div>
+    </CardShell>
+  );
+}
+
 function CodeBlock({ code }: { code: string }) {
+  const rows = code.split("\n").length;
   return (
     <div style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 14, minHeight: 200, minWidth: 0, maxWidth: "100%", padding: 20, boxSizing: "border-box", overflow: "hidden" }}>
       <div style={{ position: "relative", minWidth: 0 }}>
         <CopyBtn text={code} />
-        <div style={{ overflowX: "auto", minWidth: 0, paddingBottom: 6 }}>
-          <pre style={{ margin: 0, paddingRight: 64, fontFamily: "monospace", fontSize: 12, lineHeight: 1.9, color: "#9ba2ee", whiteSpace: "pre" }}>
-            {code}
-          </pre>
-        </div>
+        <textarea
+          readOnly
+          value={code}
+          rows={rows}
+          onFocus={e => e.currentTarget.select()}
+          spellCheck={false}
+          style={{
+            width: "100%", paddingRight: 64, margin: 0, border: "none", outline: "none", resize: "none",
+            background: "transparent", fontFamily: "monospace", fontSize: 12, lineHeight: 1.9, color: "#9ba2ee",
+            whiteSpace: "pre", overflowX: "auto", overflowY: "hidden",
+          }}
+        />
       </div>
     </div>
   );
@@ -135,9 +159,16 @@ function InlineCard({ code }: { code: string }) {
         display: "flex", alignItems: "center", gap: 10, width: "100%", minWidth: 0,
         background: "#131313", border: "1px solid #2a2a2a", borderRadius: 10, padding: "10px 10px 10px 16px",
       }}>
-        <span style={{ flex: 1, minWidth: 0, fontFamily: "monospace", fontSize: 12.5, color: "#9ba2ee", overflowX: "auto", whiteSpace: "nowrap", display: "block" }}>
-          {code}
-        </span>
+        <input
+          readOnly
+          value={code}
+          onFocus={e => e.currentTarget.select()}
+          spellCheck={false}
+          style={{
+            flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent",
+            fontFamily: "monospace", fontSize: 12.5, color: "#9ba2ee",
+          }}
+        />
         <button
           onClick={handleClick}
           style={{
@@ -257,7 +288,42 @@ const CLIENTS: ClientDef[] = [
     id: "chatgpt",
     label: "ChatGPT",
     icon: <AppIcon id="chatgpt" />,
-    comingSoon: true,
+    steps: [
+      { title: "Enable Developer Mode", desc: "Go to Settings → Apps → Advanced settings and turn on Developer mode (one-time)." },
+      { title: "Add the Posthive URL", desc: "Add an app and paste the URL below. ChatGPT will prompt you to sign in." },
+      { title: "Sign in with Posthive", desc: "Authorize once in your browser. ChatGPT can now schedule posts." },
+    ],
+    render: () => (
+      <>
+        <div style={{ position: "relative", background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 14, minHeight: 200, minWidth: 0, maxWidth: "100%", boxSizing: "border-box", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#ededed" }}>Apps</span>
+            <span style={{ width: 20, height: 20, borderRadius: 6, background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center", color: "#ededed" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "#131313", border: "1px solid #1e1e1e", borderRadius: 9 }}>
+            <span style={{ width: 22, height: 22, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
+              <Image src="/posthivemain.png" alt="Posthive" width={22} height={22} />
+            </span>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: "#ededed" }}>posthive</span>
+            <span style={{ fontSize: 9.5, fontWeight: 700, color: "#e86b6b", background: "rgba(232,107,107,.12)", border: "1px solid rgba(232,107,107,.3)", borderRadius: 4, padding: "1px 5px" }}>DEV</span>
+          </div>
+
+          <div style={{ position: "absolute", top: 48, right: 16, zIndex: 10, width: 176, borderRadius: 10, background: "#161616", border: "1px solid #2a2a2a", boxShadow: "0 8px 24px rgba(0,0,0,.5)", padding: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, borderRadius: 7, background: "#1e1e1e", padding: "7px 8px", fontSize: 12, fontWeight: 600, color: "#ededed" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+              Add app
+            </div>
+          </div>
+
+          <div style={{ marginTop: "auto", fontSize: 10.5, color: "#555" }}>Developer mode: On</div>
+        </div>
+        <InlineCard code={MCP_OAUTH_URL} />
+        <ConnectCard toIcon={<AppIcon id="chatgpt" />} toLabel="ChatGPT" buttonLabel="Approve & connect" />
+      </>
+    ),
   },
   {
     id: "claude-code",
@@ -270,8 +336,8 @@ const CLIENTS: ClientDef[] = [
     ],
     render: () => (
       <>
-        <TerminalMock comment="register the Posthive MCP server" command="claude mcp add posthive --transport http" />
-        <InlineCard code={`claude mcp add posthive --transport http --url ${MCP_OAUTH_URL}`} />
+        <TerminalMock comment="register the Posthive MCP server" command="claude mcp add --transport http posthive" />
+        <InlineCard code={`claude mcp add --transport http posthive ${MCP_OAUTH_URL}`} />
         <ConnectCard toIcon={<AppIcon id="claude-code" />} toLabel="Claude Code" buttonLabel="Sign in with Posthive" />
       </>
     ),
@@ -281,15 +347,15 @@ const CLIENTS: ClientDef[] = [
     label: "Cursor",
     icon: <AppIcon id="cursor" />,
     steps: [
-      { title: "Sign in with Posthive", desc: "Run npx posthive-cli login once to sign in via your browser. No API key needed." },
-      { title: "Add Posthive to Cursor", desc: "Add this to .cursor/mcp.json — Cursor launches it locally and reuses your login." },
-      { title: "Reload Cursor", desc: "Posthive's tools appear in the agent tool list immediately." },
+      { title: "Open MCP settings", desc: "Go to Cursor Settings → MCP → Add new server." },
+      { title: "Add the Posthive URL", desc: "Paste the URL below. No API key needed." },
+      { title: "Sign in with Posthive", desc: "Authorize once in your browser. Cursor can now schedule posts." },
     ],
     render: () => (
       <>
-        <TerminalMock comment="sign in once, no API key needed" command="npx posthive-cli login" />
-        <CodeBlock code={`{\n  "mcpServers": {\n    "posthive": {\n      "command": "npx",\n      "args": ["posthive-mcp"]\n    }\n  }\n}`} />
-        <ConnectCard toIcon={<AppIcon id="cursor" />} toLabel="Cursor" buttonLabel="Reload Cursor" />
+        <EditorMock icon={<AppIcon id="cursor" size={16} />} label=".cursor/mcp.json" />
+        <CodeBlock code={`{\n  "mcpServers": {\n    "posthive": {\n      "url": "${MCP_OAUTH_URL}"\n    }\n  }\n}`} />
+        <ConnectCard toIcon={<AppIcon id="cursor" />} toLabel="Cursor" buttonLabel="Approve & connect" />
       </>
     ),
   },
@@ -298,15 +364,15 @@ const CLIENTS: ClientDef[] = [
     label: "VS Code",
     icon: <AppIcon id="vscode" />,
     steps: [
-      { title: "Sign in with Posthive", desc: "Run npx posthive-cli login once to sign in via your browser. No API key needed." },
-      { title: "Add Posthive to VS Code", desc: "Add this to .vscode/mcp.json — no API key needed, it reuses your login." },
-      { title: "Reload the window", desc: "GitHub Copilot Chat picks up Posthive's tools automatically." },
+      { title: "Open your MCP config", desc: "Edit .vscode/mcp.json in your project." },
+      { title: "Add the Posthive URL", desc: "Paste the URL below. No API key needed." },
+      { title: "Sign in with Posthive", desc: "Authorize once in your browser. Copilot Chat can now schedule posts." },
     ],
     render: () => (
       <>
-        <TerminalMock comment="sign in once, no API key needed" command="npx posthive-cli login" />
-        <CodeBlock code={`{\n  "servers": {\n    "posthive": {\n      "type": "stdio",\n      "command": "npx",\n      "args": ["posthive-mcp"]\n    }\n  }\n}`} />
-        <ConnectCard toIcon={<AppIcon id="vscode" />} toLabel="VS Code" buttonLabel="Reload window" />
+        <EditorMock icon={<AppIcon id="vscode" size={16} />} label=".vscode/mcp.json" />
+        <CodeBlock code={`{\n  "servers": {\n    "posthive": {\n      "type": "http",\n      "url": "${MCP_OAUTH_URL}"\n    }\n  }\n}`} />
+        <ConnectCard toIcon={<AppIcon id="vscode" />} toLabel="VS Code" buttonLabel="Approve & connect" />
       </>
     ),
   },
@@ -315,15 +381,15 @@ const CLIENTS: ClientDef[] = [
     label: "Codex",
     icon: <AppIcon id="codex" />,
     steps: [
-      { title: "Sign in with Posthive", desc: "Run npx posthive-cli login once to sign in via your browser. No API key needed." },
-      { title: "Add Posthive to Codex", desc: "Add this block to ~/.codex/config.toml." },
-      { title: "Restart Codex", desc: "Codex reloads MCP servers and Posthive is ready to use." },
+      { title: "Open your terminal", desc: "Edit ~/.codex/config.toml, or .codex/config.toml per project." },
+      { title: "Add the Posthive URL", desc: "Add this block. No API key needed." },
+      { title: "Sign in with Posthive", desc: "Authorize once in your browser. Codex can now schedule posts." },
     ],
     render: () => (
       <>
-        <TerminalMock comment="sign in once, no API key needed" command="npx posthive-cli login" />
-        <CodeBlock code={`[mcp_servers.posthive]\ncommand = "npx"\nargs = ["posthive-mcp"]`} />
-        <ConnectCard toIcon={<AppIcon id="codex" />} toLabel="Codex" buttonLabel="Restart Codex" />
+        <TerminalMock comment="edit the Codex config" command="vim ~/.codex/config.toml" />
+        <CodeBlock code={`[mcp_servers.posthive]\nurl = "${MCP_OAUTH_URL}"`} />
+        <ConnectCard toIcon={<AppIcon id="codex" />} toLabel="Codex" buttonLabel="Approve & connect" />
       </>
     ),
   },
@@ -332,15 +398,15 @@ const CLIENTS: ClientDef[] = [
     label: "OpenClaw",
     icon: <AppIcon id="openclaw" />,
     steps: [
-      { title: "Sign in with Posthive", desc: "Run npx posthive-cli login once to sign in via your browser. No API key needed." },
-      { title: "Add Posthive", desc: "Register Posthive as a local MCP server. It reuses your login automatically." },
-      { title: "Message your agent", desc: "Try \"Schedule a LinkedIn post for tomorrow 9am\" — OpenClaw handles the rest." },
+      { title: "Open your terminal", desc: "Register Posthive as a remote MCP server with one command." },
+      { title: "Add the Posthive URL", desc: "Run the command below. No API key needed." },
+      { title: "Sign in with Posthive", desc: "Authorize once in your browser. OpenClaw can now schedule posts." },
     ],
     render: () => (
       <>
-        <TerminalMock comment="sign in once, no API key needed" command="npx posthive-cli login" />
-        <InlineCard code={`openclaw mcp set posthive '{"command":"npx","args":["posthive-mcp"]}'`} />
-        <ConnectCard toIcon={<AppIcon id="openclaw" />} toLabel="OpenClaw" buttonLabel="Ready to use" />
+        <TerminalMock comment="register the Posthive MCP server" command="openclaw mcp set posthive" />
+        <InlineCard code={`openclaw mcp set posthive '{"url":"${MCP_OAUTH_URL}","transport":"streamable-http"}'`} />
+        <ConnectCard toIcon={<AppIcon id="openclaw" />} toLabel="OpenClaw" buttonLabel="Approve & connect" />
       </>
     ),
   },
@@ -349,15 +415,15 @@ const CLIENTS: ClientDef[] = [
     label: "Hermes Agent",
     icon: <AppIcon id="hermes" />,
     steps: [
-      { title: "Sign in with Posthive", desc: "Run npx posthive-cli login once to sign in via your browser. No API key needed." },
-      { title: "Add Posthive", desc: "Add this to ~/.hermes/config.yaml, then run /reload-mcp." },
-      { title: "Reload Hermes Agent", desc: "Run /reload-mcp and Posthive is live and ready." },
+      { title: "Open your terminal", desc: "Edit ~/.hermes/config.yaml." },
+      { title: "Add the Posthive URL", desc: "Add this block. No API key needed." },
+      { title: "Sign in with Posthive", desc: "Authorize once in your browser. Hermes can now schedule posts." },
     ],
     render: () => (
       <>
-        <TerminalMock comment="sign in once, no API key needed" command="npx posthive-cli login" />
-        <CodeBlock code={`mcp_servers:\n  posthive:\n    command: npx\n    args: ["posthive-mcp"]`} />
-        <ConnectCard toIcon={<AppIcon id="hermes" />} toLabel="Hermes Agent" buttonLabel="Reload Hermes" />
+        <TerminalMock comment="edit the Hermes config" command="vim ~/.hermes/config.yaml" />
+        <CodeBlock code={`mcp_servers:\n  posthive:\n    url: "${MCP_OAUTH_URL}"`} />
+        <ConnectCard toIcon={<AppIcon id="hermes" />} toLabel="Hermes Agent" buttonLabel="Approve & connect" />
       </>
     ),
   },

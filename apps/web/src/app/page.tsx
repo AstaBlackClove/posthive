@@ -548,14 +548,14 @@ export default function RootPage() {
           </div>
           <div className="ph-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18 }}>
             {[
-              { icon: <ChatIcon />,   title: "First comment automation",     href: "/features/first-comment",           body: "Schedule a reply that fires the second your post goes live — on Bluesky, Threads, Mastodon, and LinkedIn. Other tools do this only on Instagram. We do it everywhere." },
+              { icon: <ChatIcon />,   title: "First comment automation",     href: "/features/first-comment",           body: "Schedule a reply that fires the second your post goes live on Bluesky, Threads, Mastodon, and LinkedIn. Other tools do this only on Instagram. We do it everywhere." },
               { icon: <LayersIcon />, title: "Multi-platform posting",       href: "/features/multi-platform-posting",  body: "Draft once and ship to all nine networks in a single click." },
               { icon: <PlayIcon />,   title: "Reels & Stories scheduling",   href: "/features/instagram-reels-scheduler",       body: "Full Instagram media support plus YouTube Shorts with native previews." },
               { icon: <CalGridIcon />,title: "Drag-to-reschedule calendar",  href: "/features/drag-to-reschedule",      body: "See your whole week at a glance. Drag any post to a new slot in seconds." },
               { icon: <PenIcon />,    title: "Per-platform text overrides",  href: "/features/per-platform-overrides",  body: "Tweak copy and media per network without leaving the composer." },
               { icon: <ServerIcon />, title: "Reliable scheduling",          href: "/features/multi-platform-posting",  body: "Posts fire at the exact second. BullMQ-backed queue with automatic retries." },
               { icon: <CsvIcon />,    title: "Bulk CSV scheduling",          href: "/features/bulk-csv-scheduling",     body: "Upload a CSV and schedule hundreds of posts at once. Exclude platforms per row with !platform syntax." },
-              { icon: <McpIcon />,    title: "Give your agents hands",        href: "/docs#mcp-overview",                body: "Drive Posthive from Claude Code or Cursor via MCP. Your agent drafts and schedules — nothing publishes without your approval." },
+              { icon: <McpIcon />,    title: "Give your agents hands",        href: "/docs#mcp-overview",                body: "Drive Posthive from Claude Code or Cursor via MCP. Your agent drafts and schedules nothing publishes without your approval." },
             ].map(({ icon, title, href, body }) => (
               <Link key={title} href={href} className="ph-feature-card" style={{ display: "block" }}>
                 <div style={{ width: 44, height: 44, borderRadius: 11, background: "#17172a", border: "1px solid #26264a", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20, color: "#8b91e8" }}>
@@ -625,7 +625,7 @@ export default function RootPage() {
               </div>
               <h2 style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.025em", margin: "0 0 16px", color: "#f2f2f2", lineHeight: 1.2 }}>Drag to reschedule.<br />Instantly.</h2>
               <p style={{ color: "#888", lineHeight: 1.75, fontSize: 16, marginBottom: 24 }}>
-                See your entire content pipeline on a month, week, or day calendar. Drag any scheduled post to a new date and time — the job is rescheduled server-side in real time.
+                See your entire content pipeline on a month, week, or day calendar. Drag any scheduled post to a new date and time the job is rescheduled server-side in real time.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {["Month, week, and day views", "Drag-and-drop rescheduling", "Color-coded by platform"].map(item => (
@@ -648,10 +648,10 @@ export default function RootPage() {
               </div>
               <h2 style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.025em", margin: "0 0 16px", color: "#f2f2f2", lineHeight: 1.2 }}>First comment.<br />On every platform.</h2>
               <p style={{ color: "#888", lineHeight: 1.75, fontSize: 16, marginBottom: 24 }}>
-                Buffer and Hootsuite do first comments on Instagram. That&apos;s it. Posthive fires a reply the second your post goes live on Bluesky, Threads, Mastodon, and LinkedIn too. Hashtag stacks, affiliate links, thread continuations — without cluttering your main copy.
+                Buffer and Hootsuite do first comments on Instagram. That&apos;s it. Posthive fires a reply the second your post goes live on Bluesky, Threads, Mastodon, and LinkedIn too. Hashtag stacks, affiliate links, thread continuations without cluttering your main copy.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {["Works on Bluesky, Threads, Mastodon & LinkedIn", "Fires within seconds of the main post", "Per-platform override — different comment per network"].map(item => (
+                {["Works on Bluesky, Threads, Mastodon & LinkedIn", "Fires within seconds of the main post", "Per-platform override different comment per network"].map(item => (
                   <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#ccc" }}>
                     <CheckCircleIcon />{item}
                   </div>

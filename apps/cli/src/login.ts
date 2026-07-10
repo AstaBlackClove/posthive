@@ -59,22 +59,24 @@ export async function runLogin(apiUrl: string): Promise<void> {
       const authCode = url.searchParams.get("code");
       const error = url.searchParams.get("error");
 
+      const shutdown = () => { server.close(); server.closeAllConnections(); };
+
       if (error) {
-        res.writeHead(200, { "Content-Type": "text/html" }).end(DENIED_HTML);
-        server.close();
+        res.writeHead(200, { "Content-Type": "text/html", "Connection": "close" });
+        res.end(DENIED_HTML, () => shutdown());
         reject(new Error(url.searchParams.get("error_description") ?? error));
         return;
       }
 
       if (!authCode || returnedState !== state) {
-        res.writeHead(400, { "Content-Type": "text/html" }).end(DENIED_HTML);
-        server.close();
+        res.writeHead(400, { "Content-Type": "text/html", "Connection": "close" });
+        res.end(DENIED_HTML, () => shutdown());
         reject(new Error("State mismatch or missing authorization code."));
         return;
       }
 
-      res.writeHead(200, { "Content-Type": "text/html" }).end(SUCCESS_HTML);
-      server.close();
+      res.writeHead(200, { "Content-Type": "text/html", "Connection": "close" });
+      res.end(SUCCESS_HTML, () => shutdown());
       resolve(authCode);
     });
 
@@ -107,16 +109,27 @@ export async function runLogin(apiUrl: string): Promise<void> {
     });
   });
 
-  const tokenRes = await fetch(`${apiUrl}/oauth/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "authorization_code",
-      code,
-      code_verifier: verifier,
-      redirect_uri: redirectUri,
-    }),
-  });
+  let tokenRes: Response;
+  try {
+    tokenRes = await fetch(`${apiUrl}/oauth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        code_verifier: verifier,
+        redirect_uri: redirectUri,
+      }),
+    });
+  } catch (err) {
+    const cause = err instanceof Error && err.cause instanceof Error ? `: ${err.cause.message}` : "";
+    throw new Error(
+      `Could not reach ${apiUrl}${cause}. This is usually a network/firewall/proxy issue on your machine ` +
+      `blocking Node.js from making HTTPS requests (even if your browser can reach the site fine). ` +
+      `If you're behind a corporate proxy or antivirus with TLS inspection, try setting NODE_EXTRA_CA_CERTS ` +
+      `to your organization's root CA, or run from a different network.`
+    );
+  }
 
   if (!tokenRes.ok) {
     const text = await tokenRes.text();

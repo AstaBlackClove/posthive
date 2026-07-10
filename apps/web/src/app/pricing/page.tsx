@@ -131,7 +131,7 @@ export default function PricingPage() {
   const { user } = useAuth();
   const ctaHref = user ? "/compose" : "/register";
   const navCtaLabel = user ? "Go to scheduler" : "Get started free";
-  const [isIndia, setIsIndia] = useState(true);
+  const [isIndia, setIsIndia] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (

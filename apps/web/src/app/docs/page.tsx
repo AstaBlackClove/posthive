@@ -90,11 +90,12 @@ const NAV = [
     items: [
       { label: "Overview", id: "mcp-overview" },
       { label: "Plan requirements", id: "mcp-plans" },
-      { label: "Installation", id: "mcp-install" },
+      { label: "Sign in (recommended)", id: "mcp-install" },
       { label: "Claude Code setup", id: "mcp-claude-code" },
-      { label: "Cursor setup", id: "mcp-cursor" },
-      { label: "Claude.ai connector", id: "mcp-claudeai" },
-      { label: "Other HTTP clients", id: "mcp-url-key" },
+      { label: "Cursor, VS Code, Codex, OpenClaw, Hermes", id: "mcp-cursor" },
+      { label: "Claude connector", id: "mcp-claudeai" },
+      { label: "ChatGPT connector", id: "mcp-chatgpt" },
+      { label: "Manual API key in URL (fallback)", id: "mcp-url-key" },
       { label: "CLI for shell agents", id: "mcp-cli" },
       { label: "Available tools", id: "mcp-tools" },
       { label: "Media & formats", id: "mcp-media" },
@@ -1005,15 +1006,16 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
               {/* ── MCP SERVER ── */}
               <h2 className="doc-h2" id="mcp-overview">MCP Server</h2>
               <p className="doc-p">
-                Posthive ships a built-in MCP (Model Context Protocol) server that exposes your scheduling queue as tools any AI agent can call — Claude Code, Cursor, Claude.ai, or your own pipeline. Two transports are available:
+                Posthive ships a built-in MCP (Model Context Protocol) server that exposes your scheduling queue as tools any AI agent can call — Claude, ChatGPT, Cursor, VS Code, Claude Code, Codex, OpenClaw, Hermes Agent, or your own pipeline. No API key copy-pasting required — every client uses the same bare URL and signs in via your browser. Two ways to connect:
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "16px 0 24px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, margin: "16px 0 24px" }}>
                 {[
-                  { label: "stdio", badge: "Claude Code / Cursor", desc: "Local binary, runs alongside your editor. Reads POSTHIVE_API_KEY from env." },
-                  { label: "Streamable HTTP", badge: "Claude.ai connector", desc: "No install needed. Hit POST /mcp with your Bearer token — OAuth handled automatically." },
+                  { label: "OAuth connector", badge: "all clients", desc: "Paste the bare MCP URL — https://api.posthive.co/mcp — into any client. It opens your browser to sign in. Zero config, no API key." },
+                  { label: "stdio + login", badge: "alternative", desc: "Prefer a local process over a network connection? Run `posthive-cli login`, then use the npx posthive-mcp binary instead of the URL." },
+                  { label: "Key in URL", badge: "fallback", desc: "For clients that don't support OAuth discovery. Embeds your API key directly in the connector URL." },
                 ].map(t => (
                   <div key={t.label} style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 10, padding: "16px 18px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
                       <span className="doc-inline-code" style={{ fontSize: 12 }}>{t.label}</span>
                       <span style={{ fontSize: 10, color: "#5b63d3", background: "rgba(91,99,211,.12)", border: "1px solid rgba(91,99,211,.2)", borderRadius: 4, padding: "2px 6px", fontWeight: 600 }}>{t.badge}</span>
                     </div>
@@ -1053,38 +1055,75 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
                 </table>
               </div>
 
-              <h3 className="doc-h3" id="mcp-install">Installation (stdio)</h3>
-              <p className="doc-p">The MCP server is published as <span className="doc-inline-code">posthive-mcp</span> on npm — no cloning or building required. Run it directly with npx from your MCP client config, or install it globally:</p>
-              <CopyCode>{`npx posthive-mcp
-# or
-npm i -g posthive-mcp`}</CopyCode>
-              <p className="doc-p">Set your credentials as environment variables:</p>
+              <h3 className="doc-h3" id="mcp-install">Sign in (recommended)</h3>
+              <p className="doc-p">
+                Sign in once via your browser — no API key to generate, copy, or paste. This works for both the CLI and the MCP server, since they share the same stored login:
+              </p>
+              <CopyCode>{`npx posthive-cli login`}</CopyCode>
+              <p className="doc-p">
+                This opens your browser, and once you approve, saves your credentials to <span className="doc-inline-code">~/.posthive/config.json</span>. Any client running <span className="doc-inline-code">posthive-mcp</span> locally — Cursor, VS Code, Claude Code, Codex, OpenClaw, Hermes Agent — picks this up automatically. Use <span className="doc-inline-code">npx posthive-cli whoami</span> to confirm who's logged in, or <span className="doc-inline-code">npx posthive-cli logout</span> to sign out.
+              </p>
+              <p className="doc-p">Self-hosted Posthive: <span className="doc-inline-code">npx posthive-cli login --api-url http://localhost:3001</span></p>
+              <div className="doc-warn">
+                Prefer a manually generated API key instead (CI, scripts, or without installing the CLI)? Set <span className="doc-inline-code">POSTHIVE_API_KEY</span> as an env var — it always overrides the stored login when present.
+              </div>
               <CopyCode>{`POSTHIVE_API_KEY=ph_...        # Settings → API Keys
 POSTHIVE_API_URL=https://api.posthive.co`}</CopyCode>
 
               <h3 className="doc-h3" id="mcp-claude-code">Claude Code setup</h3>
-              <p className="doc-p">Add to your project&apos;s <span className="doc-inline-code">.claude/mcp.json</span> or global <span className="doc-inline-code">~/.claude/mcp.json</span>:</p>
+              <p className="doc-p"><strong>Recommended — one command, no API key:</strong></p>
+              <CopyCode>{`claude mcp add --transport http posthive https://api.posthive.co/mcp`}</CopyCode>
+              <p className="doc-p">
+                The first time Claude Code calls a Posthive tool, it opens your browser to sign in. Approve once and you&apos;re connected — same OAuth flow as the Claude and ChatGPT connectors below.
+              </p>
+              <p className="doc-p"><strong>Alternative — sign in via the CLI, then run locally:</strong></p>
+              <CopyCode>{`npx posthive-cli login
+claude mcp add posthive -- npx posthive-mcp`}</CopyCode>
+              <p className="doc-p">
+                Useful if you&apos;d rather sign in from the terminal up front, or already ran <span className="doc-inline-code">posthive-cli login</span> for other tools.
+              </p>
+              <div className="doc-warn">
+                <strong>How to check it&apos;s connected:</strong> run <span className="doc-inline-code">/mcp</span> inside the Claude Code terminal. You should see <span className="doc-inline-code">posthive</span> listed with a connected status — select it to see all 10 available tools. Then try a prompt like <em>&quot;list my Posthive accounts&quot;</em> to confirm it actually calls the tool and returns real data.
+              </div>
+
+              <h3 className="doc-h3" id="mcp-cursor">Cursor, VS Code, Codex, OpenClaw, Hermes Agent</h3>
+              <p className="doc-p">
+                Same bare Streamable HTTP + OAuth URL as the Claude and ChatGPT connectors — no API key in any config file. The client opens your browser to sign in the first time it calls a tool.
+              </p>
+              <CopyCode>{`https://api.posthive.co/mcp`}</CopyCode>
+              <p className="doc-p"><strong>Cursor</strong> — add to <span className="doc-inline-code">.cursor/mcp.json</span>:</p>
               <CopyCode>{`{
   "mcpServers": {
     "posthive": {
-      "command": "npx",
-      "args": ["posthive-mcp"],
-      "env": {
-        "POSTHIVE_API_KEY": "ph_your_key_here",
-        "POSTHIVE_API_URL": "https://api.posthive.co"
-      }
+      "url": "https://api.posthive.co/mcp"
     }
   }
 }`}</CopyCode>
-              <p className="doc-p">Or from the CLI:</p>
-              <CopyCode>{`claude mcp add posthive -e POSTHIVE_API_KEY=ph_your_key_here -e POSTHIVE_API_URL=https://api.posthive.co -- npx posthive-mcp`}</CopyCode>
-              <p className="doc-p">Restart Claude Code. Run <span className="doc-inline-code">/mcp</span> in the terminal to confirm <span className="doc-inline-code">posthive</span> appears in the connected servers list.</p>
+              <p className="doc-p"><strong>VS Code</strong> (GitHub Copilot Chat) — add to <span className="doc-inline-code">.vscode/mcp.json</span>:</p>
+              <CopyCode>{`{
+  "servers": {
+    "posthive": {
+      "type": "http",
+      "url": "https://api.posthive.co/mcp"
+    }
+  }
+}`}</CopyCode>
+              <p className="doc-p"><strong>Codex</strong> — add to <span className="doc-inline-code">~/.codex/config.toml</span>:</p>
+              <CopyCode>{`[mcp_servers.posthive]
+url = "https://api.posthive.co/mcp"`}</CopyCode>
+              <p className="doc-p"><strong>OpenClaw</strong>:</p>
+              <CopyCode>{`openclaw mcp set posthive '{"url":"https://api.posthive.co/mcp","transport":"streamable-http"}'`}</CopyCode>
+              <p className="doc-p"><strong>Hermes Agent</strong> — add to <span className="doc-inline-code">~/.hermes/config.yaml</span>:</p>
+              <CopyCode>{`mcp_servers:
+  posthive:
+    url: "https://api.posthive.co/mcp"`}</CopyCode>
+              <p className="doc-p">See the <Link href="/agent" style={{ color: "#5b63d3" }}>Agent page</Link> for step-by-step setup per client.</p>
+              <div className="doc-warn">
+                Prefer running the MCP server locally instead of over the network? Sign in once with <span className="doc-inline-code">npx posthive-cli login</span>, then use <span className="doc-inline-code">{`{ "command": "npx", "args": ["posthive-mcp"] }`}</span> (add <span className="doc-inline-code">&quot;type&quot;: &quot;stdio&quot;</span> where the client requires it) instead of the URL above — still no API key needed, since <span className="doc-inline-code">posthive-mcp</span> reads the same stored login.
+              </div>
 
-              <h3 className="doc-h3" id="mcp-cursor">Cursor setup</h3>
-              <p className="doc-p">Go to <strong>Cursor Settings → MCP → Add new server</strong> and use the same JSON config above. Cursor reads the same <span className="doc-inline-code">mcpServers</span> format.</p>
-
-              <h3 className="doc-h3" id="mcp-claudeai">Claude.ai connector (no install needed)</h3>
-              <p className="doc-p">The Posthive API exposes a Streamable HTTP MCP endpoint — no local binary required. Claude.ai handles OAuth automatically.</p>
+              <h3 className="doc-h3" id="mcp-claudeai">Claude connector (no install needed)</h3>
+              <p className="doc-p">The Posthive API exposes a Streamable HTTP MCP endpoint — no local binary required. Claude handles OAuth automatically.</p>
               <p className="doc-p"><strong>Steps:</strong></p>
               <p className="doc-p">1. Go to <strong>Claude.ai → Settings → Connectors → Add custom connector</strong></p>
               <p className="doc-p">2. Enter your Posthive API URL as the connector URL:</p>
@@ -1095,13 +1134,25 @@ POSTHIVE_API_URL=https://api.posthive.co`}</CopyCode>
                 Self-hosters: replace <span className="doc-inline-code">https://api.posthive.co</span> with your own API URL. The OAuth flow and <span className="doc-inline-code">/mcp</span> endpoint are included in every deployment.
               </div>
 
-              <h3 className="doc-h3" id="mcp-url-key">Any other HTTP MCP client (one URL, no config)</h3>
-              <p className="doc-p">For Cursor, Claude Code remote, Windsurf, or any HTTP-capable MCP client — embed your API key directly in the URL. No headers, no config files beyond the URL itself:</p>
+              <h3 className="doc-h3" id="mcp-chatgpt">ChatGPT connector</h3>
+              <p className="doc-p">Same Streamable HTTP + OAuth endpoint as the Claude connector above — confirmed working with ChatGPT&apos;s Developer Mode apps.</p>
+              <p className="doc-p"><strong>Steps:</strong></p>
+              <p className="doc-p">1. Go to <strong>ChatGPT → Settings → Apps → Advanced settings</strong> and turn on <strong>Developer mode</strong> (one-time; may require your workspace admin to allow it first).</p>
+              <p className="doc-p">2. Go to <strong>Settings → Apps → Add app / Add custom connector</strong> and enter the same URL:</p>
+              <CopyCode>{`https://api.posthive.co/mcp`}</CopyCode>
+              <p className="doc-p">3. ChatGPT opens a Posthive authorization page — log in and click <strong>Allow access</strong>.</p>
+              <p className="doc-p">4. Try a prompt like <em>&quot;@posthive list my connected accounts&quot;</em> to confirm it&apos;s working.</p>
+              <div className="doc-warn">
+                Developer Mode custom connectors are private to your account — no app review or OpenAI approval needed. That&apos;s separate from submitting Posthive to the public ChatGPT App Directory, which does require identity verification and review.
+              </div>
+
+              <h3 className="doc-h3" id="mcp-url-key">Manual API key in URL (fallback)</h3>
+              <p className="doc-p">Prefer the <Link href="/agent" style={{ color: "#5b63d3" }}>Sign in / stdio method</Link> above wherever possible. For a client that doesn&apos;t support either — embed your API key directly in the URL. No headers, no config files beyond the URL itself:</p>
               <CopyCode>{`https://api.posthive.co/mcp/ph_your_api_key_here`}</CopyCode>
               <p className="doc-p">Paste that as the MCP server URL in your agent settings. The agent discovers all 10 tools automatically.</p>
               <p className="doc-p"><strong>Cursor:</strong> Settings → MCP → Add server → Type: HTTP → URL: paste above.</p>
               <p className="doc-p"><strong>Claude Code:</strong></p>
-              <CopyCode>{`claude mcp add posthive --transport http --url https://api.posthive.co/mcp/ph_your_api_key_here`}</CopyCode>
+              <CopyCode>{`claude mcp add --transport http posthive https://api.posthive.co/mcp/ph_your_api_key_here`}</CopyCode>
               <div className="doc-warn">
                 Keep this URL private — it contains your API key. Revoke and regenerate from <strong>Settings → API Keys</strong> if it leaks.
               </div>

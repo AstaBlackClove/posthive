@@ -5,7 +5,7 @@
 <h1 align="center">Posthive</h1>
 
 <p align="center">
-  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, and Nostr from a single UI.<br/>
+  Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, X (Twitter), Telegram, and Nostr from a single UI.<br/>
   Self-hostable · Open-source · AGPL-3.0
 </p>
 
@@ -19,20 +19,22 @@
 ## Features
 
 **Scheduling**
-- **Multi-platform posting** - write once, publish to all 10 platforms simultaneously
+- **Multi-platform posting** - write once, publish to all 11 platforms simultaneously
 - **Bulk CSV scheduling** - upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
 - **Post templates** - save, load, and delete reusable post drafts
 - **Dry run mode** - full pipeline test without making real API calls
 - **First comment scheduling** - auto-reply immediately after the main post goes live
 - **Per-platform overrides** - custom text and first comment per account (Pro+)
 
-**AI & MCP**
-- **MCP server** - connect Claude, Cursor, or any MCP-compatible AI agent via a single URL
-- **Claude.ai connector** - full OAuth 2.0 + PKCE flow; connect from Settings → Connectors
-- **Key-in-URL** - `POST /mcp/ph_your_key` for frictionless connection from Claude Code and Cursor
+**AI & Agents**
+- **MCP server** - connect Claude, ChatGPT, Cursor, VS Code, Claude Code, Codex, OpenClaw, Hermes Agent, or any MCP-compatible agent via one bare URL
+- **OAuth 2.0 + PKCE** - full dynamic client registration flow; no API key to paste for any client — the agent opens your browser to sign in
+- **`posthive-cli`** - shell CLI (`npx posthive-cli`) with `login`/`logout`/`whoami`, mirrors the full public API, ships a bundled `SKILL.md` for agent self-discovery
+- **`posthive-mcp`** - standalone MCP server package (`npx posthive-mcp`); shares the same login as `posthive-cli` via `~/.posthive/config.json`
 - **10 MCP tools** - list accounts, create/get/update/delete posts, approve drafts, duplicate, list/use templates
 - **Media type support** - Instagram media type (post/reel/story) and YouTube type (short/video) via MCP
-- **Plan-gated** - MCP access requires Pro or Team plan
+- **Draft-first** - every agent-created post lands as a draft for human review unless scheduling is explicitly requested
+- **Plan-gated** - MCP/API access requires Pro or Team plan (self-hosted with billing disabled: unlimited)
 
 **Media**
 - Images (up to 4 per post; plan-gated), video (up to 100 MB)
@@ -95,13 +97,15 @@ posthive/
 │   ├── api/                  # Fastify v4 API (Node.js, TypeScript, ESM)
 │   │   ├── prisma/           # Schema + migrations
 │   │   └── src/
-│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr)
+│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, X/Twitter, Telegram, Nostr)
 │   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, plans
-│   │       └── routes/       # auth, accounts, jobs, templates, upload, billing, user, apiKeys, publicApi
-│   └── web/                  # Next.js 16 frontend
-│       └── src/
-│           ├── app/          # Pages: compose, jobs, accounts, billing, settings, docs, features, platforms
-│           └── components/   # Sidebar, CalendarView, BulkScheduleModal, Toast, PlatformPreview, etc.
+│   │       └── routes/       # auth, accounts, jobs, templates, upload, billing, user, apiKeys, publicApi, mcp, oauth
+│   ├── web/                  # Next.js 16 frontend
+│   │   └── src/
+│   │       ├── app/          # Pages: compose, jobs, accounts, billing, settings, docs, agent, features, platforms
+│   │       └── components/   # Sidebar, CalendarView, BulkScheduleModal, Toast, PlatformPreview, AgentSetupTabs, etc.
+│   ├── cli/                  # posthive-cli — npm-published shell CLI (login/logout/whoami + full API)
+│   └── mcp/                  # posthive-mcp — npm-published standalone MCP server
 └── package.json              # pnpm workspace root
 ```
 
@@ -293,6 +297,16 @@ pnpm dev
 
 > Pinterest requires **Standard access** approval for production pin creation. Apply at developers.pinterest.com → My Apps → Request upgraded access. Until approved, set `PINTEREST_SANDBOX=true` and use a sandbox token.
 
+**OAuth - X (Twitter)**
+
+| Variable | Description |
+|---|---|
+| `X_API_KEY` | API Key (Consumer Key) from developer.x.com |
+| `X_API_SECRET` | API Key Secret (Consumer Secret) |
+| `X_CALLBACK_URL` | Must be public HTTPS — OAuth 1.0a callback URL |
+
+> Uses OAuth 1.0a (not 2.0). Requires Pro or Team plan when billing is enabled.
+
 **Billing**
 
 | Variable | Required | Description |
@@ -387,6 +401,14 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 **Standard access (production):** Apply at developers.pinterest.com → My Apps → Request upgraded access. Once approved, set `PINTEREST_SANDBOX=false` and remove `PINTEREST_SANDBOX_TOKEN`. Users connect via normal OAuth.
 
 > Posts as Pins on the user's first board. Image is required posts without an image are blocked at the UI level.
+
+### X (Twitter)
+1. Create a project + app at [developer.x.com](https://developer.x.com)
+2. Set App permissions to **Read and write**
+3. Enable **OAuth 1.0a** and set the callback URL to `https://your-domain/auth/twitter/callback`
+4. Copy the API Key and API Key Secret into `X_API_KEY` / `X_API_SECRET`
+
+> Requires Pro or Team plan when billing is enabled. Uses OAuth 1.0a, not OAuth 2.0.
 
 ### Telegram
 No OAuth needed — uses the Telegram Bot API directly.
@@ -489,6 +511,7 @@ Authorization: Bearer ph_your_api_key
 
 | Method | Path | Description |
 |---|---|---|
+| GET | /me | Identify the authenticated user (used by CLI/MCP login) |
 | GET | /accounts | List connected accounts |
 | POST | /posts | Schedule a post |
 | GET | /posts | List posts (cursor-paginated) |
@@ -507,33 +530,84 @@ See the full [documentation](https://posthive.co/docs) for request/response sche
 
 ## MCP — AI Agent Integration
 
-Posthive exposes an MCP (Model Context Protocol) server so AI agents can schedule and manage posts directly.
+Posthive exposes an MCP (Model Context Protocol) server so AI agents can schedule and manage posts directly. Every client below connects with the same bare URL — no API key to generate, copy, or paste. See [posthive.co/agent](https://posthive.co/agent) for a full interactive walkthrough per client.
 
-**Requires:** Pro or Team plan · Rate limit: 60 req/min
+**Requires:** Pro or Team plan (self-hosted with billing disabled: unlimited) · Rate limit: 60 req/min
 
-### Connect from Claude Code or Cursor
+### Claude / ChatGPT (OAuth connector, no install)
+
+1. **Claude**: Settings → Connectors → Add custom connector. **ChatGPT**: Settings → Apps → Advanced settings → enable Developer mode, then Settings → Apps → Add app.
+2. Enter `https://your-api/mcp`
+3. Approve access in the browser prompt that opens
+
+### Claude Code
 
 ```bash
-claude mcp add posthive --transport http --url https://your-api/mcp/ph_your_key
+claude mcp add --transport http posthive https://your-api/mcp
 ```
 
-Or add to `~/.cursor/mcp.json`:
+The first tool call opens your browser to sign in.
+
+### Cursor
+
+Add to `.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "posthive": {
-      "transport": "http",
-      "url": "https://your-api/mcp/ph_your_key"
-    }
+    "posthive": { "url": "https://your-api/mcp" }
   }
 }
 ```
 
-### Connect from Claude.ai
+### VS Code (GitHub Copilot Chat)
 
-1. Settings → Connectors → Add custom connector
-2. Enter `https://your-api/mcp`
-3. Complete the OAuth approval flow
+Add to `.vscode/mcp.json`:
+```json
+{
+  "servers": {
+    "posthive": { "type": "http", "url": "https://your-api/mcp" }
+  }
+}
+```
+
+### Codex
+
+Add to `~/.codex/config.toml`:
+```toml
+[mcp_servers.posthive]
+url = "https://your-api/mcp"
+```
+
+### OpenClaw
+
+```bash
+openclaw mcp set posthive '{"url":"https://your-api/mcp","transport":"streamable-http"}'
+```
+
+### Hermes Agent
+
+Add to `~/.hermes/config.yaml`:
+```yaml
+mcp_servers:
+  posthive:
+    url: "https://your-api/mcp"
+```
+
+### CLI for shell agents (OpenClaw, custom pipelines, scripts)
+
+Not every agent speaks MCP. `posthive-cli` is a thin shell wrapper over the same public API:
+
+```bash
+npx posthive-cli login          # opens your browser, no API key needed
+npx posthive-cli accounts:list
+npx posthive-cli posts:create --content "Hello" --accounts acc_1,acc_2
+```
+
+Every command outputs structured JSON and ships a bundled `SKILL.md` for agent self-discovery. `posthive-mcp` (the npm-published MCP server) shares the same login via `~/.posthive/config.json` — sign in once, use both.
+
+### Fallback: API key in URL
+
+For a client that doesn't support OAuth discovery, embed the key directly instead of the bare URL above: `https://your-api/mcp/ph_your_api_key_here`. Keep this URL private — revoke and regenerate from Settings → API Keys if it leaks.
 
 ### Available Tools
 
@@ -585,6 +659,7 @@ Set `ENABLE_BILLING=false` for self-hosted mode all features unlocked, no plan l
 | YouTube | Title: 100 · Description: 5,000 |
 | Facebook Pages | 63,206 characters |
 | Pinterest | Title: 100 · Description: 500 |
+| X (Twitter) | 280 characters |
 | Telegram | 4,096 characters |
 | Nostr | 10,000 characters |
 
