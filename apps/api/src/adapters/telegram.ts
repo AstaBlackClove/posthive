@@ -165,7 +165,7 @@ export async function encryptTelegramCredentials(
           const buf = Buffer.from(await imgRes.arrayBuffer());
           const ct = imgRes.headers.get("content-type") ?? "";
           const mime = ct.startsWith("image/") ? ct : "image/jpeg";
-          const path = await storageAdapter.upload(buf, mime);
+          const path = await storageAdapter.upload(buf, mime, "profile-pics");
           // If the storage returns a relative path, prefix with the API base URL
           const apiBase = process.env.PUBLIC_API_URL ?? `http://localhost:${process.env.PORT ?? 3001}`;
           avatarUrl = path.startsWith("http") ? path : `${apiBase}${path}`;

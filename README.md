@@ -20,7 +20,7 @@
 
 **Scheduling**
 
-- **Multi-platform posting** - write once, publish to all 11 platforms simultaneously
+- **Multi-platform posting** - write once, publish to all 12 platforms simultaneously
 - **Bulk CSV scheduling** - upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
 - **Post templates** - save, load, and delete reusable post drafts
 - **Dry run mode** - full pipeline test without making real API calls
@@ -104,7 +104,7 @@ posthive/
 │   ├── api/                  # Fastify v4 API (Node.js, TypeScript, ESM)
 │   │   ├── prisma/           # Schema + migrations
 │   │   └── src/
-│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, X/Twitter, Telegram, Nostr)
+│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, X/Twitter, Telegram, Nostr, Discord)
 │   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, plans
 │   │       └── routes/       # auth, accounts, jobs, templates, upload, billing, user, apiKeys, publicApi, mcp, oauth
 │   ├── web/                  # Next.js 16 frontend
@@ -456,6 +456,26 @@ No OAuth, no app registration — uses your keypair directly.
 > Your `nsec` is stored AES-256-GCM encrypted and never exposed. Posts publish as **Kind 1 notes** to four default relays (Damus, Nostr.band, nos.lol, Snort). Images are appended as URLs in the note content and tagged with NIP-92 imeta for clients that support inline rendering.
 > No environment variables needed.
 
+### Discord
+
+OAuth + Bot API. Posts are sent via a webhook auto-created at channel connect time.
+
+1. Go to [discord.com/developers](https://discord.com/developers/applications) → **New Application** → name it Posthive
+2. Go to **Bot** tab → **Add Bot** → copy the bot token
+3. Go to **OAuth2 → General** → copy Client ID and Client Secret → add redirect URI
+4. Add to `.env`:
+
+```env
+DISCORD_CLIENT_ID="your-client-id"
+DISCORD_CLIENT_SECRET="your-client-secret"
+DISCORD_BOT_TOKEN="your-bot-token"
+DISCORD_REDIRECT_URI="https://your-domain.com/auth/discord/callback"
+```
+
+5. Go to **Accounts** in Posthive → **Connect Discord** → authorise on Discord → pick a channel
+
+> Posthive auto-creates a webhook for the selected channel so messages appear under the Posthive name. Discord shows an **APP** label on all programmatic posts — this is a Discord platform requirement.
+
 ---
 
 ## Bulk CSV Scheduling
@@ -691,6 +711,7 @@ Set `ENABLE_BILLING=false` for self-hosted mode all features unlocked, no plan l
 | X (Twitter)    | 280 characters                  |
 | Telegram       | 4,096 characters                |
 | Nostr          | 10,000 characters               |
+| Discord        | 2,000 characters                |
 
 ---
 

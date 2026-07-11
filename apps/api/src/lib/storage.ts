@@ -32,7 +32,7 @@ const EXT_MAP: Record<string, string> = {
 
 export interface StorageAdapter {
   /** Persist a file and return a URL the client and job runner can use. */
-  upload(buffer: Buffer, mimeType: string): Promise<string>;
+  upload(buffer: Buffer, mimeType: string, folder?: string): Promise<string>;
 
   /** Read a file back as a Buffer so adapters can upload it to platforms. */
   getBuffer(url: string): Promise<Buffer>;
@@ -44,18 +44,19 @@ export interface StorageAdapter {
 export class LocalDiskStorage implements StorageAdapter {
   constructor(private readonly uploadsDir: string) {}
 
-  async upload(buffer: Buffer, mimeType: string): Promise<string> {
-    await fs.mkdir(this.uploadsDir, { recursive: true });
+  async upload(buffer: Buffer, mimeType: string, folder?: string): Promise<string> {
+    const dir = folder ? path.join(this.uploadsDir, folder) : this.uploadsDir;
+    await fs.mkdir(dir, { recursive: true });
     const ext = EXT_MAP[mimeType] ?? ".bin";
     const filename = `${crypto.randomUUID()}${ext}`;
-    const filepath = path.join(this.uploadsDir, filename);
-    await fs.writeFile(filepath, buffer);
-    return `/uploads/${filename}`;
+    await fs.writeFile(path.join(dir, filename), buffer);
+    return folder ? `/uploads/${folder}/${filename}` : `/uploads/${filename}`;
   }
 
   async getBuffer(url: string): Promise<Buffer> {
-    const filename = path.basename(url);
-    const filepath = path.join(this.uploadsDir, filename);
+    // Support both /uploads/filename and /uploads/folder/filename
+    const relative = url.replace(/^\/uploads\//, "");
+    const filepath = path.join(this.uploadsDir, relative);
     return fs.readFile(filepath);
   }
 
@@ -100,9 +101,11 @@ export class SupabaseStorage implements StorageAdapter {
     return { Authorization: `Bearer ${this.serviceKey}`, apikey: this.serviceKey };
   }
 
-  async upload(buffer: Buffer, mimeType: string): Promise<string> {
+  async upload(buffer: Buffer, mimeType: string, folder?: string): Promise<string> {
     const ext = EXT_MAP[mimeType] ?? ".bin";
-    const filename = `${crypto.randomUUID()}${ext}`;
+    const filename = folder
+      ? `${folder}/${crypto.randomUUID()}${ext}`
+      : `${crypto.randomUUID()}${ext}`;
     const res = await fetch(this.storageUrl(filename), {
       method: "POST",
       headers: { ...this.headers(), "Content-Type": mimeType },

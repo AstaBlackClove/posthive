@@ -15,6 +15,7 @@ const YOUTUBE_AUTH_URL = `${API_BASE}/auth/youtube`;
 const FACEBOOK_AUTH_URL = `${API_BASE}/auth/facebook`;
 const TWITTER_AUTH_URL  = `${API_BASE}/auth/twitter`;
 const PINTEREST_AUTH_URL = `${API_BASE}/auth/pinterest`;
+const DISCORD_AUTH_URL   = `${API_BASE}/auth/discord`;
 
 const BG = "#0a0a0a";
 const SURFACE = "#111111";
@@ -565,6 +566,13 @@ export default function AccountsPage() {
   const [showNostrDialog, setShowNostrDialog] = useState(false);
   const [disconnectTarget, setDisconnectTarget] = useState<{ id: string; displayName: string; platform: string } | null>(null);
 
+  // Discord channel picker state
+  const [discordGuildId, setDiscordGuildId] = useState<string | null>(null);
+  const [discordGuildName, setDiscordGuildName] = useState<string>("");
+  const [discordChannels, setDiscordChannels] = useState<{ id: string; name: string }[]>([]);
+  const [discordChannelId, setDiscordChannelId] = useState("");
+  const [discordConnecting, setDiscordConnecting] = useState(false);
+
   const [threadsToken, setThreadsToken] = useState("");
   const [connectingThreads, setConnectingThreads] = useState(false);
   const [threadsError, setThreadsError] = useState<string | null>(null);
@@ -603,6 +611,38 @@ export default function AccountsPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Discord: pick up guild from callback redirect and fetch channels
+  useEffect(() => {
+    const guildId = searchParams.get("discord_guild_id");
+    const guildName = searchParams.get("discord_guild_name") ?? "";
+    if (!guildId) return;
+    setDiscordGuildId(guildId);
+    setDiscordGuildName(guildName);
+    window.history.replaceState({}, "", "/accounts");
+    apiFetch<{ channels: { id: string; name: string }[] }>(`/auth/discord/channels?guild_id=${guildId}`)
+      .then(data => setDiscordChannels(data.channels))
+      .catch(() => toastError("Failed to load Discord channels"));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function connectDiscordChannel(e: React.FormEvent) {
+    e.preventDefault();
+    if (!discordGuildId || !discordChannelId) return;
+    const channel = discordChannels.find(c => c.id === discordChannelId);
+    if (!channel) return;
+    setDiscordConnecting(true);
+    try {
+      await apiFetch("/auth/discord/connect", {
+        method: "POST",
+        body: JSON.stringify({ guildId: discordGuildId, guildName: discordGuildName, channelId: channel.id, channelName: channel.name }),
+      });
+      setDiscordGuildId(null); setDiscordChannels([]); setDiscordChannelId("");
+      await fetchAccounts();
+      success(`Discord #${channel.name} connected!`);
+    } catch (err) { toastError(String(err)); }
+    finally { setDiscordConnecting(false); }
+  }
 
   async function connectThreadsManual(e: React.FormEvent) {
     e.preventDefault();
@@ -1198,12 +1238,100 @@ export default function AccountsPage() {
             </div>
           </div>
 
+          {/* ── Discord ── */}
+          {(() => {
+            const discordAccounts = accounts.filter(a => a.platform === "discord");
+            return (
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+                <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <PlatformIcon platform="discord" size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm" style={{ color: TEXT }}>Discord</p>
+                    <p className="text-xs" style={{ color: MUTED }}>OAuth + Bot · server channels</p>
+                  </div>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
+                </div>
+                <div className="p-5 space-y-3">
+                  {!loading && discordAccounts.length > 0 && (
+                    <div className="space-y-2">
+                      {discordAccounts.map((a) => (
+                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                      ))}
+                    </div>
+                  )}
+                  {connectDisabled ? (
+                    <button disabled title={limitMsg ?? undefined}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                      style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                      <PlatformIcon platform="discord" size={16} />
+                      {discordAccounts.length > 0 ? "Add another channel" : "Connect Discord"}
+                    </button>
+                  ) : (
+                    <a href={DISCORD_AUTH_URL}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                      style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                      <PlatformIcon platform="discord" size={16} />
+                      {discordAccounts.length > 0 ? "Add another channel" : "Connect Discord"}
+                    </a>
+                  )}
+                  <p className="text-xs" style={{ color: MUTED }}>
+                    Post to Discord channels · text, images, and video
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
+
         </div>}
       </div>
 
       {showTelegramDialog && <TelegramDialog onClose={() => setShowTelegramDialog(false)} onConnected={() => { fetchAccounts(); success("Telegram channel connected!"); }} />}
       {showMastodonDialog && <MastodonDialog onClose={() => setShowMastodonDialog(false)} />}
       {showNostrDialog && <NostrDialog onClose={() => setShowNostrDialog(false)} onConnected={() => { fetchAccounts(); success("Nostr account connected!"); }} />}
+
+      {/* Discord channel picker — shown after OAuth redirect */}
+      {discordGuildId && discordChannels.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+          <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+            <div className="flex items-center gap-2 mb-4">
+              <PlatformIcon platform="discord" size={20} />
+              <h2 className="text-base font-bold" style={{ color: "#ededed" }}>Pick a channel</h2>
+            </div>
+            <p className="text-sm mb-4" style={{ color: "#888" }}>
+              Bot added to <span style={{ color: "#ededed" }}>{discordGuildName}</span>. Choose which channel to post to.
+            </p>
+            <form onSubmit={connectDiscordChannel} className="space-y-4">
+              <select
+                value={discordChannelId}
+                onChange={e => setDiscordChannelId(e.target.value)}
+                required
+                className="w-full px-3 py-2.5 rounded-xl text-sm"
+                style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ededed" }}>
+                <option value="">Select a channel…</option>
+                {discordChannels.map(c => (
+                  <option key={c.id} value={c.id}>#{c.name}</option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => { setDiscordGuildId(null); setDiscordChannels([]); }}
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl"
+                  style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={!discordChannelId || discordConnecting}
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl disabled:opacity-50"
+                  style={{ backgroundColor: "#5865F2", color: "#fff" }}>
+                  {discordConnecting ? "Connecting…" : "Connect"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Disconnect confirm dialog */}
       {disconnectTarget && (

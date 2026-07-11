@@ -81,6 +81,7 @@ export const PLATFORM_COLOR: Record<string, string> = {
   pinterest: "#e60023",
   telegram: "#229ED9",
   nostr: "#7B5EA7",
+  discord: "#5865F2",
 };
 
 export const PLATFORM_LIMIT: Record<string, number> = {
@@ -94,6 +95,7 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   pinterest: 500,
   telegram: 4096,
   nostr: 10000,
+  discord: 2000,
 };
 
 export const MAX_IMAGES = 4;
@@ -902,6 +904,73 @@ function NostrPreview({ account, text, images }: {
   );
 }
 
+function DiscordPreview({ account, text, commentText, images, video }: {
+  account: Account;
+  text: string;
+  commentText: string;
+  images: UploadedImage[];
+  video: UploadedImage | null;
+}) {
+  const initial = account.displayName[0]?.toUpperCase() ?? "?";
+  // displayName is "#channel (Server)" — extract server name for header
+  const serverMatch = account.displayName.match(/\((.+)\)$/);
+  const serverName = serverMatch ? serverMatch[1] : account.displayName;
+
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#313338", border: "1px solid #2a2a2a" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5"
+        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #5865F2", backgroundColor: "#0a0a0a" }}>
+        <PlatformIcon platform="discord" size={16} />
+        <span className="text-xs font-semibold" style={{ color: "#5865F2" }}>Discord</span>
+        <span className="text-xs ml-auto" style={{ color: "#666" }}>{serverName}</span>
+      </div>
+
+      <div className="px-4 py-3 flex gap-3">
+        {account.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={account.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0 mt-0.5" />
+        ) : (
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5"
+            style={{ background: "#5865F2", color: "#fff" }}>
+            {initial}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 mb-1">
+            <span className="text-sm font-semibold" style={{ color: "#00b0f4" }}>Posthive Bot</span>
+            <span className="text-[10px]" style={{ color: "#949ba4" }}>Today at {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+          </div>
+          {text ? (
+            <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#dbdee1" }}>{text}</p>
+          ) : (
+            <p className="text-sm italic" style={{ color: "#4e5058" }}>Start writing your post for a preview…</p>
+          )}
+          {images.length > 0 && (
+            <div className={`mt-2 rounded-lg overflow-hidden grid gap-0.5 ${images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}
+              style={{ maxWidth: 400 }}>
+              {images.slice(0, 4).map((img, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={img.previewUrl} alt="" className={`w-full object-cover ${images.length === 1 ? "h-48" : "h-28"}`} />
+              ))}
+            </div>
+          )}
+          {video && (
+            <div className="mt-2 rounded-lg overflow-hidden" style={{ maxWidth: 400 }}>
+              <video src={video.previewUrl} className="w-full rounded-lg" style={{ maxHeight: 200 }} controls={false} muted />
+            </div>
+          )}
+          {commentText && (
+            <div className="mt-3 pl-3 py-2" style={{ borderLeft: "2px solid #5865F2" }}>
+              <span className="text-xs font-semibold" style={{ color: "#00b0f4" }}>Posthive Bot </span>
+              <span className="text-xs" style={{ color: "#dbdee1" }}>{commentText}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PlatformPreview({ account, text, commentText, mediaItems = [], igMediaType, youtubeType }: {
   account: Account;
   text: string;
@@ -936,6 +1005,9 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   }
   if (account.platform === "nostr") {
     return <NostrPreview account={account} text={text} images={images} />;
+  }
+  if (account.platform === "discord") {
+    return <DiscordPreview account={account} text={text} commentText={commentText} images={images} video={video} />;
   }
 
   const color = PLATFORM_COLOR[account.platform] ?? "#6b7280";

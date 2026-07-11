@@ -46,6 +46,7 @@ const NAV = [
       { label: "Pinterest", id: "pinterest" },
       { label: "Telegram", id: "telegram" },
       { label: "Nostr", id: "nostr" },
+      { label: "Discord", id: "discord" },
     ],
   },
   {
@@ -678,6 +679,38 @@ pnpm install`}</CopyCode>
               <p className="doc-p">
                 Images must be publicly accessible URLs — they are appended to the note text so Nostr clients can fetch and render them inline. Make sure <span className="doc-inline-code">PUBLIC_API_URL</span> is set to your public API URL (not localhost) so uploaded images resolve correctly on the Nostr network.
               </p>
+
+              {/* ── Discord ── */}
+              <h2 className="doc-h2" id="discord">Discord</h2>
+              <p className="doc-p">
+                Posthive posts to <strong>Discord channels</strong> via a webhook created automatically when you connect a channel. Text, images (up to 10), and video are supported. First comments post as replies to the original message.
+              </p>
+              <h3 className="doc-h3">Setup</h3>
+              <ol className="doc-ol">
+                <li className="doc-li">Go to <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer" className="doc-link">discord.com/developers</a> → <strong>New Application</strong> → name it Posthive.</li>
+                <li className="doc-li">Go to the <strong>Bot</strong> tab → click <strong>Add Bot</strong> → copy the <strong>bot token</strong>.</li>
+                <li className="doc-li">Go to <strong>OAuth2 → General</strong> → copy <strong>Client ID</strong> and <strong>Client Secret</strong>. Add your redirect URI.</li>
+                <li className="doc-li">Add the following to your <span className="doc-inline-code">.env</span>:</li>
+              </ol>
+              <pre className="doc-pre">{`DISCORD_CLIENT_ID="your-client-id"
+DISCORD_CLIENT_SECRET="your-client-secret"
+DISCORD_BOT_TOKEN="your-bot-token"
+DISCORD_REDIRECT_URI="https://your-domain.com/auth/discord/callback"`}</pre>
+              <ol className="doc-ol" start={5}>
+                <li className="doc-li">Go to <strong>Accounts</strong> in Posthive → click <strong>Connect Discord</strong>.</li>
+                <li className="doc-li">Authorise the bot on your Discord server, then pick a channel in the Posthive channel picker.</li>
+              </ol>
+              <div className="doc-callout">
+                Posthive auto-creates a webhook for the selected channel. Messages post under the <strong>Posthive</strong> name. Discord shows an <strong>APP</strong> label on all programmatic posts — this is a Discord platform requirement that applies to all scheduling tools.
+              </div>
+              <h3 className="doc-h3">Bot permissions required</h3>
+              <ul className="doc-ul">
+                <li className="doc-li"><strong>View Channels</strong> — to access the channel</li>
+                <li className="doc-li"><strong>Send Messages</strong> — to post</li>
+                <li className="doc-li"><strong>Attach Files</strong> — for images and video</li>
+                <li className="doc-li"><strong>Read Message History</strong> — for replies</li>
+                <li className="doc-li"><strong>Manage Webhooks</strong> — to auto-create the posting webhook</li>
+              </ul>
 
               {/* ── Scheduling posts ── */}
               <h2 className="doc-h2" id="scheduling-posts">Scheduling posts</h2>

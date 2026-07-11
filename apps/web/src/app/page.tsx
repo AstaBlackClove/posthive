@@ -21,11 +21,12 @@ const PLATFORMS_GRID = [
   { name: "X (Twitter)",    domain: "x.com",           meta: "100 tweets/mo · Pro & Team",    accent: "#e7e7e7", platform: "twitter" },
   { name: "Telegram",      domain: "telegram.org",    meta: "4,096 chars · Bot API",         accent: "#229ED9", platform: "telegram" },
   { name: "Nostr",         domain: "nostr.com",       meta: "Keypair · decentralized · no approval", accent: "#8B5CF6", platform: "nostr" },
+  { name: "Discord",       domain: "discord.com",     meta: "2,000 chars · Bot + webhook",   accent: "#5865F2", platform: "discord" },
 ];
 
 // Hero card cycling data — one array per card slot
 const HERO_CARD_SCHEDULED = [
-  { platform: "bluesky",   name: "Bluesky",        text: "Write once, post to 11 platforms. This is the tool I have been waiting for.", pill: "Fires in 2h", pillBg: "#fef3c7", pillColor: "#92400e", time: "9:00 AM" },
+  { platform: "bluesky",   name: "Bluesky",        text: "Write once, post to 12 platforms. This is the tool I have been waiting for.", pill: "Fires in 2h", pillBg: "#fef3c7", pillColor: "#92400e", time: "9:00 AM" },
   { platform: "mastodon",  name: "Mastodon",        text: "Finally a scheduler that supports the fediverse. Set it and forget it.", pill: "Fires in 45m", pillBg: "#fef3c7", pillColor: "#92400e", time: "10:15 AM" },
   { platform: "twitter",   name: "X (Twitter)",     text: "Scheduled 30 tweets for the whole week in under 10 minutes.", pill: "Tomorrow 8AM", pillBg: "#ede9fe", pillColor: "#5b21b6", time: "8:00 AM" },
   { platform: "pinterest", name: "Pinterest",        text: "Pinned my product catalogue to 6 boards on autopilot every morning.", pill: "Fires in 1h", pillBg: "#fef3c7", pillColor: "#92400e", time: "7:30 AM" },
@@ -43,6 +44,7 @@ const HERO_CARD_POSTED = [
   { platform: "youtube",   name: "YouTube Short",    text: "Short went live at peak hour. Views are already rolling in.", pill: "Live", pillBg: "#dcfce7", pillColor: "#166534", time: "12:00 PM" },
   { platform: "facebook",  name: "Facebook Page",    text: "Posted to 3 Facebook Pages at once from a single compose window.", pill: "Live", pillBg: "#dcfce7", pillColor: "#166534", time: "9:00 AM" },
   { platform: "nostr",     name: "Nostr",            text: "Decentralized post published. No algorithm, no gatekeeping.", pill: "Live", pillBg: "#dcfce7", pillColor: "#166534", time: "11:22 AM" },
+  { platform: "discord",   name: "Discord",          text: "Announcement scheduled to the community server. Done in seconds.", pill: "Live", pillBg: "#dcfce7", pillColor: "#166534", time: "3m ago" },
 ];
 
 const HERO_CARD_RESCHEDULED = [

@@ -382,6 +382,40 @@ const PLATFORMS: Record<string, PlatformData> = {
       { q: "Can one bot post to multiple channels?", a: "Yes. A single Telegram bot can be added as an admin to multiple channels. In Posthive, connect each channel as a separate account using the same bot token with different channel usernames." },
     ],
   },
+  discord: {
+    name: "Discord",
+    domain: "discord.com",
+    color: "#5865F2",
+    headline: "Schedule Discord announcements without staying online",
+    subheadline: "Post to your Discord server channels on a consistent schedule. Write your message in Posthive, pick a time, and let it publish via webhook — no manual posting needed.",
+    supports: [
+      { label: "Text posts up to 2,000 chars", icon: "text" as IconKey },
+      { label: "Single image with message", icon: "image" as IconKey },
+      { label: "Up to 10 images in one post", icon: "carousel" as IconKey },
+      { label: "Video posts", icon: "video" as IconKey },
+      { label: "First comment as thread reply", icon: "comment" as IconKey },
+      { label: "Per-account text override", icon: "override" as IconKey },
+    ],
+    steps: [
+      { n: "01", title: "Create a Discord app and bot", desc: "Go to discord.com/developers, create a new application named Posthive, add a bot, and copy the bot token." },
+      { n: "02", title: "Add env vars and connect", desc: "Add DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_BOT_TOKEN, and DISCORD_REDIRECT_URI to your .env. Then click Connect Discord on the Accounts page." },
+      { n: "03", title: "Authorise and pick a channel", desc: "Discord's OAuth page lets you choose which server to add the bot to. Back in Posthive, pick the channel to post to. A webhook is created automatically." },
+    ],
+    note: "Posts are sent via a webhook created automatically when you connect a channel. This avoids the bot badge on messages and gives cleaner attribution in Discord.",
+    image: "/screenshots/platform-discord.png",
+    imageAlt: "Posthive composer Discord channel post scheduling",
+    why: [
+      { title: "Keep your community updated without manual effort", desc: "Product updates, blog posts, weekly digests — schedule them ahead of time and let Posthive post to your Discord server at the right moment. No need to be online." },
+      { title: "Webhook-based posting for clean messages", desc: "Posthive auto-creates a channel webhook when you connect. Messages post under the Posthive name without a heavy bot badge, keeping your announcement channel looking clean." },
+      { title: "Images and video in every post", desc: "Attach up to 10 images or a video to your Discord post. Posthive uploads them directly to the channel so they render inline — no external links needed." },
+    ],
+    faq: [
+      { q: "Do I need a Discord bot to use Posthive with Discord?", a: "Yes. You create a free Discord application and bot at discord.com/developers. The bot token goes in your Posthive .env file. The OAuth flow then lets users add the bot to their server and pick a channel." },
+      { q: "Why does the post show an APP label in Discord?", a: "Discord shows an APP label on all programmatic posts — whether via bot or webhook. This is a Discord platform-level requirement that cannot be removed. All Discord scheduling tools work the same way." },
+      { q: "Can I post to multiple Discord channels?", a: "Yes. Each channel you connect in Posthive becomes a separate account. You can select multiple channels in the compose window and post to all of them at once." },
+      { q: "What happens if webhook creation fails?", a: "Posthive automatically falls back to direct bot token posting so your post still goes through. The webhook is a best-effort optimisation, not a hard requirement." },
+    ],
+  },
   nostr: {
     name: "Nostr",
     domain: "nostr.com",
@@ -652,10 +686,10 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
             {data.name} is one of eleven platforms
           </h2>
           <p style={{ fontSize: 14.5, color: "#666", lineHeight: 1.7, marginBottom: 28 }}>
-            Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, and Nostr — all from the same composer. Write once, choose your platforms, done.
+            Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, and Discord — all from the same composer. Write once, choose your platforms, done.
           </p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
-            {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube", "facebook", "pinterest", "telegram", "twitter", "nostr"] as const)
+            {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube", "facebook", "pinterest", "telegram", "twitter", "nostr", "discord"] as const)
               .filter(p => p !== platform)
               .map(p => (
                 <Link key={p} href={`/platforms/${p}`} style={{ display: "flex", alignItems: "center", gap: 6, background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 999, padding: "5px 12px", textDecoration: "none" }}>

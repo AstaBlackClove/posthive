@@ -17,6 +17,7 @@ export const PLATFORMS_NAV = [
   { platform: "twitter",   label: "X (Twitter)",    desc: "100 tweets/mo, Pro & Team" },
   { platform: "telegram",  label: "Telegram",       desc: "4,096 chars, Bot API" },
   { platform: "nostr",     label: "Nostr",          desc: "Keypair, decentralized" },
+  { platform: "discord",   label: "Discord",        desc: "2,000 chars, Bot + webhook" },
 ];
 
 export const FEATURES_NAV = [

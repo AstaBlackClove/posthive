@@ -8,6 +8,7 @@ const PLATFORM_DOMAIN: Record<string, string> = {
   facebook:  "facebook.com",
   twitter:   "x.com",
   pinterest: "pinterest.com",
+  discord:   "discord.com",
 };
 
 function TelegramSvg({ size }: { size: number }) {

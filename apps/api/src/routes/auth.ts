@@ -5,6 +5,8 @@ import { encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import { getPlan } from "../lib/plans.js";
 import { withAuth, getUser } from "../lib/auth/withAuth.js";
+import { getDiscordChannels, encryptDiscordCredentials } from "../adapters/discord.js";
+import { downloadAndStoreAvatar } from "../lib/avatarStore.js";
 
 const APP_ID = process.env.THREADS_APP_ID!;
 const APP_SECRET = process.env.THREADS_APP_SECRET!;
@@ -49,6 +51,12 @@ const YOUTUBE_SCOPES = [
 const TOKEN_URL_GOOGLE = "https://oauth2.googleapis.com/token";
 
 const SCOPES = ["threads_basic", "threads_content_publish"].join(",");
+
+const DC_CLIENT_ID     = process.env.DISCORD_CLIENT_ID!;
+const DC_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;
+const DC_REDIRECT_URI  = process.env.DISCORD_REDIRECT_URI!;
+// bot permissions: VIEW_CHANNEL(1024) + SEND_MESSAGES(2048) + ATTACH_FILES(32768) + READ_MESSAGE_HISTORY(65536) + MANAGE_WEBHOOKS(536870912)
+const DC_PERMISSIONS   = "536972288";
 
 // Build a redirect URL safely without double-? issues
 function buildRedirect(base: string, params: Record<string, string>): string {
@@ -181,6 +189,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       avatarUrl = profile.threads_profile_picture_url ?? null;
     } catch { /* optional */ }
 
+    avatarUrl = await downloadAndStoreAvatar(avatarUrl);
     const credentials = encrypt(JSON.stringify({ accessToken: longLivedToken, userId: threadsUserId }));
     await upsertThreadsAccount(userId, displayName, credentials, avatarUrl, expiresAt);
 
@@ -1028,7 +1037,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         userId: fbUserId,
         userAccessToken: longLivedToken,
       }));
-      const avatarUrl = page.picture?.data?.url ?? null;
+      const rawAvatarUrl = page.picture?.data?.url ?? null;
+      const avatarUrl = await downloadAndStoreAvatar(rawAvatarUrl);
       const existing = await prisma.account.findFirst({
         where: { platform: "facebook", displayName: page.name, userId },
       });
@@ -1065,5 +1075,154 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const msg = err instanceof Error ? err.message : "Connection failed";
       return reply.status(400).send({ error: msg });
     }
+  });
+
+  // ── Discord OAuth ─────────────────────────────────────────────────────────────
+
+  // Step 1 — redirect to Discord OAuth (adds bot to guild)
+  app.get("/auth/discord", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { from } = req.query as Record<string, string>;
+    const nonce = randomBytes(32).toString("hex");
+    await prisma.oAuthState.create({ data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) } });
+    const state = Buffer.from(JSON.stringify({ userId, from, nonce })).toString("base64url");
+
+    const url = new URL("https://discord.com/api/oauth2/authorize");
+    url.searchParams.set("client_id", DC_CLIENT_ID);
+    url.searchParams.set("redirect_uri", DC_REDIRECT_URI);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("scope", "bot identify");
+    url.searchParams.set("permissions", DC_PERMISSIONS);
+    url.searchParams.set("state", state);
+
+    return reply.redirect(url.toString());
+  });
+
+  // Step 2 — Discord redirects back with ?code= and ?guild_id=
+  app.get("/auth/discord/callback", async (req, reply) => {
+    const { code, state, guild_id, error } = req.query as Record<string, string>;
+
+    if (error) {
+      return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error }));
+    }
+    if (!code || !state) {
+      return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "missing_code_or_state" }));
+    }
+
+    let userId: string;
+    let from: string | undefined;
+    try {
+      const decoded = JSON.parse(Buffer.from(state, "base64url").toString()) as { userId: string; from?: string; nonce?: string };
+      userId = decoded.userId;
+      from = decoded.from;
+      const nonce = decoded.nonce;
+      if (!nonce) throw new Error("missing nonce");
+      const storedState = await prisma.oAuthState.findUnique({ where: { nonce } });
+      if (!storedState || storedState.userId !== userId || storedState.expiresAt < new Date()) {
+        return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "invalid_or_expired_state" }));
+      }
+      await prisma.oAuthState.delete({ where: { nonce } });
+    } catch {
+      return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "invalid_state" }));
+    }
+
+    // Exchange code for token (we only need this to confirm auth; posting uses bot token)
+    try {
+      const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: DC_CLIENT_ID,
+          client_secret: DC_CLIENT_SECRET,
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: DC_REDIRECT_URI,
+        }),
+      });
+      if (!tokenRes.ok) throw new Error(await tokenRes.text());
+    } catch (err) {
+      console.error("[discord oauth] token exchange failed:", err);
+      return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "token_exchange_failed" }));
+    }
+
+    const guildId = guild_id ?? "";
+    if (!guildId) {
+      return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "no_guild_selected" }));
+    }
+
+    // Fetch guild name using bot token
+    let guildName = guildId;
+    try {
+      const guildRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
+        headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` },
+      });
+      if (guildRes.ok) {
+        const guild = await guildRes.json() as { name: string };
+        guildName = guild.name;
+      }
+    } catch { /* optional */ }
+
+    // Redirect to accounts page with guild info — frontend will show channel picker
+    const redirectBase = from === "onboarding" ? `${WEB_URL}/onboarding?step=2` : `${WEB_URL}/accounts`;
+    return reply.redirect(buildRedirect(redirectBase, {
+      discord_guild_id: guildId,
+      discord_guild_name: guildName,
+      discord_user_id: userId,
+    }));
+  });
+
+  // Step 3 — frontend fetches channel list for the guild
+  app.get("/auth/discord/channels", { preHandler: [withAuth] }, async (req, reply) => {
+    const { guild_id } = req.query as Record<string, string>;
+    if (!guild_id) return reply.status(400).send({ error: "guild_id required" });
+    try {
+      const channels = await getDiscordChannels(guild_id);
+      return reply.send({ channels });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to fetch channels";
+      return reply.status(400).send({ error: msg });
+    }
+  });
+
+  // Step 4 — create a webhook for the channel and save as connected account
+  app.post("/auth/discord/connect", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { guildId, guildName, channelId, channelName } = req.body as {
+      guildId: string; guildName: string; channelId: string; channelName: string;
+    };
+    if (!guildId || !channelId) return reply.status(400).send({ error: "guildId and channelId required" });
+
+    // Create a webhook for this channel — posts via webhook have no "APP" badge
+    let webhookId = "";
+    let webhookToken = "";
+    try {
+      const whRes = await fetch(`https://discord.com/api/v10/channels/${channelId}/webhooks`, {
+        method: "POST",
+        headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Posthive" }),
+      });
+      if (whRes.ok) {
+        const wh = await whRes.json() as { id: string; token: string };
+        webhookId = wh.id;
+        webhookToken = wh.token;
+      } else {
+        console.warn("[discord] webhook creation failed:", await whRes.text());
+      }
+    } catch (err) {
+      console.warn("[discord] webhook creation error:", err);
+    }
+
+    const credentials = encryptDiscordCredentials({ guildId, guildName, channelId, channelName, webhookId, webhookToken });
+    const displayName = `#${channelName} (${guildName})`;
+
+    const existing = await prisma.account.findFirst({ where: { platform: "discord", userId, credentials: { contains: channelId } } });
+    await prisma.account.upsert({
+      where: { id: existing?.id ?? "new" },
+      create: { platform: "discord", displayName, credentials, avatarUrl: null, userId },
+      update: { displayName, credentials },
+    });
+
+    console.log(`[discord] connected #${channelName} in ${guildName} → user ${userId}`);
+    return reply.send({ ok: true, displayName });
   });
 }
