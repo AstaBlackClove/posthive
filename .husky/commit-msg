@@ -1,6 +1,6 @@
 #!/bin/sh
 MSG=$(cat "$1")
-PATTERN='^(feat|fix|docs|chore|refactor|style|test|perf|ci|build|revert|seo)(\(.+\))?(!)?: .{1,100}'
+PATTERN='^(feat|fix|docs|chore|refactor|style|test|perf|ci|build|revert|seo|legal)(\(.+\))?(!)?: .{1,100}'
 if ! echo "$MSG" | grep -qE "$PATTERN"; then
   echo ""
   echo "  ✗ Invalid commit message format."
@@ -8,7 +8,7 @@ if ! echo "$MSG" | grep -qE "$PATTERN"; then
   echo "  Expected: <type>(<scope>): <subject>"
   echo "  Example:  feat(nav): add Pinterest to platforms dropdown"
   echo ""
-  echo "  Types: feat | fix | docs | chore | refactor | style | test | perf | ci | build | revert| seo"
+  echo "  Types: feat | fix | docs | chore | refactor | style | test | perf | ci | build | revert| seo| legal"
   echo ""
   exit 1
 fi

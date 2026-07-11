@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "How Posthive collects, uses, and protects your data.",
 };
 
-const LAST_UPDATED = "June 29, 2026";
+const LAST_UPDATED = "July 11, 2026";
 const CONTACT_EMAIL = "gunasheelan208@gmail.com";
 
 export default function PrivacyPage() {
@@ -125,17 +125,70 @@ export default function PrivacyPage() {
             We use industry-standard practices: HTTPS everywhere, AES-256-GCM credential encryption, bcrypt password hashing, HTTP-only secure cookies, and rate limiting on auth endpoints. No system is 100% secure if you discover a vulnerability please disclose it responsibly to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
           </p>
 
-          <h2>10. Self-hosted instances</h2>
+          <h2>10. Google API Services — User Data Policy</h2>
+          <p>
+            Posthive's use of information received from Google APIs adheres to the{" "}
+            <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noreferrer">
+              Google API Services User Data Policy
+            </a>
+            , including the Limited Use requirements.
+          </p>
+
+          <h3>What Google data we access</h3>
+          <p>
+            When you connect a YouTube account, Posthive requests OAuth access to your YouTube channel in order to upload and publish videos on your behalf. Specifically, we access:
+          </p>
+          <ul>
+            <li>Your YouTube channel identity (channel ID and display name) — to identify which channel to post to</li>
+            <li>The ability to upload videos and set their metadata (title, description, visibility) — to fulfil scheduled video posts</li>
+          </ul>
+          <p>We do not access your Gmail, Google Drive, Google Contacts, Google Calendar, or any other Google service.</p>
+
+          <h3>How we use Google data</h3>
+          <p>
+            Google user data is used <strong style={{ color: "#ededed" }}>exclusively</strong> to publish your scheduled YouTube videos at the time you chose. We do not use it for any other purpose — including advertising, profiling, or any feature unrelated to the scheduling service you requested.
+          </p>
+
+          <h3>How we protect Google data</h3>
+          <p>
+            Your Google OAuth tokens are encrypted at rest using AES-256-GCM with a key stored only in the server environment — never in the database. Tokens are transmitted only over HTTPS and are never logged or returned in API responses.
+          </p>
+
+          <h3>Data transfer — Google data</h3>
+          <p>
+            Your Google OAuth tokens and any associated channel data are <strong style={{ color: "#ededed" }}>never sold, rented, or transferred to any third party</strong>. The only outbound use of your Google credentials is the direct API call to YouTube's servers to publish your scheduled content. No Google user data is shared with advertisers, data brokers, or any other party.
+          </p>
+
+          <h3>Data retention and deletion — Google data</h3>
+          <p>
+            Google OAuth tokens are retained for as long as your YouTube account is connected in Posthive. You can disconnect your YouTube account at any time from the Accounts page — this immediately deletes the stored token from our database. When you delete your Posthive account, all Google OAuth tokens are permanently deleted within 30 days.
+          </p>
+
+          <h3>AI and machine learning restrictions</h3>
+          <p>
+            Posthive does <strong style={{ color: "#ededed" }}>not</strong> use any Google user data — including YouTube channel data or video content — to train, develop, or improve any AI or machine learning model. Google user data is not transferred to any third-party AI or ML service.
+          </p>
+
+          <h3>Limited Use compliance statement</h3>
+          <p style={{ border: "1px solid #2a2a2a", borderRadius: 10, padding: "16px 20px", background: "#111", color: "#aaa" }}>
+            The use of information received from Google APIs will adhere to the{" "}
+            <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noreferrer">
+              Google API Services User Data Policy
+            </a>
+            , including the Limited Use requirements.
+          </p>
+
+          <h2>11. Self-hosted instances</h2>
           <p>
             If you run Posthive on your own infrastructure, this policy does not apply to your instance. You are the data controller and are responsible for your users' data under applicable law.
           </p>
 
-          <h2>11. Changes to this policy</h2>
+          <h2>12. Changes to this policy</h2>
           <p>
             We may update this policy as the product evolves. Material changes will be communicated via email or an in-app notice at least 14 days before they take effect. The "Last updated" date at the top will always reflect the current version.
           </p>
 
-          <h2>12. Contact</h2>
+          <h2>13. Contact</h2>
           <p>
             Questions about this policy? Reach us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
           </p>
