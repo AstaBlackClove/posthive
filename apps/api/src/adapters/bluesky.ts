@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { BskyAgent } from "@atproto/api";
 import type { AppBskyEmbedImages, AppBskyEmbedExternal, AppBskyEmbedVideo } from "@atproto/api";
 import type { Account } from "@prisma/client";
@@ -50,7 +51,12 @@ async function buildImageEmbed(
 
       const { buffer: compressed, mimeType: outMime } = await compressForPlatform(buffer, mimeType, "bluesky");
       const { data } = await agent.uploadBlob(compressed, { encoding: outMime });
-      return { image: data.blob, alt: altTexts?.[i] ?? "" };
+      let aspectRatio: { width: number; height: number } | undefined;
+      try {
+        const meta = await sharp(compressed).metadata();
+        if (meta.width && meta.height) aspectRatio = { width: meta.width, height: meta.height };
+      } catch { /* aspectRatio optional */ }
+      return { image: data.blob, alt: altTexts?.[i] ?? "", aspectRatio };
     })
   );
 
