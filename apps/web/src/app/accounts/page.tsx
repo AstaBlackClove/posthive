@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 import { PlatformIcon } from "../../components/PlatformIcon";
 import { useToast } from "../../components/Toast";
@@ -557,6 +557,7 @@ interface PlanStatus {
 export default function AccountsPage() {
   const { success, error: toastError } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [planStatus, setPlanStatus] = useState<PlanStatus | null>(null);
@@ -617,9 +618,11 @@ export default function AccountsPage() {
     const guildId = searchParams.get("discord_guild_id");
     const guildName = searchParams.get("discord_guild_name") ?? "";
     if (!guildId) return;
+    // Use router.replace so Next.js clears the params from useSearchParams,
+    // preventing the modal from re-appearing when navigating back to this page.
+    router.replace("/accounts", { scroll: false });
     setDiscordGuildId(guildId);
     setDiscordGuildName(guildName);
-    window.history.replaceState({}, "", "/accounts");
     apiFetch<{ channels: { id: string; name: string }[] }>(`/auth/discord/channels?guild_id=${guildId}`)
       .then(data => setDiscordChannels(data.channels))
       .catch(() => toastError("Failed to load Discord channels"));
@@ -1295,7 +1298,8 @@ export default function AccountsPage() {
       {/* Discord channel picker — shown after OAuth redirect */}
       {discordGuildId && discordChannels.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+          onMouseDown={e => e.stopPropagation()}>
           <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
             <div className="flex items-center gap-2 mb-4">
               <PlatformIcon platform="discord" size={20} />
@@ -1317,13 +1321,8 @@ export default function AccountsPage() {
                 ))}
               </select>
               <div className="flex gap-2">
-                <button type="button" onClick={() => { setDiscordGuildId(null); setDiscordChannels([]); }}
-                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl"
-                  style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
-                  Cancel
-                </button>
                 <button type="submit" disabled={!discordChannelId || discordConnecting}
-                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl disabled:opacity-50"
+                  className="w-full py-2.5 text-sm font-semibold rounded-xl disabled:opacity-50"
                   style={{ backgroundColor: "#5865F2", color: "#fff" }}>
                   {discordConnecting ? "Connecting…" : "Connect"}
                 </button>
