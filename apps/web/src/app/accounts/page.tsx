@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
+
+// Module-level: persists across component re-mounts within the same browser session.
+// Prevents the channel picker re-appearing when the user navigates away and back.
+const _handledDiscordGuilds = new Set<string>();
 import { PlatformIcon } from "../../components/PlatformIcon";
 import { useToast } from "../../components/Toast";
 
@@ -557,7 +561,6 @@ interface PlanStatus {
 export default function AccountsPage() {
   const { success, error: toastError } = useToast();
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [planStatus, setPlanStatus] = useState<PlanStatus | null>(null);
@@ -618,9 +621,12 @@ export default function AccountsPage() {
     const guildId = searchParams.get("discord_guild_id");
     const guildName = searchParams.get("discord_guild_name") ?? "";
     if (!guildId) return;
-    // Use router.replace so Next.js clears the params from useSearchParams,
-    // preventing the modal from re-appearing when navigating back to this page.
-    router.replace("/accounts", { scroll: false });
+    // Always clear the URL params from the address bar immediately.
+    window.history.replaceState({}, "", "/accounts");
+    // Skip if we've already handled this guild in this browser session
+    // (guards against re-appearing when the user navigates away and back).
+    if (_handledDiscordGuilds.has(guildId)) return;
+    _handledDiscordGuilds.add(guildId);
     setDiscordGuildId(guildId);
     setDiscordGuildName(guildName);
     apiFetch<{ channels: { id: string; name: string }[] }>(`/auth/discord/channels?guild_id=${guildId}`)
