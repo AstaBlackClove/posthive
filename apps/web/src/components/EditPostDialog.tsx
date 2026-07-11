@@ -165,6 +165,13 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     if (videoInputRef.current) videoInputRef.current.value = "";
   }
 
+  function handlePaste(e: React.ClipboardEvent) {
+    const files = Array.from(e.clipboardData.files).filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"));
+    if (!files.length) return;
+    e.preventDefault();
+    uploadFiles(files);
+  }
+
   function removeImage(i: number) {
     setImages(prev => {
       const img = prev[i];
@@ -273,7 +280,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   }, {});
 
   return (
-    <Modal open={open} onClose={onClose} maxWidth={1080}>
+    <Modal open={open} onClose={onClose} maxWidth={1080} onPaste={handlePaste}>
 
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"

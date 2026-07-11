@@ -14,6 +14,7 @@ import { LocalDiskStorage, SupabaseStorage } from "./lib/storage.js";
 import { setBlueskyStorage } from "./adapters/bluesky.js";
 import { setStorageAdapter as setMastodonStorage } from "./adapters/mastodon.js";
 import { setTelegramStorage } from "./adapters/telegram.js";
+import { setLinkedInStorage } from "./adapters/linkedin.js";
 import { accountRoutes } from "./routes/accounts.js";
 import { authRoutes } from "./routes/auth.js";
 import { jobRoutes } from "./routes/jobs.js";
@@ -43,6 +44,7 @@ async function main() {
   setBlueskyStorage(storage);
   setMastodonStorage(storage);
   setTelegramStorage(storage);
+  setLinkedInStorage(storage);
 
   const app = Fastify({
     logger: { redact: ["req.query.token", "req.params.apiKey"] },

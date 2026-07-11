@@ -8,9 +8,10 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   maxWidth?: number;
+  onPaste?: (e: React.ClipboardEvent) => void;
 }
 
-export function Modal({ open, onClose, children, maxWidth = 1100 }: ModalProps) {
+export function Modal({ open, onClose, children, maxWidth = 1100, onPaste }: ModalProps) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -31,6 +32,7 @@ export function Modal({ open, onClose, children, maxWidth = 1100 }: ModalProps) 
     >
       <div
         className="modal-panel relative w-full flex flex-col rounded-2xl overflow-hidden"
+        onPaste={onPaste}
         style={{
           maxWidth,
           maxHeight: "90vh",

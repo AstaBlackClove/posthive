@@ -460,7 +460,6 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const instagramSelectedWithNoMedia = instagramSelected && mediaItems.length === 0 && igMediaType !== "story";
   const instagramStoryWithNoImage = instagramSelected && igMediaType === "story" && mediaItems.length === 0;
   const onlyInstagramStory = instagramSelected && igMediaType === "story" && selectedAccounts.every((a) => a.platform === "instagram");
-  const linkedinSelectedWithMedia = selectedAccounts.some((a) => a.platform === "linkedin") && mediaItems.length > 0;
   const pinterestAccounts = selectedAccounts.filter((a) => a.platform === "pinterest");
   const pinterestSelected = pinterestAccounts.length > 0;
   const pinterestSelectedWithNoImage = pinterestSelected && images.length === 0;
@@ -1327,11 +1326,6 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         {instagramStoryWithNoImage && (
           <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#f59e0b" }}>
             ℹ️ Add an image for the Instagram Story
-          </p>
-        )}
-        {linkedinSelectedWithMedia && (
-          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#888" }}>
-            ℹ️ LinkedIn will post text only image/video support requires elevated API access
           </p>
         )}
         {youtubeSelectedWithNoVideo && (

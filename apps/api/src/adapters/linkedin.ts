@@ -20,7 +20,7 @@ import type { StorageAdapter } from "../lib/storage.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 const API_BASE = "https://api.linkedin.com";
-const LI_VERSION = "202306";
+const LI_VERSION = "202606";
 
 interface LinkedInCredentials {
   accessToken: string;
@@ -151,8 +151,6 @@ export const linkedinAdapter: PlatformAdapter = {
 
     let imageUrns: string[] = [];
     if (storageAdapter && imageUrls.length > 0) {
-      // Image upload requires LinkedIn Media API access (not available on Default Tier).
-      // Attempt upload but fall back to text-only if unavailable.
       try {
         imageUrns = await Promise.all(
           imageUrls.slice(0, 9).map(async (url) => {
@@ -168,26 +166,29 @@ export const linkedinAdapter: PlatformAdapter = {
       }
     }
 
-    // UGC Posts API (v2) — available on Default Tier "Share on LinkedIn"
+    // Posts API (/rest/posts) — available on Default Tier "Share on LinkedIn"
     const postBody: Record<string, unknown> = {
       author,
       lifecycleState: "PUBLISHED",
-      specificContent: {
-        "com.linkedin.ugc.ShareContent": {
-          shareCommentary: { text: content.text },
-          shareMediaCategory: "NONE",
-        },
+      visibility: "PUBLIC",
+      commentary: content.text,
+      distribution: {
+        feedDistribution: "MAIN_FEED",
+        targetEntities: [],
+        thirdPartyDistributionChannels: [],
       },
-      visibility: {
-        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-      },
+      ...(imageUrns.length > 0 ? {
+        content: imageUrns.length === 1
+          ? { media: { id: imageUrns[0] } }
+          : { multiImage: { images: imageUrns.map(id => ({ id, altText: "" })) } },
+      } : {}),
     };
 
-    const res = await liRequest("POST", "/v2/ugcPosts", token, postBody, true);
+    const res = await liRequest("POST", "/rest/posts", token, postBody);
     if (!res.ok) throw new Error(`LinkedIn post failed: ${await res.text()}`);
 
-    const data = await res.json() as { id?: string };
-    const postUrn = data.id ?? res.headers.get("x-restli-id") ?? "unknown";
+    // /rest/posts returns 201 with no body; URN is in X-RestLi-Id header
+    const postUrn = res.headers.get("x-restli-id") ?? res.headers.get("X-RestLi-Id") ?? "unknown";
     return { platformPostId: postUrn, replyContext: { postUrn } as LinkedInReplyContext };
   },
 
