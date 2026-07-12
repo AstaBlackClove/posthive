@@ -280,7 +280,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   }, {});
 
   return (
-    <Modal open={open} onClose={onClose} maxWidth={1080} onPaste={handlePaste}>
+    <Modal open={open} onClose={onClose} maxWidth={1280} onPaste={handlePaste}>
 
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
