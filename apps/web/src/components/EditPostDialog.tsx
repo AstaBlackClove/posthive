@@ -381,11 +381,13 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
               </div>
             </div>
             <textarea
-              value={text} onChange={e => setText(e.target.value)}
+              value={text}
+              onChange={e => { setText(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
+              ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
               placeholder="What do you want to share?"
-              rows={7}
               className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-none transition"
               style={{
+                minHeight: "140px", overflow: "hidden",
                 border: overAnyLimit ? "1px solid #fca5a5" : "1px solid #2a2a2a",
                 backgroundColor: "#111111", color: "#ededed",
               }}
@@ -551,11 +553,12 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
             <p className="text-xs mb-2.5" style={{ color: "#444" }}>
               Posted as the first reply immediately after your post goes live.
             </p>
-            <textarea value={commentText} onChange={e => setCommentText(e.target.value)}
+            <textarea value={commentText}
+              onChange={e => { setCommentText(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
+              ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
               placeholder="Add a link, thread continuation, or extra context…"
-              rows={3}
               className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-none"
-              style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+              style={{ minHeight: "80px", overflow: "hidden", border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
             />
           </div>
 

@@ -846,14 +846,14 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             {!onlyInstagramStory && !noPostTextNeeded && (
               <textarea
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={(e) => { setText(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
+                ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
                 placeholder="What do you want to share?"
                 required={!noPostTextNeeded}
-                rows={8}
                 className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"
                 style={overAnyLimit
-                  ? { borderColor: "#fca5a5", backgroundColor: "#111111", color: "#ededed" }
-                  : { borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }
+                  ? { minHeight: "160px", overflow: "hidden", borderColor: "#fca5a5", backgroundColor: "#111111", color: "#ededed" }
+                  : { minHeight: "160px", overflow: "hidden", borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }
                 }
               />
             )}
