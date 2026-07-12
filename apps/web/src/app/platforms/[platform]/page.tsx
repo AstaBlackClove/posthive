@@ -450,6 +450,39 @@ const PLATFORMS: Record<string, PlatformData> = {
       { q: "Which relays does Posthive publish to?", a: "Posthive publishes to relay.damus.io, relay.nostr.band, nos.lol, and relay.snort.social by default. These are among the highest-uptime public relays on the network." },
     ],
   },
+  tumblr: {
+    name: "Tumblr",
+    domain: "tumblr.com",
+    color: "#35465c",
+    headline: "Schedule Tumblr posts without staying logged in",
+    subheadline: "Write your blog posts in Posthive, pick a publish time, and let Posthive push them to your Tumblr blog automatically — text, images, and all.",
+    supports: [
+      { label: "Text posts up to 4,096 chars", icon: "text" as IconKey },
+      { label: "Images in NPF format", icon: "image" as IconKey },
+      { label: "Posts to your primary blog", icon: "globe" as IconKey },
+      { label: "OAuth 1.0a secure connection", icon: "lock" as IconKey },
+      { label: "Per-account text override", icon: "override" as IconKey },
+    ],
+    steps: [
+      { n: "01", title: "Register a Tumblr app", desc: "Go to tumblr.com/oauth/apps and register a new application. Set the callback URL to your Posthive API domain + /auth/tumblr/callback." },
+      { n: "02", title: "Add env vars", desc: "Add TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET, and TUMBLR_REDIRECT_URI to your .env file." },
+      { n: "03", title: "Connect your blog", desc: "Click Connect Tumblr on the Accounts page. Approve the OAuth prompt and Posthive links to your primary Tumblr blog." },
+    ],
+    note: "Tumblr uses OAuth 1.0a with HMAC-SHA1 — the same auth method as X/Twitter. Tokens do not expire, so you only need to connect once.",
+    image: "/screenshots/platform-tumblr.png",
+    imageAlt: "Posthive composer Tumblr post scheduling",
+    why: [
+      { title: "A platform Postiz and most schedulers skip", desc: "Tumblr has a large, active creative community that most social schedulers ignore. Posthive is one of the only open-source schedulers that supports Tumblr — giving you access to an audience your competitors aren't reaching." },
+      { title: "No expiring tokens, no re-auth needed", desc: "Tumblr's OAuth 1.0a access tokens never expire. Connect once and Posthive will keep posting without ever asking you to re-authenticate." },
+      { title: "Text and images in every post", desc: "Posthive posts using Tumblr's NPF (Neue Post Format) — supporting rich text blocks and inline images. Your posts render beautifully in Tumblr's native UI." },
+    ],
+    faq: [
+      { q: "Does Posthive post to my primary blog or all blogs?", a: "Posthive posts to your primary Tumblr blog by default. You can connect additional blogs as separate accounts by going through the OAuth flow again." },
+      { q: "Does Tumblr require API approval?", a: "No. Registering a Tumblr app at tumblr.com/oauth/apps is instant — no review process, no waitlist, no business verification. You get your consumer key immediately." },
+      { q: "Can I schedule reblogs?", a: "Not currently. Posthive creates new original posts on your blog. Reblog scheduling is not supported by the Tumblr API for third-party apps." },
+      { q: "What post format does Posthive use?", a: "Posthive uses Tumblr's NPF (Neue Post Format) for all posts. Text is posted as a text block, images are posted as image blocks — all in a single post, rendered natively in Tumblr." },
+    ],
+  },
   twitter: {
     name: "X (Twitter)",
     domain: "x.com",
@@ -683,13 +716,13 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
         <div style={{ maxWidth: 640, margin: "0 auto", background: "#111", border: "1px solid #1e1e1e", borderRadius: 20, padding: "40px 36px", textAlign: "center" }}>
           <p style={{ fontSize: 13, fontWeight: 600, color: "#5b63d3", marginBottom: 12, letterSpacing: ".04em" }}>PART OF A BIGGER PICTURE</p>
           <h2 style={{ fontSize: 24, fontWeight: 800, color: "#ededed", letterSpacing: "-.02em", marginBottom: 12 }}>
-            {data.name} is one of eleven platforms
+            {data.name} is one of thirteen platforms
           </h2>
           <p style={{ fontSize: 14.5, color: "#666", lineHeight: 1.7, marginBottom: 28 }}>
-            Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, and Discord — all from the same composer. Write once, choose your platforms, done.
+            Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, Discord, and Tumblr — all from the same composer. Write once, choose your platforms, done.
           </p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
-            {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube", "facebook", "pinterest", "telegram", "twitter", "nostr", "discord"] as const)
+            {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube", "facebook", "pinterest", "telegram", "twitter", "nostr", "discord", "tumblr"] as const)
               .filter(p => p !== platform)
               .map(p => (
                 <Link key={p} href={`/platforms/${p}`} style={{ display: "flex", alignItems: "center", gap: 6, background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 999, padding: "5px 12px", textDecoration: "none" }}>

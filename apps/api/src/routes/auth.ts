@@ -6,6 +6,7 @@ import { prisma } from "../lib/prisma.js";
 import { getPlan } from "../lib/plans.js";
 import { withAuth, getUser } from "../lib/auth/withAuth.js";
 import { getDiscordChannels, encryptDiscordCredentials } from "../adapters/discord.js";
+import { tumblrRequestTokenAuth, tumblrAccessTokenAuth, tumblrApiAuthHeader, encryptTumblrCredentials } from "../adapters/tumblr.js";
 import { downloadAndStoreAvatar } from "../lib/avatarStore.js";
 
 const APP_ID = process.env.THREADS_APP_ID!;
@@ -55,6 +56,8 @@ const SCOPES = ["threads_basic", "threads_content_publish"].join(",");
 const DC_CLIENT_ID     = process.env.DISCORD_CLIENT_ID!;
 const DC_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;
 const DC_REDIRECT_URI  = process.env.DISCORD_REDIRECT_URI!;
+
+const TUMBLR_REDIRECT_URI = process.env.TUMBLR_REDIRECT_URI!;
 // bot permissions: VIEW_CHANNEL(1024) + SEND_MESSAGES(2048) + ATTACH_FILES(32768) + READ_MESSAGE_HISTORY(65536) + MANAGE_WEBHOOKS(536870912)
 const DC_PERMISSIONS   = "536972288";
 
@@ -1224,5 +1227,111 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     console.log(`[discord] connected #${channelName} in ${guildName} → user ${userId}`);
     return reply.send({ ok: true, displayName });
+  });
+
+  // ── Tumblr OAuth 1.0a ─────────────────────────────────────────────────────
+
+  app.get("/auth/tumblr", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { from } = req.query as Record<string, string>;
+
+    // Step 1: get a temporary request token from Tumblr
+    const { header } = tumblrRequestTokenAuth(TUMBLR_REDIRECT_URI);
+    const res = await fetch("https://www.tumblr.com/oauth/request_token", {
+      method: "POST",
+      headers: { Authorization: header },
+    });
+    if (!res.ok) return reply.redirect(`${WEB_URL}/accounts?error=tumblr_request_token_failed`);
+
+    const body = await res.text();
+    const params = Object.fromEntries(new URLSearchParams(body));
+    const { oauth_token, oauth_token_secret } = params;
+    if (!oauth_token || !oauth_token_secret) {
+      return reply.redirect(`${WEB_URL}/accounts?error=tumblr_request_token_failed`);
+    }
+
+    // Store request token secret + userId in OAuthState
+    const nonce = `${oauth_token}~~${oauth_token_secret}~~${userId}~~${from ?? ""}`;
+    await prisma.oAuthState.create({
+      data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
+    });
+
+    return reply.redirect(`https://www.tumblr.com/oauth/authorize?oauth_token=${oauth_token}`);
+  });
+
+  app.get("/auth/tumblr/callback", async (req, reply) => {
+    const { oauth_token, oauth_verifier, denied } = req.query as Record<string, string>;
+    const redirectBase = `${WEB_URL}/accounts`;
+
+    if (denied || !oauth_token || !oauth_verifier) {
+      return reply.redirect(buildRedirect(redirectBase, { error: denied ? "access_denied" : "missing_oauth_params" }));
+    }
+
+    const stored = await prisma.oAuthState.findFirst({
+      where: { nonce: { startsWith: `${oauth_token}~~` } },
+    });
+    if (!stored || stored.expiresAt < new Date()) {
+      return reply.redirect(buildRedirect(redirectBase, { error: "invalid_or_expired_state" }));
+    }
+    await prisma.oAuthState.delete({ where: { id: stored.id } });
+
+    const parts = stored.nonce.split("~~");
+    const requestSecret = parts[1] ?? "";
+    const userId = parts[2] ?? stored.userId;
+    const from = parts[3] ?? "";
+    const redirectTo = from === "onboarding" ? `${WEB_URL}/onboarding?step=2` : redirectBase;
+
+    // Step 2: exchange request token + verifier for access token
+    const authHeader = tumblrAccessTokenAuth(oauth_token, requestSecret, oauth_verifier);
+    const tokenRes = await fetch("https://www.tumblr.com/oauth/access_token", {
+      method: "POST",
+      headers: { Authorization: authHeader },
+    });
+    if (!tokenRes.ok) {
+      return reply.redirect(buildRedirect(redirectTo, { error: "token_exchange_failed" }));
+    }
+
+    const tokenBody = await tokenRes.text();
+    const tokenParams = Object.fromEntries(new URLSearchParams(tokenBody));
+    const accessToken = tokenParams.oauth_token ?? "";
+    const accessSecret = tokenParams.oauth_token_secret ?? "";
+    if (!accessToken || !accessSecret) {
+      return reply.redirect(buildRedirect(redirectTo, { error: "token_exchange_failed" }));
+    }
+
+    // Step 3: fetch user info to get their primary blog name
+    const infoUrl = "https://api.tumblr.com/v2/user/info";
+    let blogName = "";
+    let displayName = "tumblr-user";
+    let avatarUrl: string | null = null;
+
+    try {
+      const infoRes = await fetch(infoUrl, {
+        headers: { Authorization: tumblrApiAuthHeader("GET", infoUrl, accessToken, accessSecret) },
+      });
+      if (infoRes.ok) {
+        const info = await infoRes.json() as { response?: { user?: { name?: string; blogs?: Array<{ name: string; primary?: boolean }> } } };
+        const user = info.response?.user;
+        const primary = user?.blogs?.find(b => b.primary) ?? user?.blogs?.[0];
+        blogName = primary?.name ?? user?.name ?? "tumblr-user";
+        displayName = blogName;
+        avatarUrl = `https://api.tumblr.com/v2/blog/${blogName}/avatar/64`;
+      }
+    } catch (err) {
+      console.error("[tumblr] user info fetch failed:", err);
+      blogName = `user-${userId.slice(0, 8)}`;
+      displayName = blogName;
+    }
+
+    const credentials = encryptTumblrCredentials({ accessToken, accessSecret, blogName });
+    const existing = await prisma.account.findFirst({ where: { platform: "tumblr", userId, displayName } });
+    await prisma.account.upsert({
+      where: { id: existing?.id ?? "new" },
+      create: { platform: "tumblr", displayName, credentials, avatarUrl, userId },
+      update: { credentials, avatarUrl },
+    });
+
+    console.log(`[tumblr] connected ${displayName} → user ${userId}`);
+    return reply.redirect(buildRedirect(redirectTo, { connected: "tumblr" }));
   });
 }

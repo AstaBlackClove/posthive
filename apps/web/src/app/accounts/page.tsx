@@ -20,6 +20,7 @@ const FACEBOOK_AUTH_URL = `${API_BASE}/auth/facebook`;
 const TWITTER_AUTH_URL  = `${API_BASE}/auth/twitter`;
 const PINTEREST_AUTH_URL = `${API_BASE}/auth/pinterest`;
 const DISCORD_AUTH_URL   = `${API_BASE}/auth/discord`;
+const TUMBLR_AUTH_URL    = `${API_BASE}/auth/tumblr`;
 
 const BG = "#0a0a0a";
 const SURFACE = "#111111";
@@ -1288,6 +1289,49 @@ export default function AccountsPage() {
                   )}
                   <p className="text-xs" style={{ color: MUTED }}>
                     Post to Discord channels · text, images, and video
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Tumblr */}
+          {(() => {
+            const tumblrAccounts = accounts.filter(a => a.platform === "tumblr");
+            return (
+              <div className="rounded-2xl p-5 flex flex-col gap-4" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+                <div className="flex items-center gap-3">
+                  <PlatformIcon platform="tumblr" size={28} />
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: TEXT }}>Tumblr</p>
+                    <p className="text-xs" style={{ color: MUTED }}>Blog posts · text and images</p>
+                  </div>
+                </div>
+                {tumblrAccounts.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {tumblrAccounts.map(a => (
+                      <div key={a.id} className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#0d0d0d", border: `1px solid ${BORDER}` }}>
+                        {a.avatarUrl
+                          // eslint-disable-next-line @next/next/no-img-element
+                          ? <img src={a.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                          : <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: "#35465c", color: "#fff" }}>{a.displayName[0]?.toUpperCase()}</div>}
+                        <span className="text-xs flex-1 truncate" style={{ color: TEXT }}>{a.displayName}</span>
+                        <button onClick={() => setDisconnectTarget({ id: a.id, displayName: a.displayName, platform: "tumblr" })}
+                          className="text-xs px-2 py-1 rounded-lg transition-colors hover:bg-red-900/30"
+                          style={{ color: "#666", border: "1px solid #2a2a2a" }}>Disconnect</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-col gap-2">
+                  <a href={TUMBLR_AUTH_URL}
+                    className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                    style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                    <PlatformIcon platform="tumblr" size={16} />
+                    {tumblrAccounts.length > 0 ? "Add another blog" : "Connect Tumblr"}
+                  </a>
+                  <p className="text-xs" style={{ color: MUTED }}>
+                    Posts to your primary Tumblr blog · text and images
                   </p>
                 </div>
               </div>

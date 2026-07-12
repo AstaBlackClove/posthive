@@ -20,7 +20,7 @@
 
 **Scheduling**
 
-- **Multi-platform posting** - write once, publish to all 12 platforms simultaneously
+- **Multi-platform posting** - write once, publish to all 13 platforms simultaneously
 - **Bulk CSV scheduling** - upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
 - **Post templates** - save, load, and delete reusable post drafts
 - **Dry run mode** - full pipeline test without making real API calls
@@ -104,7 +104,7 @@ posthive/
 │   ├── api/                  # Fastify v4 API (Node.js, TypeScript, ESM)
 │   │   ├── prisma/           # Schema + migrations
 │   │   └── src/
-│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, X/Twitter, Telegram, Nostr, Discord)
+│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, X/Twitter, Telegram, Nostr, Discord, Tumblr)
 │   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, plans
 │   │       └── routes/       # auth, accounts, jobs, templates, upload, billing, user, apiKeys, publicApi, mcp, oauth
 │   ├── web/                  # Next.js 16 frontend
@@ -476,6 +476,24 @@ DISCORD_REDIRECT_URI="https://your-domain.com/auth/discord/callback"
 
 > Posthive auto-creates a webhook for the selected channel so messages appear under the Posthive name. Discord shows an **APP** label on all programmatic posts — this is a Discord platform requirement.
 
+### Tumblr
+
+OAuth 1.0a (HMAC-SHA1). Tokens never expire — connect once and it works indefinitely.
+
+1. Go to [tumblr.com/oauth/apps](https://www.tumblr.com/oauth/apps) → **Register application** (instant, no review)
+2. Set **Default callback URL** to `https://your-domain.com/auth/tumblr/callback`
+3. Add to `.env`:
+
+```env
+TUMBLR_CONSUMER_KEY="your-consumer-key"
+TUMBLR_CONSUMER_SECRET="your-consumer-secret"
+TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"
+```
+
+4. Go to **Accounts** in Posthive → **Connect Tumblr** → approve the OAuth prompt
+
+> Posts to your primary Tumblr blog using NPF (Neue Post Format). Text and images supported. Tumblr app registration requires no business verification or API review.
+
 ---
 
 ## Bulk CSV Scheduling
@@ -712,6 +730,7 @@ Set `ENABLE_BILLING=false` for self-hosted mode all features unlocked, no plan l
 | Telegram       | 4,096 characters                |
 | Nostr          | 10,000 characters               |
 | Discord        | 2,000 characters                |
+| Tumblr         | 4,096 characters                |
 
 ---
 

@@ -47,6 +47,7 @@ const NAV = [
       { label: "Telegram", id: "telegram" },
       { label: "Nostr", id: "nostr" },
       { label: "Discord", id: "discord" },
+      { label: "Tumblr", id: "tumblr" },
     ],
   },
   {
@@ -711,6 +712,26 @@ DISCORD_REDIRECT_URI="https://your-domain.com/auth/discord/callback"`}</pre>
                 <li className="doc-li"><strong>Read Message History</strong> — for replies</li>
                 <li className="doc-li"><strong>Manage Webhooks</strong> — to auto-create the posting webhook</li>
               </ul>
+
+              {/* ── Tumblr ── */}
+              <h2 className="doc-h2" id="tumblr">Tumblr</h2>
+              <p className="doc-p">
+                Posthive posts to your <strong>primary Tumblr blog</strong> using the NPF (Neue Post Format) API. Text and images are supported. Tumblr uses <strong>OAuth 1.0a</strong> — tokens never expire so you only connect once.
+              </p>
+              <ol className="doc-ol">
+                <li className="doc-li">Go to <a href="https://www.tumblr.com/oauth/apps" target="_blank" rel="noopener noreferrer" className="doc-link">tumblr.com/oauth/apps</a> → <strong>Register application</strong>. No review required.</li>
+                <li className="doc-li">Set <strong>Default callback URL</strong> to your production API domain + <code>/auth/tumblr/callback</code>.</li>
+                <li className="doc-li">Add to your <code>.env</code>:</li>
+              </ol>
+              <pre className="doc-pre">{`TUMBLR_CONSUMER_KEY="your-consumer-key"
+TUMBLR_CONSUMER_SECRET="your-consumer-secret"
+TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
+              <ol className="doc-ol" start={4}>
+                <li className="doc-li">Go to <strong>Accounts</strong> in Posthive → click <strong>Connect Tumblr</strong> → approve the OAuth prompt.</li>
+              </ol>
+              <div className="doc-callout">
+                Tumblr app registration is instant — no business verification, no waitlist. Your consumer key is available immediately after registering.
+              </div>
 
               {/* ── Scheduling posts ── */}
               <h2 className="doc-h2" id="scheduling-posts">Scheduling posts</h2>

@@ -82,6 +82,7 @@ export const PLATFORM_COLOR: Record<string, string> = {
   telegram: "#229ED9",
   nostr: "#7B5EA7",
   discord: "#5865F2",
+  tumblr:  "#35465c",
 };
 
 export const PLATFORM_LIMIT: Record<string, number> = {
@@ -96,6 +97,7 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   telegram: 4096,
   nostr: 10000,
   discord: 2000,
+  tumblr:  4096,
 };
 
 export const MAX_IMAGES = 4;
@@ -904,6 +906,53 @@ function NostrPreview({ account, text, images }: {
   );
 }
 
+function TumblrPreview({ account, text, images }: { account: Account; text: string; images: UploadedImage[] }) {
+  const blogName = account.displayName;
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#35465c", fontFamily: "sans-serif" }}>
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-3" style={{ backgroundColor: "#2c3e50" }}>
+        <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+          style={{ backgroundColor: "#00b8ff", color: "#fff" }}>
+          {account.avatarUrl
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={account.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover" />
+            : blogName[0]?.toUpperCase()}
+        </div>
+        <span className="text-xs font-semibold" style={{ color: "#a9b8c3" }}>{blogName}</span>
+      </div>
+
+      {/* Body */}
+      <div className="px-4 py-3 space-y-3">
+        {text && (
+          <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#ffffff" }}>
+            {text.length > 280 ? text.slice(0, 280) + "…" : text}
+          </p>
+        )}
+        {images.length > 0 && (
+          <div className={`grid gap-1 ${images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+            {images.slice(0, 4).map((img, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={i} src={img.previewUrl} alt=""
+                className="w-full rounded-lg object-cover"
+                style={{ maxHeight: images.length === 1 ? 300 : 140 }} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center gap-4 px-4 py-2" style={{ borderTop: "1px solid #2c3e50" }}>
+        {[["❤", "Like"], ["🔁", "Reblog"], ["✉", "Reply"]].map(([icon, label]) => (
+          <button key={label} className="flex items-center gap-1 text-xs" style={{ color: "#a9b8c3", background: "none", border: "none", cursor: "default" }}>
+            <span>{icon}</span><span>{label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DiscordPreview({ account, text, commentText, images, video }: {
   account: Account;
   text: string;
@@ -1008,6 +1057,9 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   }
   if (account.platform === "discord") {
     return <DiscordPreview account={account} text={text} commentText={commentText} images={images} video={video} />;
+  }
+  if (account.platform === "tumblr") {
+    return <TumblrPreview account={account} text={text} images={images} />;
   }
 
   const color = PLATFORM_COLOR[account.platform] ?? "#6b7280";
