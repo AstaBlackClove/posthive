@@ -93,8 +93,8 @@ Full docs: [https://posthive.co/docs](https://posthive.co/docs)
 | Plan | Accounts | Posts/month | API + MCP |
 |---|---|---|---|
 | Creator | 3 | 400 | No |
-| Pro | 15 | Unlimited | Yes (3 keys) |
-| Team | 50 | Unlimited | Yes (10 keys) |
+| Pro | 15 | Unlimited | Yes |
+| Team | 50 | Unlimited | Yes |
 
 14-day free trial. Self-hosted deployments can disable billing entirely.
 

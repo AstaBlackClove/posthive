@@ -92,7 +92,7 @@ const COMPARISON = [
   { feature: "Reels & Stories",         trial: "—",       creator: "—",        pro: "✓",        team: "✓" },
   { feature: "Per-platform overrides",  trial: "—",       creator: "—",        pro: "✓",        team: "✓" },
   { feature: "X/Twitter posting",       trial: "—",       creator: "—",        pro: "100/mo",   team: "100/mo" },
-  { feature: "API access & MCP",        trial: "—",       creator: "—",        pro: "3 keys",   team: "10 keys" },
+  { feature: "API access & MCP",        trial: "—",       creator: "—",        pro: "✓",   team: "✓" },
   { feature: "Webhook outbound",        trial: "—",       creator: "—",        pro: "✓",        team: "✓" },
 ];
 

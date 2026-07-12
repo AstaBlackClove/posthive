@@ -1325,9 +1325,6 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
               <p className="doc-p">
                 Go to <strong>Settings → API Keys</strong>, enter a label (e.g. &quot;My Claude agent&quot;), and click <em>Create key</em>. The full key is shown only once — copy it immediately. Keys are prefixed with <span className="doc-inline-code">ph_</span> for easy identification.
               </p>
-              <div className="doc-callout">
-                Pro plan: up to 3 keys · Team plan: up to 10 keys · Self-hosted: up to 10 keys
-              </div>
 
               <h3 className="doc-h3">Sending requests</h3>
               <p className="doc-p">Pass the key in the <span className="doc-inline-code">Authorization</span> header of every request:</p>
