@@ -1038,11 +1038,11 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               <p className="text-xs mb-2.5" style={{ color: "#999" }}>Posted as the first reply immediately after your post goes live.</p>
               <textarea
                 value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
+                onChange={(e) => { setCommentText(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
+                ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
                 placeholder="Add a link, thread continuation, or extra context…"
-                rows={2}
                 className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"
-                style={{ borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+                style={{ minHeight: "72px", overflow: "hidden", borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
               />
           </div>
 
