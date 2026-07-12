@@ -27,15 +27,6 @@ interface Props {
   className?: string;
 }
 
-function TumblrSvg({ size }: { size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <rect width="24" height="24" rx="4" fill="#35465c" />
-      <path d="M13.5 6H11V9.5H9v2.5h2V17c0 2 1.2 3 3.2 3 .8 0 1.6-.2 2.3-.5v-2.4c-.4.2-.9.3-1.4.3-.7 0-1.1-.3-1.1-1.1v-4.3H15.5V9.5H13.5V6Z" fill="white" />
-    </svg>
-  );
-}
-
 export function PlatformIcon({ platform, size = 16, className }: Props) {
   if (platform === "nostr") return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -43,7 +34,6 @@ export function PlatformIcon({ platform, size = 16, className }: Props) {
       style={{ objectFit: "contain", display: "inline-block", borderRadius: size * 0.18 }} />
   );
   if (platform === "telegram") return <TelegramSvg size={size} />;
-  if (platform === "tumblr") return <TumblrSvg size={size} />;
 
   const domain = PLATFORM_DOMAIN[platform];
   if (!domain) return <span style={{ fontSize: size * 0.75 }}>🌐</span>;
@@ -51,7 +41,7 @@ export function PlatformIcon({ platform, size = 16, className }: Props) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=${size >= 24 ? 64 : 32}`}
+      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=${size >= 24 && platform !== "tumblr" ? 64 : 32}`}
       alt={platform}
       width={size}
       height={size}
