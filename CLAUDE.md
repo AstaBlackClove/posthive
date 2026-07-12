@@ -1,6 +1,6 @@
 # Posthive — CLAUDE.md
 
-Social media scheduling SaaS. Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, and Telegram from a single UI. Self-hostable, open-source (AGPL-3.0).
+Social media scheduling SaaS. Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, X (Twitter), Discord, and Tumblr from a single UI. Self-hostable, open-source (AGPL-3.0).
 
 ---
 
@@ -46,7 +46,7 @@ pnpm db:migrate   # Run pending migrations
 ### Routes
 | File | Prefix | Purpose |
 |------|--------|---------|
-| `routes/auth.ts` | `/auth/*` | JWT login/register + Threads, Instagram, LinkedIn, YouTube, Facebook, Pinterest, Mastodon, Telegram OAuth |
+| `routes/auth.ts` | `/auth/*` | JWT login/register + Threads, Instagram, LinkedIn, YouTube, Facebook, Pinterest, Mastodon, Twitter, Discord, Tumblr OAuth |
 | `routes/accounts.ts` | `/accounts` | List/disconnect social accounts |
 | `routes/jobs.ts` | `/jobs` | CRUD + reschedule + delete scheduled posts |
 | `routes/upload.ts` | `/upload` | Image/video upload → local disk or Supabase Storage |
@@ -69,6 +69,10 @@ Each adapter implements `PlatformAdapter` from `types.ts`:
 - `facebook.ts` — Facebook Graph API v21.0 (OAuth 2.0, page access tokens, text/photo/video/carousel)
 - `pinterest.ts` — Pinterest API v5 (OAuth 2.0, Pins with image required; sandbox mode supported)
 - `telegram.ts` — Telegram Bot API (bot token + channel username, no OAuth)
+- `twitter.ts` — X/Twitter API v2 (OAuth 1.0a HMAC-SHA1, up to 4 images; Pro/Team only)
+- `nostr.ts` — Nostr protocol (keypair auth, Kind 1 notes, NIP-92 image tags, no OAuth)
+- `discord.ts` — Discord webhook API (OAuth 2.0, webhook auto-created per channel)
+- `tumblr.ts` — Tumblr API v2 (OAuth 1.0a HMAC-SHA1, NPF text + image posts; tokens never expire)
 
 **Register adapters in `src/adapters/index.ts`** — add to the array to enable.
 
@@ -125,7 +129,8 @@ All 10 tools mirror the HTTP MCP server: `list_accounts`, `create_post`, `get_po
 - `components/Sidebar.tsx` — nav sidebar with trial banner
 - `components/AppShell.tsx` — layout guard; `/mcp-connect` and `/onboarding` skip sidebar
 - `components/CalendarView.tsx` — FullCalendar month/week/day with drag-to-reschedule
-- `components/PlatformIcon.tsx` — favicon-based platform icons (Google S2)
+- `components/PlatformIcon.tsx` — favicon-based platform icons (Google S2); Telegram + Nostr use custom SVG
+- `components/PlatformPreview.tsx` — per-platform post preview cards; `PLATFORM_COLOR`, `PLATFORM_LIMIT` maps
 - `components/TrialBanner.tsx` — bottom-left trial countdown
 - `components/DateTimePicker.tsx` — datetime input used in compose
 
@@ -224,6 +229,20 @@ YOUTUBE_CLIENT_ID="....apps.googleusercontent.com"
 YOUTUBE_CLIENT_SECRET="..."
 YOUTUBE_REDIRECT_URI="https://your-tunnel/auth/youtube/callback"
 
+X_API_KEY="..."
+X_API_SECRET="..."
+X_CALLBACK_URL="https://your-tunnel/auth/twitter/callback"
+
+DISCORD_CLIENT_ID="..."
+DISCORD_CLIENT_SECRET="..."
+DISCORD_BOT_TOKEN="..."
+DISCORD_REDIRECT_URI="https://your-tunnel/auth/discord/callback"
+
+TUMBLR_CONSUMER_KEY="..."
+TUMBLR_CONSUMER_SECRET="..."
+TUMBLR_REDIRECT_URI="https://your-tunnel/auth/tumblr/callback"
+# Note: Tumblr only allows one registered callback URL — use production URL in prod
+
 DODO_ENV="test_mode"           # or "live_mode"
 DODO_API_KEY="..."
 DODO_WEBHOOK_SECRET="whsec_..."
@@ -269,7 +288,13 @@ Schema at `apps/api/prisma/schema.prisma`. Compatible with Postgres — just cha
 1. Create `apps/api/src/adapters/<platform>.ts` implementing `PlatformAdapter`
 2. Register in `apps/api/src/adapters/index.ts`
 3. Add OAuth routes in `apps/api/src/routes/auth.ts`
-4. Add platform card in `apps/web/src/app/accounts/page.tsx`
+4. Add platform card in `apps/web/src/app/accounts/page.tsx` — also add to `PLATFORM_META` and `RECONNECT_URLS`
 5. Add favicon domain in `apps/web/src/components/PlatformIcon.tsx`
-6. Add char limit in `PLATFORM_LIMIT` in `apps/web/src/app/page.tsx`
-7. Add preview component in `PlatformPreview` in `apps/web/src/app/page.tsx`
+6. Add `PLATFORM_COLOR` entry and `PLATFORM_LIMIT` entry in `apps/web/src/components/PlatformPreview.tsx`
+7. Add preview component in `apps/web/src/components/PlatformPreview.tsx`
+8. Add to `PLATFORMS_GRID` in `apps/web/src/app/page.tsx` (landing page grid + hero card)
+9. Add to `PLATFORMS_NAV` in `apps/web/src/components/LandingNav.tsx`
+10. Add platform data object in `apps/web/src/app/platforms/[platform]/page.tsx`
+11. Add docs section in `apps/web/src/app/docs/page.tsx`
+12. Add to `NO_COMMENT_PLATFORMS` in compose, EditPostDialog, and `jobRunner.ts` if the platform has no comment API
+13. Add env vars to `apps/api/.env.example` and document in `README.md`

@@ -14,7 +14,9 @@
   <a href="https://github.com/AstaBlackClove/posthive"><img alt="GitHub Repo" src="https://img.shields.io/badge/github-AstaBlackClove%2Fposthive-181717?logo=github" /></a>
 </p>
 
----
+<p align="center">
+  <img src="apps/web/public/posthiveconver.png" alt="Posthive cover" width="100%" />
+</p>
 
 ## Features
 
@@ -316,6 +318,25 @@ pnpm dev
 | `X_CALLBACK_URL` | Must be public HTTPS — OAuth 1.0a callback URL |
 
 > Uses OAuth 1.0a (not 2.0). Requires Pro or Team plan when billing is enabled.
+
+**OAuth - Discord**
+
+| Variable                | Description                                              |
+| ----------------------- | -------------------------------------------------------- |
+| `DISCORD_CLIENT_ID`     | OAuth2 Client ID from discord.com/developers             |
+| `DISCORD_CLIENT_SECRET` | OAuth2 Client Secret                                     |
+| `DISCORD_BOT_TOKEN`     | Bot token (Bot tab in your Discord app)                  |
+| `DISCORD_REDIRECT_URI`  | Must be public HTTPS — OAuth 2.0 callback URL            |
+
+**OAuth - Tumblr**
+
+| Variable                  | Description                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `TUMBLR_CONSUMER_KEY`     | Consumer Key from tumblr.com/oauth/apps                                     |
+| `TUMBLR_CONSUMER_SECRET`  | Consumer Secret                                                             |
+| `TUMBLR_REDIRECT_URI`     | Must match the Default callback URL registered in your Tumblr app exactly   |
+
+> Tumblr uses OAuth 1.0a. Only one callback URL can be registered — use your production URL.
 
 **Billing**
 
@@ -805,10 +826,16 @@ git commit -m "db: add <describe_your_change> migration"
 1. Create `apps/api/src/adapters/<platform>.ts` implementing `PlatformAdapter`
 2. Register in `apps/api/src/adapters/index.ts`
 3. Add OAuth routes in `apps/api/src/routes/auth.ts`
-4. Add platform card in `apps/web/src/app/accounts/page.tsx`
+4. Add platform card in `apps/web/src/app/accounts/page.tsx` — also add to `PLATFORM_META` and `RECONNECT_URLS`
 5. Add favicon domain in `apps/web/src/components/PlatformIcon.tsx`
-6. Add char limit in `PLATFORM_LIMIT` in `apps/web/src/app/compose/page.tsx`
-7. Add preview component in `PlatformPreview` in `apps/web/src/app/compose/page.tsx`
+6. Add `PLATFORM_COLOR` and `PLATFORM_LIMIT` in `apps/web/src/components/PlatformPreview.tsx`
+7. Add preview component in `apps/web/src/components/PlatformPreview.tsx`
+8. Add to `PLATFORMS_GRID` in `apps/web/src/app/page.tsx` (landing page grid + hero card)
+9. Add to `PLATFORMS_NAV` in `apps/web/src/components/LandingNav.tsx`
+10. Add platform data object in `apps/web/src/app/platforms/[platform]/page.tsx`
+11. Add docs section in `apps/web/src/app/docs/page.tsx`
+12. Add to `NO_COMMENT_PLATFORMS` in compose, EditPostDialog, and `jobRunner.ts` if the platform has no comment API
+13. Add env vars to `apps/api/.env.example` and document in this README
 
 ---
 
