@@ -51,7 +51,7 @@ const FEATURES: Record<string, FeatureData> = {
       "Marketers running multi-channel campaigns from one place",
     ],
     faq: [
-      { q: "How many platforms does Posthive support?", a: "Posthive currently supports 13 platforms: Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, and X (Twitter)." },
+      { q: "How many platforms does Posthive support?", a: "Posthive currently supports 13 platforms: Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, X (Twitter), Discord, and Tumblr." },
       { q: "Can I post different content to each platform?", a: "Yes. Posthive's per-platform override feature lets you write a base post and then customise the text, media, and first comment independently for each account." },
       { q: "Is Posthive a good Buffer or Hootsuite alternative?", a: "Yes. Posthive covers all major platforms, costs significantly less, and is open source — you can self-host it if you prefer full data control." },
       { q: "Do I need a separate account for each platform?", a: "No. Connect all your social accounts once from the Accounts page and they're available in every compose session. You just tick which ones to post to." },

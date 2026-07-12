@@ -48,6 +48,9 @@ const PLATFORM_META: Record<string, { label: string; brand: string }> = {
   pinterest: { label: "Pinterest", brand: "#e60023" },
   telegram:  { label: "Telegram",  brand: "#229ED9" },
   nostr:     { label: "Nostr",     brand: "#8B5CF6" },
+  twitter:   { label: "X",         brand: "#000000" },
+  instagram: { label: "Instagram", brand: "#e1306c" },
+  tumblr:    { label: "Tumblr",    brand: "#35465c" },
 };
 
 function NostrFallbackAvatar() {
@@ -89,6 +92,7 @@ const RECONNECT_URLS: Record<string, string> = {
   facebook:  `${API_BASE}/auth/facebook`,
   mastodon:  `${API_BASE}/auth/mastodon`,
   pinterest: `${API_BASE}/auth/pinterest`,
+  tumblr:    `${API_BASE}/auth/tumblr`,
 };
 
 // Platforms where the token refresh cron handles silent renewal — no user action needed
