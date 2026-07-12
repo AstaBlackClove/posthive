@@ -280,7 +280,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   }, {});
 
   return (
-    <Modal open={open} onClose={onClose} maxWidth={1280} onPaste={handlePaste}>
+    <Modal open={open} onClose={onClose} maxWidth={1400} onPaste={handlePaste}>
 
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
@@ -734,7 +734,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
         </div>
 
         {/* Right: live previews — hidden on mobile, shown on sm+ */}
-        <div className="hidden sm:flex flex-shrink-0 flex-col overflow-y-auto" style={{ width: 400, backgroundColor: "#0a0a0a" }}>
+        <div className="hidden sm:flex flex-shrink-0 flex-col overflow-y-auto" style={{ width: 480, backgroundColor: "#0a0a0a" }}>
           <div className="px-5 pt-5 pb-3">
             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Preview</p>
           </div>
