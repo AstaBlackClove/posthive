@@ -5,7 +5,7 @@
 <h1 align="center">Posthive</h1>
 
 <p align="center">
-  Open-source social media scheduling platform. Plan, create, and publish posts across every major social network with built-in MCP support for Claude, Cursor, ChatGPT and AI agents.<br/>
+  The agentic social media scheduling platform. Plan, create, and publish posts across every major social network with built-in MCP support for Claude, Cursor, ChatGPT and AI agents.<br/>
   Self-hostable · Open-source · AGPL-3.0
 </p>
 
