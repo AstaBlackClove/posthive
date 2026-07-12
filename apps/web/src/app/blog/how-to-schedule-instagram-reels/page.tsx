@@ -250,7 +250,7 @@ export default function HowToScheduleInstagramReelsPage() {
           </ol>
 
           <p style={{ marginBottom: 24 }}>
-            The limitation with Meta Business Suite is that it only covers Instagram and Facebook. If you post on Bluesky, LinkedIn, Threads, or any other platform, you will need a separate workflow for those. Posthive covers all 11 platforms from one composer.
+            The limitation with Meta Business Suite is that it only covers Instagram and Facebook. If you post on Bluesky, LinkedIn, Threads, or any other platform, you will need a separate workflow for those. Posthive covers all 13 platforms from one composer.
           </p>
 
           <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>

@@ -1,7 +1,7 @@
 {
   "name": "posthive-cli",
   "version": "0.1.9",
-  "description": "Posthive CLI — schedule posts to 11 social platforms from the command line or any AI agent (Claude Code, OpenClaw, Cursor)",
+  "description": "Posthive CLI — schedule posts to 13 social platforms from the command line or any AI agent (Claude Code, OpenClaw, Cursor)",
   "type": "module",
   "bin": {
     "posthive": "./dist/index.js"

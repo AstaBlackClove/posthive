@@ -6,7 +6,7 @@
 
 Posthive lets individuals and teams write once and publish everywhere. Key capabilities:
 
-- Multi-platform posting across 11 networks simultaneously
+- Multi-platform posting across 13 networks simultaneously
 - First comment scheduling (auto-reply immediately after the post goes live)
 - Per-platform content overrides (custom text per account, Pro+)
 - Bulk CSV scheduling (hundreds of posts from a spreadsheet)

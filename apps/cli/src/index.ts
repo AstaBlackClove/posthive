@@ -2,7 +2,7 @@
 /**
  * Posthive CLI
  *
- * Schedule posts to 11 social platforms from the command line or any
+ * Schedule posts to 13 social platforms from the command line or any
  * AI agent that can run shell commands (Claude Code, OpenClaw, Cursor).
  *
  * Every command outputs structured JSON for easy parsing by LLMs and scripts.

@@ -471,7 +471,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   // True when every selected account is YouTube or Pinterest — both have their own title/description fields
   const noPostTextNeeded = selectedAccounts.length > 0 && selectedAccounts.every((a) => a.platform === "youtube" || a.platform === "pinterest");
   // Telegram channels don't support first comments — hide the field when all selected accounts don't support comments
-  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram"]);
+  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr"]);
   const noCommentSupport = selectedAccounts.length > 0 && selectedAccounts.every((a) => NO_COMMENT_PLATFORMS.has(a.platform));
 
   const twitterSelected = selectedAccounts.some((a) => a.platform === "twitter");

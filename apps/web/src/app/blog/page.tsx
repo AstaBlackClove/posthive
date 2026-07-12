@@ -26,7 +26,7 @@ const POSTS = [
     date: "July 7, 2026",
     readTime: "7 min read",
     category: "Comparison",
-    excerpt: "Canva scheduler is limited to 8 platforms and locked behind Pro. Here is a better alternative that covers 11 platforms including Bluesky, Threads, and Mastodon.",
+    excerpt: "Canva scheduler is limited to 8 platforms and locked behind Pro. Here is a better alternative that covers 13 platforms including Bluesky, Threads, and Mastodon.",
   },
   {
     slug: "hootsuite-alternative",
@@ -34,7 +34,7 @@ const POSTS = [
     date: "July 7, 2026",
     readTime: "6 min read",
     category: "Comparison",
-    excerpt: "Hootsuite costs $99/month minimum. Posthive does the same job across 11 platforms for a fraction of the price — and it's open source.",
+    excerpt: "Hootsuite costs $99/month minimum. Posthive does the same job across 13 platforms for a fraction of the price — and it's open source.",
   },
   {
     slug: "buffer-alternative-open-source",
@@ -46,7 +46,7 @@ const POSTS = [
   },
   {
     slug: "introducing-posthive",
-    title: "Introducing Posthive Schedule posts to 11 platforms at once",
+    title: "Introducing Posthive Schedule posts to 13 platforms at once",
     date: "July 3, 2026",
     readTime: "5 min read",
     category: "Product",

@@ -455,7 +455,7 @@ const PLATFORMS: Record<string, PlatformData> = {
     domain: "tumblr.com",
     color: "#35465c",
     headline: "Schedule Tumblr posts without staying logged in",
-    subheadline: "Write your blog posts in Posthive, pick a publish time, and let Posthive push them to your Tumblr blog automatically — text, images, and all.",
+    subheadline: "Write your blog posts in Posthive, pick a publish time, and let Posthive push them to your Tumblr blog automatically text, images, and all.",
     supports: [
       { label: "Text posts up to 4,096 chars", icon: "text" as IconKey },
       { label: "Images in NPF format", icon: "image" as IconKey },

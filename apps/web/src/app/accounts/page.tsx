@@ -1317,8 +1317,8 @@ export default function AccountsPage() {
                           : <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: "#35465c", color: "#fff" }}>{a.displayName[0]?.toUpperCase()}</div>}
                         <span className="text-xs flex-1 truncate" style={{ color: TEXT }}>{a.displayName}</span>
                         <button onClick={() => setDisconnectTarget({ id: a.id, displayName: a.displayName, platform: "tumblr" })}
-                          className="text-xs px-2 py-1 rounded-lg transition-colors hover:bg-red-900/30"
-                          style={{ color: "#666", border: "1px solid #2a2a2a" }}>Disconnect</button>
+                          className="text-xs font-medium px-2 py-1 rounded-lg transition-colors hover:text-red-400"
+                          style={{ color: MUTED }}>Disconnect</button>
                       </div>
                     ))}
                   </div>

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Posthive Pricing — Simple & Transparent",
     description:
-      "Start free. Upgrade when you're ready. Creator $9, Pro $29, Team $49. All plans include all 11 platforms.",
+      "Start free. Upgrade when you're ready. Creator $9, Pro $29, Team $49. All plans include all 13 platforms.",
     url: "https://posthive.co/pricing",
     images: [
       {
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Posthive Pricing — Simple & Transparent",
     description:
-      "Start free. Upgrade when you're ready. Creator $9, Pro $29, Team $49. All plans include all 11 platforms.",
+      "Start free. Upgrade when you're ready. Creator $9, Pro $29, Team $49. All plans include all 13 platforms.",
     images: ["/og/pricingogimage.png"],
   },
 };

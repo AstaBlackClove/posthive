@@ -6,7 +6,7 @@ const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Introducing Posthive: Schedule Posts to 11 Platforms at Once",
+  headline: "Introducing Posthive: Schedule Posts to 13 platforms at Once",
   description: "We built Posthive because we were tired of switching between tabs just to post the same update everywhere. Here's what we shipped.",
   datePublished: "2026-07-03",
   author: { "@type": "Person", name: "Guna" },
@@ -15,12 +15,12 @@ const articleSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "Introducing Posthive: Schedule Posts to 11 Platforms at Once | Posthive",
+  title: "Introducing Posthive: Schedule Posts to 13 platforms at Once | Posthive",
   description:
     "We built Posthive because we were tired of switching between tabs just to post the same update everywhere. Here's what we shipped.",
   alternates: { canonical: `${WEB_URL}/blog/introducing-posthive` },
   openGraph: {
-    title: "Introducing Posthive: Schedule Posts to 11 Platforms at Once",
+    title: "Introducing Posthive: Schedule Posts to 13 platforms at Once",
     description:
       "We built Posthive because we were tired of switching between tabs just to post the same update everywhere. Here's what we shipped.",
     images: [
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Introducing Posthive: Schedule Posts to 11 Platforms at Once",
+    title: "Introducing Posthive: Schedule Posts to 13 platforms at Once",
     description:
       "We built Posthive because we were tired of switching between tabs just to post the same update everywhere.",
   },
@@ -89,7 +89,7 @@ export default function PostPage() {
 
         {/* Title */}
         <h1 style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15, margin: "0 0 24px", color: "#ededed" }}>
-          Introducing Posthive: Schedule posts to 11 platforms at once
+          Introducing Posthive: Schedule posts to 13 platforms at once
         </h1>
 
         {/* Author */}

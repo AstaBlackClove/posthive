@@ -1236,17 +1236,22 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const { from } = req.query as Record<string, string>;
 
     // Step 1: get a temporary request token from Tumblr
+    console.log("[tumblr] /auth/tumblr hit — userId:", userId, "redirectUri:", TUMBLR_REDIRECT_URI);
+    console.log("[tumblr] env check — CONSUMER_KEY present:", !!process.env.TUMBLR_CONSUMER_KEY, "CONSUMER_SECRET present:", !!process.env.TUMBLR_CONSUMER_SECRET);
     const { header } = tumblrRequestTokenAuth(TUMBLR_REDIRECT_URI);
+    console.log("[tumblr] Authorization header:", header);
     const res = await fetch("https://www.tumblr.com/oauth/request_token", {
       method: "POST",
       headers: { Authorization: header },
     });
+    const body = await res.text();
+    console.log("[tumblr] request_token response — status:", res.status, "body:", body);
     if (!res.ok) return reply.redirect(`${WEB_URL}/accounts?error=tumblr_request_token_failed`);
 
-    const body = await res.text();
     const params = Object.fromEntries(new URLSearchParams(body));
     const { oauth_token, oauth_token_secret } = params;
     if (!oauth_token || !oauth_token_secret) {
+      console.log("[tumblr] missing token in response params:", params);
       return reply.redirect(`${WEB_URL}/accounts?error=tumblr_request_token_failed`);
     }
 

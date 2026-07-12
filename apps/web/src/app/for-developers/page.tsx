@@ -138,7 +138,7 @@ export default function ForDevelopersPage() {
       <section style={{ padding: "0 24px 80px" }}>
         <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1, background: "#1e1e1e", borderRadius: 16, overflow: "hidden" }} className="dev-grid-2" >
           {[
-            { n: "11", label: "platforms" },
+            { n: "13", label: "platforms" },
             { n: "10", label: "MCP tools" },
             { n: "AGPLv3", label: "license" },
             { n: "0", label: "vendor lock-in" },

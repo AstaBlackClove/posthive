@@ -26,7 +26,7 @@ const faqSchema = {
     {
       "@type": "Question",
       name: "What platforms does Posthive support compared to Buffer?",
-      acceptedAnswer: { "@type": "Answer", text: "Posthive supports 11 platforms: Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, and X. Buffer supports fewer platforms and does not support Bluesky, Mastodon, Threads, or Telegram." },
+      acceptedAnswer: { "@type": "Answer", text: "Posthive supports 13 platforms: Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, and X. Buffer supports fewer platforms and does not support Bluesky, Mastodon, Threads, or Telegram." },
     },
     {
       "@type": "Question",
@@ -48,14 +48,14 @@ export const metadata: Metadata = {
   alternates: { canonical: `${WEB_URL}/blog/buffer-alternative-open-source` },
   openGraph: {
     title: "The Best Open-Source Buffer Alternative in 2026 | Posthive",
-    description: "Open source, self-hostable, 11 platforms. Posthive is the Buffer alternative built for developers and indie hackers.",
+    description: "Open source, self-hostable, 13 platforms. Posthive is the Buffer alternative built for developers and indie hackers.",
     url: `${WEB_URL}/blog/buffer-alternative-open-source`,
-    images: [{ url: "/api/og?layout=post&title=The+Best+Open-Source+Buffer+Alternative&desc=Self-hostable+%C2%B7+11+platforms+%C2%B7+AGPL-3.0&badge=Comparison", width: 1200, height: 630 }],
+    images: [{ url: "/api/og?layout=post&title=The+Best+Open-Source+Buffer+Alternative&desc=Self-hostable+%C2%B7+13+platforms+%C2%B7+AGPL-3.0&badge=Comparison", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "The Best Open-Source Buffer Alternative in 2026 | Posthive",
-    description: "Open source, self-hostable, 11 platforms. Posthive is the Buffer alternative built for developers and indie hackers.",
+    description: "Open source, self-hostable, 13 platforms. Posthive is the Buffer alternative built for developers and indie hackers.",
   },
 };
 

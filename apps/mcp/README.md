@@ -1,6 +1,6 @@
 # posthive-mcp
 
-MCP server for [Posthive](https://posthive.co) — schedule posts to 11 social platforms directly from Claude, Cursor, Windsurf, or any MCP-compatible AI agent.
+MCP server for [Posthive](https://posthive.co) — schedule posts to 13 social platforms directly from Claude, Cursor, Windsurf, or any MCP-compatible AI agent.
 
 **Supported platforms:** Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, X (Twitter), Nostr
 

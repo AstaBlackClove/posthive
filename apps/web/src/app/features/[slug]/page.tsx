@@ -51,7 +51,7 @@ const FEATURES: Record<string, FeatureData> = {
       "Marketers running multi-channel campaigns from one place",
     ],
     faq: [
-      { q: "How many platforms does Posthive support?", a: "Posthive currently supports 11 platforms: Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, and X (Twitter)." },
+      { q: "How many platforms does Posthive support?", a: "Posthive currently supports 13 platforms: Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, and X (Twitter)." },
       { q: "Can I post different content to each platform?", a: "Yes. Posthive's per-platform override feature lets you write a base post and then customise the text, media, and first comment independently for each account." },
       { q: "Is Posthive a good Buffer or Hootsuite alternative?", a: "Yes. Posthive covers all major platforms, costs significantly less, and is open source — you can self-host it if you prefer full data control." },
       { q: "Do I need a separate account for each platform?", a: "No. Connect all your social accounts once from the Accounts page and they're available in every compose session. You just tick which ones to post to." },
@@ -647,7 +647,7 @@ function getMockup(slug: string) {
 
 const SLUG_OVERRIDES: Record<string, { title: string; description: string; keywords: string[] }> = {
   "multi-platform-posting": {
-    title: "Multi-Platform Social Media Scheduler — Post to 11 Platforms at Once | Posthive",
+    title: "Multi-Platform Social Media Scheduler — Post to 13 platforms at Once | Posthive",
     description: "Write once, post everywhere. Schedule to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr, and X in one click. The best Buffer and Hootsuite alternative.",
     keywords: ["multi-platform social media scheduler", "post to multiple social media at once", "Buffer alternative", "Hootsuite alternative", "cross-platform posting"],
   },
@@ -673,7 +673,7 @@ const SLUG_OVERRIDES: Record<string, { title: string; description: string; keywo
   },
   "bulk-csv-scheduling": {
     title: "Bulk Social Media Scheduling via CSV — Schedule Hundreds of Posts | Posthive",
-    description: "Upload a CSV and schedule hundreds of social media posts at once across 11 platforms. The fastest way to bulk-schedule content for creators and agencies.",
+    description: "Upload a CSV and schedule hundreds of social media posts at once across 13 platforms. The fastest way to bulk-schedule content for creators and agencies.",
     keywords: ["bulk social media scheduling", "CSV social media scheduler", "schedule multiple posts at once", "bulk schedule Instagram", "content scheduling spreadsheet"],
   },
   "self-hostable": {
@@ -830,7 +830,7 @@ export default async function FeaturePage({ params }: { params: Promise<{ slug: 
         <section style={{ padding: "0 24px 80px" }}>
           <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, background: "#1e1e1e", borderRadius: 16, overflow: "hidden" }}>
             {[
-              { n: "11", label: "platforms supported" },
+              { n: "13", label: "platforms supported" },
               { n: "1", label: "post to write" },
               { n: "∞", label: "reach potential" },
             ].map((s) => (

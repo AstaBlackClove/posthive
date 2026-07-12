@@ -1,11 +1,11 @@
 ---
 name: posthive
-description: Schedule social media posts to 11 platforms (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, X/Twitter, Nostr) via the Posthive CLI. Use when the user asks to create, schedule, list, update, or delete social media posts, or manage their posting queue.
+description: Schedule social media posts to 13 platforms (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, X/Twitter, Nostr) via the Posthive CLI. Use when the user asks to create, schedule, list, update, or delete social media posts, or manage their posting queue.
 ---
 
 # Posthive — social media scheduling
 
-Schedule posts to 11 social platforms from the command line. Every command outputs structured JSON.
+Schedule posts to 13 social platforms from the command line. Every command outputs structured JSON.
 
 ## Setup
 

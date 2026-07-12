@@ -15,7 +15,7 @@ const softwareSchema = {
   operatingSystem: "Any",
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free to install, requires Posthive Pro/Team for MCP or a valid API key for CLI" },
   url: `${WEB_URL}/agent`,
-  description: "Give any AI agent — Claude, Cursor, OpenClaw, or custom pipelines — the ability to schedule social media posts across 11 platforms via MCP or CLI.",
+  description: "Give any AI agent — Claude, Cursor, OpenClaw, or custom pipelines — the ability to schedule social media posts across 13 platforms via MCP or CLI.",
 };
 
 const faqSchema = {
@@ -47,19 +47,19 @@ const faqSchema = {
 
 export const metadata: Metadata = {
   title: "Posthive Agent — Let AI Schedule Your Social Posts",
-  description: "Give Claude, Cursor, OpenClaw, or any AI agent the ability to schedule posts across 11 social platforms. MCP server and CLI, both draft-first and human-approved.",
+  description: "Give Claude, Cursor, OpenClaw, or any AI agent the ability to schedule posts across 13 social platforms. MCP server and CLI, both draft-first and human-approved.",
   keywords: ["AI social media agent", "MCP social media scheduler", "Claude social media", "OpenClaw skill", "AI agent posting tool", "posthive-mcp", "posthive-cli"],
   alternates: { canonical: `${WEB_URL}/agent` },
   openGraph: {
     title: "Posthive Agent — Let AI Schedule Your Social Posts",
-    description: "MCP server and CLI that let any AI agent schedule posts across 11 platforms. Draft-first, human-approved, open source.",
+    description: "MCP server and CLI that let any AI agent schedule posts across 13 platforms. Draft-first, human-approved, open source.",
     url: `${WEB_URL}/agent`,
     images: [{ url: "/og/landingogimage.png", width: 1200, height: 630, alt: "Posthive Agent — AI-powered social media scheduling" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Posthive Agent — Let AI Schedule Your Social Posts",
-    description: "MCP server and CLI that let any AI agent schedule posts across 11 platforms.",
+    description: "MCP server and CLI that let any AI agent schedule posts across 13 platforms.",
     images: ["/og/landingogimage.png"],
   },
 };
@@ -91,7 +91,7 @@ npx posthive-cli posts:list --status draft`;
 
 const SKILL_EXAMPLE = `---
 name: posthive
-description: Schedule social posts across 11 platforms
+description: Schedule social posts across 13 platforms
 ---
 
 # Workflow
@@ -130,7 +130,7 @@ export default function AgentPage() {
             <span style={{ display: "block" }}>run your socials.</span>
           </h1>
           <p style={{ fontSize: "clamp(15px, 2vw, 18px)", color: "#666", lineHeight: 1.75, maxWidth: 620, margin: "0 auto 40px" }}>
-            Claude, Cursor, OpenClaw, or any agent that can call a tool or run a shell command can now schedule posts across 11 platforms with you approving everything before it goes live.
+            Claude, Cursor, OpenClaw, or any agent that can call a tool or run a shell command can now schedule posts across 13 platforms with you approving everything before it goes live.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 56 }}>
             <Link href="#setup" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)" }}>
@@ -190,7 +190,7 @@ export default function AgentPage() {
       <section style={{ padding: "0 24px 80px" }}>
         <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1, background: "#1e1e1e", borderRadius: 16, overflow: "hidden" }} className="agent-grid-2">
           {[
-            { n: "11", label: "platforms" },
+            { n: "13", label: "platforms" },
             { n: "10", label: "tools/commands" },
             { n: "2", label: "install paths" },
             { n: "100%", label: "draft-first" },
@@ -377,7 +377,7 @@ export default function AgentPage() {
             Wire up your agent in minutes
           </h2>
           <p style={{ fontSize: 15, color: "#666", lineHeight: 1.75, marginBottom: 36 }}>
-            Generate an API key, drop it into your MCP config or export it for the CLI, and your agent is ready to draft posts across all 11 platforms.
+            Generate an API key, drop it into your MCP config or export it for the CLI, and your agent is ready to draft posts across all 13 platforms.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/docs#mcp-overview" style={{ display: "inline-block", fontSize: 15, fontWeight: 700, padding: "14px 32px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 12px 32px -8px rgba(91,99,211,.6)" }}>
