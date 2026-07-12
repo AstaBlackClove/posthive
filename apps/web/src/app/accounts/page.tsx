@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 
-// Module-level: persists across component re-mounts within the same browser session.
-// Prevents the channel picker re-appearing when the user navigates away and back.
+// Module-level sets persist across re-mounts — prevents duplicate toasts/modals on navigation.
 const _handledDiscordGuilds = new Set<string>();
+const _shownConnectedToasts = new Set<string>();
 import { PlatformIcon } from "../../components/PlatformIcon";
 import { useToast } from "../../components/Toast";
 
@@ -606,7 +606,8 @@ export default function AccountsPage() {
 
   // Show OAuth result as toast once (clear param from URL after)
   useEffect(() => {
-    if (oauthConnected) {
+    if (oauthConnected && !_shownConnectedToasts.has(oauthConnected)) {
+      _shownConnectedToasts.add(oauthConnected);
       success(`${oauthConnected.charAt(0).toUpperCase() + oauthConnected.slice(1)} connected successfully!`);
       window.history.replaceState({}, "", "/accounts");
     }
