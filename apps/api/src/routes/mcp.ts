@@ -41,6 +41,25 @@ const TOOLS = [
       "List all connected social media accounts for this Posthive workspace. " +
       "Returns account IDs, platforms, and display names. Use these IDs when creating posts.",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        accounts: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id:          { type: "string" },
+              platform:    { type: "string" },
+              displayName: { type: "string" },
+              avatarUrl:   { type: ["string", "null"] },
+              createdAt:   { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "create_post",
@@ -96,6 +115,18 @@ const TOOLS = [
       },
       required: ["content", "account_ids"],
     },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        id:          { type: "string" },
+        status:      { type: "string", enum: ["draft", "pending", "done", "failed"] },
+        draft:       { type: "boolean" },
+        scheduledFor:{ type: ["string", "null"] },
+        targets:     { type: "array", items: { type: "object", properties: { id: { type: "string" }, accountId: { type: "string" }, status: { type: "string" } } } },
+        _note:       { type: "string" },
+      },
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   },
   {
     name: "get_post",
@@ -107,6 +138,33 @@ const TOOLS = [
       },
       required: ["post_id"],
     },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        id:          { type: "string" },
+        status:      { type: "string" },
+        draft:       { type: "boolean" },
+        scheduledFor:{ type: ["string", "null"] },
+        content:     { type: "string" },
+        firstComment:{ type: ["string", "null"] },
+        perAccount:  { type: ["object", "null"] },
+        createdAt:   { type: "string" },
+        targets: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id:          { type: "string" },
+              platform:    { type: "string" },
+              displayName: { type: "string" },
+              status:      { type: "string" },
+              error:       { type: ["string", "null"] },
+            },
+          },
+        },
+      },
+    },
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "list_scheduled_posts",
@@ -123,6 +181,26 @@ const TOOLS = [
       },
       required: [],
     },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        posts: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id:          { type: "string" },
+              status:      { type: "string" },
+              scheduledFor:{ type: ["string", "null"] },
+              draft:       { type: "boolean" },
+              content:     { type: "string" },
+              platforms:   { type: "array", items: { type: "string" } },
+            },
+          },
+        },
+      },
+    },
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "approve_draft",
@@ -138,6 +216,16 @@ const TOOLS = [
       },
       required: ["post_id", "scheduled_time"],
     },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        id:          { type: "string" },
+        status:      { type: "string" },
+        scheduledFor:{ type: "string" },
+        _note:       { type: "string" },
+      },
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   },
   {
     name: "update_post",
@@ -159,6 +247,15 @@ const TOOLS = [
       },
       required: ["post_id"],
     },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        id:          { type: "string" },
+        status:      { type: "string" },
+        scheduledFor:{ type: ["string", "null"] },
+      },
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "duplicate_post",
@@ -170,6 +267,18 @@ const TOOLS = [
       },
       required: ["post_id"],
     },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        id:          { type: "string" },
+        status:      { type: "string" },
+        draft:       { type: "boolean" },
+        scheduledFor:{ type: "null" },
+        targets:     { type: "array", items: { type: "object", properties: { id: { type: "string" }, accountId: { type: "string" }, status: { type: "string" } } } },
+        _note:       { type: "string" },
+      },
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "delete_post",
@@ -181,11 +290,39 @@ const TOOLS = [
       },
       required: ["post_id"],
     },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        ok:      { type: "boolean" },
+        deleted: { type: "string" },
+      },
+    },
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
   },
   {
     name: "list_templates",
     description: "List all saved post templates in this Posthive workspace.",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        templates: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id:           { type: "string" },
+              name:         { type: "string" },
+              text:         { type: "string" },
+              firstComment: { type: ["string", "null"] },
+              createdAt:    { type: "string" },
+              updatedAt:    { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "create_from_template",
@@ -212,6 +349,19 @@ const TOOLS = [
       },
       required: ["template_id", "account_ids"],
     },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        id:           { type: "string" },
+        status:       { type: "string" },
+        draft:        { type: "boolean" },
+        scheduledFor: { type: ["string", "null"] },
+        templateUsed: { type: "string" },
+        targets:      { type: "array", items: { type: "object", properties: { id: { type: "string" }, accountId: { type: "string" }, status: { type: "string" } } } },
+        _note:        { type: "string" },
+      },
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   },
 ];
 

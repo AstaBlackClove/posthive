@@ -63,6 +63,14 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
+  // ── ChatGPT plugin domain verification ────────────────────────────────────
+  // Token is set via OPENAI_APPS_CHALLENGE env var during ChatGPT plugin submission.
+  app.get("/.well-known/openai-apps-challenge", async (_req, reply) => {
+    const token = process.env.OPENAI_APPS_CHALLENGE;
+    if (!token) return reply.status(404).send({ error: "not configured" });
+    return reply.type("text/plain").send(token);
+  });
+
   // ── Discovery ──────────────────────────────────────────────────────────────
   app.get("/.well-known/oauth-authorization-server", async (_req, reply) => {
     return reply.send({
