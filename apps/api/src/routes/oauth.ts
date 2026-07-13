@@ -32,7 +32,7 @@ interface PendingCode {
 const codeStore = new Map<string, PendingCode>();
 
 // In-memory client registry (populated on dynamic client registration)
-const clientStore = new Map<string, { redirectUris: string[] }>();
+const clientStore = new Map<string, { redirectUris: string[]; clientName: string }>();
 
 setInterval(() => {
   const now = Date.now();
@@ -98,7 +98,8 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
       : [];
 
     const clientId = `posthive_${crypto.randomBytes(16).toString("hex")}`;
-    clientStore.set(clientId, { redirectUris });
+    const clientName = typeof body.client_name === "string" && body.client_name.trim() ? body.client_name.trim() : "MCP Client";
+    clientStore.set(clientId, { redirectUris, clientName });
 
     return reply.status(201).send({
       client_id: clientId,
@@ -107,7 +108,7 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
       grant_types: ["authorization_code"],
       response_types: ["code"],
       token_endpoint_auth_method: "none",
-      client_name: body.client_name ?? "MCP Client",
+      client_name: clientName,
     });
   });
 
@@ -148,7 +149,8 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: "redirect_uri and code_challenge are required" });
     }
 
-    const clientName = client_id?.trim().slice(0, 100) || "MCP connector";
+    const registeredClient = client_id ? clientStore.get(client_id) : undefined;
+    const clientName = registeredClient?.clientName || "MCP connector";
 
     const code = crypto.randomBytes(32).toString("base64url");
     codeStore.set(code, {
