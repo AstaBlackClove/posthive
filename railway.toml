@@ -1,7 +1,7 @@
 [build]
-dockerfilePath = "apps/api/Dockerfile"
+buildCommand = "pnpm install --frozen-lockfile --filter api... && pnpm --filter api exec prisma generate && pnpm --filter api build"
 
 [deploy]
-startCommand = "node node_modules/.bin/prisma migrate deploy && node dist/index.js"
+startCommand = "cd apps/api && npx prisma migrate deploy && node dist/index.js"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
