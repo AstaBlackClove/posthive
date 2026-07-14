@@ -1372,8 +1372,10 @@ claude mcp add posthive -- npx posthive-mcp`}</CopyCode>
               <p className="doc-p"><strong>Codex</strong> — add to <span className="doc-inline-code">~/.codex/config.toml</span>:</p>
               <CopyCode>{`[mcp_servers.posthive]
 url = "https://api.posthive.co/mcp"`}</CopyCode>
-              <p className="doc-p"><strong>OpenClaw</strong>:</p>
+              <p className="doc-p"><strong>OpenClaw</strong> — connect via MCP URL:</p>
               <CopyCode>{`openclaw mcp set posthive '{"url":"https://api.posthive.co/mcp","transport":"streamable-http"}'`}</CopyCode>
+              <p className="doc-p">Or install the Posthive skill directly from ClawHub (teaches OpenClaw the full CLI command set automatically):</p>
+              <CopyCode>{`openclaw skills install @astablackclove/posthive-mcp`}</CopyCode>
               <p className="doc-p"><strong>Hermes Agent</strong> — add to <span className="doc-inline-code">~/.hermes/config.yaml</span>:</p>
               <CopyCode>{`mcp_servers:
   posthive:
