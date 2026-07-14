@@ -10,6 +10,7 @@ const PLATFORM_DOMAIN: Record<string, string> = {
   pinterest: "pinterest.com",
   discord:   "discord.com",
   tumblr:    "tumblr.com",
+  lemmy:     "lemmy.world",
 };
 
 function TelegramSvg({ size }: { size: number }) {

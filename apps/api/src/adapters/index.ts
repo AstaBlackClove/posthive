@@ -11,6 +11,7 @@ import { telegramAdapter } from "./telegram.js";
 import { nostrAdapter } from "./nostr.js";
 import { discordAdapter } from "./discord.js";
 import { tumblrAdapter } from "./tumblr.js";
+import { lemmyAdapter } from "./lemmy.js";
 import type { PlatformAdapter } from "./types.js";
 
 const adapters: PlatformAdapter[] = [
@@ -27,6 +28,7 @@ const adapters: PlatformAdapter[] = [
   nostrAdapter,
   discordAdapter,
   tumblrAdapter,
+  lemmyAdapter,
 ];
 
 /** Look up an adapter by platform name. Throws if not found. */

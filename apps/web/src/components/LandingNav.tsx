@@ -19,6 +19,7 @@ export const PLATFORMS_NAV = [
   { platform: "nostr",     label: "Nostr",          desc: "Keypair, decentralized" },
   { platform: "discord",   label: "Discord",        desc: "2,000 chars, Bot + webhook" },
   { platform: "tumblr",    label: "Tumblr",         desc: "4,096 chars, OAuth 1.0a" },
+  { platform: "lemmy",     label: "Lemmy",          desc: "Federated · username + password" },
 ];
 
 export const FEATURES_NAV = [

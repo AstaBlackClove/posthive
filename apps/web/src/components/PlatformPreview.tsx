@@ -83,6 +83,7 @@ export const PLATFORM_COLOR: Record<string, string> = {
   nostr: "#7B5EA7",
   discord: "#5865F2",
   tumblr:  "#35465c",
+  lemmy:   "#ff6314",
 };
 
 export const PLATFORM_LIMIT: Record<string, number> = {
@@ -98,6 +99,7 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   nostr: 10000,
   discord: 2000,
   tumblr:  4096,
+  lemmy:   10000,
 };
 
 export const MAX_IMAGES = 4;
@@ -953,6 +955,56 @@ function TumblrPreview({ account, text, images }: { account: Account; text: stri
   );
 }
 
+function LemmyPreview({ account, text, commentText, images }: { account: Account; text: string; commentText: string; images: UploadedImage[] }) {
+  const lines = text.trim().split("\n");
+  const title = lines[0]?.slice(0, 200) ?? "";
+  const body = lines.slice(1).join("\n").trim();
+  const community = account.displayName;
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#1c1c1c", fontFamily: "sans-serif" }}>
+      {/* Header bar */}
+      <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#111", borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #ff6314" }}>
+        <PlatformIcon platform="lemmy" size={16} />
+        <span className="text-xs font-semibold" style={{ color: "#ff6314" }}>Lemmy</span>
+        <span className="text-xs ml-auto" style={{ color: "#666" }}>{community}</span>
+      </div>
+
+      {/* Post card */}
+      <div className="px-4 py-3 space-y-2">
+        <p className="text-sm font-semibold leading-snug" style={{ color: "#ededed" }}>
+          {title || <span style={{ color: "#555" }}>Post title (first line of text)</span>}
+        </p>
+        {images.length > 0 && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={images[0].previewUrl} alt="" className="w-full rounded-lg object-cover" style={{ maxHeight: 220 }} />
+        )}
+        {body && (
+          <p className="text-xs whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#aaa" }}>
+            {body.length > 300 ? body.slice(0, 300) + "…" : body}
+          </p>
+        )}
+        <div className="flex items-center gap-3 pt-1">
+          {[["▲", "Vote"], ["💬", "Comment"], ["🔗", "Share"]].map(([icon, label]) => (
+            <span key={label} className="flex items-center gap-1 text-xs" style={{ color: "#555" }}>
+              <span>{icon}</span><span>{label}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {commentText && (
+        <div className="px-4 pb-3">
+          <div className="rounded-xl p-2.5" style={{ backgroundColor: "#111", border: "1px solid #2a2a2a" }}>
+            <p className="text-xs font-semibold mb-1" style={{ color: "#ff6314" }}>First comment</p>
+            <p className="text-xs whitespace-pre-wrap break-words" style={{ color: "#aaa" }}>{commentText}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DiscordPreview({ account, text, commentText, images, video }: {
   account: Account;
   text: string;
@@ -1060,6 +1112,9 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   }
   if (account.platform === "tumblr") {
     return <TumblrPreview account={account} text={text} images={images} />;
+  }
+  if (account.platform === "lemmy") {
+    return <LemmyPreview account={account} text={text} commentText={commentText} images={images} />;
   }
 
   const color = PLATFORM_COLOR[account.platform] ?? "#6b7280";

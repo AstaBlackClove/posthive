@@ -51,6 +51,7 @@ const PLATFORM_META: Record<string, { label: string; brand: string }> = {
   twitter:   { label: "X",         brand: "#000000" },
   instagram: { label: "Instagram", brand: "#e1306c" },
   tumblr:    { label: "Tumblr",    brand: "#35465c" },
+  lemmy:     { label: "Lemmy",     brand: "#ff6314" },
 };
 
 function NostrFallbackAvatar() {
@@ -381,6 +382,117 @@ function TelegramDialog({ onClose, onConnected }: { onClose: () => void; onConne
   );
 }
 
+// ── Lemmy connect dialog ──────────────────────────────────────────────────────
+function LemmyDialog({ onClose, onConnected }: { onClose: () => void; onConnected: () => void }) {
+  const [instanceUrl, setInstanceUrl] = useState("https://lemmy.world");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [community, setCommunity] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setConnecting(true); setError(null);
+    try {
+      await apiFetch("/auth/lemmy", {
+        method: "POST",
+        body: JSON.stringify({ instanceUrl: instanceUrl.trim(), username: username.trim(), password: password.trim(), community: community.trim() }),
+      });
+      onConnected();
+      onClose();
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
+        style={{ backgroundColor: "#161616", border: `1px solid ${BORDER}` }}>
+
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center">
+              <PlatformIcon platform="lemmy" size={18} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm" style={{ color: TEXT }}>Connect Lemmy</p>
+              <p className="text-xs" style={{ color: MUTED }}>Username + password · any instance</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 transition-colors hover:bg-white/5" style={{ color: MUTED }}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Instance URL</label>
+            <input
+              placeholder="https://lemmy.world"
+              value={instanceUrl} onChange={(e) => setInstanceUrl(e.target.value)}
+              required autoFocus
+              className={inputCls} style={inputStyle} />
+            <p className="text-xs mt-1.5" style={{ color: "#555" }}>Any Lemmy instance — lemmy.world, lemmy.ml, beehaw.org, etc.</p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Username</label>
+            <input
+              placeholder="your_username"
+              value={username} onChange={(e) => setUsername(e.target.value)}
+              required
+              className={inputCls} style={inputStyle} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Password</label>
+            <input
+              type="password"
+              placeholder="your password"
+              value={password} onChange={(e) => setPassword(e.target.value)}
+              required
+              className={inputCls} style={inputStyle} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Community to post to</label>
+            <input
+              placeholder="selfhosted@lemmy.world"
+              value={community} onChange={(e) => setCommunity(e.target.value)}
+              required
+              className={inputCls} style={inputStyle} />
+            <p className="text-xs mt-1.5" style={{ color: "#555" }}>Format: communityname@instance.url</p>
+          </div>
+
+          {error && (
+            <p className="text-xs rounded-lg px-3 py-2" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1a1a", color: "#f87171" }}>
+              {error}
+            </p>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+              style={{ backgroundColor: "#1a1a1a", color: MUTED, border: `1px solid ${BORDER}` }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={connecting}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 hover:bg-gray-100"
+              style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+              {connecting ? "Connecting…" : "Connect"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ── Mastodon connect dialog ───────────────────────────────────────────────────
 function MastodonDialog({ onClose }: { onClose: () => void }) {
   const [instance, setInstance] = useState("mastodon.social");
@@ -573,6 +685,7 @@ export default function AccountsPage() {
   const [showBlueskyDialog, setShowBlueskyDialog] = useState(false);
   const [showTelegramDialog, setShowTelegramDialog] = useState(false);
   const [showNostrDialog, setShowNostrDialog] = useState(false);
+  const [showLemmyDialog, setShowLemmyDialog] = useState(false);
   const [disconnectTarget, setDisconnectTarget] = useState<{ id: string; displayName: string; platform: string } | null>(null);
 
   // Discord channel picker state
@@ -1343,12 +1456,50 @@ export default function AccountsPage() {
             );
           })()}
 
+          {/* ── Lemmy ── */}
+          {(() => {
+            const lemmyAccounts = accounts.filter(a => a.platform === "lemmy");
+            return (
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+                <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <PlatformIcon platform="lemmy" size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm" style={{ color: TEXT }}>Lemmy</p>
+                    <p className="text-xs" style={{ color: MUTED }}>Federated · any instance · community posts</p>
+                  </div>
+                </div>
+                <div className="p-5 space-y-3">
+                  {!loading && lemmyAccounts.length > 0 && (
+                    <div className="space-y-2">
+                      {lemmyAccounts.map((a) => (
+                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setShowLemmyDialog(true)}
+                    className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                    style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                    <PlatformIcon platform="lemmy" size={16} />
+                    {lemmyAccounts.length > 0 ? "Add another community" : "Connect Lemmy"}
+                  </button>
+                  <p className="text-xs" style={{ color: MUTED }}>
+                    Post title from first line · body from remaining text · image support
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
+
         </div>}
       </div>
 
       {showTelegramDialog && <TelegramDialog onClose={() => setShowTelegramDialog(false)} onConnected={() => { fetchAccounts(); success("Telegram channel connected!"); }} />}
       {showMastodonDialog && <MastodonDialog onClose={() => setShowMastodonDialog(false)} />}
       {showNostrDialog && <NostrDialog onClose={() => setShowNostrDialog(false)} onConnected={() => { fetchAccounts(); success("Nostr account connected!"); }} />}
+      {showLemmyDialog && <LemmyDialog onClose={() => setShowLemmyDialog(false)} onConnected={() => { fetchAccounts(); success("Lemmy community connected!"); }} />}
 
       {/* Discord channel picker — shown after OAuth redirect */}
       {discordGuildId && discordChannels.length > 0 && (

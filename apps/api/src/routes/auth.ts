@@ -1080,6 +1080,70 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
+  // ── Lemmy connect ────────────────────────────────────────────────────────────
+  app.post("/auth/lemmy", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { instanceUrl, username, password, community } = req.body as {
+      instanceUrl?: string; username?: string; password?: string; community?: string;
+    };
+    if (!instanceUrl?.trim() || !username?.trim() || !password?.trim() || !community?.trim()) {
+      return reply.status(400).send({ error: "instanceUrl, username, password, and community are required" });
+    }
+
+    // SSRF protection
+    let parsed: URL;
+    try { parsed = new URL(instanceUrl.trim()); } catch {
+      return reply.status(400).send({ error: "Invalid instance URL" });
+    }
+    if (parsed.protocol !== "https:") return reply.status(400).send({ error: "Instance URL must use HTTPS" });
+    const hostname = parsed.hostname;
+    if (["localhost", "127.0.0.1", "0.0.0.0", "::1"].includes(hostname) || hostname.startsWith("192.168.") || hostname.startsWith("10.") || hostname.endsWith(".internal")) {
+      return reply.status(400).send({ error: "Invalid instance URL" });
+    }
+
+    try {
+      // Verify credentials by logging in
+      const loginRes = await fetch(`${parsed.origin}/api/v3/user/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username_or_email: username.trim(), password: password.trim() }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      const loginJson = await loginRes.json() as { jwt?: string; error?: string };
+      if (!loginRes.ok || !loginJson.jwt) throw new Error(loginJson.error ?? "Login failed");
+
+      // Fetch profile for display name + avatar
+      const meRes = await fetch(`${parsed.origin}/api/v3/site`, {
+        headers: { Authorization: `Bearer ${loginJson.jwt}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      const meJson = await meRes.json() as { my_user?: { local_user_view?: { person?: { name?: string; avatar?: string } } } };
+      const person = meJson.my_user?.local_user_view?.person;
+      const displayName = person?.name ?? username.trim();
+      const rawAvatar = person?.avatar ?? null;
+      const avatarUrl = await downloadAndStoreAvatar(rawAvatar);
+
+      const credentials = encrypt(JSON.stringify({
+        instanceUrl: parsed.origin,
+        username: username.trim(),
+        password: password.trim(),
+        community: community.trim(),
+      }));
+
+      const existing = await prisma.account.findFirst({ where: { platform: "lemmy", displayName, userId } });
+      await prisma.account.upsert({
+        where: { id: existing?.id ?? "new" },
+        create: { platform: "lemmy", displayName, credentials, avatarUrl, userId },
+        update: { credentials, avatarUrl },
+      });
+      console.log(`[lemmy] connected "${displayName}" → user ${userId}`);
+      return reply.send({ ok: true, displayName });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Connection failed";
+      return reply.status(400).send({ error: msg });
+    }
+  });
+
   // ── Discord OAuth ─────────────────────────────────────────────────────────────
 
   // Step 1 — redirect to Discord OAuth (adds bot to guild)
