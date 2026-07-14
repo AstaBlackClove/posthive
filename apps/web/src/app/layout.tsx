@@ -6,7 +6,7 @@ import { AuthProvider } from "../context/AuthContext";
 import { AppShell } from "../components/AppShell";
 import { ToastProvider } from "../components/Toast";
 
-const OG_BASE = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
+const OG_BASE = process.env.NEXT_PUBLIC_WEB_URL || "https://posthive.co";
 
 export const metadata: Metadata = {
   title: { default: "Posthive - Agentic Social Media Scheduler", template: "%s | Posthive" },
