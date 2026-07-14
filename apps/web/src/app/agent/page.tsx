@@ -35,7 +35,7 @@ const softwareSchema = {
   operatingSystem: "Any",
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free to install, requires Posthive Pro/Team for MCP or a valid API key for CLI" },
   url: `${WEB_URL}/agent`,
-  description: "Give any AI agent — Claude, Cursor, OpenClaw, or custom pipelines — the ability to schedule social media posts across 13 platforms via MCP or CLI.",
+  description: "Give any AI agent — Claude, Cursor, OpenClaw, or custom pipelines — the ability to schedule social media posts across multiple platforms via MCP or CLI.",
 };
 
 const faqSchema = {
@@ -71,12 +71,12 @@ $ npx posthive-cli posts:create \\
     --accounts acc_bluesky,acc_threads \\
     --first-comment "Full changelog: example.com"
 
-# → saved as a DRAFT — review it in Posthive → Posts
+# → saved as a DRAFT - review it in Posthive → Posts
 $ npx posthive-cli posts:list --status draft`;
 
 const SKILL_EXAMPLE = `---
 name: posthive
-description: Schedule social posts across 13 platforms
+description: Schedule social posts across multi platforms
 ---
 
 # Workflow
@@ -210,7 +210,7 @@ export default function AgentPage() {
               Let your AI&nbsp;agent<br />run your&nbsp;socials.
             </h1>
             <p style={{ fontSize: 18, lineHeight: 1.55, maxWidth: "58ch", color: T.muted82, marginTop: 28 }}>
-              Claude, Cursor, OpenClaw, or any agent that can call a tool or run a shell command can now schedule posts across 13 platforms — with you approving everything before it goes live.
+              Claude, Cursor, OpenClaw, or any agent that can call a tool or run a shell command can now schedule posts across multi platforms with you approving everything before it goes live.
             </p>
             <div style={{ display: "flex", gap: 12, marginTop: 32, flexWrap: "wrap" }}>
               <Link href="#setup" style={{
@@ -219,7 +219,7 @@ export default function AgentPage() {
                 borderRadius: 10, background: "#5b63d3", color: "#fff",
                 textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)",
               }}>
-                Set up Posthive MCP →
+                Set up Posthive MCP
               </Link>
               <Link href="/docs#api-authentication" style={{
                 display: "inline-flex", alignItems: "center",
@@ -470,7 +470,7 @@ export default function AgentPage() {
           <CodePanel filename="SKILL.md">
             <span style={{ color: T.muted }}>---</span>{"\n"}
             <span style={{ color: T.a300 }}>name</span>{": posthive\n"}
-            <span style={{ color: T.a300 }}>description</span>{": Schedule social posts across 13 platforms\n"}
+            <span style={{ color: T.a300 }}>description</span>{": Schedule social posts across multiple platforms\n"}
             <span style={{ color: T.muted }}>---</span>{"\n\n"}
             <span style={{ color: T.accent }}># Workflow</span>{"\n"}
             {"1. accounts:list — get valid account IDs\n"}
@@ -556,7 +556,7 @@ export default function AgentPage() {
             Wire up your agent<br />in minutes.
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.55, color: T.muted72, marginBottom: 32, maxWidth: "56ch" }}>
-            Generate an API key, drop it into your MCP config or export it for the CLI, and your agent is ready to draft posts across all 13 platforms.
+            Generate an API key, drop it into your MCP config or export it for the CLI, and your agent is ready to draft posts across multi platforms.
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <Link href="/docs#mcp-overview" style={{
@@ -565,7 +565,7 @@ export default function AgentPage() {
               borderRadius: 10, background: "#5b63d3", color: "#fff",
               textDecoration: "none", boxShadow: "0 12px 32px -8px rgba(91,99,211,.6)",
             }}>
-              Read the docs →
+              Read the docs
             </Link>
             <Link href="/register" style={{
               display: "inline-flex", alignItems: "center",

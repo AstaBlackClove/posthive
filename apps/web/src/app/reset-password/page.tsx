@@ -53,7 +53,7 @@ function ResetPasswordForm() {
             <div className="text-center">
               <p className="text-sm mb-4" style={{ color: "#f87171" }}>Invalid or missing reset token.</p>
               <Link href="/forgot-password" className="text-sm font-semibold" style={{ color: "#5b63d3" }}>
-                Request a new link →
+                Request a new link
               </Link>
             </div>
           ) : done ? (

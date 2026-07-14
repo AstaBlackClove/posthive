@@ -440,7 +440,7 @@ function LemmyDialog({ onClose, onConnected }: { onClose: () => void; onConnecte
               value={instanceUrl} onChange={(e) => setInstanceUrl(e.target.value)}
               required autoFocus
               className={inputCls} style={inputStyle} />
-            <p className="text-xs mt-1.5" style={{ color: "#555" }}>Any Lemmy instance — lemmy.world, lemmy.ml, beehaw.org, etc.</p>
+            <p className="text-xs mt-1.5" style={{ color: "#555" }}>Any Lemmy instance - lemmy.world, lemmy.ml, beehaw.org, etc.</p>
           </div>
           <div>
             <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Username</label>
@@ -552,7 +552,7 @@ function MastodonDialog({ onClose }: { onClose: () => void }) {
             <button onClick={connect} disabled={!instance.trim()}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 hover:bg-gray-100"
               style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-              Continue →
+              Continue
             </button>
           </div>
         </div>

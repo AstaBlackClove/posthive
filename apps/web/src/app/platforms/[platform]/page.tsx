@@ -116,7 +116,7 @@ const PLATFORMS: Record<string, PlatformData> = {
       { q: "Does Posthive support Bluesky threads?", a: "Posthive supports first comment automation on Bluesky — you can schedule a reply that posts immediately after your main post. Full thread scheduling (multiple replies in sequence) is on the roadmap." },
       { q: "Do I need to share my Bluesky password?", a: "No. You generate an app password inside Bluesky settings (Settings → Privacy and Security → App Passwords). This is a separate, revocable credential — your main password is never shared." },
       { q: "What happens if my post fails to publish?", a: "Posthive retries automatically. If the post still fails, the job is marked as failed and you get a visible error in your Posts dashboard so you can re-schedule." },
-      { q: "Can I schedule images on Bluesky?", a: "Yes — up to 4 images per post. You can also add alt text to each image directly in the Posthive composer." },
+      { q: "Can I schedule images on Bluesky?", a: "Yes up to 4 images per post. You can also add alt text to each image directly in the Posthive composer." },
     ],
   },
   threads: {
@@ -763,7 +763,7 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
             </p>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <Link href={registerUrl} style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "12px 20px", borderRadius: 8, background: accent, color: "#fff", textDecoration: "none", border: `1px solid ${accent}` }}>
-                Try free for 14 days →
+                Try free for 14 days
               </Link>
               <Link href="/docs" style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "12px 20px", borderRadius: 8, background: "transparent", color: muted75, textDecoration: "none", border: `1px solid ${div}` }}>
                 View docs
@@ -828,7 +828,7 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
             <span className="plat-kicker">In Posthive</span>
             <h2 style={{ fontSize: "clamp(24px,3vw,34px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: 0, fontWeight: 500 }}>Schedule {data.name} from one composer.</h2>
           </div>
-          <Link href={registerUrl} style={{ fontSize: 14, color: accent, textDecoration: "none" }}>Try it yourself →</Link>
+          <Link href={registerUrl} style={{ fontSize: 14, color: accent, textDecoration: "none" }}>Try it yourself</Link>
         </div>
         <div style={{ width: "100%", borderRadius: 14, overflow: "hidden", background: "#111", border: `1px solid ${div}` }}>
           <PageImage src={data.image} alt={data.imageAlt} />
@@ -924,7 +924,7 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
               </Link>
             ))}
         </div>
-        <Link href={registerUrl} style={{ fontSize: 14, color: accent, textDecoration: "none" }}>Connect all your platforms →</Link>
+        <Link href={registerUrl} style={{ fontSize: 14, color: accent, textDecoration: "none" }}>Connect all your platforms</Link>
       </section>
 
       {/* ── CTA ── */}
@@ -937,7 +937,7 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <Link href={registerUrl} style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "14px 24px", borderRadius: 8, background: accent, color: "#fff", textDecoration: "none", border: `1px solid ${accent}` }}>
-              Get started free →
+              Get started free
             </Link>
             <Link href="/pricing" style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "14px 24px", borderRadius: 8, background: "transparent", color: muted75, textDecoration: "none", border: `1px solid ${div}` }}>
               Pricing

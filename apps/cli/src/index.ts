@@ -2,7 +2,7 @@
 /**
  * Posthive CLI
  *
- * Schedule posts to 13 social platforms from the command line or any
+ * Schedule posts to multiple social platforms from the command line or any
  * AI agent that can run shell commands (Claude Code, OpenClaw, Cursor).
  *
  * Every command outputs structured JSON for easy parsing by LLMs and scripts.
@@ -142,7 +142,7 @@ const HELP = {
   },
   notes: [
     "All output is JSON.",
-    "Posts default to DRAFT status — review them in Posthive → Posts, or pass --schedule to schedule directly.",
+    "Posts default to DRAFT status - review them in Posthive → Posts, or pass --schedule to schedule directly.",
     "Get account IDs from accounts:list before creating posts.",
   ],
 };

@@ -33,7 +33,7 @@ const PLANS = [
     features: [
       { text: "5 connected accounts", key: true },
       { text: "400 posts / month", key: true },
-      { text: "All 7 platforms", key: true },
+      { text: "Multi platforms", key: true },
       { text: "Bulk CSV scheduling", key: true },
       { text: "Post templates", key: true },
       { text: "Calendar & drag-reschedule", key: true },
@@ -59,7 +59,7 @@ const PLANS = [
     features: [
       { text: "15 connected accounts", key: true },
       { text: "Unlimited posts", key: true },
-      { text: "All 7 platforms", key: true },
+      { text: "Multi platforms", key: true },
       { text: "Bulk CSV scheduling", key: true },
       { text: "Post templates", key: true },
       { text: "Calendar & drag-reschedule", key: true },
@@ -84,7 +84,7 @@ const PLANS = [
     features: [
       { text: "50 connected accounts", key: true },
       { text: "Unlimited posts", key: true },
-      { text: "All 7 platforms", key: true },
+      { text: "Multi platforms", key: true },
       { text: "Bulk CSV scheduling", key: true },
       { text: "Post templates", key: true },
       { text: "Calendar & drag-reschedule", key: true },
@@ -595,7 +595,7 @@ export default function BillingPage() {
               const currentIdx = planOrder.indexOf(status?.plan ?? "");
               const thisIdx = planOrder.indexOf(plan.id);
               const isUpgrade = thisIdx > currentIdx;
-              const changeLabel = isUpgrade ? `Upgrade to ${plan.name} →` : `Downgrade to ${plan.name}`;
+              const changeLabel = isUpgrade ? `Upgrade to ${plan.name}` : `Downgrade to ${plan.name}`;
 
               return (
                 <div key={plan.id} className="relative rounded-2xl flex flex-col overflow-hidden"
@@ -670,7 +670,7 @@ export default function BillingPage() {
                       <button onClick={() => checkout(plan.id)} disabled={!!checkingOut}
                         className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 active:scale-[0.98]"
                         style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                        {checkingOut === plan.id ? ((isTrialing || isActive) ? "Switching plan…" : "Opening checkout…") : (isTrialing || isActive) ? changeLabel : "Start free trial →"}
+                        {checkingOut === plan.id ? ((isTrialing || isActive) ? "Switching plan…" : "Opening checkout…") : (isTrialing || isActive) ? changeLabel : "Start free trial"}
                       </button>
                     )}
                   </div>

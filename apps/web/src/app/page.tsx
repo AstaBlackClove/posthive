@@ -28,7 +28,7 @@ const PLATFORMS_GRID = [
 
 // Hero card cycling data — one array per card slot
 const HERO_CARD_SCHEDULED = [
-  { platform: "bluesky",   name: "Bluesky",        text: "Write once, post to 13 platforms. This is the tool I have been waiting for.", pill: "Fires in 2h", pillBg: "#fef3c7", pillColor: "#92400e", time: "9:00 AM" },
+  { platform: "bluesky",   name: "Bluesky",        text: "Write once, post to multi platforms. This is the tool I have been waiting for.", pill: "Fires in 2h", pillBg: "#fef3c7", pillColor: "#92400e", time: "9:00 AM" },
   { platform: "mastodon",  name: "Mastodon",        text: "Finally a scheduler that supports the fediverse. Set it and forget it.", pill: "Fires in 45m", pillBg: "#fef3c7", pillColor: "#92400e", time: "10:15 AM" },
   { platform: "twitter",   name: "X (Twitter)",     text: "Scheduled 30 tweets for the whole week in under 10 minutes.", pill: "Tomorrow 8AM", pillBg: "#ede9fe", pillColor: "#5b21b6", time: "8:00 AM" },
   { platform: "pinterest", name: "Pinterest",        text: "Pinned my product catalogue to 6 boards on autopilot every morning.", pill: "Fires in 1h", pillBg: "#fef3c7", pillColor: "#92400e", time: "7:30 AM" },
@@ -446,7 +446,6 @@ export default function RootPage() {
                 ) : (
                   <Link href={ctaHref} className="ph-btn-primary">
                     {ctaLabel}
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                   </Link>
                 )}
                 <Link href="/docs" className="ph-btn-secondary">View docs</Link>
@@ -536,7 +535,7 @@ export default function RootPage() {
         {/* ── SOCIAL PROOF BAR ── */}
         <section style={{ borderTop: "1px solid #161616", borderBottom: "1px solid #161616", background: "#0c0c0c" }}>
           <div className="ph-proof-bar" style={{ maxWidth: 1120, margin: "0 auto", padding: "22px 40px", display: "flex", alignItems: "center", justifyContent: "center", gap: 36, flexWrap: "wrap" }}>
-            {[["13", " platforms"], ["1", " composer"], ["14-day", " free trial"]].map(([val, label]) => (
+            {[["Multi", " platforms"], ["1", " composer"], ["14-day", " free trial"]].map(([val, label]) => (
               <span key={label} className="mono" style={{ fontSize: 13.5, color: "#9a9a9a" }}>
                 <span style={{ color: "#ededed", fontWeight: 500 }}>{val}</span>{label}
               </span>
@@ -844,7 +843,7 @@ export default function RootPage() {
           <div style={{ background: "#111111", border: "1px solid #1e1e1e", borderRadius: 20, padding: "40px 36px", textAlign: "center" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/founder.png" alt="Guna, founder of Posthive" width={72} height={72} style={{ borderRadius: "50%", border: "3px solid #2a2a2a", display: "block", margin: "0 auto 16px" }} />
-            <p style={{ fontSize: 18, fontWeight: 700, color: "#ededed", margin: "0 0 4px" }}>hey, I&apos;m Guna</p>
+            <p style={{ fontSize: 18, fontWeight: 700, color: "#ededed", margin: "0 0 4px" }}>Hey, I&apos;m Guna</p>
             <p className="mono" style={{ fontSize: 13, color: "#888", margin: "0 0 24px" }}>frontend dev by day · indie builder by night</p>
             <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: 14 }}>
               <p style={{ fontSize: 14.5, color: "#888", lineHeight: 1.7, margin: 0 }}>
@@ -933,7 +932,6 @@ export default function RootPage() {
             <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
               <Link href={ctaHref} className="ph-btn-primary" style={{ fontSize: 16, padding: "15px 28px" }}>
                 {ctaLabel}
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
               </Link>
               <Link href="/docs" className="ph-btn-secondary" style={{ fontSize: 16, padding: "15px 28px" }}>View docs</Link>
             </div>

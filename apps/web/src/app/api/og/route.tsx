@@ -202,7 +202,7 @@ function DocsLayout({ logo, title, desc }: { logo: string; title: string; desc: 
 
 function FeaturesLayout({ logo, title, desc }: { logo: string; title: string; desc: string }) {
   const features = [
-    { name: "Multi-platform posting",    badge: "7 platforms" },
+    { name: "Multi-platform posting",    badge: "Multi platforms" },
     { name: "Bulk CSV scheduling",       badge: "100s of posts" },
     { name: "Drag-to-reschedule",        badge: "Calendar" },
     { name: "Reels & Stories",           badge: "Instagram" },

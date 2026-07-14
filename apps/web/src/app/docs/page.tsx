@@ -456,7 +456,7 @@ export default function DocsPage() {
               <SectionLabel>Getting Started</SectionLabel>
               <h1 className="doc-h1">Posthive Documentation</h1>
               <p className="doc-h1-sub">
-                Schedule posts to 13 platforms from one interface — with built-in MCP support for AI agents.
+                Schedule posts to multiple platforms from one interface — with built-in MCP support for AI agents.
               </p>
 
               {/* Quick-start cards */}

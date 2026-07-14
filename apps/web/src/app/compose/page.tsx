@@ -391,7 +391,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           dryRun: false,
         }),
       });
-      toastSuccess("Draft saved — find it in Posts → Drafts.");
+      toastSuccess("Draft saved - find it in Posts → Drafts.");
       resetForm();
     } catch (err) {
       const msg = err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err);
@@ -624,7 +624,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         </div>
         {!loadingAccounts && accounts.length === 0 && (
           <a href="/accounts" className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg font-medium flex-shrink-0">
-            ⚠️ Connect an account first →
+            ⚠️ Connect an account first
           </a>
         )}
       </div>

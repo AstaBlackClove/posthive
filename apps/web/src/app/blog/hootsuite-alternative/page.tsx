@@ -7,7 +7,7 @@ const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
   headline: "The Best Hootsuite Alternative in 2026 — Cheaper, Open Source, More Platforms",
-  description: "Hootsuite costs $99/month minimum. Posthive does the same job — scheduling across 13 platforms — for a fraction of the price, with open-source code you can self-host.",
+  description: "Hootsuite costs $99/month minimum. Posthive does the same job scheduling across multiple platforms for a fraction of the price, with open-source code you can self-host.",
   datePublished: "2026-07-07",
   author: { "@type": "Person", name: "Guna" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
@@ -43,19 +43,19 @@ const faqSchema = {
 
 export const metadata: Metadata = {
   title: "The Best Hootsuite Alternative in 2026 — Cheaper, Open Source | Posthive",
-  description: "Hootsuite costs $99/month minimum. Posthive does the same job across 13 platforms for a fraction of the price — and it's open source.",
+  description: "Hootsuite costs $99/month minimum. Posthive does the same job across multiple platforms for a fraction of the price — and it's open source.",
   keywords: ["Hootsuite alternative", "cheap Hootsuite alternative", "open source Hootsuite alternative", "Hootsuite vs Posthive", "affordable social media scheduler"],
   alternates: { canonical: `${WEB_URL}/blog/hootsuite-alternative` },
   openGraph: {
     title: "The Best Hootsuite Alternative in 2026 | Posthive",
-    description: "Hootsuite costs $99/month minimum. Posthive does the same job across 13 platforms for a fraction of the price.",
+    description: "Hootsuite costs $99/month minimum. Posthive does the same job across multiple platforms for a fraction of the price.",
     url: `${WEB_URL}/blog/hootsuite-alternative`,
-    images: [{ url: "/api/og?layout=post&title=The+Best+Hootsuite+Alternative&desc=Cheaper+%C2%B7+Open+Source+%C2%B7+13+platforms&badge=Comparison", width: 1200, height: 630 }],
+    images: [{ url: "/api/og?layout=post&title=The+Best+Hootsuite+Alternative&desc=Cheaper+%C2%B7+Open+Source+%C2%B7+multiple+platforms&badge=Comparison", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "The Best Hootsuite Alternative in 2026 | Posthive",
-    description: "Hootsuite costs $99/month minimum. Posthive does the same job across 13 platforms for a fraction of the price.",
+    description: "Hootsuite costs $99/month minimum. Posthive does the same job across multiple platforms for a fraction of the price.",
   },
 };
 
@@ -232,7 +232,7 @@ export default function HootsuiteAlternativePage() {
             <p style={{ fontSize: 14, color: "#666", margin: "0 0 24px" }}>No credit card required. Connect your first account in under a minute.</p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
               <Link href="/register" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>
-                Get started free →
+                Get started free
               </Link>
               <Link href="/pricing" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
                 View pricing

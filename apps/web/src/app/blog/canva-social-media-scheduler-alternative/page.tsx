@@ -7,7 +7,7 @@ const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
   headline: "The Best Canva Social Media Scheduler Alternative in 2026",
-  description: "Canva has a built-in scheduler but it is limited to 8 platforms and locked behind the Pro plan. Here is a better alternative for scheduling social media posts across 13 platforms.",
+  description: "Canva has a built-in scheduler but it is limited to 8 platforms and locked behind the Pro plan. Here is a better alternative for scheduling social media posts across multiple platforms.",
   datePublished: "2026-07-07",
   author: { "@type": "Person", name: "Guna" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
@@ -31,36 +31,36 @@ const faqSchema = {
     {
       "@type": "Question",
       name: "What is the best alternative to Canva scheduler?",
-      acceptedAnswer: { "@type": "Answer", text: "Posthive is a dedicated social media scheduler that supports 13 platforms including Bluesky, Threads, Mastodon, and Telegram. It starts at $9/month and includes bulk CSV scheduling, first comment automation, a drag-to-reschedule calendar, and Instagram Reels support." },
+      acceptedAnswer: { "@type": "Answer", text: "Posthive is a dedicated social media scheduler that supports multi platforms including Bluesky, Threads, Mastodon, and Telegram. It starts at $9/month and includes bulk CSV scheduling, first comment automation, a drag-to-reschedule calendar, and Instagram Reels support." },
     },
     {
       "@type": "Question",
       name: "Can I use Canva and Posthive together?",
-      acceptedAnswer: { "@type": "Answer", text: "Yes. The best workflow is to design your visuals in Canva, export them, then upload and schedule them in Posthive. This gives you Canva's design power with Posthive's scheduling breadth across 13 platforms." },
+      acceptedAnswer: { "@type": "Answer", text: "Yes. The best workflow is to design your visuals in Canva, export them, then upload and schedule them in Posthive. This gives you Canva's design power with Posthive's scheduling breadth across multiple platforms." },
     },
     {
       "@type": "Question",
       name: "Which scheduler works with Canva designs?",
-      acceptedAnswer: { "@type": "Answer", text: "Any scheduler that accepts image uploads works with Canva designs. Export your Canva design as JPG or PNG, then upload it to Posthive when composing your post. Posthive accepts images for all 13 supported platforms." },
+      acceptedAnswer: { "@type": "Answer", text: "Any scheduler that accepts image uploads works with Canva designs. Export your Canva design as JPG or PNG, then upload it to Posthive when composing your post. Posthive accepts images for multiple supported platforms." },
     },
   ],
 };
 
 export const metadata: Metadata = {
   title: "Best Canva Social Media Scheduler Alternative in 2026 | Posthive",
-  description: "Canva scheduler is limited to 8 platforms and locked behind Pro. Posthive schedules across 13 platforms including Bluesky, Threads and Mastodon from $9/month.",
+  description: "Canva scheduler is limited to 8 platforms and locked behind Pro. Posthive schedules across multiple platforms including Bluesky, Threads and Mastodon from $9/month.",
   keywords: ["canva social media scheduler", "canva scheduler alternative", "canva social media scheduler alternative", "canva vs posthive", "canva pro scheduler"],
   alternates: { canonical: `${WEB_URL}/blog/canva-social-media-scheduler-alternative` },
   openGraph: {
     title: "Best Canva Social Media Scheduler Alternative | Posthive",
-    description: "Canva scheduler is limited to 8 platforms and locked behind Pro. Posthive covers 13 platforms for less.",
+    description: "Canva scheduler is limited to 8 platforms and locked behind Pro. Posthive covers multiple platforms for less.",
     url: `${WEB_URL}/blog/canva-social-media-scheduler-alternative`,
-    images: [{ url: "/api/og?layout=post&title=Canva+Scheduler+Alternative&desc=13+platforms+%C2%B7+%249%2Fmo+%C2%B7+Open+source&badge=Comparison", width: 1200, height: 630 }],
+    images: [{ url: "/api/og?layout=post&title=Canva+Scheduler+Alternative&desc=multiple+platforms+%C2%B7+%249%2Fmo+%C2%B7+Open+source&badge=Comparison", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Best Canva Social Media Scheduler Alternative | Posthive",
-    description: "Canva scheduler is limited to 8 platforms and locked behind Pro. Posthive covers 13 platforms for less.",
+    description: "Canva scheduler is limited to 8 platforms and locked behind Pro. Posthive covers multiple platforms for less.",
   },
 };
 
@@ -239,7 +239,7 @@ export default function CanvaSchedulerAlternativePage() {
               { n: 1, title: "Design in Canva", desc: "Create your post graphics, Reel covers, or carousel slides in Canva. Use their templates, brand kit, and design tools." },
               { n: 2, title: "Export your assets", desc: "Download your designs as JPG, PNG, or MP4 depending on the content type." },
               { n: 3, title: "Open Posthive Compose", desc: "Start a new post in Posthive. Select all the platforms you want to publish to in one go." },
-              { n: 4, title: "Upload your Canva exports", desc: "Attach your downloaded assets. Posthive accepts images and videos for all 13 supported platforms." },
+              { n: 4, title: "Upload your Canva exports", desc: "Attach your downloaded assets. Posthive accepts images and videos for multiple supported platforms." },
               { n: 5, title: "Write your caption and schedule", desc: "Write your copy, add a first comment for hashtags if needed, pick your publish time, and schedule. Done." },
             ].map((step) => (
               <div key={step.n} style={{ display: "flex", gap: 18, padding: "18px 0", borderBottom: "1px solid #111" }}>
@@ -284,7 +284,7 @@ export default function CanvaSchedulerAlternativePage() {
           </div>
 
           <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px", textAlign: "center", marginTop: 48 }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>Schedule across 13 platforms for $9/month</p>
+            <p style={{ fontSize: 20, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>Schedule across multiple platforms for $9/month</p>
             <p style={{ fontSize: 14, color: "#666", margin: "0 0 24px" }}>14-day free trial. Works alongside Canva. No credit card required.</p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
               <Link href="/register" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>

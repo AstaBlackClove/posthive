@@ -33,7 +33,7 @@ export function TrialBanner() {
         <Link href="/billing"
           className="flex items-center justify-center gap-1 w-full font-semibold text-xs px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
           style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-          Start free trial →
+          Start free trial
         </Link>
       </div>
     );
@@ -45,7 +45,7 @@ export function TrialBanner() {
         style={{ backgroundColor: "#1f0a0a", border: "1px solid #7f1d1d" }}>
         <p className="font-semibold mb-1" style={{ color: "#f87171" }}>Subscription cancelled</p>
         <Link href="/billing" className="font-semibold underline" style={{ color: "#f87171" }}>
-          Resubscribe →
+          Resubscribe
         </Link>
       </div>
     );
@@ -60,7 +60,7 @@ export function TrialBanner() {
         <Link href="/billing"
           className="inline-flex items-center gap-1 font-semibold px-2.5 py-1 rounded-lg hover:bg-gray-100 transition-colors"
           style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-          Upgrade now →
+          Upgrade now
         </Link>
       </div>
     );

@@ -1,6 +1,6 @@
 # posthive-cli
 
-Posthive CLI — schedule posts to 13 social platforms from the command line or any AI agent that can run shell commands (Claude Code, OpenClaw, Cursor, custom pipelines).
+Posthive CLI — schedule posts to multiple social platforms from the command line or any AI agent that can run shell commands (Claude Code, OpenClaw, Cursor, custom pipelines).
 
 **Supported platforms:** Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, X (Twitter), Nostr
 

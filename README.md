@@ -22,7 +22,7 @@
 
 **Scheduling**
 
-- **Multi-platform posting** - write once, publish to all 14 platforms simultaneously
+- **Multi-platform posting** - write once, publish to multiple platforms simultaneously
 - **Bulk CSV scheduling** - upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
 - **Post templates** - save, load, and delete reusable post drafts
 - **Dry run mode** - full pipeline test without making real API calls

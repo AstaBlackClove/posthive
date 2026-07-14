@@ -26,12 +26,12 @@ const faqSchema = {
     {
       "@type": "Question",
       name: "What is the cheapest social media scheduler?",
-      acceptedAnswer: { "@type": "Answer", text: "Posthive starts at $9 per month with no per-channel pricing and support for 13 platforms. Buffer charges per channel, making it more expensive as you add accounts. Self-hosted Posthive is free." },
+      acceptedAnswer: { "@type": "Answer", text: "Posthive starts at $9 per month with no per-channel pricing and support multiple platforms. Buffer charges per channel, making it more expensive as you add accounts. Self-hosted Posthive is free." },
     },
     {
       "@type": "Question",
       name: "Which social media scheduler supports the most platforms?",
-      acceptedAnswer: { "@type": "Answer", text: "Posthive supports 13 platforms: Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr, and X. Most other schedulers do not support Bluesky, Mastodon, Threads, or Telegram." },
+      acceptedAnswer: { "@type": "Answer", text: "Posthive supports multiple platforms: Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr, and X. Most other schedulers do not support Bluesky, Mastodon, Threads, or Telegram." },
     },
     {
       "@type": "Question",
@@ -217,7 +217,7 @@ export default function BestSocialMediaSchedulerPage() {
             badgeBg="rgba(91,99,211,.15)"
             starting="$9/month (hosted) or free (self-hosted)"
             bestFor="Indie hackers, creators, developers"
-            platforms="13 platforms"
+            platforms="Multiple platforms"
             pros={[
               "Supports Bluesky, Threads, Mastodon, Telegram, Nostr",
               "Open source (AGPL-3.0) and fully self-hostable",
@@ -430,7 +430,7 @@ export default function BestSocialMediaSchedulerPage() {
 
           <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px", textAlign: "center", marginTop: 48 }}>
             <p style={{ fontSize: 20, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>Try Posthive free for 14 days</p>
-            <p style={{ fontSize: 14, color: "#666", margin: "0 0 24px" }}>13 platforms, flat pricing, no credit card required.</p>
+            <p style={{ fontSize: 14, color: "#666", margin: "0 0 24px" }}>Multi platforms, flat pricing, no credit card required.</p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
               <Link href="/register" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>
                 Get started free

@@ -125,7 +125,7 @@ export default function ForDevelopersPage() {
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/docs" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)" }}>
-              Read the docs →
+              Read the docs
             </Link>
             <Link href="https://github.com/posthive/posthive" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
               View on GitHub
@@ -138,7 +138,7 @@ export default function ForDevelopersPage() {
       <section style={{ padding: "0 24px 80px" }}>
         <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1, background: "#1e1e1e", borderRadius: 16, overflow: "hidden" }} className="dev-grid-2" >
           {[
-            { n: "13", label: "platforms" },
+            { n: "Multiple", label: "platforms" },
             { n: "10", label: "MCP tools" },
             { n: "AGPLv3", label: "license" },
             { n: "0", label: "vendor lock-in" },
@@ -358,7 +358,7 @@ export default function ForDevelopersPage() {
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/docs" style={{ display: "inline-block", fontSize: 15, fontWeight: 700, padding: "14px 32px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 12px 32px -8px rgba(91,99,211,.6)" }}>
-              Read the docs →
+              Read the docs
             </Link>
             <Link href="/register" style={{ display: "inline-block", fontSize: 15, fontWeight: 700, padding: "14px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
               Start free trial

@@ -223,7 +223,7 @@ function BlueskyConnect({ onConnected }: { onConnected: () => void }) {
             border: "1px solid #2a2a2a",
           }}
         >
-          Connect →
+          Connect
         </span>
       </button>
     );
@@ -614,7 +614,7 @@ export default function OnboardingPage() {
                   >
                     {checkingOut === plan.id
                       ? "Opening checkout…"
-                      : "Start free trial →"}
+                      : "Start free trial"}
                   </button>
                 </div>
               </div>
@@ -792,7 +792,7 @@ export default function OnboardingPage() {
                   border: "1px solid #2a2a2a",
                 }}
               >
-                Connect →
+                Connect
               </span>
             </a>
 
@@ -832,7 +832,7 @@ export default function OnboardingPage() {
                   border: "1px solid #2a2a2a",
                 }}
               >
-                Connect →
+                Connect
               </span>
             </a>
           </div>
@@ -1028,7 +1028,7 @@ export default function OnboardingPage() {
                 className="w-full py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 active:scale-[0.98]"
                 style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
               >
-                {scheduling ? "Scheduling…" : "Schedule my first post →"}
+                {scheduling ? "Scheduling…" : "Schedule my first post"}
               </button>
             )}
             <button

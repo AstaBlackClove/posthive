@@ -568,7 +568,7 @@ export default function JobsPage() {
                 </p>
                 {filter === "all" && (
                   <a href="/" className="mt-3 text-sm text-blue-600 font-semibold hover:underline">
-                    Schedule your first post →
+                    Schedule your first post
                   </a>
                 )}
               </div>

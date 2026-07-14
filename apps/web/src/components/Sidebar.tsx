@@ -309,7 +309,7 @@ export function Sidebar() {
             }}
             className="text-xs font-semibold hover:opacity-80 transition-opacity"
             style={{ color: "#fbbf24" }}>
-            Resend email →
+            Resend email
           </button>
         </div>
       )}
