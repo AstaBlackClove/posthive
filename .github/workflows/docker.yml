@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+    paths:
+      - "apps/api/**"
+      - "apps/web/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/docker.yml"
 
 jobs:
   api:
