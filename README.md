@@ -22,7 +22,7 @@
 
 **Scheduling**
 
-- **Multi-platform posting** - write once, publish to all 13 platforms simultaneously
+- **Multi-platform posting** - write once, publish to all 14 platforms simultaneously
 - **Bulk CSV scheduling** - upload a spreadsheet to schedule hundreds of posts; per-row platform exclusions (`!instagram`)
 - **Post templates** - save, load, and delete reusable post drafts
 - **Dry run mode** - full pipeline test without making real API calls
@@ -106,7 +106,7 @@ posthive/
 │   ├── api/                  # Fastify v4 API (Node.js, TypeScript, ESM)
 │   │   ├── prisma/           # Schema + migrations
 │   │   └── src/
-│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, X/Twitter, Telegram, Nostr, Discord, Tumblr)
+│   │       ├── adapters/     # Platform adapters (Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, X/Twitter, Telegram, Nostr, Discord, Tumblr, Lemmy)
 │   │       ├── lib/          # Auth, queue, worker, encryption, storage, mailer, plans
 │   │       └── routes/       # auth, accounts, jobs, templates, upload, billing, user, apiKeys, publicApi, mcp, oauth
 │   ├── web/                  # Next.js 16 frontend
@@ -654,6 +654,16 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"
 
 > Posts to your primary Tumblr blog using NPF (Neue Post Format). Text and images supported. Tumblr app registration requires no business verification or API review.
 
+### Lemmy
+
+Username + password auth. No OAuth, no app registration, no API approval — works with any Lemmy instance.
+
+1. Create a Lemmy account on any instance (e.g. [lemmy.world](https://lemmy.world), [lemmy.ml](https://lemmy.ml), [beehaw.org](https://beehaw.org))
+2. Go to **Accounts** in Posthive → **Connect Lemmy**
+3. Enter your instance URL, username, password, and the community to post to (e.g. `selfhosted@lemmy.world`)
+
+> No environment variables needed. Credentials are stored AES-256-GCM encrypted. The **first line** of your post becomes the Lemmy post title; the rest becomes the body. Images are uploaded via pictrs.
+
 ---
 
 ## Bulk CSV Scheduling
@@ -891,6 +901,7 @@ Set `ENABLE_BILLING=false` for self-hosted mode all features unlocked, no plan l
 | Nostr          | 10,000 characters               |
 | Discord        | 2,000 characters                |
 | Tumblr         | 4,096 characters                |
+| Lemmy          | 10,000 characters               |
 
 ---
 

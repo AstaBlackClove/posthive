@@ -1,6 +1,6 @@
 # Posthive — CLAUDE.md
 
-Social media scheduling SaaS. Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, X (Twitter), Discord, and Tumblr from a single UI. Self-hostable, open-source (AGPL-3.0).
+Social media scheduling SaaS. Schedule posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, X (Twitter), Discord, Tumblr, and Lemmy from a single UI. Self-hostable, open-source (AGPL-3.0).
 
 ---
 
@@ -46,7 +46,7 @@ pnpm db:migrate   # Run pending migrations
 ### Routes
 | File | Prefix | Purpose |
 |------|--------|---------|
-| `routes/auth.ts` | `/auth/*` | JWT login/register + Threads, Instagram, LinkedIn, YouTube, Facebook, Pinterest, Mastodon, Twitter, Discord, Tumblr OAuth |
+| `routes/auth.ts` | `/auth/*` | JWT login/register + Threads, Instagram, LinkedIn, YouTube, Facebook, Pinterest, Mastodon, Twitter, Discord, Tumblr OAuth + Lemmy credential connect |
 | `routes/accounts.ts` | `/accounts` | List/disconnect social accounts |
 | `routes/jobs.ts` | `/jobs` | CRUD + reschedule + delete scheduled posts |
 | `routes/upload.ts` | `/upload` | Image/video upload → local disk or Supabase Storage |
@@ -73,6 +73,7 @@ Each adapter implements `PlatformAdapter` from `types.ts`:
 - `nostr.ts` — Nostr protocol (keypair auth, Kind 1 notes, NIP-92 image tags, no OAuth)
 - `discord.ts` — Discord webhook API (OAuth 2.0, webhook auto-created per channel)
 - `tumblr.ts` — Tumblr API v2 (OAuth 1.0a HMAC-SHA1, NPF text + image posts; tokens never expire)
+- `lemmy.ts` — Lemmy API v3 (username/password → JWT per post; community posts; any instance; no OAuth)
 
 **Register adapters in `src/adapters/index.ts`** — add to the array to enable.
 
