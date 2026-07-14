@@ -87,6 +87,8 @@ posthive posts:create --content "Test" --accounts id1 --dry-run
 | Facebook Pages | 63,206 | |
 | Telegram | 4,096 | |
 | Nostr | — | |
+| Discord | 2,000 | Webhook-based; no first comment |
+| Tumblr | — | NPF format; image posts supported |
 
 When posting to multiple platforms at once, keep content within the smallest char limit of the selected platforms, or create separate posts per platform with tailored content.
 
