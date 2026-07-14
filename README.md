@@ -794,12 +794,19 @@ Recommended stack: **Railway** (API + Redis) · **Supabase** (Postgres + Storage
 
 ### 2. Railway - API
 
-1. New project → Deploy from GitHub → Root Directory: `apps/api`
+1. New project → Deploy from GitHub → **Root Directory: leave blank** (repo root)
 2. Add a Redis service → copy private URL as `${{ Redis.REDIS_URL }}`
 3. Set environment variables (see table above)
-4. **Build Command:** `npm install && npx prisma generate && npm run build`
-5. **Start Command:** `npx prisma migrate deploy && node dist/index.js`
-6. Add custom domain → set port to `3001`
+4. **Builder:** Railpack (default — do not switch to Dockerfile)
+5. **Build Command:**
+   ```
+   pnpm install --frozen-lockfile --filter api... && pnpm --filter api exec prisma generate && pnpm --filter api build
+   ```
+6. **Start Command:**
+   ```
+   cd apps/api && npx prisma migrate deploy && node dist/index.js
+   ```
+7. Add custom domain → set port to `3001`
 
 ### 3. Vercel - Frontend
 

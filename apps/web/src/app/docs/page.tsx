@@ -865,8 +865,11 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
                 <li className="doc-li">Update the Prisma provider to <span className="doc-inline-code">postgresql</span> in <span className="doc-inline-code">apps/api/prisma/schema.prisma</span>.</li>
                 <li className="doc-li">Run <span className="doc-inline-code">pnpm db:migrate</span> as part of your release command.</li>
               </ul>
-              <CopyCode>{`# Example Railway / Dockerfile release command
-pnpm db:migrate && node dist/index.js`}</CopyCode>
+              <CopyCode>{`# Railway — Build Command (Build → Custom Build Command)
+pnpm install --frozen-lockfile --filter api... && pnpm --filter api exec prisma generate && pnpm --filter api build
+
+# Railway — Start Command (Deploy → Start Command)
+cd apps/api && npx prisma migrate deploy && node dist/index.js`}</CopyCode>
 
               {/* ── Database ── */}
               <h2 className="doc-h2" id="database">Database</h2>
