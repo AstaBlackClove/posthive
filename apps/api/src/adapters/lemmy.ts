@@ -32,29 +32,46 @@ async function login(instanceUrl: string, username: string, password: string): P
 }
 
 async function resolveCommunity(instanceUrl: string, jwt: string, communityRef: string): Promise<number> {
-  // communityRef is either "name@instance" or just "name" (local)
-  const q = communityRef.includes("@") ? `!${communityRef}` : communityRef;
-  const res = await fetch(`${instanceUrl}/api/v3/resolve_object?q=${encodeURIComponent(q)}`, {
+  // Strip leading ! if user typed it
+  const ref = communityRef.replace(/^!/, "");
+  const instanceHost = new URL(instanceUrl).hostname;
+  // Treat as local if no @ or if the community's instance matches our instance
+  const communityInstance = ref.includes("@") ? ref.split("@")[1] : null;
+  const isRemote = communityInstance !== null && communityInstance !== instanceHost;
+
+  // For local communities use /community?name= — faster and works for newly created communities
+  if (!isRemote) {
+    const localName = ref.includes("@") ? ref.split("@")[0] : ref;
+    const res = await fetch(`${instanceUrl}/api/v3/community?name=${encodeURIComponent(localName)}`, {
+      headers: { Authorization: `Bearer ${jwt}` },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    const json = await res.json() as { community_view?: { community: { id: number } }; error?: string };
+    if (!res.ok || !json.community_view) throw new Error(json.error ?? `Lemmy community not found: ${ref}`);
+    return json.community_view.community.id;
+  }
+
+  // For remote (federated) communities use resolve_object
+  const res = await fetch(`${instanceUrl}/api/v3/resolve_object?q=${encodeURIComponent(`!${ref}`)}`, {
     headers: { Authorization: `Bearer ${jwt}` },
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   const json = await res.json() as { community?: { community: { id: number } }; error?: string };
-  if (!res.ok || !json.community) throw new Error(json.error ?? `Lemmy community not found: ${communityRef}`);
+  if (!res.ok || !json.community) throw new Error(json.error ?? `Lemmy community not found: ${ref}`);
   return json.community.community.id;
 }
 
 async function uploadImage(instanceUrl: string, jwt: string, buffer: Buffer, mimeType: string): Promise<string> {
-  if (!storageAdapter) throw new Error("Storage adapter not set");
   const form = new FormData();
   form.append("images[]", new Blob([new Uint8Array(buffer)], { type: mimeType }), "image");
-  const res = await fetch(`${instanceUrl}/api/v3/pictrs/image`, {
+  const res = await fetch(`${instanceUrl}/pictrs/image`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${jwt}` },
+    headers: { Cookie: `jwt=${jwt}` },
     body: form,
     signal: AbortSignal.timeout(60_000),
   });
-  const json = await res.json() as { files?: { file: string }[]; error?: string };
-  if (!res.ok || !json.files?.[0]) throw new Error(json.error ?? "Lemmy image upload failed");
+  const json = await res.json() as { files?: { file: string }[]; error?: string; message?: string };
+  if (!res.ok || !json.files?.[0]) throw new Error(json.error ?? json.message ?? "Lemmy image upload failed");
   return `${instanceUrl}/pictrs/image/${json.files[0].file}`;
 }
 

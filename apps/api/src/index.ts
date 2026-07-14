@@ -16,6 +16,7 @@ import { setStorageAdapter as setMastodonStorage } from "./adapters/mastodon.js"
 import { setTelegramStorage } from "./adapters/telegram.js";
 import { setLinkedInStorage } from "./adapters/linkedin.js";
 import { setDiscordStorage } from "./adapters/discord.js";
+import { setStorageAdapter as setLemmyStorage } from "./adapters/lemmy.js";
 import { setAvatarStorage } from "./lib/avatarStore.js";
 import { accountRoutes } from "./routes/accounts.js";
 import { authRoutes } from "./routes/auth.js";
@@ -48,6 +49,7 @@ async function main() {
   setTelegramStorage(storage);
   setLinkedInStorage(storage);
   setDiscordStorage(storage);
+  setLemmyStorage(storage);
   setAvatarStorage(storage);
 
   const app = Fastify({
