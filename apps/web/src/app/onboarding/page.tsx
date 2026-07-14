@@ -441,7 +441,7 @@ export default function OnboardingPage() {
           accountIds: selectedIds,
         }),
       });
-      router.replace("/?onboarded=1");
+      router.replace("/compose?onboarded=1");
     } catch (err) {
       setScheduleError(String(err));
       setScheduling(false);
@@ -1032,7 +1032,7 @@ export default function OnboardingPage() {
               </button>
             )}
             <button
-              onClick={() => router.replace("/?onboarded=1")}
+              onClick={() => router.replace("/compose?onboarded=1")}
               className="text-xs text-center py-1 hover:opacity-70 transition-opacity"
               style={{ color: "#444" }}
             >

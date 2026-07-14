@@ -120,7 +120,146 @@ posthive/
 
 ---
 
-## Prerequisites
+## Self-hosting
+
+The fastest path is Docker — no Node.js or pnpm needed on the host. You get two containers (API + Web) backed by Postgres and Redis, all wired up in one `docker compose` command.
+
+### Prerequisites
+
+- [Docker Engine 24+](https://docs.docker.com/engine/install/) with the Compose v2 plugin (`docker compose`, not `docker-compose`)
+
+### 1. Clone and configure
+
+```bash
+git clone https://github.com/AstaBlackClove/posthive.git
+cd posthive
+cp apps/api/.env.example .env
+```
+
+Open `.env` and set at minimum:
+
+```env
+# ── Postgres ────────────────────────────────────────────
+POSTGRES_PASSWORD=change_me_to_a_strong_password
+
+# ── Secrets (generate each with the command below) ──────
+ENCRYPTION_KEY=<64-char hex>     # NEVER change after accounts are saved
+JWT_ACCESS_SECRET=<64-char hex>
+JWT_REFRESH_SECRET=<64-char hex>
+
+# ── URLs ────────────────────────────────────────────────
+WEB_URL=http://localhost:3000           # public URL of the web app
+PUBLIC_API_URL=http://localhost:3001    # public URL of the API (must be reachable from the internet for Meta/Instagram/Threads image fetches)
+```
+
+Generate secrets:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+> `ENCRYPTION_KEY` encrypts all stored OAuth tokens. Write it down — changing it after accounts are saved makes all connected accounts permanently unusable.
+
+### 2. Start
+
+```bash
+docker compose up -d --build
+```
+
+The first build takes 2–5 minutes. Once done, Posthive is running:
+
+| Service | URL |
+|---------|-----|
+| Web | http://localhost:3000 |
+| API | http://localhost:3001 |
+
+Register your account at `/register`. Billing is disabled by default — all features are unlocked.
+
+### 3. Custom domain with a reverse proxy
+
+Set the public URLs in `.env` before building, then point your reverse proxy at the containers.
+
+**Caddy (recommended — auto HTTPS)**
+
+```
+yourdomain.com {
+    reverse_proxy localhost:3000
+}
+
+api.yourdomain.com {
+    reverse_proxy localhost:3001
+}
+```
+
+Set in `.env`:
+
+```env
+WEB_URL=https://yourdomain.com
+PUBLIC_API_URL=https://api.yourdomain.com
+```
+
+Then rebuild:
+
+```bash
+docker compose up -d --build
+```
+
+**nginx**
+
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+server {
+    listen 80;
+    server_name api.yourdomain.com;
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+### 4. Persistent uploads
+
+By default, uploaded images are stored inside the container and lost on rebuild. To persist them, add a volume to `docker-compose.yml`:
+
+```yaml
+api:
+  ...
+  volumes:
+    - uploads:/app/apps/api/uploads
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads:        # ← add this
+```
+
+For production, use Supabase Storage instead — set `STORAGE_PROVIDER=supabase` and the `SUPABASE_*` vars.
+
+### 5. Updating
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+Migrations run automatically on API startup.
+
+---
+
+## Prerequisites (developer setup)
 
 - **Node.js** >= 20
 - **pnpm** >= 9 - `npm install -g pnpm`

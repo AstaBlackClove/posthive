@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 
 function CopyCode({ children }: { children: string }) {
@@ -15,9 +15,38 @@ function CopyCode({ children }: { children: string }) {
     <div style={{ position: "relative", margin: "12px 0 20px" }}>
       <code className="doc-code" style={{ margin: 0 }}>{children}</code>
       <button onClick={copy}
-        style={{ position: "absolute", top: 8, right: 8, background: "#2a2a2a", border: "1px solid #3a3a3a", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontSize: 11, color: copied ? "#4ade80" : "#888", fontFamily: "monospace", transition: "color .15s" }}>
+        style={{ position: "absolute", top: 8, right: 8, background: "#1e1e1e", border: "1px solid #333", borderRadius: 6, padding: "3px 10px", cursor: "pointer", fontSize: 11, color: copied ? "#4ade80" : "#666", fontFamily: "monospace", transition: "color .15s" }}>
         {copied ? "Copied!" : "Copy"}
       </button>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <p style={{ fontSize: 11.5, fontWeight: 700, color: "#5b63d3", textTransform: "uppercase", letterSpacing: ".09em", margin: "0 0 10px" }}>
+      {children}
+    </p>
+  );
+}
+
+function Callout({ type = "info", children }: { type?: "info" | "warn"; children: ReactNode }) {
+  const warn = type === "warn";
+  return (
+    <div style={{
+      display: "flex", gap: 12, alignItems: "flex-start",
+      background: warn ? "rgba(245,158,11,.07)" : "rgba(91,99,211,.07)",
+      border: `1px solid ${warn ? "rgba(245,158,11,.2)" : "rgba(91,99,211,.2)"}`,
+      borderLeft: `3px solid ${warn ? "#f59e0b" : "#5b63d3"}`,
+      borderRadius: "0 8px 8px 0",
+      padding: "14px 16px", margin: "16px 0 24px",
+    }}>
+      <span style={{ flexShrink: 0, fontSize: 15, color: warn ? "#f59e0b" : "#9ba2ee", marginTop: 1 }}>
+        {warn ? "⚠" : "ⓘ"}
+      </span>
+      <div style={{ fontSize: 14, color: warn ? "#fbbf24" : "#9ba2ee", lineHeight: 1.65 }}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -66,6 +95,9 @@ const NAV = [
     section: "Self-hosting",
     items: [
       { label: "Docker setup", id: "docker-setup" },
+      { label: "Custom domain", id: "custom-domain" },
+      { label: "Persistent uploads", id: "persistent-uploads" },
+      { label: "Updating", id: "updating" },
       { label: "Database", id: "database" },
       { label: "Redis", id: "redis" },
       { label: "Storage", id: "storage" },
@@ -126,10 +158,9 @@ export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("quick-start");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
   const [search, setSearch] = useState("");
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(NAV.filter(g => g.section !== "Getting Started").map(g => [g.section, true]))
-  );
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const filteredNav = search.trim()
     ? NAV.map(g => ({
@@ -144,6 +175,14 @@ export default function DocsPage() {
     const mq = window.matchMedia("(min-width: 768px)");
     setIsDesktop(mq.matches);
     const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1280px)");
+    setIsLargeScreen(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsLargeScreen(e.matches);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
@@ -167,16 +206,6 @@ export default function DocsPage() {
         if (top <= mainRect.height * 0.3) active = id;
       }
       setActiveSection(active);
-      // Auto-expand the section that contains the active item, collapse others
-      setCollapsed(prev => {
-        const next = { ...prev };
-        for (const group of NAV) {
-          const contains = group.items.some(i => i.id === active);
-          if (contains) next[group.section] = false;
-          else if (!next[group.section]) next[group.section] = true;
-        }
-        return next;
-      });
     }
 
     main.addEventListener("scroll", onScroll, { passive: true });
@@ -201,34 +230,38 @@ export default function DocsPage() {
   return (
     <>
       <style>{`
-        .doc-h1 { font-size: 36px; font-weight: 700; letter-spacing: -.02em; color: #ededed; margin: 0 0 12px; }
-        .doc-h2 { font-size: 22px; font-weight: 700; color: #ededed; margin: 48px 0 12px; padding-top: 48px; border-top: 1px solid rgba(255,255,255,.06); }
-        .doc-h3 { font-size: 16px; font-weight: 600; color: #cfcfcf; margin: 28px 0 10px; }
-        .doc-p { font-size: 15px; line-height: 1.75; color: #888; margin: 0 0 16px; }
-        .doc-code { font-family: 'Geist Mono', monospace; font-size: 13px; background: #161616; border: 1px solid #2a2a2a; border-radius: 8px; padding: 16px 20px; color: #c9d1d9; overflow-x: auto; display: block; margin: 12px 0 20px; white-space: pre; }
-        .doc-inline-code { font-family: monospace; font-size: 12.5px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 4px; padding: 1px 6px; color: #9ba2ee; }
+        .doc-h1 { font-size: 32px; font-weight: 700; letter-spacing: -.02em; color: #ededed; margin: 0 0 10px; }
+        .doc-h1-sub { font-size: 15px; color: #666; margin: 0 0 40px; line-height: 1.6; }
+        .doc-h2 { font-size: 24px; font-weight: 700; color: #ededed; margin: 64px 0 10px; }
+        .doc-h3 { font-size: 15.5px; font-weight: 600; color: #cfcfcf; margin: 28px 0 10px; }
+        .doc-p { font-size: 15px; line-height: 1.8; color: #999; margin: 0 0 16px; }
+        .doc-code { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; background: #111; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; color: #c9d1d9; overflow-x: auto; display: block; margin: 12px 0 20px; white-space: pre; line-height: 1.6; }
+        .doc-inline-code { font-family: ui-monospace, monospace; font-size: 12.5px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 4px; padding: 1px 6px; color: #9ba2ee; }
         .doc-ul { padding-left: 20px; margin: 0 0 16px; }
-        .doc-li { font-size: 15px; line-height: 1.75; color: #888; margin-bottom: 6px; }
+        .doc-li { font-size: 15px; line-height: 1.8; color: #999; margin-bottom: 6px; }
         .doc-a { color: #9ba2ee; text-decoration: underline; text-underline-offset: 3px; }
-        .doc-callout { background: rgba(91,99,211,.08); border: 1px solid rgba(91,99,211,.25); border-radius: 10px; padding: 14px 18px; margin: 16px 0 24px; font-size: 14px; color: #9ba2ee; line-height: 1.6; }
-        .doc-warn { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.25); border-radius: 10px; padding: 14px 18px; margin: 16px 0 24px; font-size: 14px; color: #fbbf24; line-height: 1.6; }
+        .doc-callout { position: relative; padding: 13px 16px 13px 40px; background: rgba(91,99,211,.07); border: 1px solid rgba(91,99,211,.18); border-left: 3px solid #5b63d3; border-radius: 0 8px 8px 0; margin: 16px 0 24px; font-size: 14px; color: #9ba2ee; line-height: 1.7; }
+        .doc-callout::before { content: "ⓘ"; position: absolute; left: 13px; top: 14px; font-size: 14px; color: #5b63d3; }
+        .doc-warn { position: relative; padding: 13px 16px 13px 40px; background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.18); border-left: 3px solid #f59e0b; border-radius: 0 8px 8px 0; margin: 16px 0 24px; font-size: 14px; color: #fbbf24; line-height: 1.7; }
+        .doc-warn::before { content: "⚠"; position: absolute; left: 14px; top: 14px; font-size: 13px; color: #f59e0b; }
         .doc-table-wrap { width: 100%; overflow-x: auto; margin: 12px 0 24px; }
         .doc-table { width: 100%; min-width: 480px; border-collapse: collapse; font-size: 14px; margin: 0; }
-        .doc-table th { text-align: left; padding: 10px 14px; color: #666; font-weight: 600; border-bottom: 1px solid #2a2a2a; }
-        .doc-table td { padding: 10px 14px; color: #888; border-bottom: 1px solid #1e1e1e; vertical-align: top; }
+        .doc-table th { text-align: left; padding: 10px 14px; color: #666; font-weight: 600; border-bottom: 1px solid #222; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+        .doc-table td { padding: 10px 14px; color: #999; border-bottom: 1px solid #1a1a1a; vertical-align: top; }
         .doc-table tr:last-child td { border-bottom: none; }
+        .doc-divider { border: none; border-top: 1px solid #1e1e1e; margin: 48px 0; }
       `}</style>
 
       <div style={{ background: "#0a0a0a", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
         {/* Top nav */}
         <nav style={{
-          height: 64,
-          borderBottom: "1px solid #2a2a2a",
+          height: 56,
+          borderBottom: "1px solid #1e1e1e",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "0 16px",
+          padding: "0 20px",
           position: "fixed",
           top: 0,
           left: 0,
@@ -236,7 +269,8 @@ export default function DocsPage() {
           zIndex: 50,
           background: "#0a0a0a",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {/* Left: hamburger + logo */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
             <button
               onClick={() => setSidebarOpen(o => !o)}
               className="md:hidden"
@@ -245,10 +279,41 @@ export default function DocsPage() {
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
             </button>
-            <img src="/posthivemain.png" alt="Posthive" style={{ height: 28 }} />
+            <img src="/posthivemain.png" alt="Posthive" style={{ height: 26 }} />
           </div>
-          <Link href="/" style={{ fontSize: 14, color: "#888", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
-            <span>←</span> <span className="hidden sm:inline">Back to home</span>
+
+          {/* Centre: section tabs */}
+          <div className="hidden md:flex" style={{ alignItems: "center", gap: 2, overflowX: "auto" }}>
+            {[
+              { label: "Getting Started", id: "quick-start" },
+              { label: "Platforms", id: "bluesky" },
+              { label: "Self-hosting", id: "docker-setup" },
+              { label: "MCP Server", id: "mcp-overview" },
+              { label: "API Reference", id: "api-authentication" },
+            ].map(tab => {
+              const activeGroup = NAV.find(g => g.items.some(i => i.id === activeSection));
+              const tabGroup = NAV.find(g => g.items.some(i => i.id === tab.id));
+              const isActive = activeGroup?.section === tabGroup?.section;
+              return (
+                <button key={tab.id} onClick={() => scrollTo(tab.id)} style={{
+                  fontSize: 13, fontWeight: 500,
+                  color: isActive ? "#ededed" : "#666",
+                  background: "none", border: "none",
+                  borderBottom: `2px solid ${isActive ? "#5b63d3" : "transparent"}`,
+                  padding: "4px 12px", cursor: "pointer",
+                  transition: "color .15s, border-color .15s",
+                  whiteSpace: "nowrap", lineHeight: "32px",
+                }}>
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Right: back link */}
+          <Link href="/" style={{ fontSize: 13, color: "#555", textDecoration: "none", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span className="hidden sm:inline">Home</span>
           </Link>
         </nav>
 
@@ -256,34 +321,56 @@ export default function DocsPage() {
         {sidebarOpen && (
           <div
             className="md:hidden"
-            style={{ position: "fixed", inset: 0, top: 64, background: "rgba(0,0,0,.6)", zIndex: 45 }}
+            style={{ position: "fixed", inset: 0, top: 56, background: "rgba(0,0,0,.6)", zIndex: 45 }}
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Body below nav */}
-        <div style={{ display: "flex", flex: 1, marginTop: 64 }}>
+        <div style={{ display: "flex", flex: 1, marginTop: 56 }}>
 
           {/* Sidebar */}
           <aside
             style={{
-              width: 240,
+              width: 248,
               position: "fixed",
-              top: 64,
+              top: 56,
               bottom: 0,
               left: 0,
-              borderRight: "1px solid #2a2a2a",
+              borderRight: "1px solid #1e1e1e",
               overflowY: "auto",
-              padding: "16px 0 24px",
+              padding: "20px 0 40px",
               background: "#0a0a0a",
               zIndex: 46,
               transform: isDesktop || sidebarOpen ? "translateX(0)" : "translateX(-100%)",
               transition: "transform 0.2s ease",
             }}>
+
+            {/* GitHub link */}
+            <div style={{ padding: "0 16px 16px" }}>
+              <a
+                href="https://github.com/AstaBlackClove/posthive"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  fontSize: 13, color: "#666", textDecoration: "none",
+                  padding: "7px 10px", borderRadius: 7,
+                  border: "1px solid #1e1e1e", background: "#111",
+                  transition: "color .15s, border-color .15s",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#ededed"; (e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#666"; (e.currentTarget as HTMLElement).style.borderColor = "#1e1e1e"; }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                GitHub
+              </a>
+            </div>
+
             {/* Search */}
-            <div style={{ padding: "0 14px 14px" }}>
+            <div style={{ padding: "0 16px 16px" }}>
               <div style={{ position: "relative" }}>
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#555", pointerEvents: "none" }}>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#444", pointerEvents: "none" }}>
                   <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.6"/>
                   <path d="M10.5 10.5l3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
                 </svg>
@@ -291,54 +378,41 @@ export default function DocsPage() {
                   type="search"
                   placeholder="Search docs…"
                   value={search}
-                  onChange={e => {
-                    setSearch(e.target.value);
-                    if (e.target.value.trim()) {
-                      setCollapsed(Object.fromEntries(NAV.map(g => [g.section, false])));
-                    }
-                  }}
+                  onChange={e => setSearch(e.target.value)}
                   style={{
-                    width: "100%", paddingLeft: 30, paddingRight: 10, paddingTop: 7, paddingBottom: 7,
-                    background: "#111", border: "1px solid #2a2a2a", borderRadius: 8,
+                    width: "100%", paddingLeft: 32, paddingRight: 10, paddingTop: 7, paddingBottom: 7,
+                    background: "#111", border: "1px solid #1e1e1e", borderRadius: 7,
                     fontSize: 12.5, color: "#ededed", outline: "none", boxSizing: "border-box",
                   }}
                 />
               </div>
             </div>
+
             {filteredNav.length === 0 && (
-              <p style={{ padding: "0 20px", fontSize: 12, color: "#555" }}>No results for &ldquo;{search}&rdquo;</p>
+              <p style={{ padding: "0 20px", fontSize: 12, color: "#444" }}>No results for &ldquo;{search}&rdquo;</p>
             )}
+
             {filteredNav.map((group) => {
               const isCollapsed = search.trim() ? false : (collapsed[group.section] ?? false);
               const hasActive = group.items.some(i => i.id === activeSection);
               return (
-                <div key={group.section}>
+                <div key={group.section} style={{ marginBottom: 4 }}>
+                  {/* Section header — click to toggle */}
                   <button
                     onClick={() => setCollapsed(c => ({ ...c, [group.section]: !isCollapsed }))}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      width: "100%",
-                      fontSize: 10.5,
-                      fontWeight: 700,
-                      color: hasActive ? "#9ba2ee" : "#999",
-                      letterSpacing: ".08em",
-                      textTransform: "uppercase",
-                      padding: "16px 20px 6px",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
+                      display: "block", width: "100%", textAlign: "left",
+                      fontSize: 13, fontWeight: 600,
+                      color: hasActive ? "#ededed" : "#888",
+                      letterSpacing: "0",
+                      padding: "18px 20px 6px",
+                      background: "none", border: "none", cursor: "pointer",
                     }}
                   >
-                    <span>{group.section}</span>
-                    <svg
-                      width="12" height="12" viewBox="0 0 12 12" fill="none"
-                      style={{ transition: "transform 0.2s", transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)", flexShrink: 0 }}
-                    >
-                      <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    {group.section}
                   </button>
+
+                  {/* Items */}
                   {!isCollapsed && group.items.map((item) => {
                     const active = activeSection === item.id;
                     return (
@@ -346,21 +420,16 @@ export default function DocsPage() {
                         key={item.id}
                         onClick={() => scrollTo(item.id)}
                         style={{
-                          display: "block",
-                          width: "100%",
-                          textAlign: "left",
-                          fontSize: 13,
-                          padding: "6px 20px",
+                          display: "block", width: "100%", textAlign: "left",
+                          fontSize: 13, padding: "4px 20px 4px 28px",
                           cursor: "pointer",
-                          color: active ? "#ededed" : "#777",
-                          background: active ? "rgba(91,99,211,.06)" : "transparent",
-                          borderTop: "none",
-                          borderRight: "none",
-                          borderBottom: "none",
-                          borderLeftWidth: 2,
-                          borderLeftStyle: "solid",
-                          borderLeftColor: active ? "#5b63d3" : "transparent",
-                          transition: "all 0.15s",
+                          color: active ? "#9ba2ee" : "#555",
+                          background: "transparent",
+                          border: "none",
+                          borderLeft: `2px solid transparent`,
+                          marginLeft: 4,
+                          transition: "color .12s",
+                          fontWeight: active ? 500 : 400,
                         }}
                       >
                         {item.label}
@@ -374,19 +443,43 @@ export default function DocsPage() {
 
           {/* Main content */}
           <main ref={mainRef} style={{
-            marginLeft: isDesktop ? 240 : 0,
+            marginLeft: isDesktop ? 248 : 0,
+            marginRight: isLargeScreen ? 220 : 0,
             flex: 1,
             overflowY: "auto",
             minWidth: 0,
-            height: "calc(100vh - 64px)",
+            height: "calc(100vh - 56px)",
           }}>
-            <div style={{ maxWidth: 760, margin: "0 auto", paddingTop: 48, paddingBottom: 120 }} className="px-5 md:px-10">
+            <div style={{ maxWidth: 780, margin: "0 auto", paddingTop: 52, paddingBottom: 120 }} className="px-5 md:px-12">
 
               {/* Hero */}
+              <SectionLabel>Getting Started</SectionLabel>
               <h1 className="doc-h1">Posthive Documentation</h1>
-              <p className="doc-p">
-                Posthive is a social media scheduling platform. Write once, publish to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, and Telegram — all from a single clean interface.
+              <p className="doc-h1-sub">
+                Schedule posts to 13 platforms from one interface — with built-in MCP support for AI agents.
               </p>
+
+              {/* Quick-start cards */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "0 0 48px" }}>
+                {[
+                  { icon: "⚡", title: "Quick start", desc: "Up and running in 5 minutes", id: "quick-start" },
+                  { icon: "🐳", title: "Self-hosting", desc: "Docker setup on your own VPS", id: "docker-setup" },
+                  { icon: "🤖", title: "MCP Server", desc: "Connect Claude, ChatGPT & agents", id: "mcp-overview" },
+                  { icon: "🔌", title: "API Reference", desc: "Schedule posts programmatically", id: "api-authentication" },
+                ].map(card => (
+                  <button key={card.id} onClick={() => scrollTo(card.id)} style={{
+                    textAlign: "left", padding: "16px 18px", background: "#111", border: "1px solid #1e1e1e",
+                    borderRadius: 10, cursor: "pointer", transition: "border-color .15s",
+                  }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "#1e1e1e"}
+                  >
+                    <div style={{ fontSize: 20, marginBottom: 8 }}>{card.icon}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#ededed", marginBottom: 4 }}>{card.title}</div>
+                    <div style={{ fontSize: 13, color: "#666" }}>{card.desc}</div>
+                  </button>
+                ))}
+              </div>
 
               {/* ── Quick start ── */}
               <h2 className="doc-h2" id="quick-start">Quick start</h2>
@@ -461,6 +554,7 @@ pnpm install`}</CopyCode>
               </div>
 
               {/* ── Bluesky ── */}
+              <SectionLabel>Platforms</SectionLabel>
               <h2 className="doc-h2" id="bluesky">Bluesky</h2>
               <p className="doc-p">
                 Bluesky uses app passwords no OAuth flow required. Connection is straightforward and does not need a public callback URL.
@@ -734,6 +828,7 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
               </div>
 
               {/* ── Scheduling posts ── */}
+              <SectionLabel>Features</SectionLabel>
               <h2 className="doc-h2" id="scheduling-posts">Scheduling posts</h2>
               <p className="doc-p">
                 The Compose page is where you write and schedule posts. Everything happens in a single panel no multi-step wizard.
@@ -854,22 +949,128 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
               </ul>
 
               {/* ── Docker setup ── */}
+              <SectionLabel>Self-hosting</SectionLabel>
               <h2 className="doc-h2" id="docker-setup">Docker setup</h2>
               <p className="doc-p">
-                Posthive can be self-hosted on any platform that runs Docker containers Railway, Render, Fly.io, or your own VPS.
+                Self-host Posthive on any Linux VPS, Raspberry Pi, or cloud VM — no Node.js or pnpm needed. One <span className="doc-inline-code">docker compose up</span> command starts everything.
               </p>
-              <h3 className="doc-h3">Recommended stack</h3>
+
+              <h3 className="doc-h3">Prerequisites</h3>
               <ul className="doc-ul">
-                <li className="doc-li">Deploy the API container and point <span className="doc-inline-code">DATABASE_URL</span> to a managed Postgres instance.</li>
-                <li className="doc-li">Set <span className="doc-inline-code">REDIS_URL</span> to an Upstash Redis or Railway Redis URL.</li>
-                <li className="doc-li">Update the Prisma provider to <span className="doc-inline-code">postgresql</span> in <span className="doc-inline-code">apps/api/prisma/schema.prisma</span>.</li>
-                <li className="doc-li">Run <span className="doc-inline-code">pnpm db:migrate</span> as part of your release command.</li>
+                <li className="doc-li"><a href="https://docs.docker.com/engine/install/" target="_blank" rel="noopener noreferrer" style={{ color: "#5b63d3" }}>Docker Engine 24+</a> with the Compose v2 plugin (<span className="doc-inline-code">docker compose</span>, not <span className="doc-inline-code">docker-compose</span>)</li>
               </ul>
-              <CopyCode>{`# Railway — Build Command (Build → Custom Build Command)
+
+              <h3 className="doc-h3">1 · Clone and configure</h3>
+              <CopyCode>{`git clone https://github.com/AstaBlackClove/posthive.git
+cd posthive
+cp apps/api/.env.example .env`}</CopyCode>
+              <p className="doc-p">Open <span className="doc-inline-code">.env</span> and set at minimum:</p>
+              <CopyCode>{`# Postgres
+POSTGRES_PASSWORD=change_me_to_a_strong_password
+
+# Secrets — generate each with:
+# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+ENCRYPTION_KEY=<64-char hex>      # NEVER change after accounts are saved
+JWT_ACCESS_SECRET=<64-char hex>
+JWT_REFRESH_SECRET=<64-char hex>
+
+# URLs (update to your domain before building)
+WEB_URL=http://localhost:3000
+PUBLIC_API_URL=http://localhost:3001`}</CopyCode>
+              <div className="doc-warn">
+                <strong>Critical:</strong> <span className="doc-inline-code">ENCRYPTION_KEY</span> encrypts all stored OAuth tokens. Write it down somewhere safe — changing it after accounts are connected makes every connected account permanently unusable.
+              </div>
+
+              <h3 className="doc-h3">2 · Start</h3>
+              <CopyCode>{`docker compose up -d --build`}</CopyCode>
+              <p className="doc-p">First build takes 2–5 minutes. Once done, open <span className="doc-inline-code">http://localhost:3000</span> and register your account. Billing is disabled by default — all features are unlocked.</p>
+              <div style={{ overflowX: "auto", margin: "12px 0 20px" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead><tr style={{ borderBottom: "1px solid #2a2a2a" }}>
+                    <th style={{ padding: "8px 12px", textAlign: "left", color: "#888" }}>Service</th>
+                    <th style={{ padding: "8px 12px", textAlign: "left", color: "#888" }}>URL</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr style={{ borderBottom: "1px solid #1a1a1a" }}>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>Web</td>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>http://localhost:3000</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>API</td>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>http://localhost:3001</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* ── Custom domain ── */}
+              <h2 className="doc-h2" id="custom-domain">Custom domain</h2>
+              <p className="doc-p">Set your public URLs in <span className="doc-inline-code">.env</span> before building, then point a reverse proxy at the containers.</p>
+              <CopyCode>{`WEB_URL=https://yourdomain.com
+PUBLIC_API_URL=https://api.yourdomain.com`}</CopyCode>
+              <p className="doc-p">Rebuild after changing URLs:</p>
+              <CopyCode>{`docker compose up -d --build`}</CopyCode>
+
+              <h3 className="doc-h3">Caddy (recommended — auto HTTPS)</h3>
+              <CopyCode>{`yourdomain.com {
+    reverse_proxy localhost:3000
+}
+
+api.yourdomain.com {
+    reverse_proxy localhost:3001
+}`}</CopyCode>
+
+              <h3 className="doc-h3">nginx</h3>
+              <CopyCode>{`server {
+    listen 80;
+    server_name yourdomain.com;
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+server {
+    listen 80;
+    server_name api.yourdomain.com;
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}`}</CopyCode>
+
+              {/* ── Persistent uploads ── */}
+              <h2 className="doc-h2" id="persistent-uploads">Persistent uploads</h2>
+              <p className="doc-p">By default, uploaded images live inside the container and are lost on rebuild. Add a named volume in <span className="doc-inline-code">docker-compose.yml</span> to persist them:</p>
+              <CopyCode>{`services:
+  api:
+    ...
+    volumes:
+      - uploads:/app/apps/api/uploads
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads:       # add this`}</CopyCode>
+              <p className="doc-p">For production, use <strong>Supabase Storage</strong> instead — set <span className="doc-inline-code">STORAGE_PROVIDER=supabase</span> and the <span className="doc-inline-code">SUPABASE_*</span> env vars. Files are stored off-server and survive rebuilds automatically.</p>
+
+              {/* ── Updating ── */}
+              <h2 className="doc-h2" id="updating">Updating</h2>
+              <CopyCode>{`git pull
+docker compose up -d --build`}</CopyCode>
+              <p className="doc-p">Database migrations run automatically on API startup — no manual step needed.</p>
+
+              <h3 className="doc-h3">Railway / Render / Fly.io</h3>
+              <p className="doc-p">If you prefer a managed platform over a VPS, deploy the source repo and set these commands:</p>
+              <CopyCode>{`# Build command
 pnpm install --frozen-lockfile --filter api... && pnpm --filter api exec prisma generate && pnpm --filter api build
 
-# Railway — Start Command (Deploy → Start Command)
-cd apps/api && npx prisma migrate deploy && node dist/index.js`}</CopyCode>
+# Start command
+cd apps/api && node_modules/.bin/prisma migrate deploy && node dist/index.js`}</CopyCode>
 
               {/* ── Database ── */}
               <h2 className="doc-h2" id="database">Database</h2>
@@ -921,6 +1122,7 @@ SUPABASE_URL="https://your-project.supabase.co"
 SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
 
               {/* ── Plans & pricing ── */}
+              <SectionLabel>Billing</SectionLabel>
               <h2 className="doc-h2" id="plans-pricing">Plans &amp; pricing</h2>
               <p className="doc-p">
                 Posthive has four tiers. The trial is available immediately after sign-up.
@@ -1012,6 +1214,7 @@ DODO_WEBHOOK_SECRET="abc123..."`}</CopyCode>
               </table></div>
 
               {/* ── Outbound Webhooks ── */}
+              <SectionLabel>Outbound Webhooks</SectionLabel>
               <h2 className="doc-h2" id="outbound-webhooks">Outbound Webhooks (Zapier / n8n / Make)</h2>
               <p className="doc-p">
                 Posthive fires a <span className="doc-inline-code">POST</span> request to your configured URL every time a post finishes publishing (Pro &amp; Team plans). Use this to trigger automations in Zapier, n8n, Make, or any HTTP-capable tool.
@@ -1061,6 +1264,7 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
               <p className="doc-p">1. Add a <strong>Webhooks → Custom webhook</strong> module as the trigger. 2. Copy the URL and paste it into Posthive Settings → Webhook. 3. Run a test post — Make will auto-detect the payload structure. 4. Connect downstream modules.</p>
 
               {/* ── MCP SERVER ── */}
+              <SectionLabel>MCP Server</SectionLabel>
               <h2 className="doc-h2" id="mcp-overview">MCP Server</h2>
               <p className="doc-p">
                 Posthive ships a built-in MCP (Model Context Protocol) server that exposes your scheduling queue as tools any AI agent can call — Claude, ChatGPT, Cursor, VS Code, Claude Code, Codex, OpenClaw, Hermes Agent, or your own pipeline. No API key copy-pasting required — every client uses the same bare URL and signs in via your browser. Two ways to connect:
@@ -1337,6 +1541,7 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
               </div>
 
               {/* ── API REFERENCE ── */}
+              <SectionLabel>API Reference</SectionLabel>
               <h2 className="doc-h2" id="api-authentication">Authentication</h2>
               <p className="doc-p">
                 The Posthive REST API lets you schedule posts and manage accounts programmatically — useful for AI agents, automation scripts, and custom integrations. API access is available on <strong>Pro</strong> and <strong>Team</strong> plans. When self-hosting with <span className="doc-inline-code">ENABLE_BILLING</span> unset, all users have access.
@@ -1645,6 +1850,47 @@ curl -X POST https://your-api-url/api/v1/posts \\
 
             </div>
           </main>
+
+          {/* ── On this page (right panel) ── */}
+          {isLargeScreen && (() => {
+            const activeGroup = NAV.find(g => g.items.some(i => i.id === activeSection));
+            return (
+              <aside style={{
+                width: 220, position: "fixed", top: 56, right: 0, bottom: 0,
+                borderLeft: "1px solid #1a1a1a", padding: "32px 20px 40px",
+                background: "#0a0a0a", overflowY: "auto",
+              }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#444", letterSpacing: ".07em", textTransform: "uppercase", margin: "0 0 14px" }}>
+                  On this page
+                </p>
+                {activeGroup?.items.map(item => {
+                  const active = item.id === activeSection;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => scrollTo(item.id)}
+                      style={{
+                        display: "block", width: "100%", textAlign: "left",
+                        fontSize: 12.5, padding: "4px 0 4px 10px",
+                        background: "none",
+                        border: "none",
+                        borderLeft: `2px solid ${active ? "#5b63d3" : "#1e1e1e"}`,
+                        cursor: "pointer",
+                        color: active ? "#9ba2ee" : "#555",
+                        fontWeight: active ? 500 : 400,
+                        transition: "color .12s, border-color .12s",
+                        lineHeight: 1.5,
+                        marginBottom: 2,
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </aside>
+            );
+          })()}
+
         </div>
       </div>
     </>
