@@ -360,12 +360,13 @@ export default function RootPage() {
         .feature-visual:hover { box-shadow: 0 0 40px rgba(91,99,211,.08); }
 
         @media (max-width: 900px) {
-          .ph-feature-detail-row { grid-template-columns: 1fr !important; direction: ltr !important; }
-          .ph-feature-detail-row > * { direction: ltr !important; }
+          .ph-feature-detail-row { grid-template-columns: 1fr !important; direction: ltr !important; gap: 40px !important; }
+          .ph-feature-detail-row > * { direction: ltr !important; min-width: 0; max-width: 100%; overflow: hidden; }
         }
         @media (max-width: 480px) {
           .ph-platforms-grid { grid-template-columns: 1fr !important; }
           .ph-selfhost-btns { flex-direction: row !important; flex-wrap: wrap !important; }
+          .ph-feature-detail-row { gap: 28px !important; }
         }
       `}</style>
 

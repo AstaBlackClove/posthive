@@ -1,7 +1,9 @@
+import React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { NavBar } from "../../../components/LandingNav";
+import { MarketingNavBar } from "../../../components/MarketingNavBar";
+import { LandingFooter } from "../../../components/LandingFooter";
 import { PlatformIcon } from "../../../components/PlatformIcon";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
@@ -529,14 +531,82 @@ function PageImage({ src, alt }: { src: string; alt: string; aspectRatio?: strin
   );
 }
 
-// ── Check icon ─────────────────────────────────────────────────────────────
+// ── Platform mockup samples ─────────────────────────────────────────────────
 
-function Check() {
+const PLATFORM_SAMPLES: Record<string, { text: string; count: number; limit: number | string; showImages: boolean; authLabel: string; mediaLabel: string }> = {
+  bluesky:   { text: "Shipping features faster than ever with Posthive. The async workflow is a game-changer.", count: 88, limit: 300, showImages: true, authLabel: "App password", mediaLabel: "4 images" },
+  threads:   { text: "Sunday reset thread. Six things I'm carrying into the week 👇", count: 63, limit: 500, showImages: true, authLabel: "Meta OAuth", mediaLabel: "10 images" },
+  instagram: { text: "New collection drop 🎨 Every piece is one-of-a-kind. Tap to see the full series.", count: 80, limit: 2200, showImages: true, authLabel: "Meta OAuth", mediaLabel: "Reels + Stories" },
+  linkedin:  { text: "3 lessons learned from automating our content pipeline with Posthive. We used to spend 90 minutes a day cross-posting. Now it's 10.", count: 135, limit: 3000, showImages: true, authLabel: "LinkedIn OAuth", mediaLabel: "9 images" },
+  mastodon:  { text: "Open source, open web. Shipped a new feature today — all the details in the thread below 🧵", count: 91, limit: 500, showImages: true, authLabel: "OAuth 2.0", mediaLabel: "Image + Video" },
+  youtube:   { text: "How I Automated My Entire Social Media Strategy (in 1 hour)", count: 57, limit: 100, showImages: false, authLabel: "Google OAuth", mediaLabel: "Video upload" },
+  facebook:  { text: "Big update on our content strategy. We've been using Posthive for 3 months now — here's what changed:", count: 93, limit: "63k", showImages: true, authLabel: "Meta OAuth", mediaLabel: "Photo + Video" },
+  pinterest: { text: "10 desk setups that actually boost productivity → link in bio", count: 58, limit: 500, showImages: true, authLabel: "Pinterest OAuth", mediaLabel: "Image required" },
+  telegram:  { text: "📡 Weekly digest is live. New MCP integrations, scheduling tips, and community highlights.", count: 89, limit: 4096, showImages: true, authLabel: "Bot token", mediaLabel: "10 images" },
+  discord:   { text: "📣 New release! Posthive now supports Discord scheduling via webhook. No more manual announcements.", count: 93, limit: 2000, showImages: true, authLabel: "Bot + webhook", mediaLabel: "10 images" },
+  nostr:     { text: "The open social web is growing. Shipped Nostr support in Posthive — schedule Kind 1 notes across 4 relays.", count: 107, limit: "10k", showImages: false, authLabel: "Keypair (nsec)", mediaLabel: "NIP-92 images" },
+  tumblr:    { text: "new post: why I switched from Buffer to a self-hosted scheduler (and what I learned)", count: 82, limit: 4096, showImages: true, authLabel: "OAuth 1.0a", mediaLabel: "NPF images" },
+  twitter:   { text: "shipped: drag-to-reschedule calendar is live. move posts around with one drag — no more manual edits", count: 97, limit: 280, showImages: true, authLabel: "OAuth 1.0a", mediaLabel: "4 images" },
+};
+
+// ── Platform hero mockup card ──────────────────────────────────────────────
+
+function PlatformMockup({ platform, name, color }: { platform: string; name: string; color: string }) {
+  const s = PLATFORM_SAMPLES[platform] ?? PLATFORM_SAMPLES.bluesky;
+  const accentClr = "#5b63d3";
+  const divClr = "rgba(237,237,237,0.1)";
+
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="8" fill="#5b63d3" fillOpacity="0.15" />
-      <path d="M5 8l2.5 2.5L11 5.5" stroke="#9ba2ee" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <div style={{ width: "100%", borderRadius: 16, overflow: "hidden", border: `1px solid ${divClr}`, background: "#0e0e14", boxShadow: "0 24px 80px rgba(0,0,0,0.5)" }}>
+      {/* header bar */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: `1px solid ${divClr}`, background: "rgba(255,255,255,0.03)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <PlatformIcon platform={platform} size={16} />
+          <span style={{ fontSize: 13, fontWeight: 500, color: "#ededed" }}>Posthive · {name}</span>
+        </div>
+        <div style={{ fontSize: 10, letterSpacing: "0.1em", color: accentClr, border: `1px solid ${accentClr}`, borderRadius: 4, padding: "2px 7px", fontWeight: 600 }}>DRAFT</div>
+      </div>
+
+      {/* post card */}
+      <div style={{ margin: 14, borderRadius: 12, border: `1px solid ${divClr}`, background: "#111", overflow: "hidden" }}>
+        {/* post header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px" }}>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#2a2a2a", display: "grid", placeItems: "center", flexShrink: 0, fontSize: 13, fontWeight: 600, color: "rgba(237,237,237,0.6)" }}>@</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: "#ededed" }}>@yourhandle</div>
+            <div style={{ fontSize: 11, color: "rgba(237,237,237,0.4)", marginTop: 1 }}>Scheduled · Tomorrow 9:00 AM</div>
+          </div>
+        </div>
+
+        {/* post text */}
+        <div style={{ padding: "0 16px 14px", fontSize: 14, lineHeight: 1.55, color: "rgba(237,237,237,0.85)" }}>{s.text}</div>
+
+        {/* image placeholders */}
+        {s.showImages && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, margin: "0 16px 14px" }}>
+            {[1, 2].map(n => (
+              <div key={n} style={{ borderRadius: 8, background: "rgba(91,99,211,0.12)", border: `1px solid ${divClr}`, aspectRatio: "16/10", display: "grid", placeItems: "center" }}>
+                <span style={{ fontSize: 11, color: "rgba(237,237,237,0.25)", letterSpacing: "0.06em" }}>image 0{n}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* stats row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderTop: `1px solid ${divClr}` }}>
+          <div style={{ display: "flex", gap: 16, fontSize: 12, color: "rgba(237,237,237,0.35)" }}>
+            <span>♥ 24</span><span>↩ 6</span><span>↕ 3</span>
+          </div>
+          <span style={{ fontSize: 12, color: "rgba(237,237,237,0.35)", fontFeatureSettings: "'tnum' 1" }}>{s.count} / {s.limit}</span>
+        </div>
+      </div>
+
+      {/* first comment section */}
+      <div style={{ margin: "0 14px 14px", borderRadius: 10, border: `1px solid ${divClr}`, background: "rgba(91,99,211,0.06)", padding: "12px 14px" }}>
+        <div style={{ fontSize: 10, letterSpacing: "0.12em", color: color, fontWeight: 600, marginBottom: 6 }}>FIRST COMMENT · AUTO-POSTED</div>
+        <div style={{ fontSize: 13, color: "rgba(237,237,237,0.6)" }}>Full changelog and screenshots → posthive.co/blog</div>
+      </div>
+    </div>
   );
 }
 
@@ -584,168 +654,265 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
 
   const { softwareApp, breadcrumb, faqPage } = buildSchemas(platform, data);
 
+  const W = "1200px";
+  const div = "rgba(237,237,237,0.1)";
+  const muted75 = "rgba(237,237,237,0.75)";
+  const muted55 = "rgba(237,237,237,0.55)";
+  const accent = "#5b63d3";
+
+  const sample = PLATFORM_SAMPLES[platform] ?? PLATFORM_SAMPLES.bluesky;
+
   return (
-    <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed" }}>
+    <div style={{
+      minHeight: "100vh", color: "#ededed", fontFamily: "Inter,system-ui,-apple-system,sans-serif",
+      background: `radial-gradient(1100px 640px at 88% -180px, rgba(30,33,64,0.7), transparent 60%), radial-gradient(900px 700px at -8% 110%, rgba(0,0,0,0.3), transparent 55%), #0a0a0a`,
+    }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApp) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       {faqPage && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPage) }} />}
-      <NavBar user={false} ctaHref="/register" navCtaLabel="Get started free" />
+      <style>{`
+        .plat-wrap { max-width: ${W}; margin: 0 auto; padding: 0 clamp(20px,5vw,72px); }
+        .plat-rule { height: 1px; border: 0; margin: 0; background: linear-gradient(to right, transparent, ${div} 48px calc(100% - 48px), transparent); }
+        .plat-kicker { display: inline-flex; align-items: center; gap: 12px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: ${accent}; margin: 0 0 20px; }
+        .plat-kicker::before { content: ""; width: 32px; height: 1px; background: ${accent}; }
+        @media (max-width: 900px) {
+          .plat-hero-grid, .plat-supports-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .plat-sticky { position: static !important; }
+        }
+        @media (max-width: 700px) {
+          .plat-steps-grid { grid-template-columns: 1fr !important; }
+          .plat-why-grid { grid-template-columns: 1fr !important; }
+          .plat-checklist { grid-template-columns: 1fr !important; }
+          .plat-hero-grid, .plat-supports-grid { gap: 28px !important; }
+          .plat-spec-strip { grid-template-columns: 1fr 1fr !important; gap: 24px !important; }
+        }
+        @media (max-width: 400px) {
+          .plat-spec-strip { grid-template-columns: 1fr !important; }
+        }
+        .plat-faq { }
+        .plat-faq details { padding: 22px 0; border-top: 1px solid ${div}; }
+        .plat-faq details summary { cursor: pointer; font-size: 17px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+        .plat-faq details summary::-webkit-details-marker { display: none; }
+        .plat-faq-last { border-bottom: 1px solid ${div}; }
+        .plat-faq summary .faq-plus { color: ${accent}; font-size: 20px; font-weight: 400; flex: none; transition: transform 0.15s; }
+        .plat-faq details[open] summary .faq-plus { transform: rotate(45deg); }
+        .plat-chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border: 1px solid ${div}; border-radius: 20px; text-decoration: none; color: rgba(237,237,237,0.7); font-size: 13px; transition: border-color 0.12s; }
+        .plat-chip:hover { border-color: ${accent}; }
+      `}</style>
+
+      <MarketingNavBar />
+      <div style={{ height: 68 }} />
+
+      {/* breadcrumb */}
+      <div className="plat-wrap" style={{ paddingTop: 24, fontSize: 12, letterSpacing: "0.06em", color: muted55 }}>
+        <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>Home</Link>
+        <span style={{ margin: "0 8px", opacity: 0.5 }}>/</span>
+        <Link href="/platforms/bluesky" style={{ color: "inherit", textDecoration: "none" }}>Platforms</Link>
+        <span style={{ margin: "0 8px", opacity: 0.5 }}>/</span>
+        <span style={{ color: "#ededed" }}>{data.name}</span>
+      </div>
 
       {/* ── Hero ── */}
-      <section style={{ paddingTop: 140, paddingBottom: 80, textAlign: "center", padding: "140px 24px 80px" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          {/* Platform badge */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#111", border: "1px solid #2a2a2a", borderRadius: 999, padding: "6px 14px", marginBottom: 28 }}>
-            <PlatformIcon platform={platform} size={16} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: data.color }}>{data.name}</span>
-          </div>
-
-          <h1 style={{ fontSize: "clamp(32px, 5vw, 54px)", fontWeight: 800, letterSpacing: "-.03em", lineHeight: 1.12, color: "#ededed", margin: "0 0 20px" }}>
-            {data.headline}
-          </h1>
-          <p style={{ fontSize: "clamp(15px, 2vw, 18px)", color: "#888", lineHeight: 1.7, maxWidth: 580, margin: "0 auto 36px" }}>
-            {data.subheadline}
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/register" style={{ fontSize: 15, fontWeight: 600, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)" }}>
-              Get started free
-            </Link>
-            <Link href="/docs" style={{ fontSize: 15, fontWeight: 600, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#ededed", textDecoration: "none", border: "1px solid #2a2a2a" }}>
-              View docs
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── What's supported ── */}
-      <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".1em", textTransform: "uppercase", textAlign: "center", marginBottom: 32 }}>
-            WHAT POSTHIVE SUPPORTS ON {data.name.toUpperCase()}
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
-            {data.supports.map((s) => (
-              <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 12, background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "14px 16px" }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: "#1a1a1a", border: "1px solid #2a2a2a", display: "grid", placeItems: "center", color: "#666", flexShrink: 0 }}>
-                  <Icon name={s.icon} />
-                </div>
-                <span style={{ fontSize: 14, color: "#ccc", fontWeight: 500 }}>{s.label}</span>
+      <section className="plat-wrap" style={{ padding: "calc(2.5*28px) clamp(20px,5vw,72px) calc(3*28px)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: 80, alignItems: "center" }} className="plat-hero-grid">
+          {/* Left: text + spec strip */}
+          <div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
+              <PlatformIcon platform={platform} size={16} />
+              <span style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: data.color, fontWeight: 500 }}>{data.name} Scheduler</span>
+            </div>
+            <h1 style={{ fontSize: "clamp(36px,4.8vw,60px)", fontWeight: 500, letterSpacing: "-.02em", lineHeight: 1.05, margin: "0 0 24px" }}>
+              {data.headline}
+            </h1>
+            <p style={{ fontSize: 18, lineHeight: 1.55, color: muted75, margin: "0 0 32px", maxWidth: "54ch" }}>
+              {data.subheadline}
+            </p>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <Link href={registerUrl} style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "12px 20px", borderRadius: 8, background: accent, color: "#fff", textDecoration: "none", border: `1px solid ${accent}` }}>
+                Try free for 14 days →
+              </Link>
+              <Link href="/docs" style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "12px 20px", borderRadius: 8, background: "transparent", color: muted75, textDecoration: "none", border: `1px solid ${div}` }}>
+                View docs
+              </Link>
+            </div>
+            {/* Spec strip */}
+            <div className="plat-spec-strip" style={{ display: "grid", gridTemplateColumns: "repeat(3,auto)", gap: 48, marginTop: 48, paddingTop: 24, borderTop: `1px solid ${div}`, width: "fit-content" }}>
+              <div>
+                <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: muted55, marginBottom: 6 }}>Character limit</div>
+                <div style={{ fontSize: 20, fontWeight: 500 }}>{sample.limit.toLocaleString()}</div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Screenshot placeholder ── */}
-      <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <PageImage src={data.image} alt={data.imageAlt} aspectRatio="16/9" />
-        </div>
-      </section>
-
-      {/* ── How it works ── */}
-      <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".1em", textTransform: "uppercase", textAlign: "center", marginBottom: 48 }}>
-            HOW IT WORKS
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 24 }}>
-            {data.steps.map((s) => (
-              <div key={s.n} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "24px 20px" }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#5b63d3", letterSpacing: ".1em", marginBottom: 10 }}>{s.n}</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", marginBottom: 8 }}>{s.title}</p>
-                <p style={{ fontSize: 13.5, color: "#666", lineHeight: 1.6 }}>{s.desc}</p>
+              <div>
+                <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: muted55, marginBottom: 6 }}>Media</div>
+                <div style={{ fontSize: 20, fontWeight: 500 }}>{sample.mediaLabel}</div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Note callout (optional) ── */}
-      {data.note && (
-        <section style={{ padding: "0 24px 48px" }}>
-          <div style={{ maxWidth: 860, margin: "0 auto" }}>
-            <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 12, padding: "16px 20px", display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <span style={{ fontSize: 16, flexShrink: 0 }}>ℹ️</span>
-              <p style={{ fontSize: 13.5, color: "#888", lineHeight: 1.6, margin: 0 }}>{data.note}</p>
+              <div>
+                <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: muted55, marginBottom: 6 }}>Auth</div>
+                <div style={{ fontSize: 20, fontWeight: 500 }}>{sample.authLabel}</div>
+              </div>
             </div>
           </div>
-        </section>
-      )}
+          {/* Right: platform mockup card */}
+          <div>
+            <PlatformMockup platform={platform} name={data.name} color={data.color} />
+          </div>
+        </div>
+      </section>
+
+      <div className="plat-wrap"><hr className="plat-rule" /></div>
+
+      {/* ── What's supported ── */}
+      <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 80, alignItems: "start" }} className="plat-supports-grid">
+          <div className="plat-sticky" style={{ position: "sticky", top: 100 }}>
+            <span className="plat-kicker">What Posthive supports</span>
+            <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 20px", fontWeight: 500 }}>
+              Native, not glued on.
+            </h2>
+            <p style={{ fontSize: 15, lineHeight: 1.6, color: muted75, margin: 0 }}>
+              Every {data.name} feature Posthive supports is implemented against the native {data.name} API — not workarounds, not browser automation.
+            </p>
+          </div>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }} className="plat-checklist">
+            {data.supports.map((s, i) => (
+              <li key={s.label} style={{ display: "flex", gap: 14, padding: "20px 0", borderBottom: `1px solid ${div}`, alignItems: "baseline", borderRight: i % 2 === 0 ? `1px solid ${div}` : "none", paddingRight: i % 2 === 0 ? 24 : 0, paddingLeft: i % 2 === 1 ? 24 : 0 }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
+                  <path d="M2 7l3.5 3.5L12 3" stroke={accent} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span style={{ fontSize: 15, lineHeight: 1.5 }}>{s.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <div className="plat-wrap"><hr className="plat-rule" /></div>
+
+      {/* ── Screenshot section ── */}
+      <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
+          <div>
+            <span className="plat-kicker">In Posthive</span>
+            <h2 style={{ fontSize: "clamp(24px,3vw,34px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: 0, fontWeight: 500 }}>Schedule {data.name} from one composer.</h2>
+          </div>
+          <Link href={registerUrl} style={{ fontSize: 14, color: accent, textDecoration: "none" }}>Try it yourself →</Link>
+        </div>
+        <div style={{ width: "100%", borderRadius: 14, overflow: "hidden", background: "#111", border: `1px solid ${div}` }}>
+          <PageImage src={data.image} alt={data.imageAlt} />
+        </div>
+        <p style={{ fontSize: 12, color: muted55, marginTop: 12, letterSpacing: "0.02em" }}>Fig. 01 — Posthive composer showing {data.name} post preview</p>
+      </section>
+
+      <div className="plat-wrap"><hr className="plat-rule" /></div>
+
+      {/* ── How it works ── */}
+      <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+        <span className="plat-kicker">How it works</span>
+        <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 56px", fontWeight: 500, maxWidth: "22ch" }}>
+          Connect once. Schedule forever.
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 48 }} className="plat-steps-grid">
+          {data.steps.map((s) => (
+            <div key={s.n}>
+              <div style={{ fontSize: 48, lineHeight: 1, fontWeight: 500, color: accent, letterSpacing: "-0.03em", marginBottom: 24, fontFeatureSettings: "'tnum' 1" }}>{s.n}</div>
+              <h3 style={{ fontSize: 20, fontWeight: 500, margin: "0 0 12px" }}>{s.title}</h3>
+              <p style={{ fontSize: 14, lineHeight: 1.65, color: muted75, margin: 0 }}>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+        {data.note && (
+          <div style={{ marginTop: 40, padding: "14px 18px", border: `1px solid ${div}`, borderRadius: 10, fontSize: 13, color: muted55, lineHeight: 1.6 }}>
+            {data.note}
+          </div>
+        )}
+      </section>
+
+      <div className="plat-wrap"><hr className="plat-rule" /></div>
 
       {/* ── Why section ── */}
       {data.why && data.why.length > 0 && (
-        <section style={{ padding: "0 24px 80px" }}>
-          <div style={{ maxWidth: 860, margin: "0 auto" }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".1em", textTransform: "uppercase", textAlign: "center", marginBottom: 48 }}>
-              WHY USE POSTHIVE FOR {data.name.toUpperCase()}
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              {data.why.map((w) => (
-                <div key={w.title} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "28px 32px" }}>
-                  <h3 style={{ fontSize: 17, fontWeight: 700, color: "#ededed", marginBottom: 10, letterSpacing: "-.01em" }}>{w.title}</h3>
-                  <p style={{ fontSize: 14.5, color: "#666", lineHeight: 1.75, margin: 0 }}>{w.desc}</p>
-                </div>
-              ))}
-            </div>
+        <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+          <span className="plat-kicker">Why use Posthive for {data.name}</span>
+          <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 40px", fontWeight: 500, maxWidth: "28ch" }}>
+            Built for {data.name} from day one.
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }} className="plat-why-grid">
+            {data.why.map((w, i) => (
+              <div key={w.title} style={{ padding: 28, border: `1px solid ${div}`, borderRadius: 12, background: "rgba(17,17,17,0.55)", display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ fontSize: 11, letterSpacing: "0.14em", color: accent }}>0{i + 1}</div>
+                <h3 style={{ fontSize: 18, fontWeight: 500, margin: 0 }}>{w.title}</h3>
+                <p style={{ fontSize: 14, lineHeight: 1.6, color: muted75, margin: 0 }}>{w.desc}</p>
+              </div>
+            ))}
           </div>
         </section>
       )}
 
       {/* ── FAQ ── */}
       {data.faq && data.faq.length > 0 && (
-        <section style={{ padding: "0 24px 80px" }}>
-          <div style={{ maxWidth: 680, margin: "0 auto" }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".1em", textTransform: "uppercase", textAlign: "center", marginBottom: 48 }}>
-              FREQUENTLY ASKED QUESTIONS
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {data.faq.map((item) => (
-                <div key={item.q} style={{ border: "1px solid #1e1e1e", borderRadius: 12, padding: "20px 24px" }}>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", marginBottom: 8 }}>{item.q}</p>
-                  <p style={{ fontSize: 14, color: "#666", lineHeight: 1.7, margin: 0 }}>{item.a}</p>
-                </div>
+        <>
+          <div className="plat-wrap"><hr className="plat-rule" /></div>
+          <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+            <span className="plat-kicker">FAQ</span>
+            <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 48px", fontWeight: 500 }}>Frequently asked questions</h2>
+            <div className="plat-faq" style={{ maxWidth: 860 }}>
+              {data.faq.map((item, i) => (
+                <details key={item.q} className={i === data.faq!.length - 1 ? "plat-faq-last" : ""} open={i === 0}>
+                  <summary>
+                    {item.q}
+                    <span className="faq-plus">+</span>
+                  </summary>
+                  <p style={{ margin: "14px 0 0", fontSize: 14, lineHeight: 1.65, color: muted75, maxWidth: "72ch" }}>{item.a}</p>
+                </details>
               ))}
             </div>
-          </div>
-        </section>
+          </section>
+        </>
       )}
 
-      {/* ── Works with everything else ── */}
-      <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto", background: "#111", border: "1px solid #1e1e1e", borderRadius: 20, padding: "40px 36px", textAlign: "center" }}>
-          <p style={{ fontSize: 13, fontWeight: 600, color: "#5b63d3", marginBottom: 12, letterSpacing: ".04em" }}>PART OF A BIGGER PICTURE</p>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: "#ededed", letterSpacing: "-.02em", marginBottom: 12 }}>
-            {data.name} is one of thirteen platforms
-          </h2>
-          <p style={{ fontSize: 14.5, color: "#666", lineHeight: 1.7, marginBottom: 28 }}>
-            Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, Discord, and Tumblr — all from the same composer. Write once, choose your platforms, done.
+      <div className="plat-wrap"><hr className="plat-rule" /></div>
+
+      {/* ── Part of a bigger picture ── OPEN text layout, no boxed card */}
+      <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+        <span className="plat-kicker">Part of a bigger picture</span>
+        <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 16px", fontWeight: 500 }}>
+          {data.name} is one of thirteen platforms.
+        </h2>
+        <p style={{ fontSize: 16, color: muted75, lineHeight: 1.6, margin: "0 0 32px", maxWidth: "60ch" }}>
+          Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, Discord, and Tumblr — all from the same composer.
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 32 }}>
+          {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube", "facebook", "pinterest", "telegram", "twitter", "nostr", "discord", "tumblr"] as const)
+            .filter(p => p !== platform)
+            .map(p => (
+              <Link key={p} href={`/platforms/${p}`} className="plat-chip">
+                <PlatformIcon platform={p} size={14} />
+                {PLATFORMS[p]?.name ?? p}
+              </Link>
+            ))}
+        </div>
+        <Link href={registerUrl} style={{ fontSize: 14, color: accent, textDecoration: "none" }}>Connect all your platforms →</Link>
+      </section>
+
+      {/* ── CTA ── */}
+      <section style={{ background: "linear-gradient(180deg, transparent 0%, rgba(30,33,64,0.32) 100%)", padding: "calc(4*28px) 0" }}>
+        <div className="plat-wrap" style={{ maxWidth: 900 }}>
+          <span className="plat-kicker">Get started today</span>
+          <h2 style={{ fontSize: "clamp(32px,4vw,56px)", letterSpacing: "-0.025em", lineHeight: 1.05, margin: "0 0 20px", fontWeight: 500 }}>Start scheduling for free.</h2>
+          <p style={{ fontSize: 17, lineHeight: 1.55, color: "rgba(237,237,237,0.78)", marginBottom: 32, maxWidth: "56ch" }}>
+            14-day free trial. No credit card required. Connect your {data.name} account in under a minute and schedule your first post today.
           </p>
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
-            {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube", "facebook", "pinterest", "telegram", "twitter", "nostr", "discord", "tumblr"] as const)
-              .filter(p => p !== platform)
-              .map(p => (
-                <Link key={p} href={`/platforms/${p}`} style={{ display: "flex", alignItems: "center", gap: 6, background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 999, padding: "5px 12px", textDecoration: "none" }}>
-                  <PlatformIcon platform={p} size={13} />
-                  <span style={{ fontSize: 12, color: "#888", fontWeight: 500 }}>{PLATFORMS[p]?.name ?? p}</span>
-                </Link>
-              ))}
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <Link href={registerUrl} style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "14px 24px", borderRadius: 8, background: accent, color: "#fff", textDecoration: "none", border: `1px solid ${accent}` }}>
+              Get started free →
+            </Link>
+            <Link href="/pricing" style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "14px 24px", borderRadius: 8, background: "transparent", color: muted75, textDecoration: "none", border: `1px solid ${div}` }}>
+              Pricing
+            </Link>
           </div>
-          <Link href="/register" style={{ display: "inline-block", fontSize: 15, fontWeight: 600, padding: "12px 28px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)" }}>
-            Connect all your platforms →
-          </Link>
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "40px 24px", textAlign: "center" }}>
-        <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
-          {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Pricing", "/pricing"], ["Blog", "/blog"]] as [string, string][]).map(([label, href]) => (
-            <Link key={label} href={href} style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>{label}</Link>
-          ))}
-        </div>
-        <p style={{ fontSize: 12, color: "#444" }}>© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }

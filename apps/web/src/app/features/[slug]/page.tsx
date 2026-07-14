@@ -2,7 +2,8 @@ import React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { NavBar } from "../../../components/LandingNav";
+import { MarketingNavBar } from "../../../components/MarketingNavBar";
+import { LandingFooter } from "../../../components/LandingFooter";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -758,56 +759,108 @@ export default async function FeaturePage({ params }: { params: Promise<{ slug: 
     })),
   } : null;
 
+  const W = "1200px";
+  const div = "rgba(237,237,237,0.1)";
+  const muted75 = "rgba(237,237,237,0.75)";
+  const muted55 = "rgba(237,237,237,0.55)";
+  const accent = "#5b63d3";
+
+  const ALL_FEATURES = [
+    { slug: "multi-platform-posting",    label: "MULTI-PLATFORM",   title: "Write once. Post everywhere.",       desc: "One composer, thirteen platforms." },
+    { slug: "instagram-reels-scheduler", label: "REELS & STORIES",  title: "Full Instagram media support",       desc: "Reels, Stories, and carousels — all scheduled." },
+    { slug: "drag-to-reschedule",        label: "CALENDAR",         title: "Drag to reschedule",                 desc: "Month, week, day. Drag any post to a new slot." },
+    { slug: "first-comment",             label: "FIRST COMMENT",    title: "Auto-reply on publish",              desc: "Fires the moment your post goes live." },
+    { slug: "per-platform-overrides",    label: "OVERRIDES",        title: "Custom text per network",            desc: "Same base post, per-platform voice." },
+    { slug: "bulk-csv-scheduling",       label: "BULK CSV",         title: "Schedule hundreds from a file",      desc: "Upload a spreadsheet, schedule every row." },
+    { slug: "self-hostable",             label: "SELF-HOSTABLE",    title: "AGPL-3.0 open source",               desc: "Run it yourself — full data control." },
+  ];
+  const otherFeatures = ALL_FEATURES.filter(f => f.slug !== slug);
+
   return (
-    <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "system-ui,-apple-system,sans-serif" }}>
+    <div style={{
+      minHeight: "100vh", color: "#ededed", fontFamily: "Inter,system-ui,-apple-system,sans-serif",
+      background: `radial-gradient(1100px 640px at 88% -180px, rgba(30,33,64,0.7), transparent 60%), radial-gradient(900px 700px at -8% 110%, rgba(0,0,0,0.3), transparent 55%), #0a0a0a`,
+    }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
       <style>{`
-        @media (max-width: 768px) {
-          .feat-hero-grid { grid-template-columns: 1fr !important; }
-          .feat-why-grid { grid-template-columns: 1fr !important; }
-          .feat-steps { flex-direction: column !important; }
-          .feat-step-connector { display: none !important; }
+        .feat-wrap { max-width: ${W}; margin: 0 auto; padding: 0 clamp(20px,5vw,72px); }
+        .feat-rule { height: 1px; border: 0; margin: 0; background: linear-gradient(to right, transparent, ${div} 48px calc(100% - 48px), transparent); }
+        .feat-kicker { display: inline-flex; align-items: center; gap: 12px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: ${accent}; margin: 0 0 20px; }
+        .feat-kicker::before { content: ""; width: 32px; height: 1px; background: ${accent}; }
+        @media (max-width: 900px) {
+          .feat-hero-grid, .feat-how-grid, .feat-who-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .feat-why-grid, .feat-toolkit-grid { grid-template-columns: 1fr 1fr !important; }
+          .feat-hero-sticky { position: static !important; }
         }
+        @media (max-width: 600px) {
+          .feat-why-grid, .feat-toolkit-grid { grid-template-columns: 1fr !important; }
+          .feat-hero-grid, .feat-how-grid, .feat-who-grid { gap: 28px !important; }
+        }
+        .feat-faq details { padding: 22px 0; border-top: 1px solid ${div}; }
+        .feat-faq details summary { cursor: pointer; font-size: 17px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+        .feat-faq details summary::-webkit-details-marker { display: none; }
+        .feat-faq-last { border-bottom: 1px solid ${div}; }
+        .feat-faq summary .faq-plus { color: ${accent}; font-size: 20px; font-weight: 400; flex: none; transition: transform 0.15s; }
+        .feat-faq details[open] summary .faq-plus { transform: rotate(45deg); }
+        .feat-toolkit-card { text-decoration: none; color: inherit; padding: 22px; border: 1px solid ${div}; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; background: rgba(17,17,17,0.5); transition: border-color 0.15s; }
+        .feat-toolkit-card:hover { border-color: ${accent}; }
       `}</style>
 
-      <NavBar user={false} ctaHref="/register" navCtaLabel="Get started free" />
+      <MarketingNavBar />
+      <div style={{ height: 68 }} />
+
+      {/* breadcrumb */}
+      <div className="feat-wrap" style={{ paddingTop: 24, fontSize: 12, letterSpacing: "0.06em", color: muted55 }}>
+        <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>Home</Link>
+        <span style={{ margin: "0 8px", opacity: 0.5 }}>/</span>
+        <Link href="/features/multi-platform-posting" style={{ color: "inherit", textDecoration: "none" }}>Features</Link>
+        <span style={{ margin: "0 8px", opacity: 0.5 }}>/</span>
+        <span style={{ color: "#ededed" }}>{data.title}</span>
+      </div>
 
       {/* ── Hero ── */}
-      <section style={{ padding: "120px 24px 80px" }}>
-        <div style={{
-          maxWidth: 960,
-          margin: "0 auto",
-          display: "grid",
-          gridTemplateColumns: isSplit ? "1fr 1fr" : "1fr",
-          gap: isSplit ? 64 : 0,
-          alignItems: "center",
-          flexDirection: layout === "split-left" ? "row-reverse" : undefined,
-        }} className="feat-hero-grid">
-
-          {/* Text - always first in DOM; visual order flipped via CSS for split-left */}
-          <div style={{ order: layout === "split-left" ? 2 : 1, textAlign: isSplit ? "left" : "center" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: data.badgeBg, border: `1px solid ${data.badgeColor}33`, borderRadius: 999, padding: "6px 14px", marginBottom: 24 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: data.badgeColor, letterSpacing: ".04em" }}>{data.badge}</span>
-            </div>
-            <h1 style={{ fontSize: isSplit ? "clamp(24px, 3vw, 42px)" : "clamp(28px, 4.5vw, 52px)", fontWeight: 800, letterSpacing: "-.03em", lineHeight: 1.15, color: "#ededed", margin: "0 0 20px" }}>
+      <section className="feat-wrap" style={{ padding: "calc(2.5*28px) clamp(20px,5vw,72px) calc(3*28px)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isSplit ? "1fr 1.05fr" : "1fr", gap: isSplit ? 80 : 0, alignItems: "center" }} className="feat-hero-grid">
+          <div style={{ order: layout === "split-left" ? 2 : 1 }}>
+            <span className="feat-kicker">{data.badge}</span>
+            <h1 style={{ fontSize: isSplit ? "clamp(36px,4.8vw,60px)" : "clamp(36px,5vw,68px)", fontWeight: 500, letterSpacing: "-.02em", lineHeight: 1.05, margin: "0 0 24px" }}>
               {data.headline}
             </h1>
-            <p style={{ fontSize: "clamp(14px, 2vw, 17px)", color: "#777", lineHeight: 1.75, maxWidth: isSplit ? 480 : 560, margin: isSplit ? "0 0 36px" : "0 auto 36px" }}>
+            <p style={{ fontSize: 18, lineHeight: 1.55, maxWidth: "58ch", color: muted75, margin: "0 0 32px" }}>
               {data.subheadline}
             </p>
-            <div style={{ display: "flex", gap: 12, justifyContent: isSplit ? "flex-start" : "center", flexWrap: "wrap", marginBottom: "22px" }}>
-              <Link href="/register" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)" }}>
-                Try it free - 14 days
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <Link href="/register" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, fontWeight: 600, padding: "12px 20px", borderRadius: 8, background: accent, color: "#fff", textDecoration: "none", border: `1px solid ${accent}` }}>
+                Try free for 14 days →
               </Link>
-              <Link href="/pricing" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
+              <Link href="/pricing" style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "12px 20px", borderRadius: 8, background: "transparent", color: muted75, textDecoration: "none", border: `1px solid ${div}` }}>
                 View pricing
               </Link>
             </div>
+            {/* inline stats */}
+            {slug === "multi-platform-posting" && (
+              <div style={{ display: "flex", gap: 40, marginTop: 56, paddingTop: 24, borderTop: `1px solid ${div}` }}>
+                {[{ n: "13", label: "Platforms" }, { n: "1", label: "Composer" }, { n: "∞", label: "Reach" }].map(s => (
+                  <div key={s.n}>
+                    <div style={{ fontSize: 32, fontWeight: 500, letterSpacing: "-0.02em", fontFeatureSettings: "'tnum' 1" }}>{s.n}</div>
+                    <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: muted55, marginTop: 6 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {slug === "self-hostable" && (
+              <div style={{ display: "flex", gap: 40, marginTop: 56, paddingTop: 24, borderTop: `1px solid ${div}` }}>
+                {[{ n: "AGPL", label: "License" }, { n: "0", label: "Per-seat" }, { n: "100%", label: "Data ownership" }].map(s => (
+                  <div key={s.n}>
+                    <div style={{ fontSize: 28, fontWeight: 500, letterSpacing: "-0.02em" }}>{s.n}</div>
+                    <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: muted55, marginTop: 6 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-
-          {/* Mockup / image — only in hero for split layouts */}
           {isSplit && mockup && (
             <div style={{ order: layout === "split-left" ? 1 : 2, display: "flex", justifyContent: "center" }}>
               {mockup}
@@ -816,181 +869,166 @@ export default async function FeaturePage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
 
-      {/* ── Center mockup (for "center" layout) ── */}
-      {!isSplit && mockup && (
-        <section style={{ padding: "0 24px 80px" }}>
-          <div style={{ maxWidth: 800, margin: "0 auto", display: "flex", justifyContent: "center" }}>
-            {mockup}
-          </div>
-        </section>
-      )}
-
-      {/* ── Stats strip ── */}
-      {slug === "multi-platform-posting" && (
-        <section style={{ padding: "0 24px 80px" }}>
-          <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, background: "#1e1e1e", borderRadius: 16, overflow: "hidden" }}>
-            {[
-              { n: "13", label: "platforms supported" },
-              { n: "1", label: "post to write" },
-              { n: "∞", label: "reach potential" },
-            ].map((s) => (
-              <div key={s.n} style={{ background: "#0d0d0d", padding: "32px 24px", textAlign: "center" }}>
-                <div style={{ fontSize: 48, fontWeight: 900, color: data.badgeColor, letterSpacing: "-.04em", lineHeight: 1 }}>{s.n}</div>
-                <div style={{ fontSize: 12, color: "#555", marginTop: 8, fontWeight: 600 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {slug === "self-hostable" && (
-        <section style={{ padding: "0 24px 80px" }}>
-          <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, background: "#1e1e1e", borderRadius: 16, overflow: "hidden" }}>
-            {[
-              { n: "AGPLv3", label: "open-source license" },
-              { n: "0", label: "per-seat cost" },
-              { n: "100%", label: "data ownership" },
-            ].map((s) => (
-              <div key={s.n} style={{ background: "#0d0d0d", padding: "32px 24px", textAlign: "center" }}>
-                <div style={{ fontSize: 36, fontWeight: 900, color: data.badgeColor, letterSpacing: "-.04em", lineHeight: 1 }}>{s.n}</div>
-                <div style={{ fontSize: 12, color: "#555", marginTop: 8, fontWeight: 600 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <div className="feat-wrap"><hr className="feat-rule" /></div>
 
       {/* ── Why it matters ── */}
-      <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 48 }}>
-            <div style={{ width: 32, height: 3, background: data.badgeColor, borderRadius: 2 }} />
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".12em", textTransform: "uppercase", margin: 0 }}>Why it matters</p>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }} className="feat-why-grid">
-            {data.why.map((w, i) => (
-              <div key={w.title} style={{ borderLeft: `2px solid ${data.badgeColor}44`, paddingLeft: 20 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: data.badgeColor, letterSpacing: ".1em", marginBottom: 10 }}>0{i + 1}</div>
-                <p style={{ fontSize: 16, fontWeight: 700, color: "#ededed", marginBottom: 10, lineHeight: 1.3 }}>{w.title}</p>
-                <p style={{ fontSize: 13.5, color: "#666", lineHeight: 1.7, margin: 0 }}>{w.desc}</p>
-              </div>
-            ))}
-          </div>
+      <section className="feat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+        <span className="feat-kicker">Why it matters</span>
+        <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 56px", maxWidth: "26ch", fontWeight: 500 }}>
+          The grind of cross-posting, gone.
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 56 }} className="feat-why-grid">
+          {data.why.map((w, i) => (
+            <div key={w.title}>
+              <div style={{ fontSize: 11, letterSpacing: "0.14em", color: accent, fontFeatureSettings: "'tnum' 1", marginBottom: 20 }}>0{i + 1}</div>
+              <h3 style={{ fontSize: 20, fontWeight: 500, margin: "0 0 12px" }}>{w.title}</h3>
+              <p style={{ fontSize: 14, lineHeight: 1.65, color: muted75, margin: 0 }}>{w.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
+
+      <div className="feat-wrap"><hr className="feat-rule" /></div>
+
+      {/* ── Under the hood (screenshot) ── */}
+      {data.image && (
+        <section className="feat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
+            <div>
+              <span className="feat-kicker">Under the hood</span>
+              <h2 style={{ fontSize: "clamp(26px,3vw,36px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: 0, fontWeight: 500, maxWidth: "28ch" }}>The feature, in the app.</h2>
+            </div>
+            <Link href="/register" style={{ fontSize: 14, color: accent, textDecoration: "none" }}>Try it yourself →</Link>
+          </div>
+          <div style={{ width: "100%", borderRadius: 14, overflow: "hidden", background: "#111", border: `1px solid ${div}` }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={data.image} alt={data.imageAlt} style={{ width: "100%", height: "auto", display: "block" }} />
+          </div>
+          <p style={{ fontSize: 12, color: muted55, marginTop: 12, letterSpacing: "0.02em" }}>Fig. 01 — {data.imageAlt}</p>
+        </section>
+      )}
+
+      <div className="feat-wrap"><hr className="feat-rule" /></div>
 
       {/* ── How it works ── */}
-      <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 48 }}>
-            <div style={{ width: 32, height: 3, background: "#2a2a2a", borderRadius: 2 }} />
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".12em", textTransform: "uppercase", margin: 0 }}>How it works</p>
+      <section className="feat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 80, alignItems: "start" }} className="feat-how-grid">
+          <div className="feat-hero-sticky" style={{ position: "sticky", top: 100 }}>
+            <span className="feat-kicker">How it works</span>
+            <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: 0, fontWeight: 500 }}>
+              Three steps.<br />No manuals.
+            </h2>
           </div>
-          <div style={{ display: "flex", gap: 0, position: "relative" }} className="feat-steps">
+          <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column" }}>
             {data.how.map((s, i) => (
-              <div key={s.n} style={{ flex: 1, position: "relative" }}>
-                {/* Connector line */}
-                {i < data.how.length - 1 && (
-                  <div className="feat-step-connector" style={{ position: "absolute", top: 20, left: "calc(50% + 24px)", right: "calc(-50% + 24px)", height: 1, background: "#1e1e1e", zIndex: 0 }} />
-                )}
-                <div style={{ position: "relative", zIndex: 1, background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "24px 22px", margin: "0 8px" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: data.badgeBg, border: `1px solid ${data.badgeColor}33`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                    <span style={{ fontSize: 13, fontWeight: 900, color: data.badgeColor }}>{s.n}</span>
-                  </div>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", marginBottom: 8 }}>{s.title}</p>
-                  <p style={{ fontSize: 13, color: "#666", lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
+              <li key={s.n} style={{ display: "grid", gridTemplateColumns: "80px 1fr", gap: 24, alignItems: "start", padding: "32px 0", borderBottom: i < data.how.length - 1 ? `1px solid ${div}` : "none" }}>
+                <div style={{ fontSize: 44, lineHeight: 1, fontWeight: 500, color: accent, fontFeatureSettings: "'tnum' 1", letterSpacing: "-0.03em" }}>{s.n}</div>
+                <div>
+                  <h3 style={{ fontSize: 20, fontWeight: 500, margin: "0 0 10px" }}>{s.title}</h3>
+                  <p style={{ fontSize: 14, lineHeight: 1.6, color: muted75, margin: 0 }}>{s.desc}</p>
                 </div>
-              </div>
+              </li>
             ))}
+          </ol>
+        </div>
+      </section>
+
+      <div className="feat-wrap"><hr className="feat-rule" /></div>
+
+      {/* ── Who uses this ── */}
+      <section className="feat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "start" }} className="feat-who-grid">
+          <div>
+            <span className="feat-kicker">Who uses this</span>
+            <h2 style={{ fontSize: "clamp(26px,3vw,36px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 32px", fontWeight: 500 }}>
+              Built for people shipping in&nbsp;public.
+            </h2>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+              {data.usecases.map((u) => (
+                <li key={u} style={{ display: "flex", gap: 14, alignItems: "baseline", fontSize: 15, lineHeight: 1.5 }}>
+                  <span style={{ color: accent, flex: "none", marginTop: 1 }}>◆</span>
+                  {u}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div style={{ borderLeft: `1px solid ${accent}`, padding: "8px 0 8px 32px" }}>
+            <div style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: accent, marginBottom: 20 }}>From the builder</div>
+            <p style={{ fontSize: 16, lineHeight: 1.65, color: "#ededed", margin: "0 0 20px" }}>
+              &ldquo;I was copy-pasting the same post into five different apps every day. Every tool I tried was too expensive, too bloated, or didn&apos;t support the platforms I actually used. So I built Posthive.&rdquo;
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#2a2a2a", display: "grid", placeItems: "center", flexShrink: 0, fontSize: 15, fontWeight: 500, color: muted75 }}>G</div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>Guna Sheelan</div>
+                <div style={{ fontSize: 12, color: muted55 }}>Founder · @gunaa_dev</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Who uses this ── */}
-      <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 40 }}>
-            <div style={{ width: 32, height: 3, background: "#1e1e1e", borderRadius: 2 }} />
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".12em", textTransform: "uppercase", margin: 0 }}>Who uses this</p>
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-            {data.usecases.map((u) => (
-              <div key={u} style={{ display: "flex", alignItems: "center", gap: 10, background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "12px 18px" }}>
-                <span style={{ fontSize: 14, color: data.badgeColor, flexShrink: 0 }}>✓</span>
-                <span style={{ fontSize: 13.5, color: "#888", lineHeight: 1.4 }}>{u}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <div className="feat-wrap"><hr className="feat-rule" /></div>
 
       {/* ── FAQ ── */}
       {data.faq && data.faq.length > 0 && (
-        <section style={{ padding: "0 24px 80px" }}>
-          <div style={{ maxWidth: 720, margin: "0 auto" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 48 }}>
-              <div style={{ width: 32, height: 3, background: "#2a2a2a", borderRadius: 2 }} />
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: ".12em", textTransform: "uppercase", margin: 0 }}>Frequently asked questions</p>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {data.faq.map((item) => (
-                <div key={item.q} style={{ borderBottom: "1px solid #1a1a1a", padding: "22px 0" }}>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>{item.q}</p>
-                  <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{item.a}</p>
-                </div>
-              ))}
-            </div>
+        <section className="feat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+          <span className="feat-kicker">FAQ</span>
+          <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 48px", fontWeight: 500 }}>Frequently asked questions</h2>
+          <div className="feat-faq">
+            {data.faq.map((item, i) => (
+              <details key={item.q} className={i === data.faq!.length - 1 ? "feat-faq-last" : ""} open={i === 0}>
+                <summary>
+                  {item.q}
+                  <span className="faq-plus">+</span>
+                </summary>
+                <p style={{ margin: "14px 0 0", fontSize: 14, lineHeight: 1.65, color: muted75, maxWidth: "72ch" }}>{item.a}</p>
+              </details>
+            ))}
           </div>
         </section>
       )}
 
-      {/* ── More features strip ── */}
-      <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 20, padding: "32px 36px", display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 6px" }}>Part of a full scheduling toolkit</p>
-              <p style={{ fontSize: 13, color: "#555", margin: 0 }}>Posthive includes multi-platform posting, a drag-to-reschedule calendar, bulk CSV upload, first comment scheduling, per-platform overrides, and self-hosting. All in one place.</p>
-            </div>
-            <Link href="/docs" style={{ fontSize: 13, fontWeight: 700, padding: "10px 20px", borderRadius: 10, background: "#1a1a1a", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a", whiteSpace: "nowrap" }}>
-              Read the docs →
+      <div className="feat-wrap"><hr className="feat-rule" /></div>
+
+      {/* ── Related toolkit ── */}
+      <section className="feat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
+        <span className="feat-kicker">Part of a full scheduling toolkit</span>
+        <h2 style={{ fontSize: "clamp(26px,3vw,36px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 40px", maxWidth: "32ch", fontWeight: 500 }}>
+          {data.title} is one of seven features working together.
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }} className="feat-toolkit-grid">
+          {otherFeatures.map((f) => (
+            <Link key={f.slug} href={`/features/${f.slug}`} className="feat-toolkit-card">
+              <div style={{ fontSize: 11, letterSpacing: "0.12em", color: accent }}>{f.label}</div>
+              <div style={{ fontSize: 16, fontWeight: 500 }}>{f.title}</div>
+              <div style={{ fontSize: 13, color: muted55, lineHeight: 1.55 }}>{f.desc}</div>
             </Link>
-          </div>
+          ))}
         </div>
+        <Link href="/docs" style={{ fontSize: 14, color: accent, textDecoration: "none", display: "inline-block", marginTop: 28 }}>Read the docs →</Link>
       </section>
 
       {/* ── CTA ── */}
-      <section style={{ padding: "0 24px 100px" }}>
-        <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: data.badgeBg, border: `1px solid ${data.badgeColor}33`, borderRadius: 999, padding: "6px 14px", marginBottom: 24 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: data.badgeColor }}>Get started today</span>
-          </div>
-          <h2 style={{ fontSize: "clamp(22px, 3.5vw, 36px)", fontWeight: 800, color: "#ededed", letterSpacing: "-.03em", lineHeight: 1.2, marginBottom: 16 }}>
-            Start scheduling for free
-          </h2>
-          <p style={{ fontSize: 14.5, color: "#666", lineHeight: 1.75, marginBottom: 36, maxWidth: 460, margin: "0 auto 36px" }}>
+      <section style={{ background: "linear-gradient(180deg, transparent 0%, rgba(30,33,64,0.32) 100%)", padding: "calc(4*28px) 0" }}>
+        <div className="feat-wrap" style={{ maxWidth: 900 }}>
+          <span className="feat-kicker">Get started today</span>
+          <h2 style={{ fontSize: "clamp(32px,4vw,56px)", letterSpacing: "-0.025em", lineHeight: 1.05, margin: "0 0 20px", fontWeight: 500 }}>Start scheduling for free.</h2>
+          <p style={{ fontSize: 17, lineHeight: 1.55, color: "rgba(237,237,237,0.78)", marginBottom: 32, maxWidth: "56ch" }}>
             14-day free trial. No credit card required. Connect your first account in under a minute and schedule your first post today.
           </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/register" style={{ display: "inline-block", fontSize: 15, fontWeight: 700, padding: "14px 32px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none", boxShadow: "0 12px 32px -8px rgba(91,99,211,.6)" }}>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <Link href="/register" style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "14px 24px", borderRadius: 8, background: accent, color: "#fff", textDecoration: "none", border: `1px solid ${accent}` }}>
               Get started free →
             </Link>
-            <Link href="/pricing" style={{ display: "inline-block", fontSize: 15, fontWeight: 700, padding: "14px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
+            <Link href="/pricing" style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "14px 24px", borderRadius: 8, background: "transparent", color: muted75, textDecoration: "none", border: `1px solid ${div}` }}>
               Pricing
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "40px 24px", textAlign: "center" }}>
-        <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
-          {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Pricing", "/pricing"], ["Blog", "/blog"]] as [string, string][]).map(([label, href]) => (
-            <Link key={label} href={href} style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>{label}</Link>
-          ))}
-        </div>
-        <p style={{ fontSize: 12, color: "#444" }}>© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }
