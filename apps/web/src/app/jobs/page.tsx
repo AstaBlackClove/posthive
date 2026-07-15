@@ -319,7 +319,7 @@ export default function JobsPage() {
         method: "PATCH",
         body: JSON.stringify({
           text,
-          commentText: commentText || undefined,
+          commentText,
           ...(!isDraft ? { scheduledFor: scheduledFor.toISOString() } : {}),
           mediaUrls,
           mediaType,
