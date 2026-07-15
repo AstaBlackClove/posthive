@@ -12,6 +12,7 @@
 <p align="center">
   <a href="https://github.com/AstaBlackClove/posthive/blob/main/LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" /></a>
   <a href="https://github.com/AstaBlackClove/posthive"><img alt="GitHub Repo" src="https://img.shields.io/badge/github-AstaBlackClove%2Fposthive-181717?logo=github" /></a>
+  <a href="https://discord.gg/Ynv8TKRX"><img alt="Discord" src="https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white" /></a>
 </p>
 
 <p align="center">
@@ -993,6 +994,14 @@ git commit -m "db: add <describe_your_change> migration"
 11. Add docs section in `apps/web/src/app/docs/page.tsx`
 12. Add to `NO_COMMENT_PLATFORMS` in compose, EditPostDialog, and `jobRunner.ts` if the platform has no comment API
 13. Add env vars to `apps/api/.env.example` and document in this README
+
+---
+
+## Community
+
+Join the Posthive Discord for support, feature requests, and to connect with other users:
+
+**[discord.gg/Ynv8TKRX](https://discord.gg/Ynv8TKRX)**
 
 ---
 
