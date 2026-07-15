@@ -1045,7 +1045,7 @@ export default function RootPage() {
 
       {/* Discord floating button */}
       <a
-        href="https://discord.gg/Ynv8TKRX"
+        href="https://discord.gg/UEdnAtHxgN"
         target="_blank"
         rel="noopener noreferrer"
         style={{

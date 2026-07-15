@@ -349,7 +349,7 @@ export default function DocsPage() {
             {/* Discord link */}
             <div style={{ padding: "0 16px 8px" }}>
               <a
-                href="https://discord.gg/Ynv8TKRX"
+                href="https://discord.gg/UEdnAtHxgN"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
