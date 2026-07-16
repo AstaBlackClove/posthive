@@ -436,7 +436,6 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setIgMediaType("post");
     setYoutubeTitle(""); setYoutubeDescription(""); setYoutubeType("short");
     setYoutubeVideoMode("upload"); setYoutubeVideoUrl("");
-    if (youtubeThumbnailUrl) deleteFromStorage(youtubeThumbnailUrl);
     if (youtubeThumbnailPreview) URL.revokeObjectURL(youtubeThumbnailPreview);
     setYoutubeThumbnailUrl(null); setYoutubeThumbnailPreview(null);
     setPinterestTitle(""); setPinterestDescription("");

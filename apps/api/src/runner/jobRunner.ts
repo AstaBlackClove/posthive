@@ -124,13 +124,19 @@ export async function runJob(
   }
 
   // Clean up stored media once the job is fully done (not dry-run, not failed)
-  if (finalStatus === "done" && !job.dryRun && storage && content.mediaUrls?.length) {
-    await Promise.allSettled(
-      content.mediaUrls.map((url) => {
-        console.log(`[storage] deleting ${url} after successful post`);
-        return storage.delete(url);
-      })
-    );
+  if (finalStatus === "done" && !job.dryRun && storage) {
+    const urlsToClean = [
+      ...(content.mediaUrls ?? []),
+      ...(content.youtubeThumbnailUrl ? [content.youtubeThumbnailUrl] : []),
+    ];
+    if (urlsToClean.length) {
+      await Promise.allSettled(
+        urlsToClean.map((url) => {
+          console.log(`[storage] deleting ${url} after successful post`);
+          return storage.delete(url);
+        })
+      );
+    }
   }
 }
 
