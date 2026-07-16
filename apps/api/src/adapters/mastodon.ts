@@ -1,7 +1,7 @@
 import type { Account } from "@prisma/client";
 import { decrypt } from "../lib/encryption.js";
 import type { StorageAdapter } from "../lib/storage.js";
-import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
+import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 let storageAdapter: StorageAdapter | null = null;
 export function setStorageAdapter(s: StorageAdapter) { storageAdapter = s; }
@@ -91,5 +91,20 @@ export const mastodonAdapter: PlatformAdapter = {
       visibility: "public",
     });
     return { platformCommentId: res.id };
+  },
+
+  async getAnalytics(account: Account, platformPostId: string): Promise<AnalyticsResult> {
+    const { accessToken, instanceUrl } = getCredentials(account);
+    const res = await fetch(`${instanceUrl}/api/v1/statuses/${platformPostId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+    const json = await res.json() as { favourites_count?: number; reblogs_count?: number; replies_count?: number };
+    return {
+      likes: json.favourites_count ?? 0,
+      reposts: json.reblogs_count ?? 0,
+      replies: json.replies_count ?? 0,
+      fetchedAt: new Date().toISOString(),
+    };
   },
 };

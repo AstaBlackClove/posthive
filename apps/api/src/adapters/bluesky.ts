@@ -5,7 +5,7 @@ import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { compressForPlatform } from "../lib/compress.js";
 import type { StorageAdapter } from "../lib/storage.js";
-import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
+import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 interface BlueskyCredentials {
   handle: string;
@@ -194,6 +194,18 @@ export const blueskyAdapter: PlatformAdapter = {
     });
 
     return { platformCommentId: response.uri };
+  },
+
+  async getAnalytics(account: Account, platformPostId: string): Promise<AnalyticsResult> {
+    const agent = await buildAgent(account);
+    const res = await agent.api.app.bsky.feed.getPostThread({ uri: platformPostId, depth: 0 });
+    const post = (res.data.thread as { post?: { likeCount?: number; repostCount?: number; replyCount?: number } }).post;
+    return {
+      likes: post?.likeCount ?? 0,
+      reposts: post?.repostCount ?? 0,
+      replies: post?.replyCount ?? 0,
+      fetchedAt: new Date().toISOString(),
+    };
   },
 };
 

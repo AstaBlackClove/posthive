@@ -56,6 +56,16 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+interface AnalyticsResult {
+  likes?: number;
+  reposts?: number;
+  replies?: number;
+  views?: number;
+  fetchedAt: string;
+}
+
+const ANALYTICS_PLATFORMS = new Set(["bluesky", "mastodon", "pixelfed", "lemmy"]);
+
 function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate }: {
   job: Job;
   onEdit: () => void;
@@ -64,6 +74,7 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate }: {
   onDuplicate: () => void;
 }) {
   const [retrying, setRetrying] = useState(false);
+  const [analytics, setAnalytics] = useState<Record<string, AnalyticsResult | "loading" | "error">>({});
   const content = JSON.parse(job.content) as { text: string; mediaUrls?: string[] };
   const isDraft = job.status === "draft";
   const scheduled = job.scheduledFor ? new Date(job.scheduledFor) : null;
@@ -197,15 +208,53 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate }: {
         <div className={`job-card-targets ${job.targets.some((t) => t.error) ? "force-open" : ""}`}>
           <div className="job-card-targets-inner" style={{ borderTop: "1px solid #1f1f1f" }}>
             <div className="px-5 py-3 space-y-1.5">
-              {job.targets.map((t) => (
-                <div key={t.id} className="flex items-center gap-2 text-xs">
-                  <PlatformIcon platform={t.account?.platform ?? "unknown"} size={13} />
-                  <span className="font-medium" style={{ color: "#666" }}>{t.account?.displayName ?? t.accountId.slice(0, 8)}</span>
-                  <StatusBadge status={t.status} />
-                  {t.attempts > 1 && <span style={{ color: "#555" }}>{t.attempts} attempts</span>}
-                  {t.error && <span className="text-red-500 truncate flex-1">{t.error}</span>}
-                </div>
-              ))}
+              {job.targets.map((t) => {
+                const platform = t.account?.platform ?? "";
+                const isPublished = ["done", "post_done", "comment_done"].includes(t.status);
+                const canFetchAnalytics = isPublished && !!t.platformPostId && ANALYTICS_PLATFORMS.has(platform);
+                const analytic = analytics[t.id];
+
+                async function fetchAnalytics() {
+                  setAnalytics(prev => ({ ...prev, [t.id]: "loading" }));
+                  try {
+                    const res = await apiFetch(`${API_BASE}/jobs/targets/${t.id}/analytics`) as Response;
+                    if (!res.ok) throw new Error();
+                    const data = await res.json() as AnalyticsResult;
+                    setAnalytics(prev => ({ ...prev, [t.id]: data }));
+                  } catch {
+                    setAnalytics(prev => ({ ...prev, [t.id]: "error" }));
+                  }
+                }
+
+                return (
+                  <div key={t.id} className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-xs">
+                      <PlatformIcon platform={platform || "unknown"} size={13} />
+                      <span className="font-medium" style={{ color: "#666" }}>{t.account?.displayName ?? t.accountId.slice(0, 8)}</span>
+                      <StatusBadge status={t.status} />
+                      {t.attempts > 1 && <span style={{ color: "#555" }}>{t.attempts} attempts</span>}
+                      {t.error && <span className="text-red-500 truncate flex-1">{t.error}</span>}
+                      {canFetchAnalytics && !analytic && (
+                        <button onClick={fetchAnalytics} className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors"
+                          style={{ color: "#888", border: "1px solid #2a2a2a", backgroundColor: "#111" }}>
+                          Stats
+                        </button>
+                      )}
+                      {analytic === "loading" && <span className="ml-auto text-[10px]" style={{ color: "#555" }}>Loading…</span>}
+                      {analytic === "error" && <span className="ml-auto text-[10px] text-red-500">Failed</span>}
+                    </div>
+                    {analytic && analytic !== "loading" && analytic !== "error" && (
+                      <div className="flex items-center gap-3 pl-5 text-[10px]" style={{ color: "#666" }}>
+                        {analytic.likes !== undefined && <span>❤ {analytic.likes}</span>}
+                        {analytic.reposts !== undefined && <span>🔁 {analytic.reposts}</span>}
+                        {analytic.replies !== undefined && <span>💬 {analytic.replies}</span>}
+                        {analytic.views !== undefined && <span>👁 {analytic.views}</span>}
+                        <button onClick={fetchAnalytics} title="Refresh" className="ml-auto" style={{ color: "#444" }}>↻</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

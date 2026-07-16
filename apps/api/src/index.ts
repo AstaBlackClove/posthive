@@ -32,6 +32,8 @@ import { mcpRoutes } from "./routes/mcp.js";
 import { oauthRoutes } from "./routes/oauth.js";
 import { startWorker } from "./lib/worker.js";
 import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
+import { startStatsCron } from "./lib/statsCron.js";
+import { analyticsRoutes } from "./routes/analytics.js";
 import { withAuth } from "./lib/auth/withAuth.js";
 import type { StorageAdapter } from "./lib/storage.js";
 
@@ -100,6 +102,7 @@ async function main() {
   await app.register(publicApiRoutes, { storage });
   await app.register(mcpRoutes);
   await app.register(oauthRoutes);
+  await app.register(analyticsRoutes);
 
   app.get("/health", async () => ({ ok: true }));
 
@@ -171,6 +174,7 @@ async function main() {
   startWorker(storage);
   startOrphanCleanup(storage);
   startTokenRefreshCron();
+  startStatsCron();
 }
 
 main().catch((err) => {

@@ -107,8 +107,29 @@ model PostJobTarget {
   error          String?
   attempts       Int     @default(0)
 
+  stats PostStats?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Cached engagement stats per PostJobTarget — synced every 6h by statsCron.
+model PostStats {
+  id       String @id @default(cuid())
+  targetId String @unique
+
+  target PostJobTarget @relation(fields: [targetId], references: [id], onDelete: Cascade)
+
+  likes    Int  @default(0)
+  reposts  Int  @default(0)
+  replies  Int  @default(0)
+  views    Int?
+
+  fetchedAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([targetId])
 }
 
 // Email verification token — single-use, 24-hour TTL.

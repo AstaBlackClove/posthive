@@ -7,6 +7,7 @@ import { authProvider } from "../lib/auth/index.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
 import { getPlan } from "../lib/plans.js";
 import type { StorageAdapter } from "../lib/storage.js";
+import { adapters } from "../adapters/index.js";
 
 const TARGET_SELECT = {
   id: true, accountId: true, status: true,
@@ -383,5 +384,36 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     await prisma.postJob.delete({ where: { id } });
 
     return reply.status(204).send();
+  });
+
+  // GET /jobs/targets/:targetId/analytics
+  app.get("/jobs/targets/:targetId/analytics", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { targetId } = req.params as { targetId: string };
+
+    const target = await prisma.postJobTarget.findFirst({
+      where: { id: targetId, postJob: { userId } },
+      select: {
+        platformPostId: true,
+        status: true,
+        accountId: true,
+        account: { select: { platform: true, credentials: true, expiresAt: true, createdAt: true, updatedAt: true, id: true, userId: true, displayName: true, avatarUrl: true, refreshToken: true } },
+      },
+    });
+
+    if (!target) return reply.status(404).send({ error: "Target not found" });
+    if (!target.platformPostId) return reply.status(400).send({ error: "Post not yet published" });
+
+    const adapter = adapters.find(a => a.name === target.account.platform);
+    if (!adapter?.getAnalytics) {
+      return reply.status(400).send({ error: "Analytics not supported for this platform" });
+    }
+
+    try {
+      const analytics = await adapter.getAnalytics(target.account, target.platformPostId);
+      return reply.send(analytics);
+    } catch (err) {
+      return reply.status(502).send({ error: err instanceof Error ? err.message : "Failed to fetch analytics" });
+    }
   });
 }

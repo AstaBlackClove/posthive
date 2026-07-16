@@ -15,7 +15,7 @@ import { tumblrAdapter } from "./tumblr.js";
 import { lemmyAdapter } from "./lemmy.js";
 import type { PlatformAdapter } from "./types.js";
 
-const adapters: PlatformAdapter[] = [
+export const adapters: PlatformAdapter[] = [
   blueskyAdapter,
   threadsAdapter,
   linkedinAdapter,

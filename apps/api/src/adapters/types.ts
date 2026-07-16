@@ -16,6 +16,15 @@ export interface CommentResult {
   platformCommentId: string | null;
 }
 
+export interface AnalyticsResult {
+  likes?: number;
+  reposts?: number;
+  replies?: number;
+  views?: number;       // impressions / views (platform-specific)
+  bookmarks?: number;
+  fetchedAt: string;   // ISO timestamp
+}
+
 /**
  * Every platform adapter must implement this interface.
  * The runner talks to adapters only through these four members.
@@ -64,4 +73,9 @@ export interface PlatformAdapter {
     replyContext: unknown,
     comment: string
   ): Promise<CommentResult>;
+
+  getAnalytics?(
+    account: Account,
+    platformPostId: string
+  ): Promise<AnalyticsResult>;
 }
