@@ -312,7 +312,7 @@ export default function JobsPage() {
     router.push("/compose");
   }
 
-  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, isDraft?: boolean) {
+  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, isDraft?: boolean, youtubeThumbnailUrl?: string) {
     try {
       // Always patch content/accounts first
       await apiFetch(`/jobs/${jobId}`, {
@@ -327,6 +327,7 @@ export default function JobsPage() {
           ...(youtubeType ? { youtubeType } : {}),
           ...(youtubeVideoMode ? { youtubeVideoMode } : {}),
           ...(youtubeVideoUrl !== undefined ? { youtubeVideoUrl } : {}),
+          ...(youtubeThumbnailUrl !== undefined ? { youtubeThumbnailUrl } : {}),
           ...(Object.keys(perAccount).length > 0 ? { perAccount } : { perAccount: {} }),
         }),
       });
@@ -407,8 +408,8 @@ export default function JobsPage() {
           open={!!editingJob}
           job={editingJob}
           accounts={accounts}
-          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl) => {
-            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, editingJob.status === "draft");
+          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, youtubeThumbnailUrl) => {
+            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, editingJob.status === "draft", youtubeThumbnailUrl);
           }}
           onClose={() => setEditingJob(null)}
         />

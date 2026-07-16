@@ -31,12 +31,12 @@ interface Props {
   open: boolean;
   job: EditableJob;
   accounts: Account[];
-  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string) => Promise<void>;
+  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, youtubeThumbnailUrl?: string) => Promise<void>;
   onClose: () => void;
 }
 
 export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) {
-  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; youtubeVideoMode?: "upload" | "url"; youtubeVideoUrl?: string; perAccount?: Record<string, PerAccountOverride> };
+  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; youtubeVideoMode?: "upload" | "url"; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; perAccount?: Record<string, PerAccountOverride> };
 
   const [text, setText] = useState(parsedContent.text);
   const [commentText, setCommentText] = useState(job.commentText ?? "");
@@ -77,6 +77,9 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const [youtubeType, setYoutubeType] = useState<"short" | "video">(parsedContent.youtubeType ?? "short");
   const [youtubeVideoMode, setYoutubeVideoMode] = useState<"upload" | "url">(parsedContent.youtubeVideoMode ?? "upload");
   const [youtubeVideoUrl, setYoutubeVideoUrl] = useState(parsedContent.youtubeVideoUrl ?? "");
+  const [youtubeThumbnailUrl, setYoutubeThumbnailUrl] = useState<string | null>(parsedContent.youtubeThumbnailUrl ?? null);
+  const [youtubeThumbnailPreview, setYoutubeThumbnailPreview] = useState<string | null>(null);
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
 
   // Pinterest: init title/description from the first Pinterest account's override
   const initPinOverride = (() => {
@@ -194,6 +197,36 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     if (ytVideoInputRef.current) ytVideoInputRef.current.value = "";
   }
 
+  async function uploadThumbnail(file: File) {
+    setThumbnailUploading(true);
+    const previewUrl = URL.createObjectURL(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({})) as { error?: string };
+        setSaveError(b.error ?? "Thumbnail upload failed");
+        URL.revokeObjectURL(previewUrl);
+      } else {
+        const { url } = await res.json() as { url: string };
+        if (youtubeThumbnailPreview) URL.revokeObjectURL(youtubeThumbnailPreview);
+        setYoutubeThumbnailUrl(url);
+        setYoutubeThumbnailPreview(previewUrl);
+      }
+    } catch {
+      setSaveError("Upload failed — is the API running?");
+      URL.revokeObjectURL(previewUrl);
+    }
+    setThumbnailUploading(false);
+  }
+
+  function removeThumbnail() {
+    if (youtubeThumbnailPreview) URL.revokeObjectURL(youtubeThumbnailPreview);
+    setYoutubeThumbnailUrl(null);
+    setYoutubeThumbnailPreview(null);
+  }
+
   function handlePaste(e: React.ClipboardEvent) {
     const files = Array.from(e.clipboardData.files).filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"));
     if (!files.length) return;
@@ -229,7 +262,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     const mediaUrls = video ? [video.url] : images.map(i => i.url);
     setSaving(true); setSaveError(null);
     try {
-      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined, hasYoutube ? youtubeVideoMode : undefined, hasYoutube ? (youtubeVideoMode === "url" ? youtubeVideoUrl.trim() : "") : undefined);
+      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined, hasYoutube ? youtubeVideoMode : undefined, hasYoutube ? (youtubeVideoMode === "url" ? youtubeVideoUrl.trim() : "") : undefined, hasYoutube && youtubeThumbnailUrl ? youtubeThumbnailUrl : undefined);
       onClose();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message.replace(/^API PATCH.*→ \d+: /, "") : "Save failed");
@@ -437,6 +470,11 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
               youtubeVideoMode={youtubeVideoMode}
               onlyYoutube={onlyYoutube}
               video={video}
+              youtubeThumbnailUrl={youtubeThumbnailUrl}
+              youtubeThumbnailPreview={youtubeThumbnailPreview}
+              onThumbnailUpload={uploadThumbnail}
+              onThumbnailRemove={removeThumbnail}
+              thumbnailUploading={thumbnailUploading}
             />
           )}
 

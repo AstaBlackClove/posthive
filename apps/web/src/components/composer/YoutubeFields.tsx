@@ -1,3 +1,5 @@
+"use client";
+import { useId, useRef } from "react";
 import { PlatformIcon } from "../PlatformIcon";
 
 interface Props {
@@ -11,6 +13,12 @@ interface Props {
   onlyYoutube: boolean;
   video: { name: string } | null;
   youtubeShortsWarning?: string | null;
+  // Thumbnail
+  youtubeThumbnailUrl: string | null;
+  youtubeThumbnailPreview: string | null;
+  onThumbnailUpload: (file: File) => void;
+  onThumbnailRemove: () => void;
+  thumbnailUploading?: boolean;
 }
 
 export function YoutubeFields({
@@ -19,7 +27,14 @@ export function YoutubeFields({
   youtubeType, onTypeChange,
   youtubeVideoMode, onlyYoutube, video,
   youtubeShortsWarning,
+  youtubeThumbnailUrl, youtubeThumbnailPreview,
+  onThumbnailUpload, onThumbnailRemove,
+  thumbnailUploading,
 }: Props) {
+  const uid = useId();
+  const thumbInputId = `${uid}-yt-thumb`;
+  const thumbInputRef = useRef<HTMLInputElement>(null);
+
   return (
     <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
       <div className="flex items-center justify-between mb-1">
@@ -83,8 +98,56 @@ export function YoutubeFields({
         />
       </div>
 
+      {/* Thumbnail */}
+      <div>
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Thumbnail</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {(youtubeThumbnailPreview ?? youtubeThumbnailUrl) ? (
+            <div className="relative group flex-shrink-0 w-28 h-16 rounded-lg overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={youtubeThumbnailPreview ?? youtubeThumbnailUrl!}
+                alt="thumbnail"
+                className="w-full h-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={onThumbnailRemove}
+                className="absolute top-1 right-1 w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ backgroundColor: "rgba(239,68,68,0.9)" }}>✕</button>
+            </div>
+          ) : null}
+          <div>
+            <input
+              ref={thumbInputRef}
+              id={thumbInputId}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) { onThumbnailUpload(f); if (thumbInputRef.current) thumbInputRef.current.value = ""; }
+              }}
+            />
+            <label
+              htmlFor={thumbInputId}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${thumbnailUploading ? "opacity-40 pointer-events-none" : "hover:border-white/20"}`}
+              style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {thumbnailUploading ? "Uploading…" : (youtubeThumbnailUrl ? "Change thumbnail" : "Add thumbnail")}
+            </label>
+            <p className="text-[10px] mt-1" style={{ color: "#555" }}>JPG/PNG · 1280×720 recommended · Requires phone-verified channel</p>
+          </div>
+        </div>
+      </div>
+
       {video && youtubeVideoMode === "upload" && (
-        <p className="text-xs" style={{ color: "#4ade80" }}>✓ {video.name}</p>
+        <p className="text-xs mt-3" style={{ color: "#4ade80" }}>✓ {video.name}</p>
       )}
     </div>
   );

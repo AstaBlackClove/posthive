@@ -45,6 +45,9 @@ export default function ComposePage() {
   const [youtubeType, setYoutubeType] = useState<"short" | "video">("short");
   const [youtubeVideoMode, setYoutubeVideoMode] = useState<"upload" | "url">("upload");
   const [youtubeVideoUrl, setYoutubeVideoUrl] = useState("");
+  const [youtubeThumbnailUrl, setYoutubeThumbnailUrl] = useState<string | null>(null);
+  const [youtubeThumbnailPreview, setYoutubeThumbnailPreview] = useState<string | null>(null);
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
   const [pinterestTitle, setPinterestTitle] = useState("");
   const [pinterestDescription, setPinterestDescription] = useState("");
 const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(null);
@@ -286,6 +289,32 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  async function uploadThumbnail(file: File) {
+    setThumbnailUploading(true);
+    const previewUrl = URL.createObjectURL(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) { const b = await res.json() as { error: string }; setUploadError(b.error ?? "Thumbnail upload failed"); URL.revokeObjectURL(previewUrl); }
+      else {
+        const { url } = await res.json() as { url: string };
+        if (youtubeThumbnailUrl) deleteFromStorage(youtubeThumbnailUrl);
+        if (youtubeThumbnailPreview) URL.revokeObjectURL(youtubeThumbnailPreview);
+        setYoutubeThumbnailUrl(url);
+        setYoutubeThumbnailPreview(previewUrl);
+      }
+    } catch { setUploadError("Upload failed — is the API running?"); URL.revokeObjectURL(previewUrl); }
+    setThumbnailUploading(false);
+  }
+
+  function removeThumbnail() {
+    if (youtubeThumbnailUrl) deleteFromStorage(youtubeThumbnailUrl);
+    if (youtubeThumbnailPreview) URL.revokeObjectURL(youtubeThumbnailPreview);
+    setYoutubeThumbnailUrl(null);
+    setYoutubeThumbnailPreview(null);
+  }
+
   function removeMediaItem(i: number) {
     setMediaItems((prev) => {
       const item = prev[i];
@@ -407,6 +436,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setIgMediaType("post");
     setYoutubeTitle(""); setYoutubeDescription(""); setYoutubeType("short");
     setYoutubeVideoMode("upload"); setYoutubeVideoUrl("");
+    if (youtubeThumbnailUrl) deleteFromStorage(youtubeThumbnailUrl);
+    if (youtubeThumbnailPreview) URL.revokeObjectURL(youtubeThumbnailPreview);
+    setYoutubeThumbnailUrl(null); setYoutubeThumbnailPreview(null);
     setPinterestTitle(""); setPinterestDescription("");
     setPerAccountOverrides({}); setShowCustomize(false); setUploadError(null);
     mediaItems.forEach(m => URL.revokeObjectURL(m.previewUrl));
@@ -432,6 +464,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(hasInstagram && igMediaType !== "post" ? { mediaType: igMediaType } : {}),
             ...(youtubeSelected ? { youtubeType, youtubeVideoMode } : {}),
             ...(youtubeSelected && youtubeVideoMode === "url" && youtubeVideoUrl.trim() ? { youtubeVideoUrl: youtubeVideoUrl.trim() } : {}),
+            ...(youtubeSelected && youtubeThumbnailUrl ? { youtubeThumbnailUrl } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -469,6 +502,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(hasInstagram && igMediaType !== "post" ? { mediaType: igMediaType } : {}),
             ...(youtubeSelected ? { youtubeType, youtubeVideoMode } : {}),
             ...(youtubeSelected && youtubeVideoMode === "url" && youtubeVideoUrl.trim() ? { youtubeVideoUrl: youtubeVideoUrl.trim() } : {}),
+            ...(youtubeSelected && youtubeThumbnailUrl ? { youtubeThumbnailUrl } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -933,6 +967,11 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               onlyYoutube={onlyYoutube}
               video={video}
               youtubeShortsWarning={youtubeShortsWarning}
+              youtubeThumbnailUrl={youtubeThumbnailUrl}
+              youtubeThumbnailPreview={youtubeThumbnailPreview}
+              onThumbnailUpload={uploadThumbnail}
+              onThumbnailRemove={removeThumbnail}
+              thumbnailUploading={thumbnailUploading}
             />
           )}
 

@@ -87,7 +87,7 @@ export const youtubeAdapter: PlatformAdapter = {
     return refreshIfNeeded(account);
   },
 
-  async createPost(account, { text, mediaUrls, youtubeType, youtubeVideoUrl }) {
+  async createPost(account, { text, mediaUrls, youtubeType, youtubeVideoUrl, youtubeThumbnailUrl }) {
     const { accessToken } = getCredentials(account);
 
     const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "";
@@ -164,6 +164,39 @@ export const youtubeAdapter: PlatformAdapter = {
       throw new Error(`YouTube video upload failed: ${uploadRes.status} ${await uploadRes.text()}`);
     }
     const video = await uploadRes.json() as { id: string };
+
+    // Set custom thumbnail if provided — requires phone-verified channel
+    if (youtubeThumbnailUrl) {
+      try {
+        const PUBLIC_API_URL2 = process.env.PUBLIC_API_URL ?? "";
+        const thumbUrl = youtubeThumbnailUrl.startsWith("http")
+          ? youtubeThumbnailUrl
+          : `${PUBLIC_API_URL2}${youtubeThumbnailUrl}`;
+        const thumbRes = await fetch(thumbUrl);
+        if (thumbRes.ok && thumbRes.body) {
+          const thumbBuffer = Buffer.from(await thumbRes.arrayBuffer());
+          const thumbContentType = thumbRes.headers.get("content-type") ?? "image/jpeg";
+          const setRes = await fetch(
+            `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${video.id}&uploadType=media`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": thumbContentType,
+                "Content-Length": String(thumbBuffer.byteLength),
+              },
+              body: thumbBuffer,
+            }
+          );
+          if (!setRes.ok) {
+            // Non-fatal — video is already live; log and continue
+            console.warn(`[youtube] thumbnail set failed (${setRes.status}):`, await setRes.text());
+          }
+        }
+      } catch (err) {
+        console.warn("[youtube] thumbnail upload error (non-fatal):", err);
+      }
+    }
 
     return { platformPostId: video.id, replyContext: { videoId: video.id } };
   },

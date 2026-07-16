@@ -30,6 +30,7 @@ type JobContent = {
   mediaType?: "post" | "reel" | "story";
   youtubeType?: "short" | "video";
   youtubeVideoUrl?: string;
+  youtubeThumbnailUrl?: string;
   locationId?: string;
   userTags?: string[];
   collaborators?: string[];
@@ -74,6 +75,7 @@ export async function runJob(
         mediaType: content.mediaType,
         youtubeType: content.youtubeType,
         youtubeVideoUrl: content.youtubeVideoUrl,
+        youtubeThumbnailUrl: content.youtubeThumbnailUrl,
         locationId: content.locationId,
         userTags: content.userTags,
         collaborators: content.collaborators,
