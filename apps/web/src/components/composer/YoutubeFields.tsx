@@ -57,8 +57,8 @@ export function YoutubeFields({
 
       <p className="text-xs mb-2.5" style={{ color: "#999" }}>
         {youtubeType === "short"
-          ? "Uploads to the Shorts shelf — separate title and description."
-          : "Uploads as a regular video — separate title and description."}
+          ? "Uploads to the Shorts shelf separate title and description."
+          : "Uploads as a regular video separate title and description."}
         {!onlyYoutube && " Other selected platforms use the Caption above."}
       </p>
 
@@ -103,6 +103,7 @@ export function YoutubeFields({
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Thumbnail</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#f59e0b", backgroundColor: "#f59e0b15", border: "1px solid #f59e0b40" }}>⏳ Pending Google approval</span>
         </div>
         <div className="flex items-center gap-3">
           {(youtubeThumbnailPreview ?? youtubeThumbnailUrl) ? (
