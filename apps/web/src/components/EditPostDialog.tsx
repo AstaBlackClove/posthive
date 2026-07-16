@@ -6,6 +6,10 @@ import { PlatformPreview, PLATFORM_COLOR, PLATFORM_LIMIT, MAX_IMAGES, countGraph
 import type { Account, UploadedImage, PerAccountOverride } from "./PlatformPreview";
 import { DateTimePicker } from "./DateTimePicker";
 import { PlatformIcon } from "./PlatformIcon";
+import { YoutubeFields } from "./composer/YoutubeFields";
+import { PinterestFields } from "./composer/PinterestFields";
+import { FirstComment } from "./composer/FirstComment";
+import { WarningsBar } from "./composer/WarningsBar";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -425,119 +429,29 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
 
           {/* YouTube — dedicated Title + Description fields */}
           {youtubeSelected && (
-            <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <PlatformIcon platform="youtube" size={13} />
-                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#ff0000" }}>YouTube</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {(["short", "video"] as const).map((t) => (
-                    <button key={t} type="button" onClick={() => setYoutubeType(t)}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all"
-                      style={youtubeType === t
-                        ? { backgroundColor: "#ff000020", color: "#ff0000", border: "1px solid #ff000050" }
-                        : { backgroundColor: "#111111", color: "#666", border: "1px solid #1f1f1f" }}>
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <p className="text-xs mb-2.5" style={{ color: "#999" }}>
-                Uploads to YouTube with a separate title and description.{!onlyYoutube && " Other selected platforms use the Caption above."}
-              </p>
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Title</span>
-                  <span className="text-[10px]" style={{ color: youtubeTitle.length > 100 ? "#ef4444" : "#444" }}>{youtubeTitle.length}/100</span>
-                </div>
-                <input
-                  value={youtubeTitle} onChange={e => setYoutubeTitle(e.target.value)}
-                  placeholder="Video title"
-                  className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
-                  style={{ borderColor: youtubeTitle.length > 100 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
-                />
-              </div>
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Description</span>
-                  <span className="text-[10px]" style={{ color: youtubeDescription.length > 5000 ? "#ef4444" : "#444" }}>{youtubeDescription.length}/5000</span>
-                </div>
-                <textarea
-                  value={youtubeDescription} onChange={e => setYoutubeDescription(e.target.value)}
-                  placeholder="Video description…"
-                  rows={3}
-                  className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
-                  style={{ borderColor: youtubeDescription.length > 5000 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
-                />
-              </div>
-
-              {video && youtubeVideoMode === "upload" && (
-                <p className="text-xs" style={{ color: "#4ade80" }}>✓ {video.name}</p>
-              )}
-            </div>
+            <YoutubeFields
+              youtubeTitle={youtubeTitle} onTitleChange={setYoutubeTitle}
+              youtubeDescription={youtubeDescription} onDescriptionChange={setYoutubeDescription}
+              youtubeType={youtubeType} onTypeChange={setYoutubeType}
+              youtubeVideoMode={youtubeVideoMode}
+              onlyYoutube={onlyYoutube}
+              video={video}
+            />
           )}
 
           {/* Pinterest — dedicated Title + Description fields */}
           {pinterestAccounts.length > 0 && (
-            <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
-              <div className="flex items-center gap-2 mb-1">
-                <PlatformIcon platform="pinterest" size={13} />
-                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#e60023" }}>Pinterest</span>
-              </div>
-              <p className="text-xs mb-2.5" style={{ color: "#999" }}>
-                Pins have a separate title and description.
-              </p>
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Pin title</span>
-                  <span className="text-[10px]" style={{ color: pinterestTitle.length > 100 ? "#ef4444" : "#444" }}>{pinterestTitle.length}/100</span>
-                </div>
-                <input
-                  value={pinterestTitle}
-                  onChange={(e) => setPinterestTitle(e.target.value)}
-                  placeholder="Short, catchy pin title"
-                  maxLength={100}
-                  className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
-                  style={{ borderColor: pinterestTitle.length > 100 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
-                />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Description</span>
-                  <span className="text-[10px]" style={{ color: pinterestDescription.length > 500 ? "#ef4444" : "#444" }}>{pinterestDescription.length}/500</span>
-                </div>
-                <textarea
-                  value={pinterestDescription}
-                  onChange={(e) => setPinterestDescription(e.target.value)}
-                  placeholder="What is this Pin about?"
-                  rows={3}
-                  maxLength={500}
-                  className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
-                  style={{ borderColor: pinterestDescription.length > 500 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
-                />
-              </div>
-            </div>
+            <PinterestFields
+              pinterestTitle={pinterestTitle} onTitleChange={setPinterestTitle}
+              pinterestDescription={pinterestDescription} onDescriptionChange={setPinterestDescription}
+              onlyPinterest={onlyPinterest}
+            />
           )}
 
           {/* First comment */}
-          <div className="px-6 py-5" style={{ borderBottom: "1px solid #1a1a1a", display: noCommentSupport ? "none" : undefined }}>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>First Comment</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full"
-                style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
-            </div>
-            <p className="text-xs mb-2.5" style={{ color: "#444" }}>
-              Posted as the first reply immediately after your post goes live.
-            </p>
-            <textarea value={commentText}
-              onChange={e => { setCommentText(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
-              ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
-              placeholder="Add a link, thread continuation, or extra context…"
-              className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-none"
-              style={{ minHeight: "80px", overflow: "hidden", border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
-            />
-          </div>
+          {!noCommentSupport && (
+            <FirstComment value={commentText} onChange={setCommentText} />
+          )}
 
           {/* Media */}
           <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #1a1a1a" }}>
@@ -804,11 +718,17 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
       {/* Footer */}
       <div className="flex flex-col gap-2 px-6 py-4 flex-shrink-0"
         style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
-        {(mediaWarning || youtubeSelectedWithNoVideo || saveError || twitterHasLink) && (
+        <WarningsBar
+          youtubeSelectedWithNoVideo={youtubeSelectedWithNoVideo}
+          pinterestSelectedWithNoImage={pinterestSelectedWithNoImage}
+          instagramSelectedWithNoMedia={instagramSelected && images.length === 0 && igMediaType !== "story" && igMediaType !== "reel"}
+          instagramStoryWithNoImage={instagramSelected && igMediaType === "story" && images.length === 0}
+          twitterHasLink={twitterHasLink}
+          igMediaType={igMediaType}
+        />
+        {(mediaWarning || saveError) && (
           <div className="flex flex-col gap-1">
             {mediaWarning && <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>{mediaWarning}</p>}
-            {youtubeSelectedWithNoVideo && <p className="text-xs font-medium" style={{ color: "#ef4444" }}>⚠ YouTube requires a video before you can save this post</p>}
-            {twitterHasLink && <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>⚠ X/Twitter post contains a link — links cost $0.20 each via the X API. Remove the link to schedule.</p>}
             {saveError && <p className="text-xs" style={{ color: "#ef4444" }}>{saveError}</p>}
           </div>
         )}
