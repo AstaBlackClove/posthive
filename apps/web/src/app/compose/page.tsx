@@ -17,6 +17,7 @@ import { YoutubeFields } from "../../components/composer/YoutubeFields";
 import { PinterestFields } from "../../components/composer/PinterestFields";
 import { FirstComment } from "../../components/composer/FirstComment";
 import { WarningsBar } from "../../components/composer/WarningsBar";
+import { MediaSection } from "../../components/composer/MediaSection";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -67,6 +68,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const [deleteTemplateTarget, setDeleteTemplateTarget] = useState<{ id: string; name: string } | null>(null);
   const templatesRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const ytVideoInputRef = useRef<HTMLInputElement>(null);
   const mediaItemsRef = useRef(mediaItems);
   useEffect(() => { mediaItemsRef.current = mediaItems; }, [mediaItems]);
 
@@ -232,7 +234,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) { uploadFiles(Array.from(e.target.files ?? [])); }
+
   function handlePaste(e: React.ClipboardEvent) {
     const files = Array.from(e.clipboardData.files).filter((f) => f.type.startsWith("image/") || f.type.startsWith("video/"));
     if (!files.length) return;
@@ -240,6 +242,48 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   }
   function deleteFromStorage(url: string) {
     fetch(`${API_BASE}/upload`, { method: "DELETE", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) }).catch(() => {});
+  }
+
+  async function uploadYtVideo(file: File) {
+    setUploading(true); setUploadError(null);
+    const previewUrl = URL.createObjectURL(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) { const b = await res.json() as { error: string }; setUploadError(b.error); URL.revokeObjectURL(previewUrl); }
+      else {
+        const { url } = await res.json() as { url: string };
+        setMediaItems(prev => {
+          const existing = prev.find(m => m.isVideo);
+          if (existing) { URL.revokeObjectURL(existing.previewUrl); deleteFromStorage(existing.url); }
+          return [...prev.filter(m => !m.isVideo), { url, previewUrl, name: file.name, isVideo: true }];
+        });
+      }
+    } catch { setUploadError("Upload failed — is the API running?"); URL.revokeObjectURL(previewUrl); }
+    setUploading(false);
+    if (ytVideoInputRef.current) ytVideoInputRef.current.value = "";
+  }
+
+  async function uploadReelVideo(file: File) {
+    setUploading(true); setUploadError(null);
+    const previewUrl = URL.createObjectURL(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) { const b = await res.json() as { error: string }; setUploadError(b.error); URL.revokeObjectURL(previewUrl); }
+      else {
+        const { url } = await res.json() as { url: string };
+        setMediaItems(prev => {
+          prev.forEach(m => { URL.revokeObjectURL(m.previewUrl); deleteFromStorage(m.url); });
+          return [{ url, previewUrl, name: file.name, isVideo: true }];
+        });
+        setAltTexts([]);
+      }
+    } catch { setUploadError("Upload failed — is the API running?"); URL.revokeObjectURL(previewUrl); }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function removeMediaItem(i: number) {
@@ -907,137 +951,41 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           )}
 
 
-          {/* Media + upload row */}
-          <div className="px-6 pt-4 pb-5" style={{ borderBottom: "1px solid #2a2a2a", display: loadingAccounts ? "none" : undefined }}>
+          {/* Media */}
+          {!loadingAccounts && (
+            <MediaSection
+              youtubeSelected={youtubeSelected}
+              youtubeVideoMode={youtubeVideoMode}
+              onYoutubeVideoModeChange={setYoutubeVideoMode}
+              youtubeVideoUrl={youtubeVideoUrl}
+              onYoutubeVideoUrlChange={setYoutubeVideoUrl}
+              onlyYoutube={onlyYoutube}
+              ytVideoInputRef={ytVideoInputRef}
+              onYtVideoUpload={uploadYtVideo}
+              images={images}
+              video={video}
+              onRemoveImage={(i) => removeMediaItem(mediaItems.indexOf(images[i]))}
+              onRemoveVideo={() => { if (video) removeMediaItem(mediaItems.indexOf(video)); }}
+              instagramSelected={instagramSelected}
+              igMediaType={igMediaType}
+              altTexts={altTexts}
+              onAltTextChange={(i, v) => setAltTexts(prev => { const n = [...prev]; n[i] = v; return n; })}
+              uploading={uploading}
+              uploadError={uploadError}
+              fileInputRef={fileInputRef}
+              onFileUpload={uploadFiles}
+              onVideoUpload={uploadReelVideo}
+              maxImageSizeMb={MAX_IMAGE_SIZE_MB}
+              maxVideoSizeMb={MAX_VIDEO_SIZE_MB}
+              showPasteHint
+              maxImages={maxImagesPerPost}
+            />
+          )}
 
-            {/* Section header */}
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold uppercase tracking-wide">Media</span>
-              {youtubeSelected && (
-                <div className="flex items-center gap-1">
-                  {(["upload", "url"] as const).map((m) => (
-                    <button key={m} type="button" onClick={() => setYoutubeVideoMode(m)}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
-                      style={youtubeVideoMode === m
-                        ? { backgroundColor: "#ff000020", color: "#ff0000", border: "1px solid #ff000050" }
-                        : { backgroundColor: "#111111", color: "#666", border: "1px solid #1f1f1f" }}>
-                      {m === "upload" ? "Upload file" : "Paste URL"}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Media thumbnails "" unified image + video grid */}
-            {mediaItems.length > 0 && (
-              <div className="space-y-2 mb-3">
-                <div className="flex gap-2 flex-wrap">
-                  {mediaItems.map((item, i) => (
-                    <div key={item.url} className="relative group w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style={{ border: "1px solid #2a2a2a", backgroundColor: "#1a1a1a" }}>
-                      {item.isVideo ? (
-                        <video src={item.previewUrl} className="w-full h-full object-cover" muted />
-                      ) : (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.previewUrl} alt={item.name} className="w-full h-full object-cover" />
-                      )}
-                      {item.isVideo && (
-                        <div className="absolute bottom-1 left-1 text-[9px] font-bold px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#fff" }}>VID</div>
-                      )}
-                      <button type="button" onClick={() => removeMediaItem(i)}
-                        className="absolute top-1 right-1 w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
-                        style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>✕</button>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Alt text "" only for image items when Instagram post selected */}
-                {instagramSelected && igMediaType === "post" && images.length > 0 && (
-                  <div className="space-y-1.5">
-                    {images.map((img, i) => (
-                      <div key={img.url} className="flex items-center gap-2">
-                        <span className="text-[10px] font-semibold w-5 text-center flex-shrink-0" style={{ color: "#444" }}>{i + 1}</span>
-                        <input
-                          type="text"
-                          value={altTexts[i] ?? ""}
-                          onChange={e => setAltTexts(prev => { const n = [...prev]; n[i] = e.target.value; return n; })}
-                          placeholder={`Alt text for image ${i + 1} (optional)`}
-                          className="flex-1 rounded-lg px-3 py-1.5 text-xs focus:outline-none"
-                          style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* YouTube URL input — shown when YouTube selected in URL mode */}
-            {youtubeSelected && youtubeVideoMode === "url" && (
-              <div className="mb-3">
-                <input
-                  value={youtubeVideoUrl}
-                  onChange={(e) => setYoutubeVideoUrl(e.target.value)}
-                  placeholder="https://your-cdn.com/video.mp4"
-                  className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
-                  style={{
-                    borderColor: youtubeVideoUrl.trim() && (() => { try { new URL(youtubeVideoUrl); return false; } catch { return true; } })() ? "#ef4444" : "#2a2a2a",
-                    backgroundColor: "#111111",
-                    color: "#ededed",
-                  }}
-                />
-                {youtubeVideoUrl.trim() && (() => { try { new URL(youtubeVideoUrl); return false; } catch { return true; } })() ? (
-                  <p className="text-xs mt-1.5" style={{ color: "#ef4444" }}>Invalid URL must start with https://</p>
-                ) : (
-                  <p className="text-xs mt-1.5" style={{ color: "#999" }}>
-                    Any public URL S3, Supabase, Cloudflare R2, direct CDN. No file size limit.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* File upload — hidden only when exclusively YouTube in URL mode */}
-            {!(onlyYoutube && youtubeVideoMode === "url") && (
-              <>
-                <div className="flex items-center gap-3">
-                  <input ref={fileInputRef} type="file"
-                    accept={igMediaType === "reel"
-                      ? "video/mp4,video/quicktime"
-                      : igMediaType === "story"
-                      ? "image/jpeg,image/png,video/mp4,video/quicktime"
-                      : "image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"}
-                    multiple={igMediaType === "post"}
-                    onChange={handleFileChange} className="hidden" id="media-upload" />
-                  <label htmlFor="media-upload"
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all hover:border-opacity-60 ${uploading ? "opacity-50 pointer-events-none" : ""}`}
-                    style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d={igMediaType === "reel"
-                          ? "M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                          : "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"} />
-                    </svg>
-                    {uploading ? "Uploading…" :
-                      igMediaType === "reel" ? (mediaItems.length > 0 ? "Change video" : "Add video") :
-                      igMediaType === "story" ? (mediaItems.length > 0 ? "Change media" : "Add story image / video") :
-                      mediaItems.length > 0 ? `${mediaItems.length} item${mediaItems.length > 1 ? "s" : ""}` : "Add photo / video"}
-                  </label>
-                  {mediaItems.length === 0 && (
-                    <span className="text-xs" style={{ color: "#999" }}>or Ctrl+V to paste</span>
-                  )}
-                </div>
-                <p className="mt-1.5 text-[11px]" style={{ color: "#555" }}>
-                  Images up to {MAX_IMAGE_SIZE_MB}MB · Videos up to {MAX_VIDEO_SIZE_MB}MB
-                  {youtubeSelected && youtubeVideoMode === "upload" && !video && (
-                    <> · <span style={{ color: "#ff0000" }}>YouTube requires a video</span></>
-                  )}
-                </p>
-                {uploadError && <p className="mt-2 text-xs text-red-500 rounded-lg px-3 py-2" style={{ backgroundColor: "#1f0a0a", border: "1px solid #3a1a1a" }}>{uploadError}</p>}
-              </>
-            )}
-
-            {/* Option buttons row */}
-            {(instagramSelected || selectedAccounts.length > 1) && (
-              <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: "1px solid #1a1a1a" }}>
+          {/* Option buttons row */}
+          {!loadingAccounts && (instagramSelected || selectedAccounts.length > 1) && (
+            <div className="px-6 pb-4 pt-3" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <div className="flex items-center gap-2">
                 {selectedAccounts.filter(a => a.platform !== "youtube" && a.platform !== "pinterest").length > 1 && (() => {
                   const customizableOverrideCount = Object.keys(perAccountOverrides)
                     .filter(id => {
@@ -1075,8 +1023,8 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                   );
                 })()}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
         </div>
 
