@@ -360,9 +360,13 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     // Delete media files from storage
     try {
-      const content = JSON.parse(job.content) as { mediaUrls?: string[] };
-      if (content.mediaUrls?.length) {
-        await Promise.allSettled(content.mediaUrls.map((url) => storage.delete(url)));
+      const content = JSON.parse(job.content) as { mediaUrls?: string[]; youtubeThumbnailUrl?: string };
+      const urlsToDelete = [
+        ...(content.mediaUrls ?? []),
+        ...(content.youtubeThumbnailUrl ? [content.youtubeThumbnailUrl] : []),
+      ];
+      if (urlsToDelete.length) {
+        await Promise.allSettled(urlsToDelete.map((url) => storage.delete(url)));
       }
     } catch { /* non-fatal */ }
 
