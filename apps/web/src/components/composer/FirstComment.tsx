@@ -7,9 +7,9 @@ export function FirstComment({ value, onChange }: Props) {
   return (
     <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-2 mb-1">
-        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>First Comment</span>
+        <span className="text-xs font-semibold uppercase tracking-wide">First Comment</span>
         <span className="text-[10px] px-1.5 py-0.5 rounded-full"
-          style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
+          style={{ color: "#999", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
       </div>
       <p className="text-xs mb-2.5" style={{ color: "#999" }}>
         Posted as the first reply immediately after your post goes live.

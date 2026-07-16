@@ -1154,7 +1154,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                                   style={{ minHeight: 100, overflow: "hidden", backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }} />
                               </div>
                               <div>
-                                <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "#555" }}>First Comment</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1">First Comment</span>
                                 <textarea value={override?.commentText ?? ""}
                                   onChange={e => { setOverrideField(a.id, "commentText", e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
                                   ref={el => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}

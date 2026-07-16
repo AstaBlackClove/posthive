@@ -71,7 +71,7 @@ export function YoutubeFields({
 
       <div className="mb-3">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Title</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide">Title</span>
           <span className="text-[10px]" style={{ color: youtubeTitle.length > 100 ? "#ef4444" : "#444" }}>{youtubeTitle.length}/100</span>
         </div>
         <input
@@ -85,7 +85,7 @@ export function YoutubeFields({
 
       <div className="mb-3">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Description</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide">Description</span>
           <span className="text-[10px]" style={{ color: youtubeDescription.length > 5000 ? "#ef4444" : "#444" }}>{youtubeDescription.length}/5000</span>
         </div>
         <textarea
@@ -101,9 +101,8 @@ export function YoutubeFields({
       {/* Thumbnail */}
       <div>
         <div className="flex items-center gap-2 mb-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Thumbnail</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#f59e0b", backgroundColor: "#f59e0b15", border: "1px solid #f59e0b40" }}>⏳ Pending Google approval</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide">Thumbnail</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#999", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
         </div>
         <div className="flex items-center gap-3">
           {(youtubeThumbnailPreview ?? youtubeThumbnailUrl) ? (
@@ -142,7 +141,7 @@ export function YoutubeFields({
               </svg>
               {thumbnailUploading ? "Uploading…" : (youtubeThumbnailUrl ? "Change thumbnail" : "Add thumbnail")}
             </label>
-            <p className="text-[10px] mt-1" style={{ color: "#555" }}>JPG/PNG · 1280×720 recommended · Requires phone-verified channel</p>
+            <p className="text-[10px] mt-1" style={{ color: "#999 " }}>JPG/PNG · 1280×720 recommended · Requires phone-verified channel</p>
           </div>
         </div>
       </div>

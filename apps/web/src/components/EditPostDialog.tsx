@@ -565,7 +565,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
                             />
                           </div>
                           <div>
-                            <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "#555" }}>First Comment</span>
+                            <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1">First Comment</span>
                             <textarea
                               value={override?.commentText ?? ""}
                               onChange={e => { setOverrideField(a.id, "commentText", e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}

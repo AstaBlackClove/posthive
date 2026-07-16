@@ -71,7 +71,7 @@ export function MediaSection({
 
       {/* Section header */}
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Media</span>
+        <span className="text-xs font-semibold uppercase tracking-wide">Media</span>
         <div className="flex items-center gap-2">
           {youtubeSelected && (
             <div className="flex items-center gap-1">

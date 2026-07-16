@@ -45,7 +45,6 @@ const PIN_CLIENT_SECRET = process.env.PINTEREST_CLIENT_SECRET!;
 const PIN_REDIRECT_URI  = process.env.PINTEREST_REDIRECT_URI!;
 const PIN_SCOPES        = "boards:read,pins:read,pins:write,user_accounts:read";
 const YOUTUBE_SCOPES = [
-  "https://www.googleapis.com/auth/youtube",
   "https://www.googleapis.com/auth/youtube.upload",
   "https://www.googleapis.com/auth/youtube.readonly",
   "https://www.googleapis.com/auth/youtube.force-ssl",
