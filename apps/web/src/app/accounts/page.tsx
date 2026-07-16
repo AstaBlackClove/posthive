@@ -1065,10 +1065,8 @@ export default function AccountsPage() {
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-sm" style={{ color: TEXT }}>YouTube</p>
-                <p className="text-xs" style={{ color: MUTED }}>Google OAuth 2.0 · Shorts</p>
+                <p className="text-xs" style={{ color: MUTED }}>Google OAuth 2.0 · Videos & Shorts</p>
               </div>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
             </div>
             <div className="p-5 space-y-3">
               {!loading && youtubeAccounts.length > 0 && (
@@ -1078,15 +1076,21 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              <button disabled
-                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                <PlatformIcon platform="youtube" size={16} />
-                Connect YouTube
-              </button>
-              <p className="text-xs" style={{ color: MUTED }}>
-                Pending Google app verification · new connections temporarily disabled
-              </p>
+              {connectDisabled ? (
+                <button disabled title={limitMsg ?? undefined}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="youtube" size={16} />
+                  {youtubeAccounts.length > 0 ? "Add another YouTube channel" : "Connect YouTube"}
+                </button>
+              ) : (
+                <a href={YOUTUBE_AUTH_URL}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="youtube" size={16} />
+                  {youtubeAccounts.length > 0 ? "Add another YouTube channel" : "Connect YouTube"}
+                </a>
+              )}
             </div>
           </div>
 

@@ -197,7 +197,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             });
             setAltTexts([]);
           }
-        } catch { setUploadError("Upload failed — is the API running?"); URL.revokeObjectURL(previewUrl); }
+        } catch { setUploadError("Upload failed is the API running?"); URL.revokeObjectURL(previewUrl); }
         continue;
       }
 
@@ -221,7 +221,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           if (!isVid) setAltTexts(a => [...a, ""]);
           return [...prev, { url, previewUrl, name: file.name || "image", isVideo: isVid }];
         });
-      } catch { setUploadError("Upload failed — is the API running?"); URL.revokeObjectURL(previewUrl); }
+      } catch { setUploadError("Upload failed is the API running?"); URL.revokeObjectURL(previewUrl); }
     }
 
     setUploading(false);
@@ -428,7 +428,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           dryRun,
         }),
       });
-      toastSuccess(dryRun ? "Dry run scheduled — no real post will be made." : "Post scheduled successfully!");
+      toastSuccess(dryRun ? "Dry run scheduled no real post will be made." : "Post scheduled successfully!");
       if (!dryRun && !localStorage.getItem("posthive_first_post_done")) {
         localStorage.setItem("posthive_first_post_done", "1");
         confetti({ particleCount: 160, spread: 80, origin: { y: 0.6 }, zIndex: 9999 });
@@ -499,8 +499,8 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     el.onloadedmetadata = () => {
       const { videoWidth: w, videoHeight: h, duration } = el;
       const issues: string[] = [];
-      if (w && h && h <= w) issues.push("isn't vertical (9:16) — it'll likely upload as a regular video, not a Short");
-      else if (w && h && duration && duration > 60) issues.push(`is ${Math.round(duration)}s — Shorts reliably need ≤60s`);
+      if (w && h && h <= w) issues.push("isn't vertical (9:16) it'll likely upload as a regular video, not a Short");
+      else if (w && h && duration && duration > 60) issues.push(`is ${Math.round(duration)}s Shorts reliably need ≤60s`);
       setYoutubeShortsWarning(issues.length ? `This video ${issues[0]}.` : null);
     };
     return () => { el.onloadedmetadata = null; };
@@ -904,13 +904,13 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               {youtubeShortsWarning && (
                 <p className="text-xs font-medium mb-2.5 flex items-start gap-1.5" style={{ color: "#f59e0b" }}>
                   <span className="flex-shrink-0">⚠️</span>
-                  <span>{youtubeShortsWarning} YouTube classifies Shorts by the video itself (vertical, ≤60s) — #Shorts alone won't override that.</span>
+                  <span>{youtubeShortsWarning} YouTube classifies Shorts by the video itself (vertical, ≤60s) #Shorts alone won't override that.</span>
                 </p>
               )}
 
               <div className="mb-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Title</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide">Title</span>
                   <span className="text-[10px]" style={{ color: youtubeTitle.length > 100 ? "#ef4444" : "#444" }}>{youtubeTitle.length}/100</span>
                 </div>
                 <input
@@ -925,7 +925,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
 
               <div className="mb-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Description</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide">Description</span>
                   <span className="text-[10px]" style={{ color: youtubeDescription.length > 5000 ? "#ef4444" : "#444" }}>{youtubeDescription.length}/5000</span>
                 </div>
                 <textarea
@@ -938,49 +938,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                 />
               </div>
 
-              {/* Video source — upload or external URL */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Video</span>
-                  <div className="flex items-center gap-1">
-                    {(["upload", "url"] as const).map((m) => (
-                      <button key={m} type="button" onClick={() => setYoutubeVideoMode(m)}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
-                        style={youtubeVideoMode === m
-                          ? { backgroundColor: "#ff000020", color: "#ff0000", border: "1px solid #ff000050" }
-                          : { backgroundColor: "#111111", color: "#666", border: "1px solid #1f1f1f" }}>
-                        {m === "upload" ? "Upload file" : "Paste URL"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {youtubeVideoMode === "url" ? (
-                  <div>
-                    <input
-                      value={youtubeVideoUrl}
-                      onChange={(e) => setYoutubeVideoUrl(e.target.value)}
-                      placeholder="https://your-cdn.com/video.mp4"
-                      className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
-                      style={{
-                        borderColor: youtubeVideoUrl.trim() && (() => { try { new URL(youtubeVideoUrl); return false; } catch { return true; } })() ? "#ef4444" : "#2a2a2a",
-                        backgroundColor: "#111111",
-                        color: "#ededed",
-                      }}
-                    />
-                    {youtubeVideoUrl.trim() && (() => { try { new URL(youtubeVideoUrl); return false; } catch { return true; } })() ? (
-                      <p className="text-xs mt-1.5" style={{ color: "#ef4444" }}>Invalid URL — must start with https://</p>
-                    ) : (
-                      <p className="text-xs mt-1.5" style={{ color: "#555" }}>
-                        Any public URL — S3, Supabase, Cloudflare R2, direct CDN. No file size limit.
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs" style={{ color: video ? "#4ade80" : "#555" }}>
-                    {video ? `✓ ${video.name}` : "Attach a video using the 📎 button below. Max 100 MB for uploaded files — use Paste URL for larger videos."}
-                  </p>
-                )}
-              </div>
+              {video && youtubeVideoMode === "upload" && (
+                <p className="text-xs" style={{ color: "#4ade80" }}>✓ {video.name}</p>
+              )}
 
             </div>
           )}
@@ -1047,12 +1007,25 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           </div>
 
 
-          {/* Media + upload row — hidden when only YouTube is selected in URL mode (video URL lives in the YouTube section) */}
-          <div className="px-6 pt-4 pb-5" style={{ borderBottom: "1px solid #2a2a2a", display: (loadingAccounts || (onlyYoutube && youtubeVideoMode === "url")) ? "none" : undefined }}>
+          {/* Media + upload row */}
+          <div className="px-6 pt-4 pb-5" style={{ borderBottom: "1px solid #2a2a2a", display: loadingAccounts ? "none" : undefined }}>
 
             {/* Section header */}
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold uppercase tracking-wide">Media</span>
+              {youtubeSelected && (
+                <div className="flex items-center gap-1">
+                  {(["upload", "url"] as const).map((m) => (
+                    <button key={m} type="button" onClick={() => setYoutubeVideoMode(m)}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                      style={youtubeVideoMode === m
+                        ? { backgroundColor: "#ff000020", color: "#ff0000", border: "1px solid #ff000050" }
+                        : { backgroundColor: "#111111", color: "#666", border: "1px solid #1f1f1f" }}>
+                      {m === "upload" ? "Upload file" : "Paste URL"}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Media thumbnails "" unified image + video grid */}
@@ -1098,7 +1071,31 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               </div>
             )}
 
-            {/* Hide file upload when only YouTube is selected and user chose Paste URL — the video URL lives in the YouTube section above */}
+            {/* YouTube URL input — shown when YouTube selected in URL mode */}
+            {youtubeSelected && youtubeVideoMode === "url" && (
+              <div className="mb-3">
+                <input
+                  value={youtubeVideoUrl}
+                  onChange={(e) => setYoutubeVideoUrl(e.target.value)}
+                  placeholder="https://your-cdn.com/video.mp4"
+                  className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                  style={{
+                    borderColor: youtubeVideoUrl.trim() && (() => { try { new URL(youtubeVideoUrl); return false; } catch { return true; } })() ? "#ef4444" : "#2a2a2a",
+                    backgroundColor: "#111111",
+                    color: "#ededed",
+                  }}
+                />
+                {youtubeVideoUrl.trim() && (() => { try { new URL(youtubeVideoUrl); return false; } catch { return true; } })() ? (
+                  <p className="text-xs mt-1.5" style={{ color: "#ef4444" }}>Invalid URL must start with https://</p>
+                ) : (
+                  <p className="text-xs mt-1.5" style={{ color: "#999" }}>
+                    Any public URL S3, Supabase, Cloudflare R2, direct CDN. No file size limit.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* File upload — hidden only when exclusively YouTube in URL mode */}
             {!(onlyYoutube && youtubeVideoMode === "url") && (
               <>
                 <div className="flex items-center gap-3">
@@ -1130,6 +1127,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                 </div>
                 <p className="mt-1.5 text-[11px]" style={{ color: "#555" }}>
                   Images up to {MAX_IMAGE_SIZE_MB}MB · Videos up to {MAX_VIDEO_SIZE_MB}MB
+                  {youtubeSelected && youtubeVideoMode === "upload" && !video && (
+                    <> · <span style={{ color: "#ff0000" }}>YouTube requires a video</span></>
+                  )}
                 </p>
                 {uploadError && <p className="mt-2 text-xs text-red-500 rounded-lg px-3 py-2" style={{ backgroundColor: "#1f0a0a", border: "1px solid #3a1a1a" }}>{uploadError}</p>}
               </>
@@ -1294,6 +1294,37 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         </div>
       )}
 
+      {/* Warnings bar — shown above footer when there are validation issues */}
+      {!loadingAccounts && (instagramSelectedWithNoMedia || instagramStoryWithNoImage || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink) && (
+        <div className="px-4 md:px-8 py-2 flex flex-wrap gap-x-6 gap-y-1" style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0d0d0d" }}>
+          {instagramSelectedWithNoMedia && (
+            <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
+              ⚠️ {igMediaType === "reel" ? "Add a video for this Reel" : "Instagram requires an image"}
+            </p>
+          )}
+          {instagramStoryWithNoImage && (
+            <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
+              ⚠️ Add an image for the Instagram Story
+            </p>
+          )}
+          {youtubeSelectedWithNoVideo && (
+            <p className="text-xs font-medium" style={{ color: "#ef4444" }}>
+              ⚠️ YouTube requires a video before you can schedule this post
+            </p>
+          )}
+          {pinterestSelectedWithNoImage && (
+            <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
+              ⚠️ Pinterest requires an image add one or the Pin will be skipped
+            </p>
+          )}
+          {twitterHasLink && (
+            <p className="text-xs font-medium" style={{ color: "#ef4444" }}>
+              ⚠️ X/Twitter charges $0.20 per tweet containing a link remove the URL to schedule
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Bottom footer bar — full width */}
       <div className="px-4 md:px-8 py-3 md:py-4 flex flex-wrap items-center gap-3 md:gap-4" style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0a0a0a", display: loadingAccounts ? "none" : undefined }}>
 
@@ -1321,32 +1352,6 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         {/* Spacer — pushes buttons to the right on desktop */}
         <div className="flex-1 hidden md:block" />
 
-        {/* Inline media warnings — full width on mobile */}
-        {instagramSelectedWithNoMedia && (
-          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#f59e0b" }}>
-            ℹ️ {igMediaType === "reel" ? "Add a video for this Reel" : "Instagram requires an image"}
-          </p>
-        )}
-        {instagramStoryWithNoImage && (
-          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#f59e0b" }}>
-            ℹ️ Add an image for the Instagram Story
-          </p>
-        )}
-        {youtubeSelectedWithNoVideo && (
-          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#ef4444" }}>
-            ⚠️ YouTube requires a video attached before you can schedule this post
-          </p>
-        )}
-        {pinterestSelectedWithNoImage && (
-          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#f59e0b" }}>
-            ℹ️ Pinterest requires an image — add one or the Pin will be skipped
-          </p>
-        )}
-        {twitterHasLink && (
-          <p className="text-xs font-medium w-full md:w-auto order-last md:order-none" style={{ color: "#ef4444" }}>
-            ⚠️ X/Twitter charges $0.20 per tweet containing a link — remove the URL to schedule
-          </p>
-        )}
 
         {/* Action buttons — full width on mobile, auto on desktop */}
         <div className="w-full md:w-auto flex gap-2">
@@ -1374,7 +1379,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             onClick={handleSaveDraft}
             className="flex-1 md:flex-none px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
-            title="Save as draft — schedule later from Posts page"
+            title="Save as draft schedule later from Posts page"
           >
             Save Draft
           </button>
