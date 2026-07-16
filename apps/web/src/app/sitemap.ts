@@ -16,12 +16,16 @@ const PLATFORM_SLUGS = [
   "instagram",
   "linkedin",
   "mastodon",
+  "pixelfed",
   "youtube",
   "facebook",
   "twitter",
   "pinterest",
   "telegram",
   "nostr",
+  "discord",
+  "tumblr",
+  "lemmy",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
