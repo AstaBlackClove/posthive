@@ -141,6 +141,7 @@ type EffectiveContent = {
   mediaType?: "post" | "reel" | "story";
   youtubeType?: "short" | "video";
   youtubeVideoUrl?: string;
+  youtubeThumbnailUrl?: string;
 };
 
 async function runTarget(
