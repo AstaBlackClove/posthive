@@ -1,4 +1,5 @@
 import type { Account } from "@prisma/client";
+import { google } from "googleapis";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import type { PlatformAdapter } from "./types.js";
 import { prisma } from "../lib/prisma.js";
@@ -172,29 +173,29 @@ export const youtubeAdapter: PlatformAdapter = {
         const thumbUrl = youtubeThumbnailUrl.startsWith("http")
           ? youtubeThumbnailUrl
           : `${PUBLIC_API_URL2}${youtubeThumbnailUrl}`;
+
         const thumbRes = await fetch(thumbUrl);
-        if (thumbRes.ok && thumbRes.body) {
-          const thumbBuffer = Buffer.from(await thumbRes.arrayBuffer());
-          const thumbContentType = thumbRes.headers.get("content-type") ?? "image/jpeg";
-          const setRes = await fetch(
-            `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${video.id}&uploadType=media`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                "Content-Type": thumbContentType,
-                "Content-Length": String(thumbBuffer.byteLength),
-              },
-              body: thumbBuffer,
-            }
-          );
-          if (!setRes.ok) {
-            // Non-fatal — video is already live; log and continue
-            console.warn(`[youtube] thumbnail set failed (${setRes.status}):`, await setRes.text());
-          }
+        if (!thumbRes.ok || !thumbRes.body) {
+          console.warn(`[youtube] failed to fetch thumbnail from ${thumbUrl}: ${thumbRes.status}`);
+        } else {
+          const auth = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET);
+          auth.setCredentials({ access_token: accessToken });
+          const yt = google.youtube({ version: "v3", auth });
+
+          // Pass the response body as a Node.js readable stream
+          const { Readable } = await import("node:stream");
+          const stream = Readable.fromWeb(thumbRes.body as import("node:stream/web").ReadableStream);
+
+          await yt.thumbnails.set({
+            videoId: video.id,
+            media: { body: stream },
+          });
+          console.log(`[youtube] thumbnail set for video ${video.id}`);
         }
-      } catch (err) {
-        console.warn("[youtube] thumbnail upload error (non-fatal):", err);
+      } catch (err: unknown) {
+        // Non-fatal — video is already live
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`[youtube] thumbnail set failed (non-fatal): ${msg}`);
       }
     }
 
