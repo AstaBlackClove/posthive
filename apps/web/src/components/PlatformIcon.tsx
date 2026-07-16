@@ -4,6 +4,7 @@ const PLATFORM_DOMAIN: Record<string, string> = {
   instagram: "instagram.com",
   linkedin:  "linkedin.com",
   mastodon:  "mastodon.social",
+  pixelfed:  "pixelfed.social",
   youtube:   "youtube.com",
   facebook:  "facebook.com",
   twitter:   "x.com",

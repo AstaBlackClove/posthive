@@ -15,6 +15,7 @@ const THREADS_AUTH_URL = `${API_BASE}/auth/threads`;
 const INSTAGRAM_AUTH_URL = `${API_BASE}/auth/instagram`;
 const LINKEDIN_AUTH_URL = `${API_BASE}/auth/linkedin`;
 const MASTODON_AUTH_URL = `${API_BASE}/auth/mastodon`;
+const PIXELFED_AUTH_URL = `${API_BASE}/auth/pixelfed`;
 const YOUTUBE_AUTH_URL = `${API_BASE}/auth/youtube`;
 const FACEBOOK_AUTH_URL = `${API_BASE}/auth/facebook`;
 const TWITTER_AUTH_URL  = `${API_BASE}/auth/twitter`;
@@ -43,6 +44,7 @@ const PLATFORM_META: Record<string, { label: string; brand: string }> = {
   threads:   { label: "Threads",   brand: "#1a1a1a" },
   linkedin:  { label: "LinkedIn",  brand: "#0077b5" },
   mastodon:  { label: "Mastodon",  brand: "#6364ff" },
+  pixelfed:  { label: "Pixelfed",  brand: "#ff8c00" },
   youtube:   { label: "YouTube",   brand: "#ff0000" },
   facebook:  { label: "Facebook",  brand: "#1877f2" },
   pinterest: { label: "Pinterest", brand: "#e60023" },
@@ -92,6 +94,7 @@ const RECONNECT_URLS: Record<string, string> = {
   youtube:   `${API_BASE}/auth/youtube`,
   facebook:  `${API_BASE}/auth/facebook`,
   mastodon:  `${API_BASE}/auth/mastodon`,
+  pixelfed:  `${API_BASE}/auth/pixelfed`,
   pinterest: `${API_BASE}/auth/pinterest`,
   tumblr:    `${API_BASE}/auth/tumblr`,
 };
@@ -493,6 +496,58 @@ function LemmyDialog({ onClose, onConnected }: { onClose: () => void; onConnecte
   );
 }
 
+// ── Pixelfed connect dialog ───────────────────────────────────────────────────
+function PixelfedDialog({ onClose }: { onClose: () => void }) {
+  const [instance, setInstance] = useState("pixelfed.social");
+
+  function connect() {
+    const url = `${PIXELFED_AUTH_URL}?instance=${encodeURIComponent(instance.trim())}`;
+    window.location.href = url;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+      <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center">
+              <PlatformIcon platform="pixelfed" size={18} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm" style={{ color: TEXT }}>Connect Pixelfed</p>
+              <p className="text-xs" style={{ color: MUTED }}>Any instance supported</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-lg" style={{ color: MUTED }}>✕</button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Your Pixelfed instance</label>
+            <input
+              value={instance}
+              onChange={e => setInstance(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && instance.trim() && connect()}
+              placeholder="pixelfed.social"
+              autoFocus
+              className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+              style={{ backgroundColor: "#0a0a0a", border: `1px solid ${BORDER}`, color: TEXT }}
+            />
+            <p className="text-xs mt-1.5" style={{ color: "#555" }}>
+              e.g. pixelfed.social · gram.social · pixelfed.au
+            </p>
+          </div>
+          <button onClick={connect} disabled={!instance.trim()}
+            className="w-full py-2.5 text-sm font-semibold rounded-xl disabled:opacity-40 hover:bg-gray-100 transition-colors"
+            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+            Connect
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Mastodon connect dialog ───────────────────────────────────────────────────
 function MastodonDialog({ onClose }: { onClose: () => void }) {
   const [instance, setInstance] = useState("mastodon.social");
@@ -701,6 +756,14 @@ export default function AccountsPage() {
   const [showManualToken, setShowManualToken] = useState(false);
 
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [platformSearch, setPlatformSearch] = useState("");
+
+  const show = (platform: string) => {
+    const q = platformSearch.trim().toLowerCase();
+    if (!q) return {};
+    const label = (PLATFORM_META[platform]?.label ?? platform).toLowerCase();
+    return (platform.includes(q) || label.includes(q)) ? {} : { display: "none" as const };
+  };
 
   const oauthConnected = searchParams.get("connected");
   const oauthError = searchParams.get("error");
@@ -812,6 +875,7 @@ export default function AccountsPage() {
   const instagramAccounts = accounts.filter((a) => a.platform === "instagram");
   const linkedinAccounts = accounts.filter((a) => a.platform === "linkedin");
   const mastodonAccounts = accounts.filter((a) => a.platform === "mastodon");
+  const pixelfedAccounts = accounts.filter((a) => a.platform === "pixelfed");
   const youtubeAccounts = accounts.filter((a) => a.platform === "youtube");
   const facebookAccounts = accounts.filter((a) => a.platform === "facebook");
   const twitterAccounts   = accounts.filter((a) => a.platform === "twitter");
@@ -822,6 +886,7 @@ export default function AccountsPage() {
   const allowTwitter = !billingEnabled || !planStatus || planStatus.plan === "pro" || planStatus.plan === "team";
 
   const [showMastodonDialog, setShowMastodonDialog] = useState(false);
+  const [showPixelfedDialog, setShowPixelfedDialog] = useState(false);
 
   const isCancelled = planStatus?.planStatus === "cancelled";
   const atLimit = planStatus !== null && !isCancelled && accounts.length >= planStatus.maxAccounts;
@@ -891,6 +956,24 @@ export default function AccountsPage() {
           </div>
         )}
 
+        {/* Platform search */}
+        <div className="relative mb-4">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="#666" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Filter platforms…"
+            value={platformSearch}
+            onChange={(e) => setPlatformSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 transition"
+            style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, color: TEXT }}
+          />
+          {platformSearch && (
+            <button onClick={() => setPlatformSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: MUTED }}>✕</button>
+          )}
+        </div>
+
         {/* Skeleton grid while loading */}
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-pulse">
@@ -915,7 +998,7 @@ export default function AccountsPage() {
         {!loading && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
           {/* ── Bluesky ── */}
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("bluesky") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                 <PlatformIcon platform="bluesky" size={20} />
@@ -949,7 +1032,7 @@ export default function AccountsPage() {
           </div>
 
           {/* ── Threads ── */}
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("threads") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                 <PlatformIcon platform="threads" size={20} />
@@ -983,7 +1066,7 @@ export default function AccountsPage() {
           </div>
 
           {/* ── Instagram ── */}
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("instagram") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                 <PlatformIcon platform="instagram" size={20} />
@@ -1016,7 +1099,7 @@ export default function AccountsPage() {
           </div>
 
           {/* ── LinkedIn ── */}
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("linkedin") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                 <PlatformIcon platform="linkedin" size={20} />
@@ -1058,7 +1141,7 @@ export default function AccountsPage() {
           </div>
 
           {/* ── YouTube ── */}
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("youtube") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                 <PlatformIcon platform="youtube" size={20} />
@@ -1095,7 +1178,7 @@ export default function AccountsPage() {
           </div>
 
           {/* ── Facebook Pages ── */}
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("facebook") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                 <PlatformIcon platform="facebook" size={20} />
@@ -1128,7 +1211,7 @@ export default function AccountsPage() {
           </div>
 
           {/* ── Mastodon ── */}
-          <div className="rounded-2xl p-5" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+          <div className="rounded-2xl p-5" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("mastodon") }}>
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3">
                 <PlatformIcon platform="mastodon" size={20} />
@@ -1162,8 +1245,43 @@ export default function AccountsPage() {
             </div>
           </div>
 
+          {/* ── Pixelfed ── */}
+          <div className="rounded-2xl p-5" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("pixelfed") }}>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <PlatformIcon platform="pixelfed" size={20} />
+                <div>
+                  <p className="font-semibold text-sm" style={{ color: TEXT }}>Pixelfed</p>
+                  <p className="text-xs" style={{ color: MUTED }}>Federated photo sharing · ActivityPub</p>
+                </div>
+              </div>
+
+              {!loading && pixelfedAccounts.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  {pixelfedAccounts.map((a) => (
+                    <ConnectedAccountRow key={a.id} account={a}
+                      onDisconnect={() => setDisconnectTarget(a)}
+                      disconnecting={disconnecting}
+                      postsThisMonth={stats[a.id]} />
+                  ))}
+                </div>
+              )}
+
+              <button onClick={() => setShowPixelfedDialog(true)} disabled={connectDisabled}
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors disabled:opacity-40 hover:bg-gray-100"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                <PlatformIcon platform="pixelfed" size={16} />
+                {pixelfedAccounts.length > 0 ? "Add another Pixelfed account" : "Connect Pixelfed"}
+              </button>
+
+              <p className="text-xs" style={{ color: MUTED }}>
+                Works with any Pixelfed instance pixelfed.social, gram.social, and more.
+              </p>
+            </div>
+          </div>
+
           {/* ── Pinterest ── */}
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("pinterest") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                 <PlatformIcon platform="pinterest" size={20} />
@@ -1199,7 +1317,7 @@ export default function AccountsPage() {
           {(() => {
             const telegramAccounts = accounts.filter(a => a.platform === "telegram");
             return (
-              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("telegram") }}>
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                     <PlatformIcon platform="telegram" size={20} />
@@ -1247,7 +1365,7 @@ export default function AccountsPage() {
           {(() => {
             const nostrAccounts = accounts.filter(a => a.platform === "nostr");
             return (
-              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("nostr") }}>
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                     <PlatformIcon platform="nostr" size={20} />
@@ -1293,7 +1411,7 @@ export default function AccountsPage() {
           })()}
 
           {/* ── X / Twitter ── */}
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("twitter") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                 <PlatformIcon platform="twitter" size={20} />
@@ -1374,7 +1492,7 @@ export default function AccountsPage() {
           {(() => {
             const discordAccounts = accounts.filter(a => a.platform === "discord");
             return (
-              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("discord") }}>
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                     <PlatformIcon platform="discord" size={20} />
@@ -1421,7 +1539,7 @@ export default function AccountsPage() {
           {(() => {
             const tumblrAccounts = accounts.filter(a => a.platform === "tumblr");
             return (
-              <div className="rounded-2xl p-5 flex flex-col gap-4" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+              <div className="rounded-2xl p-5 flex flex-col gap-4" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("tumblr") }}>
                 <div className="flex items-center gap-3">
                   <PlatformIcon platform="tumblr" size={28} />
                   <div>
@@ -1464,7 +1582,7 @@ export default function AccountsPage() {
           {(() => {
             const lemmyAccounts = accounts.filter(a => a.platform === "lemmy");
             return (
-              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("lemmy") }}>
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
                     <PlatformIcon platform="lemmy" size={20} />
@@ -1501,6 +1619,7 @@ export default function AccountsPage() {
       </div>
 
       {showTelegramDialog && <TelegramDialog onClose={() => setShowTelegramDialog(false)} onConnected={() => { fetchAccounts(); success("Telegram channel connected!"); }} />}
+      {showPixelfedDialog && <PixelfedDialog onClose={() => setShowPixelfedDialog(false)} />}
       {showMastodonDialog && <MastodonDialog onClose={() => setShowMastodonDialog(false)} />}
       {showNostrDialog && <NostrDialog onClose={() => setShowNostrDialog(false)} onConnected={() => { fetchAccounts(); success("Nostr account connected!"); }} />}
       {showLemmyDialog && <LemmyDialog onClose={() => setShowLemmyDialog(false)} onConnected={() => { fetchAccounts(); success("Lemmy community connected!"); }} />}

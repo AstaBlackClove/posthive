@@ -11,6 +11,7 @@ export const PLATFORMS_NAV = [
   { platform: "instagram", label: "Instagram", desc: "Posts, Reels & Stories" },
   { platform: "linkedin",  label: "LinkedIn",  desc: "3,000 chars, professional" },
   { platform: "mastodon",  label: "Mastodon",  desc: "500 chars, federated" },
+  { platform: "pixelfed",  label: "Pixelfed",  desc: "2,001 chars, photo-first, fediverse" },
   { platform: "youtube",   label: "YouTube",   desc: "Shorts & video, Google OAuth" },
   { platform: "facebook",  label: "Facebook Pages", desc: "Pages, Graph API" },
   { platform: "pinterest", label: "Pinterest",      desc: "Pins, image required" },
@@ -123,9 +124,9 @@ export function NavBar({ user, ctaHref, navCtaLabel, loading }: NavBarProps) {
         {/* Platforms dropdown */}
         <div style={{ position: "relative" }} onMouseEnter={openPlat} onMouseLeave={closePlat}>
           <button style={btnStyle}>Platforms {chevron(platOpen)}</button>
-          <div onMouseEnter={openPlat} onMouseLeave={closePlat} style={{ ...dropStyle(platOpen), width: 340 }}>
+          <div onMouseEnter={openPlat} onMouseLeave={closePlat} style={{ ...dropStyle(platOpen), width: 640 }}>
             <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8, paddingLeft: 6 }}>SUPPORTED PLATFORMS</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               {PLATFORMS_NAV.map((p) => (
                 <a key={p.platform} href={`/platforms/${p.platform}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 9, textDecoration: "none", transition: "background 100ms" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.04)"; }}

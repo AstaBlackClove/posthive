@@ -250,6 +250,39 @@ const PLATFORMS: Record<string, PlatformData> = {
       { q: "What character limit does Posthive use for Mastodon?", a: "Posthive respects your instance's character limit, which is 500 characters on most instances. The composer shows a live counter so you never go over." },
     ],
   },
+  pixelfed: {
+    name: "Pixelfed",
+    domain: "pixelfed.social",
+    color: "#ff8c00",
+    headline: "Schedule to Pixelfed the federated, open-source photo platform",
+    subheadline: "An Instagram alternative built on ActivityPub. Share photos to the fediverse without algorithmic manipulation or ads.",
+    supports: [
+      { label: "Photo posts up to 2,001 chars", icon: "text" as IconKey },
+      { label: "Up to 4 images per post", icon: "image" as IconKey },
+      { label: "Alt text on media", icon: "alt" as IconKey },
+      { label: "First comment on publish", icon: "comment" as IconKey },
+      { label: "Per-account text override", icon: "override" as IconKey },
+      { label: "ActivityPub · federated", icon: "globe" as IconKey },
+    ],
+    steps: [
+      { n: "01", title: "Enter your instance URL", desc: "Type your Pixelfed instance (e.g. pixelfed.social, pixelfed.uno). Posthive registers an OAuth app on your instance automatically." },
+      { n: "02", title: "Compose your post", desc: "Write your caption, attach at least one photo (required), and add alt text for accessibility. Choose audience and toggle NSFW if needed." },
+      { n: "03", title: "Schedule and publish", desc: "Pick a time and Posthive posts to your Pixelfed instance automatically." },
+    ],
+    image: "/screenshots/platform-pixelfed.png",
+    imageAlt: "Posthive composer with Pixelfed post preview",
+    why: [
+      { title: "Instagram alternative, federated", desc: "Pixelfed is what Instagram would look like if it were open-source and user-owned. Posts live on the fediverse — they can be seen from Mastodon and any ActivityPub client. No algorithm, no ads." },
+      { title: "Schedule to the open social web", desc: "Posthive is the only social scheduler that covers both the Mastodon and Pixelfed sides of ActivityPub. Post to both from one composer in a single click." },
+      { title: "First comment support", desc: "Schedule a reply to your own Pixelfed post that fires immediately after it goes live — great for links, credits, or hashtag lists you don't want cluttering the main caption." },
+    ],
+    faq: [
+      { q: "Which Pixelfed instances does Posthive support?", a: "Any Pixelfed instance — pixelfed.social, pixelfed.uno, or your own self-hosted server. Enter the instance URL on the Accounts page and Posthive registers an OAuth app automatically." },
+      { q: "Do I need a Pixelfed account to use this?", a: "Yes — you need an account on any Pixelfed instance. Registration is free on public instances like pixelfed.social and pixelfed.uno." },
+      { q: "Can I post text-only to Pixelfed?", a: "No — Pixelfed requires at least one image per post. The Posthive composer will warn you if you try to schedule without an image attached." },
+      { q: "Can I post videos to Pixelfed?", a: "Video support varies by instance. Posthive will attempt to upload the video; if the instance rejects it, you'll see an error on that target." },
+    ],
+  },
   youtube: {
     name: "YouTube",
     domain: "youtube.com",
@@ -912,10 +945,10 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
           {data.name} is one of thirteen platforms.
         </h2>
         <p style={{ fontSize: 16, color: muted75, lineHeight: 1.6, margin: "0 0 32px", maxWidth: "60ch" }}>
-          Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, Discord, and Tumblr — all from the same composer.
+          Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, Pixelfed, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, Discord, and Tumblr — all from the same composer.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 32 }}>
-          {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "youtube", "facebook", "pinterest", "telegram", "twitter", "nostr", "discord", "tumblr"] as const)
+          {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "pixelfed", "youtube", "facebook", "pinterest", "telegram", "twitter", "nostr", "discord", "tumblr"] as const)
             .filter(p => p !== platform)
             .map(p => (
               <Link key={p} href={`/platforms/${p}`} className="plat-chip">

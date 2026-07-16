@@ -13,6 +13,7 @@ import { prisma } from "./lib/prisma.js";
 import { LocalDiskStorage, SupabaseStorage } from "./lib/storage.js";
 import { setBlueskyStorage } from "./adapters/bluesky.js";
 import { setStorageAdapter as setMastodonStorage } from "./adapters/mastodon.js";
+import { setStorageAdapter as setPixelfedStorage } from "./adapters/pixelfed.js";
 import { setTelegramStorage } from "./adapters/telegram.js";
 import { setLinkedInStorage } from "./adapters/linkedin.js";
 import { setDiscordStorage } from "./adapters/discord.js";
@@ -46,6 +47,7 @@ async function main() {
     : new LocalDiskStorage(UPLOADS_DIR);
   setBlueskyStorage(storage);
   setMastodonStorage(storage);
+  setPixelfedStorage(storage);
   setTelegramStorage(storage);
   setLinkedInStorage(storage);
   setDiscordStorage(storage);

@@ -1,4 +1,5 @@
 import type { StorageAdapter } from "./storage.js";
+import { isSsrfBlocked } from "./ssrf.js";
 
 let store: StorageAdapter | null = null;
 export function setAvatarStorage(s: StorageAdapter): void { store = s; }
@@ -6,6 +7,7 @@ export function setAvatarStorage(s: StorageAdapter): void { store = s; }
 /** Download an avatar URL and persist it in our own storage. Falls back to original URL on any error. */
 export async function downloadAndStoreAvatar(url: string | null): Promise<string | null> {
   if (!url || !store) return url;
+  if (isSsrfBlocked(url)) return null;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
     if (!res.ok) return url;

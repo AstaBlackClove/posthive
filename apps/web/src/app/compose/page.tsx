@@ -15,6 +15,7 @@ import {
 import type { Account, UploadedImage, PerAccountOverride } from "../../components/PlatformPreview";
 import { YoutubeFields } from "../../components/composer/YoutubeFields";
 import { PinterestFields } from "../../components/composer/PinterestFields";
+import { PixelfedFields } from "../../components/composer/PixelfedFields";
 import { FirstComment } from "../../components/composer/FirstComment";
 import { WarningsBar } from "../../components/composer/WarningsBar";
 import { MediaSection } from "../../components/composer/MediaSection";
@@ -50,6 +51,8 @@ export default function ComposePage() {
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
   const [pinterestTitle, setPinterestTitle] = useState("");
   const [pinterestDescription, setPinterestDescription] = useState("");
+  const [pixelfedSensitive, setPixelfedSensitive] = useState(false);
+  const [pixelfedVisibility, setPixelfedVisibility] = useState<"public" | "unlisted" | "private">("public");
 const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -439,6 +442,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     if (youtubeThumbnailPreview) URL.revokeObjectURL(youtubeThumbnailPreview);
     setYoutubeThumbnailUrl(null); setYoutubeThumbnailPreview(null);
     setPinterestTitle(""); setPinterestDescription("");
+    setPixelfedSensitive(false); setPixelfedVisibility("public");
     setPerAccountOverrides({}); setShowCustomize(false); setUploadError(null);
     mediaItems.forEach(m => URL.revokeObjectURL(m.previewUrl));
     setMediaItems([]); setAltTexts([]);
@@ -464,6 +468,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected ? { youtubeType, youtubeVideoMode } : {}),
             ...(youtubeSelected && youtubeVideoMode === "url" && youtubeVideoUrl.trim() ? { youtubeVideoUrl: youtubeVideoUrl.trim() } : {}),
             ...(youtubeSelected && youtubeThumbnailUrl ? { youtubeThumbnailUrl } : {}),
+            ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -502,6 +507,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected ? { youtubeType, youtubeVideoMode } : {}),
             ...(youtubeSelected && youtubeVideoMode === "url" && youtubeVideoUrl.trim() ? { youtubeVideoUrl: youtubeVideoUrl.trim() } : {}),
             ...(youtubeSelected && youtubeThumbnailUrl ? { youtubeThumbnailUrl } : {}),
+            ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -544,6 +550,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const pinterestAccounts = selectedAccounts.filter((a) => a.platform === "pinterest");
   const pinterestSelected = pinterestAccounts.length > 0;
   const pinterestSelectedWithNoImage = pinterestSelected && images.length === 0;
+  const pixelfedAccounts = selectedAccounts.filter((a) => a.platform === "pixelfed");
+  const pixelfedSelected = pixelfedAccounts.length > 0;
+  const pixelfedSelectedWithNoImage = pixelfedSelected && images.length === 0;
   const youtubeAccounts = selectedAccounts.filter((a) => a.platform === "youtube");
   const youtubeSelected = youtubeAccounts.length > 0;
   const youtubeSelectedWithNoVideo = youtubeSelected && (youtubeVideoMode === "upload" ? !video : !youtubeVideoUrl.trim());
@@ -983,6 +992,14 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             />
           )}
 
+          {/* Pixelfed — NSFW toggle + audience */}
+          {pixelfedSelected && !loadingAccounts && (
+            <PixelfedFields
+              sensitive={pixelfedSensitive} onSensitiveChange={setPixelfedSensitive}
+              visibility={pixelfedVisibility} onVisibilityChange={setPixelfedVisibility}
+            />
+          )}
+
           {/* First comment */}
           {!loadingAccounts && !noCommentSupport && (
             <FirstComment value={commentText} onChange={setCommentText} />
@@ -1186,6 +1203,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           className="md:px-8"
           youtubeSelectedWithNoVideo={youtubeSelectedWithNoVideo}
           pinterestSelectedWithNoImage={pinterestSelectedWithNoImage}
+          pixelfedSelectedWithNoImage={pixelfedSelectedWithNoImage}
           instagramSelectedWithNoMedia={instagramSelectedWithNoMedia}
           instagramStoryWithNoImage={instagramStoryWithNoImage}
           twitterHasLink={twitterHasLink}
@@ -1254,7 +1272,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           <button
             type="submit"
             form=""
-            disabled={submitting || overAnyLimit || accounts.length === 0 || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink}
+            disabled={submitting || overAnyLimit || accounts.length === 0 || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || pixelfedSelectedWithNoImage || twitterHasLink}
             onClick={handleSubmit}
             className="flex-1 md:flex-none px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-colors hover:bg-gray-100"
             style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}

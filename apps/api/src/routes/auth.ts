@@ -8,6 +8,7 @@ import { withAuth, getUser } from "../lib/auth/withAuth.js";
 import { getDiscordChannels, encryptDiscordCredentials } from "../adapters/discord.js";
 import { tumblrRequestTokenAuth, tumblrAccessTokenAuth, tumblrApiAuthHeader, encryptTumblrCredentials } from "../adapters/tumblr.js";
 import { downloadAndStoreAvatar } from "../lib/avatarStore.js";
+import { isSsrfBlocked } from "../lib/ssrf.js";
 
 const APP_ID = process.env.THREADS_APP_ID!;
 const APP_SECRET = process.env.THREADS_APP_SECRET!;
@@ -26,6 +27,14 @@ const MASTO_CLIENT_ID = process.env.MASTODON_CLIENT_ID!;
 const MASTO_CLIENT_SECRET = process.env.MASTODON_CLIENT_SECRET!;
 const MASTO_REDIRECT_URI = process.env.MASTODON_REDIRECT_URI!;
 const MASTODON_SCOPES = "read:accounts write:statuses write:media";
+
+const PF_REDIRECT_URI = process.env.PIXELFED_REDIRECT_URI!;
+const PIXELFED_SCOPES = "read write";
+
+// Server-side store for Pixelfed dynamic client credentials (keyed by nonce)
+// Avoids placing client_secret in the unsigned state URL parameter
+const pixelfedClientStore = new Map<string, { clientId: string; clientSecret: string }>();
+
 
 const YT_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID!;
 const YT_CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET!;
@@ -506,6 +515,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
     await prisma.oAuthState.delete({ where: { id: storedState.id } });
 
+    // Re-validate instanceUrl from state — state is unsigned, so must re-check SSRF blocklist
+    if (isSsrfBlocked(instanceUrl)) {
+      return reply.redirect(`${WEB_URL}/accounts?error=invalid_instance`);
+    }
+
     const tokenRes = await fetch(`${instanceUrl}/oauth/token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -541,6 +555,157 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     console.log("[mastodon] connected @" + profile.username + " -> user " + userId);
     return reply.redirect(`${WEB_URL}/accounts?connected=mastodon`);
+  });
+
+  // ── Pixelfed OAuth (dynamic per-instance registration) ──────────────────
+
+  app.get("/auth/pixelfed", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { instance } = req.query as { instance?: string };
+
+    if (!instance) return reply.status(400).send({ error: "instance required" });
+
+    const instanceUrl = instance.startsWith("http") ? instance.replace(/\/$/, "") : `https://${instance.replace(/\/$/, "")}`;
+
+    // SSRF protection
+    let parsedInstance: URL;
+    try { parsedInstance = new URL(instanceUrl); } catch {
+      return reply.status(400).send({ error: "Invalid Pixelfed instance URL" });
+    }
+    if (parsedInstance.protocol !== "https:") {
+      return reply.status(400).send({ error: "Pixelfed instance must use HTTPS" });
+    }
+    const hostname = parsedInstance.hostname;
+    if (
+      hostname === "localhost" ||
+      /^127\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+      hostname === "169.254.169.254" ||
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal") ||
+      hostname === "0.0.0.0"
+    ) {
+      return reply.status(400).send({ error: "Invalid Pixelfed instance" });
+    }
+
+    // Dynamically register app on the instance
+    console.log(`[pixelfed] registering app on ${instanceUrl} with redirect_uri=${PF_REDIRECT_URI}`);
+    const appRes = await fetch(`${instanceUrl}/api/v1/apps`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_name: "Posthive",
+        redirect_uris: PF_REDIRECT_URI,
+        scopes: PIXELFED_SCOPES,
+        website: process.env.WEB_URL ?? "https://posthive.co",
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!appRes.ok) {
+      const body = await appRes.text();
+      console.error(`[pixelfed] app registration failed: ${appRes.status} ${body}`);
+      return reply.redirect(`${WEB_URL}/accounts?error=pixelfed_registration_failed`);
+    }
+    const pfApp = await appRes.json() as { client_id: string; client_secret: string };
+    console.log(`[pixelfed] app registered client_id=${pfApp.client_id}`);
+
+    const nonce = randomBytes(32).toString("hex");
+    await prisma.oAuthState.create({
+      data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
+    });
+    // Store client credentials server-side — never put client_secret in the state URL
+    pixelfedClientStore.set(nonce, { clientId: pfApp.client_id, clientSecret: pfApp.client_secret });
+    const state = Buffer.from(JSON.stringify({ userId, nonce, instanceUrl })).toString("base64url");
+
+    const url = new URL(`${instanceUrl}/oauth/authorize`);
+    url.searchParams.set("client_id", pfApp.client_id);
+    url.searchParams.set("redirect_uri", PF_REDIRECT_URI);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("scope", PIXELFED_SCOPES);
+    url.searchParams.set("state", state);
+
+    return reply.redirect(url.toString());
+  });
+
+  app.get("/auth/pixelfed/callback", async (req, reply) => {
+    const { code, state: stateRaw, error } = req.query as Record<string, string>;
+
+    if (error) return reply.redirect(`${WEB_URL}/accounts?error=${encodeURIComponent(error)}`);
+    if (!code || !stateRaw) return reply.redirect(`${WEB_URL}/accounts?error=missing_params`);
+
+    let userId: string, nonce: string, instanceUrl: string;
+    try {
+      ({ userId, nonce, instanceUrl } = JSON.parse(Buffer.from(stateRaw, "base64url").toString()));
+    } catch {
+      return reply.redirect(`${WEB_URL}/accounts?error=invalid_state`);
+    }
+
+    const storedState = await prisma.oAuthState.findFirst({ where: { userId, nonce } });
+    if (!storedState || storedState.expiresAt < new Date()) {
+      return reply.redirect(`${WEB_URL}/accounts?error=state_expired`);
+    }
+    await prisma.oAuthState.delete({ where: { id: storedState.id } });
+
+    // Re-validate instanceUrl — state is unsigned so must re-check SSRF blocklist
+    if (isSsrfBlocked(instanceUrl)) {
+      pixelfedClientStore.delete(nonce);
+      return reply.redirect(`${WEB_URL}/accounts?error=invalid_instance`);
+    }
+
+    // Retrieve client credentials stored server-side during initiation
+    const pfCreds = pixelfedClientStore.get(nonce);
+    pixelfedClientStore.delete(nonce);
+    if (!pfCreds) {
+      return reply.redirect(`${WEB_URL}/accounts?error=state_expired`);
+    }
+    const { clientId, clientSecret } = pfCreds;
+
+    const tokenRes = await fetch(`${instanceUrl}/oauth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: PF_REDIRECT_URI,
+        grant_type: "authorization_code",
+        code,
+        scope: PIXELFED_SCOPES,
+      }),
+    });
+    if (!tokenRes.ok) return reply.redirect(`${WEB_URL}/accounts?error=token_exchange_failed`);
+    const { access_token: accessToken } = await tokenRes.json() as { access_token: string };
+
+    console.log(`[pixelfed] fetching profile from ${instanceUrl}`);
+    const profileRes = await fetch(`${instanceUrl}/api/v1/accounts/verify_credentials`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!profileRes.ok) {
+      const body = await profileRes.text();
+      console.error(`[pixelfed] profile fetch failed: ${profileRes.status} ${body}`);
+      const isHeadersTooLarge = profileRes.status === 400 && body.includes("Header Or Cookie Too Large");
+      const msg = isHeadersTooLarge
+        ? "This Pixelfed instance has a server misconfiguration (nginx headers too large). Try a different instance like pixelfed.social or pixelfed.uno."
+        : `Pixelfed profile fetch failed (${profileRes.status}). Try again or use a different instance.`;
+      return reply.redirect(`${WEB_URL}/accounts?error=${encodeURIComponent(msg)}`);
+    }
+    const profile = await profileRes.json() as { id: string; username: string; avatar?: string };
+
+    const credentials = encrypt(JSON.stringify({ accessToken, instanceUrl, accountId: profile.id }));
+
+    const existing = await prisma.account.findFirst({
+      where: { platform: "pixelfed", displayName: profile.username, userId },
+      select: { id: true },
+    });
+    await prisma.account.upsert({
+      where: { id: existing?.id ?? "new" },
+      create: { platform: "pixelfed", displayName: profile.username, credentials, avatarUrl: profile.avatar ?? null, userId },
+      update: { credentials, avatarUrl: profile.avatar ?? null },
+    });
+
+    console.log("[pixelfed] connected @" + profile.username + " -> user " + userId);
+    return reply.redirect(`${WEB_URL}/accounts?connected=pixelfed`);
   });
 
   // ── YouTube OAuth ────────────────────────────────────────────────────────

@@ -75,6 +75,7 @@ export const PLATFORM_COLOR: Record<string, string> = {
   linkedin: "#0077b5",
   instagram: "#e1306c",
   mastodon: "#6364ff",
+  pixelfed: "#ff8c00",
   youtube: "#ff0000",
   facebook: "#1877f2",
   twitter: "#e7e9ea",
@@ -91,6 +92,7 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   threads: 500,
   linkedin: 3000,
   mastodon: 500,
+  pixelfed: 2001,
   youtube: 5000,
   facebook: 63206,
   twitter: 25000,
@@ -557,6 +559,75 @@ function YouTubePreview({ account, text, commentText, mediaItems = [], youtubeTy
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function PixelfedPreview({ account, text, commentText, images, video }: {
+  account: Account;
+  text: string;
+  commentText: string;
+  images: UploadedImage[];
+  video: UploadedImage | null;
+}) {
+  const initial = account.displayName[0]?.toUpperCase() ?? "?";
+  const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#1a1215", border: "1px solid #2a2a2a" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5"
+        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #ff8c00", backgroundColor: "#0a0a0a" }}>
+        <PlatformIcon platform="pixelfed" size={16} />
+        <span className="text-xs font-semibold" style={{ color: "#ff8c00" }}>Pixelfed</span>
+        <span className="text-xs ml-auto" style={{ color: "#666" }}>@{account.displayName}</span>
+      </div>
+
+      <div className="p-4">
+        <div className="flex gap-3">
+          {account.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white"
+              style={{ background: "#ff8c00" }}>
+              {initial}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-1.5 mb-1">
+              <span className="text-sm font-bold" style={{ color: "#ededed" }}>{account.displayName}</span>
+              <span className="text-xs" style={{ color: "#555" }}>{timeStr}</span>
+            </div>
+            {text ? (
+              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#d4d4d4" }}>{text}</p>
+            ) : (
+              <p className="text-sm italic" style={{ color: "#444" }}>Start writing your post…</p>
+            )}
+
+            {video && (
+              <div className="mt-2.5 rounded-xl overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
+                <video src={video.previewUrl} className="w-full h-48 object-cover" muted />
+              </div>
+            )}
+
+            {images.length > 0 && (
+              <div className={`mt-2.5 grid gap-1.5 ${images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                {images.slice(0, 4).map((img, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={img.previewUrl} alt="" className={`w-full object-cover rounded-lg ${images.length === 1 ? "h-48" : "h-28"}`} />
+                ))}
+              </div>
+            )}
+
+            {commentText && (
+              <div className="mt-3 pt-3 border-t" style={{ borderColor: "#2a2a2a" }}>
+                <p className="text-xs mb-1" style={{ color: "#555" }}>First comment</p>
+                <p className="text-sm" style={{ color: "#aaa" }}>{commentText}</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1088,6 +1159,9 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   }
   if (account.platform === "linkedin") {
     return <LinkedInPreview account={account} text={text} commentText={commentText} images={images} />;
+  }
+  if (account.platform === "pixelfed") {
+    return <PixelfedPreview account={account} text={text} commentText={commentText} images={images} video={video} />;
   }
   if (account.platform === "mastodon") {
     return <MastodonPreview account={account} text={text} commentText={commentText} images={images} video={video} />;

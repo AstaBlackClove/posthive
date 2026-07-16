@@ -3,6 +3,7 @@ import { linkedinAdapter } from "./linkedin.js";
 import { threadsAdapter } from "./threads.js";
 import { instagramAdapter } from "./instagram.js";
 import { mastodonAdapter } from "./mastodon.js";
+import { pixelfedAdapter } from "./pixelfed.js";
 import { youtubeAdapter } from "./youtube.js";
 import { facebookAdapter } from "./facebook.js";
 import { twitterAdapter } from "./twitter.js";
@@ -20,6 +21,7 @@ const adapters: PlatformAdapter[] = [
   linkedinAdapter,
   instagramAdapter,
   mastodonAdapter,
+  pixelfedAdapter,
   youtubeAdapter,
   facebookAdapter,
   twitterAdapter,

@@ -49,6 +49,8 @@ export interface PlatformAdapter {
       locationId?: string;           // Instagram: Facebook Place ID for location tagging
       userTags?: string[];           // Instagram: usernames to tag in the post
       collaborators?: string[];      // Instagram: usernames to add as collaborators
+      pixelfedSensitive?: boolean;   // Pixelfed: blur media behind content warning
+      pixelfedVisibility?: "public" | "unlisted" | "private"; // Pixelfed: audience
     }
   ): Promise<PostResult>;
 

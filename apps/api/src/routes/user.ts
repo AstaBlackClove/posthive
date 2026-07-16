@@ -258,8 +258,28 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     }
     const { webhookUrl } = req.body as { webhookUrl?: string };
     const url = webhookUrl?.trim() || null;
-    if (url && !/^https?:\/\/.+/.test(url)) {
-      return reply.status(400).send({ error: "Webhook URL must start with http:// or https://" });
+    if (url) {
+      let parsed: URL;
+      try { parsed = new URL(url); } catch {
+        return reply.status(400).send({ error: "Invalid webhook URL" });
+      }
+      if (parsed.protocol !== "https:") {
+        return reply.status(400).send({ error: "Webhook URL must use HTTPS" });
+      }
+      const h = parsed.hostname;
+      const blocked =
+        h === "localhost" ||
+        /^127\./.test(h) ||
+        /^10\./.test(h) ||
+        /^192\.168\./.test(h) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(h) ||
+        h === "169.254.169.254" ||
+        h.endsWith(".local") ||
+        h.endsWith(".internal") ||
+        h === "0.0.0.0";
+      if (blocked) {
+        return reply.status(400).send({ error: "Invalid webhook URL" });
+      }
     }
     await prisma.user.update({ where: { id: userId }, data: { webhookUrl: url } });
     return reply.send({ ok: true });

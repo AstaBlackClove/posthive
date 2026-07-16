@@ -1,6 +1,7 @@
 interface Props {
   youtubeSelectedWithNoVideo: boolean;
   pinterestSelectedWithNoImage: boolean;
+  pixelfedSelectedWithNoImage: boolean;
   instagramSelectedWithNoMedia?: boolean;
   instagramStoryWithNoImage?: boolean;
   twitterHasLink: boolean;
@@ -11,6 +12,7 @@ interface Props {
 export function WarningsBar({
   youtubeSelectedWithNoVideo,
   pinterestSelectedWithNoImage,
+  pixelfedSelectedWithNoImage,
   instagramSelectedWithNoMedia,
   instagramStoryWithNoImage,
   twitterHasLink,
@@ -22,6 +24,7 @@ export function WarningsBar({
     instagramStoryWithNoImage ||
     youtubeSelectedWithNoVideo ||
     pinterestSelectedWithNoImage ||
+    pixelfedSelectedWithNoImage ||
     twitterHasLink;
 
   if (!hasAny) return null;
@@ -48,12 +51,17 @@ export function WarningsBar({
       )}
       {pinterestSelectedWithNoImage && (
         <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
-          ⚠️ Pinterest requires an image — add one or the Pin will be skipped
+          ⚠️ Pinterest requires an image add one or the Pin will be skipped
+        </p>
+      )}
+      {pixelfedSelectedWithNoImage && (
+        <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
+          ⚠️ Pixelfed requires at least one image
         </p>
       )}
       {twitterHasLink && (
         <p className="text-xs font-medium" style={{ color: "#ef4444" }}>
-          ⚠️ X/Twitter charges $0.20 per tweet containing a link — remove the URL to schedule
+          ⚠️ X/Twitter charges $0.20 per tweet containing a link remove the URL to schedule
         </p>
       )}
     </div>

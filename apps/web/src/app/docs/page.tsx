@@ -70,6 +70,7 @@ const NAV = [
       { label: "Instagram", id: "instagram" },
       { label: "LinkedIn", id: "linkedin" },
       { label: "Mastodon", id: "mastodon" },
+      { label: "Pixelfed", id: "pixelfed" },
       { label: "YouTube", id: "youtube" },
       { label: "Facebook Pages", id: "facebook" },
       { label: "Pinterest", id: "pinterest" },
@@ -660,6 +661,27 @@ pnpm install`}</CopyCode>
                 <li className="doc-li">Copy the <strong>Client key</strong> and <strong>Client secret</strong>.</li>
                 <li className="doc-li">Click <strong>Connect Mastodon</strong> in Posthive, enter your instance URL and the credentials.</li>
               </ol>
+
+              {/* ── Pixelfed ── */}
+              <h2 className="doc-h2" id="pixelfed">Pixelfed</h2>
+              <p className="doc-p">
+                Pixelfed is a federated, open-source photo-sharing platform built on ActivityPub — an Instagram alternative for the fediverse. Posthive connects via OAuth 2.0 and works with <strong>any Pixelfed instance</strong> (pixelfed.social, pixelfed.uno, gram.social, or your own self-hosted server).
+              </p>
+              <h3 className="doc-h3">How to connect</h3>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">Create a free account on any Pixelfed instance (e.g. <span className="doc-inline-code">pixelfed.social</span> or <span className="doc-inline-code">pixelfed.uno</span>).</li>
+                <li className="doc-li">Set <span className="doc-inline-code">PIXELFED_REDIRECT_URI</span> in your env to <span className="doc-inline-code">https://your-domain.com/auth/pixelfed/callback</span>. No client ID/secret needed — Posthive registers an OAuth app dynamically on each instance.</li>
+                <li className="doc-li">Go to <strong>Accounts</strong>, click <strong>Connect Pixelfed</strong>, enter your instance URL (e.g. <span className="doc-inline-code">pixelfed.social</span>), and approve access.</li>
+              </ol>
+              <h3 className="doc-h3">Notes</h3>
+              <ul className="doc-ul">
+                <li className="doc-li"><strong>Image required</strong> — every Pixelfed post must have at least one image. The composer warns you if you try to schedule without one.</li>
+                <li className="doc-li">Caption up to 2,001 chars, up to 4 images per post, alt text supported.</li>
+                <li className="doc-li">Audience controls: <strong>Public</strong>, <strong>Unlisted</strong>, or <strong>Followers Only</strong> — set per post in the composer.</li>
+                <li className="doc-li">NSFW / Sensitive toggle — blurs media behind a content warning on the instance.</li>
+                <li className="doc-li">First comment scheduling is supported.</li>
+                <li className="doc-li">You can connect multiple accounts from different instances simultaneously.</li>
+              </ul>
 
               {/* ── YouTube ── */}
               <h2 className="doc-h2" id="youtube">YouTube</h2>
@@ -1647,6 +1669,7 @@ Authorization: Bearer ph_<key>`}</CopyCode>
                   <tr><td>Bluesky</td><td>300</td></tr>
                   <tr><td>Threads</td><td>500</td></tr>
                   <tr><td>Mastodon</td><td>500</td></tr>
+                  <tr><td>Pixelfed</td><td>2,200</td></tr>
                   <tr><td>Instagram</td><td>2,200</td></tr>
                   <tr><td>Facebook</td><td>63,206</td></tr>
                   <tr><td>LinkedIn</td><td>3,000</td></tr>

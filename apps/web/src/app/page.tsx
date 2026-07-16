@@ -15,6 +15,7 @@ const PLATFORMS_GRID = [
   { name: "Instagram",      domain: "instagram.com",   meta: "Posts, Reels & Stories",       accent: "#e1306c", platform: "instagram" },
   { name: "LinkedIn",       domain: "linkedin.com",    meta: "3,000 chars · Professional",   accent: "#0a66c2", platform: "linkedin" },
   { name: "Mastodon",       domain: "mastodon.social", meta: "500 chars · Federated",        accent: "#6364ff", platform: "mastodon" },
+  { name: "Pixelfed",      domain: "pixelfed.social", meta: "2,001 chars · Photo-first · Fediverse", accent: "#ff8c00", platform: "pixelfed" },
   { name: "YouTube",        domain: "youtube.com",     meta: "Shorts & video · Google OAuth", accent: "#ff0000", platform: "youtube" },
   { name: "Facebook Pages", domain: "facebook.com",    meta: "Pages · Graph API",            accent: "#1877f2", platform: "facebook" },
   { name: "Pinterest",      domain: "pinterest.com",   meta: "Pins · image required",         accent: "#e60023", platform: "pinterest" },

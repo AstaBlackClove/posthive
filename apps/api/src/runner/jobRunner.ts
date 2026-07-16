@@ -34,6 +34,8 @@ type JobContent = {
   locationId?: string;
   userTags?: string[];
   collaborators?: string[];
+  pixelfedSensitive?: boolean;
+  pixelfedVisibility?: "public" | "unlisted" | "private";
   perAccount?: Record<string, PerAccountOverride>;
 };
 
@@ -79,6 +81,8 @@ export async function runJob(
         locationId: content.locationId,
         userTags: content.userTags,
         collaborators: content.collaborators,
+        pixelfedSensitive: content.pixelfedSensitive,
+        pixelfedVisibility: content.pixelfedVisibility,
       };
       const effectiveComment = override?.commentText !== undefined ? override.commentText : job.commentText;
       return runTarget(target, effectiveContent, effectiveComment, job.dryRun);

@@ -34,6 +34,8 @@ const createJobBody = z.object({
     locationId: z.string().optional(),
     userTags: z.array(z.string()).optional(),
     collaborators: z.array(z.string()).optional(),
+    pixelfedSensitive: z.boolean().optional(),
+    pixelfedVisibility: z.enum(["public", "unlisted", "private"]).optional(),
     perAccount: z.record(z.string().cuid(), perAccountOverrideSchema).optional(),
   }),
   commentText: z.string().optional(),
@@ -219,6 +221,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       youtubeVideoMode: z.enum(["upload", "url"]).optional(),
       youtubeVideoUrl: z.string().optional(),
       youtubeThumbnailUrl: z.string().optional(),
+      pixelfedSensitive: z.boolean().optional(),
+      pixelfedVisibility: z.enum(["public", "unlisted", "private"]).optional(),
       accountIds: z.array(z.string().cuid()).min(1).optional(),
       perAccount: z.record(z.string().cuid(), perAccountOverrideSchema).optional(),
     }).safeParse(req.body);
@@ -235,8 +239,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (body.data.scheduledFor) {
       updateData.scheduledFor = new Date(body.data.scheduledFor);
     }
-    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.youtubeVideoMode !== undefined || body.data.youtubeVideoUrl !== undefined || body.data.youtubeThumbnailUrl !== undefined || body.data.perAccount !== undefined) {
-      const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; youtubeType?: string; youtubeVideoMode?: string; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; perAccount?: Record<string, unknown> };
+    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.youtubeVideoMode !== undefined || body.data.youtubeVideoUrl !== undefined || body.data.youtubeThumbnailUrl !== undefined || body.data.pixelfedSensitive !== undefined || body.data.pixelfedVisibility !== undefined || body.data.perAccount !== undefined) {
+      const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; youtubeType?: string; youtubeVideoMode?: string; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; pixelfedSensitive?: boolean; pixelfedVisibility?: string; perAccount?: Record<string, unknown> };
       updateData.content = JSON.stringify({
         ...existing,
         ...(body.data.text !== undefined ? { text: body.data.text } : {}),
@@ -246,6 +250,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         ...(body.data.youtubeVideoMode !== undefined ? { youtubeVideoMode: body.data.youtubeVideoMode } : {}),
         ...(body.data.youtubeVideoUrl !== undefined ? { youtubeVideoUrl: body.data.youtubeVideoUrl } : {}),
         ...(body.data.youtubeThumbnailUrl !== undefined ? { youtubeThumbnailUrl: body.data.youtubeThumbnailUrl } : {}),
+        ...(body.data.pixelfedSensitive !== undefined ? { pixelfedSensitive: body.data.pixelfedSensitive } : {}),
+        ...(body.data.pixelfedVisibility !== undefined ? { pixelfedVisibility: body.data.pixelfedVisibility } : {}),
         ...(body.data.perAccount !== undefined ? { perAccount: body.data.perAccount } : {}),
       });
     }
