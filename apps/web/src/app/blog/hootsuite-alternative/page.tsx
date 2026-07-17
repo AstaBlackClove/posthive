@@ -6,8 +6,8 @@ const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "The Best Hootsuite Alternative in 2026 — Cheaper, Open Source, More Platforms",
-  description: "Hootsuite costs $99/month minimum. Posthive does the same job scheduling across multiple platforms for a fraction of the price, with open-source code you can self-host.",
+  headline: "5 Best Hootsuite Alternatives in 2026 — Cheaper, Open Source, More Platforms",
+  description: "Hootsuite starts at $99/month. Here are 5 alternatives that cost less, support more platforms, and one that's free to self-host.",
   datePublished: "2026-07-07",
   author: { "@type": "Person", name: "Guna" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
@@ -38,24 +38,34 @@ const faqSchema = {
       name: "Can Posthive replace Hootsuite for agencies?",
       acceptedAnswer: { "@type": "Answer", text: "For most agency workflows — scheduling, content calendars, multi-platform posting — yes. Posthive covers the core scheduling stack. Deep analytics and team role management at enterprise scale are areas where Hootsuite still has an edge." },
     },
+    {
+      "@type": "Question",
+      name: "Is there a free Hootsuite alternative?",
+      acceptedAnswer: { "@type": "Answer", text: "Yes. Posthive is open source and free to self-host — you only pay for your own server (typically $5-10/month on Railway or Hetzner). Buffer also has a free plan covering 3 channels. Metricool has a free tier for 1 brand." },
+    },
+    {
+      "@type": "Question",
+      name: "What platforms does Posthive support that Hootsuite doesn't?",
+      acceptedAnswer: { "@type": "Answer", text: "Posthive supports Bluesky, Mastodon, Pixelfed, Threads, Telegram, Nostr, Discord, Tumblr, and Lemmy — none of which are available on Hootsuite. Hootsuite focuses on mainstream platforms (Twitter, Facebook, Instagram, LinkedIn, Pinterest, TikTok)." },
+    },
   ],
 };
 
 export const metadata: Metadata = {
-  title: "The Best Hootsuite Alternative in 2026 — Cheaper, Open Source | Posthive",
-  description: "Hootsuite costs $99/month minimum. Posthive does the same job across multiple platforms for a fraction of the price — and it's open source.",
-  keywords: ["Hootsuite alternative", "cheap Hootsuite alternative", "open source Hootsuite alternative", "Hootsuite vs Posthive", "affordable social media scheduler"],
+  title: "5 Best Hootsuite Alternatives in 2026 — Cheaper, Open Source | Posthive",
+  description: "Hootsuite starts at $99/month. Here are 5 alternatives that cost less, support more platforms, and one that's completely free to self-host.",
+  keywords: ["Hootsuite alternative", "Hootsuite alternatives 2026", "cheap Hootsuite alternative", "open source Hootsuite alternative", "free Hootsuite alternative", "Hootsuite vs Posthive"],
   alternates: { canonical: `${WEB_URL}/blog/hootsuite-alternative` },
   openGraph: {
-    title: "The Best Hootsuite Alternative in 2026 | Posthive",
-    description: "Hootsuite costs $99/month minimum. Posthive does the same job across multiple platforms for a fraction of the price.",
+    title: "5 Best Hootsuite Alternatives in 2026 | Posthive",
+    description: "Hootsuite starts at $99/month. Here are 5 alternatives that cost less, support more platforms, and one that's completely free to self-host.",
     url: `${WEB_URL}/blog/hootsuite-alternative`,
-    images: [{ url: "/api/og?layout=post&title=The+Best+Hootsuite+Alternative&desc=Cheaper+%C2%B7+Open+Source+%C2%B7+multiple+platforms&badge=Comparison", width: 1200, height: 630 }],
+    images: [{ url: "/api/og?layout=post&title=5+Best+Hootsuite+Alternatives&desc=Cheaper+%C2%B7+Open+Source+%C2%B7+More+Platforms&badge=Comparison", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Best Hootsuite Alternative in 2026 | Posthive",
-    description: "Hootsuite costs $99/month minimum. Posthive does the same job across multiple platforms for a fraction of the price.",
+    title: "5 Best Hootsuite Alternatives in 2026 | Posthive",
+    description: "Hootsuite starts at $99/month. Here are 5 alternatives that cost less, support more platforms, and one that's completely free to self-host.",
   },
 };
 
@@ -104,7 +114,7 @@ export default function HootsuiteAlternativePage() {
         </div>
 
         <h1 style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15, margin: "0 0 24px", color: "#ededed" }}>
-          The Best Hootsuite Alternative in 2026 — Cheaper, Open Source, More Platforms
+          5 Best Hootsuite Alternatives in 2026 — Cheaper, Open Source, More Platforms
         </h1>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0", borderTop: "1px solid #1e1e1e", borderBottom: "1px solid #1e1e1e", marginBottom: 40 }}>
@@ -187,6 +197,69 @@ export default function HootsuiteAlternativePage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+            The 5 best Hootsuite alternatives in 2026
+          </h2>
+
+          <p style={{ marginBottom: 24 }}>
+            Hootsuite is not the only option. Here are the top alternatives — and when each makes sense.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
+            {[
+              {
+                rank: "01",
+                name: "Posthive",
+                tag: "Best overall",
+                tagColor: "#5cb88a",
+                price: "From $9/mo · Free to self-host",
+                desc: "Covers 14 platforms including Bluesky, Mastodon, Pixelfed, Threads, Telegram, and Nostr — platforms Hootsuite ignores entirely. Open source (AGPL-3.0), self-hostable, per-platform overrides, bulk CSV scheduling, and first comment scheduling. Best pick if you post to the fediverse or want to own your data.",
+              },
+              {
+                rank: "02",
+                name: "Buffer",
+                tag: "Best for simplicity",
+                tagColor: "#5b63d3",
+                price: "From $6/mo",
+                desc: "Clean, minimal interface. Supports Instagram, Facebook, Twitter, LinkedIn, Pinterest, and TikTok. Good free tier (3 channels). Lacks Bluesky and Mastodon support. No bulk CSV. Better UX than Hootsuite at a fraction of the price.",
+              },
+              {
+                rank: "03",
+                name: "Later",
+                tag: "Best for Instagram-first creators",
+                tagColor: "#e86b6b",
+                price: "From $16.67/mo",
+                desc: "Strongest Instagram feature set — visual calendar, link-in-bio, Stories scheduling. If Instagram is your primary channel, Later is purpose-built for it. Weaker for multi-platform posting.",
+              },
+              {
+                rank: "04",
+                name: "Metricool",
+                tag: "Best free tier",
+                tagColor: "#f0a05a",
+                price: "Free plan available",
+                desc: "Generous free tier covering 1 brand across multiple platforms. Includes analytics, competitor analysis, and basic scheduling. Good starting point before committing to a paid plan.",
+              },
+              {
+                rank: "05",
+                name: "Publer",
+                tag: "Best for small teams",
+                tagColor: "#888",
+                price: "From $12/mo",
+                desc: "Solid team collaboration features at a price point well below Hootsuite. Supports most major platforms, includes a link shortener, and has a good mobile app.",
+              },
+            ].map((tool) => (
+              <div key={tool.name} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 14, padding: "20px 22px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                  <span style={{ fontSize: 11, fontWeight: 900, color: "#333", fontFamily: "monospace" }}>{tool.rank}</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: "#ededed" }}>{tool.name}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: tool.tagColor, background: `${tool.tagColor}18`, borderRadius: 6, padding: "2px 8px" }}>{tool.tag}</span>
+                  <span style={{ fontSize: 12, color: "#555", marginLeft: "auto" }}>{tool.price}</span>
+                </div>
+                <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{tool.desc}</p>
+              </div>
+            ))}
           </div>
 
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
