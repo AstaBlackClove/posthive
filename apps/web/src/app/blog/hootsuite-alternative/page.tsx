@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     title: "5 Best Hootsuite Alternatives in 2026 | Posthive",
     description: "Hootsuite starts at $99/month. Here are 5 alternatives that cost less, support more platforms, and one that's completely free to self-host.",
     url: `${WEB_URL}/blog/hootsuite-alternative`,
-    images: [{ url: "/api/og?layout=post&title=5+Best+Hootsuite+Alternatives&desc=Cheaper+%C2%B7+Open+Source+%C2%B7+More+Platforms&badge=Comparison", width: 1200, height: 630 }],
+    images: [{ url: "/api/og?layout=post&title=5+Best+Hootsuite+Alternatives&desc=Cheaper+%C2%B7+Open+Source+%C2%B7+More+Platforms&badge=Comparison&date=July+7%2C+2026", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",

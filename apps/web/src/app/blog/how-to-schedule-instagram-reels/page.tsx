@@ -84,7 +84,7 @@ export const metadata: Metadata = {
     title: "How to Schedule Instagram Reels in 2026 | Posthive",
     description: "Learn how to schedule Instagram Reels in advance and publish automatically at peak times.",
     url: `${WEB_URL}/blog/how-to-schedule-instagram-reels`,
-    images: [{ url: "/api/og?layout=post&title=How+to+Schedule+Instagram+Reels&desc=Step-by-step+guide+for+2026&badge=Guide", width: 1200, height: 630 }],
+    images: [{ url: "/api/og?layout=post&title=How+to+Schedule+Instagram+Reels&desc=Step-by-step+guide+for+2026&badge=Guide&date=July+7%2C+2026", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",

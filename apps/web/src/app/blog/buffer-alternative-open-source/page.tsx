@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     title: "The Best Open-Source Buffer Alternative in 2026 | Posthive",
     description: "Open source, self-hostable, Multi platforms. Posthive is the Buffer alternative built for developers and indie hackers.",
     url: `${WEB_URL}/blog/buffer-alternative-open-source`,
-    images: [{ url: "/api/og?layout=post&title=The+Best+Open-Source+Buffer+Alternative&desc=Self-hostable+%C2%B7+multiple+platforms+%C2%B7+AGPL-3.0&badge=Comparison", width: 1200, height: 630 }],
+    images: [{ url: "/api/og?layout=post&title=The+Best+Open-Source+Buffer+Alternative&desc=Self-hostable+%C2%B7+multiple+platforms+%C2%B7+AGPL-3.0&badge=Comparison&date=July+7%2C+2026", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",

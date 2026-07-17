@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     title: "The Best Social Media Scheduler in 2026 | Posthive",
     description: "A no-fluff comparison of the best social media schedulers. Pricing, platform support, and who each tool is actually built for.",
     url: `${WEB_URL}/blog/best-social-media-scheduler`,
-    images: [{ url: "/api/og?layout=post&title=Best+Social+Media+Scheduler+2026&desc=Free+and+paid+options+compared&badge=Comparison", width: 1200, height: 630 }],
+    images: [{ url: "/api/og?layout=post&title=Best+Social+Media+Scheduler+2026&desc=Free+and+paid+options+compared&badge=Comparison&date=July+7%2C+2026", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",

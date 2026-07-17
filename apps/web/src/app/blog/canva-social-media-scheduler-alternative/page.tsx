@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     title: "Best Canva Social Media Scheduler Alternative | Posthive",
     description: "Canva scheduler is limited to 8 platforms and locked behind Pro. Posthive covers multiple platforms for less.",
     url: `${WEB_URL}/blog/canva-social-media-scheduler-alternative`,
-    images: [{ url: "/api/og?layout=post&title=Canva+Scheduler+Alternative&desc=multiple+platforms+%C2%B7+%249%2Fmo+%C2%B7+Open+source&badge=Comparison", width: 1200, height: 630 }],
+    images: [{ url: "/api/og?layout=post&title=Canva+Scheduler+Alternative&desc=multiple+platforms+%C2%B7+%249%2Fmo+%C2%B7+Open+source&badge=Comparison&date=July+7%2C+2026", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",

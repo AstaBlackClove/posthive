@@ -5,6 +5,30 @@ import Link from "next/link";
 
 const POSTS = [
   {
+    slug: "open-source-social-media-scheduler",
+    title: "The Best Open-Source Social Media Schedulers in 2026",
+    date: "July 17, 2026",
+    readTime: "6 min read",
+    category: "Guide",
+    excerpt: "Tired of paying $50-100/month for Buffer or Hootsuite? Here are the best open-source schedulers you can self-host for free — including Posthive, Postiz, and Mixpost.",
+  },
+  {
+    slug: "how-to-schedule-first-comment-instagram",
+    title: "How to Schedule a First Comment on Instagram (and Why You Should)",
+    date: "July 17, 2026",
+    readTime: "5 min read",
+    category: "Guide",
+    excerpt: "Automatically post a first comment on Instagram right after your post goes live. Add hashtags, CTAs, or links without cluttering your caption.",
+  },
+  {
+    slug: "storrito-alternative",
+    title: "The Best Storrito Alternative in 2026 — More Platforms, Lower Price",
+    date: "July 17, 2026",
+    readTime: "5 min read",
+    category: "Comparison",
+    excerpt: "Storrito focuses on Instagram only. Posthive schedules Instagram Stories, Reels, and carousels — plus 13 other platforms. Open source and self-hostable.",
+  },
+  {
     slug: "best-social-media-scheduler",
     title: "The Best Social Media Scheduler in 2026 (Free and Paid)",
     date: "July 7, 2026",

@@ -277,7 +277,7 @@ function BlogLayout({ logo, title, desc }: { logo: string; title: string; desc: 
 
 // ── Layout: post ─────────────────────────────────────────────────────────────
 
-function PostLayout({ logo, title, desc, badge }: { logo: string; title: string; desc: string; badge: string }) {
+function PostLayout({ logo, title, desc, badge, date }: { logo: string; title: string; desc: string; badge: string; date: string }) {
   return (
     <div style={{ width: 1200, height: 630, background: "#0c0c10", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden", fontFamily: "system-ui, sans-serif" }}>
       <Grid />
@@ -307,7 +307,7 @@ function PostLayout({ logo, title, desc, badge }: { logo: string; title: string;
             <span style={{ fontSize: 14, fontWeight: 600, color: "#ededed" }}>Guna</span>
             <span style={{ fontSize: 12, color: "#555" }}>Founder, Posthive</span>
           </div>
-          <div style={{ marginLeft: "auto", fontSize: 13, color: "#444" }}>July 3, 2026</div>
+          <div style={{ marginLeft: "auto", fontSize: 13, color: "#444" }}>{date}</div>
         </div>
       </div>
     </div>
@@ -322,12 +322,13 @@ export async function GET(request: NextRequest) {
   const desc   = searchParams.get("desc")   ?? "Write once, publish everywhere.";
   const badge  = searchParams.get("badge")  ?? "";
   const layout = searchParams.get("layout") ?? "home";
+  const date   = searchParams.get("date")   ?? "July 3, 2026";
 
   const logoSrc = await fetch(`${origin}/posthivemain.png`)
     .then((r) => r.arrayBuffer())
     .then((buf) => `data:image/png;base64,${Buffer.from(buf).toString("base64")}`);
 
-  const props = { logo: logoSrc, title, desc, badge };
+  const props = { logo: logoSrc, title, desc, badge, date };
 
   const node =
     layout === "pricing"  ? <PricingLayout  {...props} /> :
