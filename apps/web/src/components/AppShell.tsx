@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   // Auth-only pages — no sidebar, no plan guard
-  if (pathname === "/onboarding" || pathname === "/mcp-connect") {
+  if (pathname === "/onboarding" || pathname === "/mcp-connect" || pathname === "/admin") {
     return <AuthGuard>{children}</AuthGuard>;
   }
 

@@ -568,6 +568,9 @@ pnpm install`}</CopyCode>
                   <tr><td><span className="doc-inline-code">PUBLIC_API_URL</span></td><td>Meta only</td><td>Public HTTPS URL of the API. Meta fetches images from this URL, so it must be reachable from the internet.</td></tr>
                   <tr><td><span className="doc-inline-code">ENABLE_BILLING</span></td><td>No</td><td>Set to <code>true</code> to enable Dodo Payments billing. Defaults to off for self-hosters.</td></tr>
                   <tr><td><span className="doc-inline-code">AUTH_PROVIDER</span></td><td>No</td><td><code>local</code> (default) or <code>supabase</code>. Switches the auth backend.</td></tr>
+                  <tr><td><span className="doc-inline-code">ENABLE_ANALYTICS</span></td><td>No</td><td>Set to <code>true</code> to enable visitor session + event tracking. Off by default — self-hosters collect no data.</td></tr>
+                  <tr><td><span className="doc-inline-code">ADMIN_EMAIL</span></td><td>No</td><td>Your email address. Only this account can access <code>/admin</code>.</td></tr>
+                  <tr><td><span className="doc-inline-code">ADMIN_PIN</span></td><td>No</td><td>Second-factor PIN for <code>/admin</code>. Validated server-side — never exposed to the browser. Set in API env only.</td></tr>
                 </tbody>
               </table></div>
 

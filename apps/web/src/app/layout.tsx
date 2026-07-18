@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "../context/AuthContext";
 import { AppShell } from "../components/AppShell";
 import { ToastProvider } from "../components/Toast";
+import { TrackingProvider } from "../components/TrackingProvider";
 
 const OG_BASE = process.env.NEXT_PUBLIC_WEB_URL || "https://posthive.co";
 
@@ -81,7 +82,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="h-full font-sans antialiased">
         <AuthProvider>
           <ToastProvider>
-            <AppShell>{children}</AppShell>
+            <TrackingProvider>
+              <AppShell>{children}</AppShell>
+            </TrackingProvider>
           </ToastProvider>
         </AuthProvider>
         <Analytics />

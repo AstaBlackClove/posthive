@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
+import { trackEvent } from "../../lib/track";
 
 interface BillingStatus {
   plan: string;
@@ -290,6 +291,7 @@ export default function BillingPage() {
 
   async function checkout(planId: string) {
     setCheckingOut(planId);
+    trackEvent("checkout_clicked", { planId, isTrialing, isActive });
     try {
       // Existing subscribers (trialing or active) — change plan in place, no new checkout
       if (isTrialing || isActive) {

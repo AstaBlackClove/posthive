@@ -39,6 +39,8 @@ model User {
   apiKeys       ApiKey[]
   emailVerifications EmailVerification[]
   templates     Template[]
+  sessions      Session[]
+  events        Event[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -207,6 +209,40 @@ model Template {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+// Anonymous + pre-login visitor session — one row per browser session.
+// Updated as the visitor navigates; flushed on tab close or login.
+model Session {
+  id        String   @id @default(cuid())
+  visitorId String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  entry     String
+  exit      String?
+  pages     Json
+  referrer  String?
+  converted Boolean  @default(false)
+  duration  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visitorId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Event {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event      String
+  properties Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([event])
+  @@index([createdAt])
 }
 
 // Cancellation feedback submitted when a user cancels their subscription.

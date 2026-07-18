@@ -5,6 +5,7 @@ import { Info } from "lucide-react";
 import confetti from "canvas-confetti";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
+import { trackEvent } from "../../lib/track";
 import { DateTimePicker } from "../../components/DateTimePicker";
 import { PlatformIcon } from "../../components/PlatformIcon";
 import { BulkScheduleModal } from "../../components/BulkScheduleModal";
@@ -515,6 +516,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           dryRun,
         }),
       });
+      if (!dryRun) trackEvent("post_scheduled", { platforms: selectedAccounts.map(a => a.platform) });
       toastSuccess(dryRun ? "Dry run scheduled no real post will be made." : "Post scheduled successfully!");
       if (!dryRun && !localStorage.getItem("posthive_first_post_done")) {
         localStorage.setItem("posthive_first_post_done", "1");

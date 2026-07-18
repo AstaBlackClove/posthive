@@ -191,6 +191,13 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
             trialEndsAt,
           },
         });
+        // Mark the user's most recent session as converted — server-side only
+        if (process.env.ENABLE_ANALYTICS === "true") {
+          await prisma.session.updateMany({
+            where: { userId, converted: false },
+            data: { converted: true },
+          });
+        }
       } else if (type === "subscription.renewed") {
         await prisma.user.update({
           where: { id: userId },

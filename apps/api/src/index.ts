@@ -34,6 +34,7 @@ import { startWorker } from "./lib/worker.js";
 import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
 import { startStatsCron } from "./lib/statsCron.js";
 import { analyticsRoutes } from "./routes/analytics.js";
+import { trackRoutes } from "./routes/track.js";
 import { withAuth } from "./lib/auth/withAuth.js";
 import type { StorageAdapter } from "./lib/storage.js";
 
@@ -103,6 +104,7 @@ async function main() {
   await app.register(mcpRoutes);
   await app.register(oauthRoutes);
   await app.register(analyticsRoutes);
+  await app.register(trackRoutes);
 
   app.get("/health", async () => ({ ok: true }));
 
