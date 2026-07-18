@@ -255,7 +255,8 @@ export default function SettingsPage() {
             </form>
           </Section>
 
-          {/* Password */}
+          {/* Password — hidden for Supabase auth users (no local passwordHash) */}
+          {user?.hasPassword && (
           <Section title="Password" description="Choose a strong password — at least 8 characters.">
             <form onSubmit={changePassword} className="space-y-4">
               <Field label="Current password">
@@ -275,6 +276,7 @@ export default function SettingsPage() {
               </div>
             </form>
           </Section>
+          )}
 
           </div>
 

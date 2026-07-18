@@ -4,6 +4,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
+  hasPassword: boolean;
   avatarUrl: string | null;
   timezone: string;
   emailVerified: boolean;

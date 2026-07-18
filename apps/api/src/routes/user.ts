@@ -83,8 +83,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   app.get("/auth/session", { preHandler: [withAuth] }, async (req, reply) => {
     const token = req.cookies?.[ACCESS_COOKIE_NAME];
     const u = getUser(req);
-    const dbUser = await prisma.user.findUnique({ where: { id: u.id }, select: { emailVerified: true } });
-    return reply.send({ user: { ...u, emailVerified: dbUser?.emailVerified ?? false }, token });
+    const dbUser = await prisma.user.findUnique({ where: { id: u.id }, select: { emailVerified: true, passwordHash: true } });
+    return reply.send({ user: { ...u, emailVerified: dbUser?.emailVerified ?? false, hasPassword: !!dbUser?.passwordHash }, token });
   });
 
   // Refresh — explicitly refresh tokens (called by frontend if needed)
@@ -153,18 +153,27 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const { email } = req.body as { email?: string };
     if (!email) return reply.status(400).send({ error: "Email required" });
 
+    // Supabase handles its own password reset emails
+    if (process.env.AUTH_PROVIDER === "supabase") {
+      const { createClient } = await import("@supabase/supabase-js");
+      const anon = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
+      await anon.auth.resetPasswordForEmail(email, { redirectTo: `${webUrl}/reset-password` });
+      return reply.send({ ok: true });
+    }
+
     const user = await prisma.user.findUnique({ where: { email } });
     if (user) {
-      // Invalidate previous unused tokens for this user
       await prisma.passwordReset.deleteMany({ where: { userId: user.id, usedAt: null } });
 
       const token = crypto.randomBytes(32).toString("hex");
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
       await prisma.passwordReset.create({ data: { userId: user.id, token, expiresAt } });
 
       const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
-      const resetUrl = `${webUrl}/reset-password?token=${token}`;
-      await sendPasswordResetEmail(email, resetUrl);
+      await sendPasswordResetEmail(email, `${webUrl}/reset-password?token=${token}`);
     }
 
     return reply.send({ ok: true });
@@ -178,6 +187,19 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     if (!token || !password) return reply.status(400).send({ error: "Token and password required" });
     if (password.length < 8) return reply.status(400).send({ error: "Password must be at least 8 characters" });
 
+    // Supabase reset: token is a Supabase access token issued after the magic-link click.
+    // Exchange it to update the password inside Supabase and sync to Prisma.
+    if (process.env.AUTH_PROVIDER === "supabase") {
+      const { createClient } = await import("@supabase/supabase-js");
+      const client = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { error } = await client.auth.updateUser({ password });
+      if (error) return reply.status(400).send({ error: error.message });
+      return reply.send({ ok: true });
+    }
+
     const reset = await prisma.passwordReset.findUnique({ where: { token } });
     if (!reset || reset.usedAt || reset.expiresAt < new Date()) {
       return reply.status(400).send({ error: "This reset link is invalid or has expired." });
@@ -186,7 +208,6 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const passwordHash = await bcrypt.hash(password, 12);
     await prisma.user.update({ where: { id: reset.userId }, data: { passwordHash } });
     await prisma.passwordReset.update({ where: { id: reset.id }, data: { usedAt: new Date() } });
-    // Invalidate all sessions
     await prisma.refreshToken.deleteMany({ where: { userId: reset.userId } });
 
     return reply.send({ ok: true });
