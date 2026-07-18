@@ -66,6 +66,7 @@ export default function SettingsPage() {
 
   // API Keys
   const [apiKeys, setApiKeys] = useState<{ id: string; name: string; prefix: string; lastUsedAt: string | null; createdAt: string }[]>([]);
+  const [apiKeysLocked, setApiKeysLocked] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
   const [creatingKey, setCreatingKey] = useState(false);
   const [newKeyRaw, setNewKeyRaw] = useState<string | null>(null);
@@ -79,8 +80,8 @@ export default function SettingsPage() {
   const [webhookLocked, setWebhookLocked] = useState(false);
 
   useEffect(() => {
-    apiFetch<{ keys: typeof apiKeys }>("/user/api-keys")
-      .then((d) => setApiKeys(d.keys ?? []))
+    apiFetch<{ keys: typeof apiKeys; locked: boolean }>("/user/api-keys")
+      .then((d) => { setApiKeys(d.keys ?? []); setApiKeysLocked(d.locked ?? false); })
       .catch(() => {});
     apiFetch<{ webhookUrl: string | null; locked: boolean }>("/user/webhook")
       .then((d) => { setWebhookUrl(d.webhookUrl ?? ""); setWebhookLocked(d.locked ?? false); })
@@ -279,6 +280,13 @@ export default function SettingsPage() {
 
           {/* API Keys */}
           <Section title="API Keys" description="Create keys to schedule posts programmatically. Pro and Team plans only.">
+            {apiKeysLocked ? (
+              <div className="rounded-xl px-4 py-5 flex flex-col gap-2 items-start" style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a" }}>
+                <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Pro &amp; Team feature</p>
+                <p className="text-xs" style={{ color: "#888" }}>Upgrade to Pro or Team to create API keys and schedule posts programmatically.</p>
+                <a href="/billing" className="mt-1 text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#5b63d3", color: "#fff" }}>Upgrade plan</a>
+              </div>
+            ) : (<>
             {/* Create new key */}
             <form onSubmit={createApiKey} className="flex gap-2 mb-4">
               <input
@@ -333,6 +341,7 @@ export default function SettingsPage() {
                 ))}
               </div>
             )}
+            </>)}
           </Section>
 
           {/* Webhook */}

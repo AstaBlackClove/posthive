@@ -8,12 +8,17 @@ export async function apiKeyRoutes(app: FastifyInstance): Promise<void> {
   // List all active API keys for the current user
   app.get("/user/api-keys", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true, planStatus: true } });
+    const { plan, planStatus } = dbUser ?? { plan: "trialing", planStatus: "trialing" };
+    if (!canUseApi(plan, planStatus)) {
+      return reply.send({ keys: [], locked: true });
+    }
     const keys = await prisma.apiKey.findMany({
       where: { userId, revokedAt: null },
       select: { id: true, name: true, prefix: true, lastUsedAt: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     });
-    return reply.send({ keys });
+    return reply.send({ keys, locked: false });
   });
 
   // Create a new API key — returns the plaintext key ONCE
