@@ -310,6 +310,15 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     await prisma.refreshToken.deleteMany({ where: { userId } });
     await prisma.user.delete({ where: { id: userId } });
 
+    // Also remove from Supabase auth so the row doesn't linger in auth.users
+    if (process.env.AUTH_PROVIDER === "supabase" && user.supabaseId) {
+      const { createClient } = await import("@supabase/supabase-js");
+      const admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      await admin.auth.admin.deleteUser(user.supabaseId);
+    }
+
     reply.clearCookie(ACCESS_COOKIE_NAME, { path: "/" });
     reply.clearCookie(REFRESH_COOKIE_NAME, { path: "/" });
     return reply.send({ ok: true });
