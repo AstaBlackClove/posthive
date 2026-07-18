@@ -1125,7 +1125,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
       {showCustomize && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
           onClick={e => { if (e.target === e.currentTarget) setShowCustomize(false); }}>
-          <div className="w-full max-w-lg rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", maxHeight: "80vh", overflowY: "auto" }}>
+          <div data-customize-scroll className="w-full max-w-lg rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", maxHeight: "80vh", overflowY: "auto" }}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-sm font-bold" style={{ color: "#ededed" }}>Customize per platform</h2>
               <button type="button" onClick={() => setShowCustomize(false)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: "#666" }}>
@@ -1166,8 +1166,8 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                                   <span className="text-[10px]" style={{ color: overrideCount > limit ? "#ef4444" : "#444" }}>{overrideCount}/{limit}</span>
                                 </div>
                                 <textarea value={override?.text ?? ""}
-                                  onChange={e => { setOverrideField(a.id, "text", e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
-                                  ref={el => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
+                                  onChange={e => { setOverrideField(a.id, "text", e.target.value); const sc = e.target.closest("[data-customize-scroll]") as HTMLElement | null; const sv = sc?.scrollTop ?? 0; e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; if (sc) sc.scrollTop = sv; }}
+                                  ref={el => { if (el) { el.style.height = `${el.scrollHeight}px`; } }}
                                   placeholder={`Custom caption for ${a.displayName}…`}
                                   className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
                                   style={{ minHeight: 100, overflow: "hidden", backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }} />
@@ -1175,8 +1175,8 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                               <div>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1">First Comment</span>
                                 <textarea value={override?.commentText ?? ""}
-                                  onChange={e => { setOverrideField(a.id, "commentText", e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
-                                  ref={el => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
+                                  onChange={e => { setOverrideField(a.id, "commentText", e.target.value); const sc = e.target.closest("[data-customize-scroll]") as HTMLElement | null; const sv = sc?.scrollTop ?? 0; e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; if (sc) sc.scrollTop = sv; }}
+                                  ref={el => { if (el) { el.style.height = `${el.scrollHeight}px`; } }}
                                   placeholder={`Custom first comment for ${a.displayName}…`}
                                   className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
                                   style={{ minHeight: 60, overflow: "hidden", backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }} />
