@@ -288,14 +288,18 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   // Delete account
   app.delete("/user", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
-    const { password } = req.body as { password: string };
-    if (!password) return reply.status(400).send({ error: "Password required" });
+    const { password } = req.body as { password?: string };
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user?.passwordHash) return reply.status(400).send({ error: "Cannot verify identity" });
+    if (!user) return reply.status(404).send({ error: "User not found" });
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) return reply.status(400).send({ error: "Incorrect password" });
+    // Accounts with a password require confirmation; accounts without (e.g. Supabase auth
+    // or directly-seeded rows) are already verified by the JWT session alone.
+    if (user.passwordHash) {
+      if (!password) return reply.status(400).send({ error: "Password required" });
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) return reply.status(400).send({ error: "Incorrect password" });
+    }
 
     // Delete in dependency order to avoid FK violations
     const jobs = await prisma.postJob.findMany({ where: { userId }, select: { id: true } });
