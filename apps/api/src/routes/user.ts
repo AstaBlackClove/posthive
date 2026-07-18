@@ -187,15 +187,19 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     if (!token || !password) return reply.status(400).send({ error: "Token and password required" });
     if (password.length < 8) return reply.status(400).send({ error: "Password must be at least 8 characters" });
 
-    // Supabase reset: token is a Supabase access token issued after the magic-link click.
-    // Exchange it to update the password inside Supabase and sync to Prisma.
+    // Supabase reset: token is the access_token from the recovery magic-link hash.
+    // Validate it to get the Supabase user ID, then use admin API to set the password.
     if (process.env.AUTH_PROVIDER === "supabase") {
       const { createClient } = await import("@supabase/supabase-js");
-      const client = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+      const admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
         auth: { autoRefreshToken: false, persistSession: false },
-        global: { headers: { Authorization: `Bearer ${token}` } },
       });
-      const { error } = await client.auth.updateUser({ password });
+      // Validate the recovery token and get the user
+      const { data: userData, error: userError } = await admin.auth.getUser(token);
+      if (userError || !userData.user) {
+        return reply.status(400).send({ error: "This reset link is invalid or has expired." });
+      }
+      const { error } = await admin.auth.admin.updateUserById(userData.user.id, { password });
       if (error) return reply.status(400).send({ error: error.message });
       return reply.send({ ok: true });
     }

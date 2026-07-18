@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "../../lib/api";
@@ -8,7 +8,23 @@ import { apiFetch } from "../../lib/api";
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token") ?? "";
+
+  // Local auth: token comes as ?token= query param.
+  // Supabase auth: token comes in URL hash as #access_token=xxx&type=recovery.
+  const [token, setToken] = useState(searchParams.get("token") ?? "");
+
+  useEffect(() => {
+    if (token) return; // already have a local-auth token
+    const hash = window.location.hash.slice(1);
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get("access_token");
+    const type = params.get("type");
+    if (accessToken && type === "recovery") {
+      setToken(accessToken);
+      // Clean hash from URL so it doesn't leak in browser history
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [token]);
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
