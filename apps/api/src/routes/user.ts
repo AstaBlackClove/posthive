@@ -153,14 +153,23 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const { email } = req.body as { email?: string };
     if (!email) return reply.status(400).send({ error: "Email required" });
 
-    // Supabase handles its own password reset emails
+    // Supabase: generate the magic link via admin API, send it through Resend
+    // so the user gets our branded email instead of Supabase's default.
     if (process.env.AUTH_PROVIDER === "supabase") {
       const { createClient } = await import("@supabase/supabase-js");
-      const anon = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+      const admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
       const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
-      await anon.auth.resetPasswordForEmail(email, { redirectTo: `${webUrl}/reset-password` });
+      const { data, error } = await admin.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: { redirectTo: `${webUrl}/reset-password` },
+      });
+      // Always return 200 to avoid email enumeration
+      if (!error && data?.properties?.action_link) {
+        await sendPasswordResetEmail(email, data.properties.action_link);
+      }
       return reply.send({ ok: true });
     }
 
