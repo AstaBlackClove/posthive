@@ -50,9 +50,6 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
   app.post("/jobs", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
 
-    const blocked = await enforcePlan(userId, "scheduling");
-    if (blocked) return reply.status(402).send(blocked);
-
     const parsed = createJobBody.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
 
@@ -62,7 +59,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       return reply.status(400).send({ error: "scheduledFor is required when not saving as draft" });
     }
 
-    // Gates only apply when scheduling (not drafting)
+    // Plan gate only applies to live scheduling, not draft creation
     if (!draft) {
       const blocked = await enforcePlan(userId, "scheduling");
       if (blocked) return reply.status(402).send(blocked);
@@ -286,6 +283,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     }
 
     if (body.data.scheduledFor) {
+      const blocked = await enforcePlan(userId, "scheduling");
+      if (blocked) return reply.status(402).send(blocked);
       await postJobQueue.remove(id);
       await schedulePostJob(id, new Date(body.data.scheduledFor));
     }

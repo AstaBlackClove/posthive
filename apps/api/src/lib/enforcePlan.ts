@@ -29,8 +29,11 @@ export async function enforcePlan(
 
   if (!user) return { error: "User not found", code: "CANCELLED", upgradeRequired: false };
 
-  // Registered but hasn't entered card / started Dodo trial yet
+  // Inactive = registered but hasn't started a trial yet.
+  // Allow account connection so users can complete onboarding before hitting billing.
+  // Block everything else (scheduling, reels, overrides) until they start a trial.
   if (user.planStatus === "inactive") {
+    if (resource === "accounts") return null;
     return {
       error: "Start your free 14-day trial to use Posthive. A card is required — you won't be charged until the trial ends.",
       code: "INACTIVE",

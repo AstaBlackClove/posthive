@@ -15,7 +15,7 @@ export function PlanGuard({ children }: { children: React.ReactNode }) {
       .then(({ planStatus, trialEndsAt }) => {
         const hasActivePlan = planStatus === "active" || (planStatus === "trialing" && trialEndsAt !== null);
         if (!hasActivePlan) {
-          router.replace("/onboarding");
+          router.replace("/onboarding?step=4");
         } else {
           setReady(true);
         }

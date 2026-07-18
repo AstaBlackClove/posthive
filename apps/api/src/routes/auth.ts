@@ -832,7 +832,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
       const plan = getPlan(user?.plan ?? "cancelled");
       if (!plan.allowTwitter) {
-        return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "twitter_pro_required" }));
+        const errorBase = from === "onboarding" ? `${WEB_URL}/onboarding?step=2` : `${WEB_URL}/accounts`;
+        return reply.redirect(buildRedirect(errorBase, { error: "twitter_pro_required" }));
       }
     }
 
