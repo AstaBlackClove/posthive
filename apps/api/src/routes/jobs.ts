@@ -396,6 +396,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       ];
       if (urlsToDelete.length) {
         await Promise.allSettled(urlsToDelete.map((url) => storage.delete(url)));
+        await prisma.upload.deleteMany({ where: { url: { in: urlsToDelete } } });
       }
     } catch { /* non-fatal */ }
 

@@ -142,6 +142,7 @@ export async function runJob(
           return storage.delete(url);
         })
       );
+      await prisma.upload.deleteMany({ where: { url: { in: urlsToClean } } });
     }
   }
 }
