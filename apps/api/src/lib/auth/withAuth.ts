@@ -1,6 +1,7 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import { authProvider } from "./index.js";
 import type { AuthUser } from "./types.js";
+import { prisma } from "../prisma.js";
 
 const ACCESS_COOKIE = "ss-access-token";
 const REFRESH_COOKIE = "ss-refresh-token";
@@ -14,6 +15,47 @@ export const COOKIE_OPTS = {
 
 export const ACCESS_COOKIE_NAME = ACCESS_COOKIE;
 export const REFRESH_COOKIE_NAME = REFRESH_COOKIE;
+
+declare module "fastify" {
+  interface FastifyRequest {
+    user?: AuthUser;
+    workspaceId?: string | null;
+  }
+}
+
+async function resolveWorkspace(req: FastifyRequest, userId: string): Promise<void> {
+  const wsHeader = req.headers["x-workspace-id"] as string | undefined;
+
+  if (wsHeader) {
+    // Validate the user is actually a member of the requested workspace
+    const membership = await prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId: wsHeader, userId } },
+    });
+    if (membership) {
+      req.workspaceId = wsHeader;
+      return;
+    }
+    // Header supplied but not a member — fall through to active workspace
+  }
+
+  // Resolve from DB: activeWorkspaceId, fall back to first membership
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      activeWorkspaceId: true,
+      workspaceMembers: {
+        orderBy: { joinedAt: "asc" },
+        take: 1,
+        select: { workspaceId: true },
+      },
+    },
+  });
+
+  req.workspaceId =
+    dbUser?.activeWorkspaceId ??
+    dbUser?.workspaceMembers[0]?.workspaceId ??
+    null;
+}
 
 async function resolveUser(
   req: FastifyRequest,
@@ -31,7 +73,8 @@ async function resolveUser(
   if (accessToken) {
     const user = await authProvider.validateAccessToken(accessToken);
     if (user) {
-      (req as FastifyRequest & { user: AuthUser }).user = user;
+      req.user = user;
+      await resolveWorkspace(req, user.id);
       return true;
     }
   }
@@ -51,7 +94,8 @@ async function resolveUser(
 
       const user = await authProvider.validateAccessToken(tokens.accessToken);
       if (user) {
-        (req as FastifyRequest & { user: AuthUser }).user = user;
+        req.user = user;
+        await resolveWorkspace(req, user.id);
         return true;
       }
     }
@@ -79,7 +123,40 @@ export async function withAuthOrToken(req: FastifyRequest, reply: FastifyReply):
   await resolveUser(req, reply, accessToken);
 }
 
-// Type helper — use in route handlers after withAuth preHandler
+// Type helpers — use in route handlers after withAuth preHandler
 export function getUser(req: FastifyRequest): AuthUser {
-  return (req as FastifyRequest & { user: AuthUser }).user;
+  if (!req.user) throw new Error("No user on request — withAuth not applied");
+  return req.user;
+}
+
+export function getWorkspaceId(req: FastifyRequest): string {
+  if (!req.workspaceId) throw new Error("No workspaceId on request — withAuth not applied or user has no workspace");
+  return req.workspaceId;
+}
+
+/** Returns the user's role in the workspace, or null if not a member. */
+export async function getWorkspaceRole(userId: string, workspaceId: string): Promise<string | null> {
+  const membership = await prisma.workspaceMember.findUnique({
+    where: { workspaceId_userId: { workspaceId, userId } },
+    select: { role: true },
+  });
+  return membership?.role ?? null;
+}
+
+/** Returns 403 payload if the user is not owner/admin, null if allowed. */
+export async function requireAdminRole(userId: string, workspaceId: string): Promise<{ error: string; code: string } | null> {
+  const role = await getWorkspaceRole(userId, workspaceId);
+  if (!role || !["owner", "admin"].includes(role)) {
+    return { error: "Only workspace admins can perform this action.", code: "FORBIDDEN" };
+  }
+  return null;
+}
+
+/** Returns 403 payload if the user is not the workspace owner, null if allowed. */
+export async function requireOwnerRole(userId: string, workspaceId: string): Promise<{ error: string; code: string } | null> {
+  const role = await getWorkspaceRole(userId, workspaceId);
+  if (role !== "owner") {
+    return { error: "Only the workspace owner can manage billing.", code: "FORBIDDEN" };
+  }
+  return null;
 }

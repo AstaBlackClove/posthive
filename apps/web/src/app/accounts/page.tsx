@@ -9,6 +9,7 @@ const _handledDiscordGuilds = new Set<string>();
 const _shownConnectedToasts = new Set<string>();
 import { PlatformIcon } from "../../components/PlatformIcon";
 import { useToast } from "../../components/Toast";
+import { useAuth } from "../../context/AuthContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const THREADS_AUTH_URL = `${API_BASE}/auth/threads`;
@@ -110,12 +111,13 @@ function tokenStatus(platform: string, expiresAt: string | null): "ok" | "soon" 
   return "ok";
 }
 
-function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMonth, onAvatarRefreshed }: {
+function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMonth, onAvatarRefreshed, isAdmin }: {
   account: Account;
   onDisconnect: (id: string, name: string, platform?: string) => void;
   disconnecting: string | null;
   postsThisMonth?: number;
   onAvatarRefreshed?: (id: string, avatarUrl: string | null) => void;
+  isAdmin?: boolean;
 }) {
   const [refreshing, setRefreshing] = useState(false);
   const status = tokenStatus(account.platform, account.expiresAt);
@@ -172,7 +174,8 @@ function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMo
         </div>
         <button
           onClick={() => onDisconnect(account.id, account.displayName, account.platform)}
-          disabled={disconnecting === account.id}
+          disabled={disconnecting === account.id || isAdmin === false}
+          title={isAdmin === false ? "Only workspace admins can disconnect accounts" : undefined}
           className="text-xs font-medium transition-colors disabled:opacity-50 px-2 py-1 rounded-lg hover:text-red-400"
           style={{ color: MUTED }}>
           {disconnecting === account.id ? "…" : "Disconnect"}
@@ -731,6 +734,8 @@ interface PlanStatus {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function AccountsPage() {
+  const { user } = useAuth();
+  const isAdmin = !user || user.role === "owner" || user.role === "admin";
   const { success, error: toastError } = useToast();
   const searchParams = useSearchParams();
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -890,8 +895,10 @@ export default function AccountsPage() {
 
   const isCancelled = planStatus?.planStatus === "cancelled";
   const atLimit = planStatus !== null && !isCancelled && accounts.length >= planStatus.maxAccounts;
-  const connectDisabled = isCancelled || atLimit;
-  const limitMsg = isCancelled
+  const connectDisabled = !isAdmin || isCancelled || atLimit;
+  const limitMsg = !isAdmin
+    ? "Only workspace admins can connect accounts."
+    : isCancelled
     ? "Your subscription is cancelled. Resubscribe to connect new accounts."
     : atLimit
     ? `You've reached your ${planStatus!.maxAccounts}-account limit. Disconnect an account or upgrade your plan.`
@@ -1015,7 +1022,7 @@ export default function AccountsPage() {
               {!loading && blueskyAccounts.length > 0 && (
                 <div className="space-y-2">
                   {blueskyAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1049,7 +1056,7 @@ export default function AccountsPage() {
               {!loading && threadsAccounts.length > 0 && (
                 <div className="space-y-2">
                   {threadsAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1082,7 +1089,7 @@ export default function AccountsPage() {
               {!loading && instagramAccounts.length > 0 && (
                 <div className="space-y-2">
                   {instagramAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1115,7 +1122,7 @@ export default function AccountsPage() {
               {!loading && linkedinAccounts.length > 0 && (
                 <div className="space-y-2">
                   {linkedinAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1155,7 +1162,7 @@ export default function AccountsPage() {
               {!loading && youtubeAccounts.length > 0 && (
                 <div className="space-y-2">
                   {youtubeAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1194,7 +1201,7 @@ export default function AccountsPage() {
               {!loading && facebookAccounts.length > 0 && (
                 <div className="space-y-2">
                   {facebookAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1227,7 +1234,7 @@ export default function AccountsPage() {
                     <ConnectedAccountRow key={a.id} account={a}
                       onDisconnect={() => setDisconnectTarget(a)}
                       disconnecting={disconnecting}
-                      postsThisMonth={stats[a.id]} />
+                      postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1262,7 +1269,7 @@ export default function AccountsPage() {
                     <ConnectedAccountRow key={a.id} account={a}
                       onDisconnect={() => setDisconnectTarget(a)}
                       disconnecting={disconnecting}
-                      postsThisMonth={stats[a.id]} />
+                      postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1297,7 +1304,7 @@ export default function AccountsPage() {
               {!loading && pinterestAccounts.length > 0 && (
                 <div className="space-y-2">
                   {pinterestAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1333,7 +1340,7 @@ export default function AccountsPage() {
                   {!loading && telegramAccounts.length > 0 && (
                     <div className="space-y-2">
                       {telegramAccounts.map((a) => (
-                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                       ))}
                     </div>
                   )}
@@ -1382,7 +1389,7 @@ export default function AccountsPage() {
                     <div className="space-y-2">
                       {nostrAccounts.map((a) => (
                         <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]}
-                          onAvatarRefreshed={(id, avatarUrl) => setAccounts(prev => prev.map(acc => acc.id === id ? { ...acc, avatarUrl } : acc))} />
+                          onAvatarRefreshed={(id, avatarUrl) => setAccounts(prev => prev.map(acc => acc.id === id ? { ...acc, avatarUrl } : acc))} isAdmin={isAdmin} />
                       ))}
                     </div>
                   )}
@@ -1432,7 +1439,7 @@ export default function AccountsPage() {
               {!loading && twitterAccounts.length > 0 && (
                 <div className="space-y-2">
                   {twitterAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1508,7 +1515,7 @@ export default function AccountsPage() {
                   {!loading && discordAccounts.length > 0 && (
                     <div className="space-y-2">
                       {discordAccounts.map((a) => (
-                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                       ))}
                     </div>
                   )}
@@ -1564,12 +1571,21 @@ export default function AccountsPage() {
                   </div>
                 )}
                 <div className="flex flex-col gap-2">
-                  <a href={TUMBLR_AUTH_URL}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
-                    style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                    <PlatformIcon platform="tumblr" size={16} />
-                    {tumblrAccounts.length > 0 ? "Add another blog" : "Connect Tumblr"}
-                  </a>
+                  {connectDisabled ? (
+                    <button disabled title={limitMsg ?? undefined}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                      style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                      <PlatformIcon platform="tumblr" size={16} />
+                      {tumblrAccounts.length > 0 ? "Add another blog" : "Connect Tumblr"}
+                    </button>
+                  ) : (
+                    <a href={TUMBLR_AUTH_URL}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                      style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                      <PlatformIcon platform="tumblr" size={16} />
+                      {tumblrAccounts.length > 0 ? "Add another blog" : "Connect Tumblr"}
+                    </a>
+                  )}
                   <p className="text-xs" style={{ color: MUTED }}>
                     Posts to your primary Tumblr blog · text and images
                   </p>
@@ -1596,13 +1612,15 @@ export default function AccountsPage() {
                   {!loading && lemmyAccounts.length > 0 && (
                     <div className="space-y-2">
                       {lemmyAccounts.map((a) => (
-                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} />
+                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
                       ))}
                     </div>
                   )}
                   <button
                     onClick={() => setShowLemmyDialog(true)}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                    disabled={connectDisabled}
+                    title={connectDisabled ? (limitMsg ?? undefined) : undefined}
+                    className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
                     <PlatformIcon platform="lemmy" size={16} />
                     {lemmyAccounts.length > 0 ? "Add another community" : "Connect Lemmy"}

@@ -43,11 +43,10 @@ function getUserClient(account: Account): TwitterApi {
 async function enforcePlanGate(account: Account): Promise<void> {
   if (process.env.ENABLE_BILLING !== "true") return;
 
-  const user = await prisma.user.findUnique({
-    where: { id: account.userId },
-    select: { plan: true },
-  });
-  const plan = getPlan(user?.plan ?? "cancelled");
+  const ws = account.workspaceId
+    ? await prisma.workspace.findUnique({ where: { id: account.workspaceId }, select: { plan: true } })
+    : null;
+  const plan = getPlan(ws?.plan ?? "cancelled");
 
   if (!plan.allowTwitter) {
     throw new Error("X/Twitter posting is available on Pro and Team plans. Upgrade to post to X.");

@@ -4,11 +4,17 @@ import { TwitterApi } from "twitter-api-v2";
 import { encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import { getPlan } from "../lib/plans.js";
-import { withAuth, getUser } from "../lib/auth/withAuth.js";
+import { enforcePlan } from "../lib/enforcePlan.js";
+import { withAuth, getUser, getWorkspaceId, requireAdminRole } from "../lib/auth/withAuth.js";
 import { getDiscordChannels, encryptDiscordCredentials } from "../adapters/discord.js";
 import { tumblrRequestTokenAuth, tumblrAccessTokenAuth, tumblrApiAuthHeader, encryptTumblrCredentials } from "../adapters/tumblr.js";
 import { downloadAndStoreAvatar } from "../lib/avatarStore.js";
 import { isSsrfBlocked } from "../lib/ssrf.js";
+
+async function getUserWorkspaceId(userId: string): Promise<string | null> {
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { activeWorkspaceId: true } });
+  return u?.activeWorkspaceId ?? null;
+}
 
 const APP_ID = process.env.THREADS_APP_ID!;
 const APP_SECRET = process.env.THREADS_APP_SECRET!;
@@ -77,14 +83,14 @@ function buildRedirect(base: string, params: Record<string, string>): string {
   return url.toString();
 }
 
-async function upsertThreadsAccount(userId: string, displayName: string, credentials: string, avatarUrl: string | null, expiresAt?: Date) {
+async function upsertThreadsAccount(userId: string, workspaceId: string | null, displayName: string, credentials: string, avatarUrl: string | null, expiresAt?: Date) {
   const existing = await prisma.account.findFirst({
-    where: { platform: "threads", displayName, userId },
+    where: workspaceId ? { platform: "threads", displayName, workspaceId } : { platform: "threads", displayName, userId },
     select: { id: true },
   });
   return prisma.account.upsert({
     where: { id: existing?.id ?? "new" },
-    create: { platform: "threads", displayName, credentials, avatarUrl, expiresAt: expiresAt ?? null, userId },
+    create: { platform: "threads", displayName, credentials, avatarUrl, expiresAt: expiresAt ?? null, userId, ...(workspaceId ? { workspaceId } : {}) },
     update: { credentials, avatarUrl, expiresAt: expiresAt ?? null },
     select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
   });
@@ -203,7 +209,20 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     avatarUrl = await downloadAndStoreAvatar(avatarUrl);
     const credentials = encrypt(JSON.stringify({ accessToken: longLivedToken, userId: threadsUserId }));
-    await upsertThreadsAccount(userId, displayName, credentials, avatarUrl, expiresAt);
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(buildRedirect(redirectBase, { error: roleBlocked.error }));
+    }
+    const threadsExisting = await prisma.account.findFirst({
+      where: workspaceId ? { platform: "threads", displayName, workspaceId } : { platform: "threads", displayName, userId },
+      select: { id: true },
+    });
+    if (!threadsExisting && workspaceId) {
+      const blocked = await enforcePlan(userId, workspaceId, "accounts");
+      if (blocked) return reply.redirect(buildRedirect(redirectBase, { error: blocked.error }));
+    }
+    await upsertThreadsAccount(userId, workspaceId, displayName, credentials, avatarUrl, expiresAt);
 
     console.log(`[threads oauth] connected @${displayName} → user ${userId}`);
     return reply.redirect(buildRedirect(redirectBase, { connected: "threads" }));
@@ -306,10 +325,19 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     } catch { /* optional */ }
 
     const credentials = encrypt(JSON.stringify({ accessToken: longToken, userId: igUserId, expiresAt: expiresAt.toISOString() }));
-    const existing = await prisma.account.findFirst({ where: { platform: "instagram", displayName, userId } });
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(buildRedirect(redirectBase, { error: roleBlocked.error }));
+    }
+    const existing = await prisma.account.findFirst({ where: workspaceId ? { platform: "instagram", displayName, workspaceId } : { platform: "instagram", displayName, userId } });
+    if (!existing && workspaceId) {
+      const blocked = await enforcePlan(userId, workspaceId, "accounts");
+      if (blocked) return reply.redirect(buildRedirect(redirectBase, { error: blocked.error }));
+    }
     await prisma.account.upsert({
       where: { id: existing?.id ?? "new" },
-      create: { platform: "instagram", displayName, credentials, avatarUrl, expiresAt, userId },
+      create: { platform: "instagram", displayName, credentials, avatarUrl, expiresAt, userId, ...(workspaceId ? { workspaceId } : {}) },
       update: { credentials, avatarUrl, expiresAt },
     });
 
@@ -414,10 +442,19 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }));
 
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
-    const existing = await prisma.account.findFirst({ where: { platform: "linkedin", displayName, userId } });
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(buildRedirect(redirectBase, { error: roleBlocked.error }));
+    }
+    const existing = await prisma.account.findFirst({ where: workspaceId ? { platform: "linkedin", displayName, workspaceId } : { platform: "linkedin", displayName, userId } });
+    if (!existing && workspaceId) {
+      const blocked = await enforcePlan(userId, workspaceId, "accounts");
+      if (blocked) return reply.redirect(buildRedirect(redirectBase, { error: blocked.error }));
+    }
     await prisma.account.upsert({
       where: { id: existing?.id ?? "new" },
-      create: { platform: "linkedin", displayName, credentials, avatarUrl, expiresAt, userId },
+      create: { platform: "linkedin", displayName, credentials, avatarUrl, expiresAt, userId, ...(workspaceId ? { workspaceId } : {}) },
       update: { credentials, avatarUrl, expiresAt },
     });
 
@@ -428,6 +465,9 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   // Manual token — requires auth cookie
   app.post("/auth/threads/manual", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const roleBlocked = await requireAdminRole(userId, workspaceId);
+    if (roleBlocked) return reply.status(403).send(roleBlocked);
     const { accessToken } = req.body as { accessToken: string };
     if (!accessToken) return reply.status(400).send({ error: "accessToken required" });
 
@@ -438,7 +478,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     const profile = await profileRes.json() as { id: string; username: string; threads_profile_picture_url?: string };
     const credentials = encrypt(JSON.stringify({ accessToken, userId: profile.id }));
-    const account = await upsertThreadsAccount(userId, profile.username, credentials, profile.threads_profile_picture_url ?? null);
+    const account = await upsertThreadsAccount(userId, workspaceId, profile.username, credentials, profile.threads_profile_picture_url ?? null);
 
     console.log(`[threads] manually connected @${profile.username} → user ${userId}`);
     return reply.status(201).send(account);
@@ -543,13 +583,22 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     const credentials = encrypt(JSON.stringify({ accessToken, instanceUrl, accountId: profile.id }));
 
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(`${WEB_URL}/accounts?error=${encodeURIComponent(roleBlocked.error)}`);
+    }
     const existing = await prisma.account.findFirst({
-      where: { platform: "mastodon", displayName: profile.username, userId },
+      where: workspaceId ? { platform: "mastodon", displayName: profile.username, workspaceId } : { platform: "mastodon", displayName: profile.username, userId },
       select: { id: true },
     });
+    if (!existing && workspaceId) {
+      const blocked = await enforcePlan(userId, workspaceId, "accounts");
+      if (blocked) return reply.redirect(`${WEB_URL}/accounts?error=${encodeURIComponent(blocked.error)}`);
+    }
     await prisma.account.upsert({
       where: { id: existing?.id ?? "new" },
-      create: { platform: "mastodon", displayName: profile.username, credentials, avatarUrl: profile.avatar ?? null, userId },
+      create: { platform: "mastodon", displayName: profile.username, credentials, avatarUrl: profile.avatar ?? null, userId, ...(workspaceId ? { workspaceId } : {}) },
       update: { credentials, avatarUrl: profile.avatar ?? null },
     });
 
@@ -694,13 +743,22 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     const credentials = encrypt(JSON.stringify({ accessToken, instanceUrl, accountId: profile.id }));
 
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(`${WEB_URL}/accounts?error=${encodeURIComponent(roleBlocked.error)}`);
+    }
     const existing = await prisma.account.findFirst({
-      where: { platform: "pixelfed", displayName: profile.username, userId },
+      where: workspaceId ? { platform: "pixelfed", displayName: profile.username, workspaceId } : { platform: "pixelfed", displayName: profile.username, userId },
       select: { id: true },
     });
+    if (!existing && workspaceId) {
+      const blocked = await enforcePlan(userId, workspaceId, "accounts");
+      if (blocked) return reply.redirect(`${WEB_URL}/accounts?error=${encodeURIComponent(blocked.error)}`);
+    }
     await prisma.account.upsert({
       where: { id: existing?.id ?? "new" },
-      create: { platform: "pixelfed", displayName: profile.username, credentials, avatarUrl: profile.avatar ?? null, userId },
+      create: { platform: "pixelfed", displayName: profile.username, credentials, avatarUrl: profile.avatar ?? null, userId, ...(workspaceId ? { workspaceId } : {}) },
       update: { credentials, avatarUrl: profile.avatar ?? null },
     });
 
@@ -810,10 +868,19 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }));
 
     const expiresAt = new Date(Date.now() + (expiresIn - 60) * 1000);
-    const existing = await prisma.account.findFirst({ where: { platform: "youtube", displayName, userId } });
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(buildRedirect(redirectBase, { error: roleBlocked.error }));
+    }
+    const existing = await prisma.account.findFirst({ where: workspaceId ? { platform: "youtube", displayName, workspaceId } : { platform: "youtube", displayName, userId } });
+    if (!existing && workspaceId) {
+      const blocked = await enforcePlan(userId, workspaceId, "accounts");
+      if (blocked) return reply.redirect(buildRedirect(redirectBase, { error: blocked.error }));
+    }
     await prisma.account.upsert({
       where: { id: existing?.id ?? "new" },
-      create: { platform: "youtube", displayName, credentials, avatarUrl, expiresAt, userId },
+      create: { platform: "youtube", displayName, credentials, avatarUrl, expiresAt, userId, ...(workspaceId ? { workspaceId } : {}) },
       update: { credentials, avatarUrl, expiresAt },
     });
 
@@ -825,12 +892,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   app.get("/auth/twitter", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
     const { from } = req.query as Record<string, string>;
 
     // Plan gate — only Pro & Team when billing is enabled
     if (process.env.ENABLE_BILLING === "true") {
-      const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
-      const plan = getPlan(user?.plan ?? "cancelled");
+      const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { plan: true } });
+      const plan = getPlan(ws?.plan ?? "cancelled");
       if (!plan.allowTwitter) {
         const errorBase = from === "onboarding" ? `${WEB_URL}/onboarding?step=2` : `${WEB_URL}/accounts`;
         return reply.redirect(buildRedirect(errorBase, { error: "twitter_pro_required" }));
@@ -911,10 +979,19 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const credentials = encrypt(JSON.stringify({ accessToken, accessSecret, twitterUserId }));
-    const existing = await prisma.account.findFirst({ where: { platform: "twitter", displayName, userId } });
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(buildRedirect(redirectTo, { error: roleBlocked.error }));
+    }
+    const existing = await prisma.account.findFirst({ where: workspaceId ? { platform: "twitter", displayName, workspaceId } : { platform: "twitter", displayName, userId } });
+    if (!existing && workspaceId) {
+      const blocked = await enforcePlan(userId, workspaceId, "accounts");
+      if (blocked) return reply.redirect(buildRedirect(redirectTo, { error: blocked.error }));
+    }
     await prisma.account.upsert({
       where: { id: existing?.id ?? "new" },
-      create: { platform: "twitter", displayName, credentials, avatarUrl, userId },
+      create: { platform: "twitter", displayName, credentials, avatarUrl, userId, ...(workspaceId ? { workspaceId } : {}) },
       update: { credentials, avatarUrl },
     });
 
@@ -1071,10 +1148,19 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       defaultBoardId,
     }));
 
-    const existing = await prisma.account.findFirst({ where: { platform: "pinterest", displayName, userId } });
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(buildRedirect(redirectBase, { error: roleBlocked.error }));
+    }
+    const existing = await prisma.account.findFirst({ where: workspaceId ? { platform: "pinterest", displayName, workspaceId } : { platform: "pinterest", displayName, userId } });
+    if (!existing && workspaceId) {
+      const blocked = await enforcePlan(userId, workspaceId, "accounts");
+      if (blocked) return reply.redirect(buildRedirect(redirectBase, { error: blocked.error }));
+    }
     await prisma.account.upsert({
       where: { id: existing?.id ?? "new" },
-      create: { platform: "pinterest", displayName, credentials, avatarUrl, expiresAt, userId },
+      create: { platform: "pinterest", displayName, credentials, avatarUrl, expiresAt, userId, ...(workspaceId ? { workspaceId } : {}) },
       update: { credentials, avatarUrl, expiresAt },
     });
 
@@ -1198,6 +1284,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.redirect(buildRedirect(redirectBase, { error: "no_pages" }));
     }
 
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(buildRedirect(redirectBase, { error: roleBlocked.error }));
+    }
     // Connect all pages the user manages (or just the first one if many)
     for (const page of pages) {
       const credentials = encrypt(JSON.stringify({
@@ -1209,11 +1300,15 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const rawAvatarUrl = page.picture?.data?.url ?? null;
       const avatarUrl = await downloadAndStoreAvatar(rawAvatarUrl);
       const existing = await prisma.account.findFirst({
-        where: { platform: "facebook", displayName: page.name, userId },
+        where: workspaceId ? { platform: "facebook", displayName: page.name, workspaceId } : { platform: "facebook", displayName: page.name, userId },
       });
+      if (!existing && workspaceId) {
+        const blocked = await enforcePlan(userId, workspaceId, "accounts");
+        if (blocked) return reply.redirect(buildRedirect(redirectBase, { error: blocked.error }));
+      }
       await prisma.account.upsert({
         where: { id: existing?.id ?? "new" },
-        create: { platform: "facebook", displayName: page.name, credentials, avatarUrl, expiresAt: userTokenExpiresAt, userId },
+        create: { platform: "facebook", displayName: page.name, credentials, avatarUrl, expiresAt: userTokenExpiresAt, userId, ...(workspaceId ? { workspaceId } : {}) },
         update: { credentials, avatarUrl, expiresAt: userTokenExpiresAt },
       });
       console.log(`[facebook oauth] connected page "${page.name}" → user ${userId}`);
@@ -1225,6 +1320,9 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   // ── Telegram connect ────────────────────────────────────────────────────────
   app.post("/auth/telegram", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const roleBlocked = await requireAdminRole(userId, workspaceId);
+    if (roleBlocked) return reply.status(403).send(roleBlocked);
     const { botToken, chatId } = req.body as { botToken?: string; chatId?: string };
     if (!botToken?.trim() || !chatId?.trim()) {
       return reply.status(400).send({ error: "botToken and chatId are required" });
@@ -1232,10 +1330,14 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     try {
       const { encryptTelegramCredentials } = await import("../adapters/telegram.js");
       const { credentials, displayName, avatarUrl } = await encryptTelegramCredentials(botToken.trim(), chatId.trim());
-      const existing = await prisma.account.findFirst({ where: { platform: "telegram", displayName, userId } });
+      const existing = await prisma.account.findFirst({ where: { platform: "telegram", displayName, workspaceId } });
+      if (!existing) {
+        const blocked = await enforcePlan(userId, workspaceId ?? "", "accounts");
+        if (blocked) return reply.status(402).send(blocked);
+      }
       await prisma.account.upsert({
         where: { id: existing?.id ?? "new" },
-        create: { platform: "telegram", displayName, credentials, avatarUrl, userId },
+        create: { platform: "telegram", displayName, credentials, avatarUrl, userId, ...(workspaceId ? { workspaceId } : {}) },
         update: { credentials, avatarUrl },
       });
       console.log(`[telegram] connected "${displayName}" → user ${userId}`);
@@ -1249,6 +1351,9 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   // ── Lemmy connect ────────────────────────────────────────────────────────────
   app.post("/auth/lemmy", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const roleBlocked = await requireAdminRole(userId, workspaceId);
+    if (roleBlocked) return reply.status(403).send(roleBlocked);
     const { instanceUrl, username, password, community } = req.body as {
       instanceUrl?: string; username?: string; password?: string; community?: string;
     };
@@ -1296,10 +1401,14 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         community: community.trim(),
       }));
 
-      const existing = await prisma.account.findFirst({ where: { platform: "lemmy", displayName, userId } });
+      const existing = await prisma.account.findFirst({ where: { platform: "lemmy", displayName, workspaceId } });
+      if (!existing) {
+        const blocked = await enforcePlan(userId, workspaceId ?? "", "accounts");
+        if (blocked) return reply.status(402).send(blocked);
+      }
       await prisma.account.upsert({
         where: { id: existing?.id ?? "new" },
-        create: { platform: "lemmy", displayName, credentials, avatarUrl, userId },
+        create: { platform: "lemmy", displayName, credentials, avatarUrl, userId, ...(workspaceId ? { workspaceId } : {}) },
         update: { credentials, avatarUrl },
       });
       console.log(`[lemmy] connected "${displayName}" → user ${userId}`);
@@ -1420,6 +1529,9 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   // Step 4 — create a webhook for the channel and save as connected account
   app.post("/auth/discord/connect", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const roleBlocked = await requireAdminRole(userId, workspaceId);
+    if (roleBlocked) return reply.status(403).send(roleBlocked);
     const { guildId, guildName, channelId, channelName } = req.body as {
       guildId: string; guildName: string; channelId: string; channelName: string;
     };
@@ -1448,10 +1560,14 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const credentials = encryptDiscordCredentials({ guildId, guildName, channelId, channelName, webhookId, webhookToken });
     const displayName = `#${channelName} (${guildName})`;
 
-    const existing = await prisma.account.findFirst({ where: { platform: "discord", userId, credentials: { contains: channelId } } });
+    const existing = await prisma.account.findFirst({ where: { platform: "discord", workspaceId, credentials: { contains: channelId } } });
+    if (!existing) {
+      const blocked = await enforcePlan(userId, workspaceId ?? "", "accounts");
+      if (blocked) return reply.status(402).send(blocked);
+    }
     await prisma.account.upsert({
       where: { id: existing?.id ?? "new" },
-      create: { platform: "discord", displayName, credentials, avatarUrl: null, userId },
+      create: { platform: "discord", displayName, credentials, avatarUrl: null, userId, ...(workspaceId ? { workspaceId } : {}) },
       update: { displayName, credentials },
     });
 
@@ -1554,10 +1670,19 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const credentials = encryptTumblrCredentials({ accessToken, accessSecret, blogName });
-    const existing = await prisma.account.findFirst({ where: { platform: "tumblr", userId, displayName } });
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(buildRedirect(redirectTo, { error: roleBlocked.error }));
+    }
+    const existing = await prisma.account.findFirst({ where: workspaceId ? { platform: "tumblr", displayName, workspaceId } : { platform: "tumblr", displayName, userId } });
+    if (!existing && workspaceId) {
+      const blocked = await enforcePlan(userId, workspaceId, "accounts");
+      if (blocked) return reply.redirect(buildRedirect(redirectTo, { error: blocked.error }));
+    }
     await prisma.account.upsert({
       where: { id: existing?.id ?? "new" },
-      create: { platform: "tumblr", displayName, credentials, avatarUrl, userId },
+      create: { platform: "tumblr", displayName, credentials, avatarUrl, userId, ...(workspaceId ? { workspaceId } : {}) },
       update: { credentials, avatarUrl },
     });
 

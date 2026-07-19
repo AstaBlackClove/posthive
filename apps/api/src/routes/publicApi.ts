@@ -16,20 +16,20 @@ export async function publicApiRoutes(
 ): Promise<void> {
   // GET /api/v1/me — identify the authenticated user (used by CLI/MCP login)
   app.get("/api/v1/me", { preHandler }, async (req, reply) => {
-    const userId = req.apiKeyUser!.id;
+    const { id: userId, workspaceId, plan, planStatus } = req.apiKeyUser!;
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, plan: true, planStatus: true },
+      select: { id: true, email: true, name: true },
     });
     if (!user) return reply.status(404).send({ error: "User not found" });
-    return reply.send({ user });
+    return reply.send({ user: { ...user, plan, planStatus, workspaceId } });
   });
 
   // GET /api/v1/accounts — list connected social accounts
   app.get("/api/v1/accounts", { preHandler }, async (req, reply) => {
-    const userId = req.apiKeyUser!.id;
+    const { workspaceId } = req.apiKeyUser!;
     const accounts = await prisma.account.findMany({
-      where: { userId },
+      where: { workspaceId },
       select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
       orderBy: { createdAt: "asc" },
     });
@@ -38,7 +38,7 @@ export async function publicApiRoutes(
 
   // POST /api/v1/posts — schedule or draft a post
   app.post("/api/v1/posts", { preHandler }, async (req, reply) => {
-    const userId = req.apiKeyUser!.id;
+    const { id: userId, workspaceId } = req.apiKeyUser!;
     const body = req.body as {
       content: string;
       accountIds: string[];
@@ -81,7 +81,7 @@ export async function publicApiRoutes(
       return reply.status(400).send({ error: "youtubeType must be 'short' or 'video'" });
 
     const accounts = await prisma.account.findMany({
-      where: { id: { in: body.accountIds }, userId },
+      where: { id: { in: body.accountIds }, workspaceId },
       select: { id: true },
     });
     if (accounts.length !== body.accountIds.length)
@@ -99,6 +99,7 @@ export async function publicApiRoutes(
     const job = await prisma.postJob.create({
       data: {
         userId,
+        workspaceId,
         scheduledFor: scheduledFor ?? new Date(0),
         status: isDraft ? "draft" : "pending",
         content: contentPayload,
@@ -127,7 +128,7 @@ export async function publicApiRoutes(
 
   // GET /api/v1/posts — list scheduled/completed posts
   app.get("/api/v1/posts", { preHandler }, async (req, reply) => {
-    const userId = req.apiKeyUser!.id;
+    const { workspaceId } = req.apiKeyUser!;
     const { status, limit: limitStr, cursor } = req.query as {
       status?: string;
       limit?: string;
@@ -140,7 +141,7 @@ export async function publicApiRoutes(
     const take = Math.min(Number(limitStr ?? 20), 100);
     const jobs = await prisma.postJob.findMany({
       where: {
-        userId,
+        workspaceId,
         ...(statusFilter ? { status: statusFilter } : {}),
         ...(cursor ? { id: { lt: cursor } } : {}),
       },
@@ -165,14 +166,14 @@ export async function publicApiRoutes(
 
   // GET /api/v1/posts/:id — get a single post
   app.get("/api/v1/posts/:id", { preHandler }, async (req, reply) => {
-    const userId = req.apiKeyUser!.id;
+    const { workspaceId } = req.apiKeyUser!;
     const { id } = req.params as { id: string };
 
-    const job = await prisma.postJob.findUnique({
-      where: { id },
+    const job = await prisma.postJob.findFirst({
+      where: { id, workspaceId },
       include: { targets: { select: { id: true, accountId: true, status: true, error: true, platformPostId: true } } },
     });
-    if (!job || job.userId !== userId) return reply.status(404).send({ error: "Post not found" });
+    if (!job) return reply.status(404).send({ error: "Post not found" });
 
     return reply.send({
       id: job.id,
@@ -188,7 +189,7 @@ export async function publicApiRoutes(
 
   // PATCH /api/v1/posts/:id — reschedule or update a pending post
   app.patch("/api/v1/posts/:id", { preHandler }, async (req, reply) => {
-    const userId = req.apiKeyUser!.id;
+    const { workspaceId } = req.apiKeyUser!;
     const { id } = req.params as { id: string };
     const body = req.body as {
       scheduledFor?: string;
@@ -202,8 +203,8 @@ export async function publicApiRoutes(
       perAccount?: Record<string, { text?: string; commentText?: string }>;
     };
 
-    const job = await prisma.postJob.findUnique({ where: { id } });
-    if (!job || job.userId !== userId) return reply.status(404).send({ error: "Post not found" });
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId } });
+    if (!job) return reply.status(404).send({ error: "Post not found" });
     if (job.status !== "pending")
       return reply.status(409).send({ error: `Cannot update a post with status "${job.status}"` });
 
@@ -254,7 +255,7 @@ export async function publicApiRoutes(
       if (!Array.isArray(body.accountIds) || body.accountIds.length === 0)
         return reply.status(400).send({ error: "accountIds must be a non-empty array" });
       const valid = await prisma.account.findMany({
-        where: { id: { in: body.accountIds }, userId },
+        where: { id: { in: body.accountIds }, workspaceId },
         select: { id: true },
       });
       if (valid.length !== body.accountIds.length)
@@ -285,11 +286,11 @@ export async function publicApiRoutes(
 
   // DELETE /api/v1/posts/:id — cancel a pending or draft post
   app.delete("/api/v1/posts/:id", { preHandler }, async (req, reply) => {
-    const userId = req.apiKeyUser!.id;
+    const { workspaceId } = req.apiKeyUser!;
     const { id } = req.params as { id: string };
 
-    const job = await prisma.postJob.findUnique({ where: { id } });
-    if (!job || job.userId !== userId) return reply.status(404).send({ error: "Post not found" });
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId } });
+    if (!job) return reply.status(404).send({ error: "Post not found" });
     if (job.status !== "pending" && job.status !== "draft") {
       return reply.status(400).send({ error: `Cannot delete a post with status "${job.status}". Only pending or draft posts can be deleted.` });
     }
@@ -300,7 +301,7 @@ export async function publicApiRoutes(
 
   // POST /api/v1/posts/:id/approve — promote a draft to scheduled
   app.post("/api/v1/posts/:id/approve", { preHandler }, async (req, reply) => {
-    const userId = req.apiKeyUser!.id;
+    const { workspaceId } = req.apiKeyUser!;
     const { id } = req.params as { id: string };
     const body = req.body as { scheduledFor: string };
 
@@ -310,8 +311,8 @@ export async function publicApiRoutes(
     if (isNaN(scheduledFor.getTime()) || scheduledFor <= new Date())
       return reply.status(400).send({ error: "scheduledFor must be a future ISO date string" });
 
-    const job = await prisma.postJob.findUnique({ where: { id } });
-    if (!job || job.userId !== userId) return reply.status(404).send({ error: "Post not found" });
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId } });
+    if (!job) return reply.status(404).send({ error: "Post not found" });
     if (job.status !== "draft") return reply.status(409).send({ error: `Post status is '${job.status}' — only drafts can be approved` });
 
     const updated = await prisma.postJob.update({
@@ -329,18 +330,19 @@ export async function publicApiRoutes(
 
   // POST /api/v1/posts/:id/duplicate — clone a post as a new draft
   app.post("/api/v1/posts/:id/duplicate", { preHandler }, async (req, reply) => {
-    const userId = req.apiKeyUser!.id;
+    const { id: userId, workspaceId } = req.apiKeyUser!;
     const { id } = req.params as { id: string };
 
-    const job = await prisma.postJob.findUnique({
-      where: { id },
+    const job = await prisma.postJob.findFirst({
+      where: { id, workspaceId },
       include: { targets: { select: { accountId: true } } },
     });
-    if (!job || job.userId !== userId) return reply.status(404).send({ error: "Post not found" });
+    if (!job) return reply.status(404).send({ error: "Post not found" });
 
     const duplicate = await prisma.postJob.create({
       data: {
         userId,
+        workspaceId,
         scheduledFor: new Date(0),
         status: "draft",
         content: job.content,
@@ -362,9 +364,9 @@ export async function publicApiRoutes(
 
   // GET /api/v1/templates — list saved templates
   app.get("/api/v1/templates", { preHandler }, async (req, reply) => {
-    const userId = req.apiKeyUser!.id;
+    const { workspaceId } = req.apiKeyUser!;
     const templates = await prisma.template.findMany({
-      where: { userId },
+      where: { workspaceId },
       orderBy: { updatedAt: "desc" },
       select: { id: true, name: true, content: true, createdAt: true, updatedAt: true },
     });
@@ -378,7 +380,7 @@ export async function publicApiRoutes(
 
   // POST /api/v1/templates/:id/use — create a post from a template
   app.post("/api/v1/templates/:id/use", { preHandler }, async (req, reply) => {
-    const userId = req.apiKeyUser!.id;
+    const { id: userId, workspaceId } = req.apiKeyUser!;
     const { id } = req.params as { id: string };
     const body = req.body as {
       accountIds: string[];
@@ -391,8 +393,8 @@ export async function publicApiRoutes(
     if (!Array.isArray(body.accountIds) || body.accountIds.length === 0)
       return reply.status(400).send({ error: "accountIds must be a non-empty array" });
 
-    const template = await prisma.template.findUnique({ where: { id } });
-    if (!template || template.userId !== userId) return reply.status(404).send({ error: "Template not found" });
+    const template = await prisma.template.findFirst({ where: { id, workspaceId } });
+    if (!template) return reply.status(404).send({ error: "Template not found" });
 
     const tc = (() => { try { return JSON.parse(template.content) as Record<string, unknown>; } catch { return {}; } })();
 
@@ -405,7 +407,7 @@ export async function publicApiRoutes(
         return reply.status(400).send({ error: "scheduledFor must be a future ISO date string" });
     }
 
-    const accounts = await prisma.account.findMany({ where: { id: { in: body.accountIds }, userId }, select: { id: true } });
+    const accounts = await prisma.account.findMany({ where: { id: { in: body.accountIds }, workspaceId }, select: { id: true } });
     if (accounts.length !== body.accountIds.length)
       return reply.status(400).send({ error: "One or more accountIds are invalid" });
 
@@ -415,6 +417,7 @@ export async function publicApiRoutes(
     const job = await prisma.postJob.create({
       data: {
         userId,
+        workspaceId,
         scheduledFor,
         status: isDraft ? "draft" : "pending",
         content: JSON.stringify({ ...tc, text, commentText }),

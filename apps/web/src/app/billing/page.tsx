@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
 import { trackEvent } from "../../lib/track";
+import { useAuth } from "../../context/AuthContext";
 
 interface BillingStatus {
   plan: string;
@@ -18,6 +19,9 @@ interface BillingStatus {
   trialDaysLeft: number;
   trialExpired: boolean;
   trialEndsAt: string | null;
+  hasDodoSub: boolean;
+  workspaceId: string;
+  workspaceName: string;
 }
 
 const PLANS = [
@@ -32,18 +36,19 @@ const PLANS = [
     maxAccounts: 5,
     maxPostsPerMonth: 400,
     features: [
-      { text: "5 connected accounts", key: true },
-      { text: "400 posts / month", key: true },
-      { text: "Multi platforms", key: true },
-      { text: "Bulk CSV scheduling", key: true },
-      { text: "Post templates", key: true },
-      { text: "Calendar & drag-reschedule", key: true },
-      { text: "First comment automation", key: true },
-      { text: "Reels & Stories", key: false },
-      { text: "Per-platform overrides", key: false },
-      { text: "X/Twitter posting", key: false },
-      { text: "API access", key: false },
-      { text: "Webhook outbound", key: false },
+      { text: "5 connected accounts", included: true },
+      { text: "400 posts / month", included: true },
+      { text: "Multi platforms", included: true },
+      { text: "Bulk CSV scheduling", included: true },
+      { text: "Post templates", included: true },
+      { text: "Calendar & drag-reschedule", included: true },
+      { text: "First comment automation", included: true },
+      { text: "1 team member", included: true },
+      { text: "Reels & Stories", included: false },
+      { text: "Per-platform overrides", included: false },
+      { text: "X/Twitter posting", included: false },
+      { text: "API access & MCP", included: false },
+      { text: "Webhook outbound", included: false },
     ],
   },
   {
@@ -58,18 +63,19 @@ const PLANS = [
     maxPostsPerMonth: null,
     popular: true,
     features: [
-      { text: "15 connected accounts", key: true },
-      { text: "Unlimited posts", key: true },
-      { text: "Multi platforms", key: true },
-      { text: "Bulk CSV scheduling", key: true },
-      { text: "Post templates", key: true },
-      { text: "Calendar & drag-reschedule", key: true },
-      { text: "First comment automation", key: true },
-      { text: "Reels & Stories", key: true },
-      { text: "Per-platform overrides", key: true },
-      { text: "X/Twitter posting (100/mo)", key: true },
-      { text: "API access & MCP", key: true },
-      { text: "Webhook outbound", key: true },
+      { text: "15 connected accounts", included: true },
+      { text: "Unlimited posts", included: true },
+      { text: "Multi platforms", included: true },
+      { text: "Bulk CSV scheduling", included: true },
+      { text: "Post templates", included: true },
+      { text: "Calendar & drag-reschedule", included: true },
+      { text: "First comment automation", included: true },
+      { text: "2 team members", included: true },
+      { text: "Reels & Stories", included: true },
+      { text: "Per-platform overrides", included: true },
+      { text: "X/Twitter posting (100/mo)", included: true },
+      { text: "API access & MCP", included: true },
+      { text: "Webhook outbound", included: true },
     ],
   },
   {
@@ -83,22 +89,24 @@ const PLANS = [
     maxAccounts: 50,
     maxPostsPerMonth: null,
     features: [
-      { text: "50 connected accounts", key: true },
-      { text: "Unlimited posts", key: true },
-      { text: "Multi platforms", key: true },
-      { text: "Bulk CSV scheduling", key: true },
-      { text: "Post templates", key: true },
-      { text: "Calendar & drag-reschedule", key: true },
-      { text: "First comment automation", key: true },
-      { text: "Reels & Stories", key: true },
-      { text: "Per-platform overrides", key: true },
-      { text: "X/Twitter posting (100/mo)", key: true },
-      { text: "Webhook outbound", key: true },
+      { text: "50 connected accounts", included: true },
+      { text: "Unlimited posts", included: true },
+      { text: "Multi platforms", included: true },
+      { text: "Bulk CSV scheduling", included: true },
+      { text: "Post templates", included: true },
+      { text: "Calendar & drag-reschedule", included: true },
+      { text: "First comment automation", included: true },
+      { text: "4 team members", included: true },
+      { text: "Reels & Stories", included: true },
+      { text: "Per-platform overrides", included: true },
+      { text: "X/Twitter posting (100/mo)", included: true },
+      { text: "API access & MCP", included: true },
+      { text: "Webhook outbound", included: true },
     ],
   },
 ];
 
-function StatusBadge({ status, trialDaysLeft }: { status: string; trialDaysLeft: number }) {
+function StatusBadge({ status, trialDaysLeft, trialEndsAt }: { status: string; trialDaysLeft: number; trialEndsAt?: string | null }) {
   if (status === "active") {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
@@ -109,6 +117,16 @@ function StatusBadge({ status, trialDaysLeft }: { status: string; trialDaysLeft:
     );
   }
   if (status === "trialing") {
+    const expired = trialEndsAt ? new Date(trialEndsAt) < new Date() : false;
+    if (expired) {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+          style={{ backgroundColor: "#1f0a0a", color: "#f87171", border: "1px solid #7f1d1d" }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+          Trial ended
+        </span>
+      );
+    }
     const urgent = trialDaysLeft <= 3;
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
@@ -265,8 +283,10 @@ function CancelModal({ onConfirm, onClose, loading }: {
   );
 }
 
-export default function BillingPage() {
+function BillingContent() {
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const isOwner = !user || user.role === "owner";
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
@@ -278,9 +298,9 @@ export default function BillingPage() {
   const success = searchParams.get("success");
 
   useEffect(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const tz = user?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
     setIsIndia(tz === "Asia/Kolkata");
-  }, []);
+  }, [user?.timezone]);
 
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_ENABLE_BILLING !== "true") { setLoading(false); return; }
@@ -293,13 +313,18 @@ export default function BillingPage() {
     setCheckingOut(planId);
     trackEvent("checkout_clicked", { planId, isTrialing, isActive });
     try {
-      // Existing subscribers (trialing or active) — change plan in place, no new checkout
-      if (isTrialing || isActive) {
-        await apiFetch("/billing/change-plan", {
+      // Existing subscribers (trialing, active, or cancelling) — change plan in place, no new checkout
+      if (isTrialing || isActive || isCancelling) {
+        const result = await apiFetch<{ ok?: boolean; url?: string }>("/billing/change-plan", {
           method: "POST",
           body: JSON.stringify({ planId }),
         });
-        setStatus((s) => s ? { ...s, plan: planId } : s);
+        if (result.url) {
+          window.location.href = result.url;
+          return;
+        }
+        // Refetch full status so planStatus, plan, and all fields are in sync
+        apiFetch<BillingStatus>("/billing/status").then(setStatus).catch(() => {});
         toastSuccess("Plan updated successfully!");
         return;
       }
@@ -326,7 +351,7 @@ export default function BillingPage() {
       setCancelDone(true);
       setShowCancelModal(false);
       setStatus((s) => s ? { ...s, planStatus: "cancelling" } : s);
-      toastSuccess("Subscription cancelled — you'll keep access until the billing period ends.");
+      toastSuccess("Subscription cancelled you'll keep access until the billing period ends.");
     } catch (err) {
       toastError(String(err));
     } finally {
@@ -335,12 +360,12 @@ export default function BillingPage() {
   }
 
   const currentPlanDef = PLANS.find((p) => p.id === status?.plan);
-  const isInactive = status?.planStatus === "inactive";
   const isTrialing = status?.planStatus === "trialing";
   const isCancelled = status?.planStatus === "cancelled";
   const isCancelling = status?.planStatus === "cancelling";
   const isOnHold = status?.planStatus === "on_hold";
   const isActive = status?.planStatus === "active";
+  const hasDodoSub = status?.hasDodoSub ?? false;
 
   const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === "true";
 
@@ -390,49 +415,14 @@ export default function BillingPage() {
       {/* Header */}
       <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
         <div className="min-w-0">
-          <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>
-            {isInactive ? "Start your free trial" : "Billing & Plans"}
-          </h1>
+          <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Billing & Plans</h1>
           <p className="text-xs mt-0.5 truncate hidden sm:block" style={{ color: "#aaaaaa" }}>
-            {isInactive
-              ? "Choose a plan and enter your card — you won't be charged for 14 days."
-              : "Manage your subscription and usage"}
+            {status?.workspaceName ?? "Manage your subscription and usage"}
           </p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6">
-
-        {/* Inactive welcome banner */}
-        {isInactive && !success && (
-          <div className="rounded-2xl p-6 flex items-start gap-5"
-            style={{ backgroundColor: "#0d0d1a", border: "1px solid #2a2a5a" }}>
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: "#5b63d318", border: "1px solid #5b63d335" }}>
-              <svg className="w-5 h-5" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-semibold text-sm mb-1" style={{ color: "#ededed" }}>Card required to start your trial</p>
-              <p className="text-xs leading-relaxed" style={{ color: "#666" }}>
-                We use Dodo Payments to securely store your card. You won&apos;t be charged anything during the
-                14-day trial — cancel any time before it ends and you pay nothing.
-              </p>
-              <div className="flex items-center gap-4 mt-3">
-                {["No charge for 14 days", "Cancel any time", "Secure via Dodo"].map((t) => (
-                  <div key={t} className="flex items-center gap-1.5 text-xs" style={{ color: "#555" }}>
-                    <svg className="w-3 h-3" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {t}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Success banner */}
         {success && (
@@ -442,8 +432,21 @@ export default function BillingPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             <div>
-              <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>Trial started — you&apos;re all set!</p>
-              <p className="text-xs mt-0.5" style={{ color: "#86efac" }}>Your 14-day free trial is now active. No charge until it ends.</p>
+              {isActive ? (
+                <>
+                  <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>
+                    {`${status?.planName} plan activated `} you&apos;re all set!
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "#86efac" }}>
+                    Your subscription is now active. Start scheduling posts across all your accounts.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>Trial started — you&apos;re all set!</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#86efac" }}>Your 14-day free trial is now active. No charge until it ends.</p>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -481,8 +484,8 @@ export default function BillingPage() {
           </div>
         )}
 
-        {/* Current plan card — hidden for new users who haven't started a trial */}
-        {!loading && status && !isCancelled && !isInactive && !loading && (
+        {/* Current plan card */}
+        {!loading && status && !isCancelled && (
           <div className="rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
             <div className="flex items-start justify-between gap-4 mb-5">
               <div className="flex-1">
@@ -491,26 +494,37 @@ export default function BillingPage() {
                 </p>
                 <div className="flex items-center gap-3 flex-wrap">
                   <h2 className="text-2xl font-bold" style={{ color: "#ededed" }}>{status.planName}</h2>
-                  <StatusBadge status={status.planStatus} trialDaysLeft={status.trialDaysLeft} />
+                  <StatusBadge status={status.planStatus} trialDaysLeft={status.trialDaysLeft} trialEndsAt={status.trialEndsAt} />
                 </div>
-                {isTrialing && status.trialEndsAt && (
-                  <p className="text-xs mt-2">
-                    Trial expires{" "}
-                    <span style={{ color: "#888" }}>
-                      {new Date(status.trialEndsAt).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}
-                    </span>
-                    {status.trialDaysLeft <= 3
-                      ? " — subscribe now to avoid losing access."
-                      : "."}
-                  </p>
-                )}
+                {isTrialing && status.trialEndsAt && (() => {
+                  const trialExpired = new Date(status.trialEndsAt) < new Date();
+                  return (
+                    <p className="text-xs mt-2" style={{ color: trialExpired ? "#f87171" : undefined }}>
+                      {trialExpired ? (
+                        <>Trial ended on{" "}
+                          <span style={{ color: "#f87171", fontWeight: 600 }}>
+                            {new Date(status.trialEndsAt).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}
+                          </span>
+                          {" "}— subscribe to restore access.
+                        </>
+                      ) : (
+                        <>Trial expires{" "}
+                          <span style={{ color: "#888" }}>
+                            {new Date(status.trialEndsAt).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}
+                          </span>
+                          {status.trialDaysLeft <= 3 ? " subscribe now to avoid losing access." : "."}
+                        </>
+                      )}
+                    </p>
+                  );
+                })()}
                 {(isActive || isCancelling) && (
                   <p className="text-xs mt-1.5" style={{ color: "#555" }}>
                     {status.maxAccounts} accounts · {status.maxPostsPerMonth === null ? "unlimited posts" : `${status.maxPostsPerMonth} posts/month`}
                   </p>
                 )}
               </div>
-              {(isActive || isTrialing) && !isCancelling && (
+              {isActive && hasDodoSub && !isCancelling && isOwner && (
                 <a href="https://app.dodopayments.com" target="_blank" rel="noreferrer"
                   className="flex-shrink-0 text-xs font-medium px-4 py-2 rounded-xl transition-opacity hover:opacity-70"
                   style={{ backgroundColor: "#161616", color: "#999", border: "1px solid #555" }}>
@@ -551,7 +565,7 @@ export default function BillingPage() {
             </div>
 
             {/* Cancel link */}
-            {(isActive || isTrialing) && !isCancelling && !cancelDone && (
+            {isActive && hasDodoSub && !isCancelling && !cancelDone && isOwner && (
               <div className="mt-5 pt-4 flex justify-end" style={{ borderTop: "1px solid #2a2a2a" }}>
                 <button onClick={() => setShowCancelModal(true)}
                   className="text-xs underline transition-opacity hover:opacity-70"
@@ -577,18 +591,42 @@ export default function BillingPage() {
 
         {/* Plan cards */}
         <div>
-          {!isInactive && (
-            <div className="mb-5">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
               <h3 className="text-sm font-semibold" style={{ color: "#ededed" }}>
-                {isActive ? "Switch plan" : isTrialing ? "Upgrade your plan" : "Choose a plan"}
+                {isActive ? "Switch plan" : isTrialing ? "Upgrade your plan" : isCancelling ? "Resubscribe" : "Choose a plan"}
               </h3>
               <p className="text-xs mt-1" style={{ color: "#444" }}>
-                {isTrialing
-                  ? "Upgrade now your card is already on file, charged immediately"
-                  : "14-day trial on every plan · credit card required · cancel anytime"}
+                {isActive
+                  ? "Switch plans — changes take effect immediately"
+                  : isCancelling
+                  ? "Pick a plan to continue — your current access stays until the billing period ends"
+                  : "Subscribe to keep access after your trial ends"}
               </p>
             </div>
-          )}
+            {/* Currency toggle */}
+            <div className="flex shrink-0 p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              {([{ label: "INR ₹", india: true }, { label: "USD $", india: false }] as const).map(({ label, india }) => (
+                <button
+                  key={label}
+                  onClick={() => setIsIndia(india)}
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 500,
+                    border: "none",
+                    cursor: "pointer",
+                    backgroundColor: isIndia === india ? "#ffffff" : "transparent",
+                    color: isIndia === india ? "#0a0a0a" : "#666",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {PLANS.map((plan) => {
@@ -651,11 +689,18 @@ export default function BillingPage() {
                     <ul className="space-y-2.5 flex-1 mb-6">
                       {plan.features.map((f) => (
                         <li key={f.text} className="flex items-start gap-2.5">
-                          <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            style={{ color: f.key ? plan.color : "#666" }}>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span className="text-sm leading-snug" style={{ color: f.key ? "#ccc" : "#999" }}>{f.text}</span>
+                          {f.included ? (
+                            <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                              style={{ color: plan.color }}>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                              style={{ color: "#3a3a3a" }}>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          )}
+                          <span className="text-sm leading-snug" style={{ color: f.included ? "#ccc" : "#444" }}>{f.text}</span>
                         </li>
                       ))}
                     </ul>
@@ -668,13 +713,31 @@ export default function BillingPage() {
                         </svg>
                         Current plan
                       </div>
-                    ) : (
-                      <button onClick={() => checkout(plan.id)} disabled={!!checkingOut}
-                        className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 active:scale-[0.98]"
-                        style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                        {checkingOut === plan.id ? ((isTrialing || isActive) ? "Switching plan…" : "Opening checkout…") : (isTrialing || isActive) ? changeLabel : "Start free trial"}
-                      </button>
-                    )}
+                    ) : (() => {
+                      const cancellingOtherPlan = isCancelling && status?.plan !== plan.id;
+                      const btnDisabled = !!checkingOut || !isOwner || cancellingOtherPlan;
+                      const btnTitle = !isOwner
+                        ? "Only the workspace owner can manage billing"
+                        : cancellingOtherPlan
+                        ? "Resubscribe to your current plan first, then switch"
+                        : undefined;
+                      return (
+                        <button onClick={() => !btnDisabled && checkout(plan.id)} disabled={btnDisabled}
+                          title={btnTitle}
+                          className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 active:scale-[0.98]"
+                          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                          {checkingOut === plan.id
+                            ? ((isTrialing || isActive || isCancelling) ? "Switching plan…" : "Opening checkout…")
+                            : (isTrialing || isActive)
+                            ? changeLabel
+                            : isCancelling
+                            ? `Resubscribe to ${plan.name}`
+                            : isCancelled
+                            ? `Subscribe to ${plan.name}`
+                            : "Start free trial"}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               );
@@ -682,7 +745,7 @@ export default function BillingPage() {
           </div>
 
           <p className="mt-4 text-center text-xs">
-            {isIndia ? "Prices in Indian Rupees (INR)" : "Prices in US Dollars (USD)"} · billed monthly · all plans include a 14-day trial
+            {isIndia ? "Prices in Indian Rupees (INR)" : "Prices in US Dollars (USD)"} · billed monthly
           </p>
         </div>
 
@@ -703,5 +766,13 @@ export default function BillingPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={null}>
+      <BillingContent />
+    </Suspense>
   );
 }

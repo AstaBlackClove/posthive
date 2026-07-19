@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { login } from "../../lib/auth";
 import { useAuth } from "../../context/AuthContext";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
   const { refresh } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +22,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       await refresh();
-      router.replace("/compose");
+      router.replace(returnTo ?? "/compose");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
@@ -76,7 +78,7 @@ export default function LoginPage() {
 
         <p className="text-center text-sm mt-5" style={{ color: "#666" }}>
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="font-semibold hover:underline" style={{ color: "#5b63d3" }}>
+          <Link href={returnTo ? `/register?returnTo=${encodeURIComponent(returnTo)}` : "/register"} className="font-semibold hover:underline" style={{ color: "#5b63d3" }}>
             Create one
           </Link>
         </p>
@@ -87,5 +89,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   );
 }

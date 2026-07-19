@@ -26,10 +26,21 @@ interface EventRow {
   user?: { name: string; email: string } | null;
 }
 
+interface FeedbackRow {
+  id: string;
+  userId: string | null;
+  type: string;
+  message: string;
+  url: string | null;
+  createdAt: string;
+  user?: { name: string; email: string } | null;
+}
+
 interface AdminData {
   funnel: { totalSessions: number; billingViews: number; checkoutClicks: number; trialsStarted: number };
   sessions: SessionRow[];
   events: EventRow[];
+  feedbacks: FeedbackRow[];
   stats: { totalUsers: number; newUsersToday: number };
 }
 
@@ -95,7 +106,7 @@ export default function AdminPage() {
   const [data, setData]       = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
-  const [tab, setTab]         = useState<"sessions" | "events">("sessions");
+  const [tab, setTab]         = useState<"sessions" | "events" | "feedback">("sessions");
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin]         = useState("");
   const [pinError, setPinError] = useState(false);
@@ -170,7 +181,7 @@ export default function AdminPage() {
 
   if (!data) return null;
 
-  const { funnel, sessions, events, stats } = data;
+  const { funnel, sessions, events, feedbacks, stats } = data;
   const totalPages   = Math.ceil(sessions.length / PAGE_SIZE);
   const pagedSessions = sessions.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
@@ -256,10 +267,10 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div style={{ display: "flex", marginBottom: 0 }}>
-          {(["sessions", "events"] as const).map(t => (
+          {(["sessions", "events", "feedback"] as const).map(t => (
             <button key={t} className={`n-tab${tab === t ? " active" : ""}`}
               onClick={() => { setTab(t); setPage(0); }}>
-              {t === "sessions" ? `Sessions (${sessions.length})` : `Events (${events.length})`}
+              {t === "sessions" ? `Sessions (${sessions.length})` : t === "events" ? `Events (${events.length})` : `Feedback (${feedbacks.length})`}
             </button>
           ))}
         </div>
@@ -432,6 +443,54 @@ export default function AdminPage() {
           ))}
         </div>
       )}
+      {/* Feedback */}
+      {tab === "feedback" && (
+        <div>
+          {feedbacks.length === 0 && (
+            <div style={{ textAlign: "center", padding: "64px 0", color: N.muted, fontSize: 14 }}>
+              No feedback yet.
+            </div>
+          )}
+          {feedbacks.map(f => {
+            const typeColor = f.type === "bug" ? N.red : f.type === "feature" ? N.green : N.blue;
+            const typeLabel = f.type === "bug" ? "🐛 Bug" : f.type === "feature" ? "✨ Feature" : "💬 General";
+            return (
+              <div key={f.id} className="n-row" style={{
+                display: "grid", gridTemplateColumns: "28px 1fr auto",
+                gap: 12, alignItems: "flex-start",
+                padding: "10px 8px", margin: "0 -8px",
+                borderRadius: 4, cursor: "default",
+              }}>
+                <Avatar visitorId={f.userId ?? f.id} name={f.user?.name} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                    <span style={{
+                      fontSize: 11, fontWeight: 600, padding: "1px 7px", borderRadius: 3,
+                      background: `${typeColor}18`, color: typeColor, border: `1px solid ${typeColor}40`,
+                    }}>{typeLabel}</span>
+                    <span style={{ fontSize: 12, color: N.muted }}>
+                      {f.user?.name ?? "Anonymous"}
+                      {f.user?.email && <span style={{ color: N.muted }}> · {f.user.email}</span>}
+                    </span>
+                    {f.url && (
+                      <span style={{ fontSize: 11, fontFamily: "ui-monospace, monospace", background: N.s2, border: `1px solid ${N.border}`, borderRadius: 3, padding: "1px 6px", color: N.muted }}>
+                        {f.url}
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: 13, color: N.text, margin: 0, lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                    {f.message}
+                  </p>
+                </div>
+                <span style={{ fontSize: 12, color: N.muted, whiteSpace: "nowrap", paddingTop: 2 }}>
+                  {timeSince(f.createdAt)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       </div>{/* end right column */}
     </div>
   );

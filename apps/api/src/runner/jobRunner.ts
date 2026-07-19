@@ -106,10 +106,12 @@ export async function runJob(
 
   // Fire outbound webhook (silent fail — never affects job status)
   if (!job.dryRun) {
-    const userRow = await prisma.user.findUnique({ where: { id: job.userId }, select: { webhookUrl: true } });
-    if (userRow?.webhookUrl) {
+    const wsRow = job.workspaceId
+      ? await prisma.workspace.findUnique({ where: { id: job.workspaceId }, select: { webhookUrl: true } })
+      : null;
+    if (wsRow?.webhookUrl) {
       const platforms = job.targets.map(t => t.account.platform);
-      fetch(userRow.webhookUrl, {
+      fetch(wsRow.webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

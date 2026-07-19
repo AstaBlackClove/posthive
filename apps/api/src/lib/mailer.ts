@@ -52,3 +52,33 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
 
   await resend.emails.send({ from: FROM, to, subject: "Reset your Posthive password", html });
 }
+
+export async function sendWorkspaceInviteEmail(
+  to: string,
+  inviterName: string,
+  workspaceName: string,
+  role: string,
+  acceptUrl: string,
+): Promise<void> {
+  const html = `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#0a0a0a;color:#ededed;">
+      <h2 style="margin:0 0 8px;font-size:20px;">You've been invited to join ${workspaceName}</h2>
+      <p style="color:#888;margin:0 0 24px;font-size:14px;">
+        ${inviterName} has invited you to join <strong style="color:#ededed;">${workspaceName}</strong> on Posthive as a <strong style="color:#ededed;">${role}</strong>.
+        Click the button below to accept — this invite expires in 7 days.
+      </p>
+      <a href="${acceptUrl}" style="display:inline-block;background:#ffffff;color:#0a0a0a;font-weight:600;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
+        Accept invite →
+      </a>
+      <p style="color:#555;font-size:12px;margin:24px 0 0;">
+        If you don't have a Posthive account yet, you'll be asked to create one first.
+      </p>
+    </div>
+  `;
+
+  if (!resend) {
+    console.log(`[mailer] Workspace invite for ${to} to join "${workspaceName}":\n${acceptUrl}`);
+    return;
+  }
+  await resend.emails.send({ from: FROM, to, subject: `${inviterName} invited you to ${workspaceName} on Posthive`, html });
+}

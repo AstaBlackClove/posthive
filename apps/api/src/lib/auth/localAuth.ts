@@ -23,10 +23,22 @@ export const localAuthProvider: AuthProvider = {
 
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
-      // planStatus "inactive" = registered but hasn't started a Dodo trial yet.
-      // Dodo checkout sets planStatus → "trialing" once the user enters their card.
-      data: { email, name, passwordHash, plan: "trialing", planStatus: "inactive" },
+      data: { email, name, passwordHash },
     });
+
+    // Create personal workspace with 14-day trial (no card required)
+    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    const workspace = await prisma.workspace.create({
+      data: {
+        name: `${name}'s Workspace`,
+        plan: "trialing",
+        planStatus: "trialing",
+        trialEndsAt,
+        allowTrial: false, // trial already started — prevent re-use
+        members: { create: { userId: user.id, role: "owner" } },
+      },
+    });
+    await prisma.user.update({ where: { id: user.id }, data: { activeWorkspaceId: workspace.id } });
 
     const accessToken = signAccess(user.id);
     const refreshToken = signRefresh(user.id);

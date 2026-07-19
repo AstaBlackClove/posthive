@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { schedulePostJob, postJobQueue } from "../lib/queue.js";
-import { withAuth, getUser, ACCESS_COOKIE_NAME } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, getWorkspaceId, getWorkspaceRole, ACCESS_COOKIE_NAME } from "../lib/auth/withAuth.js";
 import { authProvider } from "../lib/auth/index.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
 import { getPlan } from "../lib/plans.js";
@@ -49,6 +49,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
   // Create a new scheduled job
   app.post("/jobs", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
 
     const parsed = createJobBody.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
@@ -61,26 +62,26 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     // Plan gate only applies to live scheduling, not draft creation
     if (!draft) {
-      const blocked = await enforcePlan(userId, "scheduling");
+      const blocked = await enforcePlan(userId, workspaceId, "scheduling");
       if (blocked) return reply.status(402).send(blocked);
     }
 
     // Gate: Reels & Stories (Pro+)
     if (content.mediaType === "reel" || content.mediaType === "story") {
-      const reelBlocked = await enforcePlan(userId, "reels");
+      const reelBlocked = await enforcePlan(userId, workspaceId, "reels");
       if (reelBlocked) return reply.status(402).send(reelBlocked);
     }
 
     // Gate: per-platform overrides (Pro+)
     if (content.perAccount && Object.keys(content.perAccount).length > 0) {
-      const overrideBlocked = await enforcePlan(userId, "overrides");
+      const overrideBlocked = await enforcePlan(userId, workspaceId, "overrides");
       if (overrideBlocked) return reply.status(402).send(overrideBlocked);
     }
 
     // Gate: max images per post
     if (content.mediaUrls.length > 0) {
-      const postUser = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
-      const planCfg = getPlan(postUser?.plan ?? "cancelled");
+      const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { plan: true } });
+      const planCfg = getPlan(ws?.plan ?? "cancelled");
       if (content.mediaUrls.length > planCfg.maxImagesPerPost) {
         return reply.status(402).send({
           error: `Your ${planCfg.name} plan allows up to ${planCfg.maxImagesPerPost} images per post. Upgrade to Pro for up to 10.`,
@@ -90,9 +91,9 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       }
     }
 
-    // Verify accounts belong to this user
+    // Verify accounts belong to this workspace
     const accounts = await prisma.account.findMany({
-      where: { id: { in: accountIds }, userId },
+      where: { id: { in: accountIds }, workspaceId },
       select: { id: true },
     });
     if (accounts.length !== accountIds.length) {
@@ -107,6 +108,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         commentText: commentText ?? null,
         dryRun,
         userId,
+        workspaceId,
         targets: { create: accountIds.map((accountId) => ({ accountId })) },
       },
       include: { targets: { select: TARGET_SELECT } },
@@ -152,11 +154,21 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     const { id: userId } = user;
 
+    // Resolve workspaceId for stream scoping — same logic as withAuth
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        activeWorkspaceId: true,
+        workspaceMembers: { orderBy: { joinedAt: "asc" }, take: 1, select: { workspaceId: true } },
+      },
+    });
+    const streamWorkspaceId = dbUser?.activeWorkspaceId ?? dbUser?.workspaceMembers[0]?.workspaceId ?? null;
+
     reply.raw.writeHead(200, sseHeaders);
 
     const fetchJobs = async () => {
       const jobs = await prisma.postJob.findMany({
-        where: { userId },
+        where: streamWorkspaceId ? { workspaceId: streamWorkspaceId } : { userId },
         orderBy: { scheduledFor: "desc" },
         include: { targets: { select: TARGET_SELECT } },
       });
@@ -182,23 +194,23 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     await new Promise<void>((resolve) => req.raw.on("close", resolve));
   });
 
-  // List jobs for current user
+  // List jobs for current workspace
   app.get("/jobs", { preHandler: [withAuth] }, async (req, reply) => {
-    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
     const jobs = await prisma.postJob.findMany({
-      where: { userId },
+      where: { workspaceId },
       orderBy: { scheduledFor: "desc" },
       include: { targets: { select: TARGET_SELECT } },
     });
     return reply.send(jobs);
   });
 
-  // Single job detail — scoped to user
+  // Single job detail — scoped to workspace
   app.get("/jobs/:id", { preHandler: [withAuth] }, async (req, reply) => {
-    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
     const { id } = req.params as { id: string };
     const job = await prisma.postJob.findFirst({
-      where: { id, userId },
+      where: { id, workspaceId },
       include: { targets: { select: TARGET_SELECT } },
     });
     if (!job) return reply.status(404).send({ error: "Job not found" });
@@ -208,6 +220,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
   // Update a pending job (content, commentText, scheduledFor — all optional)
   app.patch("/jobs/:id", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
     const { id } = req.params as { id: string };
     const body = z.object({
       scheduledFor: z.string().datetime().optional(),
@@ -226,10 +239,14 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     }).safeParse(req.body);
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
 
-    const job = await prisma.postJob.findFirst({ where: { id, userId }, select: { status: true, content: true } });
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, content: true, userId: true } });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status !== "pending" && job.status !== "draft") {
       return reply.status(409).send({ error: `Cannot edit a job with status "${job.status}"` });
+    }
+    const role = await getWorkspaceRole(userId, workspaceId);
+    if (!["owner", "admin"].includes(role ?? "") && job.userId !== userId) {
+      return reply.status(403).send({ error: "You can only edit your own posts.", code: "FORBIDDEN" });
     }
 
     const updateData: Record<string, unknown> = {};
@@ -270,7 +287,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       const toAdd = newIds.filter(nid => !currentTargets.some(t => t.accountId === nid));
 
       if (toAdd.length > 0) {
-        const valid = await prisma.account.findMany({ where: { id: { in: toAdd }, userId }, select: { id: true } });
+        const valid = await prisma.account.findMany({ where: { id: { in: toAdd }, workspaceId }, select: { id: true } });
         if (valid.length !== toAdd.length) return reply.status(400).send({ error: "One or more accountIds not found" });
       }
 
@@ -283,7 +300,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     }
 
     if (body.data.scheduledFor) {
-      const blocked = await enforcePlan(userId, "scheduling");
+      const blocked = await enforcePlan(userId, workspaceId, "scheduling");
       if (blocked) return reply.status(402).send(blocked);
       await postJobQueue.remove(id);
       await schedulePostJob(id, new Date(body.data.scheduledFor));
@@ -295,15 +312,16 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
   // Promote a draft to a scheduled job
   app.post("/jobs/:id/schedule", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
     const { id } = req.params as { id: string };
     const body = z.object({ scheduledFor: z.string().datetime() }).safeParse(req.body);
     if (!body.success) return reply.status(400).send({ error: "scheduledFor is required" });
 
-    const job = await prisma.postJob.findFirst({ where: { id, userId }, select: { status: true } });
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true } });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status !== "draft") return reply.status(409).send({ error: "Only draft jobs can be scheduled" });
 
-    const blocked = await enforcePlan(userId, "scheduling");
+    const blocked = await enforcePlan(userId, workspaceId, "scheduling");
     if (blocked) return reply.status(402).send(blocked);
 
     const scheduledFor = new Date(body.data.scheduledFor);
@@ -319,11 +337,11 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
   // Retry only the failed targets on a partially-failed job
   app.post("/jobs/:id/retry-failed", { preHandler: [withAuth] }, async (req, reply) => {
-    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
     const { id } = req.params as { id: string };
 
     const job = await prisma.postJob.findFirst({
-      where: { id, userId },
+      where: { id, workspaceId },
       include: { targets: { select: { id: true, status: true } } },
     });
     if (!job) return reply.status(404).send({ error: "Job not found" });
@@ -358,11 +376,16 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
   // Delete a job and clean up associated media
   app.delete("/jobs/:id", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
     const { id } = req.params as { id: string };
 
-    const job = await prisma.postJob.findFirst({ where: { id, userId }, select: { status: true, content: true } });
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, content: true, userId: true } });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status === "running") return reply.status(409).send({ error: "Cannot delete a job that is currently running" });
+    const role = await getWorkspaceRole(userId, workspaceId);
+    if (!["owner", "admin"].includes(role ?? "") && job.userId !== userId) {
+      return reply.status(403).send({ error: "You can only delete your own posts.", code: "FORBIDDEN" });
+    }
 
     // Delete media files from storage
     try {
@@ -387,16 +410,16 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
   // GET /jobs/targets/:targetId/analytics
   app.get("/jobs/targets/:targetId/analytics", { preHandler: [withAuth] }, async (req, reply) => {
-    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
     const { targetId } = req.params as { targetId: string };
 
     const target = await prisma.postJobTarget.findFirst({
-      where: { id: targetId, postJob: { userId } },
+      where: { id: targetId, postJob: { workspaceId } },
       select: {
         platformPostId: true,
         status: true,
         accountId: true,
-        account: { select: { platform: true, credentials: true, expiresAt: true, createdAt: true, updatedAt: true, id: true, userId: true, displayName: true, avatarUrl: true, refreshToken: true } },
+        account: { select: { platform: true, credentials: true, expiresAt: true, createdAt: true, updatedAt: true, id: true, userId: true, workspaceId: true, displayName: true, avatarUrl: true, refreshToken: true } },
       },
     });
 

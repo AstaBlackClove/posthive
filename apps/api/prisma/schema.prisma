@@ -23,15 +23,11 @@ model User {
   avatarUrl   String?
   timezone    String    @default("UTC")
 
-  // Billing
-  plan           String    @default("trialing")   // trialing | creator | pro | team | cancelled
-  planStatus     String    @default("trialing")   // trialing | active | on_hold | cancelled
-  trialEndsAt    DateTime?
-  dodoCustomerId String?   @unique
-  dodoSubId      String?   @unique
-
   emailVerified Boolean   @default(false)
-  webhookUrl    String?   // outbound webhook fired on post publish
+
+  // Active workspace — which workspace is currently selected for this user
+  activeWorkspaceId String?
+  activeWorkspace   Workspace? @relation("UserActiveWorkspace", fields: [activeWorkspaceId], references: [id])
 
   accounts      Account[]
   postJobs      PostJob[]
@@ -41,9 +37,74 @@ model User {
   templates     Template[]
   sessions      Session[]
   events        Event[]
+  workspaceMembers WorkspaceMember[]
+  feedbacks     Feedback[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// A workspace — the billing and collaboration unit.
+// Every user gets a personal workspace on register.
+// Team plan allows multiple members.
+model Workspace {
+  id   String @id @default(cuid())
+  name String
+
+  // Billing (moved from User)
+  plan           String    @default("trialing")  // trialing | creator | pro | team | cancelled
+  planStatus     String    @default("trialing")  // trialing | active | cancelled
+  trialEndsAt    DateTime?
+  dodoCustomerId String?   @unique
+  dodoSubId      String?   @unique
+  allowTrial     Boolean   @default(true)        // false after first trial used (abuse prevention)
+
+  webhookUrl String?  // outbound webhook fired on post publish
+
+  members   WorkspaceMember[]
+  invites   WorkspaceInvite[]
+  accounts  Account[]
+  postJobs  PostJob[]
+  templates Template[]
+  apiKeys   ApiKey[]
+  feedbacks Feedback[]
+
+  // Back-ref for users whose activeWorkspace points here
+  activeForUsers User[] @relation("UserActiveWorkspace")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Membership link between User and Workspace.
+model WorkspaceMember {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String    @default("member")  // owner | admin | member
+  joinedAt    DateTime  @default(now())
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@index([workspaceId])
+}
+
+// Email invite to join a workspace — 7-day TTL, single-use.
+model WorkspaceInvite {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  email       String
+  role        String    @default("member")  // admin | member
+  token       String    @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([token])
+  @@index([workspaceId])
 }
 
 // Stored refresh tokens for local auth — allows revocation on logout.
@@ -69,10 +130,15 @@ model Account {
   userId       String
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  workspaceId  String?
+  workspace    Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   targets PostJobTarget[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
 }
 
 // A scheduled post job.
@@ -87,10 +153,15 @@ model PostJob {
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  workspaceId  String?
+  workspace    Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   targets PostJobTarget[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
 }
 
 // One row per (PostJob × Account).
@@ -187,6 +258,8 @@ model ApiKey {
   id         String    @id @default(cuid())
   userId     String
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   name       String                      // human label e.g. "My Claude agent"
   keyHash    String    @unique           // SHA-256 hash of the raw key
   prefix     String                      // first 12 chars shown in UI e.g. "ph_abc12345"
@@ -195,6 +268,7 @@ model ApiKey {
   createdAt  DateTime  @default(now())
 
   @@index([userId])
+  @@index([workspaceId])
   @@index([keyHash])
 }
 
@@ -203,12 +277,15 @@ model Template {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   name      String
   content   String   // JSON: { text, commentText, mediaUrls, altTexts, mediaType, youtubeType }
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([workspaceId])
 }
 
 // Anonymous + pre-login visitor session — one row per browser session.
@@ -242,6 +319,22 @@ model Event {
 
   @@index([userId])
   @@index([event])
+  @@index([createdAt])
+}
+
+// In-app feedback / bug reports submitted via sidebar modal.
+model Feedback {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  type        String   // "bug" | "feature" | "general"
+  message     String
+  url         String?  // page path the user was on
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
   @@index([createdAt])
 }
 

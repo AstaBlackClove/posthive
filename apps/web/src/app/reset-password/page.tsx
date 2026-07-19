@@ -86,7 +86,7 @@ function ResetPasswordForm() {
           ) : (
             <>
               <h1 className="text-lg font-bold mb-1" style={{ color: "#ededed" }}>Set new password</h1>
-              <p className="text-sm mb-6" style={{ color: "#888" }}>Choose a strong password — at least 8 characters.</p>
+              <p className="text-sm mb-6" style={{ color: "#888" }}>Choose a strong password at least 8 characters.</p>
 
               <form onSubmit={submit} className="space-y-4">
                 <div>

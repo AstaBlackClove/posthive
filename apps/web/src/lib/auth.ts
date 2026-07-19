@@ -8,6 +8,7 @@ export interface AuthUser {
   avatarUrl: string | null;
   timezone: string;
   emailVerified: boolean;
+  role: "owner" | "admin" | "member";
 }
 
 export async function getSession(): Promise<AuthUser | null> {

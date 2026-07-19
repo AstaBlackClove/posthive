@@ -72,10 +72,11 @@ const PLANS = [
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
+      { text: "1 team member", included: true },
       { text: "Reels & Stories", included: false },
       { text: "Per-platform overrides", included: false },
       { text: "X/Twitter posting", included: false },
-      { text: "API access", included: false },
+      { text: "API access & MCP", included: false },
       { text: "Webhook outbound", included: false },
     ],
     popular: false,
@@ -93,6 +94,7 @@ const PLANS = [
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
+      { text: "2 team members", included: true },
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting (100/mo, no links)*", included: true },
@@ -114,16 +116,18 @@ const PLANS = [
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
+      { text: "4 team members", included: true },
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting (100/mo, no links)*", included: true },
+      { text: "API access & MCP", included: true },
       { text: "Webhook outbound", included: true },
     ],
     popular: false,
   },
 ];
 
-function useIsIndia() {
+function useIsIndia(): [boolean, (v: boolean) => void] {
   const [india, setIndia] = useState(false);
   useEffect(() => {
     try {
@@ -133,7 +137,7 @@ function useIsIndia() {
       setIndia(false);
     }
   }, []);
-  return india;
+  return [india, setIndia];
 }
 
 function useScrollReveal() {
@@ -149,7 +153,7 @@ function useScrollReveal() {
 
 export default function RootPage() {
   const { user, loading: authLoading } = useAuth();
-  const isIndia = useIsIndia();
+  const [isIndia, setIsIndia] = useIsIndia();
   useScrollReveal();
   const ctaHref = user ? "/compose" : "/register";
   const ctaLabel = user ? "Go to scheduler" : "Get started free";
@@ -873,7 +877,31 @@ export default function RootPage() {
             <div style={{ textAlign: "center", marginBottom: 60 }}>
               <span className="section-label">PRICING</span>
               <h2 style={{ fontSize: 44, fontWeight: 700, letterSpacing: "-0.03em", margin: "16px 0 14px", color: "#f2f2f2" }}>Simple, transparent pricing</h2>
-              <p style={{ fontSize: 17, color: "#8a8a8a", margin: "0 0 32px" }}>Start free. Upgrade when you&apos;re ready. No hidden fees, no per-channel tax.</p>
+              <p style={{ fontSize: 17, color: "#8a8a8a", margin: "0 0 20px" }}>Start free. Upgrade when you&apos;re ready. No hidden fees, no per-channel tax.</p>
+              {/* Currency toggle */}
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
+                <div style={{ display: "inline-flex", padding: 3, borderRadius: 10, backgroundColor: "#111", border: "1px solid #2a2a2a" }}>
+                  {([{ label: "INR ₹", val: true }, { label: "USD $", val: false }] as const).map(({ label, val }) => (
+                    <button
+                      key={label}
+                      onClick={() => setIsIndia(val)}
+                      style={{
+                        padding: "5px 16px",
+                        borderRadius: 7,
+                        fontSize: 13,
+                        fontWeight: 500,
+                        border: "none",
+                        cursor: "pointer",
+                        backgroundColor: isIndia === val ? "#ffffff" : "transparent",
+                        color: isIndia === val ? "#0a0a0a" : "#555",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 0, border: "1px solid #2a2a2a", borderRadius: 12, overflow: "hidden", fontSize: 13.5 }}>
                 <span style={{ padding: "10px 20px", background: "#111", color: "#666" }}>7 channels on Buffer: <span style={{ color: "#ef4444", fontWeight: 600 }}>$42/mo</span></span>
                 <span style={{ padding: "10px 20px", background: "#17172a", color: "#9ba2ee", borderLeft: "1px solid #2a2a2a", borderRight: "1px solid #2a2a2a", fontWeight: 600 }}>Posthive: $9/mo</span>

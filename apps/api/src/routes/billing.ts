@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import DodoPayments from "dodopayments";
-import { withAuth, getUser } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, getWorkspaceId, requireOwnerRole } from "../lib/auth/withAuth.js";
 import { prisma } from "../lib/prisma.js";
 import { PLANS, getPlan, type PlanId } from "../lib/plans.js";
 import crypto from "node:crypto";
@@ -14,33 +14,35 @@ const WEB_URL = process.env.WEB_URL ?? "http://localhost:3000";
 
 export async function billingRoutes(app: FastifyInstance): Promise<void> {
 
-  // GET /billing/status — current plan + trial info
+  // GET /billing/status — current plan + trial info for the active workspace
   app.get("/billing/status", { preHandler: [withAuth] }, async (req, reply) => {
     const u = getUser(req);
-    const user = await prisma.user.findUnique({ where: { id: u.id } });
-    if (!user) return reply.status(404).send({ error: "User not found" });
+    const workspaceId = getWorkspaceId(req);
 
-    const plan = getPlan(user.plan);
+    const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
+    if (!workspace) return reply.status(404).send({ error: "Workspace not found" });
+
+    const plan = getPlan(workspace.plan);
     const now = new Date();
-    const trialDaysLeft = user.trialEndsAt
-      ? Math.max(0, Math.ceil((user.trialEndsAt.getTime() - now.getTime()) / 86_400_000))
+    const trialDaysLeft = workspace.trialEndsAt
+      ? Math.max(0, Math.ceil((workspace.trialEndsAt.getTime() - now.getTime()) / 86_400_000))
       : 0;
-    const trialExpired = user.planStatus === "trialing" && user.trialEndsAt && user.trialEndsAt < now;
+    const trialExpired = workspace.planStatus === "trialing" && workspace.trialEndsAt && workspace.trialEndsAt < now;
 
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     const [accountsUsed, postsThisMonth, twitterPostsThisMonth] = await Promise.all([
-      prisma.account.count({ where: { userId: u.id } }),
+      prisma.account.count({ where: { workspaceId } }),
       prisma.postJob.count({
         where: {
-          userId: u.id,
+          workspaceId,
           createdAt: { gte: startOfMonth, lt: startOfNextMonth },
         },
       }),
       prisma.postJobTarget.count({
         where: {
-          account: { userId: u.id, platform: "twitter" },
+          account: { workspaceId, platform: "twitter" },
           status: { in: ["post_done", "comment_done"] },
           createdAt: { gte: startOfMonth, lt: startOfNextMonth },
         },
@@ -48,8 +50,8 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
     ]);
 
     return reply.send({
-      plan: user.plan,
-      planStatus: user.planStatus,
+      plan: workspace.plan,
+      planStatus: workspace.planStatus,
       planName: plan.name,
       maxAccounts: plan.maxAccounts,
       maxSeats: plan.maxSeats,
@@ -63,27 +65,36 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       twitterPostsThisMonth,
       trialDaysLeft,
       trialExpired,
-      trialEndsAt: user.trialEndsAt,
+      trialEndsAt: workspace.trialEndsAt,
+      hasDodoSub: !!workspace.dodoSubId,
+      workspaceId: workspace.id,
+      workspaceName: workspace.name,
     });
   });
 
-  // POST /billing/checkout — create Dodo checkout session
+  // POST /billing/checkout — create Dodo checkout session for the active workspace
   app.post<{ Body: { planId: PlanId; successUrl?: string } }>(
     "/billing/checkout",
     { preHandler: [withAuth] },
     async (req, reply) => {
       const u = getUser(req);
+      const workspaceId = getWorkspaceId(req);
+      const roleBlocked = await requireOwnerRole(u.id, workspaceId);
+      if (roleBlocked) return reply.status(403).send(roleBlocked);
       const { planId, successUrl } = req.body;
       const plan = PLANS[planId];
       if (!plan || !plan.dodoProductId) {
         return reply.status(400).send({ error: "Invalid plan" });
       }
 
-      const user = await prisma.user.findUnique({ where: { id: u.id } });
-      if (!user) return reply.status(404).send({ error: "User not found" });
+      const [user, workspace] = await Promise.all([
+        prisma.user.findUnique({ where: { id: u.id } }),
+        prisma.workspace.findUnique({ where: { id: workspaceId } }),
+      ]);
+      if (!user || !workspace) return reply.status(404).send({ error: "Not found" });
 
-      // Skip trial if user has already used their trial (trialing or any paid status)
-      const skipTrial = ["trialing", "active", "on_hold", "cancelling"].includes(user.planStatus);
+      // Skip trial if workspace has already used their trial or previously cancelled
+      const skipTrial = ["trialing", "active", "on_hold", "cancelling", "cancelled"].includes(workspace.planStatus);
 
       // successUrl must be a relative path — we prepend WEB_URL to prevent open redirect
       const resolvedSuccessUrl = successUrl
@@ -94,7 +105,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
         product_cart: [{ product_id: plan.dodoProductId, quantity: 1 }],
         customer: { email: user.email, name: user.name },
         return_url: resolvedSuccessUrl,
-        metadata: { userId: user.id, planId },
+        metadata: { workspaceId: workspace.id, planId },
         ...(skipTrial ? { trial_period_days: 0 } : {}),
       } as Parameters<typeof dodo.checkoutSessions.create>[0]);
 
@@ -151,29 +162,43 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
           customer_id?: string;
           customer?: { customer_id?: string; id?: string };
           status?: string;
+          cancel_at_next_billing_date?: boolean;
           trial_period_days?: number | null;
           next_billing_date?: string | null;
-          metadata?: { userId?: string; planId?: string };
+          metadata?: { workspaceId?: string; planId?: string };
+          product_id?: string;
         };
       };
 
       const { type, data } = event;
-      const planId = (data.metadata?.planId ?? "creator") as PlanId;
 
-      // Resolve user from DB using subscription/customer IDs, fall back to metadata only for first activation
+      // Resolve plan from product_id (authoritative — always reflects current subscription)
+      // Fall back to metadata.planId only when product_id is absent or unrecognised
+      const resolvedPlanId = (() => {
+        if (data.product_id) {
+          const entry = (Object.entries(PLANS) as [PlanId, typeof PLANS[PlanId]][])
+            .find(([, p]) => p.dodoProductId && p.dodoProductId === data.product_id);
+          if (entry) return entry[0];
+        }
+        return (data.metadata?.planId ?? "creator") as PlanId;
+      })();
+
+      const planId = resolvedPlanId;
+
+      // Resolve workspace from DB using subscription/customer IDs, fall back to metadata
       const subId = data.subscription_id;
       const customerId = data.customer?.customer_id ?? data.customer?.id ?? data.customer_id;
 
-      let user = subId ? await prisma.user.findFirst({ where: { dodoSubId: subId } }) : null;
-      if (!user && customerId) user = await prisma.user.findFirst({ where: { dodoCustomerId: customerId } });
+      let workspace = subId ? await prisma.workspace.findFirst({ where: { dodoSubId: subId } }) : null;
+      if (!workspace && customerId) workspace = await prisma.workspace.findFirst({ where: { dodoCustomerId: customerId } });
       // Fall back to metadata for subscription.active (first activation where dodoSubId not yet stored)
-      if (!user) {
-        const metaUserId = data.metadata?.userId;
-        if (metaUserId) user = await prisma.user.findUnique({ where: { id: metaUserId } });
+      if (!workspace) {
+        const metaWorkspaceId = data.metadata?.workspaceId;
+        if (metaWorkspaceId) workspace = await prisma.workspace.findUnique({ where: { id: metaWorkspaceId } });
       }
-      if (!user) return reply.send({ ok: true });
+      if (!workspace) return reply.send({ ok: true });
 
-      const userId = user.id;
+      const workspaceId = workspace.id;
       const dodoCustomerId = data.customer?.customer_id ?? data.customer?.id ?? data.customer_id ?? null;
 
       if (type === "subscription.active") {
@@ -181,8 +206,8 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
         const trialEndsAt = isTrial && data.next_billing_date
           ? new Date(data.next_billing_date)
           : null;
-        await prisma.user.update({
-          where: { id: userId },
+        await prisma.workspace.update({
+          where: { id: workspaceId },
           data: {
             plan: planId,
             planStatus: isTrial ? "trialing" : "active",
@@ -193,33 +218,52 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
         });
         // Mark the user's most recent session as converted — server-side only
         if (process.env.ENABLE_ANALYTICS === "true") {
-          await prisma.session.updateMany({
-            where: { userId, converted: false },
-            data: { converted: true },
+          const owner = await prisma.workspaceMember.findFirst({
+            where: { workspaceId, role: "owner" },
+            select: { userId: true },
           });
+          if (owner) {
+            await prisma.session.updateMany({
+              where: { userId: owner.userId, converted: false },
+              data: { converted: true },
+            });
+          }
         }
       } else if (type === "subscription.renewed") {
-        await prisma.user.update({
-          where: { id: userId },
+        await prisma.workspace.update({
+          where: { id: workspaceId },
           data: { planStatus: "active" },
         });
       } else if (type === "subscription.on_hold") {
-        await prisma.user.update({
-          where: { id: userId },
+        await prisma.workspace.update({
+          where: { id: workspaceId },
           data: { planStatus: "on_hold" },
         });
       } else if (type === "subscription.failed" || type === "subscription.cancelled") {
-        await prisma.user.update({
-          where: { id: userId },
+        await prisma.workspace.update({
+          where: { id: workspaceId },
           data: { plan: "cancelled", planStatus: "cancelled" },
         });
-      } else if (type === "subscription.updated") {
-        const newPlanId = data.metadata?.planId as PlanId | undefined;
-        if (newPlanId && PLANS[newPlanId]) {
-          await prisma.user.update({
-            where: { id: userId },
-            data: { plan: newPlanId },
+      } else if (type === "subscription.plan_changed" || type === "subscription.updated") {
+        // If subscription is already cancelled, treat same as subscription.cancelled — don't overwrite with plan name
+        if (data.status === "cancelled") {
+          await prisma.workspace.update({
+            where: { id: workspaceId },
+            data: { plan: "cancelled", planStatus: "cancelled" },
           });
+        } else {
+          const updateData: Record<string, unknown> = {};
+          if (planId && PLANS[planId] && planId !== "cancelled" && planId !== "trialing") {
+            updateData.plan = planId;
+          }
+          if (data.cancel_at_next_billing_date === true) {
+            updateData.planStatus = "cancelling";
+          } else if (data.status === "active") {
+            updateData.planStatus = "active";
+          }
+          if (Object.keys(updateData).length > 0) {
+            await prisma.workspace.update({ where: { id: workspaceId }, data: updateData });
+          }
         }
       }
 
@@ -227,40 +271,87 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
     }
   );
 
-  // POST /billing/change-plan — upgrade/downgrade existing subscription via changePlan
+  // POST /billing/change-plan — upgrade/downgrade existing subscription
   app.post<{ Body: { planId: PlanId } }>(
     "/billing/change-plan",
     { preHandler: [withAuth] },
     async (req, reply) => {
-      const u = getUser(req);
+      const userId = getUser(req).id;
+      const workspaceId = getWorkspaceId(req);
+      const roleBlocked = await requireOwnerRole(userId, workspaceId);
+      if (roleBlocked) return reply.status(403).send(roleBlocked);
       const { planId } = req.body;
       const plan = PLANS[planId];
       if (!plan || !plan.dodoProductId) {
         return reply.status(400).send({ error: "Invalid plan" });
       }
 
-      const user = await prisma.user.findUnique({ where: { id: u.id } });
-      if (!user) return reply.status(404).send({ error: "User not found" });
-      if (!user.dodoSubId) return reply.status(400).send({ error: "No active subscription to change" });
-      if (user.plan === planId) return reply.status(400).send({ error: "Already on this plan" });
+      const [user, workspace] = await Promise.all([
+        prisma.user.findUnique({ where: { id: userId } }),
+        prisma.workspace.findUnique({ where: { id: workspaceId } }),
+      ]);
+      if (!user || !workspace) return reply.status(404).send({ error: "Workspace not found" });
+      if (workspace.plan === planId && workspace.planStatus === "active") return reply.status(400).send({ error: "Already on this plan" });
 
+      // Cancelling + same plan = undo cancellation, not a plan change
+      if (workspace.planStatus === "cancelling" && workspace.plan === planId && workspace.dodoSubId) {
+        try {
+          await dodo.subscriptions.update(workspace.dodoSubId, { cancel_at_next_billing_date: false } as Parameters<typeof dodo.subscriptions.update>[1]);
+          await prisma.workspace.update({ where: { id: workspaceId }, data: { planStatus: "active" } });
+          return reply.send({ ok: true });
+        } catch (err) {
+          console.error("[billing] undo-cancel error:", err);
+          return reply.status(500).send({ error: "Failed to undo cancellation — please try again" });
+        }
+      }
+
+      // DB-based trial (no Dodo subscription yet) — send to checkout for a new subscription
+      if (!workspace.dodoSubId) {
+        const session = await dodo.checkoutSessions.create({
+          product_cart: [{ product_id: plan.dodoProductId, quantity: 1 }],
+          customer: { email: user.email, name: user.name },
+          return_url: `${WEB_URL}/billing?success=1`,
+          metadata: { workspaceId, planId },
+          trial_period_days: 0,
+        } as Parameters<typeof dodo.checkoutSessions.create>[0]);
+        return reply.send({ url: (session as { url?: string; checkout_url?: string }).url ?? (session as { url?: string; checkout_url?: string }).checkout_url });
+      }
+
+      let undidCancellation = false;
       try {
-        await dodo.subscriptions.changePlan(user.dodoSubId, {
+        // Dodo blocks changePlan on a scheduled-cancellation sub — undo it first
+        if (workspace.planStatus === "cancelling") {
+          await dodo.subscriptions.update(workspace.dodoSubId, { cancel_at_next_billing_date: false } as Parameters<typeof dodo.subscriptions.update>[1]);
+          undidCancellation = true;
+        }
+
+        await dodo.subscriptions.changePlan(workspace.dodoSubId, {
           product_id: plan.dodoProductId,
           proration_billing_mode: "prorated_immediately",
           quantity: 1,
           effective_at: "immediately",
-          metadata: { userId: user.id, planId },
+          metadata: { workspaceId, planId },
         });
 
         // Update DB immediately — webhook will confirm but we don't wait for it
-        await prisma.user.update({
-          where: { id: u.id },
-          data: { plan: planId },
+        await prisma.workspace.update({
+          where: { id: workspaceId },
+          data: { plan: planId, planStatus: "active" },
         });
 
         return reply.send({ ok: true });
       } catch (err) {
+        const dodoErr = err as { status?: number; error?: { code?: string } };
+        if (dodoErr.status === 409 && dodoErr.error?.code === "PREVIOUS_PAYMENT_PENDING") {
+          // Undo-cancel already succeeded — reflect that in DB so UI isn't stuck in "cancelling"
+          if (undidCancellation) {
+            await prisma.workspace.update({ where: { id: workspaceId }, data: { planStatus: "active" } });
+          }
+          return reply.status(409).send({
+            error: "Cancellation removed. Your payment is still processing — try switching plans again in a moment.",
+            code: "PREVIOUS_PAYMENT_PENDING",
+          });
+        }
         console.error("[billing] change-plan error:", err);
         return reply.status(500).send({ error: "Failed to change plan — please try again" });
       }
@@ -270,17 +361,20 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
   // POST /billing/cancel — cancel subscription at period end
   app.post("/billing/cancel", { preHandler: [withAuth] }, async (req, reply) => {
     const u = getUser(req);
-    const user = await prisma.user.findUnique({ where: { id: u.id } });
-    if (!user) return reply.status(404).send({ error: "User not found" });
-    if (!user.dodoSubId) return reply.status(400).send({ error: "No active subscription found" });
+    const workspaceId = getWorkspaceId(req);
+    const roleBlocked = await requireOwnerRole(u.id, workspaceId);
+    if (roleBlocked) return reply.status(403).send(roleBlocked);
+    const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
+    if (!workspace) return reply.status(404).send({ error: "Workspace not found" });
+    if (!workspace.dodoSubId) return reply.status(400).send({ error: "No active subscription found" });
 
     const { reason, feedback } = (req.body ?? {}) as { reason?: string; feedback?: string };
 
     try {
-      await dodo.subscriptions.update(user.dodoSubId, { cancel_at_next_billing_date: true } as Parameters<typeof dodo.subscriptions.update>[1]);
-      await prisma.user.update({ where: { id: u.id }, data: { planStatus: "cancelling" } });
+      await dodo.subscriptions.update(workspace.dodoSubId, { cancel_at_next_billing_date: true } as Parameters<typeof dodo.subscriptions.update>[1]);
+      await prisma.workspace.update({ where: { id: workspaceId }, data: { planStatus: "cancelling" } });
       await prisma.cancellationFeedback.create({
-        data: { userId: u.id, plan: user.plan, reason: reason ?? null, feedback: feedback ?? null },
+        data: { userId: u.id, plan: workspace.plan, reason: reason ?? null, feedback: feedback ?? null },
       });
       return reply.send({ ok: true });
     } catch (err) {

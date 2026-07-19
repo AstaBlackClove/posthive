@@ -5,7 +5,7 @@ import { decodeNsec, generateNostrKeypair, fetchNostrProfile } from "../adapters
 import { nip19 } from "nostr-tools";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
-import { withAuth, getUser } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, getWorkspaceId, requireAdminRole } from "../lib/auth/withAuth.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
 import type { StorageAdapter } from "../lib/storage.js";
 
@@ -23,6 +23,9 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
   // Connect a Bluesky account
   app.post("/accounts/bluesky", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const roleBlocked = await requireAdminRole(userId, workspaceId);
+    if (roleBlocked) return reply.status(403).send(roleBlocked);
     const parsed = connectBlueskyBody.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
 
@@ -51,7 +54,7 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
 
     // Prevent duplicates — update credentials if account already exists
     const existing = await prisma.account.findFirst({
-      where: { userId, platform: "bluesky", displayName: handle },
+      where: { workspaceId, platform: "bluesky", displayName: handle },
     });
     if (existing) {
       const updated = await prisma.account.update({
@@ -62,11 +65,11 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
       return reply.status(200).send(updated);
     }
 
-    const blocked = await enforcePlan(userId, "accounts");
+    const blocked = await enforcePlan(userId, workspaceId, "accounts");
     if (blocked) return reply.status(402).send(blocked);
 
     const account = await prisma.account.create({
-      data: { platform: "bluesky", displayName: handle, credentials: encryptedCredentials, avatarUrl, userId },
+      data: { platform: "bluesky", displayName: handle, credentials: encryptedCredentials, avatarUrl, userId, workspaceId },
       select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
     });
 
@@ -82,6 +85,9 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
   // Connect a Nostr account via nsec (bech32 or raw hex)
   app.post("/accounts/nostr", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const roleBlocked = await requireAdminRole(userId, workspaceId);
+    if (roleBlocked) return reply.status(403).send(roleBlocked);
     const { nsec } = req.body as { nsec?: string };
     if (!nsec?.trim()) return reply.status(400).send({ error: "nsec is required" });
 
@@ -106,7 +112,7 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
     } catch { /* optional */ }
 
     // Dedup by npub (not displayName, which may change)
-    const nostrAccounts = await prisma.account.findMany({ where: { userId, platform: "nostr" } });
+    const nostrAccounts = await prisma.account.findMany({ where: { workspaceId, platform: "nostr" } });
     const existing = nostrAccounts.find(a => {
       try { return (JSON.parse(decrypt(a.credentials)) as { npub: string }).npub === npubHex; } catch { return false; }
     });
@@ -119,11 +125,11 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
       return reply.status(200).send(updated);
     }
 
-    const blocked = await enforcePlan(userId, "accounts");
+    const blocked = await enforcePlan(userId, workspaceId, "accounts");
     if (blocked) return reply.status(402).send(blocked);
 
     const account = await prisma.account.create({
-      data: { platform: "nostr", displayName, credentials, avatarUrl, userId },
+      data: { platform: "nostr", displayName, credentials, avatarUrl, userId, workspaceId },
       select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
     });
     return reply.status(201).send(account);
@@ -131,10 +137,10 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
 
   // Refresh Nostr avatar from relays without reconnecting
   app.post("/accounts/nostr/:id/refresh-avatar", { preHandler: [withAuth] }, async (req, reply) => {
-    const { id: userId } = getUser(req);
     const { id } = req.params as { id: string };
+    const workspaceId = getWorkspaceId(req);
 
-    const account = await prisma.account.findFirst({ where: { id, userId, platform: "nostr" } });
+    const account = await prisma.account.findFirst({ where: { id, workspaceId, platform: "nostr" } });
     if (!account) return reply.status(404).send({ error: "Account not found" });
 
     const { npub: npubHex } = JSON.parse(decrypt(account.credentials)) as { nsec: string; npub: string };
@@ -154,11 +160,11 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
     return reply.send(updated);
   });
 
-  // List accounts for current user
+  // List accounts for current workspace
   app.get("/accounts", { preHandler: [withAuth] }, async (req, reply) => {
-    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
     const accounts = await prisma.account.findMany({
-      where: { userId },
+      where: { workspaceId },
       select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true, expiresAt: true, credentials: true },
       orderBy: { createdAt: "asc" },
     });
@@ -176,12 +182,12 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
 
   // Instagram location search — proxies Facebook Places API using user's IG token
   app.get("/accounts/instagram/locations", { preHandler: [withAuth] }, async (req, reply) => {
-    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
     const { q } = req.query as { q?: string };
     if (!q || q.trim().length < 2) return reply.send([]);
 
     const igAccount = await prisma.account.findFirst({
-      where: { userId, platform: "instagram" },
+      where: { workspaceId, platform: "instagram" },
     });
     if (!igAccount) return reply.status(400).send({ error: "No Instagram account connected" });
 
@@ -208,14 +214,14 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
 
   // Posts published per account this month
   app.get("/accounts/stats", { preHandler: [withAuth] }, async (req, reply) => {
-    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
     const start = new Date();
     start.setDate(1); start.setHours(0, 0, 0, 0);
 
     const rows = await prisma.postJobTarget.groupBy({
       by: ["accountId"],
       where: {
-        account: { userId },
+        account: { workspaceId },
         status: { in: ["post_done", "comment_done"] },
         postJob: { scheduledFor: { gte: start } },
       },
@@ -227,18 +233,21 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
     return reply.send(stats);
   });
 
-  // Delete account — scoped to user
+  // Delete account — scoped to workspace
   app.delete("/accounts/:id", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const roleBlocked = await requireAdminRole(userId, workspaceId);
+    if (roleBlocked) return reply.status(403).send(roleBlocked);
     const { id } = req.params as { id: string };
-    const account = await prisma.account.findFirst({ where: { id, userId } });
+    const account = await prisma.account.findFirst({ where: { id, workspaceId } });
     if (!account) return reply.status(404).send({ error: "Account not found" });
 
     // Delete PostJobs whose only target is this account — they'd be unsendable orphans.
     // Jobs with multiple targets keep the job; only this account's target is removed below.
     const orphanJobs = await prisma.postJob.findMany({
       where: {
-        userId,
+        workspaceId,
         targets: { every: { accountId: id } },
       },
       select: { id: true },

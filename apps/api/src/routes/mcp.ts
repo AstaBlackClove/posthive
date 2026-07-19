@@ -374,12 +374,13 @@ function ok(data: unknown) {
 async function handleTool(
   name: string,
   args: Record<string, unknown>,
-  userId: string
+  userId: string,
+  workspaceId: string
 ) {
   switch (name) {
     case "list_accounts": {
       const accounts = await prisma.account.findMany({
-        where: { userId },
+        where: { workspaceId },
         select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
         orderBy: { createdAt: "asc" },
       });
@@ -406,7 +407,7 @@ async function handleTool(
 
       const accountIds = args.account_ids as string[];
       const accounts = await prisma.account.findMany({
-        where: { id: { in: accountIds }, userId },
+        where: { id: { in: accountIds }, workspaceId },
         select: { id: true },
       });
       if (accounts.length !== accountIds.length) {
@@ -425,6 +426,7 @@ async function handleTool(
       const job = await prisma.postJob.create({
         data: {
           userId,
+          workspaceId,
           scheduledFor,
           status: isDraft ? "draft" : "pending",
           content: contentPayload,
@@ -464,7 +466,7 @@ async function handleTool(
           },
         },
       });
-      if (!job || job.userId !== userId) throw new Error("Post not found");
+      if (!job || job.workspaceId !== workspaceId) throw new Error("Post not found");
 
       const parsed = (() => { try { return JSON.parse(job.content) as Record<string, unknown>; } catch { return {}; } })();
       return ok({
@@ -490,7 +492,7 @@ async function handleTool(
       const status = args.status as string | undefined;
       const take = Math.min(Number(args.limit ?? 20), 100);
       const jobs = await prisma.postJob.findMany({
-        where: { userId, ...(status ? { status } : {}) },
+        where: { workspaceId, ...(status ? { status } : {}) },
         orderBy: { scheduledFor: "desc" },
         take,
         include: {
@@ -525,7 +527,7 @@ async function handleTool(
       }
 
       const job = await prisma.postJob.findUnique({ where: { id: postId } });
-      if (!job || job.userId !== userId) throw new Error("Post not found");
+      if (!job || job.workspaceId !== workspaceId) throw new Error("Post not found");
       if (job.status !== "draft") {
         throw new Error(`Post status is '${job.status}' — only drafts can be approved`);
       }
@@ -547,7 +549,7 @@ async function handleTool(
     case "update_post": {
       const postId = args.post_id as string;
       const job = await prisma.postJob.findUnique({ where: { id: postId } });
-      if (!job || job.userId !== userId) throw new Error("Post not found");
+      if (!job || job.workspaceId !== workspaceId) throw new Error("Post not found");
       if (job.status !== "pending" && job.status !== "draft") {
         throw new Error(`Cannot update a post with status '${job.status}'. Only pending or draft posts can be updated.`);
       }
@@ -583,11 +585,12 @@ async function handleTool(
         where: { id: postId },
         include: { targets: { select: { accountId: true } } },
       });
-      if (!job || job.userId !== userId) throw new Error("Post not found");
+      if (!job || job.workspaceId !== workspaceId) throw new Error("Post not found");
 
       const duplicate = await prisma.postJob.create({
         data: {
           userId,
+          workspaceId,
           scheduledFor: new Date(0),
           status: "draft",
           content: job.content,
@@ -611,7 +614,7 @@ async function handleTool(
     case "delete_post": {
       const postId = args.post_id as string;
       const job = await prisma.postJob.findUnique({ where: { id: postId } });
-      if (!job || job.userId !== userId) throw new Error("Post not found");
+      if (!job || job.workspaceId !== workspaceId) throw new Error("Post not found");
       if (job.status !== "pending" && job.status !== "draft") {
         throw new Error(`Cannot delete a post with status '${job.status}'. Only pending or draft posts can be deleted.`);
       }
@@ -621,7 +624,7 @@ async function handleTool(
 
     case "list_templates": {
       const templates = await prisma.template.findMany({
-        where: { userId },
+        where: { workspaceId },
         orderBy: { updatedAt: "desc" },
         select: { id: true, name: true, content: true, createdAt: true, updatedAt: true },
       });
@@ -642,8 +645,8 @@ async function handleTool(
 
     case "create_from_template": {
       const templateId = args.template_id as string;
-      const template = await prisma.template.findUnique({ where: { id: templateId } });
-      if (!template || template.userId !== userId) throw new Error("Template not found");
+      const template = await prisma.template.findFirst({ where: { id: templateId, workspaceId } });
+      if (!template) throw new Error("Template not found");
 
       const tc = (() => { try { return JSON.parse(template.content) as Record<string, unknown>; } catch { return {}; } })();
 
@@ -666,7 +669,7 @@ async function handleTool(
 
       const accountIds = args.account_ids as string[];
       const accounts = await prisma.account.findMany({
-        where: { id: { in: accountIds }, userId },
+        where: { id: { in: accountIds }, workspaceId },
         select: { id: true },
       });
       if (accounts.length !== accountIds.length) {
@@ -686,6 +689,7 @@ async function handleTool(
       const job = await prisma.postJob.create({
         data: {
           userId,
+          workspaceId,
           scheduledFor,
           status: isDraft ? "draft" : "pending",
           content: contentPayload,
@@ -718,7 +722,7 @@ async function handleTool(
 
 // ─── Shared MCP handler ───────────────────────────────────────────────────────
 
-async function serveMcp(req: FastifyRequest, reply: FastifyReply, userId: string) {
+async function serveMcp(req: FastifyRequest, reply: FastifyReply, userId: string, workspaceId: string) {
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
   const server = new Server(
@@ -732,7 +736,7 @@ async function serveMcp(req: FastifyRequest, reply: FastifyReply, userId: string
     const { name, arguments: args } = mcpReq.params;
     const a = (args ?? {}) as Record<string, unknown>;
     try {
-      return await handleTool(name, a, userId);
+      return await handleTool(name, a, userId, workspaceId);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return {
@@ -755,7 +759,7 @@ export async function mcpRoutes(app: FastifyInstance): Promise<void> {
     "/mcp",
     { preHandler: [withApiKey, withMcpGate], config: { rawBody: true, rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req: FastifyRequest, reply: FastifyReply) => {
-      await serveMcp(req, reply, req.apiKeyUser!.id);
+      await serveMcp(req, reply, req.apiKeyUser!.id, req.apiKeyUser!.workspaceId);
     }
   );
 
@@ -775,7 +779,7 @@ export async function mcpRoutes(app: FastifyInstance): Promise<void> {
       await withMcpGate(req, reply);
       if (reply.sent) return;
 
-      await serveMcp(req, reply, req.apiKeyUser!.id);
+      await serveMcp(req, reply, req.apiKeyUser!.id, req.apiKeyUser!.workspaceId);
     }
   );
 

@@ -1,20 +1,21 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../lib/prisma.js";
-import { withAuth, getUser } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, getWorkspaceId } from "../lib/auth/withAuth.js";
 import { generateApiKey, canUseApi } from "../lib/auth/withApiKey.js";
 
 export async function apiKeyRoutes(app: FastifyInstance): Promise<void> {
 
-  // List all active API keys for the current user
+  // List all active API keys for the current workspace
   app.get("/user/api-keys", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
-    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true, planStatus: true } });
-    const { plan, planStatus } = dbUser ?? { plan: "trialing", planStatus: "trialing" };
+    const workspaceId = getWorkspaceId(req);
+    const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { plan: true, planStatus: true } });
+    const { plan, planStatus } = ws ?? { plan: "trialing", planStatus: "trialing" };
     if (!canUseApi(plan, planStatus)) {
       return reply.send({ keys: [], locked: true });
     }
     const keys = await prisma.apiKey.findMany({
-      where: { userId, revokedAt: null },
+      where: { userId, workspaceId, revokedAt: null },
       select: { id: true, name: true, prefix: true, lastUsedAt: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     });
@@ -24,8 +25,9 @@ export async function apiKeyRoutes(app: FastifyInstance): Promise<void> {
   // Create a new API key — returns the plaintext key ONCE
   app.post("/user/api-keys", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
-    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true, planStatus: true } });
-    const { plan, planStatus } = dbUser ?? { plan: "trialing", planStatus: "trialing" };
+    const workspaceId = getWorkspaceId(req);
+    const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { plan: true, planStatus: true } });
+    const { plan, planStatus } = ws ?? { plan: "trialing", planStatus: "trialing" };
 
     if (!canUseApi(plan, planStatus)) {
       return reply.status(403).send({
@@ -38,7 +40,7 @@ export async function apiKeyRoutes(app: FastifyInstance): Promise<void> {
     if (!name?.trim()) return reply.status(400).send({ error: "Key name is required" });
 
     const { raw, hash, prefix } = generateApiKey();
-    await prisma.apiKey.create({ data: { userId, name: name.trim(), keyHash: hash, prefix } });
+    await prisma.apiKey.create({ data: { userId, workspaceId, name: name.trim(), keyHash: hash, prefix } });
 
     // Return the raw key only once — we never store it
     return reply.status(201).send({ key: raw, prefix, name: name.trim() });

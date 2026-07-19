@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { prisma } from "../lib/prisma.js";
 import { authProvider } from "../lib/auth/index.js";
-import { withAuth, getUser, COOKIE_OPTS, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, getWorkspaceId, COOKIE_OPTS, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from "../lib/auth/withAuth.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/mailer.js";
 
 const registerBody = z.object({
@@ -83,8 +83,14 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   app.get("/auth/session", { preHandler: [withAuth] }, async (req, reply) => {
     const token = req.cookies?.[ACCESS_COOKIE_NAME];
     const u = getUser(req);
-    const dbUser = await prisma.user.findUnique({ where: { id: u.id }, select: { emailVerified: true, passwordHash: true } });
-    return reply.send({ user: { ...u, emailVerified: dbUser?.emailVerified ?? false, hasPassword: !!dbUser?.passwordHash }, token });
+    const workspaceId = req.workspaceId;
+    const [dbUser, membership] = await Promise.all([
+      prisma.user.findUnique({ where: { id: u.id }, select: { emailVerified: true, passwordHash: true } }),
+      workspaceId
+        ? prisma.workspaceMember.findUnique({ where: { workspaceId_userId: { workspaceId, userId: u.id } }, select: { role: true } })
+        : null,
+    ]);
+    return reply.send({ user: { ...u, emailVerified: dbUser?.emailVerified ?? false, hasPassword: !!dbUser?.passwordHash, role: membership?.role ?? "owner" }, token });
   });
 
   // Refresh — explicitly refresh tokens (called by frontend if needed)
@@ -275,19 +281,19 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // Get webhook URL
   app.get("/user/webhook", { preHandler: [withAuth] }, async (req, reply) => {
-    const { id: userId } = getUser(req);
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { webhookUrl: true, plan: true, planStatus: true } });
-    if (!canUseWebhook(user?.plan ?? "", user?.planStatus ?? "")) {
+    const workspaceId = getWorkspaceId(req);
+    const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { webhookUrl: true, plan: true, planStatus: true } });
+    if (!canUseWebhook(ws?.plan ?? "", ws?.planStatus ?? "")) {
       return reply.send({ webhookUrl: null, locked: true });
     }
-    return reply.send({ webhookUrl: user?.webhookUrl ?? null, locked: false });
+    return reply.send({ webhookUrl: ws?.webhookUrl ?? null, locked: false });
   });
 
   // Set / clear webhook URL
   app.patch("/user/webhook", { preHandler: [withAuth] }, async (req, reply) => {
-    const { id: userId } = getUser(req);
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true, planStatus: true } });
-    if (!canUseWebhook(user?.plan ?? "", user?.planStatus ?? "")) {
+    const workspaceId = getWorkspaceId(req);
+    const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { plan: true, planStatus: true } });
+    if (!canUseWebhook(ws?.plan ?? "", ws?.planStatus ?? "")) {
       return reply.status(403).send({ error: "Webhook requires a Pro or Team plan.", upgrade: true });
     }
     const { webhookUrl } = req.body as { webhookUrl?: string };
@@ -315,7 +321,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         return reply.status(400).send({ error: "Invalid webhook URL" });
       }
     }
-    await prisma.user.update({ where: { id: userId }, data: { webhookUrl: url } });
+    await prisma.workspace.update({ where: { id: workspaceId }, data: { webhookUrl: url } });
     return reply.send({ ok: true });
   });
 
@@ -335,12 +341,85 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       if (!valid) return reply.status(400).send({ error: "Incorrect password" });
     }
 
-    // Delete in dependency order to avoid FK violations
-    const jobs = await prisma.postJob.findMany({ where: { userId }, select: { id: true } });
-    const jobIds = jobs.map(j => j.id);
-    await prisma.postJobTarget.deleteMany({ where: { postJobId: { in: jobIds } } });
-    await prisma.postJob.deleteMany({ where: { userId } });
-    await prisma.account.deleteMany({ where: { userId } });
+    // Find all workspaces this user owns — those must be deleted in full
+    const ownedMemberships = await prisma.workspaceMember.findMany({
+      where: { userId, role: "owner" },
+      select: { workspaceId: true },
+    });
+    const ownedWorkspaceIds = ownedMemberships.map((m) => m.workspaceId);
+
+    // Collect all PostJob IDs we need to clean up: user's own jobs + jobs in owned workspaces
+    const allJobs = await prisma.postJob.findMany({
+      where: {
+        OR: [
+          { userId },
+          ...(ownedWorkspaceIds.length > 0 ? [{ workspaceId: { in: ownedWorkspaceIds } }] : []),
+        ],
+      },
+      select: { id: true },
+    });
+    const allJobIds = allJobs.map((j) => j.id);
+
+    // Collect all Account IDs in owned workspaces — PostJobTargets reference them without cascade
+    const workspaceAccountIds = ownedWorkspaceIds.length > 0
+      ? (await prisma.account.findMany({
+          where: { workspaceId: { in: ownedWorkspaceIds } },
+          select: { id: true },
+        })).map((a) => a.id)
+      : [];
+
+    // 1. Delete PostJobTargets first (no FK cascade on Account → PostJobTarget)
+    if (allJobIds.length > 0 || workspaceAccountIds.length > 0) {
+      await prisma.postJobTarget.deleteMany({
+        where: {
+          OR: [
+            ...(allJobIds.length > 0 ? [{ postJobId: { in: allJobIds } }] : []),
+            ...(workspaceAccountIds.length > 0 ? [{ accountId: { in: workspaceAccountIds } }] : []),
+          ],
+        },
+      });
+    }
+
+    // 2. Delete PostJobs
+    if (allJobIds.length > 0) {
+      await prisma.postJob.deleteMany({ where: { id: { in: allJobIds } } });
+    }
+
+    // 3. Delete Accounts (user-owned + workspace-owned)
+    await prisma.account.deleteMany({
+      where: {
+        OR: [
+          { userId },
+          ...(ownedWorkspaceIds.length > 0 ? [{ workspaceId: { in: ownedWorkspaceIds } }] : []),
+        ],
+      },
+    });
+
+    // 4. For each owned workspace, switch affected members' activeWorkspaceId away
+    if (ownedWorkspaceIds.length > 0) {
+      const affectedUsers = await prisma.user.findMany({
+        where: { activeWorkspaceId: { in: ownedWorkspaceIds }, id: { not: userId } },
+        select: { id: true },
+      });
+      await Promise.all(affectedUsers.map(async (u) => {
+        const next = await prisma.workspaceMember.findFirst({
+          where: { userId: u.id, workspaceId: { notIn: ownedWorkspaceIds } },
+          orderBy: { joinedAt: "asc" },
+        });
+        await prisma.user.update({
+          where: { id: u.id },
+          data: { activeWorkspaceId: next?.workspaceId ?? null },
+        });
+      }));
+
+      // 5. Delete owned workspaces (cascades: WorkspaceMember, WorkspaceInvite, Template, ApiKey)
+      await prisma.workspace.deleteMany({ where: { id: { in: ownedWorkspaceIds } } });
+    }
+
+    // 6. Clear user's activeWorkspaceId to avoid FK violation on user delete
+    await prisma.user.update({ where: { id: userId }, data: { activeWorkspaceId: null } });
+
+    // 7. Delete remaining user data (cascade handles WorkspaceMember, RefreshToken, ApiKey, Template, etc.)
     await prisma.refreshToken.deleteMany({ where: { userId } });
     await prisma.user.delete({ where: { id: userId } });
 

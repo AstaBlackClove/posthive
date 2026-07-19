@@ -27,6 +27,7 @@ import { userRoutes } from "./routes/user.js";
 import { billingRoutes } from "./routes/billing.js";
 import { apiKeyRoutes } from "./routes/apiKeys.js";
 import { templateRoutes } from "./routes/templates.js";
+import { workspaceRoutes } from "./routes/workspaces.js";
 import { publicApiRoutes } from "./routes/publicApi.js";
 import { mcpRoutes } from "./routes/mcp.js";
 import { oauthRoutes } from "./routes/oauth.js";
@@ -35,6 +36,7 @@ import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
 import { startStatsCron } from "./lib/statsCron.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { trackRoutes } from "./routes/track.js";
+import { feedbackRoutes } from "./routes/feedback.js";
 import { withAuth } from "./lib/auth/withAuth.js";
 import type { StorageAdapter } from "./lib/storage.js";
 
@@ -100,11 +102,13 @@ async function main() {
   if (process.env.ENABLE_BILLING === "true") await app.register(billingRoutes);
   await app.register(apiKeyRoutes);
   await app.register(templateRoutes);
+  await app.register(workspaceRoutes);
   await app.register(publicApiRoutes, { storage });
   await app.register(mcpRoutes);
   await app.register(oauthRoutes);
   await app.register(analyticsRoutes);
   await app.register(trackRoutes);
+  await app.register(feedbackRoutes);
 
   app.get("/health", async () => ({ ok: true }));
 

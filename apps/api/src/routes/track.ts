@@ -96,7 +96,7 @@ export async function trackRoutes(app: FastifyInstance): Promise<void> {
 
   // GET /track/admin — admin-only: sessions + events for dashboard
   app.get("/track/admin", { preHandler: [withAuth] }, async (req, reply) => {
-    if (!ENABLED) return reply.status(403).send({ error: "Analytics disabled" });
+    // Admin endpoint works regardless of ENABLE_ANALYTICS — feedback is always collected
 
     const u = getUser(req);
     const adminEmail = process.env.ADMIN_EMAIL ?? "";
@@ -118,20 +118,25 @@ export async function trackRoutes(app: FastifyInstance): Promise<void> {
 
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const [sessions, events, totalUsers, newUsersToday] = await Promise.all([
+    const [sessions, events, feedbacks, totalUsers, newUsersToday] = await Promise.all([
       prisma.session.findMany({
         where: { createdAt: { gte: since } },
         orderBy: { createdAt: "desc" },
         take: 100,
         include: {
           // join user name+email if linked
-          user: { select: { name: true, email: true, plan: true, planStatus: true } },
+          user: { select: { name: true, email: true } },
         },
       }),
       prisma.event.findMany({
         where: { createdAt: { gte: since } },
         orderBy: { createdAt: "desc" },
         take: 500,
+        include: { user: { select: { name: true, email: true } } },
+      }),
+      prisma.feedback.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 200,
         include: { user: { select: { name: true, email: true } } },
       }),
       prisma.user.count(),
@@ -152,6 +157,7 @@ export async function trackRoutes(app: FastifyInstance): Promise<void> {
       funnel: { totalSessions, billingViews, checkoutClicks, trialsStarted },
       sessions,
       events,
+      feedbacks,
       stats: { totalUsers, newUsersToday },
     });
   });

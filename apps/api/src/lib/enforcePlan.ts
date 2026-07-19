@@ -6,8 +6,9 @@ import { getPlan } from "./plans.js";
  * "scheduling" — checks status + monthly post count limit
  * "reels"      — checks allowReels flag (Pro/Team only)
  * "overrides"  — checks allowOverrides flag (Pro/Team only)
+ * "seats"      — checks team member seat limit (Team plan only allows invites)
  */
-export type PlanResource = "accounts" | "scheduling" | "reels" | "overrides";
+export type PlanResource = "accounts" | "scheduling" | "reels" | "overrides" | "seats";
 
 export interface PlanError {
   error: string;
@@ -17,31 +18,20 @@ export interface PlanError {
 
 export async function enforcePlan(
   userId: string,
+  workspaceId: string,
   resource: PlanResource
 ): Promise<PlanError | null> {
   // Billing disabled — self-hosted mode, no limits enforced
   if (process.env.ENABLE_BILLING !== "true") return null;
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { _count: { select: { accounts: true } } },
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    include: { _count: { select: { accounts: true, members: true } } },
   });
 
-  if (!user) return { error: "User not found", code: "CANCELLED", upgradeRequired: false };
+  if (!workspace) return { error: "Workspace not found", code: "CANCELLED", upgradeRequired: false };
 
-  // Inactive = registered but hasn't started a trial yet.
-  // Allow account connection so users can complete onboarding before hitting billing.
-  // Block everything else (scheduling, reels, overrides) until they start a trial.
-  if (user.planStatus === "inactive") {
-    if (resource === "accounts") return null;
-    return {
-      error: "Start your free 14-day trial to use Posthive. A card is required — you won't be charged until the trial ends.",
-      code: "INACTIVE",
-      upgradeRequired: true,
-    };
-  }
-
-  if (user.planStatus === "cancelled" || user.plan === "cancelled") {
+  if (workspace.planStatus === "cancelled" || workspace.plan === "cancelled") {
     return {
       error: "Your subscription has been cancelled. Resubscribe to continue using Posthive.",
       code: "CANCELLED",
@@ -49,7 +39,7 @@ export async function enforcePlan(
     };
   }
 
-  if (user.planStatus === "trialing" && user.trialEndsAt && user.trialEndsAt < new Date()) {
+  if (workspace.planStatus === "trialing" && workspace.trialEndsAt && workspace.trialEndsAt < new Date()) {
     return {
       error: "Your 14-day free trial has expired. Upgrade to keep scheduling posts.",
       code: "TRIAL_EXPIRED",
@@ -57,10 +47,10 @@ export async function enforcePlan(
     };
   }
 
-  const plan = getPlan(user.plan);
+  const plan = getPlan(workspace.plan);
 
   if (resource === "accounts") {
-    if (user._count.accounts >= plan.maxAccounts) {
+    if (workspace._count.accounts >= plan.maxAccounts) {
       return {
         error: `Your ${plan.name} plan supports up to ${plan.maxAccounts} connected account${plan.maxAccounts === 1 ? "" : "s"}. Upgrade to connect more.`,
         code: "PLAN_LIMIT",
@@ -75,15 +65,28 @@ export async function enforcePlan(
     startOfMonth.setHours(0, 0, 0, 0);
 
     const postsThisMonth = await prisma.postJob.count({
-      where: { userId, createdAt: { gte: startOfMonth } },
+      where: { workspaceId, createdAt: { gte: startOfMonth } },
     });
 
     if (postsThisMonth >= plan.maxPostsPerMonth) {
-      const isTrialing = user.planStatus === "trialing";
+      const isTrialing = workspace.planStatus === "trialing";
       return {
         error: isTrialing
           ? `Your free trial allows up to ${plan.maxPostsPerMonth} scheduled posts. Upgrade to continue scheduling.`
           : `Your ${plan.name} plan allows up to ${plan.maxPostsPerMonth} posts per month. Upgrade to Pro for unlimited posts.`,
+        code: "PLAN_LIMIT",
+        upgradeRequired: true,
+      };
+    }
+  }
+
+  if (resource === "seats") {
+    if (workspace._count.members >= plan.maxSeats) {
+      const isTrialing = workspace.planStatus === "trialing";
+      return {
+        error: isTrialing
+          ? "Team members are not available during the free trial. Upgrade to a paid plan to invite members."
+          : `Your ${plan.name} plan supports up to ${plan.maxSeats} seat${plan.maxSeats === 1 ? "" : "s"} (including yourself). Upgrade to invite more members.`,
         code: "PLAN_LIMIT",
         upgradeRequired: true,
       };

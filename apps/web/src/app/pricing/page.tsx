@@ -28,6 +28,7 @@ const PLANS = [
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
+      { text: "1 team member", included: true },
       { text: "Reels & Stories", included: false },
       { text: "Per-platform overrides", included: false },
       { text: "X/Twitter posting", included: false },
@@ -50,6 +51,7 @@ const PLANS = [
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
+      { text: "2 team members", included: true },
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting (100/mo, no links)", included: true },
@@ -72,9 +74,11 @@ const PLANS = [
       { text: "Post templates", included: true },
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
+      { text: "4 team members", included: true },
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting (100/mo, no links)", included: true },
+      { text: "API access & MCP", included: true },
       { text: "Webhook outbound", included: true },
     ],
   },
@@ -83,7 +87,8 @@ const PLANS = [
 const COMPARISON = [
   { feature: "Connected accounts",      trial: "3",       creator: "5",        pro: "15",       team: "50" },
   { feature: "Posts per month",         trial: "30",      creator: "400",      pro: "Unlimited", team: "Unlimited" },
-  { feature: "All platforms",         trial: "✓",       creator: "✓",        pro: "✓",        team: "✓" },
+  { feature: "Team members",            trial: "1",       creator: "1",        pro: "2",        team: "4" },
+  { feature: "All platforms",           trial: "✓",       creator: "✓",        pro: "✓",        team: "✓" },
   { feature: "Bulk CSV scheduling",     trial: "✓",       creator: "✓",        pro: "✓",        team: "✓" },
   { feature: "Post templates",          trial: "✓",       creator: "✓",        pro: "✓",        team: "✓" },
   { feature: "Calendar view",           trial: "✓",       creator: "✓",        pro: "✓",        team: "✓" },
@@ -92,7 +97,7 @@ const COMPARISON = [
   { feature: "Reels & Stories",         trial: "—",       creator: "—",        pro: "✓",        team: "✓" },
   { feature: "Per-platform overrides",  trial: "—",       creator: "—",        pro: "✓",        team: "✓" },
   { feature: "X/Twitter posting",       trial: "—",       creator: "—",        pro: "100/mo",   team: "100/mo" },
-  { feature: "API access & MCP",        trial: "—",       creator: "—",        pro: "✓",   team: "✓" },
+  { feature: "API access & MCP",        trial: "—",       creator: "—",        pro: "✓",        team: "✓" },
   { feature: "Webhook outbound",        trial: "—",       creator: "—",        pro: "✓",        team: "✓" },
 ];
 
@@ -140,6 +145,13 @@ export default function PricingPage() {
   const [isIndia, setIsIndia] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
+
+  useEffect(() => {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz === "Asia/Kolkata" || tz === "Asia/Calcutta") setIsIndia(true);
+    } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     if (!user) { setBillingStatus(null); return; }

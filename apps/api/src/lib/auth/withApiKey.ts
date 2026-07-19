@@ -1,10 +1,10 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import crypto from "crypto";
 import { prisma } from "../prisma.js";
-import { getPlan } from "../plans.js";
 
 export interface ApiKeyUser {
   id: string;
+  workspaceId: string;
   plan: string;
   planStatus: string;
 }
@@ -33,20 +33,35 @@ export async function withApiKey(req: FastifyRequest, reply: FastifyReply): Prom
   const keyHash = hashKey(raw);
   const apiKey = await prisma.apiKey.findUnique({
     where: { keyHash },
-    include: { user: { select: { id: true, plan: true, planStatus: true } } },
+    include: {
+      user: { select: { id: true } },
+      workspace: { select: { id: true, plan: true, planStatus: true } },
+    },
   });
 
   if (!apiKey || apiKey.revokedAt) {
     return reply.status(401).send({ error: "Invalid or revoked API key" });
   }
 
+  if (!apiKey.workspace) {
+    return reply.status(403).send({ error: "API key is not associated with a workspace" });
+  }
+
   // Update lastUsedAt without blocking the request
   prisma.apiKey.update({ where: { id: apiKey.id }, data: { lastUsedAt: new Date() } }).catch(() => {});
 
-  req.apiKeyUser = apiKey.user;
+  req.apiKeyUser = {
+    id: apiKey.user.id,
+    workspaceId: apiKey.workspace.id,
+    plan: apiKey.workspace.plan,
+    planStatus: apiKey.workspace.planStatus,
+  };
+
+  // Also expose on workspaceId so shared route helpers work
+  req.workspaceId = apiKey.workspace.id;
 }
 
-/** Check if a user is allowed to use the API (plan gate). */
+/** Check if a workspace is allowed to use the API (plan gate). */
 export function canUseApi(plan: string, planStatus: string): boolean {
   // Self-hosters (billing disabled) always get access
   if (process.env.ENABLE_BILLING !== "true") return true;
@@ -54,7 +69,6 @@ export function canUseApi(plan: string, planStatus: string): boolean {
   if (planStatus !== "active") return false;
   return plan === "pro" || plan === "team";
 }
-
 
 export function generateApiKey(): { raw: string; hash: string; prefix: string } {
   const secret = crypto.randomBytes(32).toString("hex");

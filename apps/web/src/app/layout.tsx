@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "../context/AuthContext";
+import { WorkspaceProvider } from "../context/WorkspaceContext";
 import { AppShell } from "../components/AppShell";
 import { ToastProvider } from "../components/Toast";
 import { TrackingProvider } from "../components/TrackingProvider";
@@ -81,11 +82,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="h-full font-sans antialiased">
         <AuthProvider>
-          <ToastProvider>
-            <TrackingProvider>
-              <AppShell>{children}</AppShell>
-            </TrackingProvider>
-          </ToastProvider>
+          <WorkspaceProvider>
+            <ToastProvider>
+              <TrackingProvider>
+                <AppShell>{children}</AppShell>
+              </TrackingProvider>
+            </ToastProvider>
+          </WorkspaceProvider>
         </AuthProvider>
         <Analytics />
         <Script id="posthive-console" strategy="afterInteractive">{`

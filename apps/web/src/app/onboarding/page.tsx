@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 import { PlatformIcon } from "../../components/PlatformIcon";
-import { useToast } from "../../components/Toast";
+import confetti from "canvas-confetti";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -26,6 +26,8 @@ const PLANS = [
     color: "#5b63d3",
     maxAccounts: 5,
     maxPosts: "400 posts/mo",
+    trialAccounts: 3,
+    trialPosts: 30,
     features: [
       "5 connected accounts",
       "400 posts / month",
@@ -86,17 +88,12 @@ const PLANS = [
   },
 ];
 
-// OAuth platforms shown in the connect step.
-// Instagram, Threads, Facebook require Meta app review — excluded from onboarding.
-// Pinterest requires app review — excluded from onboarding.
-// Users can still connect them from /accounts once approved.
 const OAUTH_PLATFORMS = [
   { platform: "linkedin",  label: "LinkedIn",   sub: "LinkedIn OAuth",     path: "/auth/linkedin",  proOnly: false },
   { platform: "youtube",   label: "YouTube",    sub: "Google OAuth",       path: "/auth/youtube",   proOnly: false },
   { platform: "discord",   label: "Discord",    sub: "Webhook + OAuth",    path: "/auth/discord",   proOnly: false },
   { platform: "tumblr",    label: "Tumblr",     sub: "Tumblr OAuth",       path: "/auth/tumblr",    proOnly: false },
 ];
-
 
 const WELCOME_PLATFORMS = [
   "bluesky", "threads", "instagram", "linkedin", "youtube",
@@ -258,22 +255,18 @@ function BlueskyConnect({ onConnected }: { onConnected: () => void }) {
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────────
-export default function OnboardingPage() {
+// ── Main content ───────────────────────────────────────────────────────────────
+function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { error: toastError } = useToast();
   const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === "true";
 
   const stepParam = parseInt(searchParams.get("step") ?? "1");
   const step = Math.min(Math.max(stepParam, 1), billingEnabled ? 4 : 3);
 
   const [isIndia, setIsIndia] = useState(true);
-  const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
-  const [waitingForPlan, setWaitingForPlan] = useState(false);
-  const [planReady, setPlanReady] = useState(false);
 
   const [postText, setPostText] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -292,6 +285,13 @@ export default function OnboardingPage() {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     setIsIndia(tz === "Asia/Kolkata");
   }, []);
+
+  useEffect(() => {
+    if (step === 4 && billingEnabled) {
+      confetti({ particleCount: 180, spread: 90, origin: { y: 0.55 }, zIndex: 9999 });
+      setTimeout(() => confetti({ particleCount: 80, spread: 120, origin: { y: 0.5 }, zIndex: 9999 }), 400);
+    }
+  }, [step, billingEnabled]);
 
   async function fetchAccounts() {
     try {
@@ -312,47 +312,6 @@ export default function OnboardingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
-  // Poll for plan activation after checkout
-  useEffect(() => {
-    if (!billingEnabled || step !== 4 || searchParams.get("trialStarted") !== "1") return;
-    setWaitingForPlan(true);
-    let attempts = 0;
-    async function check() {
-      try {
-        const { planStatus, trialEndsAt } = await apiFetch<{ planStatus: string; trialEndsAt: string | null }>("/billing/status");
-        if (planStatus === "active" || (planStatus === "trialing" && trialEndsAt !== null)) {
-          setPlanReady(true);
-          setWaitingForPlan(false);
-          setTimeout(() => router.replace("/compose?onboarded=1"), 1200);
-        } else if (attempts < 8) {
-          attempts++;
-          setTimeout(check, 1000);
-        } else {
-          setWaitingForPlan(false);
-        }
-      } catch {
-        setWaitingForPlan(false);
-      }
-    }
-    check();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
-
-  async function checkout(planId: string) {
-    setCheckingOut(planId);
-    try {
-      const { url } = await apiFetch<{ url: string }>("/billing/checkout", {
-        method: "POST",
-        body: JSON.stringify({ planId, successUrl: "/onboarding?step=4&trialStarted=1" }),
-      });
-      window.location.href = url;
-    } catch (err) {
-      toastError(String(err));
-    } finally {
-      setCheckingOut(null);
-    }
-  }
-
   function goStep(n: number) {
     router.push(`/onboarding?step=${n}`);
   }
@@ -362,8 +321,6 @@ export default function OnboardingPage() {
     setScheduling(true);
     setScheduleError(null);
     try {
-      // When billing is enabled the user hasn't paid yet — save as draft so it
-      // won't fire without an active plan. They can activate it from /jobs after billing.
       const asDraft = billingEnabled;
       await apiFetch("/jobs", {
         method: "POST",
@@ -385,17 +342,11 @@ export default function OnboardingPage() {
   const planPrice = (p: (typeof PLANS)[number]) => (isIndia ? p.priceInr : p.priceUsd);
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-8" style={{ backgroundColor: "#0a0a0a" }}>
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 mb-10 self-start w-full max-w-3xl">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/posthivemain.png" alt="Posthive" className="w-8 h-8 rounded-xl object-cover" />
-        <span className="font-bold text-sm" style={{ color: "#ededed" }}>Posthive</span>
-      </div>
+    <div className="min-h-screen flex flex-col items-center px-4 py-12" style={{ backgroundColor: "#0a0a0a" }}>
 
       {/* Step indicator — skip on welcome */}
       {step > 1 && (
-        <div className="mb-10">
+        <div className="mb-10 mt-5">
           <StepIndicator current={step} billingEnabled={billingEnabled} />
         </div>
       )}
@@ -459,7 +410,7 @@ export default function OnboardingPage() {
 
           <p className="mt-4 text-xs" style={{ color: "#999" }}>
             {billingEnabled
-              ? "14-day free trial · card only at checkout · cancel any time"
+              ? "14-day free trial · no card required to start · cancel any time"
               : "Free to use · open source · self-hostable"}
           </p>
         </div>
@@ -485,10 +436,22 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          <div className="mb-6">
+          <div className="mb-5">
             <h1 className="text-2xl font-bold mb-1.5" style={{ color: "#ededed" }}>Connect your accounts</h1>
             <p className="text-sm" style={{ color: "#555" }}>Connect at least one platform to start scheduling.</p>
           </div>
+
+          {/* Trial account note */}
+          {billingEnabled && (
+            <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl mb-5" style={{ backgroundColor: "#0d1117", border: "1px solid #5b63d330" }}>
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-xs" style={{ color: "#888" }}>
+                Free trial includes <span style={{ color: "#ededed", fontWeight: 600 }}>3 connected accounts</span> connect more after upgrading.
+              </p>
+            </div>
+          )}
 
           {/* Connected accounts list */}
           {accounts.length > 0 && (
@@ -508,58 +471,70 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Bluesky inline form */}
-          <div className="mb-3">
-            <BlueskyConnect onConnected={fetchAccounts} />
-          </div>
+          {/* Trial limit reached — hide connect UI */}
+          {billingEnabled && accounts.length >= 3 ? (
+            <div className="rounded-xl px-5 py-4 mb-6 text-center" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+              <p className="text-sm font-semibold mb-1" style={{ color: "#ededed" }}>Trial limit reached</p>
+              <p className="text-xs" style={{ color: "#555" }}>
+                Your free trial includes 3 connected accounts. Upgrade after signing in to connect more.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Bluesky inline form */}
+              <div className="mb-3">
+                <BlueskyConnect onConnected={fetchAccounts} />
+              </div>
 
-          {/* OAuth platforms 2-column grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
-            {OAUTH_PLATFORMS.map(({ platform, label, sub, path, proOnly }) =>
-              proOnly && billingEnabled ? (
-                <div
-                  key={platform}
-                  className="flex items-center gap-3 p-3.5 rounded-xl opacity-50 cursor-not-allowed"
-                  style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
-                  title="Available on Pro and Team plans"
-                >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
-                    <PlatformIcon platform={platform} size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: "#ededed" }}>{label}</p>
-                    <p className="text-xs truncate" style={{ color: "#555" }}>{sub}</p>
-                  </div>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#1c1209", color: "#fbbf24", border: "1px solid #78560a" }}>
-                    Pro
-                  </span>
-                </div>
-              ) : (
-                <a
-                  key={platform}
-                  href={`${API_BASE}${path}?from=onboarding`}
-                  className="flex items-center gap-3 p-3.5 rounded-xl transition-all hover:border-gray-600/50"
-                  style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
-                >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
-                    <PlatformIcon platform={platform} size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: "#ededed" }}>{label}</p>
-                    <p className="text-xs truncate" style={{ color: "#555" }}>{sub}</p>
-                  </div>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
-                    Connect
-                  </span>
-                </a>
-              )
-            )}
-          </div>
+              {/* OAuth platforms 2-column grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+                {OAUTH_PLATFORMS.map(({ platform, label, sub, path, proOnly }) =>
+                  proOnly && billingEnabled ? (
+                    <div
+                      key={platform}
+                      className="flex items-center gap-3 p-3.5 rounded-xl opacity-50 cursor-not-allowed"
+                      style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+                      title="Available on Pro and Team plans"
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
+                        <PlatformIcon platform={platform} size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold" style={{ color: "#ededed" }}>{label}</p>
+                        <p className="text-xs truncate" style={{ color: "#555" }}>{sub}</p>
+                      </div>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#1c1209", color: "#fbbf24", border: "1px solid #78560a" }}>
+                        Pro
+                      </span>
+                    </div>
+                  ) : (
+                    <a
+                      key={platform}
+                      href={`${API_BASE}${path}?from=onboarding`}
+                      className="flex items-center gap-3 p-3.5 rounded-xl transition-all hover:border-gray-600/50"
+                      style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
+                        <PlatformIcon platform={platform} size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold" style={{ color: "#ededed" }}>{label}</p>
+                        <p className="text-xs truncate" style={{ color: "#555" }}>{sub}</p>
+                      </div>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
+                        Connect
+                      </span>
+                    </a>
+                  )
+                )}
+              </div>
 
-          <p className="text-xs mb-6 text-center" style={{ color: "#999" }}>
-            Instagram, Threads, Facebook, Pinterest, Mastodon, Telegram, Nostr & more →{" "}
-            <span>available after setup in Settings</span>
-          </p>
+              <p className="text-xs mb-6 text-center" style={{ color: "#999" }}>
+                Instagram, Threads, Facebook, Pinterest, Mastodon, Telegram, Nostr & more →{" "}
+                <span>available after setup in Settings</span>
+              </p>
+            </>
+          )}
 
           <div className="flex flex-col gap-3">
             <button
@@ -708,32 +683,41 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* ── Step 4: Choose plan (billing enabled, shown last) ─────────────────── */}
+      {/* ── Step 4: Trial active + plan preview ──────────────────────────────── */}
       {step === 4 && billingEnabled && (
         <div className="w-full max-w-3xl">
-          {waitingForPlan && (
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6" style={{ backgroundColor: "#052e16", border: "1px solid #14532d" }}>
-              <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0" style={{ borderColor: "#4ade80", borderTopColor: "transparent" }} />
-              <p className="text-sm" style={{ color: "#4ade80" }}>Activating your trial, just a moment…</p>
-            </div>
-          )}
 
-          {planReady && (
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6" style={{ backgroundColor: "#052e16", border: "1px solid #14532d" }}>
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="#4ade80" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <p className="text-sm" style={{ color: "#4ade80" }}>Trial started! Taking you in…</p>
+          {/* Trial active banner */}
+          <div className="rounded-2xl p-5 mb-7" style={{ backgroundColor: "#0a1a0a", border: "1px solid #22c55e30" }}>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#22c55e20", border: "1px solid #22c55e30" }}>
+                <svg className="w-5 h-5" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold mb-1" style={{ color: "#ededed" }}>
+                  Your 14-day free trial is active 🎉
+                </p>
+                <p className="text-xs mb-3" style={{ color: "#666" }}>
+                  Start scheduling right now no card needed. You get 14 days to explore everything. Pick a plan to keep access after the trial ends.
+                </p>
+                <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+                  {[
+                    { icon: "🔗", text: "3 connected accounts" },
+                    { icon: "📅", text: "30 posts during trial" },
+                    { icon: "🌐", text: "All 15 platforms" },
+                    { icon: "📋", text: "Bulk CSV scheduling" },
+                    { icon: "💬", text: "First comment automation" },
+                  ].map(({ icon, text }) => (
+                    <span key={text} className="flex items-center gap-1.5 text-xs" style={{ color: "#888" }}>
+                      <span>{icon}</span>
+                      <span>{text}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
-          )}
-
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2" style={{ color: "#ededed" }}>
-              You&apos;re almost in — choose a plan.
-            </h1>
-            <p className="text-sm" style={{ color: "#555" }}>
-              14-day free trial · your card won&apos;t be charged until the trial ends.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -798,24 +782,41 @@ export default function OnboardingPage() {
                     ))}
                   </ul>
 
-                  <button
-                    onClick={() => checkout(plan.id)}
-                    disabled={!!checkingOut || waitingForPlan}
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 active:scale-[0.98]"
-                    style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
-                  >
-                    {checkingOut === plan.id ? "Opening checkout…" : "Start free trial"}
-                  </button>
                 </div>
               </div>
             ))}
           </div>
 
-          <p className="text-center text-xs" style={{ color: "#333" }}>
-            14 days free · cancel any time · {isIndia ? "billed in INR" : "billed in USD"}
+          {/* Primary CTA — go to app, no checkout required */}
+          <button
+            onClick={() => router.replace("/compose?onboarded=1")}
+            className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100 active:scale-[0.98] mb-3"
+            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+          >
+            Start posting →
+          </button>
+
+          <p className="text-center text-xs" style={{ color: "#999" }}>
+            Set up billing later in{" "}
+            <button
+              onClick={() => router.replace("/billing")}
+              className="underline hover:opacity-70"
+            >
+              Settings → Billing
+            </button>
+            {" "}· cancel any time
           </p>
         </div>
       )}
     </div>
+  );
+}
+
+// ── Page export with Suspense (required for useSearchParams in App Router) ─────
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={null}>
+      <OnboardingContent />
+    </Suspense>
   );
 }

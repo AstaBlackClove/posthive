@@ -13,9 +13,14 @@ export function PlanGuard({ children }: { children: React.ReactNode }) {
     if (process.env.NEXT_PUBLIC_ENABLE_BILLING !== "true") { setReady(true); return; }
     apiFetch<{ planStatus: string; trialEndsAt: string | null }>("/billing/status")
       .then(({ planStatus, trialEndsAt }) => {
-        const hasActivePlan = planStatus === "active" || (planStatus === "trialing" && trialEndsAt !== null);
-        if (!hasActivePlan) {
+        const trialExpired = planStatus === "trialing" && !!trialEndsAt && new Date(trialEndsAt) < new Date();
+        // cancelling = still has access until period ends; trialing = always has access
+        const hasActivePlan = (planStatus === "active" || planStatus === "trialing" || planStatus === "cancelling") && !trialExpired;
+        const isExpired = planStatus === "cancelled" || planStatus === "on_hold" || trialExpired;
+        if (!hasActivePlan && !isExpired) {
           router.replace("/onboarding?step=4");
+        } else if (isExpired && pathname !== "/billing" && pathname !== "/settings") {
+          router.replace("/billing");
         } else {
           setReady(true);
         }
