@@ -78,6 +78,7 @@ const NAV = [
       { label: "Nostr", id: "nostr" },
       { label: "Discord", id: "discord" },
       { label: "Tumblr", id: "tumblr" },
+      { label: "Lemmy", id: "lemmy" },
     ],
   },
   {
@@ -102,6 +103,15 @@ const NAV = [
       { label: "Database", id: "database" },
       { label: "Redis", id: "redis" },
       { label: "Storage", id: "storage" },
+    ],
+  },
+  {
+    section: "Workspaces & Teams",
+    items: [
+      { label: "Overview", id: "workspaces-overview" },
+      { label: "Inviting members", id: "workspaces-invites" },
+      { label: "Roles", id: "workspaces-roles" },
+      { label: "Switching workspaces", id: "workspaces-switching" },
     ],
   },
   {
@@ -873,6 +883,30 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
                 Tumblr app registration is instant — no business verification, no waitlist. Your consumer key is available immediately after registering.
               </div>
 
+              {/* ── Lemmy ── */}
+              <h2 className="doc-h2" id="lemmy">Lemmy</h2>
+              <p className="doc-p">
+                Posthive posts to a <strong>Lemmy community</strong> on any public instance. Lemmy uses username/password authentication — a fresh JWT is obtained per post so no token expiry issues exist.
+              </p>
+              <Callout type="info">
+                No app registration required. You just need a Lemmy account on any instance and a community to post to.
+              </Callout>
+              <h3 className="doc-h3">Connect</h3>
+              <ol className="doc-ol">
+                <li className="doc-li">Go to <strong>Accounts</strong> in Posthive → click <strong>Connect Lemmy</strong>.</li>
+                <li className="doc-li">Enter your <strong>instance URL</strong> (e.g. <span className="doc-inline-code">https://lemmy.world</span>), <strong>username</strong>, <strong>password</strong>, and the <strong>community name</strong> (e.g. <span className="doc-inline-code">technology</span> — no <span className="doc-inline-code">!</span> prefix needed).</li>
+                <li className="doc-li">Click Connect. Posthive verifies credentials immediately.</li>
+              </ol>
+              <h3 className="doc-h3">Supported content</h3>
+              <ul className="doc-ul">
+                <li className="doc-li">Post text becomes the <strong>link post body</strong> or a <strong>text post</strong> if no URL is present.</li>
+                <li className="doc-li">The first image (if any) is used as the post URL so it appears as a link preview in Lemmy.</li>
+                <li className="doc-li">First comment automation is not supported on Lemmy.</li>
+              </ul>
+              <Callout type="warn">
+                Lemmy credentials are stored encrypted. If you change your Lemmy password, reconnect the account in Posthive.
+              </Callout>
+
               {/* ── Scheduling posts ── */}
               <SectionLabel>Features</SectionLabel>
               <h2 className="doc-h2" id="scheduling-posts">Scheduling posts</h2>
@@ -1167,6 +1201,78 @@ pnpm db:migrate`}</CopyCode>
 SUPABASE_URL="https://your-project.supabase.co"
 SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
 
+              {/* ── Workspaces & Teams ── */}
+              <SectionLabel>Workspaces &amp; Teams</SectionLabel>
+              <h2 className="doc-h2" id="workspaces-overview">Overview</h2>
+              <p className="doc-p">
+                Every account belongs to one or more <strong>workspaces</strong>. A workspace is the billing and collaboration unit — it owns connected accounts, scheduled posts, templates, and API keys. You get a personal workspace on sign-up, and you can create additional workspaces for separate teams or projects.
+              </p>
+              <p className="doc-p">
+                Switch between workspaces using the workspace picker at the top of the sidebar. Each workspace has its own plan and subscription.
+              </p>
+
+              <h2 className="doc-h2" id="workspaces-invites">Inviting members</h2>
+              <p className="doc-p">
+                Workspace owners and admins can invite team members from <strong>Sidebar → Team</strong>.
+              </p>
+              <ol className="doc-ol">
+                <li>Click <strong>Invite member</strong> in the Team page header.</li>
+                <li>Enter the email address and choose a role (Member or Admin).</li>
+                <li>The invitee receives an email with a link to <span className="doc-inline-code">/invite?token=…</span>.</li>
+                <li>If they don&apos;t have an account yet, the invite link guides them through registration and auto-accepts on completion.</li>
+                <li>Accepted invites are deleted from the database — they cannot be reused.</li>
+              </ol>
+              <Callout type="info">
+                Invite links expire after 7 days. Resend from the pending invites list if needed.
+              </Callout>
+
+              <h2 className="doc-h2" id="workspaces-roles">Roles</h2>
+              <div className="doc-table-wrap"><table className="doc-table">
+                <thead>
+                  <tr>
+                    <th>Role</th>
+                    <th>Can post &amp; schedule</th>
+                    <th>Can manage accounts</th>
+                    <th>Can invite members</th>
+                    <th>Can delete workspace</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Owner</strong></td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                    <td>Yes (if not last workspace)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Admin</strong></td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Member</strong></td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td>No</td>
+                    <td>No</td>
+                  </tr>
+                </tbody>
+              </table></div>
+              <p className="doc-p">
+                Non-owners can leave a workspace from <strong>Settings → Danger zone → Leave workspace</strong>.
+              </p>
+
+              <h2 className="doc-h2" id="workspaces-switching">Switching workspaces</h2>
+              <p className="doc-p">
+                Click the workspace name at the top of the sidebar to open the workspace picker. Select any workspace you belong to — all pages (posts, accounts, billing) immediately reflect that workspace&apos;s data. You can also create a new workspace from the picker.
+              </p>
+              <Callout type="warn">
+                Each workspace has its own billing plan. Creating a second workspace starts a new trial for that workspace. Upgrade each workspace independently.
+              </Callout>
+
               {/* ── Plans & pricing ── */}
               <SectionLabel>Billing</SectionLabel>
               <h2 className="doc-h2" id="plans-pricing">Plans &amp; pricing</h2>
@@ -1179,43 +1285,48 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
                     <th>Plan</th>
                     <th>Accounts</th>
                     <th>Posts / month</th>
+                    <th>Team members</th>
                     <th>Reels &amp; Stories</th>
+                    <th>API &amp; MCP</th>
                     <th>Overrides</th>
-                    <th>Images / post</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Trialing</td>
+                    <td>Trial</td>
                     <td>3</td>
                     <td>30</td>
+                    <td>1</td>
                     <td>No</td>
                     <td>No</td>
-                    <td>4</td>
+                    <td>No</td>
                   </tr>
                   <tr>
                     <td>Creator</td>
                     <td>5</td>
                     <td>400</td>
+                    <td>1</td>
                     <td>No</td>
                     <td>No</td>
-                    <td>4</td>
+                    <td>No</td>
                   </tr>
                   <tr>
                     <td>Pro</td>
                     <td>15</td>
                     <td>Unlimited</td>
+                    <td>2</td>
                     <td>Yes</td>
                     <td>Yes</td>
-                    <td>10</td>
+                    <td>Yes</td>
                   </tr>
                   <tr>
                     <td>Team</td>
                     <td>50</td>
                     <td>Unlimited</td>
+                    <td>4</td>
                     <td>Yes</td>
                     <td>Yes</td>
-                    <td>10</td>
+                    <td>Yes</td>
                   </tr>
                 </tbody>
               </table></div>
