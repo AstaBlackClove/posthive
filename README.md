@@ -136,7 +136,7 @@ The first tool call opens your browser to sign in. **Full setup per client →**
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=AstaBlackClove/posthive&type=Date)](https://star-history.com/#AstaBlackClove/posthive&Date)
+[![Star History Chart](https://api.star-history.com/chart?repos=AstaBlackClove/posthive&type=date&legend=top-left&sealed_token=KArWljHVyC2uW1jZFEunk4hv9bQ6icDOFz1x4HxgyVURXuZY2PSrZEnOC-K4NyWFfxGsg8ePO8iPWNVokmpSm4aRwpz8EfE0HFYBDFppW332zLCdigr_ncrGyafPyaaquoxZ7i7XWz16ZdEHsjpKQGzBUMAWMzMMW018efpnyGNI6L2Q14093OoiXRN3)](https://www.star-history.com/?repos=AstaBlackClove%2Fposthive&type=date&legend=top-left)
 
 ---
 
