@@ -16,11 +16,14 @@ const connection = { url: process.env.REDIS_URL };
 
 export const postJobQueue = new Queue("post-jobs", {
   connection,
+  streams: {
+    events: { maxLen: 100 },
+  },
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: "exponential", delay: 5000 },
-    removeOnComplete: 100,
-    removeOnFail: 200,
+    removeOnComplete: { count: 50, age: 24 * 3600 },
+    removeOnFail: { count: 100, age: 7 * 24 * 3600 },
   },
 });
 
