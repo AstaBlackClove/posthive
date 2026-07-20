@@ -6,8 +6,8 @@ export const metadata: Metadata = {
   description: "How Posthive collects, uses, and protects your data.",
 };
 
-const LAST_UPDATED = "July 11, 2026";
-const CONTACT_EMAIL = "gunasheelan208@gmail.com";
+const LAST_UPDATED = "July 20, 2026";
+const CONTACT_EMAIL = "guna@posthive.co";
 
 export default function PrivacyPage() {
   return (

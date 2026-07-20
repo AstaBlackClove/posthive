@@ -8,7 +8,7 @@ This project is in active development. Security fixes are applied to the latest 
 
 Please **do not** report security vulnerabilities through public GitHub issues, as this could expose users before a fix is available.
 
-Instead, email: **gunasheelan208@gmail.com**
+Instead, email: **guna@posthive.co**
 
 Include:
 - A description of the vulnerability

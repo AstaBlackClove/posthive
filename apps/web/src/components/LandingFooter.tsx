@@ -124,7 +124,7 @@ export function LandingFooter() {
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <span style={{ fontSize: 11, letterSpacing: ".1em", color: "#444", fontWeight: 700, marginBottom: 6, textTransform: "uppercase" as const }}>Company</span>
             {([
-              ["mailto:gunasheelan208@gmail.com", "Contact us"],
+              ["mailto:guna@posthive.co", "Contact us"],
               ["/privacy", "Privacy policy"],
               ["/terms", "Terms of service"],
             ] as [string, string][]).map(([href, label]) => (

@@ -6,8 +6,8 @@ export const metadata: Metadata = {
   description: "Terms governing your use of Posthive.",
 };
 
-const LAST_UPDATED = "June 29, 2026";
-const CONTACT_EMAIL = "gunasheelan208@gmail.com";
+const LAST_UPDATED = "July 20, 2026";
+const CONTACT_EMAIL = "guna@posthive.co";
 
 export default function TermsPage() {
   return (
