@@ -66,7 +66,7 @@ const YOUTUBE_SCOPES = [
 ].join(" ");
 const TOKEN_URL_GOOGLE = "https://oauth2.googleapis.com/token";
 
-const SCOPES = ["threads_basic", "threads_content_publish"].join(",");
+const SCOPES = ["threads_basic", "threads_content_publish", "threads_manage_insights"].join(",");
 
 const DC_CLIENT_ID     = process.env.DISCORD_CLIENT_ID!;
 const DC_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;

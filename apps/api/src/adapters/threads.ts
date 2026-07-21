@@ -11,7 +11,7 @@
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
-import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
+import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 const BASE = "https://graph.threads.net/v1.0";
 
@@ -227,5 +227,36 @@ export const threadsAdapter: PlatformAdapter = {
     const commentId = await publishContainer(userId, accessToken, containerId);
 
     return { platformCommentId: commentId };
+  },
+
+  async getAnalytics(account: Account, platformPostId: string): Promise<AnalyticsResult> {
+    const { accessToken } = getCredentials(account);
+
+    const url = new URL(`${BASE}/${platformPostId}/insights`);
+    url.searchParams.set("metric", "likes,replies,reposts,quotes,views");
+    url.searchParams.set("access_token", accessToken);
+
+    const res = await fetch(url.toString());
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Threads insights failed: ${body}`);
+    }
+
+    const data = await res.json() as {
+      data: Array<{ name: string; values?: Array<{ value: number }> }>;
+    };
+
+    const get = (name: string): number => {
+      const metric = data.data.find((m) => m.name === name);
+      return metric?.values?.[0]?.value ?? 0;
+    };
+
+    return {
+      likes:    get("likes"),
+      reposts:  get("reposts"),
+      replies:  get("replies"),
+      views:    get("views"),
+      fetchedAt: new Date().toISOString(),
+    };
   },
 };

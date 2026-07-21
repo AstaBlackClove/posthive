@@ -12,7 +12,7 @@
 import { prisma } from "./prisma.js";
 import { adapters } from "../adapters/index.js";
 
-const SUPPORTED = new Set(["bluesky", "mastodon", "pixelfed"]);
+const SUPPORTED = new Set(["bluesky", "mastodon", "pixelfed", "threads"]);
 const INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const RECENCY_MS  = 5 * 60 * 60 * 1000; // skip targets synced within 5h
 const BATCH = 5;                          // concurrent platform API calls

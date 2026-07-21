@@ -44,7 +44,6 @@ interface ChartPoint {
 
 /* ---------- constants ---------- */
 
-const PAGE_SIZE = 10;
 
 const PLATFORM_LABEL: Record<string, string> = {
   bluesky: "Bluesky",
@@ -158,7 +157,6 @@ export default function AnalyticsPage() {
   const [platform, setPlatform] = useState("all");
   const [error, setError] = useState<string | null>(null);
   const [chartType, setChartType] = useState<"bar" | "line">("bar");
-  const [page, setPage] = useState(0);
   const runId = useRef(0);
 
   const loadAll = useCallback(async (silent = false) => {
@@ -181,8 +179,6 @@ export default function AnalyticsPage() {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
-  /* reset page when filter changes */
-  useEffect(() => { setPage(0); }, [platform]);
 
   /* filtered groups */
   const allPlatforms = Array.from(
@@ -203,9 +199,15 @@ export default function AnalyticsPage() {
   /* chart data */
   const chartData = toWeekBuckets(visibleGroups);
 
-  /* pagination */
-  const totalPages = Math.ceil(visibleGroups.length / PAGE_SIZE);
-  const pageGroups = visibleGroups.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  /* top posts — sorted by total engagement desc, capped at 10 */
+  const topGroups = [...visibleGroups]
+    .sort((a, b) => {
+      const engA = a.targets.reduce((s, t) => s + t.likes + t.reposts + t.replies, 0);
+      const engB = b.targets.reduce((s, t) => s + t.likes + t.reposts + t.replies, 0);
+      return engB - engA;
+    })
+    .slice(0, 10);
+
 
   /* ---------- render ---------- */
 
@@ -354,7 +356,7 @@ export default function AnalyticsPage() {
                   color: "#555",
                 }}
               >
-                <span>Post</span>
+                <span>Top Posts · by engagement</span>
                 <span>Platforms</span>
                 <span className="text-right">Likes</span>
                 <span className="text-right">Reposts</span>
@@ -362,10 +364,10 @@ export default function AnalyticsPage() {
                 <span className="text-right">Posted</span>
               </div>
 
-              {pageGroups.length === 0 ? (
+              {topGroups.length === 0 ? (
                 <div className="px-5 py-10 text-center text-sm" style={{ color: "#555" }}>No posts yet.</div>
               ) : (
-                pageGroups.map((group, i) => {
+                topGroups.map((group, i) => {
                   const multi = group.targets.length > 1;
                   return (
                     <div
@@ -373,7 +375,7 @@ export default function AnalyticsPage() {
                       className="grid px-5 py-4"
                       style={{
                         gridTemplateColumns: "1fr 100px 70px 70px 70px 80px",
-                        borderBottom: i < pageGroups.length - 1 ? "1px solid #1e1e1e" : "none",
+                        borderBottom: i < topGroups.length - 1 ? "1px solid #1e1e1e" : "none",
                         alignItems: multi ? "start" : "center",
                       }}
                     >
@@ -397,24 +399,6 @@ export default function AnalyticsPage() {
               </div>{/* end minWidth */}
               </div>{/* end overflow-x-auto */}
 
-              {/* Pagination — outside scroll wrapper, inside card */}
-              {totalPages > 1 && (
-                <div
-                  className="flex items-center justify-between px-5 py-3"
-                  style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0e0e0e" }}
-                >
-                  <span className="text-xs" style={{ color: "#555" }}>
-                    {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, visibleGroups.length)} of {visibleGroups.length}
-                  </span>
-                  <div className="flex gap-1">
-                    <PaginationBtn label="←" disabled={page === 0} onClick={() => setPage((p) => p - 1)} />
-                    {Array.from({ length: totalPages }, (_, i) => (
-                      <PaginationBtn key={i} label={String(i + 1)} active={i === page} onClick={() => setPage(i)} />
-                    ))}
-                    <PaginationBtn label="→" disabled={page === totalPages - 1} onClick={() => setPage((p) => p + 1)} />
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Coming soon */}
@@ -436,25 +420,3 @@ export default function AnalyticsPage() {
   );
 }
 
-/* ---------- pagination button ---------- */
-
-function PaginationBtn({ label, active, disabled, onClick }: {
-  label: string; active?: boolean; disabled?: boolean; onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className="w-7 h-7 flex items-center justify-center rounded text-xs font-medium transition-colors"
-      style={
-        active
-          ? { backgroundColor: "#5b63d3", color: "#fff" }
-          : disabled
-          ? { color: "#333", cursor: "default" }
-          : { color: "#666", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }
-      }
-    >
-      {label}
-    </button>
-  );
-}
