@@ -893,6 +893,22 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
         )}
       </section>
 
+      {platform === "instagram" && (
+        <div className="plat-wrap" style={{ padding: "0 clamp(20px,5vw,72px) 48px" }}>
+          <Link
+            href="/blog/how-to-schedule-instagram-reels"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              fontSize: 14, color: accent, textDecoration: "none",
+              border: `1px solid rgba(91,99,211,0.3)`, borderRadius: 8,
+              padding: "10px 18px", background: "rgba(91,99,211,0.05)",
+            }}
+          >
+            📖 Read the full guide: How to Schedule Instagram Reels in 2026 →
+          </Link>
+        </div>
+      )}
+
       <div className="plat-wrap"><hr className="plat-rule" /></div>
 
       {/* ── Why section ── */}

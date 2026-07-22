@@ -2463,6 +2463,22 @@ export default async function FeaturePage({
       </div>
 
       {/* ── FAQ ── */}
+      {slug === "instagram-reels-scheduler" && (
+        <div className="feat-wrap" style={{ padding: "0 clamp(20px,5vw,72px) 48px" }}>
+          <a
+            href="/blog/how-to-schedule-instagram-reels"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              fontSize: 14, color: accent, textDecoration: "none",
+              border: `1px solid ${accent}33`, borderRadius: 8,
+              padding: "10px 18px", background: `${accent}0d`,
+            }}
+          >
+            📖 Read the full guide: How to Schedule Instagram Reels in 2026 →
+          </a>
+        </div>
+      )}
+
       {data.faq && data.faq.length > 0 && (
         <section
           className="feat-wrap"

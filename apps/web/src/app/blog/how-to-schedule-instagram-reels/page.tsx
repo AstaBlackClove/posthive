@@ -9,6 +9,7 @@ const articleSchema = {
   headline: "How to Schedule Instagram Reels in 2026 (Step-by-Step Guide)",
   description: "Learn how to schedule Instagram Reels in advance using Posthive. Save hours every week by batching your Reels content and publishing automatically at peak times.",
   datePublished: "2026-07-07",
+  dateModified: "2026-07-22",
   author: { "@type": "Person", name: "Guna" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
   url: `${WEB_URL}/blog/how-to-schedule-instagram-reels`,
@@ -275,6 +276,69 @@ export default function HowToScheduleInstagramReelsPage() {
           <p style={{ marginBottom: 24 }}>
             The limitation with Meta Business Suite is that it only covers Instagram and Facebook. If you post on Bluesky, LinkedIn, Threads, or any other platform, you will need a separate workflow for those. Posthive covers multiple platforms from one composer.
           </p>
+
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+            How to schedule Instagram Reels for free
+          </h2>
+
+          <p style={{ marginBottom: 20 }}>
+            There are two ways to schedule Instagram Reels without paying anything:
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 28 }}>
+            <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "20px 22px" }}>
+              <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 8px" }}>Option 1 — Posthive free trial</p>
+              <p style={{ fontSize: 14, color: "#777", lineHeight: 1.75, margin: 0 }}>
+                Posthive includes a 14-day free trial with full Instagram Reels scheduling support, no credit card required. You get access to Reels, Stories, carousels, and feed posts, plus cross-posting to Bluesky, Threads, and LinkedIn from the same composer.
+              </p>
+            </div>
+            <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "20px 22px" }}>
+              <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 8px" }}>Option 2 — Meta Business Suite (permanently free)</p>
+              <p style={{ fontSize: 14, color: "#777", lineHeight: 1.75, margin: 0 }}>
+                Meta Business Suite is free and lets you schedule Reels natively without a third-party account. The trade-off is that it only works for Instagram and Facebook — no other platforms, no bulk scheduling, and no content calendar across accounts.
+              </p>
+            </div>
+          </div>
+
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+            Instagram Reels scheduler comparison
+          </h2>
+
+          <p style={{ marginBottom: 20 }}>
+            Not all schedulers handle Instagram Reels the same way. Here is how the main options compare:
+          </p>
+
+          <div style={{ overflowX: "auto", marginBottom: 28 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: "#111" }}>
+                  {["Feature", "Posthive", "Meta Business Suite", "Buffer", "Later"].map((h) => (
+                    <th key={h} style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #2a2a2a", color: h === "Posthive" ? "#9ba2ee" : "#555", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["Schedule Reels", "✓", "✓", "✓", "✓"],
+                  ["Schedule Stories", "✓", "✓", "✗", "✓"],
+                  ["Carousel scheduling", "✓", "✓", "✓", "✓"],
+                  ["First comment scheduling", "✓", "✗", "✗", "✗"],
+                  ["Cross-platform posting", "✓ (14 platforms)", "Facebook only", "✓ (6 platforms)", "✓ (6 platforms)"],
+                  ["Bulk CSV scheduling", "✓", "✗", "✗", "✗"],
+                  ["Open source / self-host", "✓", "✗", "✗", "✗"],
+                  ["Free tier", "14-day trial", "Free forever", "Free (3 channels)", "Free (1 channel)"],
+                  ["Paid plans from", "₹550/mo", "Free", "$6/mo", "$18/mo"],
+                ].map(([feature, ...vals]) => (
+                  <tr key={feature as string} style={{ borderBottom: "1px solid #111" }}>
+                    <td style={{ padding: "10px 14px", color: "#aaa", fontSize: 13, fontWeight: 600 }}>{feature as string}</td>
+                    {vals.map((v, i) => (
+                      <td key={i} style={{ padding: "10px 14px", color: i === 0 ? "#9ba2ee" : v === "✗" ? "#444" : "#666", fontSize: 13 }}>{v as string}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
             Best times to post Instagram Reels
