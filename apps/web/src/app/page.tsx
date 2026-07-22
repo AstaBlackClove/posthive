@@ -195,7 +195,7 @@ export default function RootPage() {
         body {
           background: #0a0a0a;
           color: #ededed;
-          font-family: 'Inter', -apple-system, system-ui, sans-serif;
+          font-family: var(--font-figtree), -apple-system, system-ui, sans-serif;
           -webkit-font-smoothing: antialiased;
           text-rendering: optimizeLegibility;
           overflow-x: hidden;
@@ -227,7 +227,7 @@ export default function RootPage() {
         .hero-card {
           background: #fff; border-radius: 14px; padding: 16px 18px; width: 220px;
           border: 2px dashed #555; box-shadow: 0 4px 24px rgba(0,0,0,.35);
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-figtree), system-ui, sans-serif;
         }
         .hero-card-platform { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
         .hero-card-platform span { font-size: 12.5px; font-weight: 700; color: #111; }
@@ -241,7 +241,7 @@ export default function RootPage() {
         /* medium: smaller columns + smaller H1 so text doesn't break */
         @media (min-width: 1101px) and (max-width: 1440px) {
           .ph-hero-grid { grid-template-columns: 220px 1fr 220px !important; gap: 24px !important; }
-          .ph-hero-h1 { font-size: 56px !important; }
+          .ph-hero-h1 { font-size: 56px !important; font-family: var(--font-caprasimo), system-ui, sans-serif !important; }
           .hero-card { width: 200px !important; }
         }
         /* ≤1100px: hide side cards, center takes full width */
@@ -378,7 +378,7 @@ export default function RootPage() {
 
       <NavBar user={!!user} ctaHref={ctaHref} navCtaLabel={navCtaLabel} loading={authLoading} />
 
-      <div style={{ paddingTop: 64 }}>
+      <div className="mkt" style={{ paddingTop: 64 }}>
 
         {/* ── HERO ── */}
         <section className="ph-section" style={{ position: "relative", overflow: "hidden", padding: "110px 24px 80px" }}>
@@ -436,12 +436,12 @@ export default function RootPage() {
 
             {/* Center — untouched */}
             <div style={{ textAlign: "center" }}>
-              <h1 className="anim-2 ph-hero-h1" style={{ fontSize: 72, lineHeight: 1.03, fontWeight: 800, letterSpacing: "-0.035em", margin: "0 0 24px", color: "#f4f4f4" }}>
+              <h1 className="anim-2 ph-hero-h1" style={{ fontSize: 72, lineHeight: 1.03, fontWeight: 400, letterSpacing: "-0.02em", margin: "0 0 24px", color: "#f4f4f4", fontFamily: "var(--font-caprasimo), system-ui, sans-serif" }}>
                 <span style={{ display: "block", marginBottom: 14 }}>The agentic scheduler</span>
                 <span style={{ color: "#f4f4f4" }}>for the <span style={{ display: "inline-block", background: "#5b63d3", color: "#fff", padding: "2px 16px 4px", borderRadius: 6, transform: "rotate(-1.5deg)", transformOrigin: "center" }}>new social web.</span></span>
               </h1>
 
-              <p className="anim-3" style={{ fontSize: 19, lineHeight: 1.6, color: "#8f8f8f", maxWidth: 640, margin: "0 auto 38px", fontWeight: 400 }}>
+              <p className="anim-3" style={{ fontSize: 19, lineHeight: 1.6, color: "#8f8f8f", maxWidth: 640, margin: "0 auto 38px", fontWeight: 400, fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
                 Plan, create, review, and schedule posts across every major social network. Connect Claude, Cursor, Codex, ChatGPT or any MCP-compatible AI agent to automate your social media workflow.
               </p>
 

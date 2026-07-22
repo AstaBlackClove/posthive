@@ -1850,10 +1850,11 @@ export default async function FeaturePage({
 
   return (
     <div
+      className="mkt"
       style={{
         minHeight: "100vh",
         color: "#ededed",
-        fontFamily: "Inter,system-ui,-apple-system,sans-serif",
+        fontFamily: "var(--font-figtree), system-ui, sans-serif",
         background: `radial-gradient(1100px 640px at 88% -180px, rgba(30,33,64,0.7), transparent 60%), radial-gradient(900px 700px at -8% 110%, rgba(0,0,0,0.3), transparent 55%), #0a0a0a`,
       }}
     >

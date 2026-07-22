@@ -103,7 +103,7 @@ function BlogNav() {
 
 export default function BlogPage() {
   return (
-    <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "system-ui, sans-serif" }}>
+    <div className="mkt" style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
       <BlogNav />
 
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "120px 24px 100px" }}>

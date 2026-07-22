@@ -162,14 +162,14 @@ const py = (n: number) => `${n * LEADING}px`;
 
 export default function AgentPage() {
   return (
-    <div style={{
+    <div className="mkt" style={{
       background: `
         radial-gradient(1100px 640px at 88% -180px, color-mix(in srgb, ${T.a900} 70%, transparent), transparent 60%),
         radial-gradient(900px 700px at -8% 110%, color-mix(in srgb, black 30%, transparent), transparent 55%),
         ${T.bg}
       `,
       minHeight: "100vh", color: T.text,
-      fontFamily: "Inter, system-ui, sans-serif",
+      fontFamily: "var(--font-figtree), system-ui, sans-serif",
     }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />

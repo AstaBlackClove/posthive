@@ -131,6 +131,11 @@ input::placeholder, textarea::placeholder {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Marketing page typography ── */
+.mkt h1, .mkt h2 {
+  font-family: var(--font-caprasimo), system-ui, sans-serif;
+}
+
 /* ── FullCalendar dark theme overrides ── */
 .fc {
   color: var(--color-text) !important;

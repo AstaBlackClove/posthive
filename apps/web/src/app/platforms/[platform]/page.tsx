@@ -730,8 +730,8 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
   const sample = PLATFORM_SAMPLES[platform] ?? PLATFORM_SAMPLES.bluesky;
 
   return (
-    <div style={{
-      minHeight: "100vh", color: "#ededed", fontFamily: "Inter,system-ui,-apple-system,sans-serif",
+    <div className="mkt" style={{
+      minHeight: "100vh", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif",
       background: `radial-gradient(1100px 640px at 88% -180px, rgba(30,33,64,0.7), transparent 60%), radial-gradient(900px 700px at -8% 110%, rgba(0,0,0,0.3), transparent 55%), #0a0a0a`,
     }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApp) }} />

@@ -11,7 +11,7 @@ const CONTACT_EMAIL = "guna@posthive.co";
 
 export default function PrivacyPage() {
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#ededed", fontFamily: "system-ui, sans-serif" }}>
+    <div className="mkt" style={{ minHeight: "100vh", background: "#0a0a0a", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
       <style>{`
         .prose h2 { font-size: 20px; font-weight: 600; color: #ededed; margin: 40px 0 12px; letter-spacing: -.01em; }
         .prose h3 { font-size: 15px; font-weight: 600; color: #cfcfcf; margin: 24px 0 8px; }

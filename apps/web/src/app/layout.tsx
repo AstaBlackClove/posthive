@@ -1,6 +1,21 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Caprasimo, Figtree } from "next/font/google";
 import "./globals.css";
+
+const caprasimo = Caprasimo({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-caprasimo",
+  display: "swap",
+});
+
+const figtree = Figtree({
+  weight: ["400", "500", "600", "700", "800"],
+  subsets: ["latin"],
+  variable: "--font-figtree",
+  display: "swap",
+});
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "../context/AuthContext";
 import { WorkspaceProvider } from "../context/WorkspaceContext";
@@ -73,7 +88,7 @@ const softwareSchema = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full" style={{ backgroundColor: "var(--color-bg)" }}>
+    <html lang="en" className={`h-full ${caprasimo.variable} ${figtree.variable}`} style={{ backgroundColor: "var(--color-bg)" }}>
       <head>
         <script
           type="application/ld+json"
