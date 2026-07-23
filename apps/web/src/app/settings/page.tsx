@@ -161,7 +161,7 @@ export default function SettingsPage() {
       <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-5">
 
         {/* Top row: Profile + Password */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className={`grid grid-cols-1 gap-5 ${user?.hasPassword ? "md:grid-cols-2" : ""}`}>
           <Section title="Profile" description="Update your display name and email address.">
             <form onSubmit={saveProfile} className="space-y-4">
               <Field label="Name">

@@ -9,6 +9,7 @@ import { withAuth, getUser, getWorkspaceId, requireAdminRole } from "../lib/auth
 import { getDiscordChannels, encryptDiscordCredentials } from "../adapters/discord.js";
 import { tumblrRequestTokenAuth, tumblrAccessTokenAuth, tumblrApiAuthHeader, encryptTumblrCredentials } from "../adapters/tumblr.js";
 import { downloadAndStoreAvatar } from "../lib/avatarStore.js";
+import { listGBPLocations } from "../adapters/googlebusiness.js";
 import { isSsrfBlocked } from "../lib/ssrf.js";
 
 async function getUserWorkspaceId(userId: string): Promise<string | null> {
@@ -65,6 +66,11 @@ const YOUTUBE_SCOPES = [
   "https://www.googleapis.com/auth/youtube.force-ssl",
 ].join(" ");
 const TOKEN_URL_GOOGLE = "https://oauth2.googleapis.com/token";
+
+const GB_CLIENT_ID     = process.env.GOOGLEBUSINESS_CLIENT_ID ?? "";
+const GB_CLIENT_SECRET = process.env.GOOGLEBUSINESS_CLIENT_SECRET ?? "";
+const GB_REDIRECT_URI  = process.env.GOOGLEBUSINESS_REDIRECT_URI ?? "";
+const GB_SCOPES        = "https://www.googleapis.com/auth/business.manage";
 
 const SCOPES = ["threads_basic", "threads_content_publish", "threads_manage_insights"].join(",");
 
@@ -891,6 +897,122 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     console.log(`[youtube oauth] connected ${displayName} → user ${userId}`);
     return reply.redirect(buildRedirect(redirectBase, { connected: "youtube" }));
+  });
+
+  // ── Google Business Profile OAuth ─────────────────────────────────────────
+  app.get("/auth/googlebusiness", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { from } = req.query as Record<string, string>;
+    const nonce = randomBytes(32).toString("hex");
+    await prisma.oAuthState.create({ data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) } });
+    const state = Buffer.from(JSON.stringify({ userId, from, nonce })).toString("base64url");
+    const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    url.searchParams.set("client_id", GB_CLIENT_ID);
+    url.searchParams.set("redirect_uri", GB_REDIRECT_URI);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("scope", GB_SCOPES);
+    url.searchParams.set("access_type", "offline");
+    url.searchParams.set("prompt", "consent");
+    url.searchParams.set("state", state);
+    return reply.redirect(url.toString());
+  });
+
+  app.get("/auth/googlebusiness/callback", async (req, reply) => {
+    const { code, state, error } = req.query as Record<string, string>;
+    if (error) return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error }));
+    if (!code || !state) return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "missing_code_or_state" }));
+
+    let userId: string;
+    let from: string | undefined;
+    try {
+      const decoded = JSON.parse(Buffer.from(state, "base64url").toString()) as { userId: string; from?: string; nonce?: string };
+      userId = decoded.userId;
+      from = decoded.from === "onboarding" ? "onboarding" : undefined;
+      const nonce = decoded.nonce;
+      if (!nonce) throw new Error("missing nonce");
+      const storedState = await prisma.oAuthState.findUnique({ where: { nonce } });
+      if (!storedState || storedState.userId !== userId || storedState.expiresAt < new Date()) {
+        return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "invalid_or_expired_state" }));
+      }
+      await prisma.oAuthState.delete({ where: { nonce } });
+    } catch {
+      return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "invalid_state" }));
+    }
+
+    const redirectBase = from === "onboarding" ? `${WEB_URL}/onboarding?step=2` : `${WEB_URL}/accounts`;
+
+    let accessToken: string;
+    let refreshToken: string;
+    let expiresIn: number;
+    try {
+      const tokenRes = await fetch(TOKEN_URL_GOOGLE, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: GB_CLIENT_ID,
+          client_secret: GB_CLIENT_SECRET,
+          code,
+          redirect_uri: GB_REDIRECT_URI,
+          grant_type: "authorization_code",
+        }),
+      });
+      if (!tokenRes.ok) throw new Error(await tokenRes.text());
+      const tokenData = await tokenRes.json() as { access_token: string; refresh_token?: string; expires_in: number };
+      accessToken = tokenData.access_token;
+      refreshToken = tokenData.refresh_token ?? "";
+      expiresIn = tokenData.expires_in;
+    } catch (err) {
+      console.error("[googlebusiness oauth] token exchange error:", err);
+      return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
+    }
+
+    if (!refreshToken) {
+      return reply.redirect(buildRedirect(redirectBase, { error: "no_refresh_token" }));
+    }
+
+    // List the user's Business Profile locations — take the first one.
+    // TODO: if multiple locations, redirect to a location picker UI.
+    let locationName: string;
+    let displayName: string;
+    try {
+      const locations = await listGBPLocations(accessToken);
+      locationName = locations[0].locationName;
+      displayName = locations[0].displayName;
+    } catch (err) {
+      console.error("[googlebusiness oauth] list locations error:", err);
+      return reply.redirect(buildRedirect(redirectBase, { error: "no_gbp_locations" }));
+    }
+
+    const credentials = encrypt(JSON.stringify({
+      accessToken,
+      refreshToken,
+      locationName,
+      displayName,
+      expiresAt: Date.now() + (expiresIn - 60) * 1000,
+    }));
+    const expiresAt = new Date(Date.now() + (expiresIn - 60) * 1000);
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(buildRedirect(redirectBase, { error: roleBlocked.error }));
+    }
+    const existing = await prisma.account.findFirst({
+      where: workspaceId
+        ? { platform: "googlebusiness", displayName, workspaceId }
+        : { platform: "googlebusiness", displayName, userId },
+    });
+    if (!existing && workspaceId) {
+      const blocked = await enforcePlan(userId, workspaceId, "accounts");
+      if (blocked) return reply.redirect(buildRedirect(redirectBase, { error: blocked.error }));
+    }
+    await prisma.account.upsert({
+      where: { id: existing?.id ?? "new" },
+      create: { platform: "googlebusiness", displayName, credentials, expiresAt, userId, ...(workspaceId ? { workspaceId } : {}) },
+      update: { credentials, expiresAt },
+    });
+
+    console.log(`[googlebusiness oauth] connected ${displayName} → user ${userId}`);
+    return reply.redirect(buildRedirect(redirectBase, { connected: "googlebusiness" }));
   });
 
   // ── X / Twitter OAuth 1.0a ────────────────────────────────────────────────

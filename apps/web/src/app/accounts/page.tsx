@@ -53,8 +53,9 @@ const PLATFORM_META: Record<string, { label: string; brand: string }> = {
   nostr:     { label: "Nostr",     brand: "#8B5CF6" },
   twitter:   { label: "X",         brand: "#000000" },
   instagram: { label: "Instagram", brand: "#e1306c" },
-  tumblr:    { label: "Tumblr",    brand: "#35465c" },
-  lemmy:     { label: "Lemmy",     brand: "#ff6314" },
+  tumblr:         { label: "Tumblr",                brand: "#35465c" },
+  lemmy:          { label: "Lemmy",                 brand: "#ff6314" },
+  googlebusiness: { label: "Google Business",       brand: "#4285f4" },
 };
 
 function NostrFallbackAvatar() {
@@ -1002,7 +1003,7 @@ export default function AccountsPage() {
           </div>
         )}
 
-        {!loading && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {!loading && <div className="masonry-accounts">
 
           {/* ── Bluesky ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("bluesky") }}>
@@ -1632,6 +1633,32 @@ export default function AccountsPage() {
               </div>
             );
           })()}
+
+          {/* ── Google Business Profile ── */}
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("googlebusiness") }}>
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                <PlatformIcon platform="googlebusiness" size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm" style={{ color: TEXT }}>Google Business Profile</p>
+                <p className="text-xs" style={{ color: MUTED }}>Google OAuth 2.0 · post updates to your listing</p>
+              </div>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
+            </div>
+            <div className="p-5 space-y-3">
+              <button disabled
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                <PlatformIcon platform="googlebusiness" size={16} />
+                Connect Google Business Profile
+              </button>
+              <p className="text-xs" style={{ color: MUTED }}>
+                Awaiting Google Business Profile API approval · coming soon
+              </p>
+            </div>
+          </div>
 
         </div>}
       </div>

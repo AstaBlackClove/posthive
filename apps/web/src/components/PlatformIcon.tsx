@@ -1,17 +1,18 @@
 const PLATFORM_DOMAIN: Record<string, string> = {
-  bluesky:   "bsky.app",
-  threads:   "threads.net",
-  instagram: "instagram.com",
-  linkedin:  "linkedin.com",
-  mastodon:  "mastodon.social",
-  pixelfed:  "pixelfed.social",
-  youtube:   "youtube.com",
-  facebook:  "facebook.com",
-  twitter:   "x.com",
-  pinterest: "pinterest.com",
-  discord:   "discord.com",
-  tumblr:    "tumblr.com",
-  lemmy:     "join-lemmy.org",
+  bluesky:        "bsky.app",
+  threads:        "threads.net",
+  instagram:      "instagram.com",
+  linkedin:       "linkedin.com",
+  mastodon:       "mastodon.social",
+  pixelfed:       "pixelfed.social",
+  youtube:        "youtube.com",
+  facebook:       "facebook.com",
+  twitter:        "x.com",
+  pinterest:      "pinterest.com",
+  discord:        "discord.com",
+  tumblr:         "tumblr.com",
+  lemmy:          "join-lemmy.org",
+  googlebusiness: "business.google.com",
 };
 
 function TelegramSvg({ size }: { size: number }) {
@@ -36,6 +37,11 @@ export function PlatformIcon({ platform, size = 16, className }: Props) {
       style={{ objectFit: "contain", display: "inline-block", borderRadius: size * 0.18 }} />
   );
   if (platform === "telegram") return <TelegramSvg size={size} />;
+  if (platform === "googlebusiness") return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/googlemybusinesslogo.svg" alt="google business profile" width={size} height={size}
+      style={{ objectFit: "contain", display: "inline-block", borderRadius: size * 0.18 }} />
+  );
 
   const domain = PLATFORM_DOMAIN[platform];
   if (!domain) return <span style={{ fontSize: size * 0.75 }}>🌐</span>;

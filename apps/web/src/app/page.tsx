@@ -21,10 +21,10 @@ const PLATFORMS_GRID = [
   { name: "Pinterest",      domain: "pinterest.com",   meta: "Pins · image required",         accent: "#e60023", platform: "pinterest" },
   { name: "X (Twitter)",    domain: "x.com",           meta: "100 tweets/mo · Pro & Team",    accent: "#e7e7e7", platform: "twitter" },
   { name: "Telegram",      domain: "telegram.org",    meta: "4,096 chars · Bot API",         accent: "#229ED9", platform: "telegram" },
-  { name: "Nostr",         domain: "nostr.com",       meta: "Keypair · decentralized · no approval", accent: "#8B5CF6", platform: "nostr" },
+  { name: "Nostr",         domain: "nostr.com",       meta: "Keypair · decentralized · no approval", accent: "#8B5CF6", platform: "nostr", iconUrl: "/Nostr.svg" },
   { name: "Discord",       domain: "discord.com",     meta: "2,000 chars · Bot + webhook",   accent: "#5865F2", platform: "discord" },
   { name: "Tumblr",        domain: "tumblr.com",      meta: "4,096 chars · OAuth 1.0a",      accent: "#35465c", platform: "tumblr" },
-  { name: "Lemmy",         domain: "lemmy.world",     meta: "Federated · username + password", accent: "#ff6314", platform: "lemmy" },
+  { name: "Lemmy",         domain: "join-lemmy.org",  meta: "Federated · username + password", accent: "#ff6314", platform: "lemmy" },
 ];
 
 // Hero card cycling data — one array per card slot
@@ -603,7 +603,7 @@ export default function RootPage() {
                 {PLATFORMS_GRID.map(p => (
                   <span key={p.domain} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, border: "1px solid #1e1e1e", background: "#111", fontSize: 13, color: "#ccc" }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https://www.google.com/s2/favicons?domain=${p.domain}&sz=32`} alt={p.name} width={14} height={14} />
+                    <img src={p.iconUrl ?? `https://www.google.com/s2/favicons?domain=${p.domain}&sz=32`} alt={p.name} width={14} height={14} />
                     {p.name}
                   </span>
                 ))}
@@ -1209,9 +1209,9 @@ function BulkCsvMockup() {
 
 function PerPlatformMockup() {
   const PLATFORMS = [
-    { domain: "bsky.app",      label: "Bluesky",   text: "Long-form thoughts on async content workflows and why scheduling beats publishing live..." },
-    { domain: "threads.net",   label: "Threads",   text: "Hot take: scheduled posts perform better than live ones. Here's why 👇" },
-    { domain: "linkedin.com",  label: "LinkedIn",  text: "3 lessons learned from automating our content pipeline with Posthive 🚀" },
+    { domain: "bsky.app",      label: "Bluesky",   text: "Long-form thoughts on async content workflows and why scheduling beats publishing live...",   iconUrl: undefined as string | undefined },
+    { domain: "threads.net",   label: "Threads",   text: "Hot take: scheduled posts perform better than live ones. Here's why 👇",                       iconUrl: undefined as string | undefined },
+    { domain: "linkedin.com",  label: "LinkedIn",  text: "3 lessons learned from automating our content pipeline with Posthive 🚀",                      iconUrl: undefined as string | undefined },
   ];
 
   const [activeIdx, setActiveIdx] = useState(0);
@@ -1251,7 +1251,7 @@ function PerPlatformMockup() {
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`https://www.google.com/s2/favicons?domain=${p.domain}&sz=32`} alt={p.label} width={14} height={14} />
+              <img src={p.iconUrl ?? `https://www.google.com/s2/favicons?domain=${p.domain}&sz=32`} alt={p.label} width={14} height={14} />
               <span style={{ fontSize:13, fontWeight:600, color: active ? "#9ba2ee" : "#555", transition:"color .35s ease" }}>{p.label}</span>
               <span className="mono" style={{
                 marginLeft:"auto", fontSize:10, padding:"2px 8px", borderRadius:999, letterSpacing:".04em",
@@ -1535,9 +1535,9 @@ function ComposeTypingMockup() {
   const TEXT = "Just shipped a new feature 🚀 Thread-safe scheduling across all your favorite platforms. No more copy-paste marathons.";
   const MAX = 300;
   const PLATFORMS = [
-    { domain: "bsky.app",       label: "bsky" },
-    { domain: "threads.net",    label: "threads" },
-    { domain: "instagram.com",  label: "instagram" },
+    { domain: "bsky.app",       label: "bsky",       iconUrl: undefined as string | undefined },
+    { domain: "threads.net",    label: "threads",    iconUrl: undefined as string | undefined },
+    { domain: "instagram.com",  label: "instagram",  iconUrl: undefined as string | undefined },
   ];
 
   const [displayed, setDisplayed] = useState("");
@@ -1597,7 +1597,7 @@ function ComposeTypingMockup() {
             transition:"opacity .22s ease, transform .22s ease",
           }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`https://www.google.com/s2/favicons?domain=${p.domain}&sz=32`} alt={p.label} width={12} height={12} />
+            <img src={p.iconUrl ?? `https://www.google.com/s2/favicons?domain=${p.domain}&sz=32`} alt={p.label} width={12} height={12} />
             <span style={{ color:"#9ba2ee" }}>{p.label}</span>
           </div>
         ))}

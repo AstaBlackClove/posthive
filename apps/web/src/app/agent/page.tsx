@@ -43,7 +43,7 @@ const faqSchema = {
   "@type": "FAQPage",
   mainEntity: [
     { "@type": "Question", name: "What is posthive-mcp?", acceptedAnswer: { "@type": "Answer", text: "posthive-mcp is an MCP (Model Context Protocol) server you run with npx. It gives Claude Desktop, Cursor, Windsurf, and any MCP-compatible client tools to list accounts, create posts, and manage your Posthive queue." } },
-    { "@type": "Question", name: "What is posthive-cli and how is it different from the MCP server?", acceptedAnswer: { "@type": "Answer", text: "posthive-cli is a shell command (`posthive`) that mirrors the same API. It's built for agents that run shell commands rather than speak MCP directly — OpenClaw, Claude Code skills, and custom automation pipelines. Every command outputs structured JSON." } },
+    { "@type": "Question", name: "What is posthive-cli and how is it different from the MCP server?", acceptedAnswer: { "@type": "Answer", text: "posthive-cli is a shell command (`posthive`) that mirrors the same API. It's built for agents that run shell commands rather than speak MCP directly OpenClaw, Claude Code skills, and custom automation pipelines. Every command outputs structured JSON." } },
     { "@type": "Question", name: "Will an AI agent publish posts without my approval?", acceptedAnswer: { "@type": "Answer", text: "No. Every post created by an agent is saved as a draft by default and appears in Posthive's review queue. Nothing publishes unless a human approves it, or the agent is explicitly told to schedule directly with a future timestamp." } },
     { "@type": "Question", name: "Do I need a paid plan to use the agent tools?", acceptedAnswer: { "@type": "Answer", text: "The MCP server requires a Pro or Team plan. The CLI works with any valid API key, which is also available on Pro and Team." } },
   ],
@@ -230,13 +230,6 @@ export default function AgentPage() {
                 Use the API
               </Link>
             </div>
-            <div style={{ display: "flex", gap: 24, marginTop: 36, color: T.muted, fontSize: 13, flexWrap: "wrap" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 8px #4ade80", display: "block" }} />
-                API live · 99.98% uptime
-              </span>
-              <span>AGPL-3.0 · open source</span>
-            </div>
           </div>
 
           {/* Claude Code preview */}
@@ -290,7 +283,7 @@ export default function AgentPage() {
                     <span style={{ fontSize: 11, padding: "3px 10px", border: `1px solid ${T.accent}`, color: T.accent, borderRadius: 6 }}>DRAFT</span>
                   </div>
                   <p style={{ fontSize: 13, lineHeight: 1.55, color: T.muted82, marginBottom: 12 }}>
-                    Shipped v2.0 today — drag-to-reschedule calendar, per-platform overrides, and first-comment on every platform. Try it free →
+                    Shipped v2.0 today drag-to-reschedule calendar, per-platform overrides, and first-comment on every platform. Try it free →
                   </p>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     {["bsky.app","threads.net","linkedin.com","mastodon.social"].map(d => (
@@ -334,7 +327,7 @@ export default function AgentPage() {
         <div style={WRAP}>
           <div className="agent-stat-grid">
             {[
-              { n: "13", label: "Platforms" },
+              { n: "Multi", label: "Platforms" },
               { n: "10", label: "Tools · commands" },
               { n: "2",  label: "Install paths" },
               { n: "100%", label: "Draft-first" },
@@ -355,7 +348,7 @@ export default function AgentPage() {
           Connect in three steps.
         </h2>
         <p style={{ fontSize: 18, lineHeight: 1.55, maxWidth: "58ch", color: T.muted82, marginBottom: 56 }}>
-          One-click for the hosted apps that ship an MCP UI — Claude, ChatGPT, Cursor, Windsurf, Codex, VS Code. Config-file or shell for everything else.
+          One-click for the hosted apps that ship an MCP UI Claude, ChatGPT, Cursor, Windsurf, Codex, VS Code. Config-file or shell for everything else.
         </p>
 
         <AgentSetupSection />
@@ -372,13 +365,13 @@ export default function AgentPage() {
               One config block,<br />full MCP access.
             </h2>
             <p style={{ fontSize: 15, lineHeight: 1.6, color: T.muted72, marginBottom: 28, maxWidth: "44ch" }}>
-              Drop <code style={{ color: T.a300, background: `color-mix(in srgb, ${T.accent} 10%, transparent)`, padding: "2px 6px", borderRadius: 4, fontSize: 13 }}>posthive-mcp</code> into any MCP client config and your agent instantly has tools to list accounts, create posts, approve drafts, and manage the queue — no server to run or maintain, npx handles it.
+              Drop <code style={{ color: T.a300, background: `color-mix(in srgb, ${T.accent} 10%, transparent)`, padding: "2px 6px", borderRadius: 4, fontSize: 13 }}>posthive-mcp</code> into any MCP client config and your agent instantly has tools to list accounts, create posts, approve drafts, and manage the queue no server to run or maintain, npx handles it.
             </p>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                ["list_accounts", "— connected accounts and IDs"],
-                ["create_post", "— draft or schedule directly"],
-                ["approve_draft", "— promote a draft to scheduled"],
+                ["list_accounts", "- connected accounts and IDs"],
+                ["create_post", "- draft or schedule directly"],
+                ["approve_draft", "- promote a draft to scheduled"],
                 ["update_post / duplicate_post / delete_post", ""],
                 ["list_templates / create_from_template", ""],
               ].map(([cmd, desc]) => (
@@ -431,7 +424,7 @@ export default function AgentPage() {
               A CLI that any agent can run.
             </h2>
             <p style={{ fontSize: 15, lineHeight: 1.6, color: T.muted72, marginBottom: 20, maxWidth: "48ch" }}>
-              <code style={{ color: T.a300, background: `color-mix(in srgb, ${T.accent} 10%, transparent)`, padding: "2px 6px", borderRadius: 4, fontSize: 13 }}>posthive-cli</code> mirrors the same API as a plain shell command. Every output is structured JSON — perfect for agents that call shell tools rather than speak MCP directly, like OpenClaw or custom pipelines.
+              <code style={{ color: T.a300, background: `color-mix(in srgb, ${T.accent} 10%, transparent)`, padding: "2px 6px", borderRadius: 4, fontSize: 13 }}>posthive-cli</code> mirrors the same API as a plain shell command. Every output is structured JSON perfect for agents that call shell tools rather than speak MCP directly, like OpenClaw or custom pipelines.
             </p>
             <p style={{ fontSize: 15, lineHeight: 1.6, color: T.muted72, marginBottom: 24, maxWidth: "48ch" }}>
               It ships with a bundled skill file so agents that support Claude Code-style skills discover the full command set, platform character limits, and best practices automatically.
@@ -461,10 +454,10 @@ export default function AgentPage() {
               Agents learn the tool<br />by reading it.
             </h2>
             <p style={{ fontSize: 15, lineHeight: 1.6, color: T.muted72, marginBottom: 20, maxWidth: "46ch" }}>
-              No prompt engineering required. The bundled <code style={{ color: T.a300, background: `color-mix(in srgb, ${T.accent} 10%, transparent)`, padding: "2px 6px", borderRadius: 4, fontSize: 13 }}>SKILL.md</code> describes every command, required flags, platform quirks (Instagram needs media, X has no links, LinkedIn rewards links in the first comment), and the draft-first workflow — so any capable agent figures out the right call on its own.
+              No prompt engineering required. The bundled <code style={{ color: T.a300, background: `color-mix(in srgb, ${T.accent} 10%, transparent)`, padding: "2px 6px", borderRadius: 4, fontSize: 13 }}>SKILL.md</code> describes every command, required flags, platform quirks (Instagram needs media, X has no links, LinkedIn rewards links in the first comment), and the draft-first workflow so any capable agent figures out the right call on its own.
             </p>
             <p style={{ fontSize: 14, lineHeight: 1.6, color: T.muted, fontStyle: "italic", maxWidth: "46ch" }}>
-              Try prompts like: <span style={{ color: T.text }}>&ldquo;Schedule a LinkedIn post about our launch for tomorrow 9am with the link in the first comment&rdquo;</span> — the agent handles the rest.
+              Try prompts like: <span style={{ color: T.text }}>&ldquo;Schedule a LinkedIn post about our launch for tomorrow 9am with the link in the first comment&rdquo;</span> the agent handles the rest.
             </p>
           </div>
           <CodePanel filename="SKILL.md">
@@ -499,7 +492,7 @@ export default function AgentPage() {
             {
               icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M3 12h18" stroke={T.accent} strokeWidth="1.4"/><circle cx="12" cy="12" r="8" stroke={T.accent} strokeWidth="1.4"/></svg>,
               title: "Explicit scheduling only",
-              desc: "An agent can only skip the draft step by passing a future timestamp and being told to schedule directly — never by default.",
+              desc: "An agent can only skip the draft step by passing a future timestamp and being told to schedule directly never by default.",
             },
             {
               icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="4" y="9" width="16" height="12" rx="2" stroke={T.accent} strokeWidth="1.4"/><path d="M8 9V6a4 4 0 018 0v3" stroke={T.accent} strokeWidth="1.4"/></svg>,

@@ -83,8 +83,9 @@ export const PLATFORM_COLOR: Record<string, string> = {
   telegram: "#229ED9",
   nostr: "#7B5EA7",
   discord: "#5865F2",
-  tumblr:  "#35465c",
-  lemmy:   "#ff6314",
+  tumblr:         "#35465c",
+  lemmy:          "#ff6314",
+  googlebusiness: "#4285f4",
 };
 
 export const PLATFORM_LIMIT: Record<string, number> = {
@@ -100,8 +101,9 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   telegram: 4096,
   nostr: 10000,
   discord: 2000,
-  tumblr:  4096,
-  lemmy:   10000,
+  tumblr:         4096,
+  lemmy:          10000,
+  googlebusiness: 1500,
 };
 
 export const MAX_IMAGES = 4;
