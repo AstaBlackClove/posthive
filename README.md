@@ -13,6 +13,7 @@
   <a href="https://github.com/AstaBlackClove/posthive/blob/main/LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" /></a>
   <a href="https://github.com/AstaBlackClove/posthive"><img alt="GitHub Repo" src="https://img.shields.io/github/stars/AstaBlackClove/posthive?style=social" /></a>
   <a href="https://discord.gg/UEdnAtHxgN"><img alt="Discord" src="https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white" /></a>
+  <a href="https://opencollective.com/posthive"><img alt="Open Collective" src="https://img.shields.io/opencollective/all/posthive?label=sponsors&color=brightgreen" /></a>
 </p>
 
 <p align="center">
@@ -145,6 +146,18 @@ The first tool call opens your browser to sign in. **Full setup per client →**
 Questions, feature requests, bugs join the Discord:
 
 **[discord.gg/UEdnAtHxgN](https://discord.gg/UEdnAtHxgN)**
+
+---
+
+## Sponsors
+
+Support Posthive's development on [Open Collective](https://opencollective.com/posthive).
+
+<a href="https://opencollective.com/posthive"><img src="https://opencollective.com/posthive/sponsors.svg?width=890" alt="Sponsors" /></a>
+
+### Backers
+
+<a href="https://opencollective.com/posthive"><img src="https://opencollective.com/posthive/backers.svg?width=890" alt="Backers" /></a>
 
 ---
 
