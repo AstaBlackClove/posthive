@@ -73,8 +73,8 @@ const PLANS = [
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
       { text: "1 team member", included: true },
-      { text: "Reels & Stories", included: false },
-      { text: "Per-platform overrides", included: false },
+      { text: "Reels & Stories", included: true },
+      { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting", included: false },
       { text: "API access & MCP", included: false },
       { text: "Webhook outbound", included: false },
@@ -545,6 +545,13 @@ export default function RootPage() {
                 <span style={{ color: "#ededed", fontWeight: 500 }}>{val}</span>{label}
               </span>
             ))}
+            <span style={{ width: 1, height: 18, background: "#2a2a2a", display: "inline-block" }} />
+            <a href="https://github.com/punkpeye/awesome-mcp-servers" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, color: "#9a9a9a", textDecoration: "none", transition: "color .15s" }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#ededed")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#9a9a9a")}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#f0a500"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <span>Featured in <span style={{ color: "#ededed", fontWeight: 500 }}>awesome-mcp-servers</span></span>
+            </a>
           </div>
         </section>
 

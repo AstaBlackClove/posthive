@@ -115,6 +115,49 @@ async function uploadImage(
   return imageUrn;
 }
 
+async function uploadVideo(
+  token: string,
+  personUrn: string,
+  buffer: Buffer,
+): Promise<string> {
+  const initRes = await liRequest("POST", "/rest/videos?action=initializeUpload", token, {
+    initializeUploadRequest: {
+      owner: personUrn,
+      fileSizeBytes: buffer.length,
+      uploadCaptions: false,
+      uploadThumbnail: false,
+    },
+  });
+  if (!initRes.ok) throw new Error(`LinkedIn video init failed: ${await initRes.text()}`);
+  const initData = await initRes.json() as {
+    value: {
+      uploadInstructions: Array<{ uploadUrl: string; firstByte: number; lastByte: number }>;
+      video: string;
+      uploadToken: string;
+    };
+  };
+  const { uploadInstructions, video: videoUrn, uploadToken } = initData.value;
+
+  const uploadedPartIds: string[] = [];
+  for (const instruction of uploadInstructions) {
+    const chunk = buffer.subarray(instruction.firstByte, instruction.lastByte + 1);
+    const uploadRes = await fetch(instruction.uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/octet-stream", Authorization: `Bearer ${token}` },
+      body: new Uint8Array(chunk),
+    });
+    if (!uploadRes.ok) throw new Error(`LinkedIn video chunk upload failed: ${await uploadRes.text()}`);
+    uploadedPartIds.push(uploadRes.headers.get("etag") ?? "");
+  }
+
+  const finalRes = await liRequest("POST", "/rest/videos?action=finalizeUpload", token, {
+    finalizeUploadRequest: { video: videoUrn, uploadToken, uploadedPartIds },
+  });
+  if (!finalRes.ok) throw new Error(`LinkedIn video finalize failed: ${await finalRes.text()}`);
+
+  return videoUrn;
+}
+
 let storageAdapter: StorageAdapter | null = null;
 export function setLinkedInStorage(s: StorageAdapter): void {
   storageAdapter = s;
@@ -147,12 +190,22 @@ export const linkedinAdapter: PlatformAdapter = {
     const { accessToken: token, personUrn: author } = creds;
 
     const isVideo = (u: string) => /\.(mp4|mov|quicktime)$/i.test(u);
+    const videoUrls = content.mediaUrls.filter(u => isVideo(u));
     const imageUrls = content.mediaUrls.filter(u => !isVideo(u));
 
-    let imageUrns: string[] = [];
-    if (storageAdapter && imageUrls.length > 0) {
+    let mediaContent: Record<string, unknown> | undefined;
+
+    if (storageAdapter && videoUrls.length > 0) {
       try {
-        imageUrns = await Promise.all(
+        const buffer = await storageAdapter.getBuffer(videoUrls[0]);
+        const videoUrn = await uploadVideo(token, author, buffer);
+        mediaContent = { media: { id: videoUrn } };
+      } catch (err) {
+        console.warn("[linkedin] video upload failed:", err);
+      }
+    } else if (storageAdapter && imageUrls.length > 0) {
+      try {
+        const imageUrns = await Promise.all(
           imageUrls.slice(0, 9).map(async (url) => {
             const buffer = await storageAdapter!.getBuffer(url);
             const ext = url.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -160,9 +213,11 @@ export const linkedinAdapter: PlatformAdapter = {
             return uploadImage(token, author, buffer, mime);
           })
         );
+        mediaContent = imageUrns.length === 1
+          ? { media: { id: imageUrns[0] } }
+          : { multiImage: { images: imageUrns.map(id => ({ id, altText: "" })) } };
       } catch (err) {
         console.warn("[linkedin] image upload skipped (API tier does not support media):", err);
-        imageUrns = [];
       }
     }
 
@@ -177,11 +232,7 @@ export const linkedinAdapter: PlatformAdapter = {
         targetEntities: [],
         thirdPartyDistributionChannels: [],
       },
-      ...(imageUrns.length > 0 ? {
-        content: imageUrns.length === 1
-          ? { media: { id: imageUrns[0] } }
-          : { multiImage: { images: imageUrns.map(id => ({ id, altText: "" })) } },
-      } : {}),
+      ...(mediaContent ? { content: mediaContent } : {}),
     };
 
     const res = await liRequest("POST", "/rest/posts", token, postBody);

@@ -323,6 +323,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       displayName = profile.username ?? igUserId;
       avatarUrl = profile.profile_picture_url ?? null;
     } catch { /* optional */ }
+    avatarUrl = await downloadAndStoreAvatar(avatarUrl);
 
     const credentials = encrypt(JSON.stringify({ accessToken: longToken, userId: igUserId, expiresAt: expiresAt.toISOString() }));
     const workspaceId = await getUserWorkspaceId(userId);
@@ -432,6 +433,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       displayName = profile.name ?? displayName;
       avatarUrl = profile.picture ?? null;
     } catch { /* optional */ }
+    avatarUrl = await downloadAndStoreAvatar(avatarUrl);
 
     const credentials = encrypt(JSON.stringify({
       accessToken,
@@ -596,10 +598,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const blocked = await enforcePlan(userId, workspaceId, "accounts");
       if (blocked) return reply.redirect(`${WEB_URL}/accounts?error=${encodeURIComponent(blocked.error)}`);
     }
+    const mastoAvatarUrl = await downloadAndStoreAvatar(profile.avatar ?? null);
     await prisma.account.upsert({
       where: { id: existing?.id ?? "new" },
-      create: { platform: "mastodon", displayName: profile.username, credentials, avatarUrl: profile.avatar ?? null, userId, ...(workspaceId ? { workspaceId } : {}) },
-      update: { credentials, avatarUrl: profile.avatar ?? null },
+      create: { platform: "mastodon", displayName: profile.username, credentials, avatarUrl: mastoAvatarUrl, userId, ...(workspaceId ? { workspaceId } : {}) },
+      update: { credentials, avatarUrl: mastoAvatarUrl },
     });
 
     console.log("[mastodon] connected @" + profile.username + " -> user " + userId);
@@ -859,6 +862,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         avatarUrl = channel.snippet.thumbnails?.default?.url ?? null;
       }
     } catch { /* optional */ }
+    avatarUrl = await downloadAndStoreAvatar(avatarUrl);
 
     const credentials = encrypt(JSON.stringify({
       accessToken,
@@ -977,6 +981,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     } catch (err) {
       console.error("[twitter oauth] profile fetch failed:", err);
     }
+    avatarUrl = await downloadAndStoreAvatar(avatarUrl);
 
     const credentials = encrypt(JSON.stringify({ accessToken, accessSecret, twitterUserId }));
     const workspaceId = await getUserWorkspaceId(userId);
@@ -1101,6 +1106,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       displayName = me.username ?? pinterestUserId;
       avatarUrl = me.profile_image ?? null;
     } catch { /* optional */ }
+    avatarUrl = await downloadAndStoreAvatar(avatarUrl);
 
     // Fetch boards and pick the first as the default
     let defaultBoardId = "";
@@ -1668,6 +1674,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       blogName = `user-${userId.slice(0, 8)}`;
       displayName = blogName;
     }
+    avatarUrl = await downloadAndStoreAvatar(avatarUrl);
 
     const credentials = encryptTumblrCredentials({ accessToken, accessSecret, blogName });
     const workspaceId = await getUserWorkspaceId(userId);
