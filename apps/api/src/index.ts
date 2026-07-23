@@ -13,6 +13,7 @@ import underPressure from "@fastify/under-pressure";
 import helmet from "@fastify/helmet";
 import rawBody from "fastify-raw-body";
 import { createBullBoard } from "@bull-board/api";
+// @ts-ignore — @bull-board/api v5 has no exports map; subpath resolves fine at runtime
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { FastifyAdapter as BullBoardFastifyAdapter } from "@bull-board/fastify";
 import { Queue } from "bullmq";
@@ -117,7 +118,7 @@ async function main() {
   const postJobsQueue = new Queue("post-jobs", { connection: { url: process.env.REDIS_URL! } });
   createBullBoard({ queues: [new BullMQAdapter(postJobsQueue)], serverAdapter: bullBoardAdapter });
   bullBoardAdapter.setBasePath("/admin/queues");
-  await app.register(bullBoardAdapter.registerPlugin(), { prefix: "/admin/queues" });
+  await app.register(bullBoardAdapter.registerPlugin(), { basePath: "/admin/queues", prefix: "/admin/queues" });
   // Guard: restrict to local in prod unless BULL_BOARD_TOKEN is set
   app.addHook("onRequest", async (req, reply) => {
     if (!req.url.startsWith("/admin/queues")) return;
