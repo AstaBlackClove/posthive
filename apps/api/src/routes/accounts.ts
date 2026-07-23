@@ -8,6 +8,7 @@ import { prisma } from "../lib/prisma.js";
 import { withAuth, getUser, getWorkspaceId, requireAdminRole } from "../lib/auth/withAuth.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
 import type { StorageAdapter } from "../lib/storage.js";
+import { downloadAndStoreAvatar } from "../lib/avatarStore.js";
 
 const connectBlueskyBody = z.object({
   handle: z.string().min(1),
@@ -51,6 +52,7 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
         avatarUrl = profile.avatar ?? null;
       }
     } catch { /* avatar optional */ }
+    avatarUrl = await downloadAndStoreAvatar(avatarUrl);
 
     // Prevent duplicates — update credentials if account already exists
     const existing = await prisma.account.findFirst({

@@ -759,10 +759,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const blocked = await enforcePlan(userId, workspaceId, "accounts");
       if (blocked) return reply.redirect(`${WEB_URL}/accounts?error=${encodeURIComponent(blocked.error)}`);
     }
+    const pixelfedAvatarUrl = await downloadAndStoreAvatar(profile.avatar ?? null);
     await prisma.account.upsert({
       where: { id: existing?.id ?? "new" },
-      create: { platform: "pixelfed", displayName: profile.username, credentials, avatarUrl: profile.avatar ?? null, userId, ...(workspaceId ? { workspaceId } : {}) },
-      update: { credentials, avatarUrl: profile.avatar ?? null },
+      create: { platform: "pixelfed", displayName: profile.username, credentials, avatarUrl: pixelfedAvatarUrl, userId, ...(workspaceId ? { workspaceId } : {}) },
+      update: { credentials, avatarUrl: pixelfedAvatarUrl },
     });
 
     console.log("[pixelfed] connected @" + profile.username + " -> user " + userId);
