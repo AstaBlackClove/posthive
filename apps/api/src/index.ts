@@ -8,7 +8,14 @@ import cookie from "@fastify/cookie";
 import multipart from "@fastify/multipart";
 import staticFiles from "@fastify/static";
 import rateLimit from "@fastify/rate-limit";
+import compress from "@fastify/compress";
+import underPressure from "@fastify/under-pressure";
+import helmet from "@fastify/helmet";
 import rawBody from "fastify-raw-body";
+import { createBullBoard } from "@bull-board/api";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
+import { FastifyAdapter as BullBoardFastifyAdapter } from "@bull-board/fastify";
+import { Queue } from "bullmq";
 import { prisma } from "./lib/prisma.js";
 import { LocalDiskStorage, SupabaseStorage } from "./lib/storage.js";
 import { setBlueskyStorage } from "./adapters/bluesky.js";
@@ -59,8 +66,11 @@ async function main() {
   setLemmyStorage(storage);
   setAvatarStorage(storage);
 
+  const isDev = process.env.NODE_ENV !== "production";
   const app = Fastify({
-    logger: { redact: ["req.query.token", "req.params.apiKey"] },
+    logger: isDev
+      ? { transport: { target: "pino-pretty", options: { colorize: true, translateTime: "HH:MM:ss", ignore: "pid,hostname" } }, redact: ["req.query.token", "req.params.apiKey"] }
+      : { redact: ["req.query.token", "req.params.apiKey"] },
     bodyLimit: 1_048_576, // 1 MB
   });
 
@@ -77,6 +87,17 @@ async function main() {
     },
     credentials: true,
   });
+  await app.register(helmet, {
+    contentSecurityPolicy: false, // API — no HTML served here
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // allow media URLs from other origins
+  });
+  await app.register(compress, { global: true });
+  await app.register(underPressure, {
+    maxEventLoopDelay: 1000,
+    maxHeapUsedBytes: 512 * 1024 * 1024, // 512 MB
+    message: "Server under pressure — try again shortly",
+    retryAfter: 10,
+  });
   await app.register(cookie);
   await app.register(multipart, { limits: { fileSize: MAX_UPLOAD_SIZE, files: 4 } });
   await app.register(staticFiles, { root: UPLOADS_DIR, prefix: "/uploads/" });
@@ -89,6 +110,24 @@ async function main() {
     global: false,
     max: 100,
     timeWindow: "1 minute",
+  });
+
+  // Bull Board — queue dashboard (admin-only, dev always open)
+  const bullBoardAdapter = new BullBoardFastifyAdapter();
+  const postJobsQueue = new Queue("post-jobs", { connection: { url: process.env.REDIS_URL! } });
+  createBullBoard({ queues: [new BullMQAdapter(postJobsQueue)], serverAdapter: bullBoardAdapter });
+  bullBoardAdapter.setBasePath("/admin/queues");
+  await app.register(bullBoardAdapter.registerPlugin(), { prefix: "/admin/queues" });
+  // Guard: restrict to local in prod unless BULL_BOARD_TOKEN is set
+  app.addHook("onRequest", async (req, reply) => {
+    if (!req.url.startsWith("/admin/queues")) return;
+    const token = process.env.BULL_BOARD_TOKEN;
+    if (!token) {
+      if (!isDev) { reply.status(404).send(); return; }
+      return; // dev — always open
+    }
+    const auth = req.headers.authorization ?? "";
+    if (auth !== `Bearer ${token}`) { reply.status(401).send({ error: "Unauthorized" }); }
   });
 
   // Auth routes (no auth required)
