@@ -151,7 +151,12 @@ Questions, feature requests, bugs join the Discord:
 
 ## Sponsors
 
-Support Posthive's development on [Open Collective](https://opencollective.com/posthive).
+Want to support Posthive? We offer a few options:
+
+- **Just a donation** — you like what we're building and want to help us ship faster.
+- **Logo in the README** — get your logo with a backlink from the Posthive repository, visible to every developer who discovers or self-hosts Posthive.
+
+👉 **[opencollective.com/posthive](https://opencollective.com/posthive)**
 
 <a href="https://opencollective.com/posthive"><img src="https://opencollective.com/posthive/sponsors.svg?width=890" alt="Sponsors" /></a>
 
