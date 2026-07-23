@@ -44,8 +44,8 @@ const PLANS = [
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
       { text: "1 team member", included: true },
-      { text: "Reels & Stories", included: false },
-      { text: "Per-platform overrides", included: false },
+      { text: "Reels & Stories", included: true },
+      { text: "Per-platform overrides", included: true },
       { text: "X/Twitter posting", included: false },
       { text: "API access & MCP", included: false },
       { text: "Webhook outbound", included: false },
@@ -598,9 +598,9 @@ function BillingContent() {
               </h3>
               <p className="text-xs mt-1" style={{ color: "#444" }}>
                 {isActive
-                  ? "Switch plans — changes take effect immediately"
+                  ? "Switch plans changes take effect immediately"
                   : isCancelling
-                  ? "Pick a plan to continue — your current access stays until the billing period ends"
+                  ? "Pick a plan to continue your current access stays until the billing period ends"
                   : "Subscribe to keep access after your trial ends"}
               </p>
             </div>
