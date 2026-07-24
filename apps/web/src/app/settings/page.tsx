@@ -329,19 +329,28 @@ export default function SettingsPage() {
             <p className="text-xs mb-5" style={{ color: "#aaaaaa" }}>
               All your workspaces, scheduled posts, and connected accounts will be permanently deleted. This cannot be undone.
             </p>
-            <Field label="Your password">
-              <input type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)}
-                style={inputStyle} placeholder="••••••••" autoFocus />
-            </Field>
+            {user?.hasPassword ? (
+              <Field label="Your password">
+                <input type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)}
+                  style={inputStyle} placeholder="••••••••" autoFocus />
+              </Field>
+            ) : (
+              <Field label={`Type ${user?.email} to confirm`}>
+                <input type="email" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)}
+                  style={inputStyle} placeholder={user?.email ?? "your@email.com"} autoFocus />
+              </Field>
+            )}
             <div className="flex gap-3 mt-5">
               <button onClick={() => { setShowDelete(false); setDeletePassword(""); }}
                 className="flex-1 text-sm font-semibold py-2 rounded-xl"
                 style={{ backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a" }}>
                 Cancel
               </button>
-              <button onClick={deleteAccount} disabled={deleteLoading || !deletePassword}
+              <button
+                onClick={deleteAccount}
+                disabled={deleteLoading || (user?.hasPassword ? !deletePassword : deletePassword !== user?.email)}
                 className="flex-1 text-sm font-semibold py-2 rounded-xl transition-opacity"
-                style={{ backgroundColor: "#7f1d1d", color: "#fca5a5", opacity: (deleteLoading || !deletePassword) ? 0.5 : 1 }}>
+                style={{ backgroundColor: "#7f1d1d", color: "#fca5a5", opacity: (deleteLoading || (user?.hasPassword ? !deletePassword : deletePassword !== user?.email)) ? 0.5 : 1 }}>
                 {deleteLoading ? "Deleting…" : "Delete forever"}
               </button>
             </div>
