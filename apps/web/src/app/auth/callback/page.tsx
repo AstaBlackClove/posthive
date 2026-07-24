@@ -5,14 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useAuth } from "../../../context/AuthContext";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
 function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refresh } = useAuth();
   const ran = useRef(false);
-  const [error, setError] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (ran.current) return;
@@ -20,43 +18,14 @@ function CallbackContent() {
 
     const returnTo = searchParams.get("returnTo") ?? "/compose";
 
-    async function handle() {
-      // Supabase mode: API redirected to Supabase OAuth which returns tokens in the URL hash
-      const hash = window.location.hash.slice(1);
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get("access_token");
-      const refreshToken = params.get("refresh_token");
-
-      if (accessToken && refreshToken) {
-        try {
-          const res = await fetch(`${API_BASE}/auth/google/session`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ accessToken, refreshToken }),
-          });
-          if (res.ok) {
-            const data = await res.json() as { isNew?: boolean };
-            await refresh();
-            router.replace(data.isNew ? "/onboarding" : returnTo);
-          } else {
-            setError(true);
-          }
-        } catch {
-          setError(true);
-        }
-        return;
-      }
-
-      // Local auth mode: API already set cookies, just refresh context
-      await refresh();
-      router.replace(returnTo);
-    }
-
-    handle();
+    // API already set cookies (both local and Supabase PKCE modes).
+    // Just refresh the auth context and navigate.
+    refresh()
+      .then(() => router.replace(returnTo))
+      .catch(() => setFailed(true));
   }, [refresh, router, searchParams]);
 
-  if (error) {
+  if (failed) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
         <div style={{ textAlign: "center" }}>

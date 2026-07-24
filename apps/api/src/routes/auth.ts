@@ -1,4 +1,4 @@
-﻿import { randomBytes } from "crypto";
+﻿import { randomBytes, createHash } from "crypto";
 import type { FastifyInstance } from "fastify";
 import { TwitterApi } from "twitter-api-v2";
 import { encrypt } from "../lib/encryption.js";
@@ -78,6 +78,10 @@ const SCOPES = ["threads_basic", "threads_content_publish", "threads_manage_insi
 const GOOGLE_SIGNIN_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID ?? "";
 const GOOGLE_SIGNIN_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
 const GOOGLE_SIGNIN_REDIRECT_URI  = process.env.GOOGLE_REDIRECT_URI ?? "http://localhost:3001/auth/google/callback";
+
+// In-memory store for server-side PKCE verifiers (Supabase mode only).
+// Keyed by nonce; TTL 10 min. Single-instance only — use Redis for multi-instance.
+const googlePkceStore = new Map<string, { codeVerifier: string; returnTo: string; expiresAt: number }>();
 
 const DC_CLIENT_ID     = process.env.DISCORD_CLIENT_ID!;
 const DC_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;
@@ -1827,19 +1831,44 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── Google Sign-In ───────────────────────────────────────────────────────
 
-  // GET /auth/google — redirect to Google (local mode) or Supabase OAuth (supabase mode)
+  // GET /auth/google — redirect to Google (local) or Supabase with server-side PKCE (supabase)
   app.get("/auth/google", async (req, reply) => {
-    if (!GOOGLE_SIGNIN_CLIENT_ID) return reply.status(503).send({ error: "Google OAuth not configured" });
+    if (!GOOGLE_SIGNIN_CLIENT_ID && process.env.AUTH_PROVIDER !== "supabase") {
+      return reply.status(503).send({ error: "Google OAuth not configured" });
+    }
 
     const { returnTo } = req.query as { returnTo?: string };
     const safeReturnTo = returnTo && /^\//.test(returnTo) ? returnTo : "/compose";
 
     if (process.env.AUTH_PROVIDER === "supabase") {
       const supabaseUrl = process.env.SUPABASE_URL!;
-      const webCallback = `${WEB_URL}/auth/callback?returnTo=${encodeURIComponent(safeReturnTo)}`;
-      return reply.redirect(
-        `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(webCallback)}`,
-      );
+
+      // Generate PKCE pair server-side
+      const codeVerifier = randomBytes(32).toString("base64url");
+      const codeChallenge = createHash("sha256").update(codeVerifier).digest("base64url");
+      const nonce = randomBytes(16).toString("hex");
+
+      // Prune stale entries
+      const now = Date.now();
+      for (const [k, v] of googlePkceStore) if (v.expiresAt < now) googlePkceStore.delete(k);
+
+      googlePkceStore.set(nonce, { codeVerifier, returnTo: safeReturnTo, expiresAt: now + 10 * 60 * 1000 });
+
+      // Store nonce in short-lived httpOnly cookie so the callback can retrieve the verifier
+      reply.setCookie("_gpkce", nonce, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/auth/google/callback",
+        maxAge: 10 * 60,
+      });
+
+      const url = new URL(`${supabaseUrl}/auth/v1/authorize`);
+      url.searchParams.set("provider", "google");
+      url.searchParams.set("code_challenge", codeChallenge);
+      url.searchParams.set("code_challenge_method", "S256");
+      url.searchParams.set("redirect_to", GOOGLE_SIGNIN_REDIRECT_URI);
+      return reply.redirect(url.toString());
     }
 
     // Local auth — redirect directly to Google
@@ -1855,13 +1884,92 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     return reply.redirect(url.toString());
   });
 
-  // GET /auth/google/callback — local auth mode only
+  // GET /auth/google/callback — handles both local (Google code) and supabase (Supabase PKCE code)
   app.get("/auth/google/callback", async (req, reply) => {
     const { code, state, error } = req.query as Record<string, string>;
     const errorRedirect = `${WEB_URL}/login?error=google_oauth_failed`;
 
     if (error || !code) return reply.redirect(errorRedirect);
 
+    // ── Supabase mode: exchange Supabase PKCE code ──────────────────────────
+    if (process.env.AUTH_PROVIDER === "supabase") {
+      const nonce = req.cookies?.["_gpkce"];
+      reply.clearCookie("_gpkce", { path: "/auth/google/callback" });
+
+      if (!nonce) return reply.redirect(errorRedirect);
+      const pkce = googlePkceStore.get(nonce);
+      googlePkceStore.delete(nonce);
+      if (!pkce || pkce.expiresAt < Date.now()) return reply.redirect(errorRedirect);
+
+      try {
+        const supabaseUrl = process.env.SUPABASE_URL!;
+        const supabaseAnonKey = process.env.SUPABASE_ANON_KEY!;
+
+        // Exchange authorization code using PKCE verifier
+        const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=pkce`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": supabaseAnonKey,
+            "Authorization": `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({ auth_code: code, code_verifier: pkce.codeVerifier }),
+        });
+        const tokenData = await tokenRes.json() as { access_token?: string; refresh_token?: string; user?: { id: string; email?: string; user_metadata?: Record<string, string> }; error?: string; error_description?: string };
+
+        if (!tokenData.access_token || !tokenData.user) {
+          console.error("[google-callback/supabase] token exchange failed:", tokenData.error, tokenData.error_description);
+          return reply.redirect(errorRedirect);
+        }
+
+        const supaUser = tokenData.user;
+        const email = supaUser.email!;
+        const name = supaUser.user_metadata?.full_name ?? supaUser.user_metadata?.name ?? email.split("@")[0];
+        const avatarUrl = supaUser.user_metadata?.avatar_url ?? null;
+
+        // Upsert: by supabaseId → by email (merge) → create new
+        let dbUser = await prisma.user.findUnique({ where: { supabaseId: supaUser.id } });
+        let isNew = false;
+
+        if (!dbUser) {
+          const byEmail = await prisma.user.findUnique({ where: { email } });
+          if (byEmail) {
+            dbUser = await prisma.user.update({
+              where: { id: byEmail.id },
+              data: { supabaseId: supaUser.id, avatarUrl: avatarUrl ?? byEmail.avatarUrl },
+            });
+          } else {
+            isNew = true;
+            dbUser = await prisma.user.create({
+              data: { email, name, supabaseId: supaUser.id, avatarUrl, emailVerified: true },
+            });
+            const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+            const workspace = await prisma.workspace.create({
+              data: {
+                name: `${name}'s Workspace`,
+                plan: "trialing",
+                planStatus: "trialing",
+                trialEndsAt,
+                allowTrial: false,
+                members: { create: { userId: dbUser.id, role: "owner" } },
+              },
+            });
+            await prisma.user.update({ where: { id: dbUser.id }, data: { activeWorkspaceId: workspace.id } });
+          }
+        } else {
+          await prisma.user.update({ where: { id: dbUser.id }, data: { email, name, avatarUrl: avatarUrl ?? dbUser.avatarUrl } });
+        }
+
+        setAuthCookies(reply, tokenData.access_token, tokenData.refresh_token!);
+        const dest = isNew ? "/onboarding" : pkce.returnTo;
+        return reply.redirect(`${WEB_URL}/auth/callback?returnTo=${encodeURIComponent(dest)}`);
+      } catch (err) {
+        console.error("[google-callback/supabase]", err);
+        return reply.redirect(errorRedirect);
+      }
+    }
+
+    // ── Local auth mode: exchange Google authorization code ─────────────────
     let returnTo = "/compose";
     try {
       const parsed = JSON.parse(Buffer.from(state ?? "", "base64url").toString()) as { returnTo?: string };
@@ -1869,7 +1977,6 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     } catch { /* ignore bad state */ }
 
     try {
-      // Exchange code for Google access token
       const tokenRes = await fetch(TOKEN_URL_GOOGLE, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1884,14 +1991,12 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const tokenData = await tokenRes.json() as { access_token?: string; error?: string };
       if (!tokenData.access_token) return reply.redirect(errorRedirect);
 
-      // Fetch Google profile
       const profileRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });
       const profile = await profileRes.json() as { email?: string; name?: string; picture?: string };
       if (!profile.email) return reply.redirect(errorRedirect);
 
-      // Find existing user by email (merges email+password account with Google)
       let dbUser = await prisma.user.findUnique({ where: { email: profile.email } });
       let isNew = false;
 
@@ -1925,7 +2030,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const dest = isNew ? "/onboarding" : returnTo;
       return reply.redirect(`${WEB_URL}/auth/callback?returnTo=${encodeURIComponent(dest)}`);
     } catch (err) {
-      console.error("[google-callback]", err);
+      console.error("[google-callback/local]", err);
       return reply.redirect(errorRedirect);
     }
   });
