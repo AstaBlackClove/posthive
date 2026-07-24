@@ -60,6 +60,7 @@ const NAV = [
       { label: "Quick start", id: "quick-start" },
       { label: "Installation", id: "installation" },
       { label: "Environment variables", id: "environment-variables" },
+      { label: "Google Sign-In", id: "google-signin" },
     ],
   },
   {
@@ -491,6 +492,21 @@ export default function DocsPage() {
                 Schedule posts to multiple platforms from one interface with built-in MCP support for AI agents.
               </p>
 
+              {/* Hosted version nudge — for GitHub/self-host evaluators */}
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                gap: 12, flexWrap: "wrap",
+                background: "#111", border: "1px solid #1e1e1e", borderRadius: 8,
+                padding: "10px 14px", marginBottom: 24,
+              }}>
+                <span style={{ fontSize: 13, color: "#666" }}>
+                  Don&apos;t want to manage infrastructure?
+                </span>
+                <Link href="/register" style={{ fontSize: 13, color: "#9ba2ee", textDecoration: "none", whiteSpace: "nowrap" }}>
+                  Try posthive.co free — no setup needed →
+                </Link>
+              </div>
+
               {/* Quick-start cards */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "0 0 48px" }}>
                 {[
@@ -578,6 +594,9 @@ pnpm install`}</CopyCode>
                   <tr><td><span className="doc-inline-code">PUBLIC_API_URL</span></td><td>Meta only</td><td>Public HTTPS URL of the API. Meta fetches images from this URL, so it must be reachable from the internet.</td></tr>
                   <tr><td><span className="doc-inline-code">ENABLE_BILLING</span></td><td>No</td><td>Set to <code>true</code> to enable Dodo Payments billing. Defaults to off for self-hosters.</td></tr>
                   <tr><td><span className="doc-inline-code">AUTH_PROVIDER</span></td><td>No</td><td><code>local</code> (default) or <code>supabase</code>. Switches the auth backend.</td></tr>
+                  <tr><td><span className="doc-inline-code">GOOGLE_CLIENT_ID</span></td><td>No</td><td>Google OAuth client ID. Enables "Sign in with Google" on the login and register pages.</td></tr>
+                  <tr><td><span className="doc-inline-code">GOOGLE_CLIENT_SECRET</span></td><td>No</td><td>Google OAuth client secret. Required alongside <code>GOOGLE_CLIENT_ID</code>.</td></tr>
+                  <tr><td><span className="doc-inline-code">GOOGLE_REDIRECT_URI</span></td><td>No</td><td>Callback URL registered in Google Cloud Console. Defaults to <code>http://localhost:3001/auth/google/callback</code>.</td></tr>
                   <tr><td><span className="doc-inline-code">ENABLE_ANALYTICS</span></td><td>No</td><td>Set to <code>true</code> to enable visitor session + event tracking. Off by default self-hosters collect no data.</td></tr>
                   <tr><td><span className="doc-inline-code">ADMIN_EMAIL</span></td><td>No</td><td>Your email address. Only this account can access <code>/admin</code>.</td></tr>
                   <tr><td><span className="doc-inline-code">ADMIN_PIN</span></td><td>No</td><td>Second-factor PIN for <code>/admin</code>. Validated server-side never exposed to the browser. Set in API env only.</td></tr>
@@ -587,6 +606,43 @@ pnpm install`}</CopyCode>
               <div className="doc-warn">
                 <strong>Warning:</strong> <span className="doc-inline-code">ENCRYPTION_KEY</span> must never be changed after connected accounts have been saved. Changing it makes all stored credentials permanently unreadable.
               </div>
+
+              {/* ── Google Sign-In ── */}
+              <h2 className="doc-h2" id="google-signin">Google Sign-In</h2>
+              <p className="doc-p">
+                Adds a <strong>Continue with Google</strong> button to the login and register pages. When a user signs in with Google using an email that already has a password-based account, Posthive merges them automatically — no duplicate account is created.
+              </p>
+              <Callout type="info">
+                Google Sign-In is optional. If you skip this, users can only register and log in with email + password.
+              </Callout>
+
+              <h3 className="doc-h3">1. Create a Google OAuth client</h3>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">Go to <a className="doc-a" href="https://console.cloud.google.com" target="_blank" rel="noreferrer">console.cloud.google.com</a> and open (or create) a project.</li>
+                <li className="doc-li">Navigate to <strong>APIs &amp; Services → OAuth consent screen</strong>. Set User Type to <strong>External</strong>, fill in the app name and your email, then save.</li>
+                <li className="doc-li">Go to <strong>APIs &amp; Services → Credentials → Create Credentials → OAuth client ID</strong>.</li>
+                <li className="doc-li">Choose <strong>Web application</strong>. Under <strong>Authorized redirect URIs</strong> add your callback URL (e.g. <span className="doc-inline-code">https://your-domain.com/auth/google/callback</span> for prod, <span className="doc-inline-code">http://localhost:3001/auth/google/callback</span> for dev).</li>
+                <li className="doc-li">Copy the <strong>Client ID</strong> and <strong>Client Secret</strong>.</li>
+              </ol>
+
+              <Callout type="info">
+                If you already have a Google Cloud project for YouTube, you can reuse the same OAuth client — just add the Google Sign-In redirect URI alongside the existing YouTube one.
+              </Callout>
+
+              <h3 className="doc-h3">2. Add env vars</h3>
+              <p className="doc-p">Add to <span className="doc-inline-code">apps/api/.env</span>:</p>
+              <CopyCode>{`GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="your-client-secret"
+GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
+
+              <h3 className="doc-h3">How account merging works</h3>
+              <p className="doc-p">
+                When a user clicks <strong>Continue with Google</strong>, Posthive looks up the Google account&apos;s email in the database:
+              </p>
+              <ul className="doc-ul">
+                <li className="doc-li"><strong>Email not found</strong> — new account created, 14-day trial started, user lands on onboarding.</li>
+                <li className="doc-li"><strong>Email matches an existing account</strong> — user is logged in to that account. The original password remains valid. Both sign-in methods work going forward.</li>
+              </ul>
 
               {/* ── Bluesky ── */}
               <SectionLabel>Platforms</SectionLabel>

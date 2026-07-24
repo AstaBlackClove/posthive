@@ -152,6 +152,12 @@ export async function requireAdminRole(userId: string, workspaceId: string): Pro
   return null;
 }
 
+/** Set auth cookies on a reply (access 2h, refresh 30d). */
+export function setAuthCookies(reply: FastifyReply, accessToken: string, refreshToken: string): void {
+  reply.setCookie(ACCESS_COOKIE, accessToken, { ...COOKIE_OPTS, maxAge: 2 * 60 * 60 });
+  reply.setCookie(REFRESH_COOKIE, refreshToken, { ...COOKIE_OPTS, maxAge: 30 * 24 * 60 * 60 });
+}
+
 /** Returns 403 payload if the user is not the workspace owner, null if allowed. */
 export async function requireOwnerRole(userId: string, workspaceId: string): Promise<{ error: string; code: string } | null> {
   const role = await getWorkspaceRole(userId, workspaceId);

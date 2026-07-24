@@ -5,7 +5,8 @@ import { encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import { getPlan } from "../lib/plans.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
-import { withAuth, getUser, getWorkspaceId, requireAdminRole } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, getWorkspaceId, requireAdminRole, setAuthCookies } from "../lib/auth/withAuth.js";
+import { createLocalTokens } from "../lib/auth/localAuth.js";
 import { getDiscordChannels, encryptDiscordCredentials } from "../adapters/discord.js";
 import { tumblrRequestTokenAuth, tumblrAccessTokenAuth, tumblrApiAuthHeader, encryptTumblrCredentials } from "../adapters/tumblr.js";
 import { downloadAndStoreAvatar } from "../lib/avatarStore.js";
@@ -73,6 +74,10 @@ const GB_REDIRECT_URI  = process.env.GOOGLEBUSINESS_REDIRECT_URI ?? "";
 const GB_SCOPES        = "https://www.googleapis.com/auth/business.manage";
 
 const SCOPES = ["threads_basic", "threads_content_publish", "threads_manage_insights"].join(",");
+
+const GOOGLE_SIGNIN_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID ?? "";
+const GOOGLE_SIGNIN_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
+const GOOGLE_SIGNIN_REDIRECT_URI  = process.env.GOOGLE_REDIRECT_URI ?? "http://localhost:3001/auth/google/callback";
 
 const DC_CLIENT_ID     = process.env.DISCORD_CLIENT_ID!;
 const DC_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;
@@ -1818,5 +1823,181 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     console.log(`[tumblr] connected ${displayName} → user ${userId}`);
     return reply.redirect(buildRedirect(redirectTo, { connected: "tumblr" }));
+  });
+
+  // ─── Google Sign-In ───────────────────────────────────────────────────────
+
+  // GET /auth/google — redirect to Google (local mode) or Supabase OAuth (supabase mode)
+  app.get("/auth/google", async (req, reply) => {
+    if (!GOOGLE_SIGNIN_CLIENT_ID) return reply.status(503).send({ error: "Google OAuth not configured" });
+
+    const { returnTo } = req.query as { returnTo?: string };
+    const safeReturnTo = returnTo && /^\//.test(returnTo) ? returnTo : "/compose";
+
+    if (process.env.AUTH_PROVIDER === "supabase") {
+      const supabaseUrl = process.env.SUPABASE_URL!;
+      const webCallback = `${WEB_URL}/auth/callback?returnTo=${encodeURIComponent(safeReturnTo)}`;
+      return reply.redirect(
+        `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(webCallback)}`,
+      );
+    }
+
+    // Local auth — redirect directly to Google
+    const state = Buffer.from(JSON.stringify({ returnTo: safeReturnTo })).toString("base64url");
+    const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    url.searchParams.set("client_id", GOOGLE_SIGNIN_CLIENT_ID);
+    url.searchParams.set("redirect_uri", GOOGLE_SIGNIN_REDIRECT_URI);
+    url.searchParams.set("scope", "openid email profile");
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("access_type", "offline");
+    url.searchParams.set("prompt", "select_account");
+    url.searchParams.set("state", state);
+    return reply.redirect(url.toString());
+  });
+
+  // GET /auth/google/callback — local auth mode only
+  app.get("/auth/google/callback", async (req, reply) => {
+    const { code, state, error } = req.query as Record<string, string>;
+    const errorRedirect = `${WEB_URL}/login?error=google_oauth_failed`;
+
+    if (error || !code) return reply.redirect(errorRedirect);
+
+    let returnTo = "/compose";
+    try {
+      const parsed = JSON.parse(Buffer.from(state ?? "", "base64url").toString()) as { returnTo?: string };
+      if (parsed.returnTo?.startsWith("/")) returnTo = parsed.returnTo;
+    } catch { /* ignore bad state */ }
+
+    try {
+      // Exchange code for Google access token
+      const tokenRes = await fetch(TOKEN_URL_GOOGLE, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          code,
+          client_id: GOOGLE_SIGNIN_CLIENT_ID,
+          client_secret: GOOGLE_SIGNIN_CLIENT_SECRET,
+          redirect_uri: GOOGLE_SIGNIN_REDIRECT_URI,
+          grant_type: "authorization_code",
+        }).toString(),
+      });
+      const tokenData = await tokenRes.json() as { access_token?: string; error?: string };
+      if (!tokenData.access_token) return reply.redirect(errorRedirect);
+
+      // Fetch Google profile
+      const profileRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      const profile = await profileRes.json() as { email?: string; name?: string; picture?: string };
+      if (!profile.email) return reply.redirect(errorRedirect);
+
+      // Find existing user by email (merges email+password account with Google)
+      let dbUser = await prisma.user.findUnique({ where: { email: profile.email } });
+      let isNew = false;
+
+      if (!dbUser) {
+        isNew = true;
+        dbUser = await prisma.user.create({
+          data: {
+            email: profile.email,
+            name: profile.name ?? profile.email.split("@")[0],
+            avatarUrl: profile.picture ?? null,
+            emailVerified: true,
+          },
+        });
+        const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+        const workspace = await prisma.workspace.create({
+          data: {
+            name: `${dbUser.name}'s Workspace`,
+            plan: "trialing",
+            planStatus: "trialing",
+            trialEndsAt,
+            allowTrial: false,
+            members: { create: { userId: dbUser.id, role: "owner" } },
+          },
+        });
+        await prisma.user.update({ where: { id: dbUser.id }, data: { activeWorkspaceId: workspace.id } });
+      }
+
+      const { accessToken, refreshToken } = await createLocalTokens(dbUser.id);
+      setAuthCookies(reply, accessToken, refreshToken);
+
+      const dest = isNew ? "/onboarding" : returnTo;
+      return reply.redirect(`${WEB_URL}/auth/callback?returnTo=${encodeURIComponent(dest)}`);
+    } catch (err) {
+      console.error("[google-callback]", err);
+      return reply.redirect(errorRedirect);
+    }
+  });
+
+  // POST /auth/google/session — Supabase mode: web sends Supabase tokens → we validate, upsert, set cookies
+  app.post("/auth/google/session", async (req, reply) => {
+    if (process.env.AUTH_PROVIDER !== "supabase") {
+      return reply.status(404).send({ error: "Not available in local auth mode" });
+    }
+
+    const { accessToken, refreshToken } = req.body as { accessToken?: string; refreshToken?: string };
+    if (!accessToken || !refreshToken) return reply.status(400).send({ error: "Missing tokens" });
+
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+        global: { headers: { Authorization: `Bearer ${accessToken}` } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user?.email) return reply.status(401).send({ error: "Invalid token" });
+
+      const supaUser = data.user;
+      const email = supaUser.email!;
+      const name = supaUser.user_metadata?.full_name ?? supaUser.user_metadata?.name ?? email.split("@")[0];
+      const avatarUrl = supaUser.user_metadata?.avatar_url ?? null;
+
+      // 1. Try to find by supabaseId (returning user via Google)
+      let dbUser = await prisma.user.findUnique({ where: { supabaseId: supaUser.id } });
+      let isNew = false;
+
+      if (!dbUser) {
+        // 2. Supabase may have created a fresh user even though the email already exists
+        //    (happens when "Link identities" is off). Fall back to email lookup to prevent duplicates.
+        const byEmail = await prisma.user.findUnique({ where: { email } });
+
+        if (byEmail) {
+          // Link: attach this supabaseId to the existing account
+          dbUser = await prisma.user.update({
+            where: { id: byEmail.id },
+            data: { supabaseId: supaUser.id, avatarUrl: avatarUrl ?? byEmail.avatarUrl },
+          });
+        } else {
+          // Genuinely new user — create account + workspace
+          isNew = true;
+          dbUser = await prisma.user.create({
+            data: { email, name, supabaseId: supaUser.id, avatarUrl, emailVerified: true },
+          });
+          const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+          const workspace = await prisma.workspace.create({
+            data: {
+              name: `${name}'s Workspace`,
+              plan: "trialing",
+              planStatus: "trialing",
+              trialEndsAt,
+              allowTrial: false,
+              members: { create: { userId: dbUser.id, role: "owner" } },
+            },
+          });
+          await prisma.user.update({ where: { id: dbUser.id }, data: { activeWorkspaceId: workspace.id } });
+        }
+      } else {
+        // Keep profile info fresh
+        await prisma.user.update({ where: { id: dbUser.id }, data: { email, name, avatarUrl: avatarUrl ?? dbUser.avatarUrl } });
+      }
+
+      setAuthCookies(reply, accessToken, refreshToken);
+      return reply.send({ isNew });
+    } catch (err) {
+      console.error("[google-session]", err);
+      return reply.status(500).send({ error: "Auth failed" });
+    }
   });
 }

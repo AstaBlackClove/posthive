@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { BlogCtaBanner } from "../../../components/BlogCtaBanner";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -102,6 +103,8 @@ export default function PostPage() {
         </div>
 
         {/* Content */}
+        <BlogCtaBanner />
+
         <div style={{ fontSize: 16, lineHeight: 1.85, color: "#888" }}>
 
           <p style={{ marginBottom: 24 }}>

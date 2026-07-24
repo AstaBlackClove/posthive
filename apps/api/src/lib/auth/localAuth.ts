@@ -123,3 +123,16 @@ export const localAuthProvider: AuthProvider = {
     await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
   },
 };
+
+export async function createLocalTokens(userId: string): Promise<{ accessToken: string; refreshToken: string }> {
+  const accessToken = signAccess(userId);
+  const refreshToken = signRefresh(userId);
+  await prisma.refreshToken.create({
+    data: {
+      token: refreshToken,
+      userId,
+      expiresAt: new Date(Date.now() + REFRESH_EXPIRES_DAYS * 86400 * 1000),
+    },
+  });
+  return { accessToken, refreshToken };
+}

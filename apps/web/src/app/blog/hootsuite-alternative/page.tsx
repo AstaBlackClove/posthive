@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { BlogCtaBanner } from "../../../components/BlogCtaBanner";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -124,6 +125,8 @@ export default function HootsuiteAlternativePage() {
             <div style={{ fontSize: 12, color: "#555" }}>Founder, Posthive</div>
           </div>
         </div>
+
+        <BlogCtaBanner />
 
         <div style={{ fontSize: 16, lineHeight: 1.85, color: "#888" }}>
 
