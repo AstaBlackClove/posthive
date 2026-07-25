@@ -143,7 +143,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         delete next[accountId];
         return next;
       }
-      return { ...prev, [accountId]: { text: defaultText, commentText: defaultComment } };
+      return { ...prev, [accountId]: { text: defaultText, commentText: defaultComment || undefined } };
     });
   }
   function setOverrideField(accountId: string, field: keyof PerAccountOverride, value: string) {
@@ -453,7 +453,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setSubmitting(true);
     try {
       const cleanOverrides = Object.fromEntries(
-        Object.entries(perAccountOverrides).filter(([id]) => selectedIds.includes(id))
+        Object.entries(perAccountOverrides)
+          .filter(([id]) => selectedIds.includes(id))
+          .map(([id, ov]) => [id, ov.commentText?.trim() ? ov : { ...ov, commentText: undefined }])
       );
       const mediaUrls = mediaItems.map(m => m.url);
       const hasInstagram = selectedAccounts.some((a) => a.platform === "instagram");
@@ -492,7 +494,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setSubmitting(true);
     try {
       const cleanOverrides = Object.fromEntries(
-        Object.entries(perAccountOverrides).filter(([id]) => selectedIds.includes(id))
+        Object.entries(perAccountOverrides)
+          .filter(([id]) => selectedIds.includes(id))
+          .map(([id, ov]) => [id, ov.commentText?.trim() ? ov : { ...ov, commentText: undefined }])
       );
       const mediaUrls = mediaItems.map(m => m.url);
       const hasInstagram = selectedAccounts.some((a) => a.platform === "instagram");
