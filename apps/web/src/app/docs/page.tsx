@@ -132,6 +132,15 @@ const NAV = [
     ],
   },
   {
+    section: "Make.com Integration",
+    items: [
+      { label: "Overview", id: "make-overview" },
+      { label: "Connect your account", id: "make-connect" },
+      { label: "Available modules", id: "make-modules" },
+      { label: "Example scenarios", id: "make-examples" },
+    ],
+  },
+  {
     section: "MCP Server",
     items: [
       { label: "Overview", id: "mcp-overview" },
@@ -1475,6 +1484,54 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
 
               <h3 className="doc-h3" id="outbound-webhook-make">Make (Integromat) — Custom Webhook</h3>
               <p className="doc-p">1. Add a <strong>Webhooks → Custom webhook</strong> module as the trigger. 2. Copy the URL and paste it into Posthive Settings → Webhook. 3. Run a test post — Make will auto-detect the payload structure. 4. Connect downstream modules.</p>
+
+              {/* ── MAKE.COM INTEGRATION ── */}
+              <SectionLabel>Make.com Integration</SectionLabel>
+              <h2 className="doc-h2" id="make-overview">Make.com Integration</h2>
+              <p className="doc-p">
+                Posthive has a native Make.com app that lets you schedule and manage social media posts directly from your Make scenarios — no webhooks or custom HTTP modules needed. Connect once with your API key and use ready-made modules for every action.
+              </p>
+
+              <h3 className="doc-h3" id="make-connect">Connect your account</h3>
+              <ol className="doc-list" style={{ listStyleType: "decimal" }}>
+                <li>Open <strong>Make.com</strong> and create a new scenario.</li>
+                <li>Search for <strong>Posthive</strong> in the app search.</li>
+                <li>Select any module and click <strong>Create a connection</strong>.</li>
+                <li>In Posthive, go to <strong>Settings → API Keys</strong> and create a new API key.</li>
+                <li>Paste the key (starts with <code className="doc-inline-code">ph_</code>) into Make and click Save.</li>
+              </ol>
+              <p className="doc-p">API keys require a <strong>Pro or Team plan</strong>.</p>
+
+              <h3 className="doc-h3" id="make-modules">Available modules</h3>
+              <div style={{ overflowX: "auto", margin: "16px 0" }}>
+                <table className="doc-table">
+                  <thead><tr><th>Module</th><th>Type</th><th>Description</th></tr></thead>
+                  <tbody>
+                    {[
+                      ["List Social Accounts", "Search", "Returns all connected social accounts in your workspace"],
+                      ["Create Post", "Action", "Schedule or draft a post to one or more social accounts"],
+                      ["Get Post", "Action", "Retrieve a post by ID including per-platform status"],
+                      ["List Posts", "Search", "Filter posts by status — pending, done, failed, draft"],
+                      ["Update Post", "Action", "Update content, schedule time, or images of a pending post"],
+                      ["Delete Post", "Action", "Permanently delete a pending or draft post"],
+                      ["Approve Draft", "Action", "Approve a draft and schedule it for publishing"],
+                      ["Duplicate Post", "Action", "Clone an existing post as a new draft"],
+                      ["List Templates", "Search", "Returns all saved post templates"],
+                      ["Create Post from Template", "Action", "Create a new post using a saved template"],
+                    ].map(([mod, type, desc]) => (
+                      <tr key={mod}><td>{mod}</td><td>{type}</td><td>{desc}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 className="doc-h3" id="make-examples">Example scenarios</h3>
+              <ul className="doc-list">
+                <li><strong>Content calendar</strong> — trigger from Google Sheets or Notion → Create Post for each row on a schedule.</li>
+                <li><strong>Repurpose content</strong> — Duplicate Post on top-performing content and reschedule it.</li>
+                <li><strong>Draft approval workflow</strong> — Create Post as draft → send Slack notification → Approve Draft after team review.</li>
+                <li><strong>Template publishing</strong> — Run a template on a cron schedule to post recurring content.</li>
+              </ul>
 
               {/* ── MCP SERVER ── */}
               <SectionLabel>MCP Server</SectionLabel>
