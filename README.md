@@ -13,7 +13,6 @@
   <a href="https://github.com/AstaBlackClove/posthive/blob/main/LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" /></a>
   <a href="https://github.com/AstaBlackClove/posthive"><img alt="GitHub Repo" src="https://img.shields.io/github/stars/AstaBlackClove/posthive?style=social" /></a>
   <a href="https://discord.gg/UEdnAtHxgN"><img alt="Discord" src="https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white" /></a>
-  <a href="https://opencollective.com/posthive"><img alt="Open Collective" src="https://img.shields.io/opencollective/all/posthive?label=sponsors&color=brightgreen" /></a>
 </p>
 
 <p align="center">
@@ -148,15 +147,6 @@ Questions, feature requests, bugs join the Discord:
 **[discord.gg/UEdnAtHxgN](https://discord.gg/UEdnAtHxgN)**
 
 ---
-
-## Sponsors
-
-Want to support Posthive? We offer a few options:
-
-- **Just a donation** — you like what we're building and want to help us ship faster.
-- **Logo in the README** — get your logo with a backlink from the Posthive repository, visible to every developer who discovers or self-hosts Posthive.
-
-👉 **[Become a sponsor](https://opencollective.com/posthive)**
 
 ---
 
