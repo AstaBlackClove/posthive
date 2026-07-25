@@ -8,6 +8,16 @@ import { ALLOWED_IMAGE_TYPES, type StorageAdapter } from "../lib/storage.js";
 const preHandler = [withApiKey];
 
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/mov"];
+
+// Normalize perAccount: accepts keyed object OR array [{accountId, text, commentText}] (Make.com format)
+function normalizePerAccount(
+  raw: Record<string, { text?: string; commentText?: string }> | Array<{ accountId: string; text?: string; commentText?: string }>
+): Record<string, { text?: string; commentText?: string }> {
+  if (Array.isArray(raw)) {
+    return Object.fromEntries(raw.map(({ accountId, ...rest }) => [accountId, rest]));
+  }
+  return raw;
+}
 const MAX_VIDEO_SIZE_BYTES = 100_000_000;
 
 export async function publicApiRoutes(
@@ -50,7 +60,7 @@ export async function publicApiRoutes(
       mediaType?: "post" | "reel" | "story";
       youtubeType?: "short" | "video";
       dryRun?: boolean;
-      perAccount?: Record<string, { text?: string; commentText?: string }>;
+      perAccount?: Record<string, { text?: string; commentText?: string }> | Array<{ accountId: string; text?: string; commentText?: string }>;
     };
 
     if (!body.content?.trim()) return reply.status(400).send({ error: "content is required" });
@@ -93,7 +103,7 @@ export async function publicApiRoutes(
       ...(body.altTexts?.length ? { altTexts: body.altTexts } : {}),
       ...(body.mediaType ? { mediaType: body.mediaType } : {}),
       ...(body.youtubeType ? { youtubeType: body.youtubeType } : {}),
-      ...(body.perAccount ? { perAccount: body.perAccount } : {}),
+      ...(body.perAccount ? { perAccount: normalizePerAccount(body.perAccount) } : {}),
     });
 
     const job = await prisma.postJob.create({
@@ -200,7 +210,7 @@ export async function publicApiRoutes(
       altTexts?: string[];
       mediaType?: "post" | "reel" | "story";
       youtubeType?: "short" | "video";
-      perAccount?: Record<string, { text?: string; commentText?: string }>;
+      perAccount?: Record<string, { text?: string; commentText?: string }> | Array<{ accountId: string; text?: string; commentText?: string }>;
     };
 
     const job = await prisma.postJob.findFirst({ where: { id, workspaceId } });
@@ -242,7 +252,7 @@ export async function publicApiRoutes(
         ...(body.altTexts !== undefined ? { altTexts: body.altTexts } : {}),
         ...(body.mediaType !== undefined ? { mediaType: body.mediaType } : {}),
         ...(body.youtubeType !== undefined ? { youtubeType: body.youtubeType } : {}),
-        ...(body.perAccount !== undefined ? { perAccount: body.perAccount } : {}),
+        ...(body.perAccount !== undefined ? { perAccount: normalizePerAccount(body.perAccount) } : {}),
       });
     }
 
@@ -365,9 +375,12 @@ export async function publicApiRoutes(
   // GET /api/v1/templates — list saved templates
   app.get("/api/v1/templates", { preHandler }, async (req, reply) => {
     const { workspaceId } = req.apiKeyUser!;
+    const { limit: limitStr } = req.query as { limit?: string };
+    const take = Math.min(Number(limitStr ?? 100), 100);
     const templates = await prisma.template.findMany({
       where: { workspaceId },
       orderBy: { updatedAt: "desc" },
+      take,
       select: { id: true, name: true, content: true, createdAt: true, updatedAt: true },
     });
     return reply.send({

@@ -24,9 +24,9 @@ function CopyCode({ children }: { children: string }) {
 
 function SectionLabel({ children }: { children: string }) {
   return (
-    <p style={{ fontSize: 11.5, fontWeight: 700, color: "#5b63d3", textTransform: "uppercase", letterSpacing: ".09em", margin: "0 0 10px" }}>
+    <h2 style={{ fontSize: 24, fontWeight: 900, color: "#5b63d3", textTransform: "uppercase", letterSpacing: ".12em", margin: "48px 0 4px", paddingTop: 8, borderTop: "1px solid #1e1e1e" }}>
       {children}
-    </p>
+    </h2>
   );
 }
 
@@ -253,7 +253,7 @@ export default function DocsPage() {
       <style>{`
         .doc-h1 { font-size: 32px; font-weight: 700; letter-spacing: -.02em; color: #ededed; margin: 0 0 10px; }
         .doc-h1-sub { font-size: 15px; color: #666; margin: 0 0 40px; line-height: 1.6; }
-        .doc-h2 { font-size: 24px; font-weight: 700; color: #ededed; margin: 64px 0 10px; }
+        .doc-h2 { font-size: 24px; font-weight: 700; color: #ededed; margin: 24px 0 10px; }
         .doc-h3 { font-size: 15.5px; font-weight: 600; color: #cfcfcf; margin: 28px 0 10px; }
         .doc-p { font-size: 15px; line-height: 1.8; color: #999; margin: 0 0 16px; }
         .doc-code { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; background: #111; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; color: #c9d1d9; overflow-x: auto; display: block; margin: 12px 0 20px; white-space: pre; line-height: 1.6; }
@@ -512,7 +512,7 @@ export default function DocsPage() {
                   Don&apos;t want to manage infrastructure?
                 </span>
                 <Link href="/register" style={{ fontSize: 13, color: "#9ba2ee", textDecoration: "none", whiteSpace: "nowrap" }}>
-                  Try posthive.co free — no setup needed →
+                  Try posthive.co free no setup needed →
                 </Link>
               </div>
 
@@ -539,22 +539,22 @@ export default function DocsPage() {
               </div>
 
               {/* ── Quick start ── */}
-              <h2 className="doc-h2" id="quick-start">Quick start</h2>
+              <h3 className="doc-h2" id="quick-start">Quick start</h3>
               <p className="doc-p">Get Posthive running locally in under five minutes.</p>
 
-              <h3 className="doc-h3">1. Clone the repository</h3>
+              <h4 className="doc-h3">1. Clone the repository</h4>
               <CopyCode>{`git clone https://github.com/AstaBlackClove/posthive.git
 cd posthive`}</CopyCode>
 
-              <h3 className="doc-h3">2. Copy environment files</h3>
+              <h4 className="doc-h3">2. Copy environment files</h4>
               <CopyCode>{`cp apps/api/.env.example apps/api/.env
 # Edit apps/api/.env and fill in the required values`}</CopyCode>
 
-              <h3 className="doc-h3">3. Run database migrations</h3>
+              <h4 className="doc-h3">3. Run database migrations</h4>
               <CopyCode>{`cd apps/api
 pnpm db:migrate`}</CopyCode>
 
-              <h3 className="doc-h3">4. Start the dev server</h3>
+              <h4 className="doc-h3">4. Start the dev server</h4>
               <CopyCode>{`# From the repo root
 pnpm dev`}</CopyCode>
               <p className="doc-p">
@@ -562,15 +562,15 @@ pnpm dev`}</CopyCode>
               </p>
 
               {/* ── Installation ── */}
-              <h2 className="doc-h2" id="installation">Installation</h2>
-              <h3 className="doc-h3">Prerequisites</h3>
+              <h3 className="doc-h2" id="installation">Installation</h3>
+              <h4 className="doc-h3">Prerequisites</h4>
               <ul className="doc-ul">
                 <li className="doc-li">Node.js ≥ 20</li>
                 <li className="doc-li">pnpm ≥ 9 (<span className="doc-inline-code">npm i -g pnpm</span>)</li>
                 <li className="doc-li">Redis Upstash free tier or Railway Redis (required for BullMQ job queue)</li>
               </ul>
 
-              <h3 className="doc-h3">Clone and install</h3>
+              <h4 className="doc-h3">Clone and install</h4>
               <CopyCode>{`git clone https://github.com/AstaBlackClove/posthive.git
 cd posthive
 pnpm install`}</CopyCode>
@@ -580,7 +580,7 @@ pnpm install`}</CopyCode>
               </p>
 
               {/* ── Environment variables ── */}
-              <h2 className="doc-h2" id="environment-variables">Environment variables</h2>
+              <h3 className="doc-h2" id="environment-variables">Environment variables</h3>
               <p className="doc-p">
                 All configuration lives in <span className="doc-inline-code">apps/api/.env</span>. Copy <span className="doc-inline-code">.env.example</span> and fill in the values below.
               </p>
@@ -617,7 +617,7 @@ pnpm install`}</CopyCode>
               </div>
 
               {/* ── Google Sign-In ── */}
-              <h2 className="doc-h2" id="google-signin">Google Sign-In</h2>
+              <h3 className="doc-h2" id="google-signin">Google Sign-In</h3>
               <p className="doc-p">
                 Adds a <strong>Continue with Google</strong> button to the login and register pages. When a user signs in with Google using an email that already has a password-based account, Posthive merges them automatically — no duplicate account is created.
               </p>
@@ -625,7 +625,7 @@ pnpm install`}</CopyCode>
                 Google Sign-In is optional. If you skip this, users can only register and log in with email + password.
               </Callout>
 
-              <h3 className="doc-h3">1. Create a Google OAuth client</h3>
+              <h4 className="doc-h3">1. Create a Google OAuth client</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Go to <a className="doc-a" href="https://console.cloud.google.com" target="_blank" rel="noreferrer">console.cloud.google.com</a> and open (or create) a project.</li>
                 <li className="doc-li">Navigate to <strong>APIs &amp; Services → OAuth consent screen</strong>. Set User Type to <strong>External</strong>, fill in the app name and your email, then save.</li>
@@ -638,13 +638,13 @@ pnpm install`}</CopyCode>
                 If you already have a Google Cloud project for YouTube, you can reuse the same OAuth client — just add the Google Sign-In redirect URI alongside the existing YouTube one.
               </Callout>
 
-              <h3 className="doc-h3">2. Add env vars</h3>
+              <h4 className="doc-h3">2. Add env vars</h4>
               <p className="doc-p">Add to <span className="doc-inline-code">apps/api/.env</span>:</p>
               <CopyCode>{`GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="your-client-secret"
 GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
 
-              <h3 className="doc-h3">How account merging works</h3>
+              <h4 className="doc-h3">How account merging works</h4>
               <p className="doc-p">
                 When a user clicks <strong>Continue with Google</strong>, Posthive looks up the Google account&apos;s email in the database:
               </p>
@@ -655,11 +655,11 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
 
               {/* ── Bluesky ── */}
               <SectionLabel>Platforms</SectionLabel>
-              <h2 className="doc-h2" id="bluesky">Bluesky</h2>
+              <h3 className="doc-h2" id="bluesky">Bluesky</h3>
               <p className="doc-p">
                 Bluesky uses app passwords no OAuth flow required. Connection is straightforward and does not need a public callback URL.
               </p>
-              <h3 className="doc-h3">How to connect</h3>
+              <h4 className="doc-h3">How to connect</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Go to <a className="doc-a" href="https://bsky.app" target="_blank" rel="noreferrer">bsky.app</a> → Settings → Privacy and Security → App Passwords.</li>
                 <li className="doc-li">Create a new app password and copy it.</li>
@@ -671,11 +671,11 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               </p>
 
               {/* ── Threads ── */}
-              <h2 className="doc-h2" id="threads">Threads</h2>
+              <h3 className="doc-h2" id="threads">Threads</h3>
               <p className="doc-p">
                 Threads uses Meta OAuth 2.0. You need a Meta Developer app with the Threads use case enabled.
               </p>
-              <h3 className="doc-h3">Setup</h3>
+              <h4 className="doc-h3">Setup</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Go to <a className="doc-a" href="https://developers.facebook.com" target="_blank" rel="noreferrer">developers.facebook.com</a> and create an app.</li>
                 <li className="doc-li">Add the <strong>Threads API</strong> use case to your app.</li>
@@ -688,20 +688,20 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               </p>
 
               {/* ── Instagram ── */}
-              <h2 className="doc-h2" id="instagram">Instagram</h2>
+              <h3 className="doc-h2" id="instagram">Instagram</h3>
               <p className="doc-p">
                 Instagram publishing requires a Professional (Business or Creator) account linked to a Facebook Page, and a Meta Developer app with the Instagram product enabled.
               </p>
               <div className="doc-callout">
                 <strong>Important:</strong> <span className="doc-inline-code">PUBLIC_API_URL</span> must be a public HTTPS URL. Meta fetches your uploaded images directly from the API server when creating carousel containers a localhost URL will not work.
               </div>
-              <h3 className="doc-h3">Supported media types</h3>
+              <h4 className="doc-h3">Supported media types</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><strong>Post</strong> - single image or carousel (up to 10 images on Pro/Team)</li>
                 <li className="doc-li"><strong>Reel</strong> - short video (Pro/Team plans only)</li>
                 <li className="doc-li"><strong>Story</strong> - image or video story (Pro/Team plans only)</li>
               </ul>
-              <h3 className="doc-h3">Setup</h3>
+              <h4 className="doc-h3">Setup</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Create a Meta Developer app and add the <strong>Instagram</strong> product.</li>
                 <li className="doc-li">Set your redirect URI to <span className="doc-inline-code">INSTAGRAM_REDIRECT_URI</span> (must be public HTTPS).</li>
@@ -710,14 +710,14 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               </ol>
 
               {/* ── LinkedIn ── */}
-              <h2 className="doc-h2" id="linkedin">LinkedIn</h2>
+              <h3 className="doc-h2" id="linkedin">LinkedIn</h3>
               <p className="doc-p">
                 LinkedIn uses OAuth 2.0 via the LinkedIn Developer platform.
               </p>
               <div className="doc-warn">
                 <strong>Note:</strong> Image and video uploads require <strong>elevated API access</strong> (Marketing Developer Platform approval). Without it, Posthive will publish text-only posts to LinkedIn.
               </div>
-              <h3 className="doc-h3">Setup</h3>
+              <h4 className="doc-h3">Setup</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Create an app at <a className="doc-a" href="https://developer.linkedin.com" target="_blank" rel="noreferrer">developer.linkedin.com</a>.</li>
                 <li className="doc-li">Add the <strong>Share on LinkedIn</strong> and <strong>Sign In with LinkedIn using OpenID Connect</strong> products.</li>
@@ -727,11 +727,11 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               </ol>
 
               {/* ── Mastodon ── */}
-              <h2 className="doc-h2" id="mastodon">Mastodon</h2>
+              <h3 className="doc-h2" id="mastodon">Mastodon</h3>
               <p className="doc-p">
                 Posthive works with any Mastodon instance. You register an application within your own instance and paste the credentials into Posthive.
               </p>
-              <h3 className="doc-h3">How to connect</h3>
+              <h4 className="doc-h3">How to connect</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Log in to your Mastodon instance (e.g. <span className="doc-inline-code">mastodon.social</span>).</li>
                 <li className="doc-li">Go to <strong>Settings → Development → New application</strong>.</li>
@@ -741,17 +741,17 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               </ol>
 
               {/* ── Pixelfed ── */}
-              <h2 className="doc-h2" id="pixelfed">Pixelfed</h2>
+              <h3 className="doc-h2" id="pixelfed">Pixelfed</h3>
               <p className="doc-p">
                 Pixelfed is a federated, open-source photo-sharing platform built on ActivityPub — an Instagram alternative for the fediverse. Posthive connects via OAuth 2.0 and works with <strong>any Pixelfed instance</strong> (pixelfed.social, pixelfed.uno, gram.social, or your own self-hosted server).
               </p>
-              <h3 className="doc-h3">How to connect</h3>
+              <h4 className="doc-h3">How to connect</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Create a free account on any Pixelfed instance (e.g. <span className="doc-inline-code">pixelfed.social</span> or <span className="doc-inline-code">pixelfed.uno</span>).</li>
                 <li className="doc-li">Set <span className="doc-inline-code">PIXELFED_REDIRECT_URI</span> in your env to <span className="doc-inline-code">https://your-domain.com/auth/pixelfed/callback</span>. No client ID/secret needed — Posthive registers an OAuth app dynamically on each instance.</li>
                 <li className="doc-li">Go to <strong>Accounts</strong>, click <strong>Connect Pixelfed</strong>, enter your instance URL (e.g. <span className="doc-inline-code">pixelfed.social</span>), and approve access.</li>
               </ol>
-              <h3 className="doc-h3">Notes</h3>
+              <h4 className="doc-h3">Notes</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><strong>Image required</strong> — every Pixelfed post must have at least one image. The composer warns you if you try to schedule without one.</li>
                 <li className="doc-li">Caption up to 2,001 chars, up to 4 images per post, alt text supported.</li>
@@ -762,11 +762,11 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               </ul>
 
               {/* ── YouTube ── */}
-              <h2 className="doc-h2" id="youtube">YouTube</h2>
+              <h3 className="doc-h2" id="youtube">YouTube</h3>
               <p className="doc-p">
                 Posthive publishes to YouTube as <strong>Shorts</strong> (or regular videos your choice per post) using Google OAuth 2.0 and the YouTube Data API v3. Every post requires a video attached.
               </p>
-              <h3 className="doc-h3">How to connect</h3>
+              <h4 className="doc-h3">How to connect</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Create a project at <a className="doc-a" href="https://console.cloud.google.com" target="_blank" rel="noreferrer">console.cloud.google.com</a> and enable the <strong>YouTube Data API v3</strong>.</li>
                 <li className="doc-li">Configure the OAuth consent screen add the <span className="doc-inline-code">youtube.upload</span>, <span className="doc-inline-code">youtube.readonly</span>, and <span className="doc-inline-code">youtube.force-ssl</span> scopes, and add your own Google account under <strong>Audience → Test users</strong> while the app is unverified.</li>
@@ -776,7 +776,7 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               <div className="doc-warn">
                 <strong>Important:</strong> Google requires OAuth redirect domains to be owned and verified shared tunnel domains (devtunnels.ms, ngrok, etc.) are rejected outright with <span className="doc-inline-code">Error 403: access_denied</span>. Use <span className="doc-inline-code">http://localhost:&lt;API_PORT&gt;/auth/youtube/callback</span> for <span className="doc-inline-code">YOUTUBE_REDIRECT_URI</span> instead Google exempts localhost from domain verification. This means connecting YouTube only works from a browser on the same machine as your API server (everything else in Posthive works fine over a tunnel).
               </div>
-              <h3 className="doc-h3">Shorts vs. regular video</h3>
+              <h4 className="doc-h3">Shorts vs. regular video</h4>
               <p className="doc-p">
                 In Compose, the YouTube section has a <strong>Short / Video</strong> toggle. YouTube classifies Shorts by the video file itself vertical (9:16) and 60 seconds or under is the reliable threshold. Posthive auto-appends <span className="doc-inline-code">#Shorts</span> to the description when "Short" is selected, but that tag alone does nothing if the video doesn't already qualify by aspect ratio and duration. Posthive checks the attached video's dimensions and warns you in the UI if it won't actually classify as a Short.
               </p>
@@ -788,11 +788,11 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               </div>
 
               {/* ── Facebook Pages ── */}
-              <h2 className="doc-h2" id="facebook">Facebook Pages</h2>
+              <h3 className="doc-h2" id="facebook">Facebook Pages</h3>
               <p className="doc-p">
                 Posthive publishes to <strong>Facebook Pages</strong> you manage via the Graph API v21.0. Text, single photo, multi-photo carousel, and video posts are all supported. The Facebook API does not allow posting to personal profiles a Page is required.
               </p>
-              <h3 className="doc-h3">How to connect</h3>
+              <h4 className="doc-h3">How to connect</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">At <a className="doc-a" href="https://developers.facebook.com" target="_blank" rel="noreferrer">developers.facebook.com</a>, open your Meta app and add the <strong>"Manage everything on your Page"</strong> use case this grants <span className="doc-inline-code">pages_manage_posts</span>, <span className="doc-inline-code">pages_show_list</span>, and <span className="doc-inline-code">pages_read_engagement</span>.</li>
                 <li className="doc-li">Under <strong>Facebook Login for Business → Settings</strong>, add your callback URL as a valid OAuth redirect URI: <span className="doc-inline-code">https://your-domain/auth/facebook/callback</span>.</li>
@@ -805,21 +805,21 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               </div>
 
               {/* ── Pinterest ── */}
-              <h2 className="doc-h2" id="pinterest">Pinterest</h2>
+              <h3 className="doc-h2" id="pinterest">Pinterest</h3>
               <p className="doc-p">
                 Posthive publishes <strong>Pins</strong> to Pinterest using the Pinterest API v5. Every Pinterest post requires an image — Pinterest is a visual platform and rejects posts without one.
               </p>
               <div className="doc-warn">
                 <strong>Trial access only:</strong> Pinterest Standard access (required for production posting) requires approval from Pinterest. Until approved, Posthive connects to the Pinterest sandbox environment. The connect button on the Accounts page shows <em>Pending Approval</em> and is disabled until Standard access is granted. See below for what to do once approved.
               </div>
-              <h3 className="doc-h3">How it works</h3>
+              <h4 className="doc-h3">How it works</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><strong>Title</strong> — first line of your post text (max 100 chars).</li>
                 <li className="doc-li"><strong>Description</strong> — remaining lines (max 500 chars).</li>
                 <li className="doc-li"><strong>Link</strong> — if your post contains a URL, it is attached as the Pin destination.</li>
                 <li className="doc-li"><strong>Board</strong> — the Pin is created on the default board selected at connect time.</li>
               </ul>
-              <h3 className="doc-h3">Environment variables</h3>
+              <h4 className="doc-h3">Environment variables</h4>
               <div className="doc-table-wrap"><table className="doc-table">
                 <thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead>
                 <tbody>
@@ -830,7 +830,7 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
                   <tr><td><span className="doc-inline-code">PINTEREST_SANDBOX_TOKEN</span></td><td>No</td><td>Manually generated sandbox token from the Pinterest developer dashboard. When set, bypasses the OAuth code exchange entirely (required for Trial apps whose token exchange is restricted).</td></tr>
                 </tbody>
               </table></div>
-              <h3 className="doc-h3">Moving to production (after Standard access approval)</h3>
+              <h4 className="doc-h3">Moving to production (after Standard access approval)</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Remove <span className="doc-inline-code">PINTEREST_SANDBOX=true</span> and <span className="doc-inline-code">PINTEREST_SANDBOX_TOKEN</span> from your env.</li>
                 <li className="doc-li">The Pinterest connect button on the Accounts page will be re-enabled in the next release.</li>
@@ -841,11 +841,11 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               </div>
 
               {/* ── Telegram ── */}
-              <h2 className="doc-h2" id="telegram">Telegram</h2>
+              <h3 className="doc-h2" id="telegram">Telegram</h3>
               <p className="doc-p">
                 Posthive publishes to <strong>Telegram channels</strong> via the Telegram Bot API. No OAuth flow is required — connection uses a bot token you generate yourself. Text, images (up to 10), and video posts are supported. First comments are not available on Telegram channels.
               </p>
-              <h3 className="doc-h3">How to connect</h3>
+              <h4 className="doc-h3">How to connect</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Open Telegram and message <strong>@BotFather</strong> → send <span className="doc-inline-code">/newbot</span> → follow the prompts. BotFather gives you a <strong>bot token</strong> (looks like <span className="doc-inline-code">123456789:ABCdef...</span>).</li>
                 <li className="doc-li">Create a Telegram channel — public or private.</li>
@@ -853,7 +853,7 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
                 <li className="doc-li">Go to <strong>Accounts</strong> in Posthive and click <strong>Connect Telegram Channel</strong>.</li>
                 <li className="doc-li">Paste the bot token and your channel identifier, then click Connect.</li>
               </ol>
-              <h3 className="doc-h3">Channel identifier</h3>
+              <h4 className="doc-h3">Channel identifier</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><strong>Public channels</strong> — use the username: <span className="doc-inline-code">@mychannel</span></li>
                 <li className="doc-li"><strong>Private channels</strong> — use the numeric chat ID: <span className="doc-inline-code">-1001234567890</span>. To find it, forward any message from the channel to <strong>@userinfobot</strong> on Telegram.</li>
@@ -861,7 +861,7 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               <div className="doc-callout">
                 <strong>No environment variables needed.</strong> Unlike OAuth platforms, Telegram requires no server-side app credentials. Each user provides their own bot token which is stored encrypted per-user. One bot can serve multiple channels — connect each channel separately on the Accounts page.
               </div>
-              <h3 className="doc-h3">What gets posted</h3>
+              <h4 className="doc-h3">What gets posted</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><strong>Text only</strong> — sent as a plain message.</li>
                 <li className="doc-li"><strong>Single image</strong> — sent via <span className="doc-inline-code">sendPhoto</span> with caption.</li>
@@ -870,11 +870,11 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               </ul>
 
               {/* ── Nostr ── */}
-              <h2 className="doc-h2" id="nostr">Nostr</h2>
+              <h3 className="doc-h2" id="nostr">Nostr</h3>
               <p className="doc-p">
                 Posthive publishes <strong>Kind 1 notes</strong> to Nostr relays using your keypair. No OAuth, no app approval — just paste your <span className="doc-inline-code">nsec</span> private key. Text and images are supported. Images are appended as URLs in the note content and use NIP-92 imeta tags for clients that support inline rendering.
               </p>
-              <h3 className="doc-h3">Setup</h3>
+              <h4 className="doc-h3">Setup</h4>
               <ol className="doc-ol">
                 <li className="doc-li">Go to <strong>Accounts</strong> in Posthive and click <strong>Connect Nostr</strong>.</li>
                 <li className="doc-li">Paste your <span className="doc-inline-code">nsec1...</span> private key — or click <strong>Generate a new keypair</strong> to create a fresh one.</li>
@@ -883,7 +883,7 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               <div className="doc-callout">
                 <strong>No environment variables needed.</strong> Nostr uses keypairs — there is no server-side app registration or OAuth flow. Your <span className="doc-inline-code">nsec</span> is stored AES-256-GCM encrypted per-user, never logged or exposed.
               </div>
-              <h3 className="doc-h3">Relays</h3>
+              <h4 className="doc-h3">Relays</h4>
               <p className="doc-p">Posts are published to four well-known high-uptime relays by default:</p>
               <ul className="doc-ul">
                 <li className="doc-li"><span className="doc-inline-code">wss://relay.damus.io</span></li>
@@ -891,17 +891,17 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
                 <li className="doc-li"><span className="doc-inline-code">wss://nos.lol</span></li>
                 <li className="doc-li"><span className="doc-inline-code">wss://relay.snort.social</span></li>
               </ul>
-              <h3 className="doc-h3">Images</h3>
+              <h4 className="doc-h3">Images</h4>
               <p className="doc-p">
                 Images must be publicly accessible URLs — they are appended to the note text so Nostr clients can fetch and render them inline. Make sure <span className="doc-inline-code">PUBLIC_API_URL</span> is set to your public API URL (not localhost) so uploaded images resolve correctly on the Nostr network.
               </p>
 
               {/* ── Discord ── */}
-              <h2 className="doc-h2" id="discord">Discord</h2>
+              <h3 className="doc-h2" id="discord">Discord</h3>
               <p className="doc-p">
                 Posthive posts to <strong>Discord channels</strong> via a webhook created automatically when you connect a channel. Text, images (up to 10), and video are supported. First comments post as replies to the original message.
               </p>
-              <h3 className="doc-h3">Setup</h3>
+              <h4 className="doc-h3">Setup</h4>
               <ol className="doc-ol">
                 <li className="doc-li">Go to <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer" className="doc-link">discord.com/developers</a> → <strong>New Application</strong> → name it Posthive.</li>
                 <li className="doc-li">Go to the <strong>Bot</strong> tab → click <strong>Add Bot</strong> → copy the <strong>bot token</strong>.</li>
@@ -919,7 +919,7 @@ DISCORD_REDIRECT_URI="https://your-domain.com/auth/discord/callback"`}</pre>
               <div className="doc-callout">
                 Posthive auto-creates a webhook for the selected channel. Messages post under the <strong>Posthive</strong> name. Discord shows an <strong>APP</strong> label on all programmatic posts — this is a Discord platform requirement that applies to all scheduling tools.
               </div>
-              <h3 className="doc-h3">Bot permissions required</h3>
+              <h4 className="doc-h3">Bot permissions required</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><strong>View Channels</strong> — to access the channel</li>
                 <li className="doc-li"><strong>Send Messages</strong> — to post</li>
@@ -929,7 +929,7 @@ DISCORD_REDIRECT_URI="https://your-domain.com/auth/discord/callback"`}</pre>
               </ul>
 
               {/* ── Tumblr ── */}
-              <h2 className="doc-h2" id="tumblr">Tumblr</h2>
+              <h3 className="doc-h2" id="tumblr">Tumblr</h3>
               <p className="doc-p">
                 Posthive posts to your <strong>primary Tumblr blog</strong> using the NPF (Neue Post Format) API. Text and images are supported. Tumblr uses <strong>OAuth 1.0a</strong> — tokens never expire so you only connect once.
               </p>
@@ -949,20 +949,20 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
               </div>
 
               {/* ── Lemmy ── */}
-              <h2 className="doc-h2" id="lemmy">Lemmy</h2>
+              <h3 className="doc-h2" id="lemmy">Lemmy</h3>
               <p className="doc-p">
                 Posthive posts to a <strong>Lemmy community</strong> on any public instance. Lemmy uses username/password authentication — a fresh JWT is obtained per post so no token expiry issues exist.
               </p>
               <Callout type="info">
                 No app registration required. You just need a Lemmy account on any instance and a community to post to.
               </Callout>
-              <h3 className="doc-h3">Connect</h3>
+              <h4 className="doc-h3">Connect</h4>
               <ol className="doc-ol">
                 <li className="doc-li">Go to <strong>Accounts</strong> in Posthive → click <strong>Connect Lemmy</strong>.</li>
                 <li className="doc-li">Enter your <strong>instance URL</strong> (e.g. <span className="doc-inline-code">https://lemmy.world</span>), <strong>username</strong>, <strong>password</strong>, and the <strong>community name</strong> (e.g. <span className="doc-inline-code">technology</span> — no <span className="doc-inline-code">!</span> prefix needed).</li>
                 <li className="doc-li">Click Connect. Posthive verifies credentials immediately.</li>
               </ol>
-              <h3 className="doc-h3">Supported content</h3>
+              <h4 className="doc-h3">Supported content</h4>
               <ul className="doc-ul">
                 <li className="doc-li">Post text becomes the <strong>link post body</strong> or a <strong>text post</strong> if no URL is present.</li>
                 <li className="doc-li">The first image (if any) is used as the post URL so it appears as a link preview in Lemmy.</li>
@@ -974,11 +974,11 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
 
               {/* ── Scheduling posts ── */}
               <SectionLabel>Features</SectionLabel>
-              <h2 className="doc-h2" id="scheduling-posts">Scheduling posts</h2>
+              <h3 className="doc-h2" id="scheduling-posts">Scheduling posts</h3>
               <p className="doc-p">
                 The Compose page is where you write and schedule posts. Everything happens in a single panel no multi-step wizard.
               </p>
-              <h3 className="doc-h3">Steps</h3>
+              <h4 className="doc-h3">Steps</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Select one or more connected accounts from the account picker at the top.</li>
                 <li className="doc-li">Write your post in the text area. The character counter updates per-platform.</li>
@@ -988,17 +988,17 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
               </ol>
 
               {/* ── Post templates ── */}
-              <h2 className="doc-h2" id="post-templates">Post templates</h2>
+              <h3 className="doc-h2" id="post-templates">Post templates</h3>
               <p className="doc-p">
                 Templates let you save and reuse post content from the Compose page. Useful for recurring formats like weekly updates, product announcements, or thread starters.
               </p>
-              <h3 className="doc-h3">Saving a template</h3>
+              <h4 className="doc-h3">Saving a template</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Write your post in the Compose page.</li>
                 <li className="doc-li">Click <strong>+ Save</strong> in the POST section header.</li>
                 <li className="doc-li">Enter a name and press Enter or click Save. Template names must be unique.</li>
               </ol>
-              <h3 className="doc-h3">Loading a template</h3>
+              <h4 className="doc-h3">Loading a template</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Click <strong>Templates</strong> in the POST section header to open the dropdown.</li>
                 <li className="doc-li">Click any template name — the text and first comment are instantly populated.</li>
@@ -1006,17 +1006,17 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
               <p className="doc-p">
                 Templates save: post text, first comment, and YouTube title/description (if YouTube fields were filled). Templates are not shown when only YouTube is selected.
               </p>
-              <h3 className="doc-h3">Deleting a template</h3>
+              <h4 className="doc-h3">Deleting a template</h4>
               <p className="doc-p">
                 Hover over a template in the dropdown and click the <strong>✕</strong> that appears on the right. A confirmation dialog will ask you to confirm before deleting.
               </p>
 
               {/* ── Bulk CSV ── */}
-              <h2 className="doc-h2" id="bulk-csv">Bulk CSV scheduling</h2>
+              <h3 className="doc-h2" id="bulk-csv">Bulk CSV scheduling</h3>
               <p className="doc-p">
                 Bulk scheduling lets you upload a CSV file to schedule tens or hundreds of posts at once. Available from both the <strong>Posts page</strong> (Bulk button in the top bar) and the <strong>Compose page</strong> (Bulk CSV button next to Schedule).
               </p>
-              <h3 className="doc-h3">CSV format</h3>
+              <h4 className="doc-h3">CSV format</h4>
               <p className="doc-p">The CSV must have a header row with these columns (in order):</p>
               <CopyCode>{`scheduled_for,text,accounts,comment,image_urls`}</CopyCode>
               <ul className="doc-ul">
@@ -1026,7 +1026,7 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
                 <li className="doc-li"><span className="doc-inline-code">comment</span> — first comment text (optional, leave blank).</li>
                 <li className="doc-li"><span className="doc-inline-code">image_urls</span> — public image URLs separated by <span className="doc-inline-code">;</span> (optional, up to 4).</li>
               </ul>
-              <h3 className="doc-h3">Accounts column syntax</h3>
+              <h4 className="doc-h3">Accounts column syntax</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><span className="doc-inline-code">all</span> — post to all connected accounts (excluding YouTube).</li>
                 <li className="doc-li"><span className="doc-inline-code">bluesky|mastodon</span> — post to specific platforms, separated by <span className="doc-inline-code">|</span>.</li>
@@ -1039,14 +1039,14 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
               <p className="doc-p">
                 Instagram rows must include at least one URL in <span className="doc-inline-code">image_urls</span>. Rows missing an image for Instagram will show an error in the preview and be skipped.
               </p>
-              <h3 className="doc-h3">Example CSV</h3>
+              <h4 className="doc-h3">Example CSV</h4>
               <CopyCode>{`scheduled_for,text,accounts,comment,image_urls
 2026-08-01 09:00,Good morning 🌅,all,,
 2026-08-02 14:30,Check the blog post,bluesky|mastodon,Link in first comment,
 2026-08-03 18:00,LinkedIn update,linkedin,,https://example.com/image.jpg
 2026-08-04 10:00,Skip Instagram today,!instagram,,
 2026-08-05 12:00,Two images 🖼️,bluesky|threads,,https://img1.jpg;https://img2.jpg`}</CopyCode>
-              <h3 className="doc-h3">Preview and scheduling</h3>
+              <h4 className="doc-h3">Preview and scheduling</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Paste your CSV or upload a <span className="doc-inline-code">.csv</span> file.</li>
                 <li className="doc-li">Click <strong>Preview</strong> — each row is validated and shown in a table with its status (✓ Ready or ✕ error).</li>
@@ -1055,7 +1055,7 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
               </ol>
 
               {/* ── Calendar view ── */}
-              <h2 className="doc-h2" id="calendar-view">Calendar view</h2>
+              <h3 className="doc-h2" id="calendar-view">Calendar view</h3>
               <p className="doc-p">
                 The Posts page (<span className="doc-inline-code">/jobs</span>) has both a list view and a calendar view. Toggle between them with the view switcher in the top-right corner.
               </p>
@@ -1064,7 +1064,7 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
               </p>
 
               {/* ── First comment ── */}
-              <h2 className="doc-h2" id="first-comment">First comment</h2>
+              <h3 className="doc-h2" id="first-comment">First comment</h3>
               <p className="doc-p">
                 The first comment field lets you attach a reply that is posted immediately after the main post goes live. This is commonly used to add hashtags without cluttering the main post body, or to add a thread continuation.
               </p>
@@ -1073,7 +1073,7 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
               </p>
 
               {/* ── Per-platform overrides ── */}
-              <h2 className="doc-h2" id="per-platform-overrides">Per-platform overrides</h2>
+              <h3 className="doc-h2" id="per-platform-overrides">Per-platform overrides</h3>
               <p className="doc-p">
                 Available on <strong>Pro and Team plans</strong>. Per-platform overrides let you customise the post text for individual accounts without creating separate posts.
               </p>
@@ -1082,7 +1082,7 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
               </p>
 
               {/* ── Media uploads ── */}
-              <h2 className="doc-h2" id="media-uploads">Media uploads</h2>
+              <h3 className="doc-h2" id="media-uploads">Media uploads</h3>
               <p className="doc-p">
                 Posthive supports image and video attachments. Images can be attached by clicking the media button, dragging files into the compose area, or pasting from the clipboard.
               </p>
@@ -1095,17 +1095,17 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
 
               {/* ── Docker setup ── */}
               <SectionLabel>Self-hosting</SectionLabel>
-              <h2 className="doc-h2" id="docker-setup">Docker setup</h2>
+              <h3 className="doc-h2" id="docker-setup">Docker setup</h3>
               <p className="doc-p">
                 Self-host Posthive on any Linux VPS, Raspberry Pi, or cloud VM — no Node.js or pnpm needed. One <span className="doc-inline-code">docker compose up</span> command starts everything.
               </p>
 
-              <h3 className="doc-h3">Prerequisites</h3>
+              <h4 className="doc-h3">Prerequisites</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><a href="https://docs.docker.com/engine/install/" target="_blank" rel="noopener noreferrer" style={{ color: "#5b63d3" }}>Docker Engine 24+</a> with the Compose v2 plugin (<span className="doc-inline-code">docker compose</span>, not <span className="doc-inline-code">docker-compose</span>)</li>
               </ul>
 
-              <h3 className="doc-h3">1 · Clone and configure</h3>
+              <h4 className="doc-h3">1 · Clone and configure</h4>
               <CopyCode>{`git clone https://github.com/AstaBlackClove/posthive.git
 cd posthive
 cp apps/api/.env.example .env`}</CopyCode>
@@ -1126,7 +1126,7 @@ PUBLIC_API_URL=http://localhost:3001`}</CopyCode>
                 <strong>Critical:</strong> <span className="doc-inline-code">ENCRYPTION_KEY</span> encrypts all stored OAuth tokens. Write it down somewhere safe — changing it after accounts are connected makes every connected account permanently unusable.
               </div>
 
-              <h3 className="doc-h3">2 · Start</h3>
+              <h4 className="doc-h3">2 · Start</h4>
               <CopyCode>{`docker compose up -d --build`}</CopyCode>
               <p className="doc-p">First build takes 2–5 minutes. Once done, open <span className="doc-inline-code">http://localhost:3000</span> and register your account. Billing is disabled by default — all features are unlocked.</p>
               <div style={{ overflowX: "auto", margin: "12px 0 20px" }}>
@@ -1149,14 +1149,14 @@ PUBLIC_API_URL=http://localhost:3001`}</CopyCode>
               </div>
 
               {/* ── Custom domain ── */}
-              <h2 className="doc-h2" id="custom-domain">Custom domain</h2>
+              <h3 className="doc-h2" id="custom-domain">Custom domain</h3>
               <p className="doc-p">Set your public URLs in <span className="doc-inline-code">.env</span> before building, then point a reverse proxy at the containers.</p>
               <CopyCode>{`WEB_URL=https://yourdomain.com
 PUBLIC_API_URL=https://api.yourdomain.com`}</CopyCode>
               <p className="doc-p">Rebuild after changing URLs:</p>
               <CopyCode>{`docker compose up -d --build`}</CopyCode>
 
-              <h3 className="doc-h3">Caddy (recommended — auto HTTPS)</h3>
+              <h4 className="doc-h3">Caddy (recommended — auto HTTPS)</h4>
               <CopyCode>{`yourdomain.com {
     reverse_proxy localhost:3000
 }
@@ -1165,7 +1165,7 @@ api.yourdomain.com {
     reverse_proxy localhost:3001
 }`}</CopyCode>
 
-              <h3 className="doc-h3">nginx</h3>
+              <h4 className="doc-h3">nginx</h4>
               <CopyCode>{`server {
     listen 80;
     server_name yourdomain.com;
@@ -1189,7 +1189,7 @@ server {
 }`}</CopyCode>
 
               {/* ── Persistent uploads ── */}
-              <h2 className="doc-h2" id="persistent-uploads">Persistent uploads</h2>
+              <h3 className="doc-h2" id="persistent-uploads">Persistent uploads</h3>
               <p className="doc-p">By default, uploaded images live inside the container and are lost on rebuild. Add a named volume in <span className="doc-inline-code">docker-compose.yml</span> to persist them:</p>
               <CopyCode>{`services:
   api:
@@ -1204,12 +1204,12 @@ volumes:
               <p className="doc-p">For production, use <strong>Supabase Storage</strong> instead — set <span className="doc-inline-code">STORAGE_PROVIDER=supabase</span> and the <span className="doc-inline-code">SUPABASE_*</span> env vars. Files are stored off-server and survive rebuilds automatically.</p>
 
               {/* ── Updating ── */}
-              <h2 className="doc-h2" id="updating">Updating</h2>
+              <h3 className="doc-h2" id="updating">Updating</h3>
               <CopyCode>{`git pull
 docker compose up -d --build`}</CopyCode>
               <p className="doc-p">Database migrations run automatically on API startup — no manual step needed.</p>
 
-              <h3 className="doc-h3">Railway / Render / Fly.io</h3>
+              <h4 className="doc-h3">Railway / Render / Fly.io</h4>
               <p className="doc-p">If you prefer a managed platform over a VPS, deploy the source repo and set these commands:</p>
               <CopyCode>{`# Build command
 pnpm install --frozen-lockfile --filter api... && pnpm --filter api exec prisma generate && pnpm --filter api build
@@ -1218,7 +1218,7 @@ pnpm install --frozen-lockfile --filter api... && pnpm --filter api exec prisma 
 cd apps/api && node_modules/.bin/prisma migrate deploy && node dist/index.js`}</CopyCode>
 
               {/* ── Database ── */}
-              <h2 className="doc-h2" id="database">Database</h2>
+              <h3 className="doc-h2" id="database">Database</h3>
               <p className="doc-p">
                 Posthive uses <strong>Prisma 5</strong> with SQLite in development and Postgres in production. Switching is a one-line change in the schema.
               </p>
@@ -1235,11 +1235,11 @@ pnpm db:migrate`}</CopyCode>
               </div>
 
               {/* ── Redis ── */}
-              <h2 className="doc-h2" id="redis">Redis</h2>
+              <h3 className="doc-h2" id="redis">Redis</h3>
               <p className="doc-p">
                 Redis is used exclusively for the BullMQ job queue that powers scheduled post delivery. No application state is stored in Redis it is safe to flush between deploys as long as no posts are currently queued.
               </p>
-              <h3 className="doc-h3">Options</h3>
+              <h4 className="doc-h3">Options</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><strong>Upstash</strong> - free tier is sufficient for most self-hosters. Use the <span className="doc-inline-code">rediss://</span> TLS URL.</li>
                 <li className="doc-li"><strong>Railway Redis</strong> - add the Redis plugin to your Railway project and copy the connection string.</li>
@@ -1248,15 +1248,15 @@ pnpm db:migrate`}</CopyCode>
               <CopyCode>{`REDIS_URL="rediss://default:<password>@<host>:<port>"`}</CopyCode>
 
               {/* ── Storage ── */}
-              <h2 className="doc-h2" id="storage">Storage</h2>
+              <h3 className="doc-h2" id="storage">Storage</h3>
               <p className="doc-p">
                 Uploaded media can be stored locally (dev) or in Supabase Storage (prod). Switch with the <span className="doc-inline-code">STORAGE_PROVIDER</span> env variable.
               </p>
-              <h3 className="doc-h3">Local storage (default)</h3>
+              <h4 className="doc-h3">Local storage (default)</h4>
               <CopyCode>{`STORAGE_PROVIDER=local`}</CopyCode>
               <p className="doc-p">Files are written to <span className="doc-inline-code">apps/api/uploads/</span>. Not recommended for production files are lost on redeploy.</p>
 
-              <h3 className="doc-h3">Supabase Storage</h3>
+              <h4 className="doc-h3">Supabase Storage</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
                 <li className="doc-li">Create a Supabase project.</li>
                 <li className="doc-li">In Storage, create a public bucket named <span className="doc-inline-code">media</span>.</li>
@@ -1268,7 +1268,7 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
 
               {/* ── Workspaces & Teams ── */}
               <SectionLabel>Workspaces &amp; Teams</SectionLabel>
-              <h2 className="doc-h2" id="workspaces-overview">Overview</h2>
+              <h3 className="doc-h2" id="workspaces-overview">Overview</h3>
               <p className="doc-p">
                 Every account belongs to one or more <strong>workspaces</strong>. A workspace is the billing and collaboration unit — it owns connected accounts, scheduled posts, templates, and API keys. You get a personal workspace on sign-up, and you can create additional workspaces for separate teams or projects.
               </p>
@@ -1276,7 +1276,7 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
                 Switch between workspaces using the workspace picker at the top of the sidebar. Each workspace has its own plan and subscription.
               </p>
 
-              <h2 className="doc-h2" id="workspaces-invites">Inviting members</h2>
+              <h3 className="doc-h2" id="workspaces-invites">Inviting members</h3>
               <p className="doc-p">
                 Workspace owners and admins can invite team members from <strong>Sidebar → Team</strong>.
               </p>
@@ -1291,7 +1291,7 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
                 Invite links expire after 7 days. Resend from the pending invites list if needed.
               </Callout>
 
-              <h2 className="doc-h2" id="workspaces-roles">Roles</h2>
+              <h3 className="doc-h2" id="workspaces-roles">Roles</h3>
               <div className="doc-table-wrap"><table className="doc-table">
                 <thead>
                   <tr>
@@ -1330,7 +1330,7 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
                 Non-owners can leave a workspace from <strong>Settings → Danger zone → Leave workspace</strong>.
               </p>
 
-              <h2 className="doc-h2" id="workspaces-switching">Switching workspaces</h2>
+              <h3 className="doc-h2" id="workspaces-switching">Switching workspaces</h3>
               <p className="doc-p">
                 Click the workspace name at the top of the sidebar to open the workspace picker. Select any workspace you belong to — all pages (posts, accounts, billing) immediately reflect that workspace&apos;s data. You can also create a new workspace from the picker.
               </p>
@@ -1340,7 +1340,7 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
 
               {/* ── Plans & pricing ── */}
               <SectionLabel>Billing</SectionLabel>
-              <h2 className="doc-h2" id="plans-pricing">Plans &amp; pricing</h2>
+              <h3 className="doc-h2" id="plans-pricing">Plans &amp; pricing</h3>
               <p className="doc-p">
                 Posthive has four tiers. The trial is available immediately after sign-up.
               </p>
@@ -1400,14 +1400,14 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
               </p>
 
               {/* ── Webhooks ── */}
-              <h2 className="doc-h2" id="webhooks">Webhooks</h2>
+              <h3 className="doc-h2" id="webhooks">Webhooks</h3>
               <p className="doc-p">
                 Posthive listens for Dodo Payments webhook events to update subscription status in real time. Configure the webhook endpoint in your Dodo dashboard.
               </p>
-              <h3 className="doc-h3">Webhook URL</h3>
+              <h4 className="doc-h3">Webhook URL</h4>
               <CopyCode>{`POST https://your-api-url/billing/webhook`}</CopyCode>
 
-              <h3 className="doc-h3">Webhook secret</h3>
+              <h4 className="doc-h3">Webhook secret</h4>
               <div className="doc-warn">
                 <strong>Important:</strong> Dodo Payments webhook secrets are prefixed with <span className="doc-inline-code">whsec_</span>. Strip this prefix before setting <span className="doc-inline-code">DODO_WEBHOOK_SECRET</span> the verification code base64-decodes the raw secret and will fail if the prefix is included.
               </div>
@@ -1415,7 +1415,7 @@ SUPABASE_SERVICE_KEY="eyJ..."`}</CopyCode>
 # Set in .env:
 DODO_WEBHOOK_SECRET="abc123..."`}</CopyCode>
 
-              <h3 className="doc-h3">Handled events</h3>
+              <h4 className="doc-h3">Handled events</h4>
               <div className="doc-table-wrap"><table className="doc-table">
                 <thead>
                   <tr>
@@ -1437,15 +1437,15 @@ DODO_WEBHOOK_SECRET="abc123..."`}</CopyCode>
 
               {/* ── Outbound Webhooks ── */}
               <SectionLabel>Outbound Webhooks</SectionLabel>
-              <h2 className="doc-h2" id="outbound-webhooks">Outbound Webhooks (Zapier / n8n / Make)</h2>
+              <h3 className="doc-h2" id="outbound-webhooks">Outbound Webhooks (Zapier / n8n / Make)</h3>
               <p className="doc-p">
                 Posthive fires a <span className="doc-inline-code">POST</span> request to your configured URL every time a post finishes publishing (Pro &amp; Team plans). Use this to trigger automations in Zapier, n8n, Make, or any HTTP-capable tool.
               </p>
 
-              <h3 className="doc-h3">Setup</h3>
+              <h4 className="doc-h3">Setup</h4>
               <p className="doc-p">Go to <strong>Settings → Webhook</strong> and paste your endpoint URL. Posthive will send a JSON payload to that URL after every successful (or failed) publish.</p>
 
-              <h3 className="doc-h3">Payload</h3>
+              <h4 className="doc-h3">Payload</h4>
               <CopyCode>{`{
   "event": "post.published",
   "postId": "clx7k2m9e0000abc123xyz",
@@ -1473,36 +1473,36 @@ DODO_WEBHOOK_SECRET="abc123..."`}</CopyCode>
                 Delivery is best-effort with a 10-second timeout. Posthive does not retry failed webhook deliveries — if your endpoint is down, the event is lost. Build your handler to be idempotent.
               </div>
 
-              <h3 className="doc-h3" id="outbound-webhook-n8n">n8n — Webhook trigger</h3>
+              <h4 className="doc-h3" id="outbound-webhook-n8n">n8n — Webhook trigger</h4>
               <p className="doc-p">1. Add a <strong>Webhook</strong> node in n8n and copy the URL. 2. Paste it into Posthive Settings → Webhook. 3. Connect downstream nodes — e.g. send a Slack message, log to a Google Sheet, or notify a Notion database.</p>
               <CopyCode>{`// Example: filter for only successful posts in n8n Function node
 if ($json.status !== "done") return [];
 return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode>
 
-              <h3 className="doc-h3" id="outbound-webhook-zapier">Zapier — Catch Hook</h3>
+              <h4 className="doc-h3" id="outbound-webhook-zapier">Zapier — Catch Hook</h4>
               <p className="doc-p">1. Create a new Zap → Trigger: <strong>Webhooks by Zapier → Catch Hook</strong>. 2. Copy the Zapier webhook URL and paste it into Posthive Settings → Webhook. 3. Schedule a test post in Posthive to send a sample payload. 4. Use the fields (<span className="doc-inline-code">postId</span>, <span className="doc-inline-code">platforms</span>, <span className="doc-inline-code">text</span>) in your Zap actions.</p>
 
-              <h3 className="doc-h3" id="outbound-webhook-make">Make (Integromat) — Custom Webhook</h3>
+              <h4 className="doc-h3" id="outbound-webhook-make">Make (Integromat) — Custom Webhook</h4>
               <p className="doc-p">1. Add a <strong>Webhooks → Custom webhook</strong> module as the trigger. 2. Copy the URL and paste it into Posthive Settings → Webhook. 3. Run a test post — Make will auto-detect the payload structure. 4. Connect downstream modules.</p>
 
               {/* ── MAKE.COM INTEGRATION ── */}
               <SectionLabel>Make.com Integration</SectionLabel>
-              <h2 className="doc-h2" id="make-overview">Make.com Integration</h2>
+              <h3 className="doc-h2" id="make-overview">Make.com Integration</h3>
               <p className="doc-p">
-                Posthive has a native Make.com app that lets you schedule and manage social media posts directly from your Make scenarios — no webhooks or custom HTTP modules needed. Connect once with your API key and use ready-made modules for every action.
+                Posthive has a native Make.com app. Schedule and manage social media posts directly from your Make scenarios with no webhooks or custom HTTP modules needed. Connect once with your API key and use ready-made modules for every action.
               </p>
 
-              <h3 className="doc-h3" id="make-connect">Connect your account</h3>
+              <h4 className="doc-h3" id="make-connect">Connect your account</h4>
               <ol className="doc-list" style={{ listStyleType: "decimal" }}>
                 <li>Open <strong>Make.com</strong> and create a new scenario.</li>
                 <li>Search for <strong>Posthive</strong> in the app search.</li>
                 <li>Select any module and click <strong>Create a connection</strong>.</li>
-                <li>In Posthive, go to <strong>Settings → API Keys</strong> and create a new API key.</li>
+                <li>In Posthive, go to <strong>Settings / API Keys</strong> and create a new API key.</li>
                 <li>Paste the key (starts with <code className="doc-inline-code">ph_</code>) into Make and click Save.</li>
               </ol>
               <p className="doc-p">API keys require a <strong>Pro or Team plan</strong>.</p>
 
-              <h3 className="doc-h3" id="make-modules">Available modules</h3>
+              <h4 className="doc-h3" id="make-modules">Available modules</h4>
               <div style={{ overflowX: "auto", margin: "16px 0" }}>
                 <table className="doc-table">
                   <thead><tr><th>Module</th><th>Type</th><th>Description</th></tr></thead>
@@ -1511,7 +1511,7 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
                       ["List Social Accounts", "Search", "Returns all connected social accounts in your workspace"],
                       ["Create Post", "Action", "Schedule or draft a post to one or more social accounts"],
                       ["Get Post", "Action", "Retrieve a post by ID including per-platform status"],
-                      ["List Posts", "Search", "Filter posts by status — pending, done, failed, draft"],
+                      ["List Posts", "Search", "Filter posts by status: pending, done, failed, or draft"],
                       ["Update Post", "Action", "Update content, schedule time, or images of a pending post"],
                       ["Delete Post", "Action", "Permanently delete a pending or draft post"],
                       ["Approve Draft", "Action", "Approve a draft and schedule it for publishing"],
@@ -1525,17 +1525,24 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
                 </table>
               </div>
 
-              <h3 className="doc-h3" id="make-examples">Example scenarios</h3>
-              <ul className="doc-list">
-                <li><strong>Content calendar</strong> — trigger from Google Sheets or Notion → Create Post for each row on a schedule.</li>
-                <li><strong>Repurpose content</strong> — Duplicate Post on top-performing content and reschedule it.</li>
-                <li><strong>Draft approval workflow</strong> — Create Post as draft → send Slack notification → Approve Draft after team review.</li>
-                <li><strong>Template publishing</strong> — Run a template on a cron schedule to post recurring content.</li>
-              </ul>
+              <h4 className="doc-h3" id="make-examples">Example scenarios</h4>
+              <div style={{ display: "grid", gap: 12, margin: "16px 0" }}>
+                {[
+                  { title: "Content calendar", desc: "Trigger from Google Sheets or Notion and use Create Post to publish each row on a schedule." },
+                  { title: "Repurpose content", desc: "Use Duplicate Post to clone top-performing content and reschedule it for a new audience." },
+                  { title: "Draft approval workflow", desc: "Create Post as a draft, send a Slack notification, then Approve Draft after team review." },
+                  { title: "Template publishing", desc: "Run Create Post from Template on a cron schedule to publish recurring content automatically." },
+                ].map(s => (
+                  <div key={s.title} style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 10, padding: "14px 16px" }}>
+                    <p style={{ fontWeight: 600, fontSize: 13, color: "#ededed", marginBottom: 4 }}>{s.title}</p>
+                    <p style={{ fontSize: 13, color: "#888888", margin: 0 }}>{s.desc}</p>
+                  </div>
+                ))}
+              </div>
 
               {/* ── MCP SERVER ── */}
               <SectionLabel>MCP Server</SectionLabel>
-              <h2 className="doc-h2" id="mcp-overview">MCP Server</h2>
+              <h3 className="doc-h2" id="mcp-overview">MCP Server</h3>
               <p className="doc-p">
                 Posthive ships a built-in MCP (Model Context Protocol) server that exposes your scheduling queue as tools any AI agent can call — Claude, ChatGPT, Cursor, VS Code, Claude Code, Codex, OpenClaw, Hermes Agent, or your own pipeline. No API key copy-pasting required — every client uses the same bare URL and signs in via your browser. Two ways to connect:
               </p>
@@ -1558,7 +1565,7 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
                 <strong>Human-in-the-loop by default.</strong> Agent-created posts are saved as <strong>drafts</strong> and require your review before anything publishes. Open Posthive → Posts to approve, edit, or schedule them. Use <span className="doc-inline-code">schedule_directly: true</span> only when you explicitly want to skip the review step.
               </div>
 
-              <h3 className="doc-h3" id="mcp-plans">Plan requirements</h3>
+              <h4 className="doc-h3" id="mcp-plans">Plan requirements</h4>
               <p className="doc-p">MCP access is available on <strong>Pro</strong> and <strong>Team</strong> plans. Self-hosters with billing disabled always have full access. The <span className="doc-inline-code">/mcp</span> endpoint returns <span className="doc-inline-code">403</span> with a clear message if your plan does not include it.</p>
               <div style={{ overflowX: "auto", margin: "12px 0 24px" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -1586,7 +1593,7 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
                 </table>
               </div>
 
-              <h3 className="doc-h3" id="mcp-install">Sign in (recommended)</h3>
+              <h4 className="doc-h3" id="mcp-install">Sign in (recommended)</h4>
               <p className="doc-p">
                 Sign in once via your browser — no API key to generate, copy, or paste. This works for both the CLI and the MCP server, since they share the same stored login:
               </p>
@@ -1601,7 +1608,7 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
               <CopyCode>{`POSTHIVE_API_KEY=ph_...        # Settings → API Keys
 POSTHIVE_API_URL=https://api.posthive.co`}</CopyCode>
 
-              <h3 className="doc-h3" id="mcp-claude-code">Claude Code setup</h3>
+              <h4 className="doc-h3" id="mcp-claude-code">Claude Code setup</h4>
               <p className="doc-p"><strong>Recommended — one command, no API key:</strong></p>
               <CopyCode>{`claude mcp add --transport http posthive https://api.posthive.co/mcp`}</CopyCode>
               <p className="doc-p">
@@ -1617,7 +1624,7 @@ claude mcp add posthive -- npx posthive-mcp`}</CopyCode>
                 <strong>How to check it&apos;s connected:</strong> run <span className="doc-inline-code">/mcp</span> inside the Claude Code terminal. You should see <span className="doc-inline-code">posthive</span> listed with a connected status — select it to see all 10 available tools. Then try a prompt like <em>&quot;list my Posthive accounts&quot;</em> to confirm it actually calls the tool and returns real data.
               </div>
 
-              <h3 className="doc-h3" id="mcp-cursor">Cursor, VS Code, Codex, OpenClaw, Hermes Agent</h3>
+              <h4 className="doc-h3" id="mcp-cursor">Cursor, VS Code, Codex, OpenClaw, Hermes Agent</h4>
               <p className="doc-p">
                 Same bare Streamable HTTP + OAuth URL as the Claude and ChatGPT connectors — no API key in any config file. The client opens your browser to sign in the first time it calls a tool.
               </p>
@@ -1655,7 +1662,7 @@ url = "https://api.posthive.co/mcp"`}</CopyCode>
                 Prefer running the MCP server locally instead of over the network? Sign in once with <span className="doc-inline-code">npx posthive-cli login</span>, then use <span className="doc-inline-code">{`{ "command": "npx", "args": ["posthive-mcp"] }`}</span> (add <span className="doc-inline-code">&quot;type&quot;: &quot;stdio&quot;</span> where the client requires it) instead of the URL above — still no API key needed, since <span className="doc-inline-code">posthive-mcp</span> reads the same stored login.
               </div>
 
-              <h3 className="doc-h3" id="mcp-claudeai">Claude connector (no install needed)</h3>
+              <h4 className="doc-h3" id="mcp-claudeai">Claude connector (no install needed)</h4>
               <p className="doc-p">The Posthive API exposes a Streamable HTTP MCP endpoint — no local binary required. Claude handles OAuth automatically.</p>
               <p className="doc-p"><strong>Steps:</strong></p>
               <p className="doc-p">1. Go to <strong>Claude.ai → Settings → Connectors → Add custom connector</strong></p>
@@ -1667,7 +1674,7 @@ url = "https://api.posthive.co/mcp"`}</CopyCode>
                 Self-hosters: replace <span className="doc-inline-code">https://api.posthive.co</span> with your own API URL. The OAuth flow and <span className="doc-inline-code">/mcp</span> endpoint are included in every deployment.
               </div>
 
-              <h3 className="doc-h3" id="mcp-chatgpt">ChatGPT connector</h3>
+              <h4 className="doc-h3" id="mcp-chatgpt">ChatGPT connector</h4>
               <p className="doc-p">Same Streamable HTTP + OAuth endpoint as the Claude connector above — confirmed working with ChatGPT&apos;s Developer Mode apps.</p>
               <p className="doc-p"><strong>Steps:</strong></p>
               <p className="doc-p">1. Go to <strong>ChatGPT → Settings → Apps → Advanced settings</strong> and turn on <strong>Developer mode</strong> (one-time; may require your workspace admin to allow it first).</p>
@@ -1679,7 +1686,7 @@ url = "https://api.posthive.co/mcp"`}</CopyCode>
                 Developer Mode custom connectors are private to your account — no app review or OpenAI approval needed. That&apos;s separate from submitting Posthive to the public ChatGPT App Directory, which does require identity verification and review.
               </div>
 
-              <h3 className="doc-h3" id="mcp-url-key">Manual API key in URL (fallback)</h3>
+              <h4 className="doc-h3" id="mcp-url-key">Manual API key in URL (fallback)</h4>
               <p className="doc-p">Prefer the <Link href="/agent" style={{ color: "#5b63d3" }}>Sign in / stdio method</Link> above wherever possible. For a client that doesn&apos;t support either — embed your API key directly in the URL. No headers, no config files beyond the URL itself:</p>
               <CopyCode>{`https://api.posthive.co/mcp/ph_your_api_key_here`}</CopyCode>
               <p className="doc-p">Paste that as the MCP server URL in your agent settings. The agent discovers all 10 tools automatically.</p>
@@ -1690,7 +1697,7 @@ url = "https://api.posthive.co/mcp"`}</CopyCode>
                 Keep this URL private — it contains your API key. Revoke and regenerate from <strong>Settings → API Keys</strong> if it leaks.
               </div>
 
-              <h3 className="doc-h3" id="mcp-cli">CLI for shell agents (OpenClaw, custom pipelines)</h3>
+              <h4 className="doc-h3" id="mcp-cli">CLI for shell agents (OpenClaw, custom pipelines)</h4>
               <p className="doc-p">
                 Not every agent speaks MCP. For agents that run shell commands — OpenClaw, custom automation, or scripts — install <span className="doc-inline-code">posthive-cli</span>, a thin command-line wrapper over the same public API:
               </p>
@@ -1711,7 +1718,7 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
                 Same safety model as MCP: posts default to drafts. Pass <span className="doc-inline-code">--schedule</span> explicitly to schedule directly instead of saving as a draft.
               </div>
 
-              <h3 className="doc-h3" id="mcp-tools">Available tools</h3>
+              <h4 className="doc-h3" id="mcp-tools">Available tools</h4>
               <p className="doc-p">All tools are available on both transports. The full set:</p>
               <div style={{ overflowX: "auto", margin: "16px 0 24px" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -1745,7 +1752,7 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
                 </table>
               </div>
 
-              <h3 className="doc-h3" id="mcp-media">Media, video types & platform formats</h3>
+              <h4 className="doc-h3" id="mcp-media">Media, video types & platform formats</h4>
               <p className="doc-p">The <span className="doc-inline-code">create_post</span> tool supports images, videos, and platform-specific formats via three optional fields:</p>
               <div style={{ overflowX: "auto", margin: "12px 0 20px" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -1781,7 +1788,7 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
                 A media library UI for uploading assets and copying URLs without writing code is on the roadmap.
               </div>
 
-              <h3 className="doc-h3" id="mcp-examples">Example prompts</h3>
+              <h4 className="doc-h3" id="mcp-examples">Example prompts</h4>
               <p className="doc-p">Once connected, use natural language — the agent picks the right tools automatically:</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 12, margin: "20px 0" }}>
                 {[
@@ -1814,27 +1821,27 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
 
               {/* ── API REFERENCE ── */}
               <SectionLabel>API Reference</SectionLabel>
-              <h2 className="doc-h2" id="api-authentication">Authentication</h2>
+              <h3 className="doc-h2" id="api-authentication">Authentication</h3>
               <p className="doc-p">
                 The Posthive REST API lets you schedule posts and manage accounts programmatically — useful for AI agents, automation scripts, and custom integrations. API access is available on <strong>Pro</strong> and <strong>Team</strong> plans. When self-hosting with <span className="doc-inline-code">ENABLE_BILLING</span> unset, all users have access.
               </p>
 
-              <h3 className="doc-h3">Base URL</h3>
+              <h4 className="doc-h3">Base URL</h4>
               <CopyCode>{`https://your-api-url/api/v1`}</CopyCode>
 
-              <h3 className="doc-h3">Creating an API key</h3>
+              <h4 className="doc-h3">Creating an API key</h4>
               <p className="doc-p">
                 Go to <strong>Settings → API Keys</strong>, enter a label (e.g. &quot;My Claude agent&quot;), and click <em>Create key</em>. The full key is shown only once — copy it immediately. Keys are prefixed with <span className="doc-inline-code">ph_</span> for easy identification.
               </p>
 
-              <h3 className="doc-h3">Sending requests</h3>
+              <h4 className="doc-h3">Sending requests</h4>
               <p className="doc-p">Pass the key in the <span className="doc-inline-code">Authorization</span> header of every request:</p>
               <CopyCode>{`Authorization: Bearer ph_<your-key>`}</CopyCode>
               <div className="doc-warn">
                 <strong>Keep keys secret.</strong> Do not commit them to source control or expose them in client-side code. Revoke any compromised key from Settings → API Keys immediately — revocation takes effect within seconds.
               </div>
 
-              <h3 className="doc-h3">Response format</h3>
+              <h4 className="doc-h3">Response format</h4>
               <p className="doc-p">All responses are JSON. Successful responses return the resource directly. Errors return an object with an <span className="doc-inline-code">error</span> string field.</p>
               <CopyCode>{`# Success
 { "accounts": [ ... ] }
@@ -1843,14 +1850,14 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
 { "error": "One or more accountIds are invalid" }`}</CopyCode>
 
               {/* ── GET /accounts ── */}
-              <h2 className="doc-h2" id="api-accounts">GET /accounts</h2>
+              <h3 className="doc-h2" id="api-accounts">GET /accounts</h3>
               <p className="doc-p">Returns all social accounts connected to your Posthive account. Use the returned <span className="doc-inline-code">id</span> values as <span className="doc-inline-code">accountIds</span> when creating posts.</p>
 
-              <h3 className="doc-h3">Request</h3>
+              <h4 className="doc-h3">Request</h4>
               <CopyCode>{`GET /api/v1/accounts
 Authorization: Bearer ph_<key>`}</CopyCode>
 
-              <h3 className="doc-h3">Response</h3>
+              <h4 className="doc-h3">Response</h4>
               <CopyCode>{`{
   "accounts": [
     {
@@ -1863,15 +1870,15 @@ Authorization: Bearer ph_<key>`}</CopyCode>
   ]
 }`}</CopyCode>
 
-              <h3 className="doc-h3">Example</h3>
+              <h4 className="doc-h3">Example</h4>
               <CopyCode>{`curl https://your-api-url/api/v1/accounts \\
   -H "Authorization: Bearer ph_<key>"`}</CopyCode>
 
               {/* ── POST /posts ── */}
-              <h2 className="doc-h2" id="api-posts-create">POST /posts</h2>
+              <h3 className="doc-h2" id="api-posts-create">POST /posts</h3>
               <p className="doc-p">Schedule a post to one or more connected accounts. The post is queued and published automatically at <span className="doc-inline-code">scheduledFor</span>.</p>
 
-              <h3 className="doc-h3">Request body</h3>
+              <h4 className="doc-h3">Request body</h4>
               <div className="doc-table-wrap"><table className="doc-table">
                 <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                 <tbody>
@@ -1888,7 +1895,7 @@ Authorization: Bearer ph_<key>`}</CopyCode>
                 </tbody>
               </table></div>
 
-              <h3 className="doc-h3">Per-platform overrides</h3>
+              <h4 className="doc-h3">Per-platform overrides</h4>
               <p className="doc-p">Use <span className="doc-inline-code">perAccount</span> to post different text or a different first comment to specific accounts. This is the recommended approach when targeting platforms with different character limits (e.g. Bluesky 300 chars vs LinkedIn 3,000 chars).</p>
               <div className="doc-table-wrap"><table className="doc-table">
                 <thead><tr><th>Platform</th><th>Char limit</th></tr></thead>
@@ -1906,7 +1913,7 @@ Authorization: Bearer ph_<key>`}</CopyCode>
                 </tbody>
               </table></div>
 
-              <h3 className="doc-h3">Response — 201 Created</h3>
+              <h4 className="doc-h3">Response — 201 Created</h4>
               <CopyCode>{`{
   "id": "cmr39jppf0003iiwnt643zr91",
   "scheduledFor": "2026-07-03T10:00:00.000Z",
@@ -1920,7 +1927,7 @@ Authorization: Bearer ph_<key>`}</CopyCode>
   ]
 }`}</CopyCode>
 
-              <h3 className="doc-h3">Example — multi-platform with per-account overrides</h3>
+              <h4 className="doc-h3">Example — multi-platform with per-account overrides</h4>
               <CopyCode>{`curl -X POST https://your-api-url/api/v1/posts \\
   -H "Authorization: Bearer ph_<key>" \\
   -H "Content-Type: application/json" \\
@@ -1936,7 +1943,7 @@ Authorization: Bearer ph_<key>`}</CopyCode>
     }
   }'`}</CopyCode>
 
-              <h3 className="doc-h3">Example — dry run (test without posting)</h3>
+              <h4 className="doc-h3">Example — dry run (test without posting)</h4>
               <CopyCode>{`curl -X POST https://your-api-url/api/v1/posts \\
   -H "Authorization: Bearer ph_<key>" \\
   -H "Content-Type: application/json" \\
@@ -1948,10 +1955,10 @@ Authorization: Bearer ph_<key>`}</CopyCode>
   }'`}</CopyCode>
 
               {/* ── GET /posts ── */}
-              <h2 className="doc-h2" id="api-posts-list">GET /posts</h2>
+              <h3 className="doc-h2" id="api-posts-list">GET /posts</h3>
               <p className="doc-p">Returns your scheduled and completed posts in reverse chronological order (newest first). Supports cursor-based pagination.</p>
 
-              <h3 className="doc-h3">Query parameters</h3>
+              <h4 className="doc-h3">Query parameters</h4>
               <div className="doc-table-wrap"><table className="doc-table">
                 <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
                 <tbody>
@@ -1961,7 +1968,7 @@ Authorization: Bearer ph_<key>`}</CopyCode>
                 </tbody>
               </table></div>
 
-              <h3 className="doc-h3">Response</h3>
+              <h4 className="doc-h3">Response</h4>
               <CopyCode>{`{
   "posts": [
     {
@@ -1977,7 +1984,7 @@ Authorization: Bearer ph_<key>`}</CopyCode>
   "nextCursor": "cmr39jppf0003iiwnt643zr91"  // null on last page
 }`}</CopyCode>
 
-              <h3 className="doc-h3">Paginating</h3>
+              <h4 className="doc-h3">Paginating</h4>
               <CopyCode>{`# Page 1
 GET /api/v1/posts?limit=20
 
@@ -1985,10 +1992,10 @@ GET /api/v1/posts?limit=20
 GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</CopyCode>
 
               {/* ── GET /posts/:id ── */}
-              <h2 className="doc-h2" id="api-posts-get">GET /posts/:id</h2>
+              <h3 className="doc-h2" id="api-posts-get">GET /posts/:id</h3>
               <p className="doc-p">Returns a single post by ID, including full per-platform target details and any error messages.</p>
 
-              <h3 className="doc-h3">Response</h3>
+              <h4 className="doc-h3">Response</h4>
               <CopyCode>{`{
   "id": "cmr39jppf0003iiwnt643zr91",
   "scheduledFor": "2026-07-03T10:00:00.000Z",
@@ -2008,7 +2015,7 @@ GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</CopyCode>
   "updatedAt": "2026-07-03T10:00:05.000Z"
 }`}</CopyCode>
 
-              <h3 className="doc-h3">Target statuses</h3>
+              <h4 className="doc-h3">Target statuses</h4>
               <div className="doc-table-wrap"><table className="doc-table">
                 <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
                 <tbody>
@@ -2021,15 +2028,15 @@ GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</CopyCode>
                 </tbody>
               </table></div>
 
-              <h3 className="doc-h3">Example</h3>
+              <h4 className="doc-h3">Example</h4>
               <CopyCode>{`curl https://your-api-url/api/v1/posts/cmr39jppf0003iiwnt643zr91 \\
   -H "Authorization: Bearer ph_<key>"`}</CopyCode>
 
               {/* ── PATCH /posts/:id ── */}
-              <h2 className="doc-h2" id="api-posts-patch">PATCH /posts/:id</h2>
+              <h3 className="doc-h2" id="api-posts-patch">PATCH /posts/:id</h3>
               <p className="doc-p">Update a <span className="doc-inline-code">pending</span> post — reschedule it, change the content, swap accounts, or update the first comment. All fields are optional; only send what you want to change.</p>
 
-              <h3 className="doc-h3">Request body</h3>
+              <h4 className="doc-h3">Request body</h4>
               <p className="doc-p">All fields are optional — only send what you want to change.</p>
               <div className="doc-table-wrap"><table className="doc-table">
                 <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
@@ -2046,7 +2053,7 @@ GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</CopyCode>
                 </tbody>
               </table></div>
 
-              <h3 className="doc-h3">Response — 200 OK</h3>
+              <h4 className="doc-h3">Response — 200 OK</h4>
               <CopyCode>{`{
   "id": "cmr39jppf...",
   "scheduledFor": "2026-07-04T10:00:00.000Z",
@@ -2055,28 +2062,28 @@ GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</CopyCode>
   "commentText": null
 }`}</CopyCode>
 
-              <h3 className="doc-h3">Example — reschedule only</h3>
+              <h4 className="doc-h3">Example — reschedule only</h4>
               <CopyCode>{`curl -X PATCH https://your-api-url/api/v1/posts/cmr39jppf... \\
   -H "Authorization: Bearer ph_<key>" \\
   -H "Content-Type: application/json" \\
   -d '{ "scheduledFor": "2026-07-04T10:00:00.000Z" }'`}</CopyCode>
 
               {/* ── DELETE /posts/:id ── */}
-              <h2 className="doc-h2" id="api-posts-delete">DELETE /posts/:id</h2>
+              <h3 className="doc-h2" id="api-posts-delete">DELETE /posts/:id</h3>
               <p className="doc-p">Cancels and permanently deletes a <span className="doc-inline-code">pending</span> post. Posts with status <span className="doc-inline-code">running</span>, <span className="doc-inline-code">done</span>, or <span className="doc-inline-code">failed</span> cannot be deleted via the API.</p>
 
-              <h3 className="doc-h3">Response — 200 OK</h3>
+              <h4 className="doc-h3">Response — 200 OK</h4>
               <CopyCode>{`{ "ok": true }`}</CopyCode>
 
-              <h3 className="doc-h3">Example</h3>
+              <h4 className="doc-h3">Example</h4>
               <CopyCode>{`curl -X DELETE https://your-api-url/api/v1/posts/cmr39jppf0003iiwnt643zr91 \\
   -H "Authorization: Bearer ph_<key>"`}</CopyCode>
 
               {/* ── POST /upload ── */}
-              <h2 className="doc-h2" id="api-upload">POST /upload</h2>
+              <h3 className="doc-h2" id="api-upload">POST /upload</h3>
               <p className="doc-p">Upload an image or video file and get back a URL you can pass in the <span className="doc-inline-code">images</span> field of <span className="doc-inline-code">POST /posts</span>. Send as <span className="doc-inline-code">multipart/form-data</span> with the file in a field named <span className="doc-inline-code">file</span>.</p>
 
-              <h3 className="doc-h3">Supported types</h3>
+              <h4 className="doc-h3">Supported types</h4>
               <div className="doc-table-wrap"><table className="doc-table">
                 <thead><tr><th>Type</th><th>Formats</th><th>Max size</th></tr></thead>
                 <tbody>
@@ -2085,13 +2092,13 @@ GET /api/v1/posts?limit=20&cursor=cmr39jppf0003iiwnt643zr91`}</CopyCode>
                 </tbody>
               </table></div>
 
-              <h3 className="doc-h3">Response — 201 Created</h3>
+              <h4 className="doc-h3">Response — 201 Created</h4>
               <CopyCode>{`{
   "url": "https://your-api-url/uploads/abc123.jpg",
   "type": "image"   // "image" | "video"
 }`}</CopyCode>
 
-              <h3 className="doc-h3">Example</h3>
+              <h4 className="doc-h3">Example</h4>
               <CopyCode>{`curl -X POST https://your-api-url/api/v1/upload \\
   -H "Authorization: Bearer ph_<key>" \\
   -F "file=@/path/to/photo.jpg"
@@ -2108,7 +2115,7 @@ curl -X POST https://your-api-url/api/v1/posts \\
   }'`}</CopyCode>
 
               {/* ── Error codes ── */}
-              <h2 className="doc-h2" id="api-errors">Error codes</h2>
+              <h3 className="doc-h2" id="api-errors">Error codes</h3>
               <p className="doc-p">All errors return a JSON body with an <span className="doc-inline-code">error</span> field describing what went wrong.</p>
               <div className="doc-table-wrap"><table className="doc-table">
                 <thead><tr><th>HTTP status</th><th>Meaning</th></tr></thead>
