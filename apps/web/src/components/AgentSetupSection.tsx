@@ -323,15 +323,22 @@ export function AgentSetupSection() {
           ))}
         </div>
 
-        {/* Authorize dialog */}
+        {/* Authorize dialog — preview illustration */}
         <div
           style={{
             borderRadius: 12,
             background: T.surface,
             padding: "18px 18px 20px",
             boxShadow: T.shadow,
+            position: "relative",
           }}
         >
+          <div style={{
+            position: "absolute", top: 10, right: 12,
+            fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+            color: T.muted, padding: "2px 7px", borderRadius: 4,
+            border: `1px solid ${T.divider}`,
+          }}>Preview</div>
           <div
             style={{
               display: "flex",
@@ -378,14 +385,15 @@ export function AgentSetupSection() {
             templates. Revoke anytime.
           </div>
           <button
+            disabled
             style={{
               width: "100%",
               padding: 10,
               borderRadius: 8,
-              cursor: "pointer",
+              cursor: "default",
               border: "none",
-              color: "#fff",
-              background: "#5b63d3",
+              color: "rgba(255,255,255,0.5)",
+              background: "rgba(91,99,211,0.4)",
               fontSize: 14,
               fontFamily: "inherit",
               fontWeight: 700,

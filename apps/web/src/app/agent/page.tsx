@@ -27,6 +27,25 @@ const T = {
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
+export const metadata: Metadata = {
+  title: "Posthive Agent — Schedule Social Posts from Claude, Cursor & Any AI Agent",
+  description: "Connect any AI agent to Posthive via MCP or CLI. Claude, Cursor, VS Code, ChatGPT, and more can create, schedule, and manage social media posts — with you approving everything before it goes live.",
+  keywords: ["MCP social media", "Claude MCP social scheduler", "AI agent social media posting", "posthive-mcp", "social media API agent", "Claude tool social media"],
+  alternates: { canonical: `${WEB_URL}/agent` },
+  openGraph: {
+    title: "Posthive Agent — AI-powered social media scheduling via MCP + CLI",
+    description: "Give Claude, Cursor, or any AI agent the ability to schedule posts across multiple platforms. Draft-first — nothing goes live without your approval.",
+    url: `${WEB_URL}/agent`,
+    images: [{ url: "/og/fordeveloperogimage.png", width: 1200, height: 630, alt: "Posthive Agent — MCP + CLI for social media" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Posthive Agent — Schedule social posts from any AI agent",
+    description: "MCP server + CLI for Claude, Cursor, VS Code, ChatGPT and more. Draft-first, revocable API keys.",
+    images: ["/og/fordeveloperogimage.png"],
+  },
+};
+
 const softwareSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
