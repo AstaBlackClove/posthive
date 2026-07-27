@@ -1097,52 +1097,80 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
               <SectionLabel>Self-hosting</SectionLabel>
               <h3 className="doc-h2" id="docker-setup">Docker setup</h3>
               <p className="doc-p">
-                Self-host Posthive on any Linux VPS, Raspberry Pi, or cloud VM — no Node.js or pnpm needed. One <span className="doc-inline-code">docker compose up</span> command starts everything.
+                Self-host Posthive on any Linux VPS, Raspberry Pi, or cloud VM — no Node.js or pnpm needed. Docker Compose starts Postgres, Redis, the API, and the web app with one command. All configuration lives in a single <span className="doc-inline-code">.env</span> file at the project root.
               </p>
 
               <h4 className="doc-h3">Prerequisites</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><a href="https://docs.docker.com/engine/install/" target="_blank" rel="noopener noreferrer" style={{ color: "#5b63d3" }}>Docker Engine 24+</a> with the Compose v2 plugin (<span className="doc-inline-code">docker compose</span>, not <span className="doc-inline-code">docker-compose</span>)</li>
+                <li className="doc-li">A domain with two A records pointing at your server: <span className="doc-inline-code">yourdomain.com</span> → web, <span className="doc-inline-code">api.yourdomain.com</span> → API</li>
+                <li className="doc-li">A reverse proxy (Caddy or nginx) for HTTPS termination</li>
               </ul>
 
-              <h4 className="doc-h3">1 · Clone and configure</h4>
+              <h4 className="doc-h3">Step 1 — Clone</h4>
               <CopyCode>{`git clone https://github.com/AstaBlackClove/posthive.git
-cd posthive
-cp apps/api/.env.example .env`}</CopyCode>
-              <p className="doc-p">Open <span className="doc-inline-code">.env</span> and set at minimum:</p>
-              <CopyCode>{`# Postgres
-POSTGRES_PASSWORD=change_me_to_a_strong_password
+cd posthive`}</CopyCode>
 
-# Secrets — generate each with:
-# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-ENCRYPTION_KEY=<64-char hex>      # NEVER change after accounts are saved
+              <h4 className="doc-h3">Step 2 — Create your <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 13 }}>.env</span></h4>
+              <p className="doc-p"><span className="doc-inline-code">.env.docker</span> is a ready-made template with only the vars you need for Docker. Copy it to <span className="doc-inline-code">.env</span> at the project root — this single file configures all four containers.</p>
+              <CopyCode>{`cp .env.docker .env`}</CopyCode>
+
+              <h4 className="doc-h3">Step 3 — Generate secrets</h4>
+              <p className="doc-p">Run this command three times and paste each output into <span className="doc-inline-code">ENCRYPTION_KEY</span>, <span className="doc-inline-code">JWT_ACCESS_SECRET</span>, and <span className="doc-inline-code">JWT_REFRESH_SECRET</span>:</p>
+              <CopyCode>{`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`}</CopyCode>
+              <div className="doc-warn">
+                <strong>Critical:</strong> <span className="doc-inline-code">ENCRYPTION_KEY</span> encrypts all stored OAuth tokens. Changing it after accounts are connected makes every connected account permanently unusable. Back it up somewhere safe.
+              </div>
+
+              <h4 className="doc-h3">Step 4 — Set your URLs</h4>
+              <p className="doc-p">Edit <span className="doc-inline-code">.env</span> and fill in your domain. These two vars are baked into the Next.js build — set them correctly before the first build.</p>
+              <CopyCode>{`POSTGRES_PASSWORD=strong_random_password
+
+ENCRYPTION_KEY=<64-char hex>
 JWT_ACCESS_SECRET=<64-char hex>
 JWT_REFRESH_SECRET=<64-char hex>
 
-# URLs (update to your domain before building)
-WEB_URL=http://localhost:3000
-PUBLIC_API_URL=http://localhost:3001`}</CopyCode>
-              <div className="doc-warn">
-                <strong>Critical:</strong> <span className="doc-inline-code">ENCRYPTION_KEY</span> encrypts all stored OAuth tokens. Write it down somewhere safe — changing it after accounts are connected makes every connected account permanently unusable.
-              </div>
+WEB_URL=https://yourdomain.com
+PUBLIC_API_URL=https://api.yourdomain.com`}</CopyCode>
+              <p className="doc-p">Everything else in <span className="doc-inline-code">.env.docker</span> is optional — uncomment only the platforms you want to enable. Redis and Postgres connection strings are set automatically by Docker Compose; you do not need to set them manually.</p>
 
-              <h4 className="doc-h3">2 · Start</h4>
+              <h4 className="doc-h3">Step 5 — Add platform OAuth vars</h4>
+              <p className="doc-p">For each social platform you want to enable, uncomment its block in <span className="doc-inline-code">.env</span> and set the redirect URI to <span className="doc-inline-code">https://api.yourdomain.com/auth/&lt;platform&gt;/callback</span>. For example:</p>
+              <CopyCode>{`THREADS_APP_ID=your-app-id
+THREADS_APP_SECRET=your-app-secret
+THREADS_REDIRECT_URI=https://api.yourdomain.com/auth/threads/callback`}</CopyCode>
+              <p className="doc-p">Bluesky, Telegram, Nostr, Mastodon, Pixelfed, Lemmy, and Discord need no app registration — they work out of the box.</p>
+
+              <h4 className="doc-h3">Step 6 — Build and start</h4>
               <CopyCode>{`docker compose up -d --build`}</CopyCode>
-              <p className="doc-p">First build takes 2–5 minutes. Once done, open <span className="doc-inline-code">http://localhost:3000</span> and register your account. Billing is disabled by default — all features are unlocked.</p>
+              <p className="doc-p">First build takes 2–5 minutes. Once done, open your domain and register your account. Billing is disabled by default — all features are unlocked.</p>
               <div style={{ overflowX: "auto", margin: "12px 0 20px" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead><tr style={{ borderBottom: "1px solid #2a2a2a" }}>
-                    <th style={{ padding: "8px 12px", textAlign: "left", color: "#888" }}>Service</th>
-                    <th style={{ padding: "8px 12px", textAlign: "left", color: "#888" }}>URL</th>
+                    <th style={{ padding: "8px 12px", textAlign: "left", color: "#888" }}>Container</th>
+                    <th style={{ padding: "8px 12px", textAlign: "left", color: "#888" }}>Default port</th>
+                    <th style={{ padding: "8px 12px", textAlign: "left", color: "#888" }}>Purpose</th>
                   </tr></thead>
                   <tbody>
                     <tr style={{ borderBottom: "1px solid #1a1a1a" }}>
-                      <td style={{ padding: "8px 12px", color: "#ededed" }}>Web</td>
-                      <td style={{ padding: "8px 12px", color: "#ededed" }}>http://localhost:3000</td>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>web</td>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>3000</td>
+                      <td style={{ padding: "8px 12px", color: "#888" }}>Next.js frontend</td>
+                    </tr>
+                    <tr style={{ borderBottom: "1px solid #1a1a1a" }}>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>api</td>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>3001</td>
+                      <td style={{ padding: "8px 12px", color: "#888" }}>Fastify backend + BullMQ worker</td>
+                    </tr>
+                    <tr style={{ borderBottom: "1px solid #1a1a1a" }}>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>db</td>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>5432 (internal)</td>
+                      <td style={{ padding: "8px 12px", color: "#888" }}>Postgres 16</td>
                     </tr>
                     <tr>
-                      <td style={{ padding: "8px 12px", color: "#ededed" }}>API</td>
-                      <td style={{ padding: "8px 12px", color: "#ededed" }}>http://localhost:3001</td>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>redis</td>
+                      <td style={{ padding: "8px 12px", color: "#ededed" }}>6379 (internal)</td>
+                      <td style={{ padding: "8px 12px", color: "#888" }}>BullMQ job queue</td>
                     </tr>
                   </tbody>
                 </table>
