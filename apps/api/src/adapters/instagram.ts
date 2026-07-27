@@ -1,6 +1,6 @@
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
-import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
+import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 import { prisma } from "../lib/prisma.js";
 
 const API = "https://graph.instagram.com/v21.0";
@@ -188,5 +188,26 @@ const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body)
     const { postId } = replyContext as { postId: string; userId: string };
     const res = await apiPost<{ id: string }>(`/${postId}/comments`, accessToken, { message: comment });
     return { platformCommentId: res.id };
+  },
+
+  async getAnalytics(account: Account, platformPostId: string): Promise<AnalyticsResult> {
+    const { accessToken } = getCredentials(account);
+    const res = await apiGet<{
+      data: Array<{ name: string; values?: Array<{ value: number }> }>;
+    }>(
+      `/${platformPostId}/insights`,
+      accessToken,
+      { metric: "likes,comments,reach,reposts,saved", period: "lifetime" },
+    );
+    const get = (name: string): number =>
+      res.data.find((m) => m.name === name)?.values?.[0]?.value ?? 0;
+    return {
+      likes:     get("likes"),
+      replies:   get("comments"),
+      reposts:   get("reposts"),
+      views:     get("reach"),
+      bookmarks: get("saved"),
+      fetchedAt: new Date().toISOString(),
+    };
   },
 };

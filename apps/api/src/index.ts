@@ -41,7 +41,7 @@ import { mcpRoutes } from "./routes/mcp.js";
 import { oauthRoutes } from "./routes/oauth.js";
 import { startWorker } from "./lib/worker.js";
 import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
-import { startStatsCron } from "./lib/statsCron.js";
+import { startStatsCron, runStatsCronNow } from "./lib/statsCron.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { trackRoutes } from "./routes/track.js";
 import { feedbackRoutes } from "./routes/feedback.js";
@@ -152,6 +152,17 @@ async function main() {
   await app.register(feedbackRoutes);
 
   app.get("/health", async () => ({ ok: true }));
+
+  // Admin — manually trigger stats sync (dev + admin only)
+  app.post("/admin/sync-stats", async (req, reply) => {
+    const token = (req.headers["authorization"] ?? "").replace("Bearer ", "");
+    const adminPin = process.env.ADMIN_PIN ?? "";
+    if (adminPin && token !== adminPin) {
+      return reply.status(401).send({ error: "Unauthorized" });
+    }
+    runStatsCronNow().catch((e) => console.error("[sync-stats] error:", e));
+    return { ok: true, message: "stats sync triggered" };
+  });
 
   // Global error handler — captures all unhandled Fastify errors to Sentry
   app.setErrorHandler((err, _req, reply) => {

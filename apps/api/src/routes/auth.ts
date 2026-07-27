@@ -51,7 +51,7 @@ const YT_REDIRECT_URI = process.env.YOUTUBE_REDIRECT_URI!;
 const FB_APP_ID = process.env.FACEBOOK_APP_ID!;
 const FB_APP_SECRET = process.env.FACEBOOK_APP_SECRET!;
 const FB_REDIRECT_URI = process.env.FACEBOOK_REDIRECT_URI!;
-const FB_SCOPES = "pages_manage_posts,pages_show_list,pages_read_engagement";
+const FB_SCOPES = "pages_manage_posts,pages_show_list,pages_read_engagement,pages_manage_engagement";
 
 const X_API_KEY     = process.env.X_API_KEY!;
 const X_API_SECRET  = process.env.X_API_SECRET!;
@@ -254,7 +254,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const url = new URL("https://api.instagram.com/oauth/authorize");
     url.searchParams.set("client_id", IG_APP_ID);
     url.searchParams.set("redirect_uri", IG_REDIRECT_URI);
-    url.searchParams.set("scope", "instagram_business_basic,instagram_business_content_publish");
+    url.searchParams.set("scope", "instagram_business_basic,instagram_business_content_publish,instagram_manage_insights,pages_read_engagement");
     url.searchParams.set("response_type", "code");
     url.searchParams.set("state", state);
     return reply.redirect(url.toString());

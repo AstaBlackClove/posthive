@@ -13,7 +13,7 @@
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
-import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
+import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 
@@ -175,11 +175,43 @@ export const facebookAdapter: PlatformAdapter = {
 
   async createComment(
     _account: Account,
-    _replyContext: unknown,
-    _comment: string
+    replyContext: unknown,
+    comment: string,
   ): Promise<CommentResult> {
-    // Commenting on page posts requires pages_manage_engagement (restricted permission).
-    // Skip silently — the post itself succeeds.
-    return { platformCommentId: null };
+    const { postId, pageAccessToken } = replyContext as { postId: string; pageId: string; pageAccessToken: string };
+    const res = await graphPost(`/${postId}/comments`, {
+      message: comment,
+      access_token: pageAccessToken,
+    });
+    if (!res.ok) throw new Error(`Facebook comment failed: ${await res.text()}`);
+    const data = await res.json() as { id: string };
+    return { platformCommentId: data.id };
+  },
+
+  async getAnalytics(account: Account, platformPostId: string): Promise<AnalyticsResult> {
+    const { pageAccessToken } = getCredentials(account);
+
+    const [insightsRes, postRes] = await Promise.all([
+      fetch(
+        `${GRAPH}/${platformPostId}/insights?metric=post_reactions_by_type_total&access_token=${pageAccessToken}`,
+      ).then((r) => r.json()) as Promise<{
+        data: Array<{ name: string; values: Array<{ value: Record<string, number> }> }>;
+      }>,
+      fetch(
+        `${GRAPH}/${platformPostId}?fields=comments.summary(true)&access_token=${pageAccessToken}`,
+      ).then((r) => r.json()) as Promise<{
+        comments?: { summary?: { total_count?: number } };
+      }>,
+    ]);
+
+    const reactionsObj =
+      insightsRes.data?.find((d) => d.name === "post_reactions_by_type_total")?.values?.[0]?.value ?? {};
+    const likes = Object.values(reactionsObj).reduce((sum, n) => sum + n, 0);
+
+    return {
+      likes,
+      replies: postRes.comments?.summary?.total_count ?? 0,
+      fetchedAt: new Date().toISOString(),
+    };
   },
 };
