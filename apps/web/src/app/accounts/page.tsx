@@ -112,12 +112,15 @@ function tokenStatus(platform: string, expiresAt: string | null): "ok" | "soon" 
   return "ok";
 }
 
-function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMonth, onAvatarRefreshed, isAdmin }: {
+const PROFILE_REFRESH_PLATFORMS = new Set(["bluesky", "threads", "instagram", "linkedin", "mastodon", "pixelfed", "pinterest"]);
+
+function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMonth, onAvatarRefreshed, onRefreshed, isAdmin }: {
   account: Account;
   onDisconnect: (id: string, name: string, platform?: string) => void;
   disconnecting: string | null;
   postsThisMonth?: number;
   onAvatarRefreshed?: (id: string, avatarUrl: string | null) => void;
+  onRefreshed?: (id: string, displayName: string, avatarUrl: string | null) => void;
   isAdmin?: boolean;
 }) {
   const [refreshing, setRefreshing] = useState(false);
@@ -135,6 +138,15 @@ function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMo
         onAvatarRefreshed?.(account.id, updated.avatarUrl);
       }
     } finally { setRefreshing(false); }
+  }
+
+  async function refreshProfile() {
+    setRefreshing(true);
+    try {
+      const updated = await apiFetch<Account>(`/accounts/${account.id}/refresh`, { method: "POST" });
+      onRefreshed?.(account.id, updated.displayName, updated.avatarUrl);
+    } catch { /* silent */ }
+    finally { setRefreshing(false); }
   }
 
   return (
@@ -173,6 +185,16 @@ function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMo
             )}
           </p>
         </div>
+        {PROFILE_REFRESH_PLATFORMS.has(account.platform) && (
+          <button
+            onClick={refreshProfile}
+            disabled={refreshing}
+            title="Refresh profile name and photo"
+            className="text-sm font-medium transition-colors disabled:opacity-50 px-2.5 py-1.5 rounded-lg hover:opacity-80"
+            style={{ color: MUTED }}>
+            {refreshing ? "…" : "↻"}
+          </button>
+        )}
         <button
           onClick={() => onDisconnect(account.id, account.displayName, account.platform)}
           disabled={disconnecting === account.id || isAdmin === false}
@@ -857,6 +879,10 @@ export default function AccountsPage() {
     setDisconnectTarget({ id, displayName, platform: platform ?? "" });
   }
 
+  function handleRefreshed(id: string, displayName: string, avatarUrl: string | null) {
+    setAccounts(prev => prev.map(a => a.id === id ? { ...a, displayName, avatarUrl } : a));
+  }
+
   async function confirmDisconnect() {
     if (!disconnectTarget) return;
     const { id, displayName } = disconnectTarget;
@@ -1023,7 +1049,7 @@ export default function AccountsPage() {
               {!loading && blueskyAccounts.length > 0 && (
                 <div className="space-y-2">
                   {blueskyAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1057,7 +1083,7 @@ export default function AccountsPage() {
               {!loading && threadsAccounts.length > 0 && (
                 <div className="space-y-2">
                   {threadsAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1090,7 +1116,7 @@ export default function AccountsPage() {
               {!loading && instagramAccounts.length > 0 && (
                 <div className="space-y-2">
                   {instagramAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1123,7 +1149,7 @@ export default function AccountsPage() {
               {!loading && linkedinAccounts.length > 0 && (
                 <div className="space-y-2">
                   {linkedinAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1163,7 +1189,7 @@ export default function AccountsPage() {
               {!loading && youtubeAccounts.length > 0 && (
                 <div className="space-y-2">
                   {youtubeAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1202,7 +1228,7 @@ export default function AccountsPage() {
               {!loading && facebookAccounts.length > 0 && (
                 <div className="space-y-2">
                   {facebookAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1235,7 +1261,7 @@ export default function AccountsPage() {
                     <ConnectedAccountRow key={a.id} account={a}
                       onDisconnect={() => setDisconnectTarget(a)}
                       disconnecting={disconnecting}
-                      postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                      postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1270,7 +1296,7 @@ export default function AccountsPage() {
                     <ConnectedAccountRow key={a.id} account={a}
                       onDisconnect={() => setDisconnectTarget(a)}
                       disconnecting={disconnecting}
-                      postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                      postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1305,7 +1331,7 @@ export default function AccountsPage() {
               {!loading && pinterestAccounts.length > 0 && (
                 <div className="space-y-2">
                   {pinterestAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1341,7 +1367,7 @@ export default function AccountsPage() {
                   {!loading && telegramAccounts.length > 0 && (
                     <div className="space-y-2">
                       {telegramAccounts.map((a) => (
-                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                       ))}
                     </div>
                   )}
@@ -1440,7 +1466,7 @@ export default function AccountsPage() {
               {!loading && twitterAccounts.length > 0 && (
                 <div className="space-y-2">
                   {twitterAccounts.map((a) => (
-                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                   ))}
                 </div>
               )}
@@ -1516,7 +1542,7 @@ export default function AccountsPage() {
                   {!loading && discordAccounts.length > 0 && (
                     <div className="space-y-2">
                       {discordAccounts.map((a) => (
-                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                       ))}
                     </div>
                   )}
@@ -1613,7 +1639,7 @@ export default function AccountsPage() {
                   {!loading && lemmyAccounts.length > 0 && (
                     <div className="space-y-2">
                       {lemmyAccounts.map((a) => (
-                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} isAdmin={isAdmin} />
+                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                       ))}
                     </div>
                   )}

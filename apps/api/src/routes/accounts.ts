@@ -235,6 +235,112 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
     return reply.send(stats);
   });
 
+  // Refresh profile (displayName + avatarUrl) from the platform API
+  app.post("/accounts/:id/refresh", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const workspaceId = getWorkspaceId(req);
+
+    const account = await prisma.account.findFirst({
+      where: { id, workspaceId },
+      select: { id: true, platform: true, credentials: true, displayName: true },
+    });
+    if (!account) return reply.status(404).send({ error: "Account not found" });
+
+    let creds: Record<string, string>;
+    try { creds = JSON.parse(decrypt(account.credentials)) as Record<string, string>; }
+    catch { return reply.status(400).send({ error: "Failed to decrypt credentials" }); }
+
+    let displayName: string | null = null;
+    let avatarUrl: string | null = null;
+
+    try {
+      switch (account.platform) {
+        case "bluesky": {
+          const res = await fetch(`https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(account.displayName)}`);
+          if (res.ok) {
+            const d = await res.json() as { handle?: string; avatar?: string };
+            displayName = d.handle ?? null;
+            avatarUrl = d.avatar ?? null;
+          }
+          break;
+        }
+        case "threads": {
+          const res = await fetch(`https://graph.threads.net/me?fields=username,threads_profile_picture_url&access_token=${creds.accessToken}`);
+          if (res.ok) {
+            const d = await res.json() as { username?: string; threads_profile_picture_url?: string };
+            displayName = d.username ?? null;
+            avatarUrl = d.threads_profile_picture_url ?? null;
+          }
+          break;
+        }
+        case "instagram": {
+          const res = await fetch(`https://graph.instagram.com/me?fields=id,username,profile_picture_url&access_token=${creds.accessToken}`);
+          if (res.ok) {
+            const d = await res.json() as { username?: string; profile_picture_url?: string };
+            displayName = d.username ?? null;
+            avatarUrl = d.profile_picture_url ?? null;
+          }
+          break;
+        }
+        case "linkedin": {
+          const res = await fetch("https://api.linkedin.com/v2/userinfo", {
+            headers: { Authorization: `Bearer ${creds.accessToken}` },
+          });
+          if (res.ok) {
+            const d = await res.json() as { name?: string; picture?: string };
+            displayName = d.name ?? null;
+            avatarUrl = d.picture ?? null;
+          }
+          break;
+        }
+        case "mastodon":
+        case "pixelfed": {
+          const res = await fetch(`${creds.instanceUrl}/api/v1/accounts/verify_credentials`, {
+            headers: { Authorization: `Bearer ${creds.accessToken}` },
+          });
+          if (res.ok) {
+            const d = await res.json() as { username?: string; avatar?: string };
+            displayName = d.username ?? null;
+            avatarUrl = d.avatar ?? null;
+          }
+          break;
+        }
+        case "pinterest": {
+          const res = await fetch("https://api.pinterest.com/v5/user_account", {
+            headers: { Authorization: `Bearer ${creds.accessToken}` },
+          });
+          if (res.ok) {
+            const d = await res.json() as { username?: string; profile_image?: string };
+            displayName = d.username ?? null;
+            avatarUrl = d.profile_image ?? null;
+          }
+          break;
+        }
+        default:
+          return reply.status(400).send({ error: "Profile refresh not supported for this platform" });
+      }
+    } catch {
+      return reply.status(502).send({ error: "Failed to fetch profile from platform" });
+    }
+
+    if (!displayName && !avatarUrl) {
+      return reply.status(502).send({ error: "No profile data returned from platform" });
+    }
+
+    if (avatarUrl) avatarUrl = await downloadAndStoreAvatar(avatarUrl);
+
+    const updated = await prisma.account.update({
+      where: { id: account.id },
+      data: {
+        ...(displayName ? { displayName } : {}),
+        ...(avatarUrl ? { avatarUrl } : {}),
+      },
+      select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true, expiresAt: true },
+    });
+
+    return reply.send(updated);
+  });
+
   // Delete account — scoped to workspace
   app.delete("/accounts/:id", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
