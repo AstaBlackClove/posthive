@@ -257,10 +257,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const nonce = randomBytes(32).toString("hex");
     await prisma.oAuthState.create({ data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) } });
     const state = Buffer.from(JSON.stringify({ userId, from, nonce })).toString("base64url");
-    const url = new URL("https://api.instagram.com/oauth/authorize");
+    const url = new URL("https://www.instagram.com/oauth/authorize");
     url.searchParams.set("client_id", IG_APP_ID);
     url.searchParams.set("redirect_uri", IG_REDIRECT_URI);
-    url.searchParams.set("scope", "instagram_business_basic,instagram_business_content_publish,instagram_manage_insights,pages_read_engagement");
+    url.searchParams.set("scope", "instagram_business_basic,instagram_business_content_publish,instagram_business_manage_insights,instagram_business_manage_comments");
     url.searchParams.set("response_type", "code");
     url.searchParams.set("state", state);
     return reply.redirect(url.toString());
