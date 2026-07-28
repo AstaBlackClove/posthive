@@ -197,14 +197,14 @@ const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body)
     }>(
       `/${platformPostId}/insights`,
       accessToken,
-      { metric: "likes,comments,reach,reposts,saved", period: "lifetime" },
+      { metric: "likes,comments,reach,saved,shares", period: "lifetime" },
     );
     const get = (name: string): number =>
       res.data.find((m) => m.name === name)?.values?.[0]?.value ?? 0;
     return {
       likes:     get("likes"),
       replies:   get("comments"),
-      reposts:   get("reposts"),
+      reposts:   get("shares"),
       views:     get("reach"),
       bookmarks: get("saved"),
       fetchedAt: new Date().toISOString(),
