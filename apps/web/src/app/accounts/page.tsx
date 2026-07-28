@@ -1124,12 +1124,15 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              <a href={INSTAGRAM_AUTH_URL}
-                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a", textDecoration: "none" }}>
+              <button disabled
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
                 <PlatformIcon platform="instagram" size={16} />
                 Connect Instagram
-              </a>
+              </button>
+              <p className="text-xs" style={{ color: MUTED }}>
+                Pending Meta app review · new connections temporarily disabled
+              </p>
             </div>
           </div>
 
