@@ -112,7 +112,7 @@ function tokenStatus(platform: string, expiresAt: string | null): "ok" | "soon" 
   return "ok";
 }
 
-const PROFILE_REFRESH_PLATFORMS = new Set(["bluesky", "threads", "instagram", "linkedin", "mastodon", "pixelfed", "pinterest"]);
+const PROFILE_REFRESH_PLATFORMS = new Set(["bluesky", "threads", "instagram", "linkedin", "mastodon", "pixelfed", "pinterest", "facebook"]);
 
 function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMonth, onAvatarRefreshed, onRefreshed, isAdmin }: {
   account: Account;

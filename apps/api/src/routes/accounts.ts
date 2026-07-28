@@ -316,6 +316,17 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
           }
           break;
         }
+        case "facebook": {
+          const res = await fetch(
+            `https://graph.facebook.com/v21.0/${creds.pageId}?fields=name,picture.type(large)&access_token=${creds.pageAccessToken}`
+          );
+          if (res.ok) {
+            const d = await res.json() as { name?: string; picture?: { data?: { url?: string } } };
+            displayName = d.name ?? null;
+            avatarUrl = d.picture?.data?.url ?? null;
+          }
+          break;
+        }
         default:
           return reply.status(400).send({ error: "Profile refresh not supported for this platform" });
       }
