@@ -71,6 +71,10 @@ function Avatar({ account }: { account: Account }) {
   const [imgError, setImgError] = useState(false);
   const meta = PLATFORM_META[account.platform];
 
+  // Reset error state when avatarUrl changes (e.g. after profile refresh)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setImgError(false); }, [account.avatarUrl]);
+
   if (account.avatarUrl && !imgError) {
     return (
       // eslint-disable-next-line @next/next/no-img-element

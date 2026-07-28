@@ -86,6 +86,19 @@ const softwareSchema = {
   ],
 };
 
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Posthive",
+  url: "https://posthive.co",
+  logo: "https://posthive.co/posthivemain.png",
+  description: "Open-source social media scheduler. Schedule posts and first comments across Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr, X, Discord, Tumblr, and Lemmy.",
+  sameAs: [
+    "https://github.com/AstaBlackClove/posthive",
+    "https://x.com/gunaa_dev",
+  ],
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`h-full ${caprasimo.variable} ${figtree.variable}`} style={{ backgroundColor: "var(--color-bg)" }}>
@@ -93,6 +106,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
       </head>
       <body className="h-full font-sans antialiased">
