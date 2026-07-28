@@ -14,8 +14,14 @@ import { listGBPLocations } from "../adapters/googlebusiness.js";
 import { isSsrfBlocked } from "../lib/ssrf.js";
 
 async function getUserWorkspaceId(userId: string): Promise<string | null> {
-  const u = await prisma.user.findUnique({ where: { id: userId }, select: { activeWorkspaceId: true } });
-  return u?.activeWorkspaceId ?? null;
+  const u = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      activeWorkspaceId: true,
+      workspaceMembers: { select: { workspaceId: true }, take: 1, orderBy: { joinedAt: "asc" } },
+    },
+  });
+  return u?.activeWorkspaceId ?? u?.workspaceMembers?.[0]?.workspaceId ?? null;
 }
 
 const APP_ID = process.env.THREADS_APP_ID!;

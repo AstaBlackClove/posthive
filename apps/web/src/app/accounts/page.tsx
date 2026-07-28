@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
+import { PlatformIcon } from "../../components/PlatformIcon";
+import { useToast } from "../../components/Toast";
+import { useAuth } from "../../context/AuthContext";
 
 // Module-level sets persist across re-mounts — prevents duplicate toasts/modals on navigation.
 const _handledDiscordGuilds = new Set<string>();
 const _shownConnectedToasts = new Set<string>();
-import { PlatformIcon } from "../../components/PlatformIcon";
-import { useToast } from "../../components/Toast";
-import { useAuth } from "../../context/AuthContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const THREADS_AUTH_URL = `${API_BASE}/auth/threads`;
