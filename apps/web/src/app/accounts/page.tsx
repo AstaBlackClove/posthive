@@ -1236,12 +1236,13 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              <a href={FACEBOOK_AUTH_URL}
-                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a", textDecoration: "none" }}>
+              <button
+                disabled
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl cursor-not-allowed"
+                style={{ backgroundColor: "#1a1a1a", color: "#555555" }}>
                 <PlatformIcon platform="facebook" size={16} />
                 Connect Facebook Page
-              </a>
+              </button>
             </div>
           </div>
 
