@@ -1236,15 +1236,12 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              <button disabled
-                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+              <a href={FACEBOOK_AUTH_URL}
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a", textDecoration: "none" }}>
                 <PlatformIcon platform="facebook" size={16} />
                 Connect Facebook Page
-              </button>
-              <p className="text-xs" style={{ color: MUTED }}>
-                Pending Meta app review · new connections temporarily disabled
-              </p>
+              </a>
             </div>
           </div>
 
