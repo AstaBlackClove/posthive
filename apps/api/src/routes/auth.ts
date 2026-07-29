@@ -57,7 +57,7 @@ const YT_REDIRECT_URI = process.env.YOUTUBE_REDIRECT_URI!;
 const FB_APP_ID = process.env.FACEBOOK_APP_ID!;
 const FB_APP_SECRET = process.env.FACEBOOK_APP_SECRET!;
 const FB_REDIRECT_URI = process.env.FACEBOOK_REDIRECT_URI!;
-const FB_SCOPES = "pages_manage_posts,pages_show_list,pages_read_engagement,pages_manage_engagement";
+const FB_SCOPES = "pages_manage_posts,pages_show_list,pages_read_engagement,pages_manage_engagement,pages_read_user_content";
 
 const X_API_KEY     = process.env.X_API_KEY!;
 const X_API_SECRET  = process.env.X_API_SECRET!;
