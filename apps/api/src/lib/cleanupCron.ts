@@ -67,7 +67,10 @@ async function runCleanup(): Promise<void> {
       const orphans = storedFiles.filter((url) => !referencedFilenames.has(toFilename(url)));
 
       if (orphans.length) {
-        await Promise.allSettled(orphans.map((url) => adapter.delete(url)));
+        const BATCH = 50;
+        for (let i = 0; i < orphans.length; i += BATCH) {
+          await Promise.allSettled(orphans.slice(i, i + BATCH).map((url) => adapter.delete(url)));
+        }
         console.log(`[cleanup-cron] profile-pics: ${orphans.length} orphan(s) deleted`);
       } else {
         console.log(`[cleanup-cron] profile-pics: no orphans found`);

@@ -1573,26 +1573,28 @@ export default function AccountsPage() {
             );
           })()}
 
-          {/* Tumblr */}
+          {/* ── Tumblr ── */}
           {(() => {
             const tumblrAccounts = accounts.filter(a => a.platform === "tumblr");
             return (
-              <div className="rounded-2xl p-5 flex flex-col gap-4" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("tumblr") }}>
-                <div className="flex items-center gap-3">
-                  <PlatformIcon platform="tumblr" size={28} />
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: TEXT }}>Tumblr</p>
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("tumblr") }}>
+                <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <PlatformIcon platform="tumblr" size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm" style={{ color: TEXT }}>Tumblr</p>
                     <p className="text-xs" style={{ color: MUTED }}>Blog posts · text and images</p>
                   </div>
                 </div>
-                {tumblrAccounts.length > 0 && (
-                  <div className="flex flex-col gap-2">
-                    {tumblrAccounts.map(a => (
-                      <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
-                    ))}
-                  </div>
-                )}
-                <div className="flex flex-col gap-2">
+                <div className="p-5 space-y-3">
+                  {!loading && tumblrAccounts.length > 0 && (
+                    <div className="space-y-2">
+                      {tumblrAccounts.map(a => (
+                        <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
+                      ))}
+                    </div>
+                  )}
                   {connectDisabled ? (
                     <button disabled title={limitMsg ?? undefined}
                       className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"

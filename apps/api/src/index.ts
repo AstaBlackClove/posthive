@@ -267,10 +267,13 @@ function startOrphanCleanup(storage: StorageAdapter) {
     });
     if (!orphans.length) return;
     console.log(`[orphan-cleanup] deleting ${orphans.length} unclaimed upload(s)`);
-    await Promise.allSettled(orphans.map(async (u) => {
-      try { await storage.delete(u.url); } catch { /* already gone */ }
-      await prisma.upload.delete({ where: { id: u.id } });
-    }));
+    const BATCH = 50;
+    for (let i = 0; i < orphans.length; i += BATCH) {
+      await Promise.allSettled(orphans.slice(i, i + BATCH).map(async (u) => {
+        try { await storage.delete(u.url); } catch { /* already gone */ }
+        await prisma.upload.delete({ where: { id: u.id } });
+      }));
+    }
   }
 
   // Run once at startup (catches anything from a previous session), then on interval
