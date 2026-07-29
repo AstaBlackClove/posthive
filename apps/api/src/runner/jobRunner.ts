@@ -215,7 +215,7 @@ async function runTarget(
   }
 
   // Platforms that don't support first comments
-  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr"]);
+  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr", "facebook"]);
   if (!commentText || target.status !== "post_done" || NO_COMMENT_PLATFORMS.has(target.account.platform)) return;
 
   const replyContext = target.replyContext ? JSON.parse(target.replyContext) : null;

@@ -283,7 +283,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const pinterestAccounts = selectedAccounts.filter(a => a.platform === "pinterest");
   const onlyPinterest = pinterestAccounts.length > 0 && selectedAccounts.every(a => a.platform === "pinterest");
   const noPostTextNeeded = selectedAccounts.length > 0 && selectedAccounts.every(a => a.platform === "youtube" || a.platform === "pinterest");
-  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr"]);
+  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr", "facebook"]);
   const noCommentSupport = selectedAccounts.length > 0 && selectedAccounts.every(a => NO_COMMENT_PLATFORMS.has(a.platform));
   const youtubeSelectedWithNoVideo = youtubeSelected && (youtubeVideoMode === "upload" ? !video : !youtubeVideoUrl.trim());
 
