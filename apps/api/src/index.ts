@@ -42,7 +42,7 @@ import { oauthRoutes } from "./routes/oauth.js";
 import { startWorker } from "./lib/worker.js";
 import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
 import { startStatsCron, runStatsCronNow } from "./lib/statsCron.js";
-import { startCleanupCron } from "./lib/cleanupCron.js";
+import { startCleanupCron, setCleanupStorage, runCleanupNow } from "./lib/cleanupCron.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { trackRoutes } from "./routes/track.js";
 import { feedbackRoutes } from "./routes/feedback.js";
@@ -154,6 +154,17 @@ async function main() {
 
   app.get("/health", async () => ({ ok: true }));
 
+  // Admin — manually trigger cleanup (dev + admin only)
+  app.post("/admin/run-cleanup", async (req, reply) => {
+    const token = (req.headers["authorization"] ?? "").replace("Bearer ", "");
+    const adminPin = process.env.ADMIN_PIN ?? "";
+    if (adminPin && token !== adminPin) {
+      return reply.status(401).send({ error: "Unauthorized" });
+    }
+    runCleanupNow().catch((e) => console.error("[run-cleanup] error:", e));
+    return { ok: true, message: "cleanup triggered" };
+  });
+
   // Admin — manually trigger stats sync (dev + admin only)
   app.post("/admin/sync-stats", async (req, reply) => {
     const token = (req.headers["authorization"] ?? "").replace("Bearer ", "");
@@ -234,6 +245,7 @@ async function main() {
   startOrphanCleanup(storage);
   startTokenRefreshCron();
   startStatsCron();
+  setCleanupStorage(storage);
   startCleanupCron();
 }
 

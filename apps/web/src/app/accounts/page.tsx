@@ -1236,13 +1236,15 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              <button
-                disabled
-                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl cursor-not-allowed"
-                style={{ backgroundColor: "#1a1a1a", color: "#555555" }}>
+              <button disabled
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
                 <PlatformIcon platform="facebook" size={16} />
                 Connect Facebook Page
               </button>
+              <p className="text-xs" style={{ color: MUTED }}>
+                Pending Meta app review · new connections temporarily disabled
+              </p>
             </div>
           </div>
 
@@ -1586,16 +1588,7 @@ export default function AccountsPage() {
                 {tumblrAccounts.length > 0 && (
                   <div className="flex flex-col gap-2">
                     {tumblrAccounts.map(a => (
-                      <div key={a.id} className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#0d0d0d", border: `1px solid ${BORDER}` }}>
-                        {a.avatarUrl
-                          // eslint-disable-next-line @next/next/no-img-element
-                          ? <img src={a.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
-                          : <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: "#35465c", color: "#fff" }}>{a.displayName[0]?.toUpperCase()}</div>}
-                        <span className="text-xs flex-1 truncate" style={{ color: TEXT }}>{a.displayName}</span>
-                        <button onClick={() => setDisconnectTarget({ id: a.id, displayName: a.displayName, platform: "tumblr" })}
-                          className="text-xs font-medium px-2 py-1 rounded-lg transition-colors hover:text-red-400"
-                          style={{ color: MUTED }}>Disconnect</button>
-                      </div>
+                      <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                     ))}
                   </div>
                 )}

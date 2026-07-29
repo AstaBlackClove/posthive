@@ -39,6 +39,9 @@ export interface StorageAdapter {
 
   /** Delete a stored file by its URL. Called after a job posts successfully. */
   delete(url: string): Promise<void>;
+
+  /** List all public URLs of files stored in a given folder. */
+  listFolder(folder: string): Promise<string[]>;
 }
 
 export class LocalDiskStorage implements StorageAdapter {
@@ -62,12 +65,22 @@ export class LocalDiskStorage implements StorageAdapter {
 
   async delete(url: string): Promise<void> {
     try {
-      const filename = path.basename(url);
-      const filepath = path.join(this.uploadsDir, filename);
+      const relative = url.replace(/^\/uploads\//, "");
+      const filepath = path.join(this.uploadsDir, relative);
       await fs.unlink(filepath);
     } catch (err: unknown) {
       // File already gone — not an error
       if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+    }
+  }
+
+  async listFolder(folder: string): Promise<string[]> {
+    const dir = path.join(this.uploadsDir, folder);
+    try {
+      const files = await fs.readdir(dir);
+      return files.map((f) => `/uploads/${folder}/${f}`);
+    } catch {
+      return [];
     }
   }
 }
@@ -131,5 +144,16 @@ export class SupabaseStorage implements StorageAdapter {
       headers: this.headers(),
     });
     if (!res.ok && res.status !== 404) throw new Error(`Supabase delete failed: ${await res.text()}`);
+  }
+
+  async listFolder(folder: string): Promise<string[]> {
+    const res = await fetch(`${this.baseUrl}/storage/v1/object/list/${this.bucket}`, {
+      method: "POST",
+      headers: { ...this.headers(), "Content-Type": "application/json" },
+      body: JSON.stringify({ prefix: `${folder}/`, limit: 1000, offset: 0 }),
+    });
+    if (!res.ok) return [];
+    const items = await res.json() as Array<{ name: string }>;
+    return items.map((f) => `${this.baseUrl}/storage/v1/object/public/${this.bucket}/${folder}/${f.name}`);
   }
 }
