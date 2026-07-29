@@ -191,6 +191,7 @@ export const facebookAdapter: PlatformAdapter = {
   async getAnalytics(account: Account, platformPostId: string): Promise<AnalyticsResult> {
     const { pageAccessToken } = getCredentials(account);
 
+    console.log("[fb-analytics] fetching for postId:", platformPostId);
     const [reactionsRes, postRes] = await Promise.all([
       fetch(
         `${GRAPH}/${platformPostId}/reactions?summary=true&access_token=${pageAccessToken}`,
@@ -204,6 +205,8 @@ export const facebookAdapter: PlatformAdapter = {
       }>,
     ]);
 
+    console.log("[fb-analytics] reactionsRes:", JSON.stringify(reactionsRes));
+    console.log("[fb-analytics] postRes:", JSON.stringify(postRes));
     return {
       likes:   reactionsRes.summary?.total_count ?? 0,
       replies: postRes.comments?.summary?.total_count ?? 0,
