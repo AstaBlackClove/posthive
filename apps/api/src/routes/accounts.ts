@@ -379,9 +379,9 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
     await prisma.postJobTarget.deleteMany({ where: { accountId: id } });
     await prisma.account.delete({ where: { id } });
 
-    // Clean up stored avatar (e.g. Telegram channel photo we uploaded)
-    if (account.avatarUrl && !account.avatarUrl.startsWith("http")) {
-      try { await storage.delete(account.avatarUrl); } catch { /* already gone */ }
+    // Clean up stored avatar from profile-pics folder
+    if (account.avatarUrl) {
+      try { await storage.delete(account.avatarUrl); } catch { /* already gone or external URL */ }
     }
 
     return reply.status(204).send();
