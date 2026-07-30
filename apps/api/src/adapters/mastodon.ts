@@ -25,8 +25,14 @@ async function apiPost<T>(instanceUrl: string, token: string, path: string, body
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
+  if (!res.ok) {
+    const ct = res.headers.get("content-type") ?? "";
+    const body = ct.includes("application/json")
+      ? ((await res.json()) as { error?: string }).error
+      : await res.text();
+    throw new Error(body || `Mastodon API error: ${res.status}`);
+  }
   const json = await res.json() as T & { error?: string };
-  if (!res.ok) throw new Error((json as { error?: string }).error ?? `Mastodon API error: ${res.status}`);
   return json;
 }
 
