@@ -10,6 +10,7 @@ const articleSchema = {
   headline: "How to Schedule a First Comment on Instagram (and Why You Should)",
   description: "Learn how to automatically post a first comment on Instagram right after your post goes live. Schedule hashtags, CTAs, and links without cluttering your caption.",
   datePublished: "2026-07-17",
+  dateModified: "2026-07-30",
   author: { "@type": "Person", name: "Guna" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
   url: `${WEB_URL}/blog/how-to-schedule-first-comment-instagram`,
@@ -43,6 +44,31 @@ const faqSchema = {
       "@type": "Question",
       name: "Can I schedule a first comment on a Reel without scheduling the Reel itself?",
       acceptedAnswer: { "@type": "Answer", text: "No. The first comment is tied to the post it accompanies. You need to schedule the post and the first comment together in Posthive. Both publish automatically at the scheduled time." },
+    },
+    {
+      "@type": "Question",
+      name: "Can I schedule a first comment on LinkedIn?",
+      acceptedAnswer: { "@type": "Answer", text: "Yes. Posthive supports first comment scheduling on LinkedIn. Many LinkedIn creators use the first comment to add a link (since LinkedIn deprioritises posts with links in the caption) or a list of related resources. The first comment fires within seconds of the LinkedIn post going live." },
+    },
+    {
+      "@type": "Question",
+      name: "Can I schedule a first comment on Bluesky or Mastodon?",
+      acceptedAnswer: { "@type": "Answer", text: "Yes. Posthive supports first comment scheduling on Bluesky and Mastodon. On Bluesky the first comment appears as a reply to your post in the thread. On Mastodon it appears as a reply toot. Both are useful for adding links you could not fit in the 300-character limit." },
+    },
+    {
+      "@type": "Question",
+      name: "Which social media schedulers support first comment scheduling?",
+      acceptedAnswer: { "@type": "Answer", text: "Posthive supports first comments on Instagram, LinkedIn, Bluesky, Mastodon, and Threads. Most other major schedulers (Buffer, Later, Hootsuite) do not support first comment scheduling. Sprout Social supports it on Instagram at higher price tiers." },
+    },
+    {
+      "@type": "Question",
+      name: "Does scheduling a first comment affect Instagram reach?",
+      acceptedAnswer: { "@type": "Answer", text: "No. Scheduling a first comment through a Meta-approved API tool does not affect Instagram reach. The comment is posted via the official Instagram API, which is the same method Meta uses internally. Posting hashtags in the first comment is a widely used strategy with no documented penalty." },
+    },
+    {
+      "@type": "Question",
+      name: "Can I use emojis in the first comment?",
+      acceptedAnswer: { "@type": "Answer", text: "Yes. Emojis work fine in first comments on Instagram, LinkedIn, Bluesky, and Mastodon. Many creators use emojis to break up hashtag lists or make CTAs more visually distinctive." },
     },
   ],
 };
@@ -261,6 +287,104 @@ export default function HowToScheduleFirstCommentPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+            First comment on other platforms — LinkedIn, Bluesky, Mastodon, Threads
+          </h2>
+
+          <p style={{ marginBottom: 20 }}>
+            First comment scheduling is not just an Instagram trick. Posthive supports it across multiple platforms, each with a slightly different use case:
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+            {([
+              {
+                platform: "LinkedIn",
+                color: "#0077b5",
+                use: "LinkedIn actively deprioritises posts that contain external links in the caption. Many creators put the link in the first comment instead, keeping the caption link-free and getting better organic reach. The first comment on LinkedIn appears immediately below the post.",
+              },
+              {
+                platform: "Bluesky",
+                color: "#0085ff",
+                use: "Bluesky posts are capped at 300 characters. First comments let you continue a thought, add a link, or start a thread — the same way you would manually reply to yourself. Posthive posts the reply within seconds of the main post going live.",
+              },
+              {
+                platform: "Mastodon",
+                color: "#6364ff",
+                use: "Mastodon toots are limited to 500 characters by default (varies by instance). First comments post as a reply to your toot immediately after publishing — useful for content warnings, thread continuations, or hashtag lists you want to keep out of the main toot.",
+              },
+              {
+                platform: "Threads",
+                color: "#000",
+                use: "Threads posts can carry a first comment for extra context or a call to action. Posthive supports first comments on Threads the same way it does Instagram — write it in the First Comment field in the composer.",
+              },
+            ] as { platform: string; color: string; use: string }[]).map((row) => (
+              <div key={row.platform} style={{ background: "#111", border: "1px solid #1e1e1e", borderLeft: `3px solid ${row.color}`, borderRadius: 10, padding: "16px 18px" }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 8px" }}>{row.platform}</p>
+                <p style={{ fontSize: 13, color: "#666", lineHeight: 1.7, margin: 0 }}>{row.use}</p>
+              </div>
+            ))}
+          </div>
+
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+            Which schedulers support first comment scheduling?
+          </h2>
+
+          <p style={{ marginBottom: 20 }}>
+            First comment scheduling is rarer than it should be. Most major tools do not support it, or gate it behind expensive plans:
+          </p>
+
+          <div style={{ overflowX: "auto", marginBottom: 28 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: "#111" }}>
+                  {["Tool", "Instagram", "LinkedIn", "Bluesky", "Mastodon", "Threads", "Price"].map((h) => (
+                    <th key={h} style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #2a2a2a", color: "#555", fontWeight: 700, fontSize: 11, whiteSpace: "nowrap" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {([
+                  ["Posthive", "✓", "✓", "✓", "✓", "✓", "From $9/mo"],
+                  ["Sprout Social", "✓", "✗", "✗", "✗", "✗", "From $249/mo"],
+                  ["Later", "✗", "✗", "✗", "✗", "✗", "From $18/mo"],
+                  ["Buffer", "✗", "✗", "✗", "✗", "✗", "From $6/mo"],
+                  ["Hootsuite", "✓", "✗", "✗", "✗", "✗", "From $99/mo"],
+                  ["Meta Business Suite", "✗", "✗", "✗", "✗", "✗", "Free"],
+                ] as string[][]).map(([tool, ...vals]) => (
+                  <tr key={tool} style={{ borderBottom: "1px solid #111" }}>
+                    <td style={{ padding: "10px 12px", color: tool === "Posthive" ? "#9ba2ee" : "#aaa", fontWeight: tool === "Posthive" ? 700 : 400, fontSize: 13 }}>{tool}</td>
+                    {vals.map((v, i) => (
+                      <td key={i} style={{ padding: "10px 12px", color: v === "✓" ? (tool === "Posthive" ? "#9ba2ee" : "#888") : v === "✗" ? "#333" : "#666", fontSize: 13 }}>{v}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+            What makes a good first comment?
+          </h2>
+
+          <p style={{ marginBottom: 20 }}>
+            The first comment has a specific job. It should add value or context, not repeat the caption. Here is what works:
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+            {([
+              { label: "Hashtags (Instagram)", tip: "10–20 targeted hashtags in the first comment. Mix niche tags (under 100K posts) with mid-size tags (100K–1M). Avoid mega-tags with 10M+ posts — your post disappears instantly." },
+              { label: "A link (LinkedIn)", tip: "Paste the URL in the first comment, not the caption. LinkedIn's algorithm rewards posts without external links in the body. Move the link down and keep the caption clean." },
+              { label: "A thread start (Bluesky / Mastodon)", tip: "Use the first comment to continue the post — either a longer explanation or a numbered list that did not fit in 300 characters. It feels like a proper thread." },
+              { label: "A CTA", tip: "\"Save this for later\" / \"Drop a comment below\" / \"Link in bio\" — one clear action, phrased conversationally, not like an ad." },
+              { label: "Credit or context", tip: "If the post references someone or something, credit them in the first comment rather than cluttering the caption." },
+            ] as { label: string; tip: string }[]).map((row) => (
+              <div key={row.label} style={{ display: "flex", gap: 14, padding: "12px 16px", background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#5b63d3", minWidth: 160, paddingTop: 1 }}>{row.label}</span>
+                <span style={{ fontSize: 13, color: "#666", lineHeight: 1.65 }}>{row.tip}</span>
+              </div>
+            ))}
           </div>
 
           <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
