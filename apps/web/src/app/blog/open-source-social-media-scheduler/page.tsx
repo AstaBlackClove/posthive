@@ -43,7 +43,7 @@ const faqSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "Best Open-Source Social Media Schedulers in 2026 (Self-Hostable) | Posthive",
+  title: "Best Open-Source Social Media Schedulers in 2026 | Posthive",
   description: "Tired of paying $50-100/month for Buffer or Hootsuite? Here are the best open-source social media schedulers you can self-host for free in 2026.",
   keywords: ["open source social media scheduler", "self-hosted social media scheduler", "free social media scheduler open source", "self-hostable social media scheduler", "open source buffer alternative", "open source hootsuite alternative"],
   alternates: { canonical: `${WEB_URL}/blog/open-source-social-media-scheduler` },

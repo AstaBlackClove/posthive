@@ -93,7 +93,7 @@ const howToSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "How to Schedule Instagram Reels in 2026 (Step-by-Step) | Posthive",
+  title: "How to Schedule Instagram Reels in 2026 | Posthive",
   description: "Learn how to schedule Instagram Reels in advance. Save hours every week by batching your content and publishing automatically at peak times.",
   keywords: ["schedule instagram reels", "how to schedule instagram reels", "can you schedule instagram reels", "instagram reels scheduler", "schedule reels in advance"],
   alternates: { canonical: `${WEB_URL}/blog/how-to-schedule-instagram-reels` },

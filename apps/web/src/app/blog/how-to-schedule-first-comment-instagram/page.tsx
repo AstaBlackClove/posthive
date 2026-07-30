@@ -62,7 +62,7 @@ const howToSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "How to Schedule a First Comment on Instagram (Step-by-Step) | Posthive",
+  title: "How to Schedule a First Comment on Instagram | Posthive",
   description: "Automatically post a first comment on Instagram right after your post goes live. Add hashtags, CTAs, and links without cluttering your caption.",
   keywords: ["schedule first comment instagram", "how to schedule first comment", "instagram first comment", "instagram first comment scheduler", "hashtags in first comment instagram"],
   alternates: { canonical: `${WEB_URL}/blog/how-to-schedule-first-comment-instagram` },

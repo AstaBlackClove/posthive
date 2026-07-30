@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms of Service - Posthive",
-  description: "Terms governing your use of Posthive.",
+  description: "Read Posthive's Terms of Service. These terms govern your use of Posthive — including account access, scheduling features, billing, and acceptable use.",
 };
 
 const LAST_UPDATED = "July 20, 2026";

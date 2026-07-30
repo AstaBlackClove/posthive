@@ -43,7 +43,7 @@ const faqSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "Best Storrito Alternative in 2026 — More Platforms, Lower Price | Posthive",
+  title: "Best Storrito Alternative in 2026 | Posthive",
   description: "Looking for a Storrito alternative? Posthive schedules Instagram Stories, Reels, and feed posts — plus 13 other platforms. Open source, self-hostable.",
   keywords: ["storrito alternative", "storrito alternatives", "storrito vs posthive", "instagram stories scheduler alternative", "instagram reels scheduler alternative to storrito"],
   alternates: { canonical: `${WEB_URL}/blog/storrito-alternative` },

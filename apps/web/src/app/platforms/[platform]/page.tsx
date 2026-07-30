@@ -76,6 +76,7 @@ interface PlatformData {
   color: string;
   headline: string;
   subheadline: string;
+  metaDescription?: string;
   supports: { label: string; icon: IconKey }[];
   steps: { n: string; title: string; desc: string }[];
   note?: string;
@@ -355,6 +356,7 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#e60023",
     headline: "Schedule Pinterest Pins without losing momentum",
     subheadline: "Pinterest rewards consistency. Write your Pin descriptions in Posthive, attach your image, set a time, and let it publish — so your boards stay active without you staying online.",
+    metaDescription: "Schedule Pinterest Pins automatically. Attach images, write descriptions, pick a time, and publish to your boards — all without staying online.",
     supports: [
       { label: "Pin with image (required)", icon: "image" as IconKey },
       { label: "Title and description text", icon: "text" as IconKey },
@@ -423,6 +425,7 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#5865F2",
     headline: "Schedule Discord announcements without staying online",
     subheadline: "Post to your Discord server channels on a consistent schedule. Write your message in Posthive, pick a time, and let it publish via webhook — no manual posting needed.",
+    metaDescription: "Schedule messages to Discord channels via webhook. Write in Posthive, pick a time, and let it publish automatically — no manual posting.",
     supports: [
       { label: "Text posts up to 2,000 chars", icon: "text" as IconKey },
       { label: "Single image with message", icon: "image" as IconKey },
@@ -457,6 +460,7 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#8B5CF6",
     headline: "Schedule Nostr notes without staying online",
     subheadline: "Publish to the decentralized social web on a consistent schedule. Write your notes in Posthive, set a time, and let it broadcast to Nostr relays — no OAuth, no approval needed.",
+    metaDescription: "Schedule Nostr notes to broadcast across public relays. No OAuth needed — just your nsec key. Write ahead, set a time, let Posthive publish.",
     supports: [
       { label: "Text notes up to 10,000 chars", icon: "text" as IconKey },
       { label: "Images appended as URLs (NIP-92 imeta)", icon: "image" as IconKey },
@@ -524,6 +528,7 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#ff6314",
     headline: "Schedule posts to any Lemmy community automatically",
     subheadline: "Post to federated Lemmy communities on a schedule. Write once in Posthive, pick a time, and let it publish to any instance — lemmy.world, lemmy.ml, beehaw.org, or your own.",
+    metaDescription: "Schedule posts to Lemmy communities on any instance. Write once in Posthive, pick a time, and publish to lemmy.world, beehaw.org, or your own.",
     supports: [
       { label: "Text posts with Markdown body", icon: "text" as IconKey },
       { label: "Image upload via pictrs", icon: "image" as IconKey },
@@ -689,11 +694,11 @@ export async function generateMetadata({ params }: { params: Promise<{ platform:
   if (!data) return {};
   return {
     title: `${data.name} Scheduler | Posthive`,
-    description: data.subheadline,
+    description: data.metaDescription ?? data.subheadline,
     alternates: { canonical: `${WEB_URL}/platforms/${platform}` },
     openGraph: {
       title: `${data.name} Scheduler | Posthive`,
-      description: data.subheadline,
+      description: data.metaDescription ?? data.subheadline,
       url: `${WEB_URL}/platforms/${platform}`,
       images: [
         {
@@ -707,7 +712,7 @@ export async function generateMetadata({ params }: { params: Promise<{ platform:
     twitter: {
       card: "summary_large_image" as const,
       title: `${data.name} Scheduler | Posthive`,
-      description: data.subheadline,
+      description: data.metaDescription ?? data.subheadline,
     },
   };
 }

@@ -16,7 +16,7 @@ const articleSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "Introducing Posthive: Schedule Posts to multiple platforms at Once | Posthive",
+  title: "Introducing Posthive: Multi-Platform Social Scheduler | Posthive",
   description:
     "We built Posthive because we were tired of switching between tabs just to post the same update everywhere. Here's what we shipped.",
   alternates: { canonical: `${WEB_URL}/blog/introducing-posthive` },

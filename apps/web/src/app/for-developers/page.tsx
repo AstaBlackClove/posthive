@@ -43,8 +43,8 @@ const faqSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "Posthive for Developers — REST API, MCP Server & Self-Hosting",
-  description: "Posthive is open-source and built API-first. Schedule social media posts programmatically via REST API, connect AI agents via MCP, or self-host the entire stack under AGPL-3.0.",
+  title: "Posthive for Developers — API & MCP",
+  description: "Open-source and API-first. Schedule posts via REST API, connect AI agents via MCP, or self-host under AGPL-3.0. Full control, no lock-in.",
   keywords: ["social media scheduler API", "open source social media API", "self-hosted social scheduler", "MCP social media", "social scheduling REST API"],
   alternates: { canonical: `${WEB_URL}/for-developers` },
   openGraph: {

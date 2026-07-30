@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - Posthive",
-  description: "How Posthive collects, uses, and protects your data.",
+  description: "Read Posthive's Privacy Policy. Learn how we collect, use, and protect your data — including OAuth tokens, post content, and account information.",
 };
 
 const LAST_UPDATED = "July 23, 2026";

@@ -53,7 +53,7 @@ const faqSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "5 Best Hootsuite Alternatives in 2026 — Cheaper, Open Source | Posthive",
+  title: "5 Best Hootsuite Alternatives in 2026 | Posthive",
   description: "Hootsuite starts at $99/month. Here are 5 alternatives that cost less, support more platforms, and one that's completely free to self-host.",
   keywords: ["Hootsuite alternative", "Hootsuite alternatives 2026", "cheap Hootsuite alternative", "open source Hootsuite alternative", "free Hootsuite alternative", "Hootsuite vs Posthive"],
   alternates: { canonical: `${WEB_URL}/blog/hootsuite-alternative` },

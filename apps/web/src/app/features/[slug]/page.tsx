@@ -1619,10 +1619,9 @@ const SLUG_OVERRIDES: Record<
   { title: string; description: string; keywords: string[] }
 > = {
   "multi-platform-posting": {
-    title:
-      "Multi-Platform Social Media Scheduler Post to multiple platforms at Once | Posthive",
+    title: "Multi-Platform Social Scheduler | Posthive",
     description:
-      "Write once, post everywhere. Schedule to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr, and X in one click. The best Buffer and Hootsuite alternative.",
+      "Write once, post everywhere. Schedule to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr, and X in one click.",
     keywords: [
       "multi-platform social media scheduler",
       "post to multiple social media at once",
@@ -1632,8 +1631,7 @@ const SLUG_OVERRIDES: Record<
     ],
   },
   "instagram-reels-scheduler": {
-    title:
-      "Instagram Reels Scheduler — Schedule Reels, Stories & Carousels | Posthive",
+    title: "Instagram Reels & Stories Scheduler | Posthive",
     description:
       "Schedule Instagram Reels, Stories, carousels, and feed posts without switching tabs. The easiest Instagram Reels scheduler for creators and brands.",
     keywords: [
@@ -1645,7 +1643,7 @@ const SLUG_OVERRIDES: Record<
     ],
   },
   "drag-to-reschedule": {
-    title: "Social Media Content Calendar with Drag-to-Reschedule | Posthive",
+    title: "Social Media Content Calendar | Posthive",
     description:
       "Visualise your entire posting schedule on a drag-and-drop calendar. Move posts instantly, spot gaps, and never miss a publish date.",
     keywords: [
@@ -1656,8 +1654,7 @@ const SLUG_OVERRIDES: Record<
     ],
   },
   "first-comment": {
-    title:
-      "Auto First Comment Scheduling — Post Hashtags Automatically | Posthive",
+    title: "Schedule First Comment Automatically | Posthive",
     description:
       "Automatically post a first comment the moment your content goes live. Keep captions clean and drop hashtags, links, or CTAs in the first comment.",
     keywords: [
@@ -1668,8 +1665,7 @@ const SLUG_OVERRIDES: Record<
     ],
   },
   "per-platform-overrides": {
-    title:
-      "Per-Platform Social Media Overrides — Different Text Per Network | Posthive",
+    title: "Per-Platform Post Customization | Posthive",
     description:
       "Write one post, customise it for every platform. Different character limits, different audiences, different tones — all from a single composer.",
     keywords: [
@@ -1681,7 +1677,7 @@ const SLUG_OVERRIDES: Record<
   },
   "bulk-csv-scheduling": {
     title:
-      "Bulk Social Media Scheduling via CSV — Schedule Hundreds of Posts | Posthive",
+      "Bulk CSV Social Media Scheduler | Posthive",
     description:
       "Upload a CSV and schedule hundreds of social media posts at once across multiple platforms. The fastest way to bulk-schedule content for creators and agencies.",
     keywords: [
@@ -1695,7 +1691,7 @@ const SLUG_OVERRIDES: Record<
   "self-hostable": {
     title: "Self-Hostable Open Source Social Media Scheduler | Posthive",
     description:
-      "Run your own social media scheduler. Posthive is open source (AGPL-3.0) and self-hostable on Railway, Fly.io, or any VPS. Full data ownership, no vendor lock-in.",
+      "Run your own social media scheduler. Open source (AGPL-3.0), self-hostable on Railway, Fly.io, or any VPS. Full data ownership, no vendor lock-in.",
     keywords: [
       "self-hosted social media scheduler",
       "open source social media tool",

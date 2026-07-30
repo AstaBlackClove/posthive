@@ -23,7 +23,7 @@ const docsSchema = {
 export const metadata: Metadata = {
   title: "Docs",
   description:
-    "Complete documentation for Posthive. Self-host with Docker, connect Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, and Nostr. REST API and MCP server reference included.",
+    "Complete docs for Posthive — self-host with Docker, connect 14 platforms, use the REST API, and integrate AI agents via MCP server.",
   openGraph: {
     title: "Posthive Docs — Setup, Platforms & API Reference",
     description:

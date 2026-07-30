@@ -48,7 +48,7 @@ const faqSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "The Best Social Media Scheduler in 2026 (Free and Paid) | Posthive",
+  title: "The Best Social Media Scheduler in 2026 | Posthive",
   description: "A no-fluff comparison of the best social media schedulers in 2026. Pricing, platform support, key features, and who each tool is built for.",
   keywords: ["best social media scheduler", "best free social media scheduler", "social media scheduler comparison", "cheapest social media scheduler", "top social media scheduling tools"],
   alternates: { canonical: `${WEB_URL}/blog/best-social-media-scheduler` },

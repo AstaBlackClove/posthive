@@ -48,7 +48,7 @@ const faqSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "Best Canva Social Media Scheduler Alternative in 2026 | Posthive",
+  title: "Best Canva Scheduler Alternative in 2026 | Posthive",
   description: "Canva scheduler is limited to 8 platforms and locked behind Pro. Posthive schedules across multiple platforms including Bluesky, Threads and Mastodon from $9/month.",
   keywords: ["canva social media scheduler", "canva scheduler alternative", "canva social media scheduler alternative", "canva vs posthive", "canva pro scheduler"],
   alternates: { canonical: `${WEB_URL}/blog/canva-social-media-scheduler-alternative` },
