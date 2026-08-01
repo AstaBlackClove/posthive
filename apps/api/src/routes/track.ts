@@ -137,7 +137,10 @@ export async function trackRoutes(app: FastifyInstance): Promise<void> {
       prisma.feedback.findMany({
         orderBy: { createdAt: "desc" },
         take: 200,
-        include: { user: { select: { name: true, email: true } } },
+        include: {
+          user: { select: { name: true, email: true } },
+          replies: { orderBy: { createdAt: "asc" } },
+        },
       }),
       prisma.user.count(),
       prisma.user.count({

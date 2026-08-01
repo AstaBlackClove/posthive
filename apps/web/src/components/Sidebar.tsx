@@ -89,8 +89,16 @@ export function Sidebar() {
   const [fbType, setFbType] = useState<"bug" | "feature" | "general">("general");
   const [fbMessage, setFbMessage] = useState("");
   const [fbLoading, setFbLoading] = useState(false);
-  const [myFeedback, setMyFeedback] = useState<{ id: string; type: string; message: string; adminReply: string | null; repliedAt: string | null; createdAt: string }[]>([]);
+  const [myFeedback, setMyFeedback] = useState<{
+    id: string; type: string; message: string;
+    unreadByUser: number; createdAt: string;
+    replies: { id: string; sender: string; message: string; createdAt: string }[];
+  }[]>([]);
   const [myFeedbackLoading, setMyFeedbackLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [openThread, setOpenThread] = useState<string | null>(null);
+  const [threadDraft, setThreadDraft] = useState("");
+  const [threadSending, setThreadSending] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed");
@@ -148,9 +156,40 @@ export function Sidebar() {
     try {
       const data = await apiFetch<typeof myFeedback>("/feedback/mine");
       setMyFeedback(data);
+      setUnreadCount(data.reduce((s, f) => s + f.unreadByUser, 0));
     } catch { /* silent */ }
     finally { setMyFeedbackLoading(false); }
   }
+
+  async function markRead(id: string) {
+    await apiFetch(`/feedback/${id}/read`, { method: "POST" }).catch(() => {});
+    setMyFeedback(prev => prev.map(f => f.id === id ? { ...f, unreadByUser: 0 } : f));
+    setUnreadCount(prev => {
+      const item = myFeedback.find(f => f.id === id);
+      return Math.max(0, prev - (item?.unreadByUser ?? 0));
+    });
+  }
+
+  async function sendThreadReply(feedbackId: string) {
+    const text = threadDraft.trim();
+    if (!text) return;
+    setThreadSending(true);
+    try {
+      const r = await apiFetch<{ id: string; sender: string; message: string; createdAt: string }>(
+        `/feedback/${feedbackId}/replies`,
+        { method: "POST", body: JSON.stringify({ message: text }) }
+      );
+      setMyFeedback(prev => prev.map(f => f.id === feedbackId ? { ...f, replies: [...f.replies, r] } : f));
+      setThreadDraft("");
+    } catch { /* silent */ }
+    finally { setThreadSending(false); }
+  }
+
+  useEffect(() => {
+    apiFetch<{ unread: number }>("/feedback/unread")
+      .then(d => setUnreadCount(d.unread))
+      .catch(() => {});
+  }, []);
 
   async function submitFeedback(e: React.FormEvent) {
     e.preventDefault();
@@ -458,9 +497,17 @@ export function Sidebar() {
             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors hover:bg-white/5"
             style={{justifyContent: showCollapsed ? "center" : "flex-start" }}
           >
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h6m-9 8l4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-            </svg>
+            <div className="relative">
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h6m-9 8l4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 flex items-center justify-center rounded-full text-[9px] font-bold px-0.5"
+                  style={{ backgroundColor: "#ef4444", color: "#fff" }}>
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </div>
             {!showCollapsed && <span style={{ fontSize: 13 }}>Feedback</span>}
           </button>
         </div>
@@ -520,36 +567,89 @@ export function Sidebar() {
                   <p className="text-xs text-center py-8" style={{ color: "#888" }}>Loading…</p>
                 ) : myFeedback.length === 0 ? (
                   <p className="text-xs text-center py-8" style={{ color: "#888" }}>No feedback submitted yet.</p>
-                ) : (
-                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                ) : openThread ? (() => {
+                  const f = myFeedback.find(x => x.id === openThread);
+                  if (!f) return null;
+                  return (
+                    <div>
+                      <button onClick={() => setOpenThread(null)} className="text-xs mb-3 flex items-center gap-1" style={{ color: "#888" }}>
+                        ← Back
+                      </button>
+                      <div className="space-y-2 max-h-64 overflow-y-auto mb-3">
+                        {f.replies.map(r => (
+                          <div key={r.id} style={{
+                            display: "flex",
+                            justifyContent: r.sender === "user" ? "flex-end" : "flex-start",
+                          }}>
+                            <div style={{
+                              maxWidth: "85%", padding: "7px 11px", borderRadius: r.sender === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+                              backgroundColor: r.sender === "user" ? "#1e1e1e" : "#0a1a0a",
+                              border: `1px solid ${r.sender === "user" ? "#2a2a2a" : "#14532d"}`,
+                            }}>
+                              {r.sender === "admin" && <p style={{ fontSize: 10, fontWeight: 600, color: "#4ade80", margin: "0 0 2px" }}>Posthive</p>}
+                              <p style={{ fontSize: 12, color: "#ededed", margin: 0, whiteSpace: "pre-wrap" }}>{r.message}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          value={threadDraft}
+                          onChange={e => setThreadDraft(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendThreadReply(f.id); } }}
+                          placeholder="Reply…"
+                          style={{ flex: 1, fontSize: 12, padding: "6px 10px", borderRadius: 8, backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ededed", outline: "none" }}
+                        />
+                        <button
+                          onClick={() => sendThreadReply(f.id)}
+                          disabled={threadSending || !threadDraft.trim()}
+                          style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, backgroundColor: "#fff", color: "#0a0a0a", border: "none", cursor: "pointer", opacity: (!threadDraft.trim() || threadSending) ? 0.4 : 1 }}>
+                          {threadSending ? "…" : "Send"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })() : (
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
                     {myFeedback.map(f => {
                       const typeLabel = f.type === "bug" ? "🐛 Bug" : f.type === "feature" ? "✨ Feature" : "💬 General";
+                      const hasUnread = f.unreadByUser > 0;
                       return (
-                        <div key={f.id} className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                        <button
+                          key={f.id}
+                          onClick={() => { setOpenThread(f.id); if (hasUnread) markRead(f.id); }}
+                          className="w-full text-left rounded-xl p-3 space-y-1.5 transition-colors hover:bg-white/5"
+                          style={{ backgroundColor: "#1a1a1a", border: `1px solid ${hasUnread ? "#14532d" : "#2a2a2a"}` }}>
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-[11px] font-semibold" style={{ color: "#888" }}>{typeLabel}</span>
-                            <span className="text-[11px]" style={{ color: "#555" }}>{new Date(f.createdAt).toLocaleDateString()}</span>
-                          </div>
-                          <p className="text-xs" style={{ color: "#ededed", whiteSpace: "pre-wrap" }}>{f.message}</p>
-                          {f.adminReply ? (
-                            <div className="rounded-lg p-2.5" style={{ backgroundColor: "#0a1a0a", border: "1px solid #14532d" }}>
-                              <p className="text-[11px] font-semibold mb-1" style={{ color: "#4ade80" }}>Reply from Posthive</p>
-                              <p className="text-xs" style={{ color: "#ededed", whiteSpace: "pre-wrap" }}>{f.adminReply}</p>
+                            <div className="flex items-center gap-2">
+                              {hasUnread && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#14532d", color: "#4ade80" }}>
+                                  {f.unreadByUser} new
+                                </span>
+                              )}
+                              <span className="text-[11px]" style={{ color: "#555" }}>{f.replies.length} msg{f.replies.length !== 1 ? "s" : ""}</span>
                             </div>
-                          ) : (
-                            <p className="text-[11px]" style={{ color: "#555" }}>⏳ Awaiting reply</p>
+                          </div>
+                          <p className="text-xs truncate" style={{ color: "#ededed" }}>{f.message}</p>
+                          {f.replies.length > 1 && (
+                            <p className="text-[11px]" style={{ color: "#555" }}>
+                              Last: {f.replies[f.replies.length - 1].message.slice(0, 50)}…
+                            </p>
                           )}
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
                 )}
-                <button
-                  onClick={() => { setFbOpen(false); setFbTab("send"); }}
-                  className="w-full mt-4 py-2 rounded-xl text-sm font-semibold"
-                  style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
-                  Close
-                </button>
+                {!openThread && (
+                  <button
+                    onClick={() => { setFbOpen(false); setFbTab("send"); }}
+                    className="w-full mt-3 py-2 rounded-xl text-sm font-semibold"
+                    style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+                    Close
+                  </button>
+                )}
               </div>
             )}
 

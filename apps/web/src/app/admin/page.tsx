@@ -26,6 +26,13 @@ interface EventRow {
   user?: { name: string; email: string } | null;
 }
 
+interface FeedbackReply {
+  id: string;
+  sender: string;
+  message: string;
+  createdAt: string;
+}
+
 interface FeedbackRow {
   id: string;
   userId: string | null;
@@ -33,8 +40,7 @@ interface FeedbackRow {
   message: string;
   url: string | null;
   createdAt: string;
-  adminReply: string | null;
-  repliedAt: string | null;
+  replies: FeedbackReply[];
   user?: { name: string; email: string } | null;
 }
 
@@ -104,22 +110,97 @@ function buildStory(s: SessionRow): string {
 
 const ADMIN_PIN_KEY = "ph_admin_unlocked";
 
-function FeedbackPanel({ feedbacks }: { feedbacks: FeedbackRow[] }) {
-  const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
-  const [replyLoading, setReplyLoading] = useState<string | null>(null);
-  const [replied, setReplied] = useState<Record<string, string>>({});
+function FeedbackThread({ f, onReplyAdded }: { f: FeedbackRow; onReplyAdded: (id: string, reply: FeedbackReply) => void }) {
+  const [draft, setDraft] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
-  async function submitReply(id: string) {
-    const text = replyDraft[id]?.trim();
+  async function send() {
+    const text = draft.trim();
     if (!text) return;
-    setReplyLoading(id);
+    setLoading(true);
     try {
-      await apiFetch(`/feedback/${id}/reply`, { method: "PATCH", body: JSON.stringify({ reply: text }) });
-      setReplied(prev => ({ ...prev, [id]: text }));
-      setReplyDraft(prev => ({ ...prev, [id]: "" }));
-    } finally {
-      setReplyLoading(null);
-    }
+      const r = await apiFetch<FeedbackReply>(`/feedback/${f.id}/replies`, {
+        method: "POST",
+        body: JSON.stringify({ message: text }),
+      });
+      onReplyAdded(f.id, r);
+      setDraft("");
+    } finally { setLoading(false); }
+  }
+
+  const typeColor = f.type === "bug" ? N.red : f.type === "feature" ? N.green : N.blue;
+  const typeLabel = f.type === "bug" ? "🐛 Bug" : f.type === "feature" ? "✨ Feature" : "💬 General";
+
+  return (
+    <div style={{ borderBottom: `1px solid ${N.border}`, padding: "10px 0" }}>
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }} onClick={() => setExpanded(p => !p)}>
+        <Avatar visitorId={f.userId ?? f.id} name={f.user?.name} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const, marginBottom: 3 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, padding: "1px 7px", borderRadius: 3, background: `${typeColor}18`, color: typeColor, border: `1px solid ${typeColor}40` }}>{typeLabel}</span>
+            <span style={{ fontSize: 12, color: N.muted }}>{f.user?.name ?? "Anonymous"}{f.user?.email && ` · ${f.user.email}`}</span>
+            {f.url && <span style={{ fontSize: 11, fontFamily: "monospace", background: N.s2, border: `1px solid ${N.border}`, borderRadius: 3, padding: "1px 6px", color: N.muted }}>{f.url}</span>}
+          </div>
+          <p style={{ fontSize: 13, color: N.text, margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{f.message}</p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <span style={{ fontSize: 12, color: N.muted }}>{timeSince(f.createdAt)}</span>
+          <span style={{ fontSize: 12, color: N.muted }}>{f.replies.length} msg{f.replies.length !== 1 ? "s" : ""}</span>
+          <span style={{ fontSize: 11, color: N.muted }}>{expanded ? "▲" : "▼"}</span>
+        </div>
+      </div>
+
+      {/* Thread */}
+      {expanded && (
+        <div style={{ marginTop: 10, paddingLeft: 38 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+            {f.replies.map(r => (
+              <div key={r.id} style={{
+                alignSelf: r.sender === "admin" ? "flex-end" : "flex-start",
+                maxWidth: "85%",
+                padding: "7px 12px",
+                borderRadius: r.sender === "admin" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+                background: r.sender === "admin" ? "#0a1a0a" : N.s2,
+                border: `1px solid ${r.sender === "admin" ? "#14532d" : N.border}`,
+              }}>
+                <p style={{ fontSize: 12, color: r.sender === "admin" ? "#4ade80" : N.sec, margin: "0 0 2px", fontWeight: 600 }}>
+                  {r.sender === "admin" ? "You (admin)" : f.user?.name ?? "User"}
+                </p>
+                <p style={{ fontSize: 13, color: N.text, margin: 0, whiteSpace: "pre-wrap" }}>{r.message}</p>
+                <p style={{ fontSize: 11, color: N.muted, margin: "3px 0 0", textAlign: "right" }}>{timeSince(r.createdAt)}</p>
+              </div>
+            ))}
+          </div>
+          {/* Reply input */}
+          <div style={{ display: "flex", gap: 6 }}>
+            <input
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+              placeholder="Reply…"
+              style={{ flex: 1, fontSize: 12, padding: "6px 10px", borderRadius: 8, background: N.s2, border: `1px solid ${N.border}`, color: N.text, outline: "none" }}
+            />
+            <button
+              onClick={send}
+              disabled={loading || !draft.trim()}
+              style={{ fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 8, background: "#fff", color: "#0a0a0a", border: "none", cursor: "pointer", opacity: (!draft.trim() || loading) ? 0.4 : 1 }}
+            >
+              {loading ? "…" : "Send"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FeedbackPanel({ feedbacks: initial }: { feedbacks: FeedbackRow[] }) {
+  const [feedbacks, setFeedbacks] = useState(initial);
+
+  function onReplyAdded(id: string, reply: FeedbackReply) {
+    setFeedbacks(prev => prev.map(f => f.id === id ? { ...f, replies: [...f.replies, reply] } : f));
   }
 
   if (feedbacks.length === 0) {
@@ -128,53 +209,7 @@ function FeedbackPanel({ feedbacks }: { feedbacks: FeedbackRow[] }) {
 
   return (
     <div>
-      {feedbacks.map(f => {
-        const typeColor = f.type === "bug" ? N.red : f.type === "feature" ? N.green : N.blue;
-        const typeLabel = f.type === "bug" ? "🐛 Bug" : f.type === "feature" ? "✨ Feature" : "💬 General";
-        const existingReply = replied[f.id] ?? f.adminReply;
-        return (
-          <div key={f.id} style={{ padding: "12px 8px", margin: "0 -8px 4px", borderRadius: 4, borderBottom: `1px solid ${N.border}` }}>
-            <div style={{ display: "grid", gridTemplateColumns: "28px 1fr auto", gap: 12, alignItems: "flex-start" }}>
-              <Avatar visitorId={f.userId ?? f.id} name={f.user?.name} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, flexWrap: "wrap" as const }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, padding: "1px 7px", borderRadius: 3, background: `${typeColor}18`, color: typeColor, border: `1px solid ${typeColor}40` }}>{typeLabel}</span>
-                  <span style={{ fontSize: 12, color: N.muted }}>
-                    {f.user?.name ?? "Anonymous"}
-                    {f.user?.email && <span> · {f.user.email}</span>}
-                  </span>
-                  {f.url && <span style={{ fontSize: 11, fontFamily: "ui-monospace, monospace", background: N.s2, border: `1px solid ${N.border}`, borderRadius: 3, padding: "1px 6px", color: N.muted }}>{f.url}</span>}
-                </div>
-                <p style={{ fontSize: 13, color: N.text, margin: 0, lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{f.message}</p>
-                {existingReply ? (
-                  <div style={{ marginTop: 8, padding: "8px 10px", borderRadius: 6, background: "#0a1a0a", border: "1px solid #14532d" }}>
-                    <p style={{ fontSize: 11, fontWeight: 600, color: "#4ade80", margin: "0 0 3px" }}>Your reply</p>
-                    <p style={{ fontSize: 13, color: N.text, margin: 0, whiteSpace: "pre-wrap" }}>{existingReply}</p>
-                  </div>
-                ) : (
-                  <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
-                    <input
-                      value={replyDraft[f.id] ?? ""}
-                      onChange={e => setReplyDraft(prev => ({ ...prev, [f.id]: e.target.value }))}
-                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitReply(f.id); } }}
-                      placeholder="Reply to this feedback…"
-                      style={{ flex: 1, fontSize: 12, padding: "5px 10px", borderRadius: 6, background: N.s2, border: `1px solid ${N.border}`, color: N.text, outline: "none" }}
-                    />
-                    <button
-                      onClick={() => submitReply(f.id)}
-                      disabled={replyLoading === f.id || !replyDraft[f.id]?.trim()}
-                      style={{ fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 6, background: "#fff", color: "#0a0a0a", border: "none", cursor: "pointer", opacity: (!replyDraft[f.id]?.trim() || replyLoading === f.id) ? 0.4 : 1 }}
-                    >
-                      {replyLoading === f.id ? "…" : "Reply"}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <span style={{ fontSize: 12, color: N.muted, whiteSpace: "nowrap", paddingTop: 2 }}>{timeSince(f.createdAt)}</span>
-            </div>
-          </div>
-        );
-      })}
+      {feedbacks.map(f => <FeedbackThread key={f.id} f={f} onReplyAdded={onReplyAdded} />)}
     </div>
   );
 }

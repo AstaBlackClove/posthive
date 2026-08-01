@@ -324,20 +324,31 @@ model Event {
 
 // In-app feedback / bug reports submitted via sidebar modal.
 model Feedback {
-  id          String    @id @default(cuid())
-  userId      String?
-  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  workspaceId String?
-  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
-  type        String    // "bug" | "feature" | "general"
-  message     String
-  url         String?   // page path the user was on
-  adminReply  String?
-  repliedAt   DateTime?
-  createdAt   DateTime  @default(now())
+  id              String           @id @default(cuid())
+  userId          String?
+  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  workspaceId     String?
+  workspace       Workspace?       @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  type            String           // "bug" | "feature" | "general"
+  message         String
+  url             String?          // page path the user was on
+  unreadByUser    Int              @default(0) // count of admin replies not yet seen by user
+  createdAt       DateTime         @default(now())
+  replies         FeedbackReply[]
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model FeedbackReply {
+  id         String   @id @default(cuid())
+  feedbackId String
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  sender     String   // "admin" | "user"
+  message    String
+  createdAt  DateTime @default(now())
+
+  @@index([feedbackId])
 }
 
 // Cancellation feedback submitted when a user cancels their subscription.
