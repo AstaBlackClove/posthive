@@ -1080,7 +1080,7 @@ export default function AccountsPage() {
                 <p className="text-xs" style={{ color: MUTED }}>Meta OAuth 2.0</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
+                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>⚠ Unavailable</span>
             </div>
 
             <div className="p-5 space-y-3">
@@ -1097,8 +1097,8 @@ export default function AccountsPage() {
                 <PlatformIcon platform="threads" size={16} />
                 Connect with Threads
               </button>
-              <p className="text-xs" style={{ color: MUTED }}>
-                Pending Meta app review · new connections temporarily disabled
+              <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
+                ⚠ Cannot connect — awaiting Meta App Review. New connections are blocked until approved.
               </p>
             </div>
           </div>
@@ -1114,7 +1114,7 @@ export default function AccountsPage() {
                 <p className="text-xs" style={{ color: MUTED }}>Instagram Login · images required</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
+                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>⚠ Unavailable</span>
             </div>
             <div className="p-5 space-y-3">
               {!loading && instagramAccounts.length > 0 && (
@@ -1130,8 +1130,8 @@ export default function AccountsPage() {
                 <PlatformIcon platform="instagram" size={16} />
                 Connect Instagram
               </button>
-              <p className="text-xs" style={{ color: MUTED }}>
-                Pending Meta app review · new connections temporarily disabled
+              <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
+                ⚠ Cannot connect — awaiting Meta App Review. New connections are blocked until approved.
               </p>
             </div>
           </div>
@@ -1226,7 +1226,7 @@ export default function AccountsPage() {
                 <p className="text-xs" style={{ color: MUTED }}>Post to Facebook Pages you manage</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
+                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>⚠ Unavailable</span>
             </div>
             <div className="p-5 space-y-3">
               {!loading && facebookAccounts.length > 0 && (
@@ -1242,8 +1242,8 @@ export default function AccountsPage() {
                 <PlatformIcon platform="facebook" size={16} />
                 Connect Facebook Page
               </button>
-              <p className="text-xs" style={{ color: MUTED }}>
-                Pending Meta app review · new connections temporarily disabled
+              <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
+                ⚠ Cannot connect — awaiting Meta App Review. New connections are blocked until approved.
               </p>
             </div>
           </div>
@@ -1329,7 +1329,7 @@ export default function AccountsPage() {
                 <p className="text-xs" style={{ color: MUTED }}>OAuth 2.0 · image required</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
+                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>⚠ Unavailable</span>
             </div>
             <div className="p-5 space-y-3">
               {!loading && pinterestAccounts.length > 0 && (
@@ -1345,8 +1345,8 @@ export default function AccountsPage() {
                 <PlatformIcon platform="pinterest" size={16} />
                 Connect Pinterest
               </button>
-              <p className="text-xs" style={{ color: MUTED }}>
-                Awaiting Pinterest Standard access approval · coming soon
+              <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
+                ⚠ Cannot connect — awaiting Pinterest Standard access approval.
               </p>
             </div>
           </div>
