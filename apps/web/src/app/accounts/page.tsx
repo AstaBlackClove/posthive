@@ -1668,7 +1668,7 @@ export default function AccountsPage() {
                 <p className="text-xs" style={{ color: MUTED }}>Google OAuth 2.0 · post updates to your listing</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>Pending Approval</span>
+                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>⚠ Unavailable</span>
             </div>
             <div className="p-5 space-y-3">
               <button disabled
@@ -1677,8 +1677,8 @@ export default function AccountsPage() {
                 <PlatformIcon platform="googlebusiness" size={16} />
                 Connect Google Business Profile
               </button>
-              <p className="text-xs" style={{ color: MUTED }}>
-                Awaiting Google Business Profile API approval · coming soon
+              <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
+                ⚠ Cannot connect — awaiting Google Business Profile API approval.
               </p>
             </div>
           </div>
