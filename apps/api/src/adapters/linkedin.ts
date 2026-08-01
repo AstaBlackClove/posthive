@@ -20,7 +20,7 @@ import type { StorageAdapter } from "../lib/storage.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 const API_BASE = "https://api.linkedin.com";
-const LI_VERSION = "202606";
+const LI_VERSION = "202501";
 
 interface LinkedInCredentials {
   accessToken: string;
