@@ -250,9 +250,11 @@ export const linkedinAdapter: PlatformAdapter = {
   ): Promise<CommentResult> {
     const creds = getCredentials(account);
     const ctx = replyContext as LinkedInReplyContext;
+    // socialActions requires urn:li:activity: — share and activity share the same numeric ID
+    const activityUrn = ctx.postUrn.replace("urn:li:share:", "urn:li:activity:");
     const res = await liRequest(
       "POST",
-      `/rest/socialActions/${encodeURIComponent(ctx.postUrn)}/comments`,
+      `/rest/socialActions/${encodeURIComponent(activityUrn)}/comments`,
       creds.accessToken,
       { actor: creds.personUrn, message: { text: comment } },
     );
