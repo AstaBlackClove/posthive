@@ -20,7 +20,7 @@ import type { StorageAdapter } from "../lib/storage.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 const API_BASE = "https://api.linkedin.com";
-const LI_VERSION = "202501";
+const LI_VERSION = "202511";
 
 interface LinkedInCredentials {
   accessToken: string;
@@ -250,7 +250,6 @@ export const linkedinAdapter: PlatformAdapter = {
   ): Promise<CommentResult> {
     const creds = getCredentials(account);
     const ctx = replyContext as LinkedInReplyContext;
-    // socialActions requires urn:li:activity: — share and activity share the same numeric ID
     const activityUrn = ctx.postUrn.replace("urn:li:share:", "urn:li:activity:");
     const res = await liRequest(
       "POST",
