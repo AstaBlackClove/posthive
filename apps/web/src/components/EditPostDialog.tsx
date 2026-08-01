@@ -65,6 +65,11 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   });
   const [selectedIds, setSelectedIds] = useState<string[]>(job.targets.map(t => t.accountId));
   const [perAccountOverrides, setPerAccountOverrides] = useState<Record<string, PerAccountOverride>>(parsedContent.perAccount ?? {});
+  const [showReorder, setShowReorder] = useState(false);
+  const [accountOrder, setAccountOrder] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("posthive_account_order") ?? "[]"); } catch { return []; }
+  });
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   // YouTube: init title/description from the first YouTube account's override
   const initYtOverride = (() => {
@@ -341,7 +346,18 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   }
 
   // Group accounts by platform for the selector
-  const groupedAccounts = accounts.reduce<Record<string, Account[]>>((acc, a) => {
+  const sortedAccounts = accountOrder.length
+    ? [...accounts].sort((a, b) => {
+        const ai = accountOrder.indexOf(a.id);
+        const bi = accountOrder.indexOf(b.id);
+        if (ai === -1 && bi === -1) return 0;
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      })
+    : accounts;
+
+  const groupedAccounts = sortedAccounts.reduce<Record<string, Account[]>>((acc, a) => {
     (acc[a.platform] ??= []).push(a); return acc;
   }, {});
 
@@ -384,15 +400,21 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#444" }}>Post to</p>
               {accounts.length > 1 && (
-                <button type="button"
-                  onClick={() => {
-                    const next = selectedIds.length === accounts.length ? [] : accounts.map(a => a.id);
-                    if (!next.some(id => accounts.find(a => a.id === id)?.platform === "instagram")) setIgMediaType("post");
-                    setSelectedIds(next);
-                  }}
-                  className="text-xs font-semibold" style={{ color: "#5b63d3" }}>
-                  {selectedIds.length === accounts.length ? "Deselect all" : "Select all"}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button type="button"
+                    onClick={() => {
+                      const next = selectedIds.length === accounts.length ? [] : accounts.map(a => a.id);
+                      if (!next.some(id => accounts.find(a => a.id === id)?.platform === "instagram")) setIgMediaType("post");
+                      setSelectedIds(next);
+                    }}
+                    className="text-xs font-semibold" style={{ color: "#5b63d3" }}>
+                    {selectedIds.length === accounts.length ? "Deselect all" : "Select all"}
+                  </button>
+                  <button type="button" onClick={() => setShowReorder(true)}
+                    className="text-xs font-semibold" style={{ color: "#888" }}>
+                    ⇅ Reorder
+                  </button>
+                </div>
               )}
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -703,6 +725,70 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
                   );
                 })
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {showReorder && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+          onClick={() => setShowReorder(false)}>
+          <div className="rounded-2xl w-full max-w-sm overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <div>
+                <p className="font-semibold text-sm" style={{ color: "#ededed" }}>Reorder Accounts</p>
+                <p className="text-xs mt-0.5" style={{ color: "#888" }}>Drag to set the order they appear</p>
+              </div>
+              <button onClick={() => setShowReorder(false)} style={{ color: "#888", fontSize: 18, lineHeight: 1 }}>×</button>
+            </div>
+            <div className="p-4 space-y-1.5 max-h-96 overflow-y-auto">
+              {sortedAccounts.map((a, idx) => (
+                <div key={a.id}
+                  draggable
+                  onDragStart={e => e.dataTransfer.setData("text/plain", a.id)}
+                  onDragOver={e => { e.preventDefault(); setDragOverId(a.id); }}
+                  onDragLeave={() => setDragOverId(null)}
+                  onDrop={e => {
+                    e.preventDefault();
+                    setDragOverId(null);
+                    const fromId = e.dataTransfer.getData("text/plain");
+                    if (fromId === a.id) return;
+                    const ids = sortedAccounts.map(x => x.id);
+                    const fromIdx = ids.indexOf(fromId);
+                    const toIdx = ids.indexOf(a.id);
+                    const next = [...ids];
+                    next.splice(fromIdx, 1);
+                    next.splice(toIdx, 0, fromId);
+                    setAccountOrder(next);
+                    localStorage.setItem("posthive_account_order", JSON.stringify(next));
+                  }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-grab select-none"
+                  style={{
+                    backgroundColor: dragOverId === a.id ? "#1e1e1e" : "#1a1a1a",
+                    border: `1px solid ${dragOverId === a.id ? "#5b63d3" : "#2a2a2a"}`,
+                  }}>
+                  <span style={{ color: "#555", fontSize: 14 }}>⠿</span>
+                  <PlatformIcon platform={a.platform} size={16} />
+                  {a.avatarUrl
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={a.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+                    : null}
+                  <span className="text-sm flex-1 truncate" style={{ color: "#ededed" }}>{a.displayName}</span>
+                  <span className="text-xs" style={{ color: "#555" }}>{idx + 1}</span>
+                </div>
+              ))}
+            </div>
+            <div className="px-4 pb-4 pt-2 flex gap-2">
+              <button onClick={() => { setAccountOrder([]); localStorage.removeItem("posthive_account_order"); }}
+                className="flex-1 py-2 rounded-xl text-sm font-semibold"
+                style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+                Reset order
+              </button>
+              <button onClick={() => setShowReorder(false)}
+                className="flex-1 py-2 rounded-xl text-sm font-semibold"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                Done
+              </button>
             </div>
           </div>
         </div>
