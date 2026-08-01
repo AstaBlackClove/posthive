@@ -33,6 +33,8 @@ interface FeedbackRow {
   message: string;
   url: string | null;
   createdAt: string;
+  adminReply: string | null;
+  repliedAt: string | null;
   user?: { name: string; email: string } | null;
 }
 
@@ -101,6 +103,81 @@ function buildStory(s: SessionRow): string {
 }
 
 const ADMIN_PIN_KEY = "ph_admin_unlocked";
+
+function FeedbackPanel({ feedbacks }: { feedbacks: FeedbackRow[] }) {
+  const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
+  const [replyLoading, setReplyLoading] = useState<string | null>(null);
+  const [replied, setReplied] = useState<Record<string, string>>({});
+
+  async function submitReply(id: string) {
+    const text = replyDraft[id]?.trim();
+    if (!text) return;
+    setReplyLoading(id);
+    try {
+      await apiFetch(`/feedback/${id}/reply`, { method: "PATCH", body: JSON.stringify({ reply: text }) });
+      setReplied(prev => ({ ...prev, [id]: text }));
+      setReplyDraft(prev => ({ ...prev, [id]: "" }));
+    } finally {
+      setReplyLoading(null);
+    }
+  }
+
+  if (feedbacks.length === 0) {
+    return <div style={{ textAlign: "center", padding: "64px 0", color: N.muted, fontSize: 14 }}>No feedback yet.</div>;
+  }
+
+  return (
+    <div>
+      {feedbacks.map(f => {
+        const typeColor = f.type === "bug" ? N.red : f.type === "feature" ? N.green : N.blue;
+        const typeLabel = f.type === "bug" ? "🐛 Bug" : f.type === "feature" ? "✨ Feature" : "💬 General";
+        const existingReply = replied[f.id] ?? f.adminReply;
+        return (
+          <div key={f.id} style={{ padding: "12px 8px", margin: "0 -8px 4px", borderRadius: 4, borderBottom: `1px solid ${N.border}` }}>
+            <div style={{ display: "grid", gridTemplateColumns: "28px 1fr auto", gap: 12, alignItems: "flex-start" }}>
+              <Avatar visitorId={f.userId ?? f.id} name={f.user?.name} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, flexWrap: "wrap" as const }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: "1px 7px", borderRadius: 3, background: `${typeColor}18`, color: typeColor, border: `1px solid ${typeColor}40` }}>{typeLabel}</span>
+                  <span style={{ fontSize: 12, color: N.muted }}>
+                    {f.user?.name ?? "Anonymous"}
+                    {f.user?.email && <span> · {f.user.email}</span>}
+                  </span>
+                  {f.url && <span style={{ fontSize: 11, fontFamily: "ui-monospace, monospace", background: N.s2, border: `1px solid ${N.border}`, borderRadius: 3, padding: "1px 6px", color: N.muted }}>{f.url}</span>}
+                </div>
+                <p style={{ fontSize: 13, color: N.text, margin: 0, lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{f.message}</p>
+                {existingReply ? (
+                  <div style={{ marginTop: 8, padding: "8px 10px", borderRadius: 6, background: "#0a1a0a", border: "1px solid #14532d" }}>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: "#4ade80", margin: "0 0 3px" }}>Your reply</p>
+                    <p style={{ fontSize: 13, color: N.text, margin: 0, whiteSpace: "pre-wrap" }}>{existingReply}</p>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+                    <input
+                      value={replyDraft[f.id] ?? ""}
+                      onChange={e => setReplyDraft(prev => ({ ...prev, [f.id]: e.target.value }))}
+                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitReply(f.id); } }}
+                      placeholder="Reply to this feedback…"
+                      style={{ flex: 1, fontSize: 12, padding: "5px 10px", borderRadius: 6, background: N.s2, border: `1px solid ${N.border}`, color: N.text, outline: "none" }}
+                    />
+                    <button
+                      onClick={() => submitReply(f.id)}
+                      disabled={replyLoading === f.id || !replyDraft[f.id]?.trim()}
+                      style={{ fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 6, background: "#fff", color: "#0a0a0a", border: "none", cursor: "pointer", opacity: (!replyDraft[f.id]?.trim() || replyLoading === f.id) ? 0.4 : 1 }}
+                    >
+                      {replyLoading === f.id ? "…" : "Reply"}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <span style={{ fontSize: 12, color: N.muted, whiteSpace: "nowrap", paddingTop: 2 }}>{timeSince(f.createdAt)}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function AdminPage() {
   const [data, setData]       = useState<AdminData | null>(null);
@@ -445,50 +522,7 @@ export default function AdminPage() {
       )}
       {/* Feedback */}
       {tab === "feedback" && (
-        <div>
-          {feedbacks.length === 0 && (
-            <div style={{ textAlign: "center", padding: "64px 0", color: N.muted, fontSize: 14 }}>
-              No feedback yet.
-            </div>
-          )}
-          {feedbacks.map(f => {
-            const typeColor = f.type === "bug" ? N.red : f.type === "feature" ? N.green : N.blue;
-            const typeLabel = f.type === "bug" ? "🐛 Bug" : f.type === "feature" ? "✨ Feature" : "💬 General";
-            return (
-              <div key={f.id} className="n-row" style={{
-                display: "grid", gridTemplateColumns: "28px 1fr auto",
-                gap: 12, alignItems: "flex-start",
-                padding: "10px 8px", margin: "0 -8px",
-                borderRadius: 4, cursor: "default",
-              }}>
-                <Avatar visitorId={f.userId ?? f.id} name={f.user?.name} />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, padding: "1px 7px", borderRadius: 3,
-                      background: `${typeColor}18`, color: typeColor, border: `1px solid ${typeColor}40`,
-                    }}>{typeLabel}</span>
-                    <span style={{ fontSize: 12, color: N.muted }}>
-                      {f.user?.name ?? "Anonymous"}
-                      {f.user?.email && <span style={{ color: N.muted }}> · {f.user.email}</span>}
-                    </span>
-                    {f.url && (
-                      <span style={{ fontSize: 11, fontFamily: "ui-monospace, monospace", background: N.s2, border: `1px solid ${N.border}`, borderRadius: 3, padding: "1px 6px", color: N.muted }}>
-                        {f.url}
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ fontSize: 13, color: N.text, margin: 0, lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                    {f.message}
-                  </p>
-                </div>
-                <span style={{ fontSize: 12, color: N.muted, whiteSpace: "nowrap", paddingTop: 2 }}>
-                  {timeSince(f.createdAt)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+        <FeedbackPanel feedbacks={feedbacks} />
       )}
 
       </div>{/* end right column */}

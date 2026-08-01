@@ -85,9 +85,12 @@ export function Sidebar() {
 
   // Feedback modal
   const [fbOpen, setFbOpen] = useState(false);
+  const [fbTab, setFbTab] = useState<"send" | "mine">("send");
   const [fbType, setFbType] = useState<"bug" | "feature" | "general">("general");
   const [fbMessage, setFbMessage] = useState("");
   const [fbLoading, setFbLoading] = useState(false);
+  const [myFeedback, setMyFeedback] = useState<{ id: string; type: string; message: string; adminReply: string | null; repliedAt: string | null; createdAt: string }[]>([]);
+  const [myFeedbackLoading, setMyFeedbackLoading] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed");
@@ -140,6 +143,15 @@ export function Sidebar() {
     }
   }
 
+  async function loadMyFeedback() {
+    setMyFeedbackLoading(true);
+    try {
+      const data = await apiFetch<typeof myFeedback>("/feedback/mine");
+      setMyFeedback(data);
+    } catch { /* silent */ }
+    finally { setMyFeedbackLoading(false); }
+  }
+
   async function submitFeedback(e: React.FormEvent) {
     e.preventDefault();
     if (!fbMessage.trim()) return;
@@ -153,6 +165,7 @@ export function Sidebar() {
       setFbOpen(false);
       setFbMessage("");
       setFbType("general");
+      setFbTab("send");
     } catch {
       error("Failed to send feedback. Try again.");
     } finally {
@@ -484,8 +497,66 @@ export function Sidebar() {
       {fbOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
           <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+            {/* Tabs */}
+            <div className="flex gap-1 mb-4 p-1 rounded-xl" style={{ backgroundColor: "#1a1a1a" }}>
+              <button
+                onClick={() => setFbTab("send")}
+                className="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors"
+                style={{ backgroundColor: fbTab === "send" ? "#2a2a2a" : "transparent", color: fbTab === "send" ? "#ededed" : "#888" }}>
+                Send feedback
+              </button>
+              <button
+                onClick={() => { setFbTab("mine"); loadMyFeedback(); }}
+                className="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors"
+                style={{ backgroundColor: fbTab === "mine" ? "#2a2a2a" : "transparent", color: fbTab === "mine" ? "#ededed" : "#888" }}>
+                My feedback
+              </button>
+            </div>
+
+            {/* My feedback tab */}
+            {fbTab === "mine" && (
+              <div>
+                {myFeedbackLoading ? (
+                  <p className="text-xs text-center py-8" style={{ color: "#888" }}>Loading…</p>
+                ) : myFeedback.length === 0 ? (
+                  <p className="text-xs text-center py-8" style={{ color: "#888" }}>No feedback submitted yet.</p>
+                ) : (
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                    {myFeedback.map(f => {
+                      const typeLabel = f.type === "bug" ? "🐛 Bug" : f.type === "feature" ? "✨ Feature" : "💬 General";
+                      return (
+                        <div key={f.id} className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-semibold" style={{ color: "#888" }}>{typeLabel}</span>
+                            <span className="text-[11px]" style={{ color: "#555" }}>{new Date(f.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-xs" style={{ color: "#ededed", whiteSpace: "pre-wrap" }}>{f.message}</p>
+                          {f.adminReply ? (
+                            <div className="rounded-lg p-2.5" style={{ backgroundColor: "#0a1a0a", border: "1px solid #14532d" }}>
+                              <p className="text-[11px] font-semibold mb-1" style={{ color: "#4ade80" }}>Reply from Posthive</p>
+                              <p className="text-xs" style={{ color: "#ededed", whiteSpace: "pre-wrap" }}>{f.adminReply}</p>
+                            </div>
+                          ) : (
+                            <p className="text-[11px]" style={{ color: "#555" }}>⏳ Awaiting reply</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <button
+                  onClick={() => { setFbOpen(false); setFbTab("send"); }}
+                  className="w-full mt-4 py-2 rounded-xl text-sm font-semibold"
+                  style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+                  Close
+                </button>
+              </div>
+            )}
+
+            {/* Send feedback tab */}
+            {fbTab === "send" && <>
             <h2 className="text-base font-bold mb-1" style={{ color: "#ededed" }}>Send feedback</h2>
-            <p className="text-xs mb-4" style={{ color: "#888" }}>Report a bug or suggest a feature we read every message.</p>
+            <p className="text-xs mb-4" style={{ color: "#888" }}>Report a bug or suggest a feature — we read every message.</p>
             <form onSubmit={submitFeedback} className="space-y-4">
               {/* Type selector */}
               <div className="flex gap-2">
@@ -525,7 +596,7 @@ export function Sidebar() {
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => { setFbOpen(false); setFbMessage(""); setFbType("general"); }}
+                  onClick={() => { setFbOpen(false); setFbMessage(""); setFbType("general"); setFbTab("send"); }}
                   style={{ flex: 1, padding: "8px", borderRadius: 10, fontSize: 13, fontWeight: 600, backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a", cursor: "pointer" }}
                 >
                   Cancel
@@ -539,6 +610,7 @@ export function Sidebar() {
                 </button>
               </div>
             </form>
+            </>}
           </div>
         </div>
       )}

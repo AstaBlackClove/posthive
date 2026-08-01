@@ -324,15 +324,17 @@ model Event {
 
 // In-app feedback / bug reports submitted via sidebar modal.
 model Feedback {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String?
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   workspaceId String?
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
-  type        String   // "bug" | "feature" | "general"
+  type        String    // "bug" | "feature" | "general"
   message     String
-  url         String?  // page path the user was on
-  createdAt   DateTime @default(now())
+  url         String?   // page path the user was on
+  adminReply  String?
+  repliedAt   DateTime?
+  createdAt   DateTime  @default(now())
 
   @@index([userId])
   @@index([createdAt])
