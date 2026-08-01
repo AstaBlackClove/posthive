@@ -1197,6 +1197,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                                   className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
                                   style={{ minHeight: 100, overflow: "hidden", backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }} />
                               </div>
+                              {!NO_COMMENT_PLATFORMS.has(a.platform) && (
                               <div>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1">First Comment</span>
                                 <textarea value={override?.commentText ?? ""}
@@ -1206,6 +1207,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                                   className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
                                   style={{ minHeight: 60, overflow: "hidden", backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }} />
                               </div>
+                              )}
                             </>
                           )}
                         </div>

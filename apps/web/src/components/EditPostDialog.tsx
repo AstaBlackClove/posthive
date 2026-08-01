@@ -598,6 +598,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
                               style={{ minHeight: 100, overflow: "hidden", backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }}
                             />
                           </div>
+                          {!NO_COMMENT_PLATFORMS.has(a.platform) && (
                           <div>
                             <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1">First Comment</span>
                             <textarea
@@ -609,6 +610,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
                               style={{ minHeight: 60, overflow: "hidden", backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}
                             />
                           </div>
+                          )}
                         </div>
                       )}
                     </div>
