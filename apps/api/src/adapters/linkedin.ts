@@ -252,10 +252,9 @@ export const linkedinAdapter: PlatformAdapter = {
     const ctx = replyContext as LinkedInReplyContext;
     const res = await liRequest(
       "POST",
-      `/v2/socialActions/${encodeURIComponent(ctx.postUrn)}/comments`,
+      `/rest/socialActions/${encodeURIComponent(ctx.postUrn)}/comments`,
       creds.accessToken,
       { actor: creds.personUrn, message: { text: comment } },
-      true
     );
     if (!res.ok) throw new Error(`LinkedIn comment failed: ${await res.text()}`);
     const data = await res.json() as { id?: string };
