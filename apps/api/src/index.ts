@@ -47,6 +47,7 @@ import { startCleanupCron, setCleanupStorage, runCleanupNow } from "./lib/cleanu
 import { analyticsRoutes } from "./routes/analytics.js";
 import { trackRoutes } from "./routes/track.js";
 import { feedbackRoutes } from "./routes/feedback.js";
+import { aiRoutes } from "./routes/ai.js";
 import { withAuth } from "./lib/auth/withAuth.js";
 import type { StorageAdapter } from "./lib/storage.js";
 
@@ -153,6 +154,7 @@ async function main() {
   await app.register(analyticsRoutes);
   await app.register(trackRoutes);
   await app.register(feedbackRoutes);
+  await app.register(aiRoutes);
 
   app.get("/health", async () => ({ ok: true }));
 

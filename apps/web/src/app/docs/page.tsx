@@ -80,11 +80,13 @@ const NAV = [
       { label: "Discord", id: "discord" },
       { label: "Tumblr", id: "tumblr" },
       { label: "Lemmy", id: "lemmy" },
+      { label: "TikTok", id: "tiktok" },
     ],
   },
   {
     section: "Features",
     items: [
+      { label: "AI caption assist", id: "ai-caption" },
       { label: "Scheduling posts", id: "scheduling-posts" },
       { label: "Post templates", id: "post-templates" },
       { label: "Bulk CSV scheduling", id: "bulk-csv" },
@@ -609,6 +611,10 @@ pnpm install`}</CopyCode>
                   <tr><td><span className="doc-inline-code">ENABLE_ANALYTICS</span></td><td>No</td><td>Set to <code>true</code> to enable visitor session + event tracking. Off by default self-hosters collect no data.</td></tr>
                   <tr><td><span className="doc-inline-code">ADMIN_EMAIL</span></td><td>No</td><td>Your email address. Only this account can access <code>/admin</code>.</td></tr>
                   <tr><td><span className="doc-inline-code">ADMIN_PIN</span></td><td>No</td><td>Second-factor PIN for <code>/admin</code>. Validated server-side never exposed to the browser. Set in API env only.</td></tr>
+                  <tr><td><span className="doc-inline-code">ANTHROPIC_API_KEY</span></td><td>No</td><td>Anthropic API key for AI caption features (Fix Grammar, Expand, Polish, etc.). Get one at <code>console.anthropic.com</code>. Self-hosters supply their own key.</td></tr>
+                  <tr><td><span className="doc-inline-code">TIKTOK_CLIENT_KEY</span></td><td>TikTok only</td><td>TikTok app client key from developers.tiktok.com.</td></tr>
+                  <tr><td><span className="doc-inline-code">TIKTOK_CLIENT_SECRET</span></td><td>TikTok only</td><td>TikTok app client secret.</td></tr>
+                  <tr><td><span className="doc-inline-code">TIKTOK_REDIRECT_URI</span></td><td>TikTok only</td><td>OAuth callback URL. Must match exactly what is registered in the TikTok developer portal.</td></tr>
                 </tbody>
               </table></div>
 
@@ -972,8 +978,45 @@ TUMBLR_REDIRECT_URI="https://your-domain.com/auth/tumblr/callback"`}</pre>
                 Lemmy credentials are stored encrypted. If you change your Lemmy password, reconnect the account in Posthive.
               </Callout>
 
+              {/* ── TikTok ── */}
+              <h3 className="doc-h2" id="tiktok">TikTok</h3>
+              <p className="doc-p">
+                Posthive posts <strong>videos</strong> to TikTok via the Content Posting API v2. Text-only and image posts are not supported by TikTok's API — a video file (mp4 or mov) is required.
+              </p>
+              <ol className="doc-ol">
+                <li className="doc-li">Go to <a href="https://developers.tiktok.com" target="_blank" rel="noopener noreferrer" className="doc-link">developers.tiktok.com</a> → create an app.</li>
+                <li className="doc-li">Add products: <strong>Login Kit</strong> and <strong>Content Posting API</strong>. Enable <strong>Direct Post</strong> under Content Posting API.</li>
+                <li className="doc-li">Set the redirect URI to <code>https://your-domain.com/auth/tiktok/callback</code>.</li>
+                <li className="doc-li">Copy your client key and secret into your API env:</li>
+              </ol>
+              <pre className="doc-code">{`TIKTOK_CLIENT_KEY="your-client-key"
+TIKTOK_CLIENT_SECRET="your-client-secret"
+TIKTOK_REDIRECT_URI="https://your-domain.com/auth/tiktok/callback"`}</pre>
+              <ol className="doc-ol" start={5}>
+                <li className="doc-li">Go to <strong>Accounts</strong> in Posthive → click <strong>Connect TikTok</strong>.</li>
+              </ol>
+              <Callout type="warn">
+                TikTok requires app review before posts can be made to public accounts. During review, your TikTok account must be set to <strong>Private</strong> and posts will be visible only to you. Once TikTok approves the app, posts go public and the account can be set back to public.
+              </Callout>
+
               {/* ── Scheduling posts ── */}
               <SectionLabel>Features</SectionLabel>
+              <h3 className="doc-h2" id="ai-caption">AI caption assist</h3>
+              <p className="doc-p">
+                The composer and post editor include an <strong>AI</strong> button that rewrites your caption using Claude. Seven actions are available:
+              </p>
+              <ul className="doc-ul">
+                <li className="doc-li"><strong>Fix Grammar</strong> — corrects spelling, grammar, and punctuation.</li>
+                <li className="doc-li"><strong>Make it Concise</strong> — shortens while keeping the core message.</li>
+                <li className="doc-li"><strong>Expand</strong> — adds detail and makes the caption more engaging.</li>
+                <li className="doc-li"><strong>Rephrase</strong> — rewrites with the same meaning in a fresh voice.</li>
+                <li className="doc-li"><strong>Improve Structure</strong> — improves readability and flow.</li>
+                <li className="doc-li"><strong>Simplify Language</strong> — makes the caption easy to understand.</li>
+                <li className="doc-li"><strong>Polish my Caption</strong> — makes it compelling and professional.</li>
+              </ul>
+              <p className="doc-p">
+                Self-hosters must set <span className="doc-inline-code">ANTHROPIC_API_KEY</span> in their API env. Get a key at <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="doc-link">console.anthropic.com</a>.
+              </p>
               <h3 className="doc-h2" id="scheduling-posts">Scheduling posts</h3>
               <p className="doc-p">
                 The Compose page is where you write and schedule posts. Everything happens in a single panel no multi-step wizard.

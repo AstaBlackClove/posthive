@@ -76,6 +76,8 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [saveTemplateDialog, setSaveTemplateDialog] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showAiMenu, setShowAiMenu] = useState(false);
   const [saveTemplateName, setSaveTemplateName] = useState("");
   const [deleteTemplateTarget, setDeleteTemplateTarget] = useState<{ id: string; name: string } | null>(null);
   const templatesRef = useRef<HTMLDivElement>(null);
@@ -335,6 +337,20 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
       return next;
     });
     setAltTexts((prev) => prev.filter((_, j) => j !== i));
+  }
+
+  async function runAiAction(action: string) {
+    if (!text.trim()) return;
+    setAiLoading(true);
+    setShowAiMenu(false);
+    try {
+      const data = await apiFetch<{ text: string }>("/ai/caption", { method: "POST", body: JSON.stringify({ text, action }) });
+      setText(data.text);
+    } catch {
+      // silently fail — user keeps original text
+    } finally {
+      setAiLoading(false);
+    }
   }
 
   function validateBeforeSubmit(): string | null {
@@ -976,14 +992,51 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                 }
               />
             )}
-            {/* Char counters below textarea */}
+            {/* Char counters + AI button below textarea */}
             {!onlyInstagramStory && !noPostTextNeeded && <div className="flex items-center gap-3 mt-1.5">
               {overAnyLimit && (
                 <p className="text-xs text-red-500 flex-1">
                   {Math.abs(mostRestrictiveLimit - graphemeCount)} chars over limit
                 </p>
               )}
-              <div className="flex items-center gap-3 ml-auto">
+              {/* AI caption button */}
+              <div className="relative ml-auto flex items-center gap-3">
+                <button type="button" onClick={() => setShowAiMenu(v => !v)} disabled={aiLoading || !text.trim()}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all disabled:opacity-40"
+                  style={{ backgroundColor: aiLoading ? "#2e2458" : "#1e1e2e", color: aiLoading ? "#ede9fe" : "#a5b4fc", border: `1px solid ${aiLoading ? "#6d28d9" : "#3d3d6b"}` }}>
+                  {aiLoading ? (
+                    <>
+                      <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                      Generating…
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5ZM18 1.5a.75.75 0 0 1 .728.568l.258 1.036a2.63 2.63 0 0 0 1.91 1.91l1.036.258a.75.75 0 0 1 0 1.456l-1.036.258a2.63 2.63 0 0 0-1.91 1.91l-.258 1.036a.75.75 0 0 1-1.456 0l-.258-1.036a2.63 2.63 0 0 0-1.91-1.91l-1.036-.258a.75.75 0 0 1 0-1.456l1.036-.258a2.63 2.63 0 0 0 1.91-1.91l.258-1.036A.75.75 0 0 1 18 1.5Z"/></svg>
+                      AI
+                    </>
+                  )}
+                </button>
+                {showAiMenu && (
+                  <div className="absolute bottom-full right-0 mb-1 rounded-xl overflow-hidden z-50 min-w-[180px]"
+                    style={{ backgroundColor: "#111", border: "1px solid #2a2a2a", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+                    {[
+                      { action: "fix_grammar",       label: "Fix Grammar",         color: "#a78bfa", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg> },
+                      { action: "concise",            label: "Make it Concise",     color: "#60a5fa", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 9l7-7 7 7M5 15l7 7 7-7"/></svg> },
+                      { action: "expand",             label: "Expand",              color: "#34d399", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg> },
+                      { action: "rephrase",           label: "Rephrase",            color: "#fb923c", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg> },
+                      { action: "improve_structure",  label: "Improve Structure",   color: "#f472b6", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 10h10M4 14h12M4 18h8"/></svg> },
+                      { action: "simplify",           label: "Simplify Language",   color: "#38bdf8", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg> },
+                      { action: "polish",             label: "Polish my Caption",   color: "#fbbf24", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2zM4.5 14L5.5 17 8.5 18l-3 1-1 3-1-3-3-1 3-1 1-3z"/></svg> },
+                    ].map(({ action, label, color, icon }) => (
+                      <button key={action} type="button" onClick={() => runAiAction(action)}
+                        className="w-full text-left px-3 py-2 text-xs transition-colors hover:bg-white/5 flex items-center gap-2.5"
+                        style={{ color: "#ededed" }}>
+                        <span style={{ color }}>{icon}</span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {platformLimits.map((p) => (
                   <span key={p.platform} className="text-xs font-medium flex items-center gap-1"
                     style={{ color: p.over ? "#ef4444" : p.effectiveCount > p.limit * 0.8 ? "#f59e0b" : "#444" }}>
