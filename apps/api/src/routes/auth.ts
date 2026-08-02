@@ -991,8 +991,6 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.redirect(buildRedirect(redirectBase, { error: "no_refresh_token" }));
     }
 
-    // List the user's Business Profile locations — take the first one.
-    // TODO: if multiple locations, redirect to a location picker UI.
     let locationName: string;
     let displayName: string;
     try {

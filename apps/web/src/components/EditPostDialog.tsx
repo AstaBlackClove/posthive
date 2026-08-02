@@ -126,7 +126,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const [saveError, setSaveError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const aiMenuRef = useRef<HTMLDivElement>(null);
   const ytVideoInputRef = useRef<HTMLInputElement>(null);
 
   function toggleOverride(accountId: string, defaultText: string, defaultComment: string) {
@@ -313,6 +313,15 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr", "facebook", "linkedin", "tiktok"]);
   const noCommentSupport = selectedAccounts.length > 0 && selectedAccounts.every(a => NO_COMMENT_PLATFORMS.has(a.platform));
   const youtubeSelectedWithNoVideo = youtubeSelected && (youtubeVideoMode === "upload" ? !video : !youtubeVideoUrl.trim());
+
+  useEffect(() => {
+    if (!showAiMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (aiMenuRef.current && !aiMenuRef.current.contains(e.target as Node)) setShowAiMenu(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showAiMenu]);
 
   useEffect(() => {
     if (youtubeAccounts.length === 0) return;
@@ -508,7 +517,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
               </p>
             )}
             {/* AI caption button */}
-            <div className="relative flex justify-end mt-1.5">
+            <div ref={aiMenuRef} className="relative flex justify-end mt-1.5">
               <button type="button" onClick={() => setShowAiMenu(v => !v)} disabled={aiLoading || !text.trim()}
                 className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all disabled:opacity-40"
                 style={{ backgroundColor: aiLoading ? "#2e2458" : "#1e1e2e", color: aiLoading ? "#ede9fe" : "#a5b4fc", border: `1px solid ${aiLoading ? "#6d28d9" : "#3d3d6b"}` }}>

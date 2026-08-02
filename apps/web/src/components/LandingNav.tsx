@@ -24,14 +24,22 @@ export const PLATFORMS_NAV = [
   { platform: "tiktok",   label: "TikTok",         desc: "Videos · Content Posting API" },
 ];
 
+const SparklesNavIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/>
+    <path d="M20 3v4M22 5h-4M4 17v2M5 18H3"/>
+  </svg>
+);
+
 export const FEATURES_NAV = [
-  { icon: <SunIcon />,      bg: "rgba(91,99,211,.18)",  color: "#9ba2ee", title: "Multi-platform posting",  desc: "One composer, seven platforms", slug: "multi-platform-posting" },
-  { icon: <InstagramIcon />,bg: "rgba(225,100,100,.18)",color: "#e86b6b", title: "Reels & Stories",         desc: "Full Instagram media support",  slug: "instagram-reels-scheduler" },
-  { icon: <CalendarIcon />, bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Drag-to-reschedule",      desc: "Visual calendar view",           slug: "drag-to-reschedule" },
-  { icon: <CommentIcon />,  bg: "rgba(220,160,60,.18)", color: "#d4a83c", title: "First comment",           desc: "Auto-reply on publish",          slug: "first-comment" },
-  { icon: <SlidersIcon />,  bg: "rgba(140,100,220,.18)",color: "#a07ee0", title: "Per-platform overrides",  desc: "Custom text per network",        slug: "per-platform-overrides" },
-  { icon: <CsvNavIcon />,  bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Bulk CSV scheduling",      desc: "Schedule hundreds from a file",  slug: "bulk-csv-scheduling" },
-  { icon: <CodeIcon />,     bg: "rgba(60,180,200,.18)", color: "#3db8c8", title: "Self-hostable",           desc: "AGPL-3.0 open source",           slug: "self-hostable" },
+  { icon: <SunIcon />,          bg: "rgba(91,99,211,.18)",  color: "#9ba2ee", title: "Multi-platform posting",  desc: "One composer, seven platforms",     slug: "multi-platform-posting" },
+  { icon: <InstagramIcon />,    bg: "rgba(225,100,100,.18)",color: "#e86b6b", title: "Reels & Stories",         desc: "Full Instagram media support",      slug: "instagram-reels-scheduler" },
+  { icon: <CalendarIcon />,     bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Drag-to-reschedule",      desc: "Visual calendar view",              slug: "drag-to-reschedule" },
+  { icon: <CommentIcon />,      bg: "rgba(220,160,60,.18)", color: "#d4a83c", title: "First comment",           desc: "Auto-reply on publish",             slug: "first-comment" },
+  { icon: <SlidersIcon />,      bg: "rgba(140,100,220,.18)",color: "#a07ee0", title: "Per-platform overrides",  desc: "Custom text per network",           slug: "per-platform-overrides" },
+  { icon: <CsvNavIcon />,       bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Bulk CSV scheduling",     desc: "Schedule hundreds from a file",     slug: "bulk-csv-scheduling" },
+  { icon: <CodeIcon />,         bg: "rgba(60,180,200,.18)", color: "#3db8c8", title: "Self-hostable",           desc: "AGPL-3.0 open source",              slug: "self-hostable" },
+  { icon: <SparklesNavIcon />,  bg: "rgba(167,139,250,.18)",color: "#a78bfa", title: "AI caption assist",       desc: "Rewrite in one click",              slug: "ai-caption-assist" },
 ];
 
 interface NavBarProps {

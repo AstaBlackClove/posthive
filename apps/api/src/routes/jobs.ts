@@ -186,7 +186,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         const payload = await fetchJobs();
         if (payload !== lastPayload) { lastPayload = payload; reply.raw.write(`data: ${payload}\n\n`); }
       } catch { /* ignore */ }
-    }, 3000);
+    }, 5000);
 
     const keepAlive = setInterval(() => { reply.raw.write(": ping\n\n"); }, 25000);
 

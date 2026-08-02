@@ -81,10 +81,21 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const [saveTemplateName, setSaveTemplateName] = useState("");
   const [deleteTemplateTarget, setDeleteTemplateTarget] = useState<{ id: string; name: string } | null>(null);
   const templatesRef = useRef<HTMLDivElement>(null);
+  const aiMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ytVideoInputRef = useRef<HTMLInputElement>(null);
   const mediaItemsRef = useRef(mediaItems);
   useEffect(() => { mediaItemsRef.current = mediaItems; }, [mediaItems]);
+
+  // Close AI menu on outside click
+  useEffect(() => {
+    if (!showAiMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (aiMenuRef.current && !aiMenuRef.current.contains(e.target as Node)) setShowAiMenu(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showAiMenu]);
 
   // Close templates dropdown on outside click
   useEffect(() => {
@@ -1000,7 +1011,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                 </p>
               )}
               {/* AI caption button */}
-              <div className="relative ml-auto flex items-center gap-3">
+              <div ref={aiMenuRef} className="relative ml-auto flex items-center gap-3">
                 <button type="button" onClick={() => setShowAiMenu(v => !v)} disabled={aiLoading || !text.trim()}
                   className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all disabled:opacity-40"
                   style={{ backgroundColor: aiLoading ? "#2e2458" : "#1e1e2e", color: aiLoading ? "#ede9fe" : "#a5b4fc", border: `1px solid ${aiLoading ? "#6d28d9" : "#3d3d6b"}` }}>

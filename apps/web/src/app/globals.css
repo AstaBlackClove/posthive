@@ -47,6 +47,15 @@ input::placeholder, textarea::placeholder {
   color: #555;
 }
 
+/* ── Footer responsive ── */
+@media (max-width: 768px) {
+  .ph-footer-inner { grid-template-columns: 1fr !important; gap: 40px !important; }
+  .ph-foot-cols { grid-template-columns: repeat(2, 1fr) !important; gap: 28px !important; }
+}
+@media (max-width: 480px) {
+  .ph-foot-cols { grid-template-columns: 1fr !important; }
+}
+
 /* ── Job card smooth hover ── */
 .job-card {
   border: 1px solid #2a2a2a;

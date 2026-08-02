@@ -21,7 +21,6 @@ export interface AnalyticsResult {
   reposts?: number;
   replies?: number;
   views?: number;       // impressions / views (platform-specific)
-  bookmarks?: number;
   fetchedAt: string;   // ISO timestamp
 }
 

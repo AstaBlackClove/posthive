@@ -17,7 +17,6 @@ const BATCH_CONCURRENCY = 5; // refresh 5 accounts at a time within each batch
 async function run() {
   const cutoff = new Date(Date.now() + WINDOW_MS);
   let cursor: string | undefined;
-  let total = 0;
 
   while (true) {
     const batch = await prisma.account.findMany({
@@ -32,7 +31,6 @@ async function run() {
 
     if (!batch.length) break;
     cursor = batch[batch.length - 1].id;
-    total += batch.length;
 
     // Process up to BATCH_CONCURRENCY accounts at a time
     for (let i = 0; i < batch.length; i += BATCH_CONCURRENCY) {
@@ -58,8 +56,6 @@ async function run() {
 
     if (batch.length < BATCH_SIZE) break; // last page
   }
-
-  // total logged only in debug — individual refreshes are logged per-account above
 }
 
 export function startTokenRefreshCron() {

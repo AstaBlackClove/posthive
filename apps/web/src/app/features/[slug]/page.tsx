@@ -84,7 +84,7 @@ const FEATURES: Record<string, FeatureData> = {
       },
       {
         q: "Is Posthive a good Buffer or Hootsuite alternative?",
-        a: "Yes. Posthive covers all major platforms, costs significantly less, and is open source — you can self-host it if you prefer full data control.",
+        a: "Yes. Posthive covers all major platforms, costs significantly less, and is open source you can self-host it if you prefer full data control.",
       },
       {
         q: "Do I need a separate account for each platform?",
@@ -148,11 +148,11 @@ const FEATURES: Record<string, FeatureData> = {
       },
       {
         q: "Does Posthive support Instagram Stories?",
-        a: "Yes. You can schedule Stories from the composer — just select 'Story' as the content type and upload an image or short video.",
+        a: "Yes. You can schedule Stories from the composer just select 'Story' as the content type and upload an image or short video.",
       },
       {
         q: "Why can't I connect a personal Instagram account?",
-        a: "Meta's Instagram API only allows publishing to Business and Creator accounts. Personal accounts are not supported by the API — you'll need to switch your account type in Instagram settings.",
+        a: "Meta's Instagram API only allows publishing to Business and Creator accounts. Personal accounts are not supported by the API you'll need to switch your account type in Instagram settings.",
       },
       {
         q: "Can I schedule Instagram carousels?",
@@ -223,7 +223,7 @@ const FEATURES: Record<string, FeatureData> = {
       },
       {
         q: "Does the calendar sync in real time?",
-        a: "Yes. Any change you make — a new post, a reschedule, a deletion — appears on the calendar immediately without a page refresh.",
+        a: "Yes. Any change you make a new post, a reschedule, a deletion appears on the calendar immediately without a page refresh.",
       },
     ],
   },
@@ -282,7 +282,7 @@ const FEATURES: Record<string, FeatureData> = {
       },
       {
         q: "How long after the main post does the first comment go live?",
-        a: "The first comment is posted within a few seconds of the main post going live — in the same job run, immediately after the post is confirmed published.",
+        a: "The first comment is posted within a few seconds of the main post going live in the same job run, immediately after the post is confirmed published.",
       },
       {
         q: "Can I put hashtags in the first comment to avoid cluttering my caption?",
@@ -345,7 +345,7 @@ const FEATURES: Record<string, FeatureData> = {
     faq: [
       {
         q: "What are per-platform overrides?",
-        a: "Per-platform overrides let you write a custom version of your post for any specific account. The override replaces the base post for that platform only — all other platforms use the base.",
+        a: "Per-platform overrides let you write a custom version of your post for any specific account. The override replaces the base post for that platform only all other platforms use the base.",
       },
       {
         q: "Can I override the first comment per platform too?",
@@ -428,6 +428,72 @@ const FEATURES: Record<string, FeatureData> = {
       },
     ],
   },
+  "ai-caption-assist": {
+    title: "AI caption assist",
+    badge: "AI-powered",
+    badgeColor: "#a78bfa",
+    badgeBg: "rgba(167,139,250,.15)",
+    headline: "Better captions. One click.",
+    subheadline:
+      "Seven AI actions built right into the composer and edit dialog. Fix grammar, tighten the copy, expand, rephrase, restructure, simplify, or polish all powered by Claude without leaving the compose window.",
+    image: "",
+    imageAlt: "",
+    why: [
+      {
+        title: "Writing is the bottleneck",
+        desc: "The hard part of consistent posting isn't the scheduling it's staring at a blank text box. AI assist gives you a starting point or polishes what you already wrote, in seconds.",
+      },
+      {
+        title: "Platform tone varies",
+        desc: "LinkedIn needs professional. Bluesky needs casual. Twitter needs punchy. Use Rephrase or Simplify to adapt one base caption to the platform you're posting to.",
+      },
+      {
+        title: "No context switching",
+        desc: "The AI button lives inside the composer and the edit dialog. You don't open a new tab, paste into ChatGPT, copy back. It rewrites in place.",
+      },
+    ],
+    how: [
+      {
+        n: "01",
+        title: "Write your caption",
+        desc: "Type your post in the composer as you normally would. Even a rough draft is enough AI assist will clean it up.",
+      },
+      {
+        n: "02",
+        title: "Click the sparkles button",
+        desc: "Hit the ✦ button above the textarea. A menu of seven actions appears: Fix grammar, Concise, Expand, Rephrase, Improve structure, Simplify, Polish.",
+      },
+      {
+        n: "03",
+        title: "Pick an action",
+        desc: "Select the action you want. Posthive sends your caption to Claude Haiku and replaces the text with the improved version in under two seconds.",
+      },
+    ],
+    usecases: [
+      "Creators who batch-write content and want a final polish pass",
+      "Non-native English speakers who want grammar and clarity checks",
+      "Founders who know what to say but need help saying it concisely",
+      "Teams shortening long LinkedIn posts to fit Bluesky's 300-char limit",
+    ],
+    faq: [
+      {
+        q: "Which AI model powers the caption assist?",
+        a: "AI caption assist uses Claude Haiku (claude-haiku-4-5) by Anthropic fast, accurate, and cost-efficient for short-text rewrites.",
+      },
+      {
+        q: "Does AI caption assist cost extra?",
+        a: "No. It's included in all paid plans (Creator, Pro, Team). If you self-host, bring your own Anthropic API key via the ANTHROPIC_API_KEY env var.",
+      },
+      {
+        q: "What are the seven actions?",
+        a: "Fix grammar, Concise (shorter), Expand (more detail), Rephrase (fresh take), Improve structure (better flow), Simplify (plain language), Polish (professional finish). Each rewrites the caption in place.",
+      },
+      {
+        q: "Does it work in the edit dialog too?",
+        a: "Yes. The AI button appears both in the main Compose page and in the Edit Post dialog so you can refine already-scheduled posts.",
+      },
+    ],
+  },
   "self-hostable": {
     title: "Self-hostable",
     badge: "Open source",
@@ -479,7 +545,7 @@ const FEATURES: Record<string, FeatureData> = {
     faq: [
       {
         q: "What does self-hostable mean?",
-        a: "Self-hostable means you can run the entire Posthive application on your own server or cloud account. Your data — including encrypted OAuth credentials — stays on your infrastructure.",
+        a: "Self-hostable means you can run the entire Posthive application on your own server or cloud account. Your data including encrypted OAuth credentials stays on your infrastructure.",
       },
       {
         q: "What infrastructure do I need to self-host Posthive?",
@@ -1434,6 +1500,57 @@ function CsvMockup() {
   );
 }
 
+function AiCaptionMockup() {
+  const actions = [
+    { label: "Fix grammar", color: "#5cb88a", icon: "✓" },
+    { label: "Concise", color: "#3db8c8", icon: "↓" },
+    { label: "Expand", color: "#9ba2ee", icon: "↑" },
+    { label: "Rephrase", color: "#d4a83c", icon: "↺" },
+    { label: "Improve structure", color: "#a07ee0", icon: "≡" },
+    { label: "Simplify", color: "#e86b6b", icon: "◇" },
+    { label: "Polish", color: "#a78bfa", icon: "✦" },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 460, width: "100%" }}>
+      {/* Composer */}
+      <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: "#444", fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase" }}>Caption</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(167,139,250,.15)", border: "1px solid rgba(167,139,250,.4)", borderRadius: 8, padding: "5px 12px", cursor: "pointer" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/>
+              <path d="M20 3v4M22 5h-4M4 17v2M5 18H3"/>
+            </svg>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa" }}>AI assist</span>
+          </div>
+        </div>
+        <div style={{ fontSize: 13.5, color: "#bbb", lineHeight: 1.65, background: "#0d0d0d", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
+          just launched posthive v2. drag reschedule is out. csv too. check it out
+        </div>
+        <div style={{ fontSize: 11, color: "#444" }}>48 / 300 chars</div>
+      </div>
+      {/* Actions menu */}
+      <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, overflow: "hidden" }}>
+        <div style={{ padding: "10px 16px", borderBottom: "1px solid #1a1a1a", fontSize: 11, color: "#555", fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>Choose an action</div>
+        {actions.map((a, i) => (
+          <div key={a.label} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderBottom: i < actions.length - 1 ? "1px solid #111" : "none", cursor: "pointer", background: i === 6 ? "rgba(167,139,250,.07)" : "transparent" }}>
+            <span style={{ width: 26, height: 26, borderRadius: 7, background: `${a.color}18`, border: `1px solid ${a.color}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: a.color, flexShrink: 0, fontWeight: 700 }}>{a.icon}</span>
+            <span style={{ fontSize: 13, color: i === 6 ? "#ededed" : "#888", fontWeight: i === 6 ? 600 : 400 }}>{a.label}</span>
+            {i === 6 && <span style={{ marginLeft: "auto", fontSize: 10, color: "#a78bfa", background: "rgba(167,139,250,.15)", border: "1px solid rgba(167,139,250,.3)", borderRadius: 5, padding: "2px 7px" }}>Selected</span>}
+          </div>
+        ))}
+      </div>
+      {/* After */}
+      <div style={{ background: "#0e1a0e", border: "1px solid #1e3a1e", borderRadius: 16, padding: 20 }}>
+        <div style={{ fontSize: 11, color: "#4ade80", fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 10 }}>✦ Polished</div>
+        <div style={{ fontSize: 13.5, color: "#bbb", lineHeight: 1.65 }}>
+          Posthive v2 is live. Drag-to-reschedule and bulk CSV scheduling are now available the two most-requested features since launch. Try it at <span style={{ color: "#5b63d3" }}>posthive.co</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SelfHostMockup() {
   const lines = [
     { t: "comment", v: "# Clone the repo" },
@@ -1589,6 +1706,7 @@ const LAYOUT_MAP: Record<string, Layout> = {
   "per-platform-overrides": "split-left",
   "bulk-csv-scheduling": "center",
   "self-hostable": "center",
+  "ai-caption-assist": "split-right",
 };
 
 function getMockup(slug: string) {
@@ -1607,6 +1725,8 @@ function getMockup(slug: string) {
       return <CsvMockup />;
     case "self-hostable":
       return <SelfHostMockup />;
+    case "ai-caption-assist":
+      return <AiCaptionMockup />;
     default:
       return null;
   }
@@ -1667,7 +1787,7 @@ const SLUG_OVERRIDES: Record<
   "per-platform-overrides": {
     title: "Per-Platform Post Customization | Posthive",
     description:
-      "Write one post, customise it for every platform. Different character limits, different audiences, different tones — all from a single composer.",
+      "Write one post, customise it for every platform. Different character limits, different audiences, different tones all from a single composer.",
     keywords: [
       "per platform social media post",
       "customize posts per platform",
@@ -1686,6 +1806,18 @@ const SLUG_OVERRIDES: Record<
       "schedule multiple posts at once",
       "bulk schedule Instagram",
       "content scheduling spreadsheet",
+    ],
+  },
+  "ai-caption-assist": {
+    title: "AI Caption Assist for Social Media | Posthive",
+    description:
+      "Seven AI-powered caption actions built into the composer. Fix grammar, make it concise, expand, rephrase, or polish powered by Claude Haiku without leaving the compose window.",
+    keywords: [
+      "AI social media caption writer",
+      "AI caption assist",
+      "social media post rewriter",
+      "caption generator",
+      "AI writing tool for social media",
     ],
   },
   "self-hostable": {
@@ -1809,7 +1941,7 @@ export default async function FeaturePage({
       slug: "instagram-reels-scheduler",
       label: "REELS & STORIES",
       title: "Full Instagram media support",
-      desc: "Reels, Stories, and carousels — all scheduled.",
+      desc: "Reels, Stories, and carousels all scheduled.",
     },
     {
       slug: "drag-to-reschedule",
@@ -1839,7 +1971,13 @@ export default async function FeaturePage({
       slug: "self-hostable",
       label: "SELF-HOSTABLE",
       title: "AGPL-3.0 open source",
-      desc: "Run it yourself — full data control.",
+      desc: "Run it yourself full data control.",
+    },
+    {
+      slug: "ai-caption-assist",
+      label: "AI ASSIST",
+      title: "AI caption assist",
+      desc: "Seven rewrite actions, one click.",
     },
   ];
   const otherFeatures = ALL_FEATURES.filter((f) => f.slug !== slug);
@@ -2541,7 +2679,7 @@ export default async function FeaturePage({
             fontWeight: 500,
           }}
         >
-          {data.title} is one of seven features working together.
+          {data.title} is one of eight features working together.
         </h2>
         <div
           style={{

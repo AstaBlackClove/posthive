@@ -29,7 +29,6 @@
     "@prisma/client": "^5.16.2",
     "@sentry/node": "^10.63.0",
     "@supabase/supabase-js": "^2.108.2",
-    "@types/sharp": "^0.32.0",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.79.1",
     "cross-env": "^7.0.3",
@@ -49,8 +48,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@dodopayments/express": "^0.2.8",
-    "@types/bcryptjs": "^3.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.14.12",
     "@types/node-cron": "^3.0.11",

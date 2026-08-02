@@ -72,9 +72,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.108.2
         version: 2.108.2
-      '@types/sharp':
-        specifier: ^0.32.0
-        version: 0.32.0
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -127,12 +124,6 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
-      '@dodopayments/express':
-        specifier: ^0.2.8
-        version: 0.2.8(zod@3.25.76)
-      '@types/bcryptjs':
-        specifier: ^3.0.0
-        version: 3.0.0
       '@types/jsonwebtoken':
         specifier: ^9.0.10
         version: 9.0.10
@@ -308,14 +299,6 @@ packages:
 
   '@bull-board/ui@5.23.0':
     resolution: {integrity: sha512-iI/Ssl8T5ZEn9s899Qz67m92M6RU8thf/aqD7cUHB2yHmkCjqbw7s7NaODTsyArAsnyu7DGJMWm7EhbfFXDNgQ==}
-
-  '@dodopayments/core@0.3.12':
-    resolution: {integrity: sha512-cahX0AmZI9QN6PhXDE24vUa/UBD4qU21iCgyJRC0L7jxX3dQNMwQSfP2ow9xovnrBQxrsebnwwlDoKi5wl20dA==}
-    peerDependencies:
-      zod: ^3.25.0 || ^4.0.0
-
-  '@dodopayments/express@0.2.8':
-    resolution: {integrity: sha512-vEfUocEbBueiuk4sDoiKzdVxRmpz0+rHVBCGaOEYrieQ0sUPyn7XsmtAgaavt99PGIpVJZf3L3YP0Fw1AvIDgg==}
 
   '@emnapi/runtime@1.11.1':
     resolution: {integrity: sha512-vgj7R3y3Wgx24IQaGPA/R6YFXLHVMOZ0uVEyIQPaWs+rd1AzfEMXlAC22FYwO1XkKR6NPsq7mUandH8oIRdZFw==}
@@ -1193,10 +1176,6 @@ packages:
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
 
-  '@types/bcryptjs@3.0.0':
-    resolution: {integrity: sha512-WRZOuCuaz8UcZZE4R5HXTco2goQSI2XxjGY3hbM/xDvwmqFWd4ivooImsMx65OKM6CtNKbnZ5YL+YwAwK7c1dg==}
-    deprecated: This is a stub types definition. bcryptjs provides its own type definitions, so you do not need this installed.
-
   '@types/canvas-confetti@1.9.0':
     resolution: {integrity: sha512-aBGj/dULrimR1XDZLtG9JwxX1b4HPRF6CX9Yfwh3NvstZEm1ZL7RBnel4keCPSqs1ANRu1u2Aoz9R+VmtjYuTg==}
 
@@ -1255,10 +1234,6 @@ packages:
 
   '@types/react@18.3.31':
     resolution: {integrity: sha512-vfEqpXTvwT91yhmwdfouStN2hSKwTvyRs8qpLfADyrq/kxDw0hZM7Wk9Ug1FELj8hIby+S/+kQCSRFF32nv2Qw==}
-
-  '@types/sharp@0.32.0':
-    resolution: {integrity: sha512-OOi3kL+FZDnPhVzsfD37J88FNeZh6gQsGcLc95NbeURRGvmSjeXiDcyWzF2o3yh/gQAUn2uhh/e+CPCa5nwAxw==}
-    deprecated: This is a stub types definition. sharp provides its own type definitions, so you do not need this installed.
 
   '@types/use-sync-external-store@0.0.6':
     resolution: {integrity: sha512-zFDAD+tlpf2r4asuHEj0XH6pY6i0g5NeAHPn+15wk3BV6JA69eERFXC1gyGThDkVa1zCyKr5jox1+2LbV/AMLg==}
@@ -3126,20 +3101,6 @@ snapshots:
     dependencies:
       '@bull-board/api': 5.23.0(@bull-board/ui@5.23.0)
 
-  '@dodopayments/core@0.3.12(zod@3.25.76)':
-    dependencies:
-      dodopayments: 2.40.0
-      standardwebhooks: 1.0.0
-      zod: 3.25.76
-
-  '@dodopayments/express@0.2.8(zod@3.25.76)':
-    dependencies:
-      '@dodopayments/core': 0.3.12(zod@3.25.76)
-      express: 5.2.1
-    transitivePeerDependencies:
-      - supports-color
-      - zod
-
   '@emnapi/runtime@1.11.1':
     dependencies:
       tslib: 2.8.1
@@ -3850,10 +3811,6 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@types/bcryptjs@3.0.0':
-    dependencies:
-      bcryptjs: 3.0.3
-
   '@types/canvas-confetti@1.9.0': {}
 
   '@types/d3-array@3.2.2': {}
@@ -3907,10 +3864,6 @@ snapshots:
     dependencies:
       '@types/prop-types': 15.7.15
       csstype: 3.2.3
-
-  '@types/sharp@0.32.0':
-    dependencies:
-      sharp: 0.34.5
 
   '@types/use-sync-external-store@0.0.6': {}
 
@@ -5446,6 +5399,7 @@ snapshots:
       '@img/sharp-win32-arm64': 0.34.5
       '@img/sharp-win32-ia32': 0.34.5
       '@img/sharp-win32-x64': 0.34.5
+    optional: true
 
   sharp@0.35.2:
     dependencies:

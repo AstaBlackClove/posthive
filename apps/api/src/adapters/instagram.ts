@@ -206,7 +206,6 @@ const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body)
       replies:   get("comments"),
       reposts:   get("shares"),
       views:     get("reach"),
-      bookmarks: get("saved"),
       fetchedAt: new Date().toISOString(),
     };
   },
