@@ -609,7 +609,7 @@ const PLATFORMS: Record<string, PlatformData> = {
       { n: "02", title: "Upload your video and write a caption", desc: "Attach an mp4 or mov file in the Posthive composer and write your caption. Up to 2,200 characters supported." },
       { n: "03", title: "Schedule and publish", desc: "Pick a date and time. Posthive uploads the video to TikTok at the exact scheduled moment via the Content Posting API." },
     ],
-    image: "/screenshots/platform-bluesky.png",
+    image: "/screenshots/platform-tiktok.png",
     imageAlt: "Posthive composer TikTok video scheduling",
     why: [
       { title: "TikTok rewards consistency — schedule in batches", desc: "The TikTok algorithm favours accounts that post regularly and at optimal times. Batch record a week of content, schedule it in Posthive, and let it publish while you focus elsewhere." },
