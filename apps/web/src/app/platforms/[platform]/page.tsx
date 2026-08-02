@@ -590,6 +590,39 @@ const PLATFORMS: Record<string, PlatformData> = {
       { q: "How do I connect my X account?", a: "Click Connect X in the Accounts page. You're redirected to X's OAuth page to approve access. The connection uses OAuth 1.0a, which is what X requires for posting via the API." },
     ],
   },
+  tiktok: {
+    name: "TikTok",
+    domain: "tiktok.com",
+    color: "#010101",
+    headline: "Schedule TikTok videos without opening the app",
+    subheadline: "Batch your TikTok content in one sitting, schedule it for peak hours, and let Posthive handle the upload. No phone required — just your video file and a caption.",
+    supports: [
+      { label: "Video upload via Content Posting API", icon: "video" as IconKey },
+      { label: "Caption up to 2,200 chars", icon: "text" as IconKey },
+      { label: "Per-account text override", icon: "override" as IconKey },
+      { label: "OAuth 2.0 secure connection", icon: "lock" as IconKey },
+      { label: "24h access token auto-refresh", icon: "clock" as IconKey },
+      { label: "Calendar drag-to-reschedule", icon: "calendar" as IconKey },
+    ],
+    steps: [
+      { n: "01", title: "Connect your TikTok account", desc: "Click Connect TikTok in Posthive's Accounts page. You're redirected to TikTok's OAuth page to approve access in one click." },
+      { n: "02", title: "Upload your video and write a caption", desc: "Attach an mp4 or mov file in the Posthive composer and write your caption. Up to 2,200 characters supported." },
+      { n: "03", title: "Schedule and publish", desc: "Pick a date and time. Posthive uploads the video to TikTok at the exact scheduled moment via the Content Posting API." },
+    ],
+    image: "/screenshots/platform-bluesky.png",
+    imageAlt: "Posthive composer TikTok video scheduling",
+    why: [
+      { title: "TikTok rewards consistency — schedule in batches", desc: "The TikTok algorithm favours accounts that post regularly and at optimal times. Batch record a week of content, schedule it in Posthive, and let it publish while you focus elsewhere." },
+      { title: "No phone needed to post", desc: "Posthive uploads your video directly via TikTok's Content Posting API. Record once, schedule from your desktop, and the video goes live at your chosen time — no app, no manual upload." },
+      { title: "Cross-post to 15+ other platforms simultaneously", desc: "Post the same video to YouTube Shorts, Instagram Reels, and TikTok in one click from Posthive's composer. Use per-platform overrides to customise captions for each network." },
+    ],
+    faq: [
+      { q: "Does Posthive support TikTok image posts?", a: "No. TikTok's Content Posting API only supports video uploads. Image carousels and text-only posts are not available via the API." },
+      { q: "What video formats are supported?", a: "mp4 and mov files up to 100MB. For best results use 9:16 aspect ratio (1080×1920) and a duration between 5 seconds and 10 minutes." },
+      { q: "Can I schedule TikTok duets or stitches?", a: "Posthive posts videos with duet and stitch enabled by default. Disabling them on a per-post basis is on the roadmap." },
+      { q: "Why does my post show as self-only after publishing?", a: "TikTok's sandbox environment overrides all posts to self-only visibility. Once the Posthive TikTok app is approved for production, all posts will be published publicly." },
+    ],
+  },
 };
 
 // ── Shared page image ─────────────────────────────────────────────────────
@@ -619,6 +652,7 @@ const PLATFORM_SAMPLES: Record<string, { text: string; count: number; limit: num
   nostr:     { text: "The open social web is growing. Shipped Nostr support in Posthive — schedule Kind 1 notes across 4 relays.", count: 107, limit: "10k", showImages: false, authLabel: "Keypair (nsec)", mediaLabel: "NIP-92 images" },
   tumblr:    { text: "new post: why I switched from Buffer to a self-hosted scheduler (and what I learned)", count: 82, limit: 4096, showImages: true, authLabel: "OAuth 1.0a", mediaLabel: "NPF images" },
   twitter:   { text: "shipped: drag-to-reschedule calendar is live. move posts around with one drag — no more manual edits", count: 97, limit: 280, showImages: true, authLabel: "OAuth 1.0a", mediaLabel: "4 images" },
+  tiktok:    { text: "New tutorial just dropped — 60 seconds to understand why async content beats live posting every time 🎬", count: 107, limit: 2200, showImages: false, authLabel: "TikTok OAuth", mediaLabel: "Video required" },
 };
 
 // ── Platform hero mockup card ──────────────────────────────────────────────

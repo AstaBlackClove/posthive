@@ -24,6 +24,7 @@ import { setStorageAdapter as setMastodonStorage } from "./adapters/mastodon.js"
 import { setStorageAdapter as setPixelfedStorage } from "./adapters/pixelfed.js";
 import { setTelegramStorage } from "./adapters/telegram.js";
 import { setLinkedInStorage } from "./adapters/linkedin.js";
+import { setTikTokStorage } from "./adapters/tiktok.js";
 import { setDiscordStorage } from "./adapters/discord.js";
 import { setStorageAdapter as setLemmyStorage } from "./adapters/lemmy.js";
 import { setAvatarStorage } from "./lib/avatarStore.js";
@@ -64,6 +65,7 @@ async function main() {
   setPixelfedStorage(storage);
   setTelegramStorage(storage);
   setLinkedInStorage(storage);
+  setTikTokStorage(storage);
   setDiscordStorage(storage);
   setLemmyStorage(storage);
   setAvatarStorage(storage);

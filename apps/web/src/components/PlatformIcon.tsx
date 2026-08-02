@@ -13,6 +13,7 @@ const PLATFORM_DOMAIN: Record<string, string> = {
   tumblr:         "tumblr.com",
   lemmy:          "join-lemmy.org",
   googlebusiness: "business.google.com",
+  tiktok:         "tiktok.com",
 };
 
 function TelegramSvg({ size }: { size: number }) {

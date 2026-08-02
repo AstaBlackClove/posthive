@@ -11,6 +11,7 @@ import { getDiscordChannels, encryptDiscordCredentials } from "../adapters/disco
 import { tumblrRequestTokenAuth, tumblrAccessTokenAuth, tumblrApiAuthHeader, encryptTumblrCredentials } from "../adapters/tumblr.js";
 import { downloadAndStoreAvatar } from "../lib/avatarStore.js";
 import { listGBPLocations } from "../adapters/googlebusiness.js";
+import { encryptTikTokCredentials } from "../adapters/tiktok.js";
 import { isSsrfBlocked } from "../lib/ssrf.js";
 
 async function getUserWorkspaceId(userId: string): Promise<string | null> {
@@ -94,6 +95,11 @@ const DC_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;
 const DC_REDIRECT_URI  = process.env.DISCORD_REDIRECT_URI!;
 
 const TUMBLR_REDIRECT_URI = process.env.TUMBLR_REDIRECT_URI!;
+
+const TK_CLIENT_KEY    = process.env.TIKTOK_CLIENT_KEY!;
+const TK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET!;
+const TK_REDIRECT_URI  = process.env.TIKTOK_REDIRECT_URI!;
+const TK_SCOPES        = "user.info.basic,video.upload,video.publish";
 // bot permissions: VIEW_CHANNEL(1024) + SEND_MESSAGES(2048) + ATTACH_FILES(32768) + READ_MESSAGE_HISTORY(65536) + MANAGE_WEBHOOKS(536870912)
 const DC_PERMISSIONS   = "536972288";
 
@@ -2110,5 +2116,121 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       console.error("[google-session]", err);
       return reply.status(500).send({ error: "Auth failed" });
     }
+  });
+
+  // ── TikTok OAuth ──────────────────────────────────────────────────────────
+  app.get("/auth/tiktok", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { from } = req.query as Record<string, string>;
+    const nonce = randomBytes(32).toString("hex");
+    await prisma.oAuthState.create({ data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) } });
+    const state = Buffer.from(JSON.stringify({ userId, from, nonce })).toString("base64url");
+    const url = new URL("https://www.tiktok.com/v2/auth/authorize/");
+    url.searchParams.set("client_key", TK_CLIENT_KEY);
+    url.searchParams.set("scope", TK_SCOPES);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("redirect_uri", TK_REDIRECT_URI);
+    url.searchParams.set("state", state);
+    return reply.redirect(url.toString());
+  });
+
+  app.get("/auth/tiktok/callback", async (req, reply) => {
+    const { code, state, error, error_description } = req.query as Record<string, string>;
+    if (error) return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: error_description ?? error }));
+    if (!code || !state) return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "missing_code_or_state" }));
+
+    let userId: string;
+    let from: string | undefined;
+    try {
+      const decoded = JSON.parse(Buffer.from(state, "base64url").toString()) as { userId: string; from?: string; nonce?: string };
+      userId = decoded.userId;
+      from = decoded.from === "onboarding" ? "onboarding" : undefined;
+      const nonce = decoded.nonce;
+      if (!nonce) throw new Error("missing nonce");
+      const storedState = await prisma.oAuthState.findUnique({ where: { nonce } });
+      if (!storedState || storedState.userId !== userId || storedState.expiresAt < new Date()) {
+        return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "invalid_or_expired_state" }));
+      }
+      await prisma.oAuthState.delete({ where: { nonce } });
+    } catch {
+      return reply.redirect(buildRedirect(`${WEB_URL}/accounts`, { error: "invalid_state" }));
+    }
+
+    const redirectBase = from === "onboarding" ? `${WEB_URL}/onboarding?step=2` : `${WEB_URL}/accounts`;
+
+    let accessToken: string;
+    let refreshToken: string;
+    let expiresIn: number;
+    let refreshExpiresIn: number;
+    let openId: string;
+    try {
+      const tokenRes = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_key: TK_CLIENT_KEY,
+          client_secret: TK_CLIENT_SECRET,
+          code,
+          grant_type: "authorization_code",
+          redirect_uri: TK_REDIRECT_URI,
+        }),
+      });
+      const tokenText = await tokenRes.text();
+      if (!tokenRes.ok) throw new Error(tokenText);
+      const tokenData = JSON.parse(tokenText) as {
+        access_token?: string;
+        expires_in?: number;
+        refresh_token?: string;
+        refresh_expires_in?: number;
+        open_id?: string;
+        error?: string;
+        error_description?: string;
+      };
+      if (tokenData.error) throw new Error(tokenData.error_description ?? tokenData.error);
+      if (!tokenData.access_token) throw new Error(`Unexpected token response: ${tokenText}`);
+      accessToken = tokenData.access_token;
+      refreshToken = tokenData.refresh_token ?? "";
+      expiresIn = tokenData.expires_in ?? 86400;
+      refreshExpiresIn = tokenData.refresh_expires_in ?? 31536000;
+      openId = tokenData.open_id ?? "";
+    } catch (err) {
+      console.error("[tiktok oauth] token exchange error:", err);
+      return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
+    }
+
+    let displayName = "tiktok-user";
+    let avatarUrl: string | null = null;
+    try {
+      const profileRes = await fetch("https://open.tiktokapis.com/v2/user/info/?fields=open_id,avatar_url,display_name", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const profileData = await profileRes.json() as { data?: { user?: { open_id?: string; display_name?: string; avatar_url?: string } }; error?: { code?: string; message?: string } };
+      displayName = profileData.data?.user?.display_name ?? displayName;
+      avatarUrl = profileData.data?.user?.avatar_url ?? null;
+    } catch (err) { console.warn("[tiktok oauth] profile fetch failed:", err); }
+    avatarUrl = await downloadAndStoreAvatar(avatarUrl);
+
+    const credentials = encryptTikTokCredentials(accessToken, refreshToken, openId, expiresIn, refreshExpiresIn);
+    const expiresAt = new Date(Date.now() + expiresIn * 1000);
+    const workspaceId = await getUserWorkspaceId(userId);
+    if (workspaceId) {
+      const roleBlocked = await requireAdminRole(userId, workspaceId);
+      if (roleBlocked) return reply.redirect(buildRedirect(redirectBase, { error: roleBlocked.error }));
+    }
+    const existing = await prisma.account.findFirst({
+      where: workspaceId ? { platform: "tiktok", displayName, workspaceId } : { platform: "tiktok", displayName, userId },
+    });
+    if (!existing && workspaceId) {
+      const blocked = await enforcePlan(userId, workspaceId, "accounts");
+      if (blocked) return reply.redirect(buildRedirect(redirectBase, { error: blocked.error }));
+    }
+    await prisma.account.upsert({
+      where: { id: existing?.id ?? "new" },
+      create: { platform: "tiktok", displayName, credentials, avatarUrl, expiresAt, userId, ...(workspaceId ? { workspaceId } : {}) },
+      update: { credentials, avatarUrl, expiresAt },
+    });
+
+    console.log(`[tiktok oauth] connected ${displayName} → user ${userId}`);
+    return reply.redirect(buildRedirect(redirectBase, { connected: "tiktok" }));
   });
 }

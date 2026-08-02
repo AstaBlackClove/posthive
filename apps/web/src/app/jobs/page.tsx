@@ -174,11 +174,18 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate }: {
         {/* Media thumbnails */}
         {content.mediaUrls && content.mediaUrls.length > 0 && job.status !== "done" && (
           <div className="flex gap-2 mt-3">
-            {content.mediaUrls.slice(0, 4).map((url, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={url.startsWith("http") ? url : `${API_BASE}${url}`}
-                alt="" className="w-14 h-14 rounded-xl object-cover" style={{ border: "1px solid #2a2a2a" }} />
-            ))}
+            {content.mediaUrls.slice(0, 4).map((url, i) => {
+              const src = url.startsWith("http") ? url : `${API_BASE}${url}`;
+              const isVideo = /\.(mp4|mov|webm|quicktime)(\?|$)/i.test(url);
+              return isVideo ? (
+                <video key={i} src={src} className="w-14 h-14 rounded-xl object-cover"
+                  style={{ border: "1px solid #2a2a2a" }} muted playsInline preload="metadata" />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={src} alt="" className="w-14 h-14 rounded-xl object-cover"
+                  style={{ border: "1px solid #2a2a2a" }} />
+              );
+            })}
           </div>
         )}
         {content.mediaUrls && content.mediaUrls.length > 0 && job.status === "done" && (

@@ -23,6 +23,7 @@ const TWITTER_AUTH_URL  = `${API_BASE}/auth/twitter`;
 const PINTEREST_AUTH_URL = `${API_BASE}/auth/pinterest`;
 const DISCORD_AUTH_URL   = `${API_BASE}/auth/discord`;
 const TUMBLR_AUTH_URL    = `${API_BASE}/auth/tumblr`;
+const TIKTOK_AUTH_URL    = `${API_BASE}/auth/tiktok`;
 
 const BG = "#0a0a0a";
 const SURFACE = "#111111";
@@ -56,6 +57,7 @@ const PLATFORM_META: Record<string, { label: string; brand: string }> = {
   tumblr:         { label: "Tumblr",                brand: "#35465c" },
   lemmy:          { label: "Lemmy",                 brand: "#ff6314" },
   googlebusiness: { label: "Google Business",       brand: "#4285f4" },
+  tiktok:         { label: "TikTok",                brand: "#010101" },
 };
 
 function NostrFallbackAvatar() {
@@ -103,10 +105,14 @@ const RECONNECT_URLS: Record<string, string> = {
   pixelfed:  `${API_BASE}/auth/pixelfed`,
   pinterest: `${API_BASE}/auth/pinterest`,
   tumblr:    `${API_BASE}/auth/tumblr`,
+  tiktok:    `${API_BASE}/auth/tiktok`,
 };
 
 // Platforms where the token refresh cron handles silent renewal — no user action needed
-const AUTO_REFRESH_PLATFORMS = new Set(["threads", "instagram", "facebook", "youtube"]);
+const AUTO_REFRESH_PLATFORMS = new Set(["threads", "instagram", "facebook", "youtube", "tiktok"]);
+
+// Flip to false once TikTok app review is approved
+const TIKTOK_REVIEW_PENDING = true;
 
 function tokenStatus(platform: string, expiresAt: string | null): "ok" | "soon" | "expired" {
   if (!expiresAt || AUTO_REFRESH_PLATFORMS.has(platform)) return "ok";
@@ -916,6 +922,7 @@ export default function AccountsPage() {
   const facebookAccounts = accounts.filter((a) => a.platform === "facebook");
   const twitterAccounts   = accounts.filter((a) => a.platform === "twitter");
   const pinterestAccounts = accounts.filter((a) => a.platform === "pinterest");
+  const tiktokAccounts    = accounts.filter((a) => a.platform === "tiktok");
 
   // Twitter is Pro & Team only (when billing is enabled)
   const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === "true";
@@ -1680,6 +1687,54 @@ export default function AccountsPage() {
               <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
                 ⚠ Cannot connect — awaiting Google Business Profile API approval.
               </p>
+            </div>
+          </div>
+
+          {/* ── TikTok ── */}
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("tiktok") }}>
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                <PlatformIcon platform="tiktok" size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm" style={{ color: TEXT }}>TikTok</p>
+                <p className="text-xs" style={{ color: MUTED }}>Content Posting API · videos only</p>
+              </div>
+              {TIKTOK_REVIEW_PENDING && (
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1"
+                  style={{ backgroundColor: "#1c0a0a", color: "#fb923c", border: "1px solid #7c2d12" }}>
+                  ⚠ Unavailable
+                </span>
+              )}
+            </div>
+            <div className="p-5 space-y-3">
+              {!loading && tiktokAccounts.length > 0 && (
+                <div className="space-y-2">
+                  {tiktokAccounts.map((a) => (
+                    <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
+                  ))}
+                </div>
+              )}
+              {(!!limitMsg || TIKTOK_REVIEW_PENDING) ? (
+                <button disabled title={TIKTOK_REVIEW_PENDING ? "Available once TikTok app review is approved" : (limitMsg ?? undefined)}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="tiktok" size={16} />
+                  {tiktokAccounts.length > 0 ? "Add another TikTok account" : "Connect TikTok"}
+                </button>
+              ) : (
+                <a href={TIKTOK_AUTH_URL}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="tiktok" size={16} />
+                  {tiktokAccounts.length > 0 ? "Add another TikTok account" : "Connect TikTok"}
+                </a>
+              )}
+              {TIKTOK_REVIEW_PENDING && (
+                <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
+                  ⚠ Cannot connect — awaiting TikTok app review approval.
+                </p>
+              )}
             </div>
           </div>
 

@@ -86,6 +86,7 @@ export const PLATFORM_COLOR: Record<string, string> = {
   tumblr:         "#35465c",
   lemmy:          "#ff6314",
   googlebusiness: "#4285f4",
+  tiktok: "#010101",
 };
 
 export const PLATFORM_LIMIT: Record<string, number> = {
@@ -104,6 +105,7 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   tumblr:         4096,
   lemmy:          10000,
   googlebusiness: 1500,
+  tiktok: 2200,
 };
 
 export const MAX_IMAGES = 4;
@@ -1145,6 +1147,75 @@ function DiscordPreview({ account, text, commentText, images, video }: {
   );
 }
 
+function TikTokPreview({ account, text, video }: { account: Account; text: string; video: UploadedImage | null }) {
+  const initial = account.displayName[0]?.toUpperCase() ?? "?";
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#111", border: "1px solid #2a2a2a" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5"
+        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #ff004f", backgroundColor: "#0a0a0a" }}>
+        <PlatformIcon platform="tiktok" size={16} />
+        <span className="text-xs font-semibold" style={{ color: "#ff004f" }}>TikTok</span>
+        <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+      </div>
+
+      {/* Full-width 9:16 canvas */}
+      <div className="relative w-full overflow-hidden" style={{ aspectRatio: "9/16", backgroundColor: "#000" }}>
+        {video ? (
+          <video src={video.previewUrl} className="w-full h-full object-cover" muted playsInline loop autoPlay />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="text-center">
+              <svg className="w-10 h-10 mx-auto mb-2 opacity-20" fill="none" stroke="white" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              <p className="text-xs" style={{ color: "#555" }}>Add a video</p>
+            </div>
+          </div>
+        )}
+
+        {/* Right side action buttons */}
+        <div className="absolute right-3 bottom-20 flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-1">
+            <svg className="w-6 h-6" fill="white" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <span className="text-white text-[10px]">0</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+            </svg>
+            <span className="text-white text-[10px]">0</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+            </svg>
+            <span className="text-white text-[10px]">Share</span>
+          </div>
+        </div>
+
+        {/* Bottom: avatar + username + caption */}
+        <div className="absolute bottom-4 left-3 right-12">
+          <div className="flex items-center gap-2 mb-1.5">
+            {account.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={account.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover ring-1 ring-white/50" />
+            ) : (
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ring-1 ring-white/50"
+                style={{ backgroundColor: "#ff004f" }}>{initial}</div>
+            )}
+            <span className="text-sm font-semibold text-white drop-shadow">@{account.displayName}</span>
+          </div>
+          {text ? (
+            <p className="text-xs text-white/80 leading-relaxed line-clamp-3 drop-shadow">{text}</p>
+          ) : (
+            <p className="text-xs italic" style={{ color: "#666" }}>Your caption here…</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PlatformPreview({ account, text, commentText, mediaItems = [], igMediaType, youtubeType }: {
   account: Account;
   text: string;
@@ -1191,6 +1262,9 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   }
   if (account.platform === "lemmy") {
     return <LemmyPreview account={account} text={text} commentText={commentText} images={images} />;
+  }
+  if (account.platform === "tiktok") {
+    return <TikTokPreview account={account} text={text} video={video} />;
   }
 
   const color = PLATFORM_COLOR[account.platform] ?? "#6b7280";

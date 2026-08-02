@@ -14,6 +14,7 @@ import { discordAdapter } from "./discord.js";
 import { tumblrAdapter } from "./tumblr.js";
 import { lemmyAdapter } from "./lemmy.js";
 import { googleBusinessAdapter } from "./googlebusiness.js";
+import { tiktokAdapter } from "./tiktok.js";
 import type { PlatformAdapter } from "./types.js";
 
 export const adapters: PlatformAdapter[] = [
@@ -33,6 +34,7 @@ export const adapters: PlatformAdapter[] = [
   tumblrAdapter,
   lemmyAdapter,
   googleBusinessAdapter,
+  tiktokAdapter,
 ];
 
 /** Look up an adapter by platform name. Throws if not found. */

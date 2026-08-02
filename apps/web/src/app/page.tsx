@@ -25,6 +25,7 @@ const PLATFORMS_GRID = [
   { name: "Discord",       domain: "discord.com",     meta: "2,000 chars · Bot + webhook",   accent: "#5865F2", platform: "discord" },
   { name: "Tumblr",        domain: "tumblr.com",      meta: "4,096 chars · OAuth 1.0a",      accent: "#35465c", platform: "tumblr" },
   { name: "Lemmy",         domain: "join-lemmy.org",  meta: "Federated · username + password", accent: "#ff6314", platform: "lemmy" },
+  { name: "TikTok",       domain: "tiktok.com",      meta: "Videos · Content Posting API",    accent: "#010101", platform: "tiktok" },
 ];
 
 // Hero card cycling data — one array per card slot

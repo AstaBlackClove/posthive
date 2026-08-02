@@ -583,7 +583,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   // True when every selected account is YouTube or Pinterest — both have their own title/description fields
   const noPostTextNeeded = selectedAccounts.length > 0 && selectedAccounts.every((a) => a.platform === "youtube" || a.platform === "pinterest");
   // Telegram channels don't support first comments — hide the field when all selected accounts don't support comments
-  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr", "facebook", "linkedin"]);
+  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr", "facebook", "linkedin", "tiktok"]);
   const noCommentSupport = selectedAccounts.length > 0 && selectedAccounts.every((a) => NO_COMMENT_PLATFORMS.has(a.platform));
 
   const twitterSelected = selectedAccounts.some((a) => a.platform === "twitter");
@@ -805,7 +805,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
 
                     {platformAccounts.map((a) => {
                       const selected = selectedIds.includes(a.id);
-                      const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
+                      const rawColor = PLATFORM_COLOR[a.platform] ?? "#6b7280";
+                      // Dark brand colors (e.g. TikTok #010101) are invisible on dark UI — use accent instead
+                      const color = rawColor === "#010101" || rawColor === "#000000" || rawColor === "#000" ? "#ff004f" : rawColor;
                       return (
                         <button key={a.id} type="button" onClick={() => toggleAccount(a.id)}
                           className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
