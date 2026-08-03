@@ -11,7 +11,8 @@ const articleSchema = {
   description: "Learn how to automatically post a first comment on Instagram right after your post goes live. Schedule hashtags, CTAs, and links without cluttering your caption.",
   datePublished: "2026-07-17",
   dateModified: "2026-07-30",
-  author: { "@type": "Person", name: "Guna" },
+  image: `${WEB_URL}/og/landingogimage.png`,
+  author: { "@type": "Person", name: "Guna", url: "https://x.com/gunaa_dev" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
   url: `${WEB_URL}/blog/how-to-schedule-first-comment-instagram`,
 };

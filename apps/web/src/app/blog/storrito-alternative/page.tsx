@@ -11,7 +11,8 @@ const articleSchema = {
   description: "Storrito focuses on Instagram Stories and Reels. If you need a scheduler that covers more platforms and costs less, here are the best Storrito alternatives in 2026.",
   datePublished: "2026-07-17",
   dateModified: "2026-07-30",
-  author: { "@type": "Person", name: "Guna" },
+  image: `${WEB_URL}/og/landingogimage.png`,
+  author: { "@type": "Person", name: "Guna", url: "https://x.com/gunaa_dev" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
   url: `${WEB_URL}/blog/storrito-alternative`,
 };

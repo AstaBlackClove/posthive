@@ -10,7 +10,9 @@ const articleSchema = {
   headline: "Introducing Posthive: Schedule Posts to multiple platforms at Once",
   description: "We built Posthive because we were tired of switching between tabs just to post the same update everywhere. Here's what we shipped.",
   datePublished: "2026-07-03",
-  author: { "@type": "Person", name: "Guna" },
+  dateModified: "2026-08-01",
+  image: `${WEB_URL}/og/landingogimage.png`,
+  author: { "@type": "Person", name: "Guna", url: "https://x.com/gunaa_dev" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
   url: `${WEB_URL}/blog/introducing-posthive`,
 };

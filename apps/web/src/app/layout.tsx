@@ -80,10 +80,17 @@ const softwareSchema = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   offers: [
-    { "@type": "Offer", name: "Creator", price: "9",  priceCurrency: "USD", description: "5 accounts, 400 posts/month" },
-    { "@type": "Offer", name: "Pro",     price: "29", priceCurrency: "USD", description: "15 accounts, unlimited posts" },
-    { "@type": "Offer", name: "Team",    price: "49", priceCurrency: "USD", description: "50 accounts, unlimited posts" },
+    { "@type": "Offer", name: "Creator", price: "550",  priceCurrency: "INR", description: "5 accounts, 400 posts/month" },
+    { "@type": "Offer", name: "Pro",     price: "1700", priceCurrency: "INR", description: "15 accounts, unlimited posts" },
+    { "@type": "Offer", name: "Team",    price: "2600", priceCurrency: "INR", description: "50 accounts, unlimited posts" },
   ],
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Posthive",
+  url: "https://posthive.co",
 };
 
 const organizationSchema = {
@@ -103,6 +110,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`h-full ${caprasimo.variable} ${figtree.variable}`} style={{ backgroundColor: "var(--color-bg)" }}>
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}

@@ -10,7 +10,9 @@ const articleSchema = {
   headline: "5 Best Hootsuite Alternatives in 2026 — Cheaper, Open Source, More Platforms",
   description: "Hootsuite starts at $99/month. Here are 5 alternatives that cost less, support more platforms, and one that's free to self-host.",
   datePublished: "2026-07-07",
-  author: { "@type": "Person", name: "Guna" },
+  dateModified: "2026-08-01",
+  image: `${WEB_URL}/og/landingogimage.png`,
+  author: { "@type": "Person", name: "Guna", url: "https://x.com/gunaa_dev" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
   url: `${WEB_URL}/blog/hootsuite-alternative`,
 };

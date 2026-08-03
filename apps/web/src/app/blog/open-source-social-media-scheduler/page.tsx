@@ -10,7 +10,9 @@ const articleSchema = {
   headline: "The Best Open-Source Social Media Schedulers in 2026",
   description: "Tired of paying $50-100/month for a social media scheduler? Here are the best open-source alternatives you can self-host for free — including Posthive, Postiz, and more.",
   datePublished: "2026-07-17",
-  author: { "@type": "Person", name: "Guna" },
+  dateModified: "2026-08-01",
+  image: `${WEB_URL}/og/landingogimage.png`,
+  author: { "@type": "Person", name: "Guna", url: "https://x.com/gunaa_dev" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
   url: `${WEB_URL}/blog/open-source-social-media-scheduler`,
 };

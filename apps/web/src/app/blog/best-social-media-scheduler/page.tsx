@@ -10,7 +10,9 @@ const articleSchema = {
   headline: "The Best Social Media Scheduler in 2026 (Free and Paid)",
   description: "A no-fluff comparison of the best social media schedulers in 2026. We cover pricing, platform support, key features, and who each tool is actually built for.",
   datePublished: "2026-07-07",
-  author: { "@type": "Person", name: "Guna" },
+  dateModified: "2026-08-01",
+  image: `${WEB_URL}/og/landingogimage.png`,
+  author: { "@type": "Person", name: "Guna", url: "https://x.com/gunaa_dev" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
   url: `${WEB_URL}/blog/best-social-media-scheduler`,
 };

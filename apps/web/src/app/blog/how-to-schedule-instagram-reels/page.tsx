@@ -11,7 +11,8 @@ const articleSchema = {
   description: "Learn how to schedule Instagram Reels in advance using Posthive. Save hours every week by batching your Reels content and publishing automatically at peak times.",
   datePublished: "2026-07-07",
   dateModified: "2026-07-30",
-  author: { "@type": "Person", name: "Guna" },
+  image: `${WEB_URL}/og/landingogimage.png`,
+  author: { "@type": "Person", name: "Guna", url: "https://x.com/gunaa_dev" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
   url: `${WEB_URL}/blog/how-to-schedule-instagram-reels`,
 };
