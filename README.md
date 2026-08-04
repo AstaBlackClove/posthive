@@ -28,10 +28,11 @@
   <img src="https://img.shields.io/badge/Bluesky-0285FF?logo=bluesky&logoColor=white&style=flat" />
   <img src="https://img.shields.io/badge/Threads-000000?logo=threads&logoColor=white&style=flat" />
   <img src="https://img.shields.io/badge/Instagram-E4405F?logo=instagram&logoColor=white&style=flat" />
+  <img src="https://img.shields.io/badge/Facebook-1877F2?logo=facebook&logoColor=white&style=flat" />
+  <img src="https://img.shields.io/badge/TikTok-000000?logo=tiktok&logoColor=white&style=flat" />
+  <img src="https://img.shields.io/badge/YouTube-FF0000?logo=youtube&logoColor=white&style=flat" />
   <img src="https://img.shields.io/badge/LinkedIn-0A66C2?logo=linkedin&logoColor=white&style=flat" />
   <img src="https://img.shields.io/badge/Mastodon-6364FF?logo=mastodon&logoColor=white&style=flat" />
-  <img src="https://img.shields.io/badge/YouTube-FF0000?logo=youtube&logoColor=white&style=flat" />
-  <img src="https://img.shields.io/badge/Facebook-1877F2?logo=facebook&logoColor=white&style=flat" />
   <img src="https://img.shields.io/badge/Pinterest-E60023?logo=pinterest&logoColor=white&style=flat" />
   <img src="https://img.shields.io/badge/X%2FTwitter-000000?logo=x&logoColor=white&style=flat" />
   <img src="https://img.shields.io/badge/Telegram-26A5E4?logo=telegram&logoColor=white&style=flat" />
