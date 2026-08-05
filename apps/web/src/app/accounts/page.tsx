@@ -111,8 +111,8 @@ const RECONNECT_URLS: Record<string, string> = {
 // Platforms where the token refresh cron handles silent renewal — no user action needed
 const AUTO_REFRESH_PLATFORMS = new Set(["threads", "instagram", "facebook", "youtube", "tiktok"]);
 
-// Flip to true once TikTok app review is approved
-const TIKTOK_REVIEW_PENDING = false;
+// Flip to false once TikTok app review is approved
+const TIKTOK_REVIEW_PENDING = true;
 
 function tokenStatus(platform: string, expiresAt: string | null): "ok" | "soon" | "expired" {
   if (!expiresAt || AUTO_REFRESH_PLATFORMS.has(platform)) return "ok";
