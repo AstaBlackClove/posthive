@@ -993,7 +993,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               <textarea
                 value={text}
                 onChange={(e) => { setText(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
-                ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
+                ref={(el) => { if (el) { el.style.height = `${el.scrollHeight}px`; } }}
                 placeholder="What do you want to share?"
                 required={!noPostTextNeeded}
                 className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"

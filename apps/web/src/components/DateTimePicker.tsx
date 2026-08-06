@@ -11,6 +11,7 @@ interface Props {
 
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const ITEM_H = 32;
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
 
@@ -24,6 +25,70 @@ function parseLocal(v: string): Date {
 function toLocal(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
+function ScrollColumn({
+  label,
+  items,
+  selectedIndex,
+  onSelect,
+}: {
+  label: string;
+  items: string[];
+  selectedIndex: number;
+  onSelect: (i: number) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      const el = scrollRef.current.children[selectedIndex] as HTMLElement;
+      el?.scrollIntoView({ block: "nearest" });
+    }
+  }, [selectedIndex]);
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555", textAlign: "center", paddingBottom: 4 }}>
+        {label}
+      </div>
+      <div
+        ref={scrollRef}
+        className="[&::-webkit-scrollbar]:hidden"
+        style={{ height: ITEM_H * 5, overflowY: "auto", scrollbarWidth: "none" }}
+      >
+        {items.map((item, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onSelect(i)}
+            style={{
+              width: "100%",
+              height: ITEM_H,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+              fontWeight: i === selectedIndex ? 600 : 400,
+              color: i === selectedIndex ? "#ededed" : "#555",
+              backgroundColor: i === selectedIndex ? "rgba(91,99,211,0.18)" : "transparent",
+              border: i === selectedIndex ? "1px solid rgba(91,99,211,0.35)" : "1px solid transparent",
+              borderRadius: 8,
+              cursor: "pointer",
+              userSelect: "none",
+              transition: "all 0.1s",
+            }}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1));
+const MINUTES = Array.from({ length: 12 }, (_, i) => pad(i * 5));
+const AMPM = ["AM", "PM"];
 
 export function DateTimePicker({ value, onChange, dropdownDirection = "up" }: Props) {
   const ref = useRef<HTMLDivElement>(null);
@@ -41,7 +106,6 @@ export function DateTimePicker({ value, onChange, dropdownDirection = "up" }: Pr
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Recalculate position whenever the dropdown opens or window scrolls/resizes
   useEffect(() => {
     if (!open || !triggerRef.current) return;
     function recalc() {
@@ -73,6 +137,10 @@ export function DateTimePicker({ value, onChange, dropdownDirection = "up" }: Pr
     const next = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate(), h, m);
     onChange(toLocal(next));
   }
+
+  const h12 = selected.getHours() % 12 || 12;
+  const minIndex = Math.round(selected.getMinutes() / 5);
+  const ampmIndex = selected.getHours() >= 12 ? 1 : 0;
 
   const label = (() => {
     const today = new Date();
@@ -135,29 +203,44 @@ export function DateTimePicker({ value, onChange, dropdownDirection = "up" }: Pr
         </div>
       </div>
 
-      {/* Time picker */}
-      <div className="px-4 py-3 flex items-center gap-3" style={{ borderTop: "1px solid #2a2a2a" }}>
-        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "#666" }}>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span className="text-xs" style={{ color: "#888" }}>Time</span>
-        <div className="flex items-center gap-1 ml-auto">
-          <input type="number" min={0} max={23}
-            value={pad(selected.getHours())}
-            onChange={(e) => setTime(Number(e.target.value), selected.getMinutes())}
-            className="w-11 text-center text-sm rounded-lg py-1 focus:outline-none"
-            style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }} />
-          <span style={{ color: "#555" }}>:</span>
-          <input type="number" min={0} max={59} step={5}
-            value={pad(selected.getMinutes())}
-            onChange={(e) => setTime(selected.getHours(), Number(e.target.value))}
-            className="w-11 text-center text-sm rounded-lg py-1 focus:outline-none"
-            style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }} />
+      {/* Time picker columns */}
+      <div style={{ borderTop: "1px solid #2a2a2a", borderBottom: "1px solid #2a2a2a", padding: "8px 12px" }}>
+        <div className="flex gap-2">
+          <ScrollColumn
+            label="Hour"
+            items={HOURS}
+            selectedIndex={h12 - 1}
+            onSelect={(i) => {
+              const newH12 = i + 1;
+              const isPm = selected.getHours() >= 12;
+              const h24 = isPm ? (newH12 === 12 ? 12 : newH12 + 12) : (newH12 === 12 ? 0 : newH12);
+              setTime(h24, selected.getMinutes());
+            }}
+          />
+          <ScrollColumn
+            label="Min"
+            items={MINUTES}
+            selectedIndex={minIndex}
+            onSelect={(i) => setTime(selected.getHours(), i * 5)}
+          />
+          <ScrollColumn
+            label="Period"
+            items={AMPM}
+            selectedIndex={ampmIndex}
+            onSelect={(i) => {
+              const h = selected.getHours();
+              const isPm = i === 1;
+              let h24 = h;
+              if (isPm && h < 12) h24 = h + 12;
+              if (!isPm && h >= 12) h24 = h - 12;
+              setTime(h24, selected.getMinutes());
+            }}
+          />
         </div>
       </div>
 
       {/* Quick shortcuts */}
-      <div className="px-3 pb-3 flex gap-1.5 flex-wrap">
+      <div className="px-3 py-3 flex gap-1.5 flex-wrap">
         {[
           { label: "In 1h", fn: () => { const d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0); onChange(toLocal(d)); } },
           { label: "Tomorrow 9am", fn: () => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); onChange(toLocal(d)); } },
@@ -177,7 +260,6 @@ export function DateTimePicker({ value, onChange, dropdownDirection = "up" }: Pr
 
   return (
     <div className="relative inline-block">
-      {/* Trigger */}
       <button
         ref={triggerRef}
         type="button"
