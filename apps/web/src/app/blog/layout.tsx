@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BlogStickyCtaBanner } from "../../components/BlogStickyCtaBanner";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -28,5 +29,10 @@ export const metadata: Metadata = {
 };
 
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <BlogStickyCtaBanner />
+    </>
+  );
 }
