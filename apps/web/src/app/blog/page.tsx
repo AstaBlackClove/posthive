@@ -117,7 +117,7 @@ export default function BlogPage() {
           }}>
             Blog
           </div>
-          <h1 style={{ fontSize: 44, fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 12px", lineHeight: 1.1 }}>
+          <h1 style={{ fontSize: 44, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 12px", lineHeight: 1.1, fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
             Updates &amp; insights
           </h1>
           <p style={{ fontSize: 17, color: "#666", margin: 0 }}>
@@ -153,7 +153,7 @@ export default function BlogPage() {
                   <span style={{ fontSize: 12, color: "#444" }}>·</span>
                   <span style={{ fontSize: 12, color: "#444" }}>{post.readTime}</span>
                 </div>
-                <h2 style={{ fontSize: 20, fontWeight: 700, color: "#ededed", margin: "0 0 10px", lineHeight: 1.3, letterSpacing: "-0.01em" }}>
+                <h2 style={{ fontSize: 20, fontWeight: 600, color: "#ededed", margin: "0 0 10px", lineHeight: 1.3, letterSpacing: "-0.01em", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
                   {post.title}
                 </h2>
                 <p style={{ fontSize: 14, color: "#666", margin: "0 0 20px", lineHeight: 1.7 }}>
