@@ -278,6 +278,13 @@ export default function HowToScheduleInstagramReelsPage() {
             </p>
           </Callout>
 
+          <Callout color="#2a2a2a">
+            <p style={{ fontSize: 14, color: "#888", fontWeight: 700, margin: "0 0 6px" }}>Scheduling carousels too?</p>
+            <p style={{ fontSize: 14, color: "#666", margin: 0 }}>
+              If you're also scheduling Instagram carousels, you'll need to design your <a href="https://carouselpost.io/" style={{ color: "#5b63d3", textDecoration: "none" }}>multi-slide posts</a> before uploading them to Posthive. CarouselPost has a free browser-based generator that turns a prompt into a finished set of slides — useful if you don't have a design tool in your workflow.
+            </p>
+          </Callout>
+
           <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
             How to schedule Instagram Reels with Meta Business Suite
           </h2>
