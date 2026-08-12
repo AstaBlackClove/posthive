@@ -516,7 +516,7 @@ export default function RootPage() {
         /* medium: smaller columns + smaller H1 so text doesn't break */
         @media (min-width: 1101px) and (max-width: 1440px) {
           .ph-hero-grid { grid-template-columns: 220px 1fr 220px !important; gap: 24px !important; }
-          .ph-hero-h1 { font-size: 56px !important; font-family: var(--font-caprasimo), system-ui, sans-serif !important; }
+          .ph-hero-h1 { font-size: 52px !important; font-family: var(--font-caprasimo), system-ui, sans-serif !important; font-weight: 400 !important; }
           .hero-card { width: 200px !important; }
         }
         /* ≤1100px: hide side cards, center takes full width */
@@ -632,7 +632,7 @@ export default function RootPage() {
         @media (max-width: 640px) {
           .ph-features-grid { grid-template-columns: 1fr !important; }
           .ph-platforms-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .ph-hero-h1 { font-size: clamp(36px, 10vw, 56px) !important; }
+          .ph-hero-h1 { font-size: clamp(32px, 9vw, 48px) !important; font-family: var(--font-caprasimo), system-ui, sans-serif !important; font-weight: 400 !important; }
           .ph-section { padding-left: 20px !important; padding-right: 20px !important; }
           .ph-hero-cta { flex-direction: column !important; align-items: stretch !important; }
           .ph-proof-bar { gap: 18px !important; }
@@ -823,8 +823,8 @@ export default function RootPage() {
               <h1
                 className="anim-2 ph-hero-h1"
                 style={{
-                  fontSize: 72,
-                  lineHeight: 1.03,
+                  fontSize: "clamp(40px, 4.8vw, 64px)",
+                  lineHeight: 1.08,
                   fontWeight: 400,
                   letterSpacing: "-0.02em",
                   margin: "0 0 24px",
@@ -833,10 +833,10 @@ export default function RootPage() {
                 }}
               >
                 <span style={{ display: "block", marginBottom: 14 }}>
-                  Run social on autopilot.
+                  Automate your social media
                 </span>
                 <span style={{ color: "#f4f4f4" }}>
-                  One composer.{" "}
+                  with{" "}
                   <span
                     style={{
                       display: "inline-block",
@@ -848,7 +848,7 @@ export default function RootPage() {
                       transformOrigin: "center",
                     }}
                   >
-                    15 platforms.
+                    AI agents.
                   </span>
                 </span>
               </h1>
