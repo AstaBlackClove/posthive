@@ -258,6 +258,7 @@ export default function BufferAlternativePage() {
             <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 16 }}>Related reading</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {[
+                { href: "/blog/how-to-schedule-instagram-reels", label: "How to schedule Instagram Reels in 2026 (step-by-step)" },
                 { href: "/blog/hootsuite-alternative", label: "Hootsuite alternatives: cheaper, open source, more platforms" },
                 { href: "/blog/best-social-media-scheduler", label: "The best social media schedulers in 2026 compared" },
                 { href: "/platforms/bluesky", label: "Schedule Bluesky posts — a platform Buffer doesn't support" },

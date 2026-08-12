@@ -292,6 +292,7 @@ export default function OpenSourceSocialMediaSchedulerPage() {
             <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 16 }}>Related reading</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {[
+                { href: "/blog/how-to-schedule-instagram-reels", label: "How to schedule Instagram Reels in 2026 (step-by-step)" },
                 { href: "/blog/hootsuite-alternative", label: "5 best Hootsuite alternatives in 2026" },
                 { href: "/blog/buffer-alternative-open-source", label: "The best open-source Buffer alternative in 2026" },
                 { href: "/features/self-hostable", label: "How Posthive self-hosting works" },

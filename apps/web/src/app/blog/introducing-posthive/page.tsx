@@ -211,6 +211,7 @@ export default function PostPage() {
           <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 20 }}>Related reading</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
+              { href: "/blog/how-to-schedule-instagram-reels", label: "How to schedule Instagram Reels in 2026 (step-by-step)" },
               { href: "/blog/best-social-media-scheduler", label: "The best social media schedulers in 2026 compared" },
               { href: "/blog/buffer-alternative-open-source", label: "The best open-source Buffer alternative" },
               { href: "/blog/hootsuite-alternative", label: "Hootsuite alternatives: cheaper, open source, more platforms" },
