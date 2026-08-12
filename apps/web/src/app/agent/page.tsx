@@ -28,8 +28,8 @@ const T = {
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
 export const metadata: Metadata = {
-  title: "Posthive Agent — Schedule Posts from Any AI Agent",
-  description: "Connect Claude, Cursor, or any AI agent to Posthive via MCP or CLI. Schedule posts across 11 platforms — draft-first, nothing goes live without your approval.",
+  title: "Posthive MCP — Schedule Social Posts from Claude, Cursor & ChatGPT",
+  description: "Connect Claude, Cursor, or ChatGPT to Posthive via MCP. Schedule posts across 14 platforms from any AI agent — draft-first, nothing goes live without your approval.",
   keywords: ["MCP social media", "Claude MCP social scheduler", "AI agent social media posting", "posthive-mcp", "social media API agent", "Claude tool social media"],
   alternates: { canonical: `${WEB_URL}/agent` },
   openGraph: {

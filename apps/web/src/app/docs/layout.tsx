@@ -21,9 +21,9 @@ const docsSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "Docs",
+  title: "Posthive Docs — Self-Host, API & MCP Setup Guide",
   description:
-    "Complete docs for Posthive — self-host with Docker, connect 14 platforms, use the REST API, and integrate AI agents via MCP server.",
+    "Complete docs for Posthive — self-host with Docker, connect 14 platforms, use the REST API, and integrate Claude or ChatGPT via MCP server.",
   openGraph: {
     title: "Posthive Docs — Setup, Platforms & API Reference",
     description:
