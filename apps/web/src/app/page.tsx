@@ -833,10 +833,10 @@ export default function RootPage() {
                 }}
               >
                 <span style={{ display: "block", marginBottom: 14 }}>
-                  Write once.
+                  Run social on autopilot.
                 </span>
                 <span style={{ color: "#f4f4f4" }}>
-                  Post to{" "}
+                  One composer.{" "}
                   <span
                     style={{
                       display: "inline-block",
