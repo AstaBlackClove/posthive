@@ -833,10 +833,10 @@ export default function RootPage() {
                 }}
               >
                 <span style={{ display: "block", marginBottom: 14 }}>
-                  The agentic scheduler
+                  Write once.
                 </span>
                 <span style={{ color: "#f4f4f4" }}>
-                  for the{" "}
+                  Post to{" "}
                   <span
                     style={{
                       display: "inline-block",
@@ -848,7 +848,7 @@ export default function RootPage() {
                       transformOrigin: "center",
                     }}
                   >
-                    new social web.
+                    15 platforms.
                   </span>
                 </span>
               </h1>
@@ -907,7 +907,7 @@ export default function RootPage() {
                   className="anim-5 mono"
                   style={{ fontSize: 13, color: "#999", margin: "0 0 52px" }}
                 >
-                  14-day free trial
+                  14-day free trial · no credit card · cancel anytime
                 </p>
               )}
 
@@ -2168,7 +2168,7 @@ export default function RootPage() {
                   color: "#f2f2f2",
                 }}
               >
-                Mutliple networks. One workflow.
+                Multiple networks. One workflow.
               </h2>
               <p
                 style={{
