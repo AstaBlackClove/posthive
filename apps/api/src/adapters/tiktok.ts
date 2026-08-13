@@ -120,7 +120,7 @@ export const tiktokAdapter: PlatformAdapter = {
       body: JSON.stringify({
         post_info: {
           title: caption,
-          privacy_level: "SELF_ONLY",
+          privacy_level: "PUBLIC_TO_EVERYONE",
           disable_duet: false,
           disable_comment: false,
           disable_stitch: false,
