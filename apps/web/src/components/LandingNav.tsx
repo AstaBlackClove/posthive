@@ -90,6 +90,38 @@ export function NavBar({ user, ctaHref, navCtaLabel, loading }: NavBarProps) {
   };
 
   return (
+    <>
+    {mobileOpen && (
+      <div onClick={(e) => { if (e.target === e.currentTarget) setMobileOpen(false); }} style={{ position: "fixed", top: 64, left: 0, right: 0, bottom: 0, background: "#111", borderBottom: "1px solid rgba(255,255,255,.08)", padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: 4, overflowY: "auto", zIndex: 99, WebkitOverflowScrolling: "touch" as any }}>
+        <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>Features</p>
+        {FEATURES_NAV.map(f => (
+          <a key={f.title} href={`/features/${f.slug}`} onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", textDecoration: "none" }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: f.bg, color: f.color, display: "grid", placeItems: "center" }}>{f.icon}</div>
+            <span style={{ fontSize: 14, fontWeight: 500, color: "#ededed" }}>{f.title}</span>
+          </a>
+        ))}
+        <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", margin: "12px 0" }} />
+        <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>Platforms</p>
+        {PLATFORMS_NAV.map(p => (
+          <a key={p.platform} href={`/platforms/${p.platform}`} onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", textDecoration: "none" }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(255,255,255,.06)", display: "grid", placeItems: "center" }}>
+              <PlatformIcon platform={p.platform} size={16} />
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 500, color: "#ededed" }}>{p.label}</span>
+          </a>
+        ))}
+        <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", margin: "12px 0" }} />
+        {([["/pricing", "Pricing"], ["/agent", "Agents"], ["/blog", "Blog"], ["/docs", "Docs"], ["/for-developers", "API"]] as [string, string][]).map(([href, label]) => (
+          <a key={label} href={href} onClick={() => setMobileOpen(false)} style={{ padding: "9px 4px", fontSize: 14, fontWeight: 500, color: "#888", textDecoration: "none" }}>{label}</a>
+        ))}
+        {!user && (
+          <>
+            <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", margin: "12px 0" }} />
+            <Link href="/login" onClick={() => setMobileOpen(false)} style={{ textAlign: "center", padding: "10px 0", borderRadius: 8, border: "1px solid rgba(255,255,255,.12)", color: "#ededed", fontSize: 14, fontWeight: 500, textDecoration: "none" }}>Sign in</Link>
+          </>
+        )}
+      </div>
+    )}
     <nav className="ph-nav" style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
       display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -198,27 +230,6 @@ export function NavBar({ user, ctaHref, navCtaLabel, loading }: NavBarProps) {
         </button>
       </div>
 
-      {mobileOpen && (
-        <div style={{ position: "absolute", top: 64, left: 0, right: 0, background: "#111", borderBottom: "1px solid rgba(255,255,255,.08)", padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: 4, maxHeight: "calc(100vh - 64px)", overflowY: "auto" }}>
-          <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>Features</p>
-          {FEATURES_NAV.map(f => (
-            <a key={f.title} href={`/features/${f.slug}`} onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", textDecoration: "none" }}>
-              <div style={{ width: 28, height: 28, borderRadius: 7, background: f.bg, color: f.color, display: "grid", placeItems: "center" }}>{f.icon}</div>
-              <span style={{ fontSize: 14, fontWeight: 500, color: "#ededed" }}>{f.title}</span>
-            </a>
-          ))}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", margin: "12px 0" }} />
-          {([["/pricing", "Pricing"], ["/agent", "Agents"], ["/blog", "Blog"], ["/docs", "Docs"], ["/for-developers", "API"]] as [string, string][]).map(([href, label]) => (
-            <a key={label} href={href} onClick={() => setMobileOpen(false)} style={{ padding: "9px 4px", fontSize: 14, fontWeight: 500, color: "#888", textDecoration: "none" }}>{label}</a>
-          ))}
-          {!user && (
-            <>
-              <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", margin: "12px 0" }} />
-              <Link href="/login" onClick={() => setMobileOpen(false)} style={{ textAlign: "center", padding: "10px 0", borderRadius: 8, border: "1px solid rgba(255,255,255,.12)", color: "#ededed", fontSize: 14, fontWeight: 500, textDecoration: "none" }}>Sign in</Link>
-            </>
-          )}
-        </div>
-      )}
 
       <style>{`
         .ph-nav { padding: 0 40px; }
@@ -233,6 +244,7 @@ export function NavBar({ user, ctaHref, navCtaLabel, loading }: NavBarProps) {
         }
       `}</style>
     </nav>
+    </>
   );
 }
 
