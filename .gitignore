@@ -19,6 +19,7 @@ dist/
 # Build cache
 .turbo/
 *.tsbuildinfo
+supabase/
 
 # Prisma migrations lock (keep migrations themselves, not the lock)
 prisma/migrations/migration_lock.toml
