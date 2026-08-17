@@ -323,6 +323,7 @@ export default function HootsuiteAlternativePage() {
             <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 16 }}>Related reading</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {[
+                { href: "/blog/how-to-schedule-first-comment-instagram", label: "How to schedule your first comment on Instagram (and why it matters)" },
                 { href: "/blog/how-to-schedule-instagram-reels", label: "How to schedule Instagram Reels in 2026 (step-by-step)" },
                 { href: "/blog/buffer-alternative-open-source", label: "The best open-source Buffer alternative in 2026" },
                 { href: "/blog/best-social-media-scheduler", label: "The best social media schedulers in 2026 compared" },
