@@ -20,6 +20,7 @@ dist/
 .turbo/
 *.tsbuildinfo
 supabase/
+brag-output/
 
 # Prisma migrations lock (keep migrations themselves, not the lock)
 prisma/migrations/migration_lock.toml

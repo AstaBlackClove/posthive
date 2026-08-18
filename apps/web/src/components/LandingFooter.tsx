@@ -296,6 +296,9 @@ export function LandingFooter() {
           <span className="mono" style={{ fontSize: 12.5, color: "#999" }}>
             Open-source · AGPL-3.0 · Built by an indie builder.
           </span>
+          <a href="https://kittylaunch.com/p/posthive?utm_source=badge" target="_blank" rel="noopener">
+            <img src="https://kittylaunch.com/api/public/badges/launch_badge.svg?style=pill&theme=dark" width="160" alt="Posthive — Verified by KittyLaunch" />
+          </a>
         </div>
       </div>
     </footer>
