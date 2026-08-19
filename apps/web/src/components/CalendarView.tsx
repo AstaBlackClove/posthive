@@ -236,11 +236,6 @@ const DARK_CSS = `
   /* Scrollgrid */
   .fc-dark .fc-scrollgrid-section-header th { border-color: #2a2a2a !important; }
 
-  /* Past days — subtle gray out, events still visible */
-  .fc-dark .fc-day-past { background: #0d0d0d !important; }
-  .fc-dark .fc-day-past .fc-daygrid-day-number { color: #3a3a3a !important; }
-  .fc-dark .fc-day-past .fc-daygrid-event-harness { opacity: 0.45; }
-
   /* Drag mirror & placeholder */
   .fc-dark .fc-event-mirror { opacity: 0.75 !important; }
   .fc-dark .fc-daygrid-event-harness.fc-event-dragging { opacity: 0.3 !important; }
