@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
+import { DocsMcpConnectorTabs } from "../../components/DocsMcpConnectorTabs";
 
 function CopyCode({ children }: { children: string }) {
   const [copied, setCopied] = useState(false);
@@ -150,9 +151,7 @@ const NAV = [
       { label: "Sign in (recommended)", id: "mcp-install" },
       { label: "Claude Code setup", id: "mcp-claude-code" },
       { label: "Cursor, VS Code, Codex, OpenClaw, Hermes", id: "mcp-cursor" },
-      { label: "Claude connector", id: "mcp-claudeai" },
-      { label: "ChatGPT connector", id: "mcp-chatgpt" },
-      { label: "Grok Bot connector", id: "mcp-grok" },
+      { label: "Hosted app connectors", id: "mcp-claudeai" },
       { label: "Manual API key in URL (fallback)", id: "mcp-url-key" },
       { label: "CLI for shell agents", id: "mcp-cli" },
       { label: "Available tools", id: "mcp-tools" },
@@ -1734,41 +1733,8 @@ url = "https://api.posthive.co/mcp"`}</CopyCode>
                 Prefer running the MCP server locally instead of over the network? Sign in once with <span className="doc-inline-code">npx posthive-cli login</span>, then use <span className="doc-inline-code">{`{ "command": "npx", "args": ["posthive-mcp"] }`}</span> (add <span className="doc-inline-code">&quot;type&quot;: &quot;stdio&quot;</span> where the client requires it) instead of the URL above — still no API key needed, since <span className="doc-inline-code">posthive-mcp</span> reads the same stored login.
               </div>
 
-              <h4 className="doc-h3" id="mcp-claudeai">Claude connector (no install needed)</h4>
-              <p className="doc-p">The Posthive API exposes a Streamable HTTP MCP endpoint — no local binary required. Claude handles OAuth automatically.</p>
-              <p className="doc-p"><strong>Steps:</strong></p>
-              <p className="doc-p">1. Go to <strong>Claude.ai → Settings → Connectors → Add custom connector</strong></p>
-              <p className="doc-p">2. Enter your Posthive API URL as the connector URL:</p>
-              <CopyCode>{`https://api.posthive.co/mcp`}</CopyCode>
-              <p className="doc-p">3. Claude.ai will open a Posthive authorization page — log in and click <strong>Allow access</strong>.</p>
-              <p className="doc-p">4. Claude.ai discovers all tools automatically. You can revoke access anytime from <strong>Settings → API Keys</strong>.</p>
-              <div className="doc-warn">
-                Self-hosters: replace <span className="doc-inline-code">https://api.posthive.co</span> with your own API URL. The OAuth flow and <span className="doc-inline-code">/mcp</span> endpoint are included in every deployment.
-              </div>
-
-              <h4 className="doc-h3" id="mcp-chatgpt">ChatGPT connector</h4>
-              <p className="doc-p">Same Streamable HTTP + OAuth endpoint as the Claude connector above — confirmed working with ChatGPT&apos;s Developer Mode apps.</p>
-              <p className="doc-p"><strong>Steps:</strong></p>
-              <p className="doc-p">1. Go to <strong>ChatGPT → Settings → Apps → Advanced settings</strong> and turn on <strong>Developer mode</strong> (one-time; may require your workspace admin to allow it first).</p>
-              <p className="doc-p">2. Go to <strong>Settings → Apps → Add app / Add custom connector</strong> and enter the same URL:</p>
-              <CopyCode>{`https://api.posthive.co/mcp`}</CopyCode>
-              <p className="doc-p">3. ChatGPT opens a Posthive authorization page — log in and click <strong>Allow access</strong>.</p>
-              <p className="doc-p">4. Try a prompt like <em>&quot;@posthive list my connected accounts&quot;</em> to confirm it&apos;s working.</p>
-              <div className="doc-warn">
-                Developer Mode custom connectors are private to your account — no app review or OpenAI approval needed. That&apos;s separate from submitting Posthive to the public ChatGPT App Directory, which does require identity verification and review.
-              </div>
-
-              <h4 className="doc-h3" id="mcp-grok">Grok Bot connector</h4>
-              <p className="doc-p">Grok Bot (xAI) supports custom MCP connectors via OAuth — same endpoint as Claude and ChatGPT, no API key needed.</p>
-              <p className="doc-p"><strong>Steps:</strong></p>
-              <p className="doc-p">1. Go to <strong>grok.com → Connectors → New Connector → Custom</strong></p>
-              <p className="doc-p">2. Enter the Posthive MCP URL:</p>
-              <CopyCode>{`https://api.posthive.co/mcp`}</CopyCode>
-              <p className="doc-p">3. Grok Bot opens a Posthive authorization page — log in and click <strong>Allow access</strong>.</p>
-              <p className="doc-p">4. Try a prompt like <em>&quot;list my Posthive accounts&quot;</em> to confirm it&apos;s working.</p>
-              <div className="doc-warn">
-                Grok Bot&apos;s custom MCP connector requires a Pro or Team plan on Posthive (API access required).
-              </div>
+              <h4 className="doc-h3" id="mcp-claudeai">Hosted app connectors</h4>
+              <DocsMcpConnectorTabs />
 
               <h4 className="doc-h3" id="mcp-url-key">Manual API key in URL (fallback)</h4>
               <p className="doc-p">Prefer the <Link href="/agent" style={{ color: "#5b63d3" }}>Sign in / stdio method</Link> above wherever possible. For a client that doesn&apos;t support either — embed your API key directly in the URL. No headers, no config files beyond the URL itself:</p>

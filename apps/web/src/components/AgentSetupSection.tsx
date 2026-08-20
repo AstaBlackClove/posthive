@@ -235,6 +235,28 @@ url = "https://api.posthive.co/mcp"`,
     ],
   },
   {
+    file: "grokbot.jpg",
+    label: "Grok Bot",
+    steps: [
+      {
+        n: "01",
+        title: "Open Connectors",
+        desc: "Go to grok.com → Connectors → New Connector → Custom.",
+      },
+      {
+        n: "02",
+        title: "Paste the MCP URL",
+        desc: "Enter the Posthive MCP URL and click Add.",
+        code: "https://api.posthive.co/mcp",
+      },
+      {
+        n: "03",
+        title: "Sign in with Posthive",
+        desc: "Grok Bot opens a browser window. Sign in and click Approve & connect.",
+      },
+    ],
+  },
+  {
     file: "hermes.jpg",
     label: "Hermes",
     steps: [
