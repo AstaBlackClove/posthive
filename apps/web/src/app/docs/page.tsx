@@ -152,6 +152,7 @@ const NAV = [
       { label: "Cursor, VS Code, Codex, OpenClaw, Hermes", id: "mcp-cursor" },
       { label: "Claude connector", id: "mcp-claudeai" },
       { label: "ChatGPT connector", id: "mcp-chatgpt" },
+      { label: "Grok Bot connector", id: "mcp-grok" },
       { label: "Manual API key in URL (fallback)", id: "mcp-url-key" },
       { label: "CLI for shell agents", id: "mcp-cli" },
       { label: "Available tools", id: "mcp-tools" },
@@ -1755,6 +1756,18 @@ url = "https://api.posthive.co/mcp"`}</CopyCode>
               <p className="doc-p">4. Try a prompt like <em>&quot;@posthive list my connected accounts&quot;</em> to confirm it&apos;s working.</p>
               <div className="doc-warn">
                 Developer Mode custom connectors are private to your account — no app review or OpenAI approval needed. That&apos;s separate from submitting Posthive to the public ChatGPT App Directory, which does require identity verification and review.
+              </div>
+
+              <h4 className="doc-h3" id="mcp-grok">Grok Bot connector</h4>
+              <p className="doc-p">Grok Bot (xAI) supports custom MCP connectors via OAuth — same endpoint as Claude and ChatGPT, no API key needed.</p>
+              <p className="doc-p"><strong>Steps:</strong></p>
+              <p className="doc-p">1. Go to <strong>grok.com → Connectors → New Connector → Custom</strong></p>
+              <p className="doc-p">2. Enter the Posthive MCP URL:</p>
+              <CopyCode>{`https://api.posthive.co/mcp`}</CopyCode>
+              <p className="doc-p">3. Grok Bot opens a Posthive authorization page — log in and click <strong>Allow access</strong>.</p>
+              <p className="doc-p">4. Try a prompt like <em>&quot;list my Posthive accounts&quot;</em> to confirm it&apos;s working.</p>
+              <div className="doc-warn">
+                Grok Bot&apos;s custom MCP connector requires a Pro or Team plan on Posthive (API access required).
               </div>
 
               <h4 className="doc-h3" id="mcp-url-key">Manual API key in URL (fallback)</h4>
