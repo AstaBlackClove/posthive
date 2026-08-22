@@ -20,7 +20,6 @@ import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "../context/AuthContext";
 import { WorkspaceProvider } from "../context/WorkspaceContext";
 import { AppShell } from "../components/AppShell";
-import { ChatWidget } from "../components/ChatWidget";
 import { ToastProvider } from "../components/Toast";
 import { TrackingProvider } from "../components/TrackingProvider";
 
@@ -134,7 +133,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </ToastProvider>
           </WorkspaceProvider>
         </AuthProvider>
-        <ChatWidget />
         <Analytics />
         <Script id="posthive-console" strategy="afterInteractive">{`
           console.log('%c Posthive ','background:#5b63d3;color:#fff;font-size:16px;font-weight:700;padding:6px 14px;border-radius:6px;font-family:sans-serif;');
