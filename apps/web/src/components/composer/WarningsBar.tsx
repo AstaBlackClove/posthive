@@ -69,7 +69,7 @@ export function WarningsBar({
       )}
       {blueskyFirstCommentTooLong && (
         <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
-          ⚠️ Bluesky first comment exceeds 300 characters — it will fail to post on Bluesky
+          ⚠️ Bluesky first comment exceeds 300 characters — use &quot;Customize per platform&quot; to set a shorter version for Bluesky
         </p>
       )}
     </div>
