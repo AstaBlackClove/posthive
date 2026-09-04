@@ -5,6 +5,7 @@ interface Props {
   instagramSelectedWithNoMedia?: boolean;
   instagramStoryWithNoImage?: boolean;
   twitterHasLink: boolean;
+  blueskyFirstCommentTooLong?: boolean;
   igMediaType?: "post" | "reel" | "story";
   className?: string;
 }
@@ -16,6 +17,7 @@ export function WarningsBar({
   instagramSelectedWithNoMedia,
   instagramStoryWithNoImage,
   twitterHasLink,
+  blueskyFirstCommentTooLong,
   igMediaType,
   className,
 }: Props) {
@@ -25,7 +27,8 @@ export function WarningsBar({
     youtubeSelectedWithNoVideo ||
     pinterestSelectedWithNoImage ||
     pixelfedSelectedWithNoImage ||
-    twitterHasLink;
+    twitterHasLink ||
+    blueskyFirstCommentTooLong;
 
   if (!hasAny) return null;
 
@@ -62,6 +65,11 @@ export function WarningsBar({
       {twitterHasLink && (
         <p className="text-xs font-medium" style={{ color: "#ef4444" }}>
           ⚠️ X/Twitter charges $0.20 per tweet containing a link remove the URL to schedule
+        </p>
+      )}
+      {blueskyFirstCommentTooLong && (
+        <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
+          ⚠️ Bluesky first comment exceeds 300 characters — it will fail to post on Bluesky
         </p>
       )}
     </div>

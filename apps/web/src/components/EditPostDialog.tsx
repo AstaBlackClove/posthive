@@ -361,6 +361,8 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const twitterTextHasLink = twitterSelected && twitterAccounts.some(a => urlPattern.test(perAccountOverrides[a.id]?.text ?? text));
   const twitterCommentHasLink = twitterSelected && twitterAccounts.some(a => urlPattern.test(perAccountOverrides[a.id]?.commentText ?? commentText));
   const twitterHasLink = twitterTextHasLink || twitterCommentHasLink;
+  const blueskySelected = selectedAccounts.some((a) => a.platform === "bluesky");
+  const blueskyFirstCommentTooLong = blueskySelected && commentText.trim().length > 0 && [...new Intl.Segmenter().segment(commentText)].length > 300;
 
   // Footer warning logic
   const pinterestSelected = selectedAccounts.some(a => a.platform === "pinterest");
@@ -731,6 +733,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           instagramSelectedWithNoMedia={instagramSelected && images.length === 0 && igMediaType !== "story" && igMediaType !== "reel"}
           instagramStoryWithNoImage={instagramSelected && igMediaType === "story" && images.length === 0}
           twitterHasLink={twitterHasLink}
+          blueskyFirstCommentTooLong={blueskyFirstCommentTooLong}
           igMediaType={igMediaType}
         />
         {(mediaWarning || saveError) && (
