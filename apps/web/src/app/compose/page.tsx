@@ -628,7 +628,14 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   });
   const twitterHasLink = twitterTextHasLink || twitterCommentHasLink;
   const blueskySelected = selectedAccounts.some((a) => a.platform === "bluesky");
-  const blueskyFirstCommentTooLong = blueskySelected && commentText.trim().length > 0 && [...new Intl.Segmenter().segment(commentText)].length > 300;
+  const blueskyFirstCommentTooLong = blueskySelected && selectedAccounts
+    .filter((a) => a.platform === "bluesky")
+    .some((a) => {
+      const effective = perAccountOverrides[a.id]?.commentText !== undefined
+        ? perAccountOverrides[a.id].commentText!
+        : commentText;
+      return effective.trim().length > 0 && [...new Intl.Segmenter().segment(effective)].length > 300;
+    });
 
   // YouTube only treats an upload as a Short when it's vertical (9:16), ≤60s, AND
   // tagged #Shorts — the hashtag alone does nothing if the video itself doesn't

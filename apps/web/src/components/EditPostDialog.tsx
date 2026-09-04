@@ -362,7 +362,14 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const twitterCommentHasLink = twitterSelected && twitterAccounts.some(a => urlPattern.test(perAccountOverrides[a.id]?.commentText ?? commentText));
   const twitterHasLink = twitterTextHasLink || twitterCommentHasLink;
   const blueskySelected = selectedAccounts.some((a) => a.platform === "bluesky");
-  const blueskyFirstCommentTooLong = blueskySelected && commentText.trim().length > 0 && [...new Intl.Segmenter().segment(commentText)].length > 300;
+  const blueskyFirstCommentTooLong = blueskySelected && selectedAccounts
+    .filter((a) => a.platform === "bluesky")
+    .some((a) => {
+      const effective = perAccountOverrides[a.id]?.commentText !== undefined
+        ? perAccountOverrides[a.id].commentText!
+        : commentText;
+      return effective.trim().length > 0 && [...new Intl.Segmenter().segment(effective)].length > 300;
+    });
 
   // Footer warning logic
   const pinterestSelected = selectedAccounts.some(a => a.platform === "pinterest");
