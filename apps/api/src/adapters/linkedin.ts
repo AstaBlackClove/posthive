@@ -184,7 +184,7 @@ export const linkedinAdapter: PlatformAdapter = {
 
   async createPost(
     account: Account,
-    content: { text: string; mediaUrls: string[]; altTexts?: string[] }
+    content: { text: string; mediaUrls: string[]; altTexts?: string[]; linkedinVisibility?: "PUBLIC" | "CONNECTIONS" }
   ): Promise<PostResult> {
     const creds = getCredentials(account);
     const { accessToken: token, personUrn: author } = creds;
@@ -225,7 +225,7 @@ export const linkedinAdapter: PlatformAdapter = {
     const postBody: Record<string, unknown> = {
       author,
       lifecycleState: "PUBLISHED",
-      visibility: "PUBLIC",
+      visibility: content.linkedinVisibility ?? "PUBLIC",
       commentary: content.text,
       distribution: {
         feedDistribution: "MAIN_FEED",

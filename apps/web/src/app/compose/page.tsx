@@ -17,6 +17,7 @@ import type { Account, UploadedImage, PerAccountOverride } from "../../component
 import { YoutubeFields } from "../../components/composer/YoutubeFields";
 import { PinterestFields } from "../../components/composer/PinterestFields";
 import { PixelfedFields } from "../../components/composer/PixelfedFields";
+import { LinkedinFields } from "../../components/composer/LinkedinFields";
 import { FirstComment } from "../../components/composer/FirstComment";
 import { WarningsBar } from "../../components/composer/WarningsBar";
 import { MediaSection } from "../../components/composer/MediaSection";
@@ -58,6 +59,7 @@ export default function ComposePage() {
   const [pinterestDescription, setPinterestDescription] = useState("");
   const [pixelfedSensitive, setPixelfedSensitive] = useState(false);
   const [pixelfedVisibility, setPixelfedVisibility] = useState<"public" | "unlisted" | "private">("public");
+  const [linkedinVisibility, setLinkedinVisibility] = useState<"PUBLIC" | "CONNECTIONS">("PUBLIC");
 const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -482,6 +484,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setYoutubeVisibility("public"); setYoutubeTags(""); setYoutubeMadeForKids(false);
     setPinterestTitle(""); setPinterestDescription("");
     setPixelfedSensitive(false); setPixelfedVisibility("public");
+    setLinkedinVisibility("PUBLIC");
     setPerAccountOverrides({}); setShowCustomize(false); setUploadError(null);
     mediaItems.forEach(m => URL.revokeObjectURL(m.previewUrl));
     setMediaItems([]); setAltTexts([]);
@@ -513,6 +516,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected && youtubeTags.trim() ? { youtubeTags: youtubeTags.split(",").map(t => t.trim()).filter(Boolean) } : {}),
             ...(youtubeSelected && youtubeMadeForKids ? { youtubeMadeForKids } : {}),
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
+            ...(linkedinSelected ? { linkedinVisibility } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -557,6 +561,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected && youtubeTags.trim() ? { youtubeTags: youtubeTags.split(",").map(t => t.trim()).filter(Boolean) } : {}),
             ...(youtubeSelected && youtubeMadeForKids ? { youtubeMadeForKids } : {}),
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
+            ...(linkedinSelected ? { linkedinVisibility } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -613,6 +618,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const pinterestSelectedWithNoImage = pinterestSelected && images.length === 0;
   const pixelfedAccounts = selectedAccounts.filter((a) => a.platform === "pixelfed");
   const pixelfedSelected = pixelfedAccounts.length > 0;
+  const linkedinSelected = selectedAccounts.some((a) => a.platform === "linkedin");
   const pixelfedSelectedWithNoImage = pixelfedSelected && images.length === 0;
   const youtubeAccounts = selectedAccounts.filter((a) => a.platform === "youtube");
   const youtubeSelected = youtubeAccounts.length > 0;
@@ -1138,6 +1144,13 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             <PixelfedFields
               sensitive={pixelfedSensitive} onSensitiveChange={setPixelfedSensitive}
               visibility={pixelfedVisibility} onVisibilityChange={setPixelfedVisibility}
+            />
+          )}
+
+          {/* LinkedIn — visibility */}
+          {linkedinSelected && !loadingAccounts && (
+            <LinkedinFields
+              linkedinVisibility={linkedinVisibility} onVisibilityChange={setLinkedinVisibility}
             />
           )}
 

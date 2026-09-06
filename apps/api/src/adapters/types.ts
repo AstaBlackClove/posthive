@@ -62,6 +62,7 @@ export interface PlatformAdapter {
       collaborators?: string[];      // Instagram: usernames to add as collaborators
       pixelfedSensitive?: boolean;   // Pixelfed: blur media behind content warning
       pixelfedVisibility?: "public" | "unlisted" | "private"; // Pixelfed: audience
+      linkedinVisibility?: "PUBLIC" | "CONNECTIONS"; // LinkedIn: post audience
     }
   ): Promise<PostResult>;
 

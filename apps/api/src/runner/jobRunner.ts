@@ -39,6 +39,7 @@ type JobContent = {
   collaborators?: string[];
   pixelfedSensitive?: boolean;
   pixelfedVisibility?: "public" | "unlisted" | "private";
+  linkedinVisibility?: "PUBLIC" | "CONNECTIONS";
   perAccount?: Record<string, PerAccountOverride>;
 };
 
@@ -89,6 +90,7 @@ export async function runJob(
         collaborators: content.collaborators,
         pixelfedSensitive: content.pixelfedSensitive,
         pixelfedVisibility: content.pixelfedVisibility,
+        linkedinVisibility: content.linkedinVisibility,
       };
       const effectiveComment = override?.commentText !== undefined ? override.commentText : job.commentText;
       return runTarget(target, effectiveContent, effectiveComment, job.dryRun);
@@ -164,6 +166,7 @@ type EffectiveContent = {
   youtubeVisibility?: "public" | "unlisted" | "private";
   youtubeTags?: string[];
   youtubeMadeForKids?: boolean;
+  linkedinVisibility?: "PUBLIC" | "CONNECTIONS";
 };
 
 async function runTarget(
