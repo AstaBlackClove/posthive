@@ -6,6 +6,7 @@ interface Props {
   instagramStoryWithNoImage?: boolean;
   twitterHasLink: boolean;
   blueskyFirstCommentTooLong?: boolean;
+  youtubePrivateWithComment?: boolean;
   igMediaType?: "post" | "reel" | "story";
   className?: string;
 }
@@ -18,6 +19,7 @@ export function WarningsBar({
   instagramStoryWithNoImage,
   twitterHasLink,
   blueskyFirstCommentTooLong,
+  youtubePrivateWithComment,
   igMediaType,
   className,
 }: Props) {
@@ -28,7 +30,8 @@ export function WarningsBar({
     pinterestSelectedWithNoImage ||
     pixelfedSelectedWithNoImage ||
     twitterHasLink ||
-    blueskyFirstCommentTooLong;
+    blueskyFirstCommentTooLong ||
+    youtubePrivateWithComment;
 
   if (!hasAny) return null;
 
@@ -70,6 +73,11 @@ export function WarningsBar({
       {blueskyFirstCommentTooLong && (
         <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
           ⚠️ Bluesky first comment exceeds 300 characters — use &quot;Customize per platform&quot; to set a shorter version for Bluesky
+        </p>
+      )}
+      {youtubePrivateWithComment && (
+        <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
+          ⚠️ YouTube private videos can&apos;t receive comments — the first comment will be skipped
         </p>
       )}
     </div>

@@ -617,6 +617,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const youtubeAccounts = selectedAccounts.filter((a) => a.platform === "youtube");
   const youtubeSelected = youtubeAccounts.length > 0;
   const youtubeSelectedWithNoVideo = youtubeSelected && (youtubeVideoMode === "upload" ? !video : !youtubeVideoUrl.trim());
+  const youtubePrivateWithComment = youtubeSelected && youtubeVisibility === "private" && commentText.trim().length > 0;
   const onlyYoutube = youtubeSelected && selectedAccounts.every((a) => a.platform === "youtube");
   const onlyPinterest = pinterestSelected && selectedAccounts.every((a) => a.platform === "pinterest");
   // True when every selected account is YouTube or Pinterest — both have their own title/description fields
@@ -1307,6 +1308,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           instagramStoryWithNoImage={instagramStoryWithNoImage}
           twitterHasLink={twitterHasLink}
           blueskyFirstCommentTooLong={blueskyFirstCommentTooLong}
+          youtubePrivateWithComment={youtubePrivateWithComment}
           igMediaType={igMediaType}
         />
       )}

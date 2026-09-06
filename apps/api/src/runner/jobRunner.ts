@@ -227,6 +227,9 @@ async function runTarget(
   const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr", "facebook", "linkedin", "tiktok"]);
   if (!commentText || target.status !== "post_done" || NO_COMMENT_PLATFORMS.has(target.account.platform)) return;
 
+  // YouTube private videos don't accept API comments
+  if (target.account.platform === "youtube" && content.youtubeVisibility === "private") return;
+
   const replyContext = target.replyContext ? JSON.parse(target.replyContext) : null;
   if (!replyContext) {
     await setTargetStatus(target.id, "comment_failed", {
