@@ -87,7 +87,7 @@ function ScrollColumn({
 }
 
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1));
-const MINUTES = Array.from({ length: 12 }, (_, i) => pad(i * 5));
+const MINUTES = Array.from({ length: 60 }, (_, i) => pad(i));
 const AMPM = ["AM", "PM"];
 
 export function DateTimePicker({ value, onChange, dropdownDirection = "up" }: Props) {
@@ -139,7 +139,7 @@ export function DateTimePicker({ value, onChange, dropdownDirection = "up" }: Pr
   }
 
   const h12 = selected.getHours() % 12 || 12;
-  const minIndex = Math.round(selected.getMinutes() / 5);
+  const minIndex = selected.getMinutes();
   const ampmIndex = selected.getHours() >= 12 ? 1 : 0;
 
   const label = (() => {
@@ -221,7 +221,7 @@ export function DateTimePicker({ value, onChange, dropdownDirection = "up" }: Pr
             label="Min"
             items={MINUTES}
             selectedIndex={minIndex}
-            onSelect={(i) => setTime(selected.getHours(), i * 5)}
+            onSelect={(i) => setTime(selected.getHours(), i)}
           />
           <ScrollColumn
             label="Period"
