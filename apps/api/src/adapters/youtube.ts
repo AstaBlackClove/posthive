@@ -89,7 +89,7 @@ export const youtubeAdapter: PlatformAdapter = {
     return refreshIfNeeded(account);
   },
 
-  async createPost(account, { text, mediaUrls, youtubeType, youtubeVideoUrl, youtubeThumbnailUrl }) {
+  async createPost(account, { text, mediaUrls, youtubeType, youtubeVideoUrl, youtubeThumbnailUrl, youtubeVisibility, youtubeTags, youtubeMadeForKids }) {
     const { accessToken } = getCredentials(account);
 
     const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "";
@@ -133,8 +133,15 @@ export const youtubeAdapter: PlatformAdapter = {
     }
 
     const metadata = {
-      snippet: { title, description },
-      status: { privacyStatus: "public", selfDeclaredMadeForKids: false },
+      snippet: {
+        title,
+        description,
+        ...(youtubeTags && youtubeTags.length > 0 ? { tags: youtubeTags } : {}),
+      },
+      status: {
+        privacyStatus: youtubeVisibility ?? "public",
+        selfDeclaredMadeForKids: youtubeMadeForKids ?? false,
+      },
     };
 
     // Step 1 — initiate resumable upload session

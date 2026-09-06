@@ -32,7 +32,7 @@ interface Props {
   open: boolean;
   job: EditableJob;
   accounts: Account[];
-  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private") => Promise<void>;
+  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean) => Promise<void>;
   onClose: () => void;
 }
 
@@ -88,6 +88,9 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const [youtubeThumbnailUrl, setYoutubeThumbnailUrl] = useState<string | null>(parsedContent.youtubeThumbnailUrl ?? null);
   const [youtubeThumbnailPreview, setYoutubeThumbnailPreview] = useState<string | null>(null);
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
+  const [youtubeVisibility, setYoutubeVisibility] = useState<"public" | "unlisted" | "private">((parsedContent as {youtubeVisibility?: "public" | "unlisted" | "private"}).youtubeVisibility ?? "public");
+  const [youtubeTags, setYoutubeTags] = useState(((parsedContent as {youtubeTags?: string[]}).youtubeTags ?? []).join(", "));
+  const [youtubeMadeForKids, setYoutubeMadeForKids] = useState((parsedContent as {youtubeMadeForKids?: boolean}).youtubeMadeForKids ?? false);
 
   // Pinterest: init title/description from the first Pinterest account's override
   const initPinOverride = (() => {
@@ -292,7 +295,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     const mediaUrls = video ? [video.url] : images.map(i => i.url);
     setSaving(true); setSaveError(null);
     try {
-      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined, hasYoutube ? youtubeVideoMode : undefined, hasYoutube ? (youtubeVideoMode === "url" ? youtubeVideoUrl.trim() : "") : undefined, hasYoutube && youtubeThumbnailUrl ? youtubeThumbnailUrl : undefined, pixelfedSelected ? pixelfedSensitive : undefined, pixelfedSelected ? pixelfedVisibility : undefined);
+      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined, hasYoutube ? youtubeVideoMode : undefined, hasYoutube ? (youtubeVideoMode === "url" ? youtubeVideoUrl.trim() : "") : undefined, hasYoutube && youtubeThumbnailUrl ? youtubeThumbnailUrl : undefined, pixelfedSelected ? pixelfedSensitive : undefined, pixelfedSelected ? pixelfedVisibility : undefined, hasYoutube ? youtubeVisibility : undefined, hasYoutube && youtubeTags.trim() ? youtubeTags.split(",").map(t => t.trim()).filter(Boolean) : undefined, hasYoutube ? youtubeMadeForKids : undefined);
       onClose();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message.replace(/^API PATCH.*→ \d+: /, "") : "Save failed");
@@ -575,6 +578,9 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
               youtubeVideoMode={youtubeVideoMode}
               onlyYoutube={onlyYoutube}
               video={video}
+              youtubeVisibility={youtubeVisibility} onVisibilityChange={setYoutubeVisibility}
+              youtubeTags={youtubeTags} onTagsChange={setYoutubeTags}
+              youtubeMadeForKids={youtubeMadeForKids} onMadeForKidsChange={setYoutubeMadeForKids}
               youtubeThumbnailUrl={youtubeThumbnailUrl}
               youtubeThumbnailPreview={youtubeThumbnailPreview}
               onThumbnailUpload={uploadThumbnail}

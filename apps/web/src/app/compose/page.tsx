@@ -51,6 +51,9 @@ export default function ComposePage() {
   const [youtubeThumbnailUrl, setYoutubeThumbnailUrl] = useState<string | null>(null);
   const [youtubeThumbnailPreview, setYoutubeThumbnailPreview] = useState<string | null>(null);
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
+  const [youtubeVisibility, setYoutubeVisibility] = useState<"public" | "unlisted" | "private">("public");
+  const [youtubeTags, setYoutubeTags] = useState("");
+  const [youtubeMadeForKids, setYoutubeMadeForKids] = useState(false);
   const [pinterestTitle, setPinterestTitle] = useState("");
   const [pinterestDescription, setPinterestDescription] = useState("");
   const [pixelfedSensitive, setPixelfedSensitive] = useState(false);
@@ -476,6 +479,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setYoutubeVideoMode("upload"); setYoutubeVideoUrl("");
     if (youtubeThumbnailPreview) URL.revokeObjectURL(youtubeThumbnailPreview);
     setYoutubeThumbnailUrl(null); setYoutubeThumbnailPreview(null);
+    setYoutubeVisibility("public"); setYoutubeTags(""); setYoutubeMadeForKids(false);
     setPinterestTitle(""); setPinterestDescription("");
     setPixelfedSensitive(false); setPixelfedVisibility("public");
     setPerAccountOverrides({}); setShowCustomize(false); setUploadError(null);
@@ -505,6 +509,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected ? { youtubeType, youtubeVideoMode } : {}),
             ...(youtubeSelected && youtubeVideoMode === "url" && youtubeVideoUrl.trim() ? { youtubeVideoUrl: youtubeVideoUrl.trim() } : {}),
             ...(youtubeSelected && youtubeThumbnailUrl ? { youtubeThumbnailUrl } : {}),
+            ...(youtubeSelected ? { youtubeVisibility } : {}),
+            ...(youtubeSelected && youtubeTags.trim() ? { youtubeTags: youtubeTags.split(",").map(t => t.trim()).filter(Boolean) } : {}),
+            ...(youtubeSelected && youtubeMadeForKids ? { youtubeMadeForKids } : {}),
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
@@ -546,6 +553,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected ? { youtubeType, youtubeVideoMode } : {}),
             ...(youtubeSelected && youtubeVideoMode === "url" && youtubeVideoUrl.trim() ? { youtubeVideoUrl: youtubeVideoUrl.trim() } : {}),
             ...(youtubeSelected && youtubeThumbnailUrl ? { youtubeThumbnailUrl } : {}),
+            ...(youtubeSelected ? { youtubeVisibility } : {}),
+            ...(youtubeSelected && youtubeTags.trim() ? { youtubeTags: youtubeTags.split(",").map(t => t.trim()).filter(Boolean) } : {}),
+            ...(youtubeSelected && youtubeMadeForKids ? { youtubeMadeForKids } : {}),
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
@@ -1102,6 +1112,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               onlyYoutube={onlyYoutube}
               video={video}
               youtubeShortsWarning={youtubeShortsWarning}
+              youtubeVisibility={youtubeVisibility} onVisibilityChange={setYoutubeVisibility}
+              youtubeTags={youtubeTags} onTagsChange={setYoutubeTags}
+              youtubeMadeForKids={youtubeMadeForKids} onMadeForKidsChange={setYoutubeMadeForKids}
               youtubeThumbnailUrl={youtubeThumbnailUrl}
               youtubeThumbnailPreview={youtubeThumbnailPreview}
               onThumbnailUpload={uploadThumbnail}

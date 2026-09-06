@@ -52,8 +52,11 @@ export interface PlatformAdapter {
       altTexts?: string[];
       mediaType?: "post" | "reel" | "story";
       youtubeType?: "short" | "video"; // YouTube: upload as a Short (default) or a regular video
-      youtubeVideoUrl?: string;      // YouTube: external video URL (no extension needed — bypasses isVideoUrl check)
-      youtubeThumbnailUrl?: string;  // YouTube: custom thumbnail image URL (requires phone-verified channel)
+      youtubeVideoUrl?: string;        // YouTube: external video URL (no extension needed — bypasses isVideoUrl check)
+      youtubeThumbnailUrl?: string;    // YouTube: custom thumbnail image URL (requires phone-verified channel)
+      youtubeVisibility?: "public" | "unlisted" | "private"; // YouTube: privacy status
+      youtubeTags?: string[];          // YouTube: search tags (max 500 chars total)
+      youtubeMadeForKids?: boolean;    // YouTube: self-declared made for kids
       locationId?: string;           // Instagram: Facebook Place ID for location tagging
       userTags?: string[];           // Instagram: usernames to tag in the post
       collaborators?: string[];      // Instagram: usernames to add as collaborators

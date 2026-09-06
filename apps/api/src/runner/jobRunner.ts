@@ -31,6 +31,9 @@ type JobContent = {
   youtubeType?: "short" | "video";
   youtubeVideoUrl?: string;
   youtubeThumbnailUrl?: string;
+  youtubeVisibility?: "public" | "unlisted" | "private";
+  youtubeTags?: string[];
+  youtubeMadeForKids?: boolean;
   locationId?: string;
   userTags?: string[];
   collaborators?: string[];
@@ -78,6 +81,9 @@ export async function runJob(
         youtubeType: content.youtubeType,
         youtubeVideoUrl: content.youtubeVideoUrl,
         youtubeThumbnailUrl: content.youtubeThumbnailUrl,
+        youtubeVisibility: content.youtubeVisibility,
+        youtubeTags: content.youtubeTags,
+        youtubeMadeForKids: content.youtubeMadeForKids,
         locationId: content.locationId,
         userTags: content.userTags,
         collaborators: content.collaborators,
@@ -155,6 +161,9 @@ type EffectiveContent = {
   youtubeType?: "short" | "video";
   youtubeVideoUrl?: string;
   youtubeThumbnailUrl?: string;
+  youtubeVisibility?: "public" | "unlisted" | "private";
+  youtubeTags?: string[];
+  youtubeMadeForKids?: boolean;
 };
 
 async function runTarget(

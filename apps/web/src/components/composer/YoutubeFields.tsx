@@ -13,6 +13,15 @@ interface Props {
   onlyYoutube: boolean;
   video: { name: string } | null;
   youtubeShortsWarning?: string | null;
+  // Visibility
+  youtubeVisibility: "public" | "unlisted" | "private";
+  onVisibilityChange: (v: "public" | "unlisted" | "private") => void;
+  // Tags
+  youtubeTags: string;
+  onTagsChange: (v: string) => void;
+  // Made for Kids
+  youtubeMadeForKids: boolean;
+  onMadeForKidsChange: (v: boolean) => void;
   // Thumbnail
   youtubeThumbnailUrl: string | null;
   youtubeThumbnailPreview: string | null;
@@ -27,6 +36,9 @@ export function YoutubeFields({
   youtubeType, onTypeChange,
   youtubeVideoMode, onlyYoutube, video,
   youtubeShortsWarning,
+  youtubeVisibility, onVisibilityChange,
+  youtubeTags, onTagsChange,
+  youtubeMadeForKids, onMadeForKidsChange,
   youtubeThumbnailUrl, youtubeThumbnailPreview,
   onThumbnailUpload, onThumbnailRemove,
   thumbnailUploading,
@@ -96,6 +108,64 @@ export function YoutubeFields({
           className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
           style={{ borderColor: youtubeDescription.length > 5000 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
         />
+      </div>
+
+      {/* Visibility */}
+      <div className="mb-3">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wide">Visibility</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {(["public", "unlisted", "private"] as const).map((v) => (
+            <button key={v} type="button" onClick={() => onVisibilityChange(v)}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all"
+              style={youtubeVisibility === v
+                ? { backgroundColor: "#ff000020", color: "#ff0000", border: "1px solid #ff000050" }
+                : { backgroundColor: "#111111", color: "#666", border: "1px solid #1f1f1f" }}>
+              {v}
+            </button>
+          ))}
+        </div>
+        {youtubeVisibility === "unlisted" && (
+          <p className="text-[10px] mt-1" style={{ color: "#888" }}>Only people with the link can view.</p>
+        )}
+        {youtubeVisibility === "private" && (
+          <p className="text-[10px] mt-1" style={{ color: "#888" }}>Only you can view.</p>
+        )}
+      </div>
+
+      {/* Tags */}
+      <div className="mb-3">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wide">Tags</span>
+          <span className="text-[10px]" style={{ color: "#444" }}>comma-separated</span>
+        </div>
+        <input
+          value={youtubeTags}
+          onChange={(e) => onTagsChange(e.target.value)}
+          placeholder="e.g. tutorial, coding, javascript"
+          className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+          style={{ borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
+        />
+        <p className="text-[10px] mt-1" style={{ color: "#555" }}>Helps with YouTube search discovery.</p>
+      </div>
+
+      {/* Made for Kids */}
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <span className="text-[10px] font-semibold uppercase tracking-wide">Made for Kids</span>
+          <p className="text-[10px] mt-0.5" style={{ color: "#555" }}>Required by law for children&apos;s content.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onMadeForKidsChange(!youtubeMadeForKids)}
+          className="relative inline-flex h-5 w-9 flex-shrink-0 rounded-full transition-colors"
+          style={{ backgroundColor: youtubeMadeForKids ? "#ff0000" : "#2a2a2a" }}>
+          <span
+            className="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform mt-0.5"
+            style={{ transform: youtubeMadeForKids ? "translateX(18px)" : "translateX(2px)" }}
+          />
+        </button>
       </div>
 
       {/* Thumbnail */}
