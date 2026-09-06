@@ -84,7 +84,7 @@ export function YoutubeFields({
       <div className="mb-3">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide">Title</span>
-          <span className="text-[10px]" style={{ color: youtubeTitle.length > 100 ? "#ef4444" : "#444" }}>{youtubeTitle.length}/100</span>
+          <span className="text-[10px]" style={{ color: youtubeTitle.length > 100 ? "#ef4444" : "#666" }}>{youtubeTitle.length}/100</span>
         </div>
         <input
           value={youtubeTitle}
@@ -98,7 +98,7 @@ export function YoutubeFields({
       <div className="mb-3">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide">Description</span>
-          <span className="text-[10px]" style={{ color: youtubeDescription.length > 5000 ? "#ef4444" : "#444" }}>{youtubeDescription.length}/5000</span>
+          <span className="text-[10px]" style={{ color: youtubeDescription.length > 5000 ? "#ef4444" : "#666" }}>{youtubeDescription.length}/5000</span>
         </div>
         <textarea
           value={youtubeDescription}
@@ -138,7 +138,7 @@ export function YoutubeFields({
       <div className="mb-3">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide">Tags</span>
-          <span className="text-[10px]" style={{ color: "#444" }}>comma-separated</span>
+          <span className="text-[10px]" style={{ color: "#666" }}>comma-separated</span>
         </div>
         <input
           value={youtubeTags}
@@ -147,14 +147,14 @@ export function YoutubeFields({
           className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
           style={{ borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
         />
-        <p className="text-[10px] mt-1" style={{ color: "#555" }}>Helps with YouTube search discovery.</p>
+        <p className="text-[10px] mt-1" style={{ color: "#777" }}>Helps with YouTube search discovery.</p>
       </div>
 
       {/* Made for Kids */}
       <div className="mb-3 flex items-center justify-between">
         <div>
           <span className="text-[10px] font-semibold uppercase tracking-wide">Made for Kids</span>
-          <p className="text-[10px] mt-0.5" style={{ color: "#555" }}>Required by law for children&apos;s content.</p>
+          <p className="text-[10px] mt-0.5" style={{ color: "#777" }}>Required by law for children&apos;s content.</p>
         </div>
         <button
           type="button"
@@ -170,7 +170,7 @@ export function YoutubeFields({
 
       {/* Thumbnail — not supported for Shorts */}
       {youtubeType === "short" && (
-        <p className="text-[10px] mb-1" style={{ color: "#555" }}>Thumbnail not supported for Shorts — YouTube uses an auto-generated frame.</p>
+        <p className="text-[10px] mb-1" style={{ color: "#777" }}>Thumbnail not supported for Shorts — YouTube uses an auto-generated frame.</p>
       )}
       <div style={youtubeType === "short" ? { opacity: 0.35, pointerEvents: "none" } : {}}>
         <div className="flex items-center gap-2 mb-1.5">
