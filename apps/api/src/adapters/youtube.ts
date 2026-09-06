@@ -174,8 +174,8 @@ export const youtubeAdapter: PlatformAdapter = {
     }
     const video = await uploadRes.json() as { id: string };
 
-    // Set custom thumbnail if provided — requires phone-verified channel
-    if (youtubeThumbnailUrl) {
+    // Set custom thumbnail if provided — requires phone-verified channel; not supported for Shorts
+    if (youtubeThumbnailUrl && youtubeType !== "short") {
       try {
         const PUBLIC_API_URL2 = process.env.PUBLIC_API_URL ?? "";
         const thumbUrl = youtubeThumbnailUrl.startsWith("http")

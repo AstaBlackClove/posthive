@@ -168,8 +168,11 @@ export function YoutubeFields({
         </button>
       </div>
 
-      {/* Thumbnail */}
-      <div>
+      {/* Thumbnail — not supported for Shorts */}
+      {youtubeType === "short" && (
+        <p className="text-[10px] mb-1" style={{ color: "#555" }}>Thumbnail not supported for Shorts — YouTube uses an auto-generated frame.</p>
+      )}
+      <div style={youtubeType === "short" ? { opacity: 0.35, pointerEvents: "none" } : {}}>
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wide">Thumbnail</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#999", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
