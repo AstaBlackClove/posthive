@@ -41,6 +41,8 @@ const createJobBody = z.object({
     youtubeTags: z.array(z.string()).optional(),
     youtubeMadeForKids: z.boolean().optional(),
     linkedinVisibility: z.enum(["PUBLIC", "CONNECTIONS"]).optional(),
+    blueskyLanguage: z.string().optional(),
+    blueskyContentWarning: z.string().optional(),
     perAccount: z.record(z.string().cuid(), perAccountOverrideSchema).optional(),
   }),
   commentText: z.string().optional(),
@@ -242,6 +244,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       youtubeTags: z.array(z.string()).optional(),
       youtubeMadeForKids: z.boolean().optional(),
       linkedinVisibility: z.enum(["PUBLIC", "CONNECTIONS"]).optional(),
+      blueskyLanguage: z.string().optional(),
+      blueskyContentWarning: z.string().optional(),
       accountIds: z.array(z.string().cuid()).min(1).optional(),
       perAccount: z.record(z.string().cuid(), perAccountOverrideSchema).optional(),
     }).safeParse(req.body);
@@ -262,8 +266,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (body.data.scheduledFor) {
       updateData.scheduledFor = new Date(body.data.scheduledFor);
     }
-    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.youtubeVideoMode !== undefined || body.data.youtubeVideoUrl !== undefined || body.data.youtubeThumbnailUrl !== undefined || body.data.pixelfedSensitive !== undefined || body.data.pixelfedVisibility !== undefined || body.data.youtubeVisibility !== undefined || body.data.youtubeTags !== undefined || body.data.youtubeMadeForKids !== undefined || body.data.linkedinVisibility !== undefined || body.data.perAccount !== undefined) {
-      const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; youtubeType?: string; youtubeVideoMode?: string; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; pixelfedSensitive?: boolean; pixelfedVisibility?: string; youtubeVisibility?: string; youtubeTags?: string[]; youtubeMadeForKids?: boolean; linkedinVisibility?: string; perAccount?: Record<string, unknown> };
+    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.youtubeVideoMode !== undefined || body.data.youtubeVideoUrl !== undefined || body.data.youtubeThumbnailUrl !== undefined || body.data.pixelfedSensitive !== undefined || body.data.pixelfedVisibility !== undefined || body.data.youtubeVisibility !== undefined || body.data.youtubeTags !== undefined || body.data.youtubeMadeForKids !== undefined || body.data.linkedinVisibility !== undefined || body.data.blueskyLanguage !== undefined || body.data.blueskyContentWarning !== undefined || body.data.perAccount !== undefined) {
+      const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; youtubeType?: string; youtubeVideoMode?: string; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; pixelfedSensitive?: boolean; pixelfedVisibility?: string; youtubeVisibility?: string; youtubeTags?: string[]; youtubeMadeForKids?: boolean; linkedinVisibility?: string; blueskyLanguage?: string; blueskyContentWarning?: string; perAccount?: Record<string, unknown> };
       updateData.content = JSON.stringify({
         ...existing,
         ...(body.data.text !== undefined ? { text: body.data.text } : {}),
@@ -279,6 +283,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         ...(body.data.youtubeTags !== undefined ? { youtubeTags: body.data.youtubeTags } : {}),
         ...(body.data.youtubeMadeForKids !== undefined ? { youtubeMadeForKids: body.data.youtubeMadeForKids } : {}),
         ...(body.data.linkedinVisibility !== undefined ? { linkedinVisibility: body.data.linkedinVisibility } : {}),
+        ...(body.data.blueskyLanguage !== undefined ? { blueskyLanguage: body.data.blueskyLanguage } : {}),
+        ...(body.data.blueskyContentWarning !== undefined ? { blueskyContentWarning: body.data.blueskyContentWarning } : {}),
         ...(body.data.perAccount !== undefined ? { perAccount: body.data.perAccount } : {}),
       });
     }

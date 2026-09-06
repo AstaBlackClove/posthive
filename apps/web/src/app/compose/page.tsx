@@ -18,6 +18,7 @@ import { YoutubeFields } from "../../components/composer/YoutubeFields";
 import { PinterestFields } from "../../components/composer/PinterestFields";
 import { PixelfedFields } from "../../components/composer/PixelfedFields";
 import { LinkedinFields } from "../../components/composer/LinkedinFields";
+import { BlueskyFields } from "../../components/composer/BlueskyFields";
 import { FirstComment } from "../../components/composer/FirstComment";
 import { WarningsBar } from "../../components/composer/WarningsBar";
 import { MediaSection } from "../../components/composer/MediaSection";
@@ -60,6 +61,7 @@ export default function ComposePage() {
   const [pixelfedSensitive, setPixelfedSensitive] = useState(false);
   const [pixelfedVisibility, setPixelfedVisibility] = useState<"public" | "unlisted" | "private">("public");
   const [linkedinVisibility, setLinkedinVisibility] = useState<"PUBLIC" | "CONNECTIONS">("PUBLIC");
+  const [blueskyContentWarning, setBlueskyContentWarning] = useState("");
 const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -485,6 +487,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setPinterestTitle(""); setPinterestDescription("");
     setPixelfedSensitive(false); setPixelfedVisibility("public");
     setLinkedinVisibility("PUBLIC");
+    setBlueskyContentWarning("");
     setPerAccountOverrides({}); setShowCustomize(false); setUploadError(null);
     mediaItems.forEach(m => URL.revokeObjectURL(m.previewUrl));
     setMediaItems([]); setAltTexts([]);
@@ -517,6 +520,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected && youtubeMadeForKids ? { youtubeMadeForKids } : {}),
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(linkedinSelected ? { linkedinVisibility } : {}),
+            ...(blueskySelected && blueskyContentWarning ? { blueskyContentWarning } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -562,6 +566,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected && youtubeMadeForKids ? { youtubeMadeForKids } : {}),
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(linkedinSelected ? { linkedinVisibility } : {}),
+            ...(blueskySelected && blueskyContentWarning ? { blueskyContentWarning } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -1151,6 +1156,13 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           {linkedinSelected && !loadingAccounts && (
             <LinkedinFields
               linkedinVisibility={linkedinVisibility} onVisibilityChange={setLinkedinVisibility}
+            />
+          )}
+
+          {/* Bluesky — language + content warning */}
+          {blueskySelected && !loadingAccounts && (
+            <BlueskyFields
+              blueskyContentWarning={blueskyContentWarning} onContentWarningChange={setBlueskyContentWarning}
             />
           )}
 

@@ -10,6 +10,7 @@ import { YoutubeFields } from "./composer/YoutubeFields";
 import { PinterestFields } from "./composer/PinterestFields";
 import { PixelfedFields } from "./composer/PixelfedFields";
 import { LinkedinFields } from "./composer/LinkedinFields";
+import { BlueskyFields } from "./composer/BlueskyFields";
 import { FirstComment } from "./composer/FirstComment";
 import { WarningsBar } from "./composer/WarningsBar";
 import { MediaSection } from "./composer/MediaSection";
@@ -33,12 +34,12 @@ interface Props {
   open: boolean;
   job: EditableJob;
   accounts: Account[];
-  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS") => Promise<void>;
+  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string) => Promise<void>;
   onClose: () => void;
 }
 
 export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) {
-  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; youtubeVideoMode?: "upload" | "url"; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; perAccount?: Record<string, PerAccountOverride>; pixelfedSensitive?: boolean; pixelfedVisibility?: "public" | "unlisted" | "private"; linkedinVisibility?: "PUBLIC" | "CONNECTIONS" };
+  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; youtubeVideoMode?: "upload" | "url"; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; perAccount?: Record<string, PerAccountOverride>; pixelfedSensitive?: boolean; pixelfedVisibility?: "public" | "unlisted" | "private"; linkedinVisibility?: "PUBLIC" | "CONNECTIONS"; blueskyContentWarning?: string };
 
   const [text, setText] = useState(parsedContent.text);
   const [commentText, setCommentText] = useState(job.commentText ?? "");
@@ -105,6 +106,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const [pixelfedSensitive, setPixelfedSensitive] = useState(parsedContent.pixelfedSensitive ?? false);
   const [pixelfedVisibility, setPixelfedVisibility] = useState<"public" | "unlisted" | "private">(parsedContent.pixelfedVisibility ?? "public");
   const [linkedinVisibility, setLinkedinVisibility] = useState<"PUBLIC" | "CONNECTIONS">(parsedContent.linkedinVisibility ?? "PUBLIC");
+  const [blueskyContentWarning, setBlueskyContentWarning] = useState(parsedContent.blueskyContentWarning ?? "");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -298,7 +300,8 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     setSaving(true); setSaveError(null);
     try {
       const hasLinkedin = selectedAccounts.some(a => a.platform === "linkedin");
-      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined, hasYoutube ? youtubeVideoMode : undefined, hasYoutube ? (youtubeVideoMode === "url" ? youtubeVideoUrl.trim() : "") : undefined, hasYoutube && youtubeThumbnailUrl ? youtubeThumbnailUrl : undefined, pixelfedSelected ? pixelfedSensitive : undefined, pixelfedSelected ? pixelfedVisibility : undefined, hasYoutube ? youtubeVisibility : undefined, hasYoutube && youtubeTags.trim() ? youtubeTags.split(",").map(t => t.trim()).filter(Boolean) : undefined, hasYoutube ? youtubeMadeForKids : undefined, hasLinkedin ? linkedinVisibility : undefined);
+      const hasBluesky = selectedAccounts.some(a => a.platform === "bluesky");
+      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined, hasYoutube ? youtubeVideoMode : undefined, hasYoutube ? (youtubeVideoMode === "url" ? youtubeVideoUrl.trim() : "") : undefined, hasYoutube && youtubeThumbnailUrl ? youtubeThumbnailUrl : undefined, pixelfedSelected ? pixelfedSensitive : undefined, pixelfedSelected ? pixelfedVisibility : undefined, hasYoutube ? youtubeVisibility : undefined, hasYoutube && youtubeTags.trim() ? youtubeTags.split(",").map(t => t.trim()).filter(Boolean) : undefined, hasYoutube ? youtubeMadeForKids : undefined, hasLinkedin ? linkedinVisibility : undefined, hasBluesky ? (blueskyContentWarning || undefined) : undefined);
       onClose();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message.replace(/^API PATCH.*→ \d+: /, "") : "Save failed");
@@ -613,6 +616,12 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           {linkedinSelected && (
             <LinkedinFields
               linkedinVisibility={linkedinVisibility} onVisibilityChange={setLinkedinVisibility}
+            />
+          )}
+
+          {blueskySelected && (
+            <BlueskyFields
+              blueskyContentWarning={blueskyContentWarning} onContentWarningChange={setBlueskyContentWarning}
             />
           )}
 

@@ -63,6 +63,8 @@ export interface PlatformAdapter {
       pixelfedSensitive?: boolean;   // Pixelfed: blur media behind content warning
       pixelfedVisibility?: "public" | "unlisted" | "private"; // Pixelfed: audience
       linkedinVisibility?: "PUBLIC" | "CONNECTIONS"; // LinkedIn: post audience
+      blueskyLanguage?: string;          // Bluesky: BCP-47 language tag e.g. "en"
+      blueskyContentWarning?: string;    // Bluesky: self-label e.g. "sexual", "nudity", "porn", "gore"
     }
   ): Promise<PostResult>;
 

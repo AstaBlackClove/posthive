@@ -146,7 +146,7 @@ export const blueskyAdapter: PlatformAdapter = {
 
   async createPost(
     account: Account,
-    content: { text: string; mediaUrls: string[]; altTexts?: string[] }
+    content: { text: string; mediaUrls: string[]; altTexts?: string[]; blueskyLanguage?: string; blueskyContentWarning?: string }
   ): Promise<PostResult> {
     const agent = await buildAgent(account);
 
@@ -171,6 +171,13 @@ export const blueskyAdapter: PlatformAdapter = {
     const response = await agent.post({
       text: content.text,
       ...(embed ? { embed } : {}),
+      ...(content.blueskyLanguage ? { langs: [content.blueskyLanguage] } : {}),
+      ...(content.blueskyContentWarning ? {
+        labels: {
+          $type: "com.atproto.label.defs#selfLabels",
+          values: [{ val: content.blueskyContentWarning }],
+        },
+      } : {}),
     });
 
     const replyContext: BlueskyReplyContext = { uri: response.uri, cid: response.cid };
