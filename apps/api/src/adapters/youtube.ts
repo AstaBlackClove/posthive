@@ -182,7 +182,11 @@ export const youtubeAdapter: PlatformAdapter = {
           ? youtubeThumbnailUrl
           : `${PUBLIC_API_URL2}${youtubeThumbnailUrl}`;
 
+        console.log(`[youtube] fetching thumbnail from ${thumbUrl}`);
         const thumbRes = await fetch(thumbUrl);
+        const contentType = thumbRes.headers.get("content-type") ?? "unknown";
+        const contentLength = thumbRes.headers.get("content-length") ?? "unknown";
+        console.log(`[youtube] thumbnail fetch status=${thumbRes.status} content-type=${contentType} content-length=${contentLength}`);
         if (!thumbRes.ok || !thumbRes.body) {
           console.warn(`[youtube] failed to fetch thumbnail from ${thumbUrl}: ${thumbRes.status}`);
         } else {
@@ -194,11 +198,11 @@ export const youtubeAdapter: PlatformAdapter = {
           const { Readable } = await import("node:stream");
           const stream = Readable.fromWeb(thumbRes.body as import("node:stream/web").ReadableStream);
 
-          await yt.thumbnails.set({
+          const thumbSetRes = await yt.thumbnails.set({
             videoId: video.id,
-            media: { body: stream },
+            media: { mimeType: contentType.split(";")[0].trim(), body: stream },
           });
-          console.log(`[youtube] thumbnail set for video ${video.id}`);
+          console.log(`[youtube] thumbnail set for video ${video.id} — API status=${thumbSetRes.status} kind=${(thumbSetRes.data as { items?: { kind?: string }[] }).items?.[0]?.kind ?? "n/a"}`);
         }
       } catch (err: unknown) {
         // Non-fatal — video is already live
