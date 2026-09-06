@@ -193,7 +193,7 @@ export function MediaSection({
             </svg>
             {uploading ? "Uploading…" : video ? "Change YouTube video" : "Add YouTube video"}
           </label>
-          {video && <span className="text-xs" style={{ color: "#4ade80" }}>✓ {video.name}</span>}
+          {video && <span className="text-xs" style={{ color: "#4ade80" }}>✓ Video ready</span>}
           <p className="text-[11px]" style={{ color: "#555" }}>Max {maxVideoSizeMb ?? 100} MB</p>
         </div>
       )}

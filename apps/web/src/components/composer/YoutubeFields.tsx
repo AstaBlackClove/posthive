@@ -217,7 +217,7 @@ export function YoutubeFields({
       </div>
 
       {video && youtubeVideoMode === "upload" && (
-        <p className="text-xs mt-3" style={{ color: "#4ade80" }}>✓ {video.name}</p>
+        <p className="text-xs mt-3" style={{ color: "#4ade80" }}>✓ Video ready</p>
       )}
     </div>
   );

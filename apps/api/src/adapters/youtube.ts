@@ -202,7 +202,7 @@ export const youtubeAdapter: PlatformAdapter = {
             videoId: video.id,
             media: { mimeType: contentType.split(";")[0].trim(), body: stream },
           });
-          console.log(`[youtube] thumbnail set for video ${video.id} — API status=${thumbSetRes.status} kind=${(thumbSetRes.data as { items?: { kind?: string }[] }).items?.[0]?.kind ?? "n/a"}`);
+          console.log(`[youtube] thumbnail set for video ${video.id} — API status=${thumbSetRes.status} kind=${(thumbSetRes.data as { kind?: string }).kind ?? "n/a"}`);
         }
       } catch (err: unknown) {
         // Non-fatal — video is already live
