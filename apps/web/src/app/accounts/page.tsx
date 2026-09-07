@@ -1335,8 +1335,6 @@ export default function AccountsPage() {
                 <p className="font-semibold text-sm" style={{ color: TEXT }}>Pinterest</p>
                 <p className="text-xs" style={{ color: MUTED }}>OAuth 2.0 · image required</p>
               </div>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>⚠ Unavailable</span>
             </div>
             <div className="p-5 space-y-3">
               {!loading && pinterestAccounts.length > 0 && (
@@ -1346,15 +1344,13 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              <button disabled
-                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+              <button
+                onClick={() => { window.location.href = RECONNECT_URLS.pinterest; }}
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl hover:bg-gray-100 transition-colors"
                 style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
                 <PlatformIcon platform="pinterest" size={16} />
                 Connect Pinterest
               </button>
-              <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
-                ⚠ Cannot connect — awaiting Pinterest Standard access approval.
-              </p>
             </div>
           </div>
 
