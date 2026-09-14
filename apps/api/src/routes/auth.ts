@@ -30,8 +30,8 @@ const APP_SECRET = process.env.THREADS_APP_SECRET!;
 const REDIRECT_URI = process.env.THREADS_REDIRECT_URI!;
 const WEB_URL = process.env.WEB_URL ?? "http://localhost:3000";
 
-const IG_APP_ID = process.env.INSTAGRAM_APP_ID!;
-const IG_APP_SECRET = process.env.INSTAGRAM_APP_SECRET!;
+const IG_APP_ID = process.env.INSTAGRAM_APP_ID!.trim();
+const IG_APP_SECRET = process.env.INSTAGRAM_APP_SECRET!.trim();
 const IG_REDIRECT_URI = process.env.INSTAGRAM_REDIRECT_URI!;
 
 const LI_CLIENT_ID = process.env.LINKEDIN_CLIENT_ID!;
@@ -337,7 +337,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     let expiresAt: Date;
     try {
       console.log(`[instagram oauth] ll-token exchange — app_id=${IG_APP_ID} secret_set=${!!IG_APP_SECRET} secret_len=${IG_APP_SECRET?.length ?? 0} short_token_prefix=${shortToken.slice(0, 8)}`);
-      const llUrl = `https://graph.instagram.com/access_token?${new URLSearchParams({ grant_type: "ig_exchange_token", client_id: IG_APP_ID, client_secret: IG_APP_SECRET, access_token: shortToken })}`;
+      const llUrl = `https://graph.instagram.com/access_token?${new URLSearchParams({ grant_type: "ig_exchange_token", client_secret: IG_APP_SECRET, access_token: shortToken.trim() })}`;
       const llRes = await fetch(llUrl);
       const llText = await llRes.text();
       console.log(`[instagram oauth] ll-token status=${llRes.status} body=${llText.slice(0, 300)}`);
