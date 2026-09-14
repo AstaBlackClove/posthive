@@ -930,6 +930,7 @@ export default function AccountsPage() {
 
   const [showMastodonDialog, setShowMastodonDialog] = useState(false);
   const [showPixelfedDialog, setShowPixelfedDialog] = useState(false);
+  const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
 
   const isCancelled = planStatus?.planStatus === "cancelled";
   const atLimit = planStatus !== null && !isCancelled && accounts.length >= planStatus.maxAccounts;
@@ -1106,12 +1107,14 @@ export default function AccountsPage() {
                   {threadsAccounts.length > 0 ? "Add another Threads account" : "Connect with Threads"}
                 </button>
               ) : (
-                <a href={THREADS_AUTH_URL}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                <button
+                  onClick={() => { setConnectingPlatform("threads"); window.location.href = THREADS_AUTH_URL; }}
+                  disabled={connectingPlatform === "threads"}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="threads" size={16} />
-                  {threadsAccounts.length > 0 ? "Add another Threads account" : "Connect with Threads"}
-                </a>
+                  {connectingPlatform === "threads" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="threads" size={16} />}
+                  {connectingPlatform === "threads" ? "Connecting…" : threadsAccounts.length > 0 ? "Add another Threads account" : "Connect with Threads"}
+                </button>
               )}
             </div>
           </div>
@@ -1145,12 +1148,14 @@ export default function AccountsPage() {
                   {instagramAccounts.length > 0 ? "Add another Instagram account" : "Connect Instagram"}
                 </button>
               ) : (
-                <a href={INSTAGRAM_AUTH_URL}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                <button
+                  onClick={() => { setConnectingPlatform("instagram"); window.location.href = INSTAGRAM_AUTH_URL; }}
+                  disabled={connectingPlatform === "instagram"}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="instagram" size={16} />
-                  {instagramAccounts.length > 0 ? "Add another Instagram account" : "Connect Instagram"}
-                </a>
+                  {connectingPlatform === "instagram" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="instagram" size={16} />}
+                  {connectingPlatform === "instagram" ? "Connecting…" : instagramAccounts.length > 0 ? "Add another Instagram account" : "Connect Instagram"}
+                </button>
               )}
             </div>
           </div>
@@ -1184,12 +1189,14 @@ export default function AccountsPage() {
                   {linkedinAccounts.length > 0 ? "Add another LinkedIn account" : "Connect LinkedIn"}
                 </button>
               ) : (
-                <a href={LINKEDIN_AUTH_URL}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                <button
+                  onClick={() => { setConnectingPlatform("linkedin"); window.location.href = LINKEDIN_AUTH_URL; }}
+                  disabled={connectingPlatform === "linkedin"}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="linkedin" size={16} />
-                  {linkedinAccounts.length > 0 ? "Add another LinkedIn account" : "Connect LinkedIn"}
-                </a>
+                  {connectingPlatform === "linkedin" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="linkedin" size={16} />}
+                  {connectingPlatform === "linkedin" ? "Connecting…" : linkedinAccounts.length > 0 ? "Add another LinkedIn account" : "Connect LinkedIn"}
+                </button>
               )}
               <p className="text-xs">
                 Requires a LinkedIn developer app with w_member_social permission
@@ -1224,12 +1231,14 @@ export default function AccountsPage() {
                   {youtubeAccounts.length > 0 ? "Add another YouTube channel" : "Connect YouTube"}
                 </button>
               ) : (
-                <a href={YOUTUBE_AUTH_URL}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                <button
+                  onClick={() => { setConnectingPlatform("youtube"); window.location.href = YOUTUBE_AUTH_URL; }}
+                  disabled={connectingPlatform === "youtube"}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="youtube" size={16} />
-                  {youtubeAccounts.length > 0 ? "Add another YouTube channel" : "Connect YouTube"}
-                </a>
+                  {connectingPlatform === "youtube" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="youtube" size={16} />}
+                  {connectingPlatform === "youtube" ? "Connecting…" : youtubeAccounts.length > 0 ? "Add another YouTube channel" : "Connect YouTube"}
+                </button>
               )}
             </div>
           </div>
@@ -1263,12 +1272,14 @@ export default function AccountsPage() {
                   {facebookAccounts.length > 0 ? "Add another Facebook Page" : "Connect Facebook Page"}
                 </button>
               ) : (
-                <a href={FACEBOOK_AUTH_URL}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                <button
+                  onClick={() => { setConnectingPlatform("facebook"); window.location.href = FACEBOOK_AUTH_URL; }}
+                  disabled={connectingPlatform === "facebook"}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="facebook" size={16} />
-                  {facebookAccounts.length > 0 ? "Add another Facebook Page" : "Connect Facebook Page"}
-                </a>
+                  {connectingPlatform === "facebook" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="facebook" size={16} />}
+                  {connectingPlatform === "facebook" ? "Connecting…" : facebookAccounts.length > 0 ? "Add another Facebook Page" : "Connect Facebook Page"}
+                </button>
               )}
             </div>
           </div>
@@ -1363,11 +1374,12 @@ export default function AccountsPage() {
                 </div>
               )}
               <button
-                onClick={() => { window.location.href = RECONNECT_URLS.pinterest; }}
-                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl hover:bg-gray-100 transition-colors"
+                onClick={() => { setConnectingPlatform("pinterest"); window.location.href = RECONNECT_URLS.pinterest; }}
+                disabled={connectingPlatform === "pinterest"}
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                <PlatformIcon platform="pinterest" size={16} />
-                Connect Pinterest
+                {connectingPlatform === "pinterest" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="pinterest" size={16} />}
+                {connectingPlatform === "pinterest" ? "Connecting…" : "Connect Pinterest"}
               </button>
             </div>
           </div>
@@ -1514,12 +1526,14 @@ export default function AccountsPage() {
                   {twitterAccounts.length > 0 ? "Add another X account" : "Connect X (Twitter)"}
                 </button>
               ) : (
-                <a href={TWITTER_AUTH_URL}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                <button
+                  onClick={() => { setConnectingPlatform("twitter"); window.location.href = TWITTER_AUTH_URL; }}
+                  disabled={connectingPlatform === "twitter"}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="twitter" size={16} />
-                  {twitterAccounts.length > 0 ? "Add another X account" : "Connect X (Twitter)"}
-                </a>
+                  {connectingPlatform === "twitter" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="twitter" size={16} />}
+                  {connectingPlatform === "twitter" ? "Connecting…" : twitterAccounts.length > 0 ? "Add another X account" : "Connect X (Twitter)"}
+                </button>
               )}
               {allowTwitter && planStatus && planStatus.maxTwitterPostsPerMonth && planStatus.maxTwitterPostsPerMonth > 0 ? (() => {
                 const used = planStatus.twitterPostsThisMonth;
@@ -1579,12 +1593,14 @@ export default function AccountsPage() {
                       {discordAccounts.length > 0 ? "Add another channel" : "Connect Discord"}
                     </button>
                   ) : (
-                    <a href={DISCORD_AUTH_URL}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                    <button
+                      onClick={() => { setConnectingPlatform("discord"); window.location.href = DISCORD_AUTH_URL; }}
+                      disabled={connectingPlatform === "discord"}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
                       style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                      <PlatformIcon platform="discord" size={16} />
-                      {discordAccounts.length > 0 ? "Add another channel" : "Connect Discord"}
-                    </a>
+                      {connectingPlatform === "discord" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="discord" size={16} />}
+                      {connectingPlatform === "discord" ? "Connecting…" : discordAccounts.length > 0 ? "Add another channel" : "Connect Discord"}
+                    </button>
                   )}
                   <p className="text-xs" style={{ color: MUTED }}>
                     Post to Discord channels · text, images, and video
@@ -1624,12 +1640,14 @@ export default function AccountsPage() {
                       {tumblrAccounts.length > 0 ? "Add another blog" : "Connect Tumblr"}
                     </button>
                   ) : (
-                    <a href={TUMBLR_AUTH_URL}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                    <button
+                      onClick={() => { setConnectingPlatform("tumblr"); window.location.href = TUMBLR_AUTH_URL; }}
+                      disabled={connectingPlatform === "tumblr"}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
                       style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                      <PlatformIcon platform="tumblr" size={16} />
-                      {tumblrAccounts.length > 0 ? "Add another blog" : "Connect Tumblr"}
-                    </a>
+                      {connectingPlatform === "tumblr" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="tumblr" size={16} />}
+                      {connectingPlatform === "tumblr" ? "Connecting…" : tumblrAccounts.length > 0 ? "Add another blog" : "Connect Tumblr"}
+                    </button>
                   )}
                   <p className="text-xs" style={{ color: MUTED }}>
                     Posts to your primary Tumblr blog · text and images
@@ -1737,12 +1755,14 @@ export default function AccountsPage() {
                   {tiktokAccounts.length > 0 ? "Add another TikTok account" : "Connect TikTok"}
                 </button>
               ) : (
-                <a href={TIKTOK_AUTH_URL}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                <button
+                  onClick={() => { setConnectingPlatform("tiktok"); window.location.href = TIKTOK_AUTH_URL; }}
+                  disabled={connectingPlatform === "tiktok"}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  <PlatformIcon platform="tiktok" size={16} />
-                  {tiktokAccounts.length > 0 ? "Add another TikTok account" : "Connect TikTok"}
-                </a>
+                  {connectingPlatform === "tiktok" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="tiktok" size={16} />}
+                  {connectingPlatform === "tiktok" ? "Connecting…" : tiktokAccounts.length > 0 ? "Add another TikTok account" : "Connect TikTok"}
+                </button>
               )}
               {TIKTOK_REVIEW_PENDING && (
                 <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
