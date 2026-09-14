@@ -39,6 +39,7 @@ interface Account {
   createdAt: string;
   expiresAt: string | null;
   npub?: string; // Nostr only — public key in bech32, safe to expose
+  shortLivedFallback?: boolean; // Instagram only — long-lived exchange failed (Meta bug); token expires in ~1h
 }
 
 const PLATFORM_META: Record<string, { label: string; brand: string }> = {
@@ -134,7 +135,12 @@ function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMo
   isAdmin?: boolean;
 }) {
   const [refreshing, setRefreshing] = useState(false);
-  const status = tokenStatus(account.platform, account.expiresAt);
+  // Short-lived fallback tokens bypass the normal auto-refresh path
+  const isShortLived = account.shortLivedFallback === true;
+  const shortLivedExpired = isShortLived && account.expiresAt != null && new Date(account.expiresAt).getTime() < Date.now();
+  const status = isShortLived
+    ? (shortLivedExpired ? "expired" : "soon")
+    : tokenStatus(account.platform, account.expiresAt);
   const reconnectUrl = RECONNECT_URLS[account.platform];
 
   async function refreshNostrAvatar() {
@@ -218,7 +224,9 @@ function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMo
         <div className="flex items-center justify-between gap-2 px-3 py-2"
           style={{ backgroundColor: status === "expired" ? "#1f0a0a" : "#1c1209", borderTop: `1px solid ${status === "expired" ? "#7f1d1d" : "#78560a"}` }}>
           <p className="text-xs" style={{ color: status === "expired" ? "#f87171" : "#fbbf24" }}>
-            {status === "expired" ? "Token expired — posts will fail" : "Token expires soon — reconnect to avoid interruption"}
+            {status === "expired"
+              ? (isShortLived ? "Instagram token expired — please reconnect to continue posting" : "Token expired — posts will fail")
+              : (isShortLived ? "Instagram token expires in ~1 hour (Meta limitation) — reconnect to get a long-lived token" : "Token expires soon — reconnect to avoid interruption")}
           </p>
           <a href={reconnectUrl}
             className="text-xs font-semibold px-2.5 py-1 rounded-lg flex-shrink-0 transition-opacity hover:opacity-80"

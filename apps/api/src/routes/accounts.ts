@@ -178,6 +178,12 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
           return { ...a, npub: nip19.npubEncode(npub) };
         } catch { /* fall through */ }
       }
+      if (a.platform === "instagram") {
+        try {
+          const { shortLivedFallback } = JSON.parse(decrypt(credentials)) as { shortLivedFallback?: boolean };
+          if (shortLivedFallback) return { ...a, shortLivedFallback: true };
+        } catch { /* fall through */ }
+      }
       return a;
     }));
   });
