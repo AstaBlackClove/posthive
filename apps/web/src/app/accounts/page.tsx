@@ -1263,7 +1263,7 @@ export default function AccountsPage() {
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-sm" style={{ color: TEXT }}>Facebook Pages</p>
-                <p className="text-xs" style={{ color: MUTED }}>Requires a Facebook Page — personal profiles not supported</p>
+                <p className="text-xs" style={{ color: MUTED }}>Requires a Facebook Page personal profiles not supported</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
@@ -1729,7 +1729,7 @@ export default function AccountsPage() {
                 Connect Google Business Profile
               </button>
               <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
-                ⚠ Cannot connect — awaiting Google Business Profile API approval.
+                ⚠ Cannot connect awaiting Google Business Profile API approval.
               </p>
             </div>
           </div>
