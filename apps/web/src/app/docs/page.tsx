@@ -715,6 +715,18 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
                 <li className="doc-li">Click <strong>Connect Instagram</strong> on the Accounts page.</li>
               </ol>
 
+              <h4 className="doc-h3">Token lifetimes</h4>
+              <p className="doc-p">
+                On a successful connection, Posthive exchanges your short-lived token (1 hour) for a <strong>long-lived token (60 days)</strong> that is automatically refreshed in the background — you should never need to reconnect.
+              </p>
+              <div className="doc-warn">
+                <strong>Known Meta API bug — "Unsupported request - method type: get" (code 100):</strong> A subset of Instagram accounts trigger this error during the long-lived token exchange, regardless of HTTP method or request parameters. This is a server-side bug on Meta&apos;s end (<a className="doc-a" href="https://developers.facebook.com/community/threads/1134548274667597/" target="_blank" rel="noreferrer">reported on Meta&apos;s developer forum</a>, status: unresolved).
+                <br /><br />
+                <strong>What happens:</strong> The connection still succeeds, but the token expires in ~1 hour instead of 60 days. The Accounts page will show an amber warning banner on the affected account. Scheduled posts will fail after the token expires.
+                <br /><br />
+                <strong>Workaround:</strong> Disconnect and reconnect the account — occasionally the exchange succeeds on a retry. If the warning banner reappears after reconnecting, the account is still affected by the Meta bug and there is no further action you can take until Meta resolves it on their end.
+              </div>
+
               {/* ── LinkedIn ── */}
               <h3 className="doc-h2" id="linkedin">LinkedIn</h3>
               <p className="doc-p">
