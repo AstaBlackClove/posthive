@@ -337,7 +337,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     let expiresAt: Date;
     try {
       console.log(`[instagram oauth] ll-token exchange — app_id=${IG_APP_ID} secret_set=${!!IG_APP_SECRET} secret_len=${IG_APP_SECRET?.length ?? 0} short_token_prefix=${shortToken.slice(0, 8)}`);
-      const llUrl = `https://graph.instagram.com/access_token?${new URLSearchParams({ grant_type: "ig_exchange_token", client_secret: IG_APP_SECRET, access_token: shortToken })}`;
+      const llUrl = `https://graph.instagram.com/access_token?${new URLSearchParams({ grant_type: "ig_exchange_token", client_id: IG_APP_ID, client_secret: IG_APP_SECRET, access_token: shortToken })}`;
       const llRes = await fetch(llUrl);
       const llText = await llRes.text();
       console.log(`[instagram oauth] ll-token status=${llRes.status} body=${llText.slice(0, 300)}`);
