@@ -332,22 +332,28 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
     }
 
-    // Exchange for long-lived token (~60 days)
-    let longToken: string;
-    let expiresAt: Date;
+    // Exchange for long-lived token (~60 days).
+    // Known Meta bug: graph.instagram.com/access_token returns IGApiException code 100
+    // for certain accounts regardless of method. Fall back to short-lived token (1h)
+    // so the connection succeeds; posts will fail after expiry and user must reconnect.
+    let longToken: string = shortToken;
+    let expiresAt: Date = new Date(Date.now() + 55 * 60 * 1000); // 55 min fallback
     try {
-      console.log(`[instagram oauth] ll-token exchange — app_id=${IG_APP_ID} secret_set=${!!IG_APP_SECRET} secret_len=${IG_APP_SECRET?.length ?? 0} short_token_prefix=${shortToken.slice(0, 8)}`);
       const llUrl = `https://graph.instagram.com/access_token?${new URLSearchParams({ grant_type: "ig_exchange_token", client_secret: IG_APP_SECRET, access_token: shortToken.trim() })}`;
       const llRes = await fetch(llUrl);
       const llText = await llRes.text();
-      console.log(`[instagram oauth] ll-token status=${llRes.status} body=${llText.slice(0, 300)}`);
-      if (!llRes.ok) throw new Error(llText);
-      const llData = JSON.parse(llText) as { access_token: string; expires_in: number };
-      longToken = llData.access_token;
-      expiresAt = new Date(Date.now() + (llData.expires_in - 86400) * 1000);
+      if (llRes.ok) {
+        const llData = JSON.parse(llText) as { access_token: string; expires_in: number };
+        longToken = llData.access_token;
+        expiresAt = new Date(Date.now() + (llData.expires_in - 86400) * 1000);
+        console.log(`[instagram oauth] long-lived token obtained, expires ${expiresAt.toISOString()}`);
+      } else {
+        // Meta API bug: "Unsupported request - method type: get" for certain accounts.
+        // Proceed with short-lived token; user will need to reconnect after ~1h.
+        console.warn(`[instagram oauth] long-lived exchange failed (Meta bug), using short-lived token: ${llText.slice(0, 200)}`);
+      }
     } catch (err) {
-      console.error("[instagram oauth] long-lived token error:", err);
-      return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
+      console.warn("[instagram oauth] long-lived exchange error, using short-lived token:", err);
     }
 
     // Fetch profile
