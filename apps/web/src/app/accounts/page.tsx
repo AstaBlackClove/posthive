@@ -830,7 +830,19 @@ export default function AccountsPage() {
       window.history.replaceState({}, "", "/accounts");
     }
     if (oauthError) {
-      toastError(decodeURIComponent(oauthError));
+      const raw = decodeURIComponent(oauthError);
+      const FRIENDLY: Record<string, string> = {
+        instagram_personal_account: "Instagram personal accounts are not supported. Go to Instagram → Settings → Account → Switch to Professional Account (Creator or Business), then try again.",
+        token_exchange_failed: "Connection failed. Please try again.",
+        "User is not an Instagram Business Account": "Instagram requires a Creator or Professional account. Go to Instagram → Settings → Account → Switch to Professional Account, then try again.",
+        "Invalid OAuth access token": "Connection expired or was revoked. Please try connecting again.",
+      };
+      const msg = FRIENDLY[raw] ?? (
+        raw.toLowerCase().includes("business") || raw.toLowerCase().includes("professional") || raw.toLowerCase().includes("creator")
+          ? `Instagram requires a Creator or Professional account. ${raw}`
+          : raw
+      );
+      toastError(msg);
       window.history.replaceState({}, "", "/accounts");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1127,7 +1139,7 @@ export default function AccountsPage() {
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-sm" style={{ color: TEXT }}>Instagram</p>
-                <p className="text-xs" style={{ color: MUTED }}>Instagram Login · images required</p>
+                <p className="text-xs" style={{ color: MUTED }}>Requires a Creator or Professional account · images required</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
@@ -1251,7 +1263,7 @@ export default function AccountsPage() {
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-sm" style={{ color: TEXT }}>Facebook Pages</p>
-                <p className="text-xs" style={{ color: MUTED }}>Post to Facebook Pages you manage</p>
+                <p className="text-xs" style={{ color: MUTED }}>Requires a Facebook Page — personal profiles not supported</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>

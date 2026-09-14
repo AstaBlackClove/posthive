@@ -312,8 +312,19 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: form,
       });
-      if (!tokenRes.ok) throw new Error(await tokenRes.text());
-      const tokenData = await tokenRes.json() as { access_token: string; user_id: number };
+      const tokenText = await tokenRes.text();
+      if (!tokenRes.ok) {
+        // Meta returns this when the user connected a personal Instagram account
+        const isPersonalAccount = tokenText.includes("not an Instagram Business") ||
+          tokenText.includes("not a business") ||
+          tokenText.includes("professional") ||
+          tokenText.includes("10140");
+        if (isPersonalAccount) {
+          return reply.redirect(buildRedirect(redirectBase, { error: "instagram_personal_account" }));
+        }
+        throw new Error(tokenText);
+      }
+      const tokenData = JSON.parse(tokenText) as { access_token: string; user_id: number };
       shortToken = tokenData.access_token;
       igUserId = String(tokenData.user_id);
     } catch (err) {
