@@ -67,7 +67,7 @@ const X_CALLBACK_URL = process.env.X_CALLBACK_URL!;
 const PIN_CLIENT_ID     = process.env.PINTEREST_CLIENT_ID!;
 const PIN_CLIENT_SECRET = process.env.PINTEREST_CLIENT_SECRET!;
 const PIN_REDIRECT_URI  = process.env.PINTEREST_REDIRECT_URI!;
-const PIN_SCOPES        = "boards:read,pins:read,pins:write,user_accounts:read";
+const PIN_SCOPES        = "boards:read,boards:write,pins:read,pins:write,user_accounts:read";
 const YOUTUBE_SCOPES = [
   "https://www.googleapis.com/auth/youtube.upload",
   "https://www.googleapis.com/auth/youtube.readonly",
