@@ -41,6 +41,7 @@ import { publicApiRoutes } from "./routes/publicApi.js";
 import { mcpRoutes } from "./routes/mcp.js";
 import { oauthRoutes } from "./routes/oauth.js";
 import { startWorker } from "./lib/worker.js";
+import { rehydrateQueue } from "./lib/rehydrateQueue.js";
 import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
 import { startStatsCron, runStatsCronNow } from "./lib/statsCron.js";
 import { startCleanupCron, setCleanupStorage, runCleanupNow } from "./lib/cleanupCron.js";
@@ -246,6 +247,7 @@ async function main() {
   console.log(`API listening on http://localhost:${PORT}`);
 
   startWorker(storage);
+  rehydrateQueue().catch((e) => console.error("[rehydrate] error:", e));
   startOrphanCleanup(storage);
   startTokenRefreshCron();
   startStatsCron();
