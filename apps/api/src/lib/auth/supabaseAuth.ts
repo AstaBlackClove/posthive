@@ -18,11 +18,46 @@ const userClient = (accessToken: string) => createClient(supabaseUrl, supabaseAn
 });
 
 async function upsertLocalUser(supabaseId: string, email: string, name: string, avatarUrl?: string): Promise<AuthUser> {
-  const user = await prisma.user.upsert({
-    where: { supabaseId },
-    update: { email, name, avatarUrl: avatarUrl ?? null },
-    create: { email, name, supabaseId, avatarUrl: avatarUrl ?? null },
+  const existing = await prisma.user.findUnique({ where: { supabaseId } });
+  if (existing) {
+    const updated = await prisma.user.update({
+      where: { supabaseId },
+      data: { email, name, avatarUrl: avatarUrl ?? null },
+    });
+    // Guard: ensure workspace exists (backfill for users created before workspace feature)
+    if (!updated.activeWorkspaceId) {
+      const hasMembership = await prisma.workspaceMember.findFirst({ where: { userId: updated.id } });
+      if (!hasMembership) {
+        const workspace = await prisma.workspace.create({
+          data: {
+            name: `${name}'s Workspace`,
+            plan: "trialing",
+            planStatus: "trialing",
+            trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+            members: { create: { userId: updated.id, role: "owner" } },
+          },
+        });
+        await prisma.user.update({ where: { id: updated.id }, data: { activeWorkspaceId: workspace.id } });
+        updated.activeWorkspaceId = workspace.id;
+      }
+    }
+    return { id: updated.id, email: updated.email, name: updated.name, avatarUrl: updated.avatarUrl, timezone: updated.timezone ?? "UTC" };
+  }
+
+  // New user — create with workspace in one go
+  const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+  const user = await prisma.user.create({ data: { email, name, supabaseId, avatarUrl: avatarUrl ?? null } });
+  const workspace = await prisma.workspace.create({
+    data: {
+      name: `${name}'s Workspace`,
+      plan: "trialing",
+      planStatus: "trialing",
+      trialEndsAt,
+      members: { create: { userId: user.id, role: "owner" } },
+    },
   });
+  await prisma.user.update({ where: { id: user.id }, data: { activeWorkspaceId: workspace.id } });
+
   return { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, timezone: user.timezone ?? "UTC" };
 }
 
