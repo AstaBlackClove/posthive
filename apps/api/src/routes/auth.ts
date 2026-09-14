@@ -358,39 +358,25 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       console.warn("[instagram oauth] long-lived exchange error, using short-lived token:", err);
     }
 
-    // Fetch profile — try multiple approaches for accounts affected by the Meta bug
+    // Fetch profile. For accounts affected by the Meta bug (shortLivedFallback),
+    // this also fails with code 100 — displayName stays as numeric igUserId in that case.
     let displayName = igUserId;
     let avatarUrl: string | null = null;
-    const profileAttempts = [
-      // Standard: /me with token in query
-      () => fetch(`https://graph.instagram.com/v21.0/me?fields=id,username,profile_picture_url&access_token=${longToken}`),
-      // Alt: /{user_id} instead of /me
-      () => fetch(`https://graph.instagram.com/v21.0/${igUserId}?fields=id,username,profile_picture_url&access_token=${longToken}`),
-      // Alt: Bearer header instead of query param
-      () => fetch(`https://graph.instagram.com/v21.0/me?fields=id,username,profile_picture_url`, {
-        headers: { Authorization: `Bearer ${longToken}` },
-      }),
-    ];
-    for (const attempt of profileAttempts) {
-      try {
-        const profileRes = await attempt();
-        const profileText = await profileRes.text();
-        if (!profileRes.ok) {
-          console.warn(`[instagram oauth] profile fetch failed (${profileRes.status}): ${profileText.slice(0, 200)}`);
-          continue;
-        }
-        const profile = JSON.parse(profileText) as { id?: string; username?: string; profile_picture_url?: string; error?: { message: string } };
-        if (profile.error) {
-          console.warn(`[instagram oauth] profile API error: ${profile.error.message}`);
-          continue;
-        }
+    try {
+      const profileRes = await fetch(
+        `https://graph.instagram.com/v21.0/me?fields=id,username,profile_picture_url&access_token=${longToken}`
+      );
+      const profileText = await profileRes.text();
+      if (!profileRes.ok) {
+        console.warn(`[instagram oauth] profile fetch failed (${profileRes.status}): ${profileText.slice(0, 200)}`);
+      } else {
+        const profile = JSON.parse(profileText) as { id?: string; username?: string; profile_picture_url?: string };
         if (profile.id) igUserId = profile.id;
         displayName = profile.username ?? igUserId;
         avatarUrl = profile.profile_picture_url ?? null;
-        break;
-      } catch (err) {
-        console.warn("[instagram oauth] profile fetch exception:", err);
       }
+    } catch (err) {
+      console.warn("[instagram oauth] profile fetch exception:", err);
     }
     avatarUrl = await downloadAndStoreAvatar(avatarUrl);
 
