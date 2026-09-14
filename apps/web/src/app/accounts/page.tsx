@@ -1087,7 +1087,7 @@ export default function AccountsPage() {
                 <p className="text-xs" style={{ color: MUTED }}>Meta OAuth 2.0</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>⚠ Unavailable</span>
+                style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
             </div>
 
             <div className="p-5 space-y-3">
@@ -1098,15 +1098,21 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              <button disabled
-                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                <PlatformIcon platform="threads" size={16} />
-                Connect with Threads
-              </button>
-              <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
-                ⚠ Cannot connect — awaiting Meta App Review. New connections are blocked until approved.
-              </p>
+              {connectDisabled ? (
+                <button disabled title={limitMsg ?? undefined}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="threads" size={16} />
+                  {threadsAccounts.length > 0 ? "Add another Threads account" : "Connect with Threads"}
+                </button>
+              ) : (
+                <a href={THREADS_AUTH_URL}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="threads" size={16} />
+                  {threadsAccounts.length > 0 ? "Add another Threads account" : "Connect with Threads"}
+                </a>
+              )}
             </div>
           </div>
 
@@ -1121,7 +1127,7 @@ export default function AccountsPage() {
                 <p className="text-xs" style={{ color: MUTED }}>Instagram Login · images required</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>⚠ Unavailable</span>
+                style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
             </div>
             <div className="p-5 space-y-3">
               {!loading && instagramAccounts.length > 0 && (
@@ -1131,15 +1137,21 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              <button disabled
-                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                <PlatformIcon platform="instagram" size={16} />
-                Connect Instagram
-              </button>
-              <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
-                ⚠ Cannot connect — awaiting Meta App Review. New connections are blocked until approved.
-              </p>
+              {connectDisabled ? (
+                <button disabled title={limitMsg ?? undefined}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="instagram" size={16} />
+                  {instagramAccounts.length > 0 ? "Add another Instagram account" : "Connect Instagram"}
+                </button>
+              ) : (
+                <a href={INSTAGRAM_AUTH_URL}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="instagram" size={16} />
+                  {instagramAccounts.length > 0 ? "Add another Instagram account" : "Connect Instagram"}
+                </a>
+              )}
             </div>
           </div>
 
@@ -1233,7 +1245,7 @@ export default function AccountsPage() {
                 <p className="text-xs" style={{ color: MUTED }}>Post to Facebook Pages you manage</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#1c1008", color: "#fb923c", border: "1px solid #7c2d12" }}>⚠ Unavailable</span>
+                style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>Live</span>
             </div>
             <div className="p-5 space-y-3">
               {!loading && facebookAccounts.length > 0 && (
@@ -1243,15 +1255,21 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              <button disabled
-                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                <PlatformIcon platform="facebook" size={16} />
-                Connect Facebook Page
-              </button>
-              <p className="text-xs font-medium" style={{ color: "#fb923c" }}>
-                ⚠ Cannot connect — awaiting Meta App Review. New connections are blocked until approved.
-              </p>
+              {connectDisabled ? (
+                <button disabled title={limitMsg ?? undefined}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="facebook" size={16} />
+                  {facebookAccounts.length > 0 ? "Add another Facebook Page" : "Connect Facebook Page"}
+                </button>
+              ) : (
+                <a href={FACEBOOK_AUTH_URL}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="facebook" size={16} />
+                  {facebookAccounts.length > 0 ? "Add another Facebook Page" : "Connect Facebook Page"}
+                </a>
+              )}
             </div>
           </div>
 
