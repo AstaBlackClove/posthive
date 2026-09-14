@@ -1385,14 +1385,23 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              <button
-                onClick={() => { setConnectingPlatform("pinterest"); window.location.href = RECONNECT_URLS.pinterest; }}
-                disabled={connectingPlatform === "pinterest"}
-                className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                {connectingPlatform === "pinterest" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="pinterest" size={16} />}
-                {connectingPlatform === "pinterest" ? "Connecting…" : "Connect Pinterest"}
-              </button>
+              {connectDisabled ? (
+                <button disabled title={limitMsg ?? undefined}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  <PlatformIcon platform="pinterest" size={16} />
+                  {pinterestAccounts.length > 0 ? "Add another Pinterest account" : "Connect Pinterest"}
+                </button>
+              ) : (
+                <button
+                  onClick={() => { setConnectingPlatform("pinterest"); window.location.href = RECONNECT_URLS.pinterest; }}
+                  disabled={connectingPlatform === "pinterest"}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  {connectingPlatform === "pinterest" ? <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <PlatformIcon platform="pinterest" size={16} />}
+                  {connectingPlatform === "pinterest" ? "Connecting…" : pinterestAccounts.length > 0 ? "Add another Pinterest account" : "Connect Pinterest"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -1759,7 +1768,7 @@ export default function AccountsPage() {
                   ))}
                 </div>
               )}
-              {(!!limitMsg || TIKTOK_REVIEW_PENDING) ? (
+              {(connectDisabled || TIKTOK_REVIEW_PENDING) ? (
                 <button disabled title={TIKTOK_REVIEW_PENDING ? "Available once TikTok app review is approved" : (limitMsg ?? undefined)}
                   className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-xl opacity-40 cursor-not-allowed"
                   style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
