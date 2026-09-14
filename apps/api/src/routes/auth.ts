@@ -365,11 +365,22 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const profileRes = await fetch(
         `https://graph.instagram.com/v21.0/me?fields=id,username,profile_picture_url&access_token=${longToken}`
       );
-      const profile = await profileRes.json() as { id?: string; username?: string; profile_picture_url?: string };
-      if (profile.id) igUserId = profile.id;
-      displayName = profile.username ?? igUserId;
-      avatarUrl = profile.profile_picture_url ?? null;
-    } catch { /* optional */ }
+      const profileText = await profileRes.text();
+      if (!profileRes.ok) {
+        console.warn(`[instagram oauth] profile fetch failed (${profileRes.status}): ${profileText.slice(0, 300)}`);
+      } else {
+        const profile = JSON.parse(profileText) as { id?: string; username?: string; profile_picture_url?: string; error?: { message: string } };
+        if (profile.error) {
+          console.warn(`[instagram oauth] profile API error: ${profile.error.message}`);
+        } else {
+          if (profile.id) igUserId = profile.id;
+          displayName = profile.username ?? igUserId;
+          avatarUrl = profile.profile_picture_url ?? null;
+        }
+      }
+    } catch (err) {
+      console.warn("[instagram oauth] profile fetch exception:", err);
+    }
     avatarUrl = await downloadAndStoreAvatar(avatarUrl);
 
     const credentials = encrypt(JSON.stringify({ accessToken: longToken, userId: igUserId, expiresAt: expiresAt.toISOString(), ...(shortLivedFallback && { shortLivedFallback: true }) }));
