@@ -336,11 +336,9 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     let longToken: string;
     let expiresAt: Date;
     try {
-      const llRes = await fetch("https://graph.instagram.com/access_token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ grant_type: "ig_exchange_token", client_secret: IG_APP_SECRET, access_token: shortToken }),
-      });
+      const llRes = await fetch(
+        `https://graph.instagram.com/access_token?${new URLSearchParams({ grant_type: "ig_exchange_token", client_secret: IG_APP_SECRET, access_token: shortToken })}`,
+      );
       if (!llRes.ok) throw new Error(await llRes.text());
       const llData = await llRes.json() as { access_token: string; expires_in: number };
       longToken = llData.access_token;
