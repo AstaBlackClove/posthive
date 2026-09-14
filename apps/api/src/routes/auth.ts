@@ -358,28 +358,33 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       console.warn("[instagram oauth] long-lived exchange error, using short-lived token:", err);
     }
 
-    // Fetch profile
+    // Fetch profile — try graph.instagram.com first, fall back to api.instagram.com
+    // (short-lived IGAA tokens for certain accounts can't access graph.instagram.com due to Meta bug)
     let displayName = igUserId;
     let avatarUrl: string | null = null;
-    try {
-      const profileRes = await fetch(
-        `https://graph.instagram.com/v21.0/me?fields=id,username,profile_picture_url&access_token=${longToken}`
-      );
-      const profileText = await profileRes.text();
-      if (!profileRes.ok) {
-        console.warn(`[instagram oauth] profile fetch failed (${profileRes.status}): ${profileText.slice(0, 300)}`);
-      } else {
+    for (const profileUrl of [
+      `https://graph.instagram.com/v21.0/me?fields=id,username,profile_picture_url&access_token=${longToken}`,
+      `https://api.instagram.com/v21.0/me?fields=id,username,profile_picture_url&access_token=${longToken}`,
+    ]) {
+      try {
+        const profileRes = await fetch(profileUrl);
+        const profileText = await profileRes.text();
+        if (!profileRes.ok) {
+          console.warn(`[instagram oauth] profile fetch failed (${profileRes.status}) from ${new URL(profileUrl).hostname}: ${profileText.slice(0, 200)}`);
+          continue;
+        }
         const profile = JSON.parse(profileText) as { id?: string; username?: string; profile_picture_url?: string; error?: { message: string } };
         if (profile.error) {
-          console.warn(`[instagram oauth] profile API error: ${profile.error.message}`);
-        } else {
-          if (profile.id) igUserId = profile.id;
-          displayName = profile.username ?? igUserId;
-          avatarUrl = profile.profile_picture_url ?? null;
+          console.warn(`[instagram oauth] profile API error from ${new URL(profileUrl).hostname}: ${profile.error.message}`);
+          continue;
         }
+        if (profile.id) igUserId = profile.id;
+        displayName = profile.username ?? igUserId;
+        avatarUrl = profile.profile_picture_url ?? null;
+        break;
+      } catch (err) {
+        console.warn(`[instagram oauth] profile fetch exception from ${new URL(profileUrl).hostname}:`, err);
       }
-    } catch (err) {
-      console.warn("[instagram oauth] profile fetch exception:", err);
     }
     avatarUrl = await downloadAndStoreAvatar(avatarUrl);
 
