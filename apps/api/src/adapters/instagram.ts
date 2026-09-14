@@ -9,6 +9,7 @@ interface InstagramCredentials {
   accessToken: string;
   userId: string;
   expiresAt?: string;
+  shortLivedFallback?: boolean; // true when long-lived exchange failed; token can't be refreshed
 }
 
 function getCredentials(account: Account): InstagramCredentials {
@@ -38,6 +39,15 @@ async function apiPost<T>(path: string, token: string, body: Record<string, stri
 async function refreshIfNeeded(account: Account): Promise<Account> {
   const creds = getCredentials(account);
   if (!creds.expiresAt) return account;
+
+  // Short-lived fallback tokens can't be refreshed via ig_refresh_token.
+  // If expired, fail fast so the job shows a clear error rather than silently using a dead token.
+  if (creds.shortLivedFallback) {
+    if (new Date(creds.expiresAt).getTime() < Date.now()) {
+      throw new Error("Instagram token expired — please reconnect your Instagram account.");
+    }
+    return account;
+  }
 
   const expiresAt = new Date(creds.expiresAt);
   const sevenDays = 7 * 24 * 60 * 60 * 1000;

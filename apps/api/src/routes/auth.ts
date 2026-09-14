@@ -338,6 +338,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     // so the connection succeeds; posts will fail after expiry and user must reconnect.
     let longToken: string = shortToken;
     let expiresAt: Date = new Date(Date.now() + 55 * 60 * 1000); // 55 min fallback
+    let shortLivedFallback = true;
     try {
       const llUrl = `https://graph.instagram.com/access_token?${new URLSearchParams({ grant_type: "ig_exchange_token", client_secret: IG_APP_SECRET, access_token: shortToken.trim() })}`;
       const llRes = await fetch(llUrl);
@@ -346,6 +347,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         const llData = JSON.parse(llText) as { access_token: string; expires_in: number };
         longToken = llData.access_token;
         expiresAt = new Date(Date.now() + (llData.expires_in - 86400) * 1000);
+        shortLivedFallback = false;
         console.log(`[instagram oauth] long-lived token obtained, expires ${expiresAt.toISOString()}`);
       } else {
         // Meta API bug: "Unsupported request - method type: get" for certain accounts.
@@ -370,7 +372,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     } catch { /* optional */ }
     avatarUrl = await downloadAndStoreAvatar(avatarUrl);
 
-    const credentials = encrypt(JSON.stringify({ accessToken: longToken, userId: igUserId, expiresAt: expiresAt.toISOString() }));
+    const credentials = encrypt(JSON.stringify({ accessToken: longToken, userId: igUserId, expiresAt: expiresAt.toISOString(), ...(shortLivedFallback && { shortLivedFallback: true }) }));
     const workspaceId = await getUserWorkspaceId(userId);
     if (workspaceId) {
       const roleBlocked = await requireAdminRole(userId, workspaceId);
