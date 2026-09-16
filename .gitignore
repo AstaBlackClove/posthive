@@ -13,6 +13,10 @@ dist/
 *.db
 *.db-journal
 
+# Broadcast scripts — contain API keys and user email lists
+apps/api/scripts/broadcast-*.ts
+apps/api/scripts/broadcast-sent.json
+
 # Next.js
 .next/
 

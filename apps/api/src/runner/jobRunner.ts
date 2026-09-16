@@ -265,6 +265,10 @@ async function runTarget(
     }
     await setTargetStatus(target.id, "comment_done", {});
   } catch (err) {
+    Sentry.captureException(err, {
+      tags: { component: "runner", platform: target.account.platform, step: "createComment" },
+      extra: { postJobId: target.postJobId, accountId: target.accountId },
+    });
     await setTargetStatus(target.id, "comment_failed", { error: String(err) });
   }
 }

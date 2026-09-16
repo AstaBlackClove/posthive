@@ -43,7 +43,15 @@ export function startWorker(storage: StorageAdapter): void {
       }
 
       console.log(`[worker] processing PostJob ${postJobId}`);
-      await runJob(postJob, storage);
+      try {
+        await runJob(postJob, storage);
+      } catch (err) {
+        // runJob threw before it could update PostJob status — mark it failed
+        console.error(`[worker] runJob threw for PostJob ${postJobId}:`, err);
+        Sentry.captureException(err, { tags: { component: "worker" }, extra: { postJobId } });
+        await prisma.postJob.update({ where: { id: postJobId }, data: { status: "failed" } }).catch(() => {});
+        throw err; // re-throw so BullMQ retries
+      }
     },
     {
       connection,
