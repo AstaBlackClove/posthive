@@ -123,10 +123,9 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
     if (valid.length === 0) return;
     setSubmitting(true);
     setProgress({ done: 0, total: valid.length });
-    let succeeded = 0;
-    for (const row of valid) {
-      try {
-        await apiFetch("/jobs", {
+    const results = await Promise.allSettled(
+      valid.map((row) =>
+        apiFetch("/jobs", {
           method: "POST",
           body: JSON.stringify({
             scheduledFor: row.scheduledFor,
@@ -134,11 +133,10 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
             commentText: row.commentText,
             accountIds: row.accountIds,
           }),
-        });
-        succeeded++;
-      } catch { /* skip failed rows */ }
-      setProgress(p => p ? { ...p, done: p.done + 1 } : null);
-    }
+        }).finally(() => setProgress(p => p ? { ...p, done: p.done + 1 } : null))
+      )
+    );
+    const succeeded = results.filter(r => r.status === "fulfilled").length;
     setSubmitting(false);
     onScheduled(succeeded);
   }

@@ -233,7 +233,7 @@ async function runTarget(
   }
 
   // Platforms that don't support first comments
-  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr", "facebook", "linkedin", "tiktok"]);
+  const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr", "linkedin", "tiktok"]);
   if (!commentText || target.status !== "post_done" || NO_COMMENT_PLATFORMS.has(target.account.platform)) return;
 
   // YouTube private videos don't accept API comments
