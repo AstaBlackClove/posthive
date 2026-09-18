@@ -66,25 +66,15 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       return reply.status(400).send({ error: "scheduledFor is required when not saving as draft" });
     }
 
-    // Plan gate only applies to live scheduling, not draft creation
-    if (!draft) {
-      const blocked = await enforcePlan(userId, workspaceId, "scheduling");
-      if (blocked) return reply.status(402).send(blocked);
-    }
-
-    // Gate: Reels & Stories (Pro+)
+    // Non-scheduling gates (reels, overrides, images) — no race risk, check outside tx
     if (content.mediaType === "reel" || content.mediaType === "story") {
       const reelBlocked = await enforcePlan(userId, workspaceId, "reels");
       if (reelBlocked) return reply.status(402).send(reelBlocked);
     }
-
-    // Gate: per-platform overrides (Pro+)
     if (content.perAccount && Object.keys(content.perAccount).length > 0) {
       const overrideBlocked = await enforcePlan(userId, workspaceId, "overrides");
       if (overrideBlocked) return reply.status(402).send(overrideBlocked);
     }
-
-    // Gate: max images per post
     if (content.mediaUrls.length > 0) {
       const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { plan: true } });
       const planCfg = getPlan(ws?.plan ?? "cancelled");
@@ -106,19 +96,35 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       return reply.status(400).send({ error: "One or more accountIds not found" });
     }
 
-    const job = await prisma.postJob.create({
-      data: {
-        scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
-        status: draft ? "draft" : "pending",
-        content: JSON.stringify(content),
-        commentText: commentText ?? null,
-        dryRun,
-        userId,
-        workspaceId,
-        targets: { create: accountIds.map((accountId) => ({ accountId })) },
-      },
-      include: { targets: { select: TARGET_SELECT } },
+    // Wrap plan-limit check + job creation in a transaction with an advisory lock
+    // so concurrent bulk-CSV requests can't all pass the count check simultaneously.
+    let planError: Awaited<ReturnType<typeof enforcePlan>> = null;
+    const job = await prisma.$transaction(async (tx) => {
+      if (!draft) {
+        // Lock per workspace — serializes concurrent scheduling requests (Postgres only)
+        if (!process.env.DATABASE_URL?.startsWith("file:")) {
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${workspaceId}))`;
+        }
+        planError = await enforcePlan(userId, workspaceId, "scheduling", tx);
+        if (planError) return null;
+      }
+      return tx.postJob.create({
+        data: {
+          scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
+          status: draft ? "draft" : "pending",
+          content: JSON.stringify(content),
+          commentText: commentText ?? null,
+          dryRun,
+          userId,
+          workspaceId,
+          targets: { create: accountIds.map((accountId) => ({ accountId })) },
+        },
+        include: { targets: { select: TARGET_SELECT } },
+      });
     });
+
+    if (planError) return reply.status(402).send(planError);
+    if (!job) return reply.status(500).send({ error: "Failed to create job" });
 
     if (!draft) {
       await schedulePostJob(job.id, new Date(scheduledFor!));

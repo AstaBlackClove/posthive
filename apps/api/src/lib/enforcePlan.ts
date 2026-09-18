@@ -1,5 +1,6 @@
 import { prisma } from "./prisma.js";
 import { getPlan } from "./plans.js";
+import type { PrismaClient } from "@prisma/client";
 
 /**
  * "accounts"   — checks status + connected-account count limit
@@ -16,15 +17,19 @@ export interface PlanError {
   upgradeRequired: boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TxClient = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"> | any;
+
 export async function enforcePlan(
   userId: string,
   workspaceId: string,
-  resource: PlanResource
+  resource: PlanResource,
+  db: TxClient = prisma,
 ): Promise<PlanError | null> {
   // Billing disabled — self-hosted mode, no limits enforced
   if (process.env.ENABLE_BILLING !== "true") return null;
 
-  const workspace = await prisma.workspace.findUnique({
+  const workspace = await db.workspace.findUnique({
     where: { id: workspaceId },
     include: { _count: { select: { accounts: true, members: true } } },
   });
@@ -64,7 +69,7 @@ export async function enforcePlan(
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const postsThisMonth = await prisma.postJob.count({
+    const postsThisMonth = await db.postJob.count({
       where: { workspaceId, createdAt: { gte: startOfMonth } },
     });
 
