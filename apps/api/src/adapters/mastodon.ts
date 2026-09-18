@@ -27,10 +27,10 @@ async function apiPost<T>(instanceUrl: string, token: string, path: string, body
   });
   if (!res.ok) {
     const ct = res.headers.get("content-type") ?? "";
-    const body = ct.includes("application/json")
+    const errorBody = ct.includes("application/json")
       ? ((await res.json()) as { error?: string }).error
-      : await res.text();
-    throw new Error(body || `Mastodon API error: ${res.status}`);
+      : null;
+    throw new Error(errorBody || `Mastodon API error: ${res.status} ${res.statusText}`);
   }
   const json = await res.json() as T & { error?: string };
   return json;

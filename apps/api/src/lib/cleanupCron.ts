@@ -21,8 +21,9 @@ async function runCleanup(): Promise<void> {
   const now = Date.now();
   const cut90d = new Date(now - 90 * 24 * 60 * 60 * 1000);
   const cut14d = new Date(now - 14 * 24 * 60 * 60 * 1000);
+  const cut1d  = new Date(now -  1 * 24 * 60 * 60 * 1000);
 
-  const [oldSessions, bounceSessions, oldEvents] = await Promise.all([
+  const [oldSessions, bounceSessions, oldEvents, oldPostJobs, oldOAuthStates, oldEmailVerifications] = await Promise.all([
     // Sessions older than 90 days
     prisma.session.deleteMany({ where: { createdAt: { lt: cut90d } } }),
 
@@ -38,11 +39,27 @@ async function runCleanup(): Promise<void> {
 
     // Events older than 90 days
     prisma.event.deleteMany({ where: { createdAt: { lt: cut90d } } }),
+
+    // Completed/failed PostJobs older than 90 days (cascades to PostJobTarget + PostStats)
+    prisma.postJob.deleteMany({
+      where: {
+        status: { in: ["done", "failed"] },
+        createdAt: { lt: cut90d },
+      },
+    }),
+
+    // OAuthState older than 1 day — flows that never completed
+    prisma.oAuthState.deleteMany({ where: { createdAt: { lt: cut1d } } }),
+
+    // EmailVerification tokens older than 1 day
+    prisma.emailVerification.deleteMany({ where: { createdAt: { lt: cut1d } } }),
   ]);
 
   console.log(
     `[cleanup-cron] sessions: ${oldSessions.count + bounceSessions.count} deleted` +
-    ` (${oldSessions.count} old, ${bounceSessions.count} bounces), events: ${oldEvents.count} deleted`
+    ` (${oldSessions.count} old, ${bounceSessions.count} bounces), events: ${oldEvents.count} deleted,` +
+    ` postJobs: ${oldPostJobs.count} deleted, oauthStates: ${oldOAuthStates.count} deleted,` +
+    ` emailVerifications: ${oldEmailVerifications.count} deleted`
   );
 
   // Clean up orphaned profile-pics from storage
