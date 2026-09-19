@@ -50,7 +50,7 @@ async function createContainer(
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`Threads container creation failed: ${body}`);
+    throw new Error(`Threads container creation failed: ${res.status} ${body || "(empty response)"}`);
   }
 
   const data = await res.json() as { id: string };
