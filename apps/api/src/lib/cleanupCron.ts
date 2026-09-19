@@ -13,6 +13,7 @@
 import cron from "node-cron";
 import { prisma } from "./prisma.js";
 import type { StorageAdapter } from "./storage.js";
+import { sendCleanupSummaryEmail } from "./mailer.js";
 
 let storageAdapter: StorageAdapter | null = null;
 export function setCleanupStorage(s: StorageAdapter): void { storageAdapter = s; }
@@ -55,12 +56,24 @@ async function runCleanup(): Promise<void> {
     prisma.emailVerification.deleteMany({ where: { createdAt: { lt: cut1d } } }),
   ]);
 
+  const sessionCount = oldSessions.count + bounceSessions.count;
   console.log(
-    `[cleanup-cron] sessions: ${oldSessions.count + bounceSessions.count} deleted` +
+    `[cleanup-cron] sessions: ${sessionCount} deleted` +
     ` (${oldSessions.count} old, ${bounceSessions.count} bounces), events: ${oldEvents.count} deleted,` +
     ` postJobs: ${oldPostJobs.count} deleted, oauthStates: ${oldOAuthStates.count} deleted,` +
     ` emailVerifications: ${oldEmailVerifications.count} deleted`
   );
+
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (adminEmail) {
+    sendCleanupSummaryEmail(adminEmail, {
+      sessions: sessionCount,
+      events: oldEvents.count,
+      postJobs: oldPostJobs.count,
+      oauthStates: oldOAuthStates.count,
+      emailVerifications: oldEmailVerifications.count,
+    }).catch((e) => console.error("[cleanup-cron] summary email error:", e));
+  }
 
   // Clean up orphaned profile-pics from storage
   const adapter = storageAdapter;

@@ -92,6 +92,56 @@ export async function sendAccountExpiryEmail(
   });
 }
 
+export async function sendWelcomeEmail(to: string, name: string): Promise<void> {
+  const appUrl = process.env.WEB_URL ?? "https://app.posthive.co";
+  const html = `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#0a0a0a;color:#ededed;">
+      <h2 style="margin:0 0 8px;font-size:20px;">Welcome to Posthive, ${name}!</h2>
+      <p style="color:#888;margin:0 0 24px;font-size:14px;">
+        You're on a 14-day free trial. Connect your social accounts and start scheduling posts across every platform from one place.
+      </p>
+      <a href="${appUrl}/accounts" style="display:inline-block;background:#ffffff;color:#0a0a0a;font-weight:600;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
+        Connect your first account →
+      </a>
+      <p style="color:#555;font-size:12px;margin:24px 0 0;">
+        Reply to this email if you need any help getting started.
+      </p>
+    </div>
+  `;
+
+  if (!resend) {
+    console.log(`[mailer] Welcome email for ${to}`);
+    return;
+  }
+  await resend.emails.send({ from: FROM, to, subject: "Welcome to Posthive 🎉", html });
+}
+
+export async function sendCleanupSummaryEmail(
+  to: string,
+  stats: { sessions: number; events: number; postJobs: number; oauthStates: number; emailVerifications: number }
+): Promise<void> {
+  const now = new Date().toUTCString();
+  const html = `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#0a0a0a;color:#ededed;">
+      <h2 style="margin:0 0 8px;font-size:20px;">DB Cleanup ran successfully</h2>
+      <p style="color:#888;margin:0 0 16px;font-size:14px;">${now}</p>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:8px 0;color:#888;">Sessions</td><td style="padding:8px 0;text-align:right;color:#ededed;">${stats.sessions} deleted</td></tr>
+        <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:8px 0;color:#888;">Events</td><td style="padding:8px 0;text-align:right;color:#ededed;">${stats.events} deleted</td></tr>
+        <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:8px 0;color:#888;">PostJobs</td><td style="padding:8px 0;text-align:right;color:#ededed;">${stats.postJobs} deleted</td></tr>
+        <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:8px 0;color:#888;">OAuthStates</td><td style="padding:8px 0;text-align:right;color:#ededed;">${stats.oauthStates} deleted</td></tr>
+        <tr><td style="padding:8px 0;color:#888;">EmailVerifications</td><td style="padding:8px 0;text-align:right;color:#ededed;">${stats.emailVerifications} deleted</td></tr>
+      </table>
+    </div>
+  `;
+
+  if (!resend) {
+    console.log(`[mailer] Cleanup summary: ${JSON.stringify(stats)}`);
+    return;
+  }
+  await resend.emails.send({ from: FROM, to, subject: "Posthive DB cleanup ran ✓", html });
+}
+
 export async function sendWorkspaceInviteEmail(
   to: string,
   inviterName: string,

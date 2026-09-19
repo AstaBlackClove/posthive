@@ -5,6 +5,7 @@ import { encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import { getPlan } from "../lib/plans.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
+import { sendWelcomeEmail } from "../lib/mailer.js";
 import { withAuth, getUser, getWorkspaceId, requireAdminRole, setAuthCookies } from "../lib/auth/withAuth.js";
 import { createLocalTokens } from "../lib/auth/localAuth.js";
 import { getDiscordChannels, encryptDiscordCredentials } from "../adapters/discord.js";
@@ -2060,6 +2061,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
           },
         });
         await prisma.user.update({ where: { id: dbUser.id }, data: { activeWorkspaceId: workspace.id } });
+        sendWelcomeEmail(dbUser.email, dbUser.name ?? "there").catch(() => {});
       }
 
       const { accessToken, refreshToken } = await createLocalTokens(dbUser.id);
