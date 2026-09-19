@@ -81,7 +81,7 @@ const GB_CLIENT_SECRET = process.env.GOOGLEBUSINESS_CLIENT_SECRET ?? "";
 const GB_REDIRECT_URI  = process.env.GOOGLEBUSINESS_REDIRECT_URI ?? "";
 const GB_SCOPES        = "https://www.googleapis.com/auth/business.manage";
 
-const SCOPES = ["threads_basic", "threads_content_publish", "threads_manage_replies", "threads_read_replies", "threads_manage_insights"].join(",");
+const SCOPES = ["threads_basic", "threads_content_publish", "threads_manage_replies", "threads_manage_insights"].join(",");
 
 const GOOGLE_SIGNIN_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID ?? "";
 const GOOGLE_SIGNIN_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
