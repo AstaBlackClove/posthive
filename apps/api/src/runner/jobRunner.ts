@@ -109,9 +109,9 @@ export async function runJob(
   const allDone = updated.every((t) =>
     t.status === "comment_done" || t.status === "post_done"
   );
-  const anyFailed = updated.some((t) =>
-    t.status === "post_failed" || t.status === "comment_failed"
-  );
+  const anyPostFailed = updated.some((t) => t.status === "post_failed");
+  const anyCommentFailed = updated.some((t) => t.status === "comment_failed");
+  const anyFailed = anyPostFailed || anyCommentFailed;
 
   const finalStatus = allDone && !anyFailed ? "done" : anyFailed ? "failed" : "running";
   await prisma.postJob.update({ where: { id: job.id }, data: { status: finalStatus } });
@@ -141,8 +141,9 @@ export async function runJob(
     }
   }
 
-  // Clean up stored media once the job is fully done (not dry-run, not failed)
-  if (finalStatus === "done" && !job.dryRun && storage) {
+  // Clean up stored media if all posts succeeded (even if first comment failed)
+  const postingSucceeded = !anyPostFailed;
+  if (postingSucceeded && !job.dryRun && storage) {
     const urlsToClean = [
       ...(content.mediaUrls ?? []),
       ...(content.youtubeThumbnailUrl ? [content.youtubeThumbnailUrl] : []),
