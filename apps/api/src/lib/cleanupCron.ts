@@ -64,16 +64,13 @@ async function runCleanup(): Promise<void> {
     ` emailVerifications: ${oldEmailVerifications.count} deleted`
   );
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (adminEmail) {
-    sendCleanupSummaryEmail(adminEmail, {
-      sessions: sessionCount,
-      events: oldEvents.count,
-      postJobs: oldPostJobs.count,
-      oauthStates: oldOAuthStates.count,
-      emailVerifications: oldEmailVerifications.count,
-    }).catch((e) => console.error("[cleanup-cron] summary email error:", e));
-  }
+  sendCleanupSummaryEmail("guna@posthive.co", {
+    sessions: sessionCount,
+    events: oldEvents.count,
+    postJobs: oldPostJobs.count,
+    oauthStates: oldOAuthStates.count,
+    emailVerifications: oldEmailVerifications.count,
+  }).catch((e) => console.error("[cleanup-cron] summary email error:", e));
 
   // Clean up orphaned profile-pics from storage
   const adapter = storageAdapter;
