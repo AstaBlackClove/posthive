@@ -2,6 +2,7 @@ interface Props {
   youtubeSelectedWithNoVideo: boolean;
   pinterestSelectedWithNoImage: boolean;
   pixelfedSelectedWithNoImage: boolean;
+  tiktokSelectedWithNoVideo?: boolean;
   instagramSelectedWithNoMedia?: boolean;
   instagramStoryWithNoImage?: boolean;
   twitterHasLink: boolean;
@@ -15,6 +16,7 @@ export function WarningsBar({
   youtubeSelectedWithNoVideo,
   pinterestSelectedWithNoImage,
   pixelfedSelectedWithNoImage,
+  tiktokSelectedWithNoVideo,
   instagramSelectedWithNoMedia,
   instagramStoryWithNoImage,
   twitterHasLink,
@@ -29,6 +31,7 @@ export function WarningsBar({
     youtubeSelectedWithNoVideo ||
     pinterestSelectedWithNoImage ||
     pixelfedSelectedWithNoImage ||
+    tiktokSelectedWithNoVideo ||
     twitterHasLink ||
     blueskyFirstCommentTooLong ||
     youtubePrivateWithComment;
@@ -53,6 +56,11 @@ export function WarningsBar({
       {youtubeSelectedWithNoVideo && (
         <p className="text-xs font-medium" style={{ color: "#ef4444" }}>
           ⚠️ YouTube requires a video before you can schedule this post
+        </p>
+      )}
+      {tiktokSelectedWithNoVideo && (
+        <p className="text-xs font-medium" style={{ color: "#ef4444" }}>
+          ⚠️ TikTok requires a video — attach an mp4 or mov file before scheduling
         </p>
       )}
       {pinterestSelectedWithNoImage && (

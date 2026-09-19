@@ -400,6 +400,10 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     // Threads "" text required, video supported (single video only)
     if (hasThreads && !text.trim()) return "Threads requires a caption.";
 
+    // TikTok — video required
+    const hasTikTok = selectedAccounts.some(a => a.platform === "tiktok");
+    if (hasTikTok && !video) return "TikTok requires a video — attach an mp4 or mov file.";
+
     // YouTube — title required, video required (either uploaded or external URL)
     if (youtubeSelected) {
       if (!youtubeTitle.trim()) return "YouTube requires a title.";
@@ -1329,6 +1333,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           youtubeSelectedWithNoVideo={youtubeSelectedWithNoVideo}
           pinterestSelectedWithNoImage={pinterestSelectedWithNoImage}
           pixelfedSelectedWithNoImage={pixelfedSelectedWithNoImage}
+          tiktokSelectedWithNoVideo={selectedAccounts.some(a => a.platform === "tiktok") && !video}
           instagramSelectedWithNoMedia={instagramSelectedWithNoMedia}
           instagramStoryWithNoImage={instagramStoryWithNoImage}
           twitterHasLink={twitterHasLink}
