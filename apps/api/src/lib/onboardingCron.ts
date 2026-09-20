@@ -44,15 +44,25 @@ async function runOnboardingNudges(): Promise<void> {
     }),
   ]);
 
-  console.log(`[onboarding-cron] day3: ${day3Users.length}, expiry: ${expiryUsers.length}`);
+  // Cap per run to stay under Resend free tier (100/day). Cron runs every 12h,
+  // so batches of 80 spread a large cohort across two runs in the same day.
+  const BATCH_CAP = 80;
+  const day3Batch = day3Users.slice(0, BATCH_CAP);
+  const remaining = BATCH_CAP - day3Batch.length;
+  const expiryBatch = expiryUsers.slice(0, Math.max(0, remaining));
+
+  console.log(
+    `[onboarding-cron] day3: ${day3Users.length} (sending ${day3Batch.length}), ` +
+    `expiry: ${expiryUsers.length} (sending ${expiryBatch.length})`
+  );
 
   await Promise.allSettled([
-    ...day3Users.map((u) =>
+    ...day3Batch.map((u) =>
       sendDay3NudgeEmail(u.email, u.name ?? "there").catch((e) =>
         console.error(`[onboarding-cron] day3 email error for ${u.email}:`, e)
       )
     ),
-    ...expiryUsers.map((u) =>
+    ...expiryBatch.map((u) =>
       sendTrialExpiryEmail(u.email, u.name ?? "there").catch((e) =>
         console.error(`[onboarding-cron] expiry email error for ${u.email}:`, e)
       )
