@@ -45,6 +45,7 @@ import { rehydrateQueue } from "./lib/rehydrateQueue.js";
 import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
 import { startStatsCron, runStatsCronNow } from "./lib/statsCron.js";
 import { startCleanupCron, setCleanupStorage, runCleanupNow } from "./lib/cleanupCron.js";
+import { startOnboardingCron } from "./lib/onboardingCron.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { trackRoutes } from "./routes/track.js";
 import { feedbackRoutes } from "./routes/feedback.js";
@@ -253,6 +254,7 @@ async function main() {
   startStatsCron();
   setCleanupStorage(storage);
   startCleanupCron();
+  startOnboardingCron();
 }
 
 main().catch((err) => {
