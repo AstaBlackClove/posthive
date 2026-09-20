@@ -14,10 +14,11 @@ async function runOnboardingNudges(): Promise<void> {
   const expiryEnd   = new Date(now + (2.5 * 24 * 60 * 60 * 1000));
 
   const [day3Users, expiryUsers] = await Promise.all([
-    // Day 3: signed up 3 days ago, still no accounts, still trialing
+    // Day 3: signed up 3 days ago, still no accounts, still trialing, not yet nudged
     prisma.user.findMany({
       where: {
         createdAt: { gte: day3Start, lte: day3End },
+        day3NudgeSentAt: null,
         accounts: { none: {} },
         workspaceMembers: {
           some: {
@@ -25,12 +26,13 @@ async function runOnboardingNudges(): Promise<void> {
           },
         },
       },
-      select: { email: true, name: true },
+      select: { id: true, email: true, name: true },
     }),
 
-    // Day 12: trial ending in ~2 days, still trialing (not yet paid)
+    // Day 12: trial ending in ~2 days, still trialing, not yet nudged
     prisma.user.findMany({
       where: {
+        expiryNudgeSentAt: null,
         workspaceMembers: {
           some: {
             workspace: {
@@ -40,7 +42,7 @@ async function runOnboardingNudges(): Promise<void> {
           },
         },
       },
-      select: { email: true, name: true },
+      select: { id: true, email: true, name: true },
     }),
   ]);
 
@@ -59,14 +61,14 @@ async function runOnboardingNudges(): Promise<void> {
 
   await Promise.allSettled([
     ...day3Batch.map((u) =>
-      sendDay3NudgeEmail(u.email, u.name ?? "there").catch((e) =>
-        console.error(`[onboarding-cron] day3 email error for ${u.email}:`, e)
-      )
+      sendDay3NudgeEmail(u.email, u.name ?? "there")
+        .then(() => prisma.user.update({ where: { id: u.id }, data: { day3NudgeSentAt: new Date() } }))
+        .catch((e) => console.error(`[onboarding-cron] day3 email error for ${u.email}:`, e))
     ),
     ...expiryBatch.map((u) =>
-      sendTrialExpiryEmail(u.email, u.name ?? "there").catch((e) =>
-        console.error(`[onboarding-cron] expiry email error for ${u.email}:`, e)
-      )
+      sendTrialExpiryEmail(u.email, u.name ?? "there")
+        .then(() => prisma.user.update({ where: { id: u.id }, data: { expiryNudgeSentAt: new Date() } }))
+        .catch((e) => console.error(`[onboarding-cron] expiry email error for ${u.email}:`, e))
     ),
   ]);
 }

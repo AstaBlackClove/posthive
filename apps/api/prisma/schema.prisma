@@ -26,6 +26,10 @@ model User {
 
   emailVerified Boolean   @default(false)
 
+  // Onboarding email tracking — prevent duplicate sends
+  day3NudgeSentAt    DateTime?
+  expiryNudgeSentAt  DateTime?
+
   // Active workspace — which workspace is currently selected for this user
   activeWorkspaceId String?
   activeWorkspace   Workspace? @relation("UserActiveWorkspace", fields: [activeWorkspaceId], references: [id])
