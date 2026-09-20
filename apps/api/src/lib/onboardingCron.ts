@@ -46,8 +46,8 @@ async function runOnboardingNudges(): Promise<void> {
 
   // Cap per run to stay under Resend free tier (100/day). Cron runs every 12h,
   // so batches of 80 spread a large cohort across two runs in the same day.
-  // 45/run × 2 runs/day = 90 max, leaving ~10 buffer for welcome/reset emails
-  const BATCH_CAP = 45;
+  // 42/run × 2 runs/day = 84 max, leaving ~16 buffer for welcome/reset emails
+  const BATCH_CAP = 42;
   const day3Batch = day3Users.slice(0, BATCH_CAP);
   const remaining = BATCH_CAP - day3Batch.length;
   const expiryBatch = expiryUsers.slice(0, Math.max(0, remaining));
