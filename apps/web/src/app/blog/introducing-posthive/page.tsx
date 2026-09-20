@@ -11,7 +11,7 @@ const articleSchema = {
   description: "We built Posthive because we were tired of switching between tabs just to post the same update everywhere. Here's what we shipped.",
   datePublished: "2026-07-03",
   dateModified: "2026-08-01",
-  image: `${WEB_URL}/og/landingogimage.png`,
+  image: `${WEB_URL}/og/landingogimage.jpg`,
   author: { "@type": "Person", name: "Guna", url: "https://x.com/gunaa_dev" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
   url: `${WEB_URL}/blog/introducing-posthive`,

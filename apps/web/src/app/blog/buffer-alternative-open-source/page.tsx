@@ -11,7 +11,7 @@ const articleSchema = {
   description: "Looking for a Buffer alternative that's open source, self-hostable, and supports more platforms? Posthive does everything Buffer does — and more — for less.",
   datePublished: "2026-07-07",
   dateModified: "2026-08-28",
-  image: `${WEB_URL}/og/landingogimage.png`,
+  image: `${WEB_URL}/og/landingogimage.jpg`,
   author: { "@type": "Person", name: "Guna", url: "https://x.com/gunaa_dev" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
   url: `${WEB_URL}/blog/buffer-alternative-open-source`,
