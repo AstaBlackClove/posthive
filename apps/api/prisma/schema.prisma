@@ -28,7 +28,9 @@ model User {
 
   // Onboarding email tracking — prevent duplicate sends
   day3NudgeSentAt    DateTime?
+  day7NudgeSentAt    DateTime?
   expiryNudgeSentAt  DateTime?
+  day14WinbackSentAt DateTime?
 
   // Active workspace — which workspace is currently selected for this user
   activeWorkspaceId String?

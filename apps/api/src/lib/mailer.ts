@@ -265,6 +265,65 @@ export async function sendTrialExpiryEmail(to: string, name: string): Promise<vo
   await resend.emails.send({ from: FROM, to, subject: "Your Posthive trial ends in 2 days", html });
 }
 
+export async function sendDay7NudgeEmail(to: string, name: string): Promise<void> {
+  const body = `
+    ${eyebrow("Quick check-in")}
+    ${heading(`${name}, you have not scheduled a post yet.`)}
+    ${bodyText("You connected an account — great start. The next step is scheduling your first post. It takes under a minute.")}
+    ${bodyText("Open the compose view, write something, pick your account and pick a time. Your post will go out automatically.")}
+    ${ctaButton(`${APP_URL}/compose`, "Schedule your first post")}
+    ${divider()}
+    ${bodyText("Need help? Reply here and I will walk you through it.", "font-size:12.5px;")}
+  `;
+  const html = emailShell(
+    "linear-gradient(90deg,#5b63d3,#7c84e8)",
+    body,
+    `You received this because you signed up for Posthive.<br><a href="https://posthive.co" style="color:#555;">posthive.co</a>`,
+  );
+  if (!resend) { console.log(`[mailer] Day-7 nudge for ${to}`); return; }
+  await resend.emails.send({ from: FROM, to, subject: "You have not scheduled a post yet", html });
+}
+
+export async function sendDay14WinbackEmail(to: string, name: string): Promise<void> {
+  const body = `
+    ${eyebrow("Your trial has ended", "#ef4444")}
+    ${heading(`${name}, your Posthive trial expired.`)}
+    ${bodyText("Your 14-day trial is over. Scheduled posts are paused until you upgrade. Pick a plan and everything resumes — no setup needed.")}
+    ${infoBox(`
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid #2a2a2a;">
+            <p style="font-size:11px;font-weight:700;color:#7a7a7a;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 2px;">Creator</p>
+            <p style="font-size:13px;color:#ededed;margin:0;">₹550/mo · 5 accounts · 60 posts</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid #2a2a2a;">
+            <p style="font-size:11px;font-weight:700;color:#7a7a7a;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 2px;">Pro</p>
+            <p style="font-size:13px;color:#ededed;margin:0;">₹1,700/mo · 15 accounts · unlimited posts · API access</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;">
+            <p style="font-size:11px;font-weight:700;color:#7a7a7a;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 2px;">Team</p>
+            <p style="font-size:13px;color:#ededed;margin:0;">₹2,600/mo · 30 accounts · 5 seats · everything in Pro</p>
+          </td>
+        </tr>
+      </table>
+    `)}
+    ${ctaButton(`${APP_URL}/billing`, "Upgrade and resume", "#ef4444", "#ffffff")}
+    ${divider()}
+    ${bodyText("Not ready to upgrade? Reply here and let me know what stopped you.", "font-size:12.5px;")}
+  `;
+  const html = emailShell(
+    "#ef4444",
+    body,
+    `You received this because your Posthive trial expired.<br><a href="https://posthive.co" style="color:#555;">posthive.co</a>`,
+  );
+  if (!resend) { console.log(`[mailer] Day-14 winback for ${to}`); return; }
+  await resend.emails.send({ from: FROM, to, subject: "Your Posthive trial has ended", html });
+}
+
 export async function sendWorkspaceInviteEmail(
   to: string,
   inviterName: string,
