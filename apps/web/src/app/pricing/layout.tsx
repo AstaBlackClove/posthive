@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     url: "https://posthive.co/pricing",
     images: [
       {
-        url: "/og/pricingogimage.png",
+        url: "/og/pricingogimage.jpg",
         width: 1200,
         height: 630,
         alt: "Posthive Pricing — Simple & Transparent",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     title: "Posthive Pricing — Simple & Transparent",
     description:
       "Start free. Upgrade when you're ready. Creator $9, Pro $29, Team $49. All plans including multiple platforms.",
-    images: ["/og/pricingogimage.png"],
+    images: ["/og/pricingogimage.jpg"],
   },
 };
 

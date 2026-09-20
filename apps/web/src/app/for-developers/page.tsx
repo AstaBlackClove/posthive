@@ -51,13 +51,13 @@ export const metadata: Metadata = {
     title: "Posthive for Developers — REST API, MCP & Self-Hosting",
     description: "Schedule social media posts via REST API or MCP. Self-host everything under AGPL-3.0. Full control, no lock-in.",
     url: `${WEB_URL}/for-developers`,
-    images: [{ url: "/og/fordeveloperogimage.png", width: 1200, height: 630, alt: "Posthive for Developers — REST API, MCP & Self-Hosting" }],
+    images: [{ url: "/og/fordeveloperogimage.jpg", width: 1200, height: 630, alt: "Posthive for Developers — REST API, MCP & Self-Hosting" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Posthive for Developers — REST API, MCP & Self-Hosting",
     description: "Schedule social media posts via REST API or MCP. Self-host everything under AGPL-3.0.",
-    images: ["/og/fordeveloperogimage.png"],
+    images: ["/og/fordeveloperogimage.jpg"],
   },
 };
 

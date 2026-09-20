@@ -97,7 +97,7 @@ export default function PostPage() {
 
         {/* Author */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0", borderTop: "1px solid #1e1e1e", borderBottom: "1px solid #1e1e1e", marginBottom: 40 }}>
-          <img src="/founder.png" alt="Founder" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
+          <img src="/founder.jpg" alt="Founder" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "#ededed" }}>Guna</div>
             <div style={{ fontSize: 12, color: "#555" }}>Founder, Posthive</div>

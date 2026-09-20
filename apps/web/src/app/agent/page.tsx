@@ -36,13 +36,13 @@ export const metadata: Metadata = {
     title: "Posthive Agent — AI-powered social media scheduling via MCP + CLI",
     description: "Give Claude, Cursor, or any AI agent the ability to schedule posts across multiple platforms. Draft-first — nothing goes live without your approval.",
     url: `${WEB_URL}/agent`,
-    images: [{ url: "/og/fordeveloperogimage.png", width: 1200, height: 630, alt: "Posthive Agent — MCP + CLI for social media" }],
+    images: [{ url: "/og/fordeveloperogimage.jpg", width: 1200, height: 630, alt: "Posthive Agent — MCP + CLI for social media" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Posthive Agent — Schedule social posts from any AI agent",
     description: "MCP server + CLI for Claude, Cursor, VS Code, ChatGPT and more. Draft-first, revocable API keys.",
-    images: ["/og/fordeveloperogimage.png"],
+    images: ["/og/fordeveloperogimage.jpg"],
   },
 };
 

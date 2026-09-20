@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     url: "https://posthive.co/docs",
     images: [
       {
-        url: "/og/docsogimage.png",
+        url: "/og/docsogimage.jpg",
         width: 1200,
         height: 630,
         alt: "Posthive Docs — Setup, Platforms & API Reference",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     title: "Posthive Docs — Setup, Platforms & API Reference",
     description:
       "Self-host guide, platform setup, REST API, and MCP server reference for Posthive.",
-    images: ["/og/docsogimage.png"],
+    images: ["/og/docsogimage.jpg"],
   },
 };
 

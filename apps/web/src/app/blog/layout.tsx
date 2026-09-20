@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     url: "https://posthive.co/blog",
     images: [
       {
-        url: "/og/blogogimage.png",
+        url: "/og/blogogimage.jpg",
         width: 1200,
         height: 630,
         alt: "Posthive Blog — Updates & Insights",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     title: "Posthive Blog — Updates & Insights",
     description:
       "Product updates, creator guides, and insights from the Posthive team.",
-    images: ["/og/blogogimage.png"],
+    images: ["/og/blogogimage.jpg"],
   },
 };
 

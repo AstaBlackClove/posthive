@@ -2409,7 +2409,7 @@ export default function RootPage() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/founder.png"
+              src="/founder.jpg"
               alt="Guna, founder of Posthive"
               width={72}
               height={72}

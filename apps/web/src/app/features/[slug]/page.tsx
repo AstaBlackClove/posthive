@@ -2568,7 +2568,7 @@ export default async function FeaturePage({
               >
                 {" "}
                 <img
-                  src="/founder.png"
+                  src="/founder.jpg"
                   alt="Guna, founder of Posthive"
                   width={72}
                   height={72}
