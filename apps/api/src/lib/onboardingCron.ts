@@ -17,8 +17,10 @@ async function runOnboardingNudges(): Promise<void> {
   const expiryStart = new Date(now + (1.4 * 24 * 60 * 60 * 1000));
   const expiryEnd   = new Date(now + (2.6 * 24 * 60 * 60 * 1000));
 
-  // Day 14: trial already expired (trialEndsAt < now), still not upgraded
-  const winbackCutoff = new Date(now - (1 * 24 * 60 * 60 * 1000)); // expired at least 1 day ago
+  // Day 14: trial expired 1–30 days ago, still not upgraded
+  // >30 days = moved on, risk spam flags
+  const winbackCutoff   = new Date(now - (1  * 24 * 60 * 60 * 1000));
+  const winbackOldestAt = new Date(now - (30 * 24 * 60 * 60 * 1000));
 
   const [day3Users, day7Users, expiryUsers, winbackUsers] = await Promise.all([
     // Day 3: signed up 3 days ago, no accounts, still trialing, not yet nudged
@@ -68,7 +70,7 @@ async function runOnboardingNudges(): Promise<void> {
           some: {
             workspace: {
               planStatus: "trialing",
-              trialEndsAt: { lte: winbackCutoff },
+              trialEndsAt: { lte: winbackCutoff, gte: winbackOldestAt },
             },
           },
         },
