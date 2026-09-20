@@ -181,10 +181,10 @@ async function main() {
     return { ok: true, message: "stats sync triggered" };
   });
 
-  // Global error handler — captures all unhandled Fastify errors to Sentry
+  // Global error handler — captures only 5xx errors to Sentry (not CORS/4xx noise)
   app.setErrorHandler((err, _req, reply) => {
-    Sentry.captureException(err);
     const status = err.statusCode ?? 500;
+    if (status >= 500) Sentry.captureException(err);
     // Don't leak internal error details for server errors
     const message = status >= 500 ? "Internal Server Error" : err.message;
     reply.status(status).send({
