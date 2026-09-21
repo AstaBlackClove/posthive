@@ -9,6 +9,7 @@ import { EditPostDialog } from "../../components/EditPostDialog";
 import { DeleteConfirmDialog } from "../../components/DeleteConfirmDialog";
 import { useToast } from "../../components/Toast";
 import { BulkScheduleModal } from "../../components/BulkScheduleModal";
+import { TrialUrgentBanner } from "../../components/TrialUrgentBanner";
 import type { Account, PerAccountOverride } from "../../components/PlatformPreview";
 
 interface Target {
@@ -464,6 +465,7 @@ export default function JobsPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+      <TrialUrgentBanner />
 
       {/* Edit dialog */}
       {editingJob && (

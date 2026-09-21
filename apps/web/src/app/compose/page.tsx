@@ -21,6 +21,7 @@ import { LinkedinFields } from "../../components/composer/LinkedinFields";
 import { BlueskyFields } from "../../components/composer/BlueskyFields";
 import { FirstComment } from "../../components/composer/FirstComment";
 import { WarningsBar } from "../../components/composer/WarningsBar";
+import { TrialUrgentBanner } from "../../components/TrialUrgentBanner";
 import { MediaSection } from "../../components/composer/MediaSection";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -736,6 +737,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
 
   return (
     <><div className="flex flex-col h-full overflow-hidden">
+      <TrialUrgentBanner />
 
       {/* Save template dialog */}
       {saveTemplateDialog && (
