@@ -72,8 +72,33 @@ async function runCleanup(): Promise<void> {
     emailVerifications: oldEmailVerifications.count,
   }).catch((e) => console.error("[cleanup-cron] summary email error:", e));
 
-  // Clean up orphaned profile-pics from storage
+  // Clean up claimed post media older than 24h — post is live by then, retries exhausted
   const adapter = storageAdapter;
+  if (adapter) {
+    try {
+      const staleUploads = await prisma.upload.findMany({
+        where: { claimedAt: { not: null, lt: cut1d } },
+        select: { id: true, url: true },
+      });
+
+      if (staleUploads.length) {
+        const BATCH = 50;
+        for (let i = 0; i < staleUploads.length; i += BATCH) {
+          await Promise.allSettled(staleUploads.slice(i, i + BATCH).map(async (u) => {
+            try { await adapter.delete(u.url); } catch { /* already gone */ }
+            await prisma.upload.delete({ where: { id: u.id } });
+          }));
+        }
+        console.log(`[cleanup-cron] post-media: ${staleUploads.length} claimed upload(s) deleted`);
+      } else {
+        console.log(`[cleanup-cron] post-media: nothing to clean`);
+      }
+    } catch (e) {
+      console.error("[cleanup-cron] post-media cleanup error:", e);
+    }
+  }
+
+  // Clean up orphaned profile-pics from storage
   if (adapter) {
     try {
       const [storedFiles, accounts, users] = await Promise.all([
