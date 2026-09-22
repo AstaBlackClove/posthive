@@ -29,8 +29,9 @@ const INTERVAL_MS = 12 * 60 * 60 * 1000;    // 12 hours
 const BATCH_SIZE = 50;
 const BATCH_CONCURRENCY = 5;
 
-async function run() {
+async function run(skipRecentlyRefreshed = false) {
   const cutoff = new Date(Date.now() + WINDOW_MS);
+  const recentCutoff = new Date(Date.now() - 60 * 60 * 1000); // 1h ago
   let cursor: string | undefined;
 
   while (true) {
@@ -38,6 +39,7 @@ async function run() {
       where: {
         platform: { in: Array.from(REFRESH_PLATFORMS) },
         expiresAt: { lte: cutoff },
+        ...(skipRecentlyRefreshed ? { updatedAt: { lt: recentCutoff } } : {}),
       },
       orderBy: { id: "asc" },
       take: BATCH_SIZE,
@@ -77,7 +79,7 @@ async function run() {
 }
 
 export function startTokenRefreshCron() {
-  // Run once at startup to catch anything already near expiry
-  run().catch((e) => console.error("[token-refresh] error:", e));
+  // Run once at startup — skip accounts refreshed within last hour to avoid hammering OAuth on deploys
+  run(true).catch((e) => console.error("[token-refresh] error:", e));
   setInterval(() => run().catch((e) => console.error("[token-refresh] error:", e)), INTERVAL_MS);
 }
