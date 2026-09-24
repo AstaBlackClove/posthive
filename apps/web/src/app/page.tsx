@@ -2852,7 +2852,14 @@ export default function RootPage() {
                 style={{ color: "#444", textDecoration: "none" }}
               >
                 open source
-              </a>
+              </a>{" "}
+              ·{" "}
+              <Link
+                href="/blog/open-source-social-media-scheduler"
+                style={{ color: "#444", textDecoration: "none" }}
+              >
+                open-source social media scheduler
+              </Link>
             </p>
           </div>
         </section>

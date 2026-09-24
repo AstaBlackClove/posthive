@@ -508,7 +508,7 @@ export default function DocsPage() {
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 gap: 12, flexWrap: "wrap",
                 background: "#111", border: "1px solid #1e1e1e", borderRadius: 8,
-                padding: "10px 14px", marginBottom: 24,
+                padding: "10px 14px", marginBottom: 12,
               }}>
                 <span style={{ fontSize: 13, color: "#666" }}>
                   Don&apos;t want to manage infrastructure?
@@ -517,6 +517,12 @@ export default function DocsPage() {
                   Try posthive.co free no setup needed →
                 </Link>
               </div>
+              <p style={{ fontSize: 12, color: "#444", marginBottom: 24 }}>
+                New to open-source schedulers?{" "}
+                <Link href="/blog/open-source-social-media-scheduler" style={{ color: "#5b63d3", textDecoration: "none" }}>
+                  Read our guide to the best open-source social media schedulers in 2026 →
+                </Link>
+              </p>
 
               {/* Quick-start cards */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "0 0 48px" }}>

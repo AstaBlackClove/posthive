@@ -2719,6 +2719,19 @@ export default async function FeaturePage({
         >
           Read the docs
         </Link>
+        <Link
+          href="/blog/open-source-social-media-scheduler"
+          style={{
+            fontSize: 14,
+            color: muted55,
+            textDecoration: "none",
+            display: "inline-block",
+            marginTop: 12,
+            marginLeft: 20,
+          }}
+        >
+          Open-source social media scheduler guide →
+        </Link>
       </section>
 
       {/* ── CTA ── */}
