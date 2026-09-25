@@ -87,7 +87,10 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // ── Dynamic client registration (RFC 7591) — Claude.ai calls this first ───
-  app.post("/oauth/register", async (req, reply) => {
+  // Rate-limited to 10 registrations per IP per minute (see index.ts global limiter).
+  app.post("/oauth/register", {
+    config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+  }, async (req, reply) => {
     const body = (req.body ?? {}) as Record<string, unknown>;
 
     const redirectUris = Array.isArray(body.redirect_uris)
@@ -96,6 +99,15 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
           catch { return false; }
         })
       : [];
+
+    // Require at least one valid redirect_uri — prevents phishing clients that
+    // rely on redirect_uri being validated only at authorize time.
+    if (redirectUris.length === 0) {
+      return reply.status(400).send({
+        error: "invalid_client_metadata",
+        error_description: "At least one valid redirect_uri (https or localhost) is required.",
+      });
+    }
 
     const clientId = `posthive_${crypto.randomBytes(16).toString("hex")}`;
     const clientName = typeof body.client_name === "string" && body.client_name.trim() ? body.client_name.trim() : "MCP Client";
@@ -120,12 +132,17 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
     if (!redirect_uri) return reply.status(400).send({ error: "redirect_uri is required" });
     if (!code_challenge) return reply.status(400).send({ error: "PKCE code_challenge is required" });
 
-    // Validate redirect_uri against registered client (if client_id was registered)
-    if (client_id) {
-      const client = clientStore.get(client_id);
-      if (client && client.redirectUris.length > 0 && !client.redirectUris.includes(redirect_uri)) {
-        return reply.status(400).send({ error: "redirect_uri not registered for this client" });
-      }
+    // Validate redirect_uri against registered client.
+    // Require client_id — unregistered clients cannot initiate the flow.
+    if (!client_id) {
+      return reply.status(400).send({ error: "invalid_request", error_description: "client_id is required" });
+    }
+    const client = clientStore.get(client_id);
+    if (!client) {
+      return reply.status(400).send({ error: "invalid_client", error_description: "Unknown client_id — register first via /oauth/register" });
+    }
+    if (client.redirectUris.length > 0 && !client.redirectUris.includes(redirect_uri)) {
+      return reply.status(400).send({ error: "invalid_request", error_description: "redirect_uri not registered for this client" });
     }
 
     const params = new URLSearchParams({
