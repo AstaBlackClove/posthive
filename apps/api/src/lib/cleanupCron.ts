@@ -64,13 +64,18 @@ async function runCleanup(): Promise<void> {
     ` emailVerifications: ${oldEmailVerifications.count} deleted`
   );
 
-  sendCleanupSummaryEmail("guna@posthive.co", {
-    sessions: sessionCount,
-    events: oldEvents.count,
-    postJobs: oldPostJobs.count,
-    oauthStates: oldOAuthStates.count,
-    emailVerifications: oldEmailVerifications.count,
-  }).catch((e) => console.error("[cleanup-cron] summary email error:", e));
+  // Only send summary email if something was actually deleted — suppresses
+  // duplicate emails when multiple instances run the cron at the same time.
+  const totalDeleted = sessionCount + oldEvents.count + oldPostJobs.count + oldOAuthStates.count + oldEmailVerifications.count;
+  if (totalDeleted > 0) {
+    sendCleanupSummaryEmail("guna@posthive.co", {
+      sessions: sessionCount,
+      events: oldEvents.count,
+      postJobs: oldPostJobs.count,
+      oauthStates: oldOAuthStates.count,
+      emailVerifications: oldEmailVerifications.count,
+    }).catch((e) => console.error("[cleanup-cron] summary email error:", e));
+  }
 
   // Clean up claimed post media older than 24h — post is live by then, retries exhausted
   const adapter = storageAdapter;
