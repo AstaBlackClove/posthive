@@ -143,8 +143,8 @@ export function runCleanupNow(): Promise<void> {
 }
 
 export function startCleanupCron(): void {
-  // Run daily at 03:00 UTC
-  cron.schedule("0 3 * * *", () => {
+  // Run daily at 07:00 UTC (~12:30 PM IST)
+  cron.schedule("0 7 * * *", () => {
     runCleanup().catch((e) => console.error("[cleanup-cron] error:", e));
   });
   console.log("[cleanup-cron] started — daily at 03:00 UTC");
