@@ -1444,14 +1444,17 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.redirect(buildRedirect(redirectBase, { error: "profile_fetch_failed" }));
     }
 
-    // List pages the user manages
-    let pages: { id: string; name: string; access_token: string; picture?: { data?: { url?: string } } }[];
+    // List pages the user manages — follow pagination to get all pages (FB defaults to 5/page)
+    type FbPage = { id: string; name: string; access_token: string; picture?: { data?: { url?: string } } };
+    let pages: FbPage[] = [];
     try {
-      const pagesRes = await fetch(
-        `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,picture&access_token=${longLivedToken}`
-      );
-      const pagesData = await pagesRes.json() as { data?: typeof pages };
-      pages = pagesData.data ?? [];
+      let url: string | null = `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,picture&limit=100&access_token=${longLivedToken}`;
+      while (url) {
+        const pagesRes = await fetch(url);
+        const pagesData = await pagesRes.json() as { data?: FbPage[]; paging?: { next?: string } };
+        pages.push(...(pagesData.data ?? []));
+        url = pagesData.paging?.next ?? null;
+      }
     } catch (err) {
       console.error("[facebook oauth] /me/accounts fetch failed:", err);
       return reply.redirect(buildRedirect(redirectBase, { error: "pages_fetch_failed" }));
