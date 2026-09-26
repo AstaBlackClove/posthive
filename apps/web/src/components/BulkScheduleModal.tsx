@@ -123,20 +123,28 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
     if (valid.length === 0) return;
     setSubmitting(true);
     setProgress({ done: 0, total: valid.length });
-    const results = await Promise.allSettled(
-      valid.map((row) =>
-        apiFetch("/jobs", {
-          method: "POST",
-          body: JSON.stringify({
-            scheduledFor: row.scheduledFor,
-            content: { text: row.text, mediaUrls: row.mediaUrls ?? [] },
-            commentText: row.commentText,
-            accountIds: row.accountIds,
-          }),
-        }).finally(() => setProgress(p => p ? { ...p, done: p.done + 1 } : null))
-      )
-    );
-    const succeeded = results.filter(r => r.status === "fulfilled").length;
+
+    // Send in batches of 10 to avoid rate-limit (100 req/min)
+    const BATCH = 10;
+    let succeeded = 0;
+    for (let i = 0; i < valid.length; i += BATCH) {
+      const batch = valid.slice(i, i + BATCH);
+      const results = await Promise.allSettled(
+        batch.map((row) =>
+          apiFetch("/jobs", {
+            method: "POST",
+            body: JSON.stringify({
+              scheduledFor: row.scheduledFor,
+              content: { text: row.text, mediaUrls: row.mediaUrls ?? [] },
+              commentText: row.commentText,
+              accountIds: row.accountIds,
+            }),
+          }).finally(() => setProgress(p => p ? { ...p, done: p.done + 1 } : null))
+        )
+      );
+      succeeded += results.filter(r => r.status === "fulfilled").length;
+    }
+
     setSubmitting(false);
     onScheduled(succeeded);
   }
