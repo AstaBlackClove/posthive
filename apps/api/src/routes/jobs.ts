@@ -52,6 +52,124 @@ const createJobBody = z.object({
 
 export async function jobRoutes(app: FastifyInstance, { storage }: { storage: StorageAdapter }): Promise<void> {
 
+  // Bulk create scheduled jobs — single request, server-side batching
+  app.post("/jobs/bulk", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+
+    const bulkItemSchema = z.object({
+      scheduledFor: z.string().datetime(),
+      content: z.object({
+        text: z.string().default(""),
+        mediaUrls: z.array(z.string()).default([]),
+      }),
+      commentText: z.string().optional(),
+      accountIds: z.array(z.string().cuid()).min(1),
+    });
+
+    const parsed = z.object({
+      jobs: z.array(bulkItemSchema).min(1).max(1000),
+    }).safeParse(req.body);
+
+    if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
+    const { jobs } = parsed.data;
+
+    // Verify all referenced accountIds belong to this workspace (one query)
+    const allAccountIds = [...new Set(jobs.flatMap(j => j.accountIds))];
+    const validAccounts = await prisma.account.findMany({
+      where: { id: { in: allAccountIds }, workspaceId },
+      select: { id: true },
+    });
+    const validAccountSet = new Set(validAccounts.map(a => a.id));
+    const invalidAccountJobs = jobs
+      .map((j, i) => ({ i, invalid: j.accountIds.filter(id => !validAccountSet.has(id)) }))
+      .filter(x => x.invalid.length > 0);
+
+    if (invalidAccountJobs.length > 0) {
+      return reply.status(400).send({
+        error: `${invalidAccountJobs.length} rows reference account IDs not in this workspace`,
+      });
+    }
+
+    // Plan limit check — once for the entire batch
+    if (process.env.ENABLE_BILLING === "true") {
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { plan: true, planStatus: true, trialEndsAt: true },
+      });
+      if (!workspace) return reply.status(400).send({ error: "Workspace not found" });
+      if (workspace.planStatus === "cancelled" || workspace.plan === "cancelled") {
+        return reply.status(402).send({ error: "Your subscription has been cancelled.", code: "CANCELLED", upgradeRequired: true });
+      }
+      if (workspace.planStatus === "trialing" && workspace.trialEndsAt && workspace.trialEndsAt < new Date()) {
+        return reply.status(402).send({ error: "Your free trial has expired.", code: "TRIAL_EXPIRED", upgradeRequired: true });
+      }
+      const plan = getPlan(workspace.plan);
+      if (plan.maxPostsPerMonth !== null) {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+        const postsThisMonth = await prisma.postJob.count({ where: { workspaceId, createdAt: { gte: startOfMonth } } });
+        const remaining = plan.maxPostsPerMonth - postsThisMonth;
+        if (remaining <= 0) {
+          return reply.status(402).send({ error: `Monthly post limit reached (${plan.maxPostsPerMonth}).`, code: "PLAN_LIMIT", upgradeRequired: true });
+        }
+        if (jobs.length > remaining) {
+          return reply.status(402).send({
+            error: `You can only schedule ${remaining} more post${remaining === 1 ? "" : "s"} this month (plan limit: ${plan.maxPostsPerMonth}).`,
+            code: "PLAN_LIMIT", upgradeRequired: true,
+          });
+        }
+      }
+    }
+
+    // Create jobs in chunks of 50 to keep transactions short
+    const CHUNK = 50;
+    const createdJobs: { id: string; scheduledFor: Date }[] = [];
+    const errors: { row: number; reason: string }[] = [];
+
+    for (let i = 0; i < jobs.length; i += CHUNK) {
+      const chunk = jobs.slice(i, i + CHUNK);
+      try {
+        const created = await prisma.$transaction(async (tx) => {
+          const results = [];
+          for (const job of chunk) {
+            const j = await tx.postJob.create({
+              data: {
+                scheduledFor: new Date(job.scheduledFor),
+                status: "pending",
+                content: JSON.stringify(job.content),
+                commentText: job.commentText ?? null,
+                dryRun: false,
+                userId,
+                workspaceId,
+                targets: { create: job.accountIds.map(accountId => ({ accountId })) },
+              },
+              select: { id: true, scheduledFor: true },
+            });
+            results.push(j);
+          }
+          return results;
+        }, { timeout: 30_000 });
+        createdJobs.push(...created.filter(j => j.scheduledFor).map(j => ({ id: j.id, scheduledFor: j.scheduledFor! })));
+      } catch (err) {
+        // Whole chunk failed — record all rows in this chunk as errors
+        const chunkStart = i;
+        for (let k = 0; k < chunk.length; k++) {
+          errors.push({ row: chunkStart + k, reason: err instanceof Error ? err.message : "DB error" });
+        }
+      }
+    }
+
+    // Enqueue BullMQ jobs (non-blocking, fire and forget failures are acceptable)
+    await Promise.allSettled(createdJobs.map(j => schedulePostJob(j.id, j.scheduledFor)));
+
+    return reply.status(201).send({
+      succeeded: createdJobs.length,
+      failed: errors.length,
+      errors,
+    });
+  });
+
   // Create a new scheduled job
   app.post("/jobs", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);

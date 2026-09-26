@@ -124,29 +124,27 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
     setSubmitting(true);
     setProgress({ done: 0, total: valid.length });
 
-    // Send in batches of 10 to avoid rate-limit (100 req/min)
-    const BATCH = 10;
-    let succeeded = 0;
-    for (let i = 0; i < valid.length; i += BATCH) {
-      const batch = valid.slice(i, i + BATCH);
-      const results = await Promise.allSettled(
-        batch.map((row) =>
-          apiFetch("/jobs", {
-            method: "POST",
-            body: JSON.stringify({
-              scheduledFor: row.scheduledFor,
-              content: { text: row.text, mediaUrls: row.mediaUrls ?? [] },
-              commentText: row.commentText,
-              accountIds: row.accountIds,
-            }),
-          }).finally(() => setProgress(p => p ? { ...p, done: p.done + 1 } : null))
-        )
-      );
-      succeeded += results.filter(r => r.status === "fulfilled").length;
+    try {
+      const res = await apiFetch("/jobs/bulk", {
+        method: "POST",
+        body: JSON.stringify({
+          jobs: valid.map(row => ({
+            scheduledFor: row.scheduledFor,
+            content: { text: row.text, mediaUrls: row.mediaUrls ?? [] },
+            commentText: row.commentText,
+            accountIds: row.accountIds,
+          })),
+        }),
+      });
+      const data = res as { succeeded: number; failed: number; errors?: { row: number; reason: string }[] };
+      setProgress({ done: data.succeeded, total: valid.length });
+      setSubmitting(false);
+      await new Promise(res => setTimeout(res, 1500));
+      onScheduled(data.succeeded);
+    } catch (err) {
+      setSubmitting(false);
+      setProgress(null);
     }
-
-    setSubmitting(false);
-    onScheduled(succeeded);
   }
 
   const validRows = rows.filter(r => !r.error);
@@ -285,11 +283,15 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
           {progress && (
             <div>
               <div className="flex justify-between text-xs mb-1" style={{ color: "#888" }}>
-                <span>Scheduling…</span>
+                <span>{submitting ? "Scheduling…" : `Done — ${progress.done} of ${progress.total} scheduled`}</span>
                 <span>{progress.done}/{progress.total}</span>
               </div>
               <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#1f1f1f" }}>
-                <div className="h-full rounded-full transition-all" style={{ width: `${(progress.done / progress.total) * 100}%`, backgroundColor: "#5b63d3" }} />
+                {submitting ? (
+                  <div className="h-full rounded-full animate-pulse" style={{ width: "100%", backgroundColor: "#5b63d3", opacity: 0.6 }} />
+                ) : (
+                  <div className="h-full rounded-full transition-all" style={{ width: `${(progress.done / progress.total) * 100}%`, backgroundColor: "#5b63d3" }} />
+                )}
               </div>
             </div>
           )}
@@ -304,7 +306,7 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
             <button onClick={handleSubmit} disabled={submitting}
               className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 disabled:opacity-50"
               style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-              {submitting ? `Scheduling… (${progress?.done}/${progress?.total})` : `Schedule ${validRows.length} post${validRows.length !== 1 ? "s" : ""}`}
+              {submitting ? `Scheduling ${validRows.length} posts…` : `Schedule ${validRows.length} post${validRows.length !== 1 ? "s" : ""}`}
             </button>
           )}
         </div>
