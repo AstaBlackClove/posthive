@@ -14,6 +14,17 @@ interface ParsedRow {
   error?: string;
 }
 
+interface ServerError {
+  row: number;
+  reason: string;
+}
+
+interface SubmitResult {
+  succeeded: number;
+  failed: number;
+  errors?: ServerError[];
+}
+
 interface Props {
   accounts: Account[];
   onClose: () => void;
@@ -108,18 +119,24 @@ function parseCSV(csv: string, accounts: Account[]): ParsedRow[] {
   });
 }
 
+type SubmitState =
+  | { phase: "idle" }
+  | { phase: "sending" }
+  | { phase: "done"; result: SubmitResult }
+  | { phase: "error"; message: string };
+
 export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
   const [csv, setCsv] = useState("");
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [parsed, setParsed] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [submitState, setSubmitState] = useState<SubmitState>({ phase: "idle" });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleParse() {
     const result = parseCSV(csv, accounts);
     setRows(result);
     setParsed(true);
+    setSubmitState({ phase: "idle" });
   }
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -130,6 +147,7 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
       setCsv(ev.target?.result as string ?? "");
       setParsed(false);
       setRows([]);
+      setSubmitState({ phase: "idle" });
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -138,8 +156,7 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
   async function handleSubmit() {
     const valid = rows.filter(r => !r.error);
     if (valid.length === 0) return;
-    setSubmitting(true);
-    setProgress({ done: 0, total: valid.length });
+    setSubmitState({ phase: "sending" });
 
     try {
       const res = await apiFetch("/jobs/bulk", {
@@ -153,19 +170,21 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
           })),
         }),
       });
-      const data = res as { succeeded: number; failed: number; errors?: { row: number; reason: string }[] };
-      setProgress({ done: data.succeeded, total: valid.length });
-      setSubmitting(false);
-      await new Promise(res => setTimeout(res, 1500));
+      const data = res as SubmitResult;
+      setSubmitState({ phase: "done", result: data });
+      await new Promise(r => setTimeout(r, 2000));
       onScheduled(data.succeeded);
     } catch (err) {
-      setSubmitting(false);
-      setProgress(null);
+      const msg = err instanceof Error ? err.message : "Request failed. Please try again.";
+      setSubmitState({ phase: "error", message: msg });
     }
   }
 
   const validRows = rows.filter(r => !r.error);
   const errorRows = rows.filter(r => r.error);
+  const isSending = submitState.phase === "sending";
+  const isDone = submitState.phase === "done";
+  const isError = submitState.phase === "error";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
@@ -177,7 +196,7 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
             <h2 className="text-base font-bold" style={{ color: "#ededed" }}>Bulk Schedule</h2>
             <p className="text-xs mt-0.5" style={{ color: "#888" }}>Upload a CSV or paste rows below</p>
           </div>
-          <button onClick={onClose} className="text-lg leading-none hover:opacity-60 transition-opacity" style={{ color: "#888" }}>✕</button>
+          <button onClick={onClose} disabled={isSending} className="text-lg leading-none hover:opacity-60 transition-opacity disabled:opacity-30" style={{ color: "#888" }}>✕</button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
@@ -185,7 +204,6 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
           <div className="rounded-xl p-3" style={{ backgroundColor: "#0d0d0d", border: "1px solid #1f1f1f" }}>
             <div className="flex items-center justify-between mb-2">
               <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#666" }}>CSV Format</p>
-              {/* Info tooltip */}
               <div className="relative group">
                 <button
                   type="button"
@@ -197,15 +215,15 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
                 </button>
                 <div
                   className="absolute right-0 top-7 z-10 hidden group-hover:block rounded-xl p-3 text-xs shadow-2xl"
-                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #333", width: "280px", color: "#ccc", lineHeight: "1.6" }}
+                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #333", width: "300px", color: "#ccc", lineHeight: "1.6" }}
                 >
                   <p className="font-semibold mb-2" style={{ color: "#ededed" }}>Column Reference</p>
                   <div className="space-y-1.5">
-                    <div><span className="font-mono" style={{ color: "#818cf8" }}>scheduled_for</span> - date &amp; time, e.g. <span className="font-mono" style={{ color: "#888" }}>2026-07-10 09:00</span></div>
-                    <div><span className="font-mono" style={{ color: "#818cf8" }}>text</span> - post body (required)</div>
-                    <div><span className="font-mono" style={{ color: "#818cf8" }}>accounts</span> - <span className="font-mono" style={{ color: "#888" }}>all</span>, platform names, or exact account display names separated by <span className="font-mono" style={{ color: "#888" }}>|</span>. Prefix with <span className="font-mono" style={{ color: "#f87171" }}>!</span> to exclude. Examples: <span className="font-mono" style={{ color: "#888" }}>facebook</span> (all FB pages), <span className="font-mono" style={{ color: "#888" }}>Omas Backstube|Omas Lieblingsgerichte</span> (specific pages), <span className="font-mono" style={{ color: "#888" }}>all|!instagram</span>. YouTube not supported (needs video).</div>
-                    <div><span className="font-mono" style={{ color: "#818cf8" }}>comment</span> - first comment text (optional)</div>
-                    <div><span className="font-mono" style={{ color: "#818cf8" }}>image_urls</span> - public image URLs separated by <span className="font-mono" style={{ color: "#888" }}>;</span> (optional, up to 4)</div>
+                    <div><span className="font-mono" style={{ color: "#818cf8" }}>scheduled_for</span> — date &amp; time, e.g. <span className="font-mono" style={{ color: "#888" }}>2026-07-10 09:00</span></div>
+                    <div><span className="font-mono" style={{ color: "#818cf8" }}>text</span> — post body (required)</div>
+                    <div><span className="font-mono" style={{ color: "#818cf8" }}>accounts</span> — <span className="font-mono" style={{ color: "#888" }}>all</span>, platform names, or exact account display names separated by <span className="font-mono" style={{ color: "#888" }}>|</span>. Prefix with <span className="font-mono" style={{ color: "#f87171" }}>!</span> to exclude. Examples: <span className="font-mono" style={{ color: "#888" }}>facebook</span> (all FB pages), <span className="font-mono" style={{ color: "#888" }}>My Page|Other Page</span> (specific pages), <span className="font-mono" style={{ color: "#888" }}>all|!instagram</span>. YouTube not supported.</div>
+                    <div><span className="font-mono" style={{ color: "#818cf8" }}>comment</span> — first comment text (optional)</div>
+                    <div><span className="font-mono" style={{ color: "#818cf8" }}>image_urls</span> — public image URLs separated by <span className="font-mono" style={{ color: "#888" }}>;</span> (optional, up to 4). Must be publicly accessible — Google Drive links won&apos;t work.</div>
                   </div>
                 </div>
               </div>
@@ -215,8 +233,8 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
 
           {/* Upload + paste */}
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors hover:opacity-80"
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isSending}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors hover:opacity-80 disabled:opacity-40"
               style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888" }}>
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -229,10 +247,11 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
 
           <textarea
             value={csv}
-            onChange={(e) => { setCsv(e.target.value); setParsed(false); setRows([]); }}
+            onChange={(e) => { setCsv(e.target.value); setParsed(false); setRows([]); setSubmitState({ phase: "idle" }); }}
             placeholder={"scheduled_for,text,accounts,comment,image_urls\n2026-07-10 09:00,My post text,bluesky|mastodon,,"}
             rows={6}
-            className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none font-mono"
+            disabled={isSending}
+            className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none font-mono disabled:opacity-40"
             style={{ backgroundColor: "#1a1a1a", borderColor: "#3a3a3a", color: "#ededed" }}
           />
 
@@ -248,45 +267,76 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
           {/* Preview table */}
           {parsed && rows.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-semibold" style={{ color: "#ededed" }}>{validRows.length} valid</span>
-                {errorRows.length > 0 && <span className="text-xs font-semibold" style={{ color: "#f87171" }}>{errorRows.length} errors</span>}
+              {/* Summary bar */}
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-xs font-semibold" style={{ color: "#4ade80" }}>
+                  {validRows.length} ready
+                </span>
+                {errorRows.length > 0 && (
+                  <span className="text-xs font-semibold" style={{ color: "#f87171" }}>
+                    {errorRows.length} error{errorRows.length !== 1 ? "s" : ""}
+                  </span>
+                )}
+                <span className="text-xs" style={{ color: "#555" }}>
+                  {rows.length} total rows
+                </span>
               </div>
+
+              {/* Error summary — show all errors up front */}
+              {errorRows.length > 0 && (
+                <div className="mb-3 rounded-xl p-3 space-y-1" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1515" }}>
+                  <p className="text-xs font-semibold mb-1.5" style={{ color: "#f87171" }}>Rows with errors (will be skipped):</p>
+                  {rows.map((row, i) => row.error ? (
+                    <div key={i} className="flex gap-2 text-xs">
+                      <span className="font-mono flex-shrink-0" style={{ color: "#666" }}>Row {i + 2}</span>
+                      <span style={{ color: "#f87171" }}>{row.error}</span>
+                    </div>
+                  ) : null)}
+                </div>
+              )}
+
               <div className="rounded-xl overflow-x-auto" style={{ border: "1px solid #2a2a2a" }}>
                 <table className="w-full text-xs" style={{ minWidth: "480px" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#161616", borderBottom: "1px solid #2a2a2a" }}>
+                      <th className="text-left px-3 py-2 font-semibold" style={{ color: "#555" }}>#</th>
                       <th className="text-left px-3 py-2 font-semibold" style={{ color: "#555" }}>Date</th>
                       <th className="text-left px-3 py-2 font-semibold" style={{ color: "#555" }}>Text</th>
                       <th className="text-left px-3 py-2 font-semibold" style={{ color: "#555" }}>Accounts</th>
-                      <th className="text-left px-3 py-2 font-semibold" style={{ color: "#555" }}>Images</th>
                       <th className="text-left px-3 py-2 font-semibold" style={{ color: "#555" }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((row, i) => (
-                      <tr key={i} style={{ borderBottom: "1px solid #1f1f1f", backgroundColor: row.error ? "#1a0a0a" : undefined }}>
+                      <tr key={i} style={{ borderBottom: "1px solid #1a1a1a", backgroundColor: row.error ? "#150808" : undefined }}>
+                        <td className="px-3 py-2 font-mono" style={{ color: "#444" }}>{i + 2}</td>
                         <td className="px-3 py-2 whitespace-nowrap" style={{ color: row.error ? "#555" : "#ededed" }}>
                           {row.scheduledFor ? new Date(row.scheduledFor).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
                         </td>
-                        <td className="px-3 py-2 max-w-[180px]" style={{ color: "#aaa" }}>
+                        <td className="px-3 py-2 max-w-[160px]" style={{ color: "#aaa" }}>
                           <span className="block truncate">{row.text || "—"}</span>
                         </td>
                         <td className="px-3 py-2">
-                          <span className="flex gap-1 flex-wrap">
-                            {row.accountIds.map(id => {
-                              const acc = accounts.find(a => a.id === id);
-                              return acc ? <PlatformIcon key={id} platform={acc.platform} size={13} /> : null;
-                            })}
-                          </span>
+                          {row.accountIds.length > 0 ? (
+                            <span className="flex gap-1 flex-wrap items-center">
+                              {row.accountIds.map(id => {
+                                const acc = accounts.find(a => a.id === id);
+                                return acc ? (
+                                  <span key={id} title={acc.displayName}>
+                                    <PlatformIcon platform={acc.platform} size={13} />
+                                  </span>
+                                ) : null;
+                              })}
+                              <span className="text-[10px] ml-0.5" style={{ color: "#555" }}>
+                                {row.accountIds.length}
+                              </span>
+                            </span>
+                          ) : <span style={{ color: "#444" }}>—</span>}
                         </td>
-                        <td className="px-3 py-2 whitespace-nowrap" style={{ color: "#888" }}>
-                          {row.mediaUrls?.length ? `${row.mediaUrls.length} img` : "—"}
-                        </td>
-                        <td className="px-3 py-2 max-w-[160px]">
+                        <td className="px-3 py-2">
                           {row.error
-                            ? <span className="block truncate" title={row.error} style={{ color: "#f87171" }}>✕ {row.error}</span>
-                            : <span style={{ color: "#4ade80" }}>✓ Ready</span>}
+                            ? <span className="text-[11px] leading-tight block" style={{ color: "#f87171" }}>✕ Error</span>
+                            : <span className="text-[11px]" style={{ color: "#4ade80" }}>✓ Ready</span>}
                         </td>
                       </tr>
                     ))}
@@ -296,35 +346,93 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
             </div>
           )}
 
-          {/* Progress */}
-          {progress && (
-            <div>
-              <div className="flex justify-between text-xs mb-1" style={{ color: "#888" }}>
-                <span>{submitting ? "Scheduling…" : `Done — ${progress.done} of ${progress.total} scheduled`}</span>
-                <span>{progress.done}/{progress.total}</span>
+          {/* Progress / result */}
+          {submitState.phase === "sending" && (
+            <div className="rounded-xl p-4" style={{ backgroundColor: "#0d0d1a", border: "1px solid #2a2a4a" }}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0" style={{ borderColor: "#5b63d3", borderTopColor: "transparent" }} />
+                <span className="text-sm font-medium" style={{ color: "#818cf8" }}>
+                  Scheduling {validRows.length} posts… this may take a moment
+                </span>
               </div>
               <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#1f1f1f" }}>
-                {submitting ? (
-                  <div className="h-full rounded-full animate-pulse" style={{ width: "100%", backgroundColor: "#5b63d3", opacity: 0.6 }} />
-                ) : (
-                  <div className="h-full rounded-full transition-all" style={{ width: `${(progress.done / progress.total) * 100}%`, backgroundColor: "#5b63d3" }} />
-                )}
+                <div className="h-full rounded-full animate-pulse" style={{ width: "100%", backgroundColor: "#5b63d3", opacity: 0.5 }} />
               </div>
+              <p className="text-[11px] mt-2" style={{ color: "#555" }}>Do not close this window</p>
+            </div>
+          )}
+
+          {submitState.phase === "done" && (
+            <div className="rounded-xl p-4" style={{ backgroundColor: "#0a1a0a", border: "1px solid #1a3a1a" }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">✓</span>
+                <span className="text-sm font-semibold" style={{ color: "#4ade80" }}>
+                  {submitState.result.succeeded} post{submitState.result.succeeded !== 1 ? "s" : ""} scheduled successfully
+                </span>
+              </div>
+              {submitState.result.failed > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs font-semibold mb-1" style={{ color: "#f87171" }}>
+                    {submitState.result.failed} failed on the server:
+                  </p>
+                  <div className="space-y-0.5">
+                    {(submitState.result.errors ?? []).map((e, i) => (
+                      <div key={i} className="text-xs flex gap-2">
+                        <span className="font-mono flex-shrink-0" style={{ color: "#666" }}>Row {e.row + 2}</span>
+                        <span style={{ color: "#f87171" }}>{e.reason}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="mt-3 h-1 rounded-full" style={{ backgroundColor: "#4ade80", opacity: 0.4 }} />
+            </div>
+          )}
+
+          {submitState.phase === "error" && (
+            <div className="rounded-xl p-4" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1515" }}>
+              <p className="text-sm font-semibold mb-1" style={{ color: "#f87171" }}>✕ Failed to submit</p>
+              <p className="text-xs" style={{ color: "#888" }}>{submitState.message}</p>
+              <button
+                onClick={() => setSubmitState({ phase: "idle" })}
+                className="mt-3 text-xs underline hover:opacity-70"
+                style={{ color: "#818cf8" }}
+              >
+                Try again
+              </button>
             </div>
           )}
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderTop: "1px solid #2a2a2a" }}>
-          <button onClick={onClose} className="text-sm font-medium hover:opacity-70 transition-opacity" style={{ color: "#888" }}>
-            Cancel
+          <button
+            onClick={onClose}
+            disabled={isSending}
+            className="text-sm font-medium hover:opacity-70 transition-opacity disabled:opacity-30"
+            style={{ color: "#888" }}
+          >
+            {isDone ? "Close" : "Cancel"}
           </button>
-          {parsed && validRows.length > 0 && (
-            <button onClick={handleSubmit} disabled={submitting}
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 disabled:opacity-50"
-              style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-              {submitting ? `Scheduling ${validRows.length} posts…` : `Schedule ${validRows.length} post${validRows.length !== 1 ? "s" : ""}`}
-            </button>
+
+          {parsed && validRows.length > 0 && !isDone && (
+            <div className="flex items-center gap-3">
+              {errorRows.length > 0 && (
+                <span className="text-xs" style={{ color: "#888" }}>
+                  {errorRows.length} row{errorRows.length !== 1 ? "s" : ""} will be skipped
+                </span>
+              )}
+              <button
+                onClick={handleSubmit}
+                disabled={isSending || isError}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 disabled:opacity-50"
+                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+              >
+                {isSending
+                  ? "Scheduling…"
+                  : `Schedule ${validRows.length} post${validRows.length !== 1 ? "s" : ""}`}
+              </button>
+            </div>
           )}
         </div>
       </div>
