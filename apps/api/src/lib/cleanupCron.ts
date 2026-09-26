@@ -77,14 +77,32 @@ async function runCleanup(): Promise<void> {
     }).catch((e) => console.error("[cleanup-cron] summary email error:", e));
   }
 
-  // Clean up claimed post media older than 24h — post is live by then, retries exhausted
+  // Clean up claimed post media older than 24h — but only if not referenced by a pending/running job.
+  // Posts scheduled days in advance have their media claimed immediately; we must not delete until after publish.
   const adapter = storageAdapter;
   if (adapter) {
     try {
-      const staleUploads = await prisma.upload.findMany({
-        where: { claimedAt: { not: null, lt: cut1d } },
-        select: { id: true, url: true },
-      });
+      const [candidates, activeJobs] = await Promise.all([
+        prisma.upload.findMany({
+          where: { claimedAt: { not: null, lt: cut1d } },
+          select: { id: true, url: true },
+        }),
+        prisma.postJob.findMany({
+          where: { status: { in: ["pending", "running"] } },
+          select: { content: true },
+        }),
+      ]);
+
+      // Build set of URLs still needed by active jobs
+      const activeUrls = new Set<string>();
+      for (const job of activeJobs) {
+        try {
+          const c = JSON.parse(job.content as string) as { mediaUrls?: string[] };
+          for (const u of c.mediaUrls ?? []) activeUrls.add(u);
+        } catch { /* ignore parse errors */ }
+      }
+
+      const staleUploads = candidates.filter(u => !activeUrls.has(u.url));
 
       if (staleUploads.length) {
         const BATCH = 50;
