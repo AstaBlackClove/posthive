@@ -8,7 +8,6 @@ import { PlatformIcon } from "../../components/PlatformIcon";
 import { EditPostDialog } from "../../components/EditPostDialog";
 import { DeleteConfirmDialog } from "../../components/DeleteConfirmDialog";
 import { useToast } from "../../components/Toast";
-import { BulkScheduleModal } from "../../components/BulkScheduleModal";
 import { TrialUrgentBanner } from "../../components/TrialUrgentBanner";
 import type { Account, PerAccountOverride } from "../../components/PlatformPreview";
 
@@ -67,12 +66,14 @@ interface AnalyticsResult {
 
 const ANALYTICS_PLATFORMS = new Set(["bluesky", "mastodon", "pixelfed", "lemmy"]);
 
-function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate }: {
+function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, selected, onToggleSelect }: {
   job: Job;
   onEdit: () => void;
   onDelete: () => void;
   onRetry: () => Promise<void>;
   onDuplicate: () => void;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }) {
   const [retrying, setRetrying] = useState(false);
   const [analytics, setAnalytics] = useState<Record<string, AnalyticsResult | "loading" | "error">>({});
@@ -92,11 +93,30 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate }: {
   }
 
   return (
-    <div className="job-card group rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111" }}>
+    <div
+      className="job-card group rounded-2xl overflow-hidden"
+      style={{
+        backgroundColor: selected ? "#12121f" : "#111111",
+        border: selected ? "1px solid #3730a340" : "1px solid transparent",
+        outline: selected ? "1px solid #3730a3" : undefined,
+      }}
+    >
       <div className="p-5">
 
         {/* Header row */}
         <div className="flex items-start gap-3">
+          {/* Checkbox */}
+          {onToggleSelect && (
+            <div className="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" style={selected ? { opacity: 1 } : {}}>
+              <input
+                type="checkbox"
+                checked={!!selected}
+                onChange={(e) => { e.stopPropagation(); onToggleSelect(); }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-3.5 h-3.5 rounded cursor-pointer accent-indigo-500"
+              />
+            </div>
+          )}
           <div className="flex items-center gap-1.5 mt-0.5 flex-shrink-0">
             {job.targets.map((t) => (
               <span key={t.id} title={`${t.account?.displayName ?? t.accountId} (${t.account?.platform ?? "unknown"})`}
@@ -287,8 +307,13 @@ export default function JobsPage() {
 
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [deletingJob, setDeletingJob] = useState<Job | null>(null);
-  const [showBulk, setShowBulk] = useState(false);
   const [platformFilter, setPlatformFilter] = useState<string>("all");
+
+  // Bulk select state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkDeleteType, setBulkDeleteType] = useState<"selected" | "draft" | "pending" | "done" | "failed">("selected");
 
   useEffect(() => {
     apiFetch<Account[]>("/accounts").then(setAccounts).catch(() => {});
@@ -311,6 +336,22 @@ export default function JobsPage() {
       setJobs((prev) => prev.filter((j) => j.id !== jobId));
       success("Post deleted.");
     } catch (err) { toastError(String(err)); }
+  }
+
+  async function bulkDelete(ids: string[]) {
+    setBulkDeleting(true);
+    let deleted = 0;
+    for (const id of ids) {
+      try {
+        await apiFetch(`/jobs/${id}`, { method: "DELETE" });
+        deleted++;
+      } catch {}
+    }
+    setJobs(prev => prev.filter(j => !ids.includes(j.id)));
+    setSelectedIds(new Set());
+    setBulkDeleting(false);
+    setShowBulkDeleteConfirm(false);
+    success(`Deleted ${deleted} post${deleted !== 1 ? "s" : ""}.`);
   }
 
   async function retryFailed(jobId: string) {
@@ -449,6 +490,28 @@ export default function JobsPage() {
 
   const allPlatforms = Array.from(new Set(jobs.flatMap((j) => j.targets.map((t) => t.account?.platform).filter(Boolean) as string[])));
 
+  // Bulk select helpers
+  const toggleSelect = (id: string) => setSelectedIds(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  const selectAll = (ids: string[]) => setSelectedIds(new Set(ids));
+  const clearSelection = () => setSelectedIds(new Set());
+
+  // IDs to delete based on bulkDeleteType
+  const getBulkDeleteIds = (): string[] => {
+    if (bulkDeleteType === "selected") return [...selectedIds];
+    const statusMap: Record<string, string[]> = {
+      draft: ["draft"],
+      pending: ["pending", "running"],
+      done: ["done", "comment_done", "post_done"],
+      failed: ["failed", "post_failed", "comment_failed"],
+    };
+    const statuses = statusMap[bulkDeleteType] ?? [];
+    return jobs.filter(j => statuses.includes(j.status)).map(j => j.id);
+  };
+
   const filteredJobs = jobs.filter((j) => {
     if (filter !== "all") {
       if (filter === "pending" && j.status !== "pending" && j.status !== "running") return false;
@@ -493,18 +556,34 @@ export default function JobsPage() {
         />
       )}
 
-      {/* Bulk schedule modal */}
-      {showBulk && (
-        <BulkScheduleModal
-          accounts={accounts}
-          onClose={() => setShowBulk(false)}
-          onScheduled={(count) => {
-            setShowBulk(false);
-            success(`${count} post${count !== 1 ? "s" : ""} scheduled!`);
-            apiFetch<Job[]>("/jobs").then(setJobs).catch(() => {});
-          }}
-        />
-      )}
+      {/* Bulk delete confirm dialog */}
+      {showBulkDeleteConfirm && (() => {
+        const ids = getBulkDeleteIds();
+        const label = bulkDeleteType === "selected" ? `${ids.length} selected` : `all ${bulkDeleteType} posts (${ids.length})`;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+            <div className="w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+              <h3 className="text-base font-bold mb-2" style={{ color: "#ededed" }}>Delete {label}?</h3>
+              <p className="text-sm mb-5" style={{ color: "#888" }}>
+                This will permanently delete {ids.length} post{ids.length !== 1 ? "s" : ""}. This cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => setShowBulkDeleteConfirm(false)} disabled={bulkDeleting}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-80 disabled:opacity-40"
+                  style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+                  Cancel
+                </button>
+                <button onClick={() => bulkDelete(ids)} disabled={bulkDeleting || ids.length === 0}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-80 disabled:opacity-40"
+                  style={{ backgroundColor: "#7f1d1d", color: "#fca5a5", border: "1px solid #991b1b" }}>
+                  {bulkDeleting ? "Deleting…" : `Delete ${ids.length}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
 
       {/* Top bar */}
       <div className="flex items-center justify-between pl-16 pr-4 md:px-8 flex-shrink-0"
@@ -517,7 +596,7 @@ export default function JobsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button onClick={() => setShowBulk(true)}
+          <button onClick={() => router.push("/bulk")}
             className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl transition-colors hover:opacity-80"
             style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -566,7 +645,7 @@ export default function JobsPage() {
                 { id: "done",    label: "Published",  dot: "#22c55e", activeColor: "#4ade80", activeBg: "#0a1f12" },
                 { id: "failed",  label: "Failed",     dot: "#ef4444", activeColor: "#f87171", activeBg: "#1f0a0a" },
               ] as { id: FilterTab; label: string; dot: string | null; activeColor: string; activeBg: string }[]).map((f) => (
-                <button key={f.id} onClick={() => setFilter(f.id)}
+                <button key={f.id} onClick={() => { setFilter(f.id); clearSelection(); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
                   style={filter === f.id
                     ? { backgroundColor: f.activeBg, color: f.activeColor, border: `1px solid ${f.dot ?? "#3a3a3a"}40` }
@@ -599,6 +678,72 @@ export default function JobsPage() {
           </>
         )}
       </div>
+
+      {/* Bulk action bar */}
+      {viewTab === "list" && (
+        <div className="flex items-center gap-3 px-4 md:px-8 py-2.5 flex-shrink-0 flex-wrap" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
+          {/* Select all / deselect */}
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={filteredJobs.length > 0 && filteredJobs.every(j => selectedIds.has(j.id))}
+              onChange={(e) => e.target.checked ? selectAll(filteredJobs.map(j => j.id)) : clearSelection()}
+              className="w-3.5 h-3.5 rounded accent-indigo-500 cursor-pointer"
+            />
+            <span className="text-xs" style={{ color: "#555" }}>
+              {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
+            </span>
+          </label>
+
+          {selectedIds.size > 0 && (
+            <>
+              <div className="h-4 w-px" style={{ backgroundColor: "#2a2a2a" }} />
+              <button onClick={clearSelection} className="text-xs hover:opacity-70 transition-opacity" style={{ color: "#555" }}>
+                Clear
+              </button>
+              <div className="h-4 w-px" style={{ backgroundColor: "#2a2a2a" }} />
+              <button
+                onClick={() => { setBulkDeleteType("selected"); setShowBulkDeleteConfirm(true); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors hover:opacity-80"
+                style={{ backgroundColor: "#2a0a0a", color: "#f87171", border: "1px solid #3a1515" }}>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete {selectedIds.size} selected
+              </button>
+            </>
+          )}
+
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs" style={{ color: "#444" }}>Delete by type:</span>
+            {([
+              { type: "draft" as const, label: "Drafts", color: "#6b7280" },
+              { type: "pending" as const, label: "Scheduled", color: "#f59e0b" },
+              { type: "done" as const, label: "Published", color: "#22c55e" },
+              { type: "failed" as const, label: "Failed", color: "#ef4444" },
+            ]).map(({ type, label, color }) => {
+              const statusMap: Record<string, string[]> = {
+                draft: ["draft"], pending: ["pending", "running"],
+                done: ["done", "comment_done", "post_done"],
+                failed: ["failed", "post_failed", "comment_failed"],
+              };
+              const count = jobs.filter(j => statusMap[type]?.includes(j.status)).length;
+              if (count === 0) return null;
+              return (
+                <button
+                  key={type}
+                  onClick={() => { setBulkDeleteType(type); setShowBulkDeleteConfirm(true); }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors hover:opacity-80"
+                  style={{ backgroundColor: "#1a0a0a", color, border: `1px solid ${color}30` }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  {label} ({count})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-8 py-6">
@@ -654,7 +799,9 @@ export default function JobsPage() {
                       onEdit={() => setEditingJob(job)}
                       onDelete={() => setDeletingJob(job)}
                       onRetry={() => retryFailed(job.id)}
-                      onDuplicate={() => duplicateJob(job)} />
+                      onDuplicate={() => duplicateJob(job)}
+                      selected={selectedIds.has(job.id)}
+                      onToggleSelect={() => toggleSelect(job.id)} />
                   ))}
                 </div>
               </section>
@@ -674,7 +821,9 @@ export default function JobsPage() {
                       onEdit={() => setEditingJob(job)}
                       onDelete={() => setDeletingJob(job)}
                       onRetry={() => retryFailed(job.id)}
-                      onDuplicate={() => duplicateJob(job)} />
+                      onDuplicate={() => duplicateJob(job)}
+                      selected={selectedIds.has(job.id)}
+                      onToggleSelect={() => toggleSelect(job.id)} />
                   ))}
                 </div>
               </section>
@@ -694,7 +843,9 @@ export default function JobsPage() {
                       onEdit={() => setEditingJob(job)}
                       onDelete={() => setDeletingJob(job)}
                       onRetry={() => retryFailed(job.id)}
-                      onDuplicate={() => duplicateJob(job)} />
+                      onDuplicate={() => duplicateJob(job)}
+                      selected={selectedIds.has(job.id)}
+                      onToggleSelect={() => toggleSelect(job.id)} />
                   ))}
                 </div>
               </section>

@@ -59,7 +59,7 @@ const YT_REDIRECT_URI = process.env.YOUTUBE_REDIRECT_URI!;
 const FB_APP_ID = process.env.FACEBOOK_APP_ID!;
 const FB_APP_SECRET = process.env.FACEBOOK_APP_SECRET!;
 const FB_REDIRECT_URI = process.env.FACEBOOK_REDIRECT_URI!;
-const FB_SCOPES = "pages_manage_posts,pages_show_list,pages_read_engagement,pages_manage_engagement,pages_read_user_content";
+const FB_SCOPES = "pages_manage_posts,pages_show_list,pages_read_engagement,pages_manage_engagement,pages_read_user_content,business_management";
 
 const X_API_KEY     = process.env.X_API_KEY!;
 const X_API_SECRET  = process.env.X_API_SECRET!;
@@ -1458,6 +1458,58 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     } catch (err) {
       console.error("[facebook oauth] /me/accounts fetch failed:", err);
       return reply.redirect(buildRedirect(redirectBase, { error: "pages_fetch_failed" }));
+    }
+
+    // Also fetch pages managed via Meta Business Portfolio (Business Manager)
+    try {
+      type FbBusiness = { id: string; name: string; owned_pages?: { data?: Array<{ id: string; name: string }>; paging?: { next?: string } } };
+      let bizUrl: string | null = `https://graph.facebook.com/v21.0/me/businesses?fields=id,name,owned_pages{id,name}&limit=10&access_token=${longLivedToken}`;
+      const pageIds = new Set(pages.map(p => p.id));
+      while (bizUrl) {
+        const bizRes = await fetch(bizUrl);
+        const bizData = await bizRes.json() as { data?: FbBusiness[]; paging?: { next?: string }; error?: { message: string } };
+        if (bizData.error) break; // business pages permission not granted — skip gracefully
+        for (const biz of bizData.data ?? []) {
+          // Fetch pages for this business (may be paginated)
+          let bizPagesUrl: string | null | undefined = null;
+          const initialPages = biz.owned_pages?.data ?? [];
+          for (const p of initialPages) {
+            if (!pageIds.has(p.id)) {
+              // Fetch full page data (access_token + picture) for this business page
+              try {
+                const fullRes = await fetch(`https://graph.facebook.com/v21.0/${p.id}?fields=id,name,access_token,picture&access_token=${longLivedToken}`);
+                const full = await fullRes.json() as FbPage & { error?: unknown };
+                if (!('error' in full) && full.access_token) {
+                  pages.push(full);
+                  pageIds.add(p.id);
+                }
+              } catch { /* skip page on error */ }
+            }
+          }
+          bizPagesUrl = biz.owned_pages?.paging?.next;
+          while (bizPagesUrl) {
+            const nextRes = await fetch(bizPagesUrl);
+            const nextData = await nextRes.json() as { data?: Array<{ id: string; name: string }>; paging?: { next?: string } };
+            for (const p of nextData.data ?? []) {
+              if (!pageIds.has(p.id)) {
+                try {
+                  const fullRes = await fetch(`https://graph.facebook.com/v21.0/${p.id}?fields=id,name,access_token,picture&access_token=${longLivedToken}`);
+                  const full = await fullRes.json() as FbPage & { error?: unknown };
+                  if (!('error' in full) && full.access_token) {
+                    pages.push(full);
+                    pageIds.add(p.id);
+                  }
+                } catch { /* skip page on error */ }
+              }
+            }
+            bizPagesUrl = nextData.paging?.next ?? null;
+          }
+        }
+        bizUrl = bizData.paging?.next ?? null;
+      }
+    } catch (err) {
+      // Non-fatal — user may not have business_management scope; log and continue with personal pages
+      console.warn("[facebook oauth] /me/businesses fetch failed (non-fatal):", err);
     }
 
     if (pages.length === 0) {

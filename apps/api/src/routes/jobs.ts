@@ -122,10 +122,30 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       }
     }
 
+    // Stream NDJSON progress back to the client
+    reply.hijack();
+    const raw = reply.raw;
+    // Manually set CORS headers — hijack() bypasses @fastify/cors
+    const reqOrigin = (req.headers.origin as string | undefined) ?? "";
+    const allowedOrigins = [process.env.WEB_URL, "http://localhost:3000"].filter(Boolean) as string[];
+    if (!reqOrigin || allowedOrigins.includes(reqOrigin)) {
+      raw.setHeader("Access-Control-Allow-Origin", reqOrigin || "*");
+    }
+    raw.setHeader("Access-Control-Allow-Credentials", "true");
+    raw.setHeader("Content-Type", "application/x-ndjson");
+    raw.setHeader("Transfer-Encoding", "chunked");
+    raw.setHeader("Cache-Control", "no-cache");
+    raw.statusCode = 200;
+
+    const writeEvent = (obj: object) => {
+      raw.write(JSON.stringify(obj) + "\n");
+    };
+
     // Create jobs in chunks of 50 to keep transactions short
     const CHUNK = 50;
     const createdJobs: { id: string; scheduledFor: Date }[] = [];
     const errors: { row: number; reason: string }[] = [];
+    let done = 0;
 
     for (let i = 0; i < jobs.length; i += CHUNK) {
       const chunk = jobs.slice(i, i + CHUNK);
@@ -152,22 +172,20 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         }, { timeout: 30_000 });
         createdJobs.push(...created.filter(j => j.scheduledFor).map(j => ({ id: j.id, scheduledFor: j.scheduledFor! })));
       } catch (err) {
-        // Whole chunk failed — record all rows in this chunk as errors
         const chunkStart = i;
         for (let k = 0; k < chunk.length; k++) {
           errors.push({ row: chunkStart + k, reason: err instanceof Error ? err.message : "DB error" });
         }
       }
+      done = Math.min(i + CHUNK, jobs.length);
+      writeEvent({ type: "progress", done, total: jobs.length });
     }
 
     // Enqueue BullMQ jobs (non-blocking, fire and forget failures are acceptable)
     await Promise.allSettled(createdJobs.map(j => schedulePostJob(j.id, j.scheduledFor)));
 
-    return reply.status(201).send({
-      succeeded: createdJobs.length,
-      failed: errors.length,
-      errors,
-    });
+    writeEvent({ type: "done", succeeded: createdJobs.length, failed: errors.length, errors });
+    raw.end();
   });
 
   // Create a new scheduled job

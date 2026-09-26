@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { apiFetch } from "../lib/api";
+import { useState, useRef, useEffect } from "react";
 import { PlatformIcon } from "./PlatformIcon";
 import type { Account } from "./PlatformPreview";
 
@@ -121,9 +120,11 @@ function parseCSV(csv: string, accounts: Account[]): ParsedRow[] {
 
 type SubmitState =
   | { phase: "idle" }
-  | { phase: "sending" }
+  | { phase: "sending"; done: number; total: number }
   | { phase: "done"; result: SubmitResult }
   | { phase: "error"; message: string };
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
   const [csv, setCsv] = useState("");
@@ -131,6 +132,16 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
   const [parsed, setParsed] = useState(false);
   const [submitState, setSubmitState] = useState<SubmitState>({ phase: "idle" });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isSendingRef = useRef(false);
+
+  // Block ESC key while uploading
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isSendingRef.current) e.stopImmediatePropagation();
+    };
+    document.addEventListener("keydown", handler, true);
+    return () => document.removeEventListener("keydown", handler, true);
+  }, []);
 
   function handleParse() {
     const result = parseCSV(csv, accounts);
@@ -156,11 +167,14 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
   async function handleSubmit() {
     const valid = rows.filter(r => !r.error);
     if (valid.length === 0) return;
-    setSubmitState({ phase: "sending" });
+    isSendingRef.current = true;
+    setSubmitState({ phase: "sending", done: 0, total: valid.length });
 
     try {
-      const res = await apiFetch("/jobs/bulk", {
+      const res = await fetch(`${API_BASE}/jobs/bulk`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           jobs: valid.map(row => ({
             scheduledFor: row.scheduledFor,
@@ -170,11 +184,45 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
           })),
         }),
       });
-      const data = res as SubmitResult;
-      setSubmitState({ phase: "done", result: data });
+
+      if (!res.ok || !res.body) {
+        const text = await res.text();
+        let msg = `${res.status} error`;
+        try { const j = JSON.parse(text); msg = j.error ?? j.message ?? msg; } catch {}
+        throw new Error(msg);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let finalResult: SubmitResult | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const evt = JSON.parse(line);
+            if (evt.type === "progress") {
+              setSubmitState({ phase: "sending", done: evt.done, total: evt.total });
+            } else if (evt.type === "done") {
+              finalResult = { succeeded: evt.succeeded, failed: evt.failed, errors: evt.errors };
+            }
+          } catch {}
+        }
+      }
+
+      if (!finalResult) throw new Error("No response from server");
+      isSendingRef.current = false;
+      setSubmitState({ phase: "done", result: finalResult });
       await new Promise(r => setTimeout(r, 2000));
-      onScheduled(data.succeeded);
+      onScheduled(finalResult.succeeded);
     } catch (err) {
+      isSendingRef.current = false;
       const msg = err instanceof Error ? err.message : "Request failed. Please try again.";
       setSubmitState({ phase: "error", message: msg });
     }
@@ -187,7 +235,11 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
   const isError = submitState.phase === "error";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+      onClick={(e) => { if (e.target === e.currentTarget && !isSending) onClose(); }}
+    >
       <div className="w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl flex flex-col" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", maxHeight: "90vh" }}>
 
         {/* Header */}
@@ -347,20 +399,27 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
           )}
 
           {/* Progress / result */}
-          {submitState.phase === "sending" && (
-            <div className="rounded-xl p-4" style={{ backgroundColor: "#0d0d1a", border: "1px solid #2a2a4a" }}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0" style={{ borderColor: "#5b63d3", borderTopColor: "transparent" }} />
-                <span className="text-sm font-medium" style={{ color: "#818cf8" }}>
-                  Scheduling {validRows.length} posts… this may take a moment
-                </span>
+          {submitState.phase === "sending" && (() => {
+            const pct = submitState.total > 0 ? Math.round((submitState.done / submitState.total) * 100) : 0;
+            return (
+              <div className="rounded-xl p-4" style={{ backgroundColor: "#0d0d1a", border: "1px solid #2a2a4a" }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0" style={{ borderColor: "#5b63d3", borderTopColor: "transparent" }} />
+                  <span className="text-sm font-medium" style={{ color: "#818cf8" }}>
+                    Scheduling posts… {submitState.done} / {submitState.total}
+                  </span>
+                  <span className="ml-auto text-xs font-mono" style={{ color: "#5b63d3" }}>{pct}%</span>
+                </div>
+                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#1f1f1f" }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{ width: `${pct || 2}%`, backgroundColor: "#5b63d3" }}
+                  />
+                </div>
+                <p className="text-[11px] mt-2" style={{ color: "#555" }}>Do not close this window</p>
               </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#1f1f1f" }}>
-                <div className="h-full rounded-full animate-pulse" style={{ width: "100%", backgroundColor: "#5b63d3", opacity: 0.5 }} />
-              </div>
-              <p className="text-[11px] mt-2" style={{ color: "#555" }}>Do not close this window</p>
-            </div>
-          )}
+            );
+          })()}
 
           {submitState.phase === "done" && (
             <div className="rounded-xl p-4" style={{ backgroundColor: "#0a1a0a", border: "1px solid #1a3a1a" }}>

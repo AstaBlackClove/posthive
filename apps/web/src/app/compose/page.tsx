@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Info } from "lucide-react";
 import confetti from "canvas-confetti";
 import { apiFetch } from "../../lib/api";
@@ -8,7 +9,6 @@ import { useToast } from "../../components/Toast";
 import { trackEvent } from "../../lib/track";
 import { DateTimePicker } from "../../components/DateTimePicker";
 import { PlatformIcon } from "../../components/PlatformIcon";
-import { BulkScheduleModal } from "../../components/BulkScheduleModal";
 import {
   PlatformPreview,
   PLATFORM_COLOR, PLATFORM_LIMIT, MAX_IMAGES, countGraphemes,
@@ -36,6 +36,7 @@ function defaultScheduledFor(): string {
 }
 
 export default function ComposePage() {
+  const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [text, setText] = useState("");
@@ -77,7 +78,6 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const { success: toastSuccess, error: toastError, warning: toastWarning } = useToast();
   const [templates, setTemplates] = useState<{ id: string; name: string; content: string }[]>([]);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [showBulk, setShowBulk] = useState(false);
   const [showReorder, setShowReorder] = useState(false);
   const [accountOrder, setAccountOrder] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem("posthive_account_order") ?? "[]"); } catch { return []; }
@@ -1368,7 +1368,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         <div className="w-full md:w-auto flex gap-2">
           <button
             type="button"
-            onClick={() => setShowBulk(true)}
+            onClick={() => router.push("/bulk")}
             className="flex-1 md:flex-none px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80"
             style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
             title="Bulk schedule from CSV"
@@ -1407,16 +1407,6 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         </div>
       </div>
     </div>
-    {showBulk && (
-      <BulkScheduleModal
-        accounts={accounts}
-        onClose={() => setShowBulk(false)}
-        onScheduled={(count) => {
-          setShowBulk(false);
-          toastSuccess(`${count} post${count !== 1 ? "s" : ""} scheduled!`);
-        }}
-      />
-    )}
     {showReorder && (() => {
       const [reorderList, setReorderList] = [sortedAccounts.map(a => a.id), (ids: string[]) => {
         setAccountOrder(ids);
