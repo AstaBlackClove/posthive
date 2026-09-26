@@ -1278,7 +1278,7 @@ export default function AccountsPage() {
             </div>
             <div className="p-5 space-y-3">
               {!loading && facebookAccounts.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 320 }}>
                   {facebookAccounts.map((a) => (
                     <ConnectedAccountRow key={a.id} account={a} onDisconnect={disconnect} disconnecting={disconnecting} postsThisMonth={stats[a.id]} onRefreshed={handleRefreshed} isAdmin={isAdmin} />
                   ))}
