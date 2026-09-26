@@ -23,7 +23,8 @@ interface Props {
 const EXAMPLE_CSV = `scheduled_for,text,accounts,comment,image_urls
 2026-07-10 09:00,Morning post for all platforms,all,First comment here,
 2026-07-11 14:30,All except Instagram (no image),all|!instagram,,
-2026-07-12 18:00,Specific platforms with image,bluesky|mastodon,,https://example.com/img1.jpg`;
+2026-07-12 18:00,Specific platforms with image,bluesky|mastodon,,https://example.com/img1.jpg
+2026-07-13 10:00,Post to specific FB page only,My Page Name,,https://example.com/img2.jpg`;
 
 function parseCSV(csv: string, accounts: Account[]): ParsedRow[] {
   const lines = csv.trim().split("\n").filter(Boolean);
@@ -52,26 +53,42 @@ function parseCSV(csv: string, accounts: Account[]): ParsedRow[] {
 
     // Resolve accounts
     // Supports: "all", "bluesky|mastodon", "all|!instagram|!youtube" (exclude with !)
+    // Also supports account display names, e.g. "Omas Backstube|Omas Lieblingsgerichte"
     let accountIds: string[] = [];
-    const parts = rawAccounts?.split("|").map(p => p.trim().toLowerCase()) ?? [];
-    const excluded = parts.filter(p => p.startsWith("!")).map(p => p.slice(1));
-    const included = parts.filter(p => !p.startsWith("!") && p !== "all");
+    const parts = rawAccounts?.split("|").map(p => p.trim()) ?? [];
+    const partsLower = parts.map(p => p.toLowerCase());
+    const excluded = partsLower.filter(p => p.startsWith("!")).map(p => p.slice(1));
+    const included = partsLower.filter(p => !p.startsWith("!") && p !== "all");
+    const includedRaw = parts.filter(p => !p.startsWith("!") && p.toLowerCase() !== "all");
     // "all" OR only exclusions provided (e.g. "!instagram") → treat as all-except
-    const isAll = parts.includes("all") || (included.length === 0 && excluded.length > 0);
+    const isAll = partsLower.includes("all") || (included.length === 0 && excluded.length > 0);
+
+    // Helper: does a term match an account (by platform OR display name)?
+    const matchesAccount = (a: Account, term: string) =>
+      a.platform === term || a.displayName.toLowerCase() === term;
+    const excludesAccount = (a: Account) =>
+      excluded.some(ex => a.platform === ex || a.displayName.toLowerCase() === ex);
 
     if (isAll) {
       accountIds = accounts
-        .filter(a => a.platform !== "youtube" && !excluded.includes(a.platform))
+        .filter(a => a.platform !== "youtube" && !excludesAccount(a))
         .map(a => a.id);
     } else {
       if (included.includes("youtube")) {
         return { scheduledFor: parsed.toISOString(), text: rawText, accountIds: [], error: "YouTube requires a video — use Compose instead" };
       }
       accountIds = accounts
-        .filter(a => included.includes(a.platform) && !excluded.includes(a.platform))
+        .filter(a => included.some(term => matchesAccount(a, term)) && !excludesAccount(a))
         .map(a => a.id);
       if (accountIds.length === 0) {
         return { scheduledFor: parsed.toISOString(), text: rawText, accountIds: [], mediaUrls, error: `No matching accounts for: "${rawAccounts}"` };
+      }
+      // Warn if any included term matched nothing
+      const unmatchedTerms = includedRaw.filter(term =>
+        !accounts.some(a => matchesAccount(a, term.toLowerCase()))
+      );
+      if (unmatchedTerms.length > 0) {
+        return { scheduledFor: parsed.toISOString(), text: rawText, accountIds: [], mediaUrls, error: `Unknown accounts: "${unmatchedTerms.join(", ")}" — check spelling matches your connected account names` };
       }
     }
 
@@ -186,7 +203,7 @@ export function BulkScheduleModal({ accounts, onClose, onScheduled }: Props) {
                   <div className="space-y-1.5">
                     <div><span className="font-mono" style={{ color: "#818cf8" }}>scheduled_for</span> - date &amp; time, e.g. <span className="font-mono" style={{ color: "#888" }}>2026-07-10 09:00</span></div>
                     <div><span className="font-mono" style={{ color: "#818cf8" }}>text</span> - post body (required)</div>
-                    <div><span className="font-mono" style={{ color: "#818cf8" }}>accounts</span> - <span className="font-mono" style={{ color: "#888" }}>all</span> or platform names separated by <span className="font-mono" style={{ color: "#888" }}>|</span>. Prefix with <span className="font-mono" style={{ color: "#f87171" }}>!</span> to exclude e.g. <span className="font-mono" style={{ color: "#888" }}>all|!instagram</span>. YouTube not supported (needs video).</div>
+                    <div><span className="font-mono" style={{ color: "#818cf8" }}>accounts</span> - <span className="font-mono" style={{ color: "#888" }}>all</span>, platform names, or exact account display names separated by <span className="font-mono" style={{ color: "#888" }}>|</span>. Prefix with <span className="font-mono" style={{ color: "#f87171" }}>!</span> to exclude. Examples: <span className="font-mono" style={{ color: "#888" }}>facebook</span> (all FB pages), <span className="font-mono" style={{ color: "#888" }}>Omas Backstube|Omas Lieblingsgerichte</span> (specific pages), <span className="font-mono" style={{ color: "#888" }}>all|!instagram</span>. YouTube not supported (needs video).</div>
                     <div><span className="font-mono" style={{ color: "#818cf8" }}>comment</span> - first comment text (optional)</div>
                     <div><span className="font-mono" style={{ color: "#818cf8" }}>image_urls</span> - public image URLs separated by <span className="font-mono" style={{ color: "#888" }}>;</span> (optional, up to 4)</div>
                   </div>
