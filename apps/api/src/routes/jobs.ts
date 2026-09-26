@@ -121,7 +121,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         },
         include: { targets: { select: TARGET_SELECT } },
       });
-    });
+    }, { timeout: 30_000 });
 
     if (planError) return reply.status(402).send(planError);
     if (!job) return reply.status(500).send({ error: "Failed to create job" });
