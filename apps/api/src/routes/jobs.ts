@@ -68,7 +68,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     });
 
     const parsed = z.object({
-      jobs: z.array(bulkItemSchema).min(1).max(1000),
+      jobs: z.array(bulkItemSchema).min(1).max(500),
     }).safeParse(req.body);
 
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
@@ -120,6 +120,22 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
           });
         }
       }
+    }
+
+    // Cap pending jobs to prevent server overload — hard limit regardless of plan
+    const MAX_PENDING = 500;
+    const pendingCount = await prisma.postJob.count({ where: { workspaceId, status: "pending" } });
+    if (pendingCount >= MAX_PENDING) {
+      return reply.status(429).send({
+        error: `You already have ${pendingCount} pending scheduled posts. Wait for them to process or delete some before adding more (max ${MAX_PENDING} pending at a time).`,
+        code: "PENDING_LIMIT",
+      });
+    }
+    if (pendingCount + jobs.length > MAX_PENDING) {
+      return reply.status(429).send({
+        error: `This upload would bring your pending posts to ${pendingCount + jobs.length}, exceeding the limit of ${MAX_PENDING}. Reduce your CSV to ${MAX_PENDING - pendingCount} rows or fewer.`,
+        code: "PENDING_LIMIT",
+      });
     }
 
     // Stream NDJSON progress back to the client
