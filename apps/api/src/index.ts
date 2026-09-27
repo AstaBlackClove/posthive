@@ -176,10 +176,12 @@ async function main() {
 
   // Admin — manually trigger drip cron
   app.post("/admin/run-drip", async (req, reply) => {
-    const token = (req.headers["authorization"] ?? "").replace("Bearer ", "");
-    const adminPin = process.env.ADMIN_PIN ?? "";
-    if (adminPin && token !== adminPin) {
-      return reply.status(401).send({ error: "Unauthorized" });
+    if (process.env.NODE_ENV !== "development") {
+      const token = (req.headers["authorization"] ?? "").replace("Bearer ", "");
+      const adminPin = process.env.ADMIN_PIN ?? "";
+      if (adminPin && token !== adminPin) {
+        return reply.status(401).send({ error: "Unauthorized" });
+      }
     }
     runDripNow().catch((e) => console.error("[run-drip] error:", e));
     return { ok: true, message: "drip triggered — watch server logs" };

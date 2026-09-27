@@ -89,6 +89,17 @@ async function processLibrary(lib: LibraryRow) {
   const slots = slotsInNextWindow(timeSlots, timezone, lib.postsPerDay);
   if (!slots.length) return;
 
+  // Filter to only accounts that still exist
+  const validAccounts = await prisma.account.findMany({
+    where: { id: { in: accountIds } },
+    select: { id: true },
+  });
+  const validAccountIds = validAccounts.map(a => a.id);
+  if (!validAccountIds.length) {
+    console.warn(`[drip] library ${lib.id} — all accounts deleted, skipping`);
+    return;
+  }
+
   const items = await prisma.libraryItem.findMany({
     where: { libraryId: lib.id, status: "queued" },
     orderBy: { order: "asc" },
@@ -109,8 +120,16 @@ async function processLibrary(lib: LibraryRow) {
     if (!slot) break;
 
     try {
-      // Atomic: create PostJob + mark item scheduled in one transaction
+      // Atomic: claim item first (status guard), then create PostJob.
+      // If another instance already claimed it, updateMany returns count=0 → skip.
       const job = await prisma.$transaction(async (tx) => {
+        // Optimistic lock: only proceed if item is still queued
+        const claimed = await tx.libraryItem.updateMany({
+          where: { id: item.id, status: "queued" },
+          data: { status: "scheduled" },
+        });
+        if (claimed.count === 0) return null; // already claimed by another instance
+
         const j = await tx.postJob.create({
           data: {
             scheduledFor: slot,
@@ -120,16 +139,18 @@ async function processLibrary(lib: LibraryRow) {
             dryRun: process.env.NODE_ENV !== "production",
             userId: ownerUserId,
             workspaceId: lib.workspaceId,
-            targets: { create: (accountIds as string[]).map((accountId) => ({ accountId })) },
+            targets: { create: validAccountIds.map((accountId) => ({ accountId })) },
           },
           select: { id: true },
         });
         await tx.libraryItem.update({
           where: { id: item.id },
-          data: { status: "scheduled", scheduledJobId: j.id },
+          data: { scheduledJobId: j.id },
         });
         return j;
       });
+
+      if (!job) { console.log(`[drip] item ${item.id} already claimed — skipping`); continue; }
 
       // Enqueue outside transaction — BullMQ is not part of the DB tx
       await schedulePostJob(job.id, slot);
