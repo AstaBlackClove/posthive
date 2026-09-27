@@ -442,7 +442,7 @@ export default function LibraryPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full" style={{ backgroundColor: "#0a0a0a", color: "#ededed" }}>
+    <div className="flex h-full flex-col md:flex-row" style={{ backgroundColor: "#0a0a0a", color: "#ededed" }}>
 
       {/* Delete confirm modal */}
       {deleteTarget && (
@@ -568,8 +568,9 @@ export default function LibraryPage() {
         </div>
       )}
 
-      {/* Left panel */}
-      <div className="flex flex-col shrink-0" style={{ width: 260, borderRight: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
+      {/* Left panel — full width on mobile, 260px sidebar on desktop. Hidden on mobile when a library is selected. */}
+      <div className={`flex flex-col shrink-0 ${selectedId ? "hidden md:flex" : "flex"}`} style={{ width: undefined, borderRight: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }} data-panel="left">
+      <style>{`@media (min-width: 768px) { [data-panel="left"] { width: 260px; } } @media (max-width: 767px) { [data-panel="left"] { width: 100%; flex: 1; } }`}</style>
         <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: "1px solid #1e1e1e" }}>
           <div>
             <p className="text-xs font-bold" style={{ color: "#ededed", letterSpacing: "0.02em" }}>Content Library</p>
@@ -647,9 +648,9 @@ export default function LibraryPage() {
         </div>
       </div>
 
-      {/* Right panel */}
+      {/* Right panel — hidden on mobile when nothing selected; full-width on mobile when selected */}
       {!selected ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3" style={{ color: "#333" }}>
+        <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-3" style={{ color: "#333" }}>
           <svg style={{ width: 40, height: 40 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
@@ -678,6 +679,7 @@ export default function LibraryPage() {
           onError={error}
           onSuccess={success}
           maxDripPerDay={planLimits.maxDripPerDay}
+          onBack={() => setSelectedId(null)}
         />
       )}
 
@@ -704,7 +706,7 @@ function LibraryDetail({
   library, accounts, items, itemsLoading, itemsHasMore,
   itemsFilter, setItemsFilter, sentinelRef,
   csvUploading, fileInputRef, settingsOpen, setSettingsOpen,
-  onCsvFile, onTogglePause, onDelete, onLibraryUpdated, onError, onSuccess, maxDripPerDay = 50,
+  onCsvFile, onTogglePause, onDelete, onLibraryUpdated, onError, onSuccess, maxDripPerDay = 50, onBack,
 }: {
   library: Library;
   accounts: Account[];
@@ -725,6 +727,7 @@ function LibraryDetail({
   onError: (msg: string) => void;
   onSuccess: (msg: string) => void;
   maxDripPerDay?: number;
+  onBack?: () => void;
 }) {
   const [dragOver, setDragOver] = useState(false);
 
@@ -754,27 +757,39 @@ function LibraryDetail({
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 shrink-0" style={{ borderBottom: "1px solid #1e1e1e" }}>
-          <div className="flex items-center gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold" style={{ color: "#ededed" }}>{library.name}</h2>
+        <div className="flex items-center justify-between gap-2 px-4 py-3 shrink-0 flex-wrap" style={{ borderBottom: "1px solid #1e1e1e" }}>
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Back button — mobile only */}
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="md:hidden shrink-0 flex items-center justify-center rounded-lg transition-colors hover:bg-white/5"
+                style={{ width: 28, height: 28, border: "1px solid #2a2a2a", color: "#888", backgroundColor: "#111" }}
+              >
+                <svg style={{ width: 14, height: 14 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm font-bold truncate" style={{ color: "#ededed" }}>{library.name}</h2>
                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
                   <div style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: sc.dot }} />
                   <span style={{ fontSize: 10, color: "#888" }}>{sc.label}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3 mt-0.5">
+              <div className="flex items-center gap-2 flex-wrap mt-0.5">
                 <span style={{ fontSize: 11, color: "#999" }}>{library.postsPerDay} posts/day</span>
                 <span style={{ fontSize: 11, color: "#555" }}>·</span>
-                <span style={{ fontSize: 11, color: "#999" }}>{library.timeSlots.join(", ")}</span>
+                <span style={{ fontSize: 11, color: "#999" }} className="truncate max-w-[120px] md:max-w-none">{library.timeSlots.join(", ")}</span>
                 <span style={{ fontSize: 11, color: "#555" }}>·</span>
-                <span style={{ fontSize: 11, color: "#999" }}>{library.timezone}</span>
+                <span style={{ fontSize: 11, color: "#999" }} className="truncate max-w-[100px] md:max-w-none">{library.timezone}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap shrink-0">
             {/* Settings */}
             <button
               onClick={() => setSettingsOpen(!settingsOpen)}
@@ -816,7 +831,7 @@ function LibraryDetail({
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-6 px-5 py-2.5 shrink-0" style={{ borderBottom: "1px solid #1e1e1e" }}>
+        <div className="flex items-center gap-4 px-4 py-2.5 shrink-0 overflow-x-auto" style={{ borderBottom: "1px solid #1e1e1e" }}>
           {[
             { label: "Total", value: total, color: "#ededed" },
             { label: "Queued", value: queued, color: "#818cf8" },
@@ -831,7 +846,7 @@ function LibraryDetail({
 
           {/* Account chips */}
           {linkedAccounts.length > 0 && (
-            <div className="ml-auto flex items-center gap-1.5 flex-wrap">
+            <div className="ml-auto flex items-center gap-1.5 shrink-0">
               <span style={{ fontSize: 11, color: "#777" }}>To:</span>
               {linkedAccounts.slice(0, 4).map(a => (
                 <span key={a.id} style={{ fontSize: 11, color: "#888", backgroundColor: "#111", border: "1px solid #1e1e1e", borderRadius: 4, padding: "1px 7px" }}>
@@ -845,7 +860,7 @@ function LibraryDetail({
 
         {/* CSV drop zone */}
         <div
-          className="mx-5 mt-3 mb-2 shrink-0"
+          className="mx-4 mt-3 mb-2 shrink-0"
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
@@ -875,7 +890,7 @@ function LibraryDetail({
         </div>
 
         {/* Filter tabs */}
-        <div className="flex items-center gap-1 px-5 mb-2 shrink-0">
+        <div className="flex items-center gap-1 px-4 mb-2 shrink-0 overflow-x-auto">
           {FILTERS.map(f => (
             <button
               key={f}
@@ -895,7 +910,7 @@ function LibraryDetail({
         </div>
 
         {/* Items */}
-        <div className="flex-1 overflow-y-auto px-5 pb-6">
+        <div className="flex-1 overflow-y-auto px-4 pb-6">
           {itemsLoading && items.length === 0 ? (
             <div className="flex justify-center py-10">
               <svg className="animate-spin w-4 h-4" style={{ color: "#555" }} fill="none" viewBox="0 0 24 24">
@@ -1027,7 +1042,9 @@ function SettingsPanel({ library, accounts, onClose, onSaved, onError, onSuccess
   }
 
   return (
-    <div className="flex flex-col shrink-0 overflow-y-auto" style={{ width: 280, borderLeft: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
+    <div className="flex flex-col shrink-0 overflow-y-auto fixed inset-0 z-40 md:static md:inset-auto md:z-auto" style={{ width: "100%", maxWidth: "100%", borderLeft: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}
+      data-settings-panel>
+      <style>{`@media (min-width: 768px) { [data-settings-panel] { width: 280px !important; max-width: 280px !important; } }`}</style>
       <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: "1px solid #1e1e1e" }}>
         <p className="text-xs font-bold" style={{ color: "#ededed" }}>Library Settings</p>
         <button onClick={onClose} style={{ color: "#555", background: "none", border: "none", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
