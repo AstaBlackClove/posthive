@@ -77,29 +77,33 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
     const { name, postsPerDay, timeSlots, timezone, accountIds } = parsed.data;
 
-    // Plan gate
-    const planData = await getWorkspacePlan(workspaceId);
-    if (!planData) return reply.status(400).send({ error: "Workspace not found" });
-    const { plan, ws } = planData;
+    // Plan gate (skipped when billing is disabled — self-hosted mode)
+    let maxDripPerDay = postsPerDay; // uncapped in self-hosted
+    if (process.env.ENABLE_BILLING === "true") {
+      const planData = await getWorkspacePlan(workspaceId);
+      if (!planData) return reply.status(400).send({ error: "Workspace not found" });
+      const { plan, ws } = planData;
+      maxDripPerDay = plan.maxDripPerDay;
 
-    if (plan.maxLibraries === 0) {
-      return reply.status(402).send({
-        error: "Content Library is not available on your plan. Upgrade to Creator or higher.",
-        code: "PLAN_LIMIT",
-        upgradeRequired: true,
-      });
-    }
-    if (ws.planStatus === "cancelled" || ws.plan === "cancelled") {
-      return reply.status(402).send({ error: "Your subscription has been cancelled.", code: "CANCELLED", upgradeRequired: true });
-    }
+      if (plan.maxLibraries === 0) {
+        return reply.status(402).send({
+          error: "Content Library is not available on your plan. Upgrade to Creator or higher.",
+          code: "PLAN_LIMIT",
+          upgradeRequired: true,
+        });
+      }
+      if (ws.planStatus === "cancelled" || ws.plan === "cancelled") {
+        return reply.status(402).send({ error: "Your subscription has been cancelled.", code: "CANCELLED", upgradeRequired: true });
+      }
 
-    const libraryCount = await prisma.contentLibrary.count({ where: { workspaceId } });
-    if (libraryCount >= plan.maxLibraries) {
-      return reply.status(402).send({
-        error: `You've reached your plan limit of ${plan.maxLibraries} content librar${plan.maxLibraries === 1 ? "y" : "ies"}. Upgrade to create more.`,
-        code: "PLAN_LIMIT",
-        upgradeRequired: true,
-      });
+      const libraryCount = await prisma.contentLibrary.count({ where: { workspaceId } });
+      if (libraryCount >= plan.maxLibraries) {
+        return reply.status(402).send({
+          error: `You've reached your plan limit of ${plan.maxLibraries} content librar${plan.maxLibraries === 1 ? "y" : "ies"}. Upgrade to create more.`,
+          code: "PLAN_LIMIT",
+          upgradeRequired: true,
+        });
+      }
     }
 
     // Validate accountIds belong to workspace
@@ -111,8 +115,7 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: "One or more account IDs are invalid or not in this workspace." });
     }
 
-    // Cap postsPerDay to plan max
-    const safePosts = Math.min(postsPerDay, plan.maxDripPerDay);
+    const safePosts = Math.min(postsPerDay, maxDripPerDay);
 
     const library = await prisma.contentLibrary.create({
       data: {
@@ -153,9 +156,9 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
     const library = await prisma.contentLibrary.findFirst({ where: { id, workspaceId } });
     if (!library) return reply.status(404).send({ error: "Library not found" });
 
-    // Cap postsPerDay to plan limit if being updated
+    // Cap postsPerDay to plan limit if being updated (no cap in self-hosted mode)
     let safeData = { ...parsed.data };
-    if (safeData.postsPerDay !== undefined) {
+    if (safeData.postsPerDay !== undefined && process.env.ENABLE_BILLING === "true") {
       const planData = await getWorkspacePlan(workspaceId);
       if (planData) safeData.postsPerDay = Math.min(safeData.postsPerDay, planData.plan.maxDripPerDay);
     }
@@ -239,26 +242,28 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
     const { items } = parsed.data;
 
-    // Plan: check total items limit
-    const planData = await getWorkspacePlan(workspaceId);
-    if (!planData) return reply.status(400).send({ error: "Workspace not found" });
-    const { plan } = planData;
+    // Plan: check total items limit (skipped in self-hosted mode)
+    if (process.env.ENABLE_BILLING === "true") {
+      const planData = await getWorkspacePlan(workspaceId);
+      if (!planData) return reply.status(400).send({ error: "Workspace not found" });
+      const { plan } = planData;
 
-    const currentCount = await prisma.libraryItem.count({ where: { workspaceId } });
-    if (currentCount >= plan.maxLibraryItems) {
-      return reply.status(429).send({
-        error: `You've reached your library item limit of ${plan.maxLibraryItems.toLocaleString()} items. Delete some items or upgrade your plan.`,
-        code: "ITEM_LIMIT",
-        upgradeRequired: true,
-      });
-    }
-    if (currentCount + items.length > plan.maxLibraryItems) {
-      const remaining = plan.maxLibraryItems - currentCount;
-      return reply.status(429).send({
-        error: `This upload would exceed your library item limit. You can add ${remaining.toLocaleString()} more item${remaining === 1 ? "" : "s"} (plan limit: ${plan.maxLibraryItems.toLocaleString()}).`,
-        code: "ITEM_LIMIT",
-        upgradeRequired: true,
-      });
+      const currentCount = await prisma.libraryItem.count({ where: { workspaceId } });
+      if (currentCount >= plan.maxLibraryItems) {
+        return reply.status(429).send({
+          error: `You've reached your library item limit of ${plan.maxLibraryItems.toLocaleString()} items. Delete some items or upgrade your plan.`,
+          code: "ITEM_LIMIT",
+          upgradeRequired: true,
+        });
+      }
+      if (currentCount + items.length > plan.maxLibraryItems) {
+        const remaining = plan.maxLibraryItems - currentCount;
+        return reply.status(429).send({
+          error: `This upload would exceed your library item limit. You can add ${remaining.toLocaleString()} more item${remaining === 1 ? "" : "s"} (plan limit: ${plan.maxLibraryItems.toLocaleString()}).`,
+          code: "ITEM_LIMIT",
+          upgradeRequired: true,
+        });
+      }
     }
 
     // Get current max order to append after existing items
