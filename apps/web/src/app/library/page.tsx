@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
 
@@ -170,6 +170,49 @@ function GuideSection({ step, title, color, description, code, rule, states }: {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+const AI_PROMPT = `Generate a CSV file for a social media content library.
+
+Rules:
+- Columns: text, comment, mediaUrls
+- "text" is required — the main post content (wrap in double quotes)
+- "comment" is optional — a first comment posted right after the post
+- "mediaUrls" is optional — pipe-separated URLs of images/videos
+- No extra columns, no markdown, no explanation — just the CSV
+
+Generate [NUMBER] posts about [TOPIC]. Each post should be engaging, unique, and end with a call-to-action question.`;
+
+function AiPromptSection() {
+  const [copied, setCopied] = React.useState(false);
+  function copy() {
+    navigator.clipboard.writeText(AI_PROMPT).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+  return (
+    <div style={{ backgroundColor: "#0a0a14", border: "1px solid #5b63d333", borderRadius: 10, padding: "14px 16px" }}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold" style={{ color: "#818cf8" }}>✦ Generate CSV with AI</span>
+        </div>
+        <button
+          onClick={copy}
+          className="text-xs px-2.5 py-1 rounded-md transition-colors"
+          style={{ backgroundColor: copied ? "#10b98122" : "#5b63d322", color: copied ? "#10b981" : "#818cf8", border: `1px solid ${copied ? "#10b98144" : "#5b63d344"}` }}
+        >
+          {copied ? "Copied!" : "Copy prompt"}
+        </button>
+      </div>
+      <p className="text-xs mb-2" style={{ color: "#555" }}>
+        Paste this into Claude, ChatGPT, or any AI. Replace <span style={{ color: "#818cf8" }}>[NUMBER]</span> and <span style={{ color: "#818cf8" }}>[TOPIC]</span>, then upload the CSV here.
+      </p>
+      <pre className="text-xs rounded-lg p-3 overflow-x-auto" style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e", color: "#6366f1", fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+        {AI_PROMPT}
+      </pre>
     </div>
   );
 }
@@ -497,8 +540,7 @@ export default function LibraryPage() {
                     "When all items are posted, the library becomes Exhausted — upload more to resume.",
                     "Max 500 rows per CSV upload.",
                   ].map((rule, i) => (
-                    <li key={i} className="flex gap-2 text-xs" style={{ color: "#888" }}>
-                      <span style={{ color: "#2a2a2a", flexShrink: 0 }}>—</span>
+                    <li key={i} className="text-xs" style={{ color: "#888", paddingLeft: 2 }}>
                       {rule}
                     </li>
                   ))}
@@ -506,7 +548,12 @@ export default function LibraryPage() {
               </div>
             </div>
 
-            <div className="px-6 pb-5">
+            {/* AI prompt section */}
+            <div className="px-6 pb-2">
+              <AiPromptSection />
+            </div>
+
+            <div className="px-6 pb-5 pt-4">
               <button
                 onClick={() => setGuideOpen(false)}
                 className="w-full py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90"
@@ -530,8 +577,8 @@ export default function LibraryPage() {
             <button
               onClick={() => setGuideOpen(true)}
               title="How it works"
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: 7, backgroundColor: "transparent", color: "#555", border: "1px solid #2a2a2a", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
-              className="hover:border-white/20 hover:text-white transition-colors"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: 7, backgroundColor: "#5b63d322", color: "#818cf8", border: "1px solid #5b63d355", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
+              className="hover:bg-indigo-500/20 hover:border-indigo-400/60 transition-colors"
             >
               ?
             </button>
