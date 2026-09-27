@@ -46,7 +46,7 @@ import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
 import { startStatsCron, runStatsCronNow } from "./lib/statsCron.js";
 import { startCleanupCron, setCleanupStorage, runCleanupNow } from "./lib/cleanupCron.js";
 import { startOnboardingCron } from "./lib/onboardingCron.js";
-import { startDripCron } from "./lib/dripCron.js";
+import { startDripCron, runDripNow } from "./lib/dripCron.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { trackRoutes } from "./routes/track.js";
 import { feedbackRoutes } from "./routes/feedback.js";
@@ -172,6 +172,17 @@ async function main() {
     }
     runCleanupNow().catch((e) => console.error("[run-cleanup] error:", e));
     return { ok: true, message: "cleanup triggered" };
+  });
+
+  // Admin — manually trigger drip cron
+  app.post("/admin/run-drip", async (req, reply) => {
+    const token = (req.headers["authorization"] ?? "").replace("Bearer ", "");
+    const adminPin = process.env.ADMIN_PIN ?? "";
+    if (adminPin && token !== adminPin) {
+      return reply.status(401).send({ error: "Unauthorized" });
+    }
+    runDripNow().catch((e) => console.error("[run-drip] error:", e));
+    return { ok: true, message: "drip triggered — watch server logs" };
   });
 
   // Admin — manually trigger stats sync (dev + admin only)

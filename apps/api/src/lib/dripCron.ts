@@ -203,7 +203,7 @@ async function processLibrary(lib: {
             mediaUrls: item.mediaUrls as string[],
           }),
           commentText: item.commentText ?? null,
-          dryRun: false,
+          dryRun: process.env.NODE_ENV !== "production",
           userId: ownerUserId,
           workspaceId: lib.workspaceId,
           targets: { create: accountIds.map((accountId) => ({ accountId })) },
@@ -237,6 +237,8 @@ async function processLibrary(lib: {
 
   console.log(`[drip] library ${lib.id} — scheduled ${scheduled}/${slots.length} slot(s)`);
 }
+
+export { run as runDripNow };
 
 export function startDripCron() {
   // Run immediately at startup to catch any missed slots from downtime
