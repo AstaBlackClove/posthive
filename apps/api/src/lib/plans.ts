@@ -12,6 +12,10 @@ export interface Plan {
   allowTwitter: boolean;                  // X/Twitter posting (Pro & Team only)
   maxTwitterPostsPerMonth: number | null; // null = unlimited; 0 = blocked
   dodoProductId: string;
+  // Content Library limits
+  maxLibraries: number;                   // 0 = feature blocked
+  maxLibraryItems: number;                // total items across all libraries
+  maxDripPerDay: number;                  // hard cap on postsPerDay drip setting
 }
 
 export const PLANS: Record<PlanId, Plan> = {
@@ -27,6 +31,9 @@ export const PLANS: Record<PlanId, Plan> = {
     allowTwitter: false,
     maxTwitterPostsPerMonth: 0,
     dodoProductId: "",
+    maxLibraries: 0,
+    maxLibraryItems: 0,
+    maxDripPerDay: 0,
   },
   creator: {
     id: "creator",
@@ -40,6 +47,9 @@ export const PLANS: Record<PlanId, Plan> = {
     allowTwitter: false,
     maxTwitterPostsPerMonth: 0,
     dodoProductId: process.env.DODO_PRODUCT_CREATOR ?? "",
+    maxLibraries: 1,
+    maxLibraryItems: 500,
+    maxDripPerDay: 5,
   },
   pro: {
     id: "pro",
@@ -53,6 +63,9 @@ export const PLANS: Record<PlanId, Plan> = {
     allowTwitter: true,
     maxTwitterPostsPerMonth: 100,
     dodoProductId: process.env.DODO_PRODUCT_PRO ?? "",
+    maxLibraries: 3,
+    maxLibraryItems: 10000,
+    maxDripPerDay: 20,
   },
   team: {
     id: "team",
@@ -66,6 +79,9 @@ export const PLANS: Record<PlanId, Plan> = {
     allowTwitter: true,
     maxTwitterPostsPerMonth: 100,
     dodoProductId: process.env.DODO_PRODUCT_TEAM ?? "",
+    maxLibraries: 10,
+    maxLibraryItems: 50000,
+    maxDripPerDay: 50,
   },
   cancelled: {
     id: "cancelled",
@@ -79,6 +95,9 @@ export const PLANS: Record<PlanId, Plan> = {
     allowTwitter: false,
     maxTwitterPostsPerMonth: 0,
     dodoProductId: "",
+    maxLibraries: 0,
+    maxLibraryItems: 0,
+    maxDripPerDay: 0,
   },
 };
 

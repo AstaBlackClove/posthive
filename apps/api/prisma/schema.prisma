@@ -68,13 +68,14 @@ model Workspace {
 
   webhookUrl String?  // outbound webhook fired on post publish
 
-  members   WorkspaceMember[]
-  invites   WorkspaceInvite[]
-  accounts  Account[]
-  postJobs  PostJob[]
-  templates Template[]
-  apiKeys   ApiKey[]
-  feedbacks Feedback[]
+  members          WorkspaceMember[]
+  invites          WorkspaceInvite[]
+  accounts         Account[]
+  postJobs         PostJob[]
+  templates        Template[]
+  apiKeys          ApiKey[]
+  feedbacks        Feedback[]
+  contentLibraries ContentLibrary[]
 
   // Back-ref for users whose activeWorkspace points here
   activeForUsers User[] @relation("UserActiveWorkspace")
@@ -369,4 +370,65 @@ model CancellationFeedback {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+// Content Library — stores a collection of posts to drip-publish over time.
+// Users upload CSV once; the drip cron picks items daily and creates PostJobs.
+model ContentLibrary {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  name        String
+  status      String   @default("active")  // "active" | "paused" | "exhausted"
+
+  // Drip settings
+  postsPerDay Int      @default(1)          // how many items to publish per day (plan-capped)
+  timeSlots   Json                          // String[] — "HH:MM" in user's timezone e.g. ["09:00","14:00"]
+  timezone    String   @default("UTC")
+  accountIds  Json                          // String[] — account IDs to post to
+
+  // Safety: track last drip run to avoid double-firing
+  lastDripAt  DateTime?
+
+  items       LibraryItem[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([status])
+}
+
+// A single content item inside a ContentLibrary.
+// status flow: queued → scheduled → published | skipped | failed
+model LibraryItem {
+  id        String   @id @default(cuid())
+  libraryId String
+  library   ContentLibrary @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+
+  workspaceId String   // denormalized for fast workspace-scoped queries
+
+  // Content (mirrors PostJob content structure)
+  text        String   @default("")
+  commentText String?
+  mediaUrls   Json     @default("[]")   // String[]
+
+  // Ordering — preserves CSV row order for drip sequence
+  order       Int
+
+  // Lifecycle
+  status      String   @default("queued")  // "queued" | "scheduled" | "published" | "skipped" | "failed"
+  scheduledJobId String?                   // FK to PostJob.id (set when scheduled, nullable)
+  publishedAt String?                      // ISO string — when the PostJob finished
+
+  // Error tracking
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+
+  @@index([libraryId, status])
+  @@index([libraryId, order])
+  @@index([workspaceId])
+  @@index([status])
 }
