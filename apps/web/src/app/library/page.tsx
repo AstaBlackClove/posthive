@@ -136,6 +136,44 @@ function fmtSchedule(d: Date): string {
   return `${d.toLocaleDateString([], { month: "short", day: "numeric" })} ${time}`;
 }
 
+// ── Guide section component ────────────────────────────────────────────────
+
+function GuideSection({ step, title, color, description, code, rule, states }: {
+  step: string; title: string; color: string; description: string;
+  code?: string; rule?: string;
+  states?: { label: string; color: string; desc: string }[];
+}) {
+  return (
+    <div className="flex gap-3">
+      <div className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: color + "22", color, border: `1px solid ${color}44` }}>
+        {step}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold mb-1" style={{ color: "#ededed" }}>{title}</p>
+        <p className="text-xs leading-relaxed" style={{ color: "#888" }}>{description}</p>
+        {code && (
+          <pre className="mt-2 text-xs rounded-lg overflow-x-auto p-3" style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e", color: "#6ee7b7", fontFamily: "monospace" }}>{code}</pre>
+        )}
+        {rule && (
+          <div className="mt-2 text-xs px-3 py-2 rounded-lg" style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e", color: "#f59e0b" }}>
+            ⚡ {rule}
+          </div>
+        )}
+        {states && (
+          <div className="mt-2 flex flex-col gap-1.5">
+            {states.map(s => (
+              <div key={s.label} className="flex items-center gap-2">
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: s.color + "22", color: s.color }}>{s.label}</span>
+                <span className="text-xs" style={{ color: "#666" }}>{s.desc}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ──────────────────────────────────────────────────────────────
 
 export default function LibraryPage() {
@@ -177,6 +215,9 @@ export default function LibraryPage() {
   // Delete confirm
   const [deleteTarget, setDeleteTarget] = useState<Library | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Guide
+  const [guideOpen, setGuideOpen] = useState(false);
 
   // ── Load ────────────────────────────────────────────────────────────────
 
@@ -389,6 +430,95 @@ export default function LibraryPage() {
         </div>
       )}
 
+      {/* Guide modal */}
+      {guideOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }} onClick={() => setGuideOpen(false)}>
+          <div className="w-full max-w-lg rounded-2xl overflow-hidden" style={{ backgroundColor: "#111", border: "1px solid #2a2a2a", maxHeight: "90vh", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid #1e1e1e" }}>
+              <div>
+                <h2 className="text-sm font-bold" style={{ color: "#ededed" }}>Content Library — How it works</h2>
+                <p className="text-xs mt-0.5" style={{ color: "#555" }}>Drip-schedule your content automatically</p>
+              </div>
+              <button onClick={() => setGuideOpen(false)} style={{ color: "#555", background: "none", border: "none", cursor: "pointer", fontSize: 18, lineHeight: 1 }} className="hover:text-white transition-colors">✕</button>
+            </div>
+
+            <div className="px-6 py-5 flex flex-col gap-6">
+              {/* What is it */}
+              <GuideSection
+                step="1"
+                title="What is Content Library?"
+                color="#5b63d3"
+                description="A Content Library is a queue of posts that drip out automatically on a schedule — like a content calendar that runs itself. Upload your posts once, set a daily schedule, and Posthive fires them one by one without you touching anything."
+              />
+
+              {/* Upload CSV */}
+              <GuideSection
+                step="2"
+                title="Upload posts via CSV"
+                color="#0ea5e9"
+                description='Each row = one post. Required column: "text". Optional columns: "comment" (first comment posted after the post) and "mediaUrls" (pipe-separated image/video URLs).'
+                code={`text,comment,mediaUrls\n"Your post content here","First comment text","https://example.com/image.jpg"\n"Another post","",""`}
+              />
+
+              {/* Time slots */}
+              <GuideSection
+                step="3"
+                title="Set your daily time slots"
+                color="#10b981"
+                description="Add one or more times of day (e.g. 09:00, 13:00, 18:00). Each slot fires one post per day. With 3 slots → 3 posts/day. Posts Per Day caps how many slots are used if you add more slots than needed."
+                rule="Posts per day = min(postsPerDay setting, number of time slots)"
+              />
+
+              {/* How drip works */}
+              <GuideSection
+                step="4"
+                title="How posts are drip-scheduled"
+                color="#f59e0b"
+                description="Every 5 minutes, Posthive checks which time slots fall in the next 5 minutes. For each matching slot, it picks the next Queued post in order and schedules it. Posts move through these states:"
+                states={[
+                  { label: "Queued", color: "#6366f1", desc: "Waiting to be scheduled" },
+                  { label: "Scheduled", color: "#0ea5e9", desc: "BullMQ job created, will fire at slot time" },
+                  { label: "Published", color: "#10b981", desc: "Posted successfully to all platforms" },
+                  { label: "Failed", color: "#ef4444", desc: "One or more platforms failed" },
+                ]}
+              />
+
+              {/* Rules */}
+              <div style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 10, padding: "14px 16px" }}>
+                <p className="text-xs font-semibold mb-3" style={{ color: "#888", letterSpacing: "0.05em", textTransform: "uppercase" }}>Rules & limits</p>
+                <ul className="flex flex-col gap-2">
+                  {[
+                    "Posts fire in order — item #1 first, then #2, etc.",
+                    "Changing time slots takes effect within 5 minutes.",
+                    "Last-minute slot changes (< 5 min before) may miss that slot — plan ahead.",
+                    "Deleting a library cancels all scheduled posts for it.",
+                    "Pausing stops new posts from being scheduled; existing scheduled posts still fire.",
+                    "When all items are posted, the library becomes Exhausted — upload more to resume.",
+                    "Max 500 rows per CSV upload.",
+                  ].map((rule, i) => (
+                    <li key={i} className="flex gap-2 text-xs" style={{ color: "#888" }}>
+                      <span style={{ color: "#2a2a2a", flexShrink: 0 }}>—</span>
+                      {rule}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="px-6 pb-5">
+              <button
+                onClick={() => setGuideOpen(false)}
+                className="w-full py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90"
+                style={{ backgroundColor: "#fff", color: "#0a0a0a" }}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Left panel */}
       <div className="flex flex-col shrink-0" style={{ width: 260, borderRight: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
         <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: "1px solid #1e1e1e" }}>
@@ -396,16 +526,26 @@ export default function LibraryPage() {
             <p className="text-xs font-bold" style={{ color: "#ededed", letterSpacing: "0.02em" }}>Content Library</p>
             <p className="text-xs" style={{ color: "#555", marginTop: 1 }}>Drip-schedule your content</p>
           </div>
-          <button
-            onClick={() => setCreateOpen(true)}
-            style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 7, backgroundColor: "#fff", color: "#0a0a0a", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}
-            className="hover:opacity-90 transition-opacity shrink-0"
-          >
-            <svg style={{ width: 11, height: 11 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-            </svg>
-            New
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setGuideOpen(true)}
+              title="How it works"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: 7, backgroundColor: "transparent", color: "#555", border: "1px solid #2a2a2a", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
+              className="hover:border-white/20 hover:text-white transition-colors"
+            >
+              ?
+            </button>
+            <button
+              onClick={() => setCreateOpen(true)}
+              style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 7, backgroundColor: "#fff", color: "#0a0a0a", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}
+              className="hover:opacity-90 transition-opacity"
+            >
+              <svg style={{ width: 11, height: 11 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+              New
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto py-1">
