@@ -152,23 +152,8 @@ async function processLibrary(lib: {
   const slots = slotsInNextHour(timeSlots, timezone, lib.postsPerDay);
   if (!slots.length) return; // no slots fire in next hour for this library
 
-  // Dedup: skip if we already dripped within this hour window
-  // (protects against crash restarts re-firing)
-  if (lib.lastDripAt) {
-    const lastDrip = lib.lastDripAt.getTime();
-    const windowStart = Date.now();
-    const windowEnd = windowStart + INTERVAL_MS;
-    const alreadyRanThisWindow = lastDrip >= windowStart - INTERVAL_MS && lastDrip < windowEnd;
-    // More precise: if lastDripAt is within the current clock-hour, skip
-    const nowHour = new Date();
-    nowHour.setMinutes(0, 0, 0);
-    if (lastDrip >= nowHour.getTime()) {
-      console.log(`[drip] library ${lib.id} already dripped this hour — skipping`);
-      return;
-    }
-  }
-
   // Pick queued items — one per slot, in order
+  // (Idempotency: items already status="scheduled" are excluded by the query filter)
   const items = await prisma.libraryItem.findMany({
     where: { libraryId: lib.id, status: "queued" },
     orderBy: { order: "asc" },
