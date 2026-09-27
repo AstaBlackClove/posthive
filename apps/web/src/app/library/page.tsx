@@ -378,9 +378,9 @@ export default function LibraryPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span style={{ fontSize: 11, color: "#444" }}>{lib._count?.items ?? 0} items</span>
-                    {queued > 0 && <span style={{ fontSize: 11, color: "#5b63d3" }}>{queued} queued</span>}
-                    <span style={{ fontSize: 11, color: "#444" }}>{lib.postsPerDay}/day</span>
+                    <span style={{ fontSize: 11, color: "#777" }}>{lib._count?.items ?? 0} items</span>
+                    {queued > 0 && <span style={{ fontSize: 11, color: "#818cf8" }}>{queued} queued</span>}
+                    <span style={{ fontSize: 11, color: "#777" }}>{lib.postsPerDay}/day</span>
                   </div>
                 </button>
               );
@@ -504,11 +504,11 @@ function LibraryDetail({
                 </div>
               </div>
               <div className="flex items-center gap-3 mt-0.5">
-                <span style={{ fontSize: 11, color: "#555" }}>{library.postsPerDay} posts/day</span>
-                <span style={{ fontSize: 11, color: "#333" }}>·</span>
-                <span style={{ fontSize: 11, color: "#555" }}>{library.timeSlots.join(", ")}</span>
-                <span style={{ fontSize: 11, color: "#333" }}>·</span>
-                <span style={{ fontSize: 11, color: "#555" }}>{library.timezone}</span>
+                <span style={{ fontSize: 11, color: "#999" }}>{library.postsPerDay} posts/day</span>
+                <span style={{ fontSize: 11, color: "#555" }}>·</span>
+                <span style={{ fontSize: 11, color: "#999" }}>{library.timeSlots.join(", ")}</span>
+                <span style={{ fontSize: 11, color: "#555" }}>·</span>
+                <span style={{ fontSize: 11, color: "#999" }}>{library.timezone}</span>
               </div>
             </div>
           </div>
@@ -564,14 +564,14 @@ function LibraryDetail({
           ].map(s => (
             <div key={s.label} className="flex items-baseline gap-1.5">
               <span style={{ fontSize: 18, fontWeight: 700, color: s.color, fontVariantNumeric: "tabular-nums" }}>{s.value}</span>
-              <span style={{ fontSize: 11, color: "#444" }}>{s.label}</span>
+              <span style={{ fontSize: 11, color: "#666" }}>{s.label}</span>
             </div>
           ))}
 
           {/* Account chips */}
           {linkedAccounts.length > 0 && (
             <div className="ml-auto flex items-center gap-1.5 flex-wrap">
-              <span style={{ fontSize: 11, color: "#444" }}>To:</span>
+              <span style={{ fontSize: 11, color: "#777" }}>To:</span>
               {linkedAccounts.slice(0, 4).map(a => (
                 <span key={a.id} style={{ fontSize: 11, color: "#888", backgroundColor: "#111", border: "1px solid #1e1e1e", borderRadius: 4, padding: "1px 7px" }}>
                   {a.displayName}
@@ -608,7 +608,7 @@ function LibraryDetail({
           ) : (
             <div>
               <p style={{ fontSize: 12, color: "#aaa", fontWeight: 500 }}>Drop CSV or click to upload</p>
-              <p style={{ fontSize: 11, color: "#444", marginTop: 1 }}>Columns: text, comment (opt), mediaUrls pipe-separated (opt) · max {MAX_CSV_ROWS} rows</p>
+              <p style={{ fontSize: 11, color: "#777", marginTop: 1 }}>Columns: text, comment (opt), mediaUrls pipe-separated (opt) · max {MAX_CSV_ROWS} rows</p>
             </div>
           )}
         </div>
@@ -659,7 +659,7 @@ function LibraryDetail({
                   >
                     <div className="flex items-start gap-3">
                       {/* Order number */}
-                      <span style={{ fontSize: 11, color: "#333", fontVariantNumeric: "tabular-nums", marginTop: 2, minWidth: 20, textAlign: "right" }}>#{idx + 1}</span>
+                      <span style={{ fontSize: 11, color: "#555", fontVariantNumeric: "tabular-nums", marginTop: 2, minWidth: 20, textAlign: "right" }}>#{idx + 1}</span>
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
@@ -687,7 +687,7 @@ function LibraryDetail({
                           {sc.label}
                         </span>
                         {scheduledAt && item.status === "queued" && (
-                          <span style={{ fontSize: 10, color: "#555", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: 10, color: "#888", whiteSpace: "nowrap" }}>
                             🕐 {fmtSchedule(scheduledAt)}
                           </span>
                         )}
