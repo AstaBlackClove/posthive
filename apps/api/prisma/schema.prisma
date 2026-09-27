@@ -68,6 +68,11 @@ model Workspace {
 
   webhookUrl String?  // outbound webhook fired on post publish
 
+  // Per-workspace overrides — set by admin to give a specific workspace higher limits than their plan
+  customMaxLibraries   Int?  // overrides plan.maxLibraries when set
+  customMaxDripPerDay  Int?  // overrides plan.maxDripPerDay when set
+  customMaxLibraryItems Int? // overrides plan.maxLibraryItems when set
+
   members          WorkspaceMember[]
   invites          WorkspaceInvite[]
   accounts         Account[]

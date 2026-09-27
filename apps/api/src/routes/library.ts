@@ -38,10 +38,18 @@ const csvItemSchema = z.object({
 async function getWorkspacePlan(workspaceId: string) {
   const ws = await prisma.workspace.findUnique({
     where: { id: workspaceId },
-    select: { plan: true, planStatus: true, trialEndsAt: true },
+    select: { plan: true, planStatus: true, trialEndsAt: true, customMaxLibraries: true, customMaxDripPerDay: true, customMaxLibraryItems: true },
   });
   if (!ws) return null;
-  return { ws, plan: getPlan(ws.plan) };
+  const basePlan = getPlan(ws.plan);
+  // Apply per-workspace overrides if set
+  const plan = {
+    ...basePlan,
+    maxLibraries: ws.customMaxLibraries ?? basePlan.maxLibraries,
+    maxDripPerDay: ws.customMaxDripPerDay ?? basePlan.maxDripPerDay,
+    maxLibraryItems: ws.customMaxLibraryItems ?? basePlan.maxLibraryItems,
+  };
+  return { ws, plan };
 }
 
 export async function libraryRoutes(app: FastifyInstance): Promise<void> {
@@ -98,7 +106,7 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
 
       if (plan.maxLibraries === 0) {
         return reply.status(402).send({
-          error: "Content Library is not available on your plan. Upgrade to Creator or higher.",
+          error: "Content Library is not available on your current plan. Upgrade to Creator or higher to use this feature.",
           code: "PLAN_LIMIT",
           upgradeRequired: true,
         });
@@ -109,8 +117,10 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
 
       const libraryCount = await prisma.contentLibrary.count({ where: { workspaceId } });
       if (libraryCount >= plan.maxLibraries) {
+        const nextPlan = ws.plan === "creator" ? "Pro" : ws.plan === "pro" ? "Team" : null;
+        const upgradeHint = nextPlan ? ` Upgrade to ${nextPlan} to create more.` : " Contact support to increase your limit.";
         return reply.status(402).send({
-          error: `You've reached your plan limit of ${plan.maxLibraries} content librar${plan.maxLibraries === 1 ? "y" : "ies"}. Upgrade to create more.`,
+          error: `You've reached your plan limit of ${plan.maxLibraries} content librar${plan.maxLibraries === 1 ? "y" : "ies"}.${upgradeHint}`,
           code: "PLAN_LIMIT",
           upgradeRequired: true,
         });
