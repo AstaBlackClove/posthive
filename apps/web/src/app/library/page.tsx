@@ -227,6 +227,7 @@ export default function LibraryPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = libraries.find(l => l.id === selectedId) ?? null;
+  const [planLimits, setPlanLimits] = useState({ maxDripPerDay: 50, maxLibraries: 999, maxLibraryItems: 999999 });
 
   // Create modal
   const [createOpen, setCreateOpen] = useState(false);
@@ -267,8 +268,9 @@ export default function LibraryPage() {
   async function loadLibraries() {
     setLoading(true);
     try {
-      const data = await apiFetch<Library[]>("/library");
-      setLibraries(data);
+      const data = await apiFetch<{ libraries: Library[]; planLimits: typeof planLimits }>("/library");
+      setLibraries(data.libraries);
+      setPlanLimits(data.planLimits);
     } catch (e) {
       error(e instanceof Error ? e.message : "Failed to load libraries");
     } finally {
@@ -480,7 +482,7 @@ export default function LibraryPage() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid #1e1e1e" }}>
               <div>
-                <h2 className="text-sm font-bold" style={{ color: "#ededed" }}>Content Library — How it works</h2>
+                <h2 className="text-sm font-bold" style={{ color: "#ededed" }}>Content Library - How it works</h2>
                 <p className="text-xs mt-0.5" style={{ color: "#555" }}>Drip-schedule your content automatically</p>
               </div>
               <button onClick={() => setGuideOpen(false)} style={{ color: "#555", background: "none", border: "none", cursor: "pointer", fontSize: 18, lineHeight: 1 }} className="hover:text-white transition-colors">✕</button>
@@ -492,7 +494,7 @@ export default function LibraryPage() {
                 step="1"
                 title="What is Content Library?"
                 color="#5b63d3"
-                description="A Content Library is a queue of posts that drip out automatically on a schedule — like a content calendar that runs itself. Upload your posts once, set a daily schedule, and Posthive fires them one by one without you touching anything."
+                description="A Content Library is a queue of posts that drip out automatically on a schedule like a content calendar that runs itself. Upload your posts once, set a daily schedule, and Posthive fires them one by one without you touching anything."
               />
 
               {/* Upload CSV */}
@@ -532,12 +534,12 @@ export default function LibraryPage() {
                 <p className="text-xs font-semibold mb-3" style={{ color: "#888", letterSpacing: "0.05em", textTransform: "uppercase" }}>Rules & limits</p>
                 <ul className="flex flex-col gap-2">
                   {[
-                    "Posts fire in order — item #1 first, then #2, etc.",
+                    "Posts fire in order item #1 first, then #2, etc.",
                     "Changing time slots takes effect within 5 minutes.",
-                    "Last-minute slot changes (< 5 min before) may miss that slot — plan ahead.",
+                    "Last-minute slot changes (< 5 min before) may miss that slot plan ahead.",
                     "Deleting a library cancels all scheduled posts for it.",
                     "Pausing stops new posts from being scheduled; existing scheduled posts still fire.",
-                    "When all items are posted, the library becomes Exhausted — upload more to resume.",
+                    "When all items are posted, the library becomes Exhausted upload more to resume.",
                     "Max 500 rows per CSV upload.",
                   ].map((rule, i) => (
                     <li key={i} className="text-xs" style={{ color: "#888", paddingLeft: 2 }}>
@@ -675,6 +677,7 @@ export default function LibraryPage() {
           }}
           onError={error}
           onSuccess={success}
+          maxDripPerDay={planLimits.maxDripPerDay}
         />
       )}
 
@@ -688,6 +691,7 @@ export default function LibraryPage() {
           saving={creating}
           onSubmit={handleCreate}
           onClose={() => setCreateOpen(false)}
+          maxDripPerDay={planLimits.maxDripPerDay}
         />
       )}
     </div>
@@ -700,7 +704,7 @@ function LibraryDetail({
   library, accounts, items, itemsLoading, itemsHasMore,
   itemsFilter, setItemsFilter, sentinelRef,
   csvUploading, fileInputRef, settingsOpen, setSettingsOpen,
-  onCsvFile, onTogglePause, onDelete, onLibraryUpdated, onError, onSuccess,
+  onCsvFile, onTogglePause, onDelete, onLibraryUpdated, onError, onSuccess, maxDripPerDay = 50,
 }: {
   library: Library;
   accounts: Account[];
@@ -720,6 +724,7 @@ function LibraryDetail({
   onLibraryUpdated: (updated: Partial<Library> & { id: string }) => void;
   onError: (msg: string) => void;
   onSuccess: (msg: string) => void;
+  maxDripPerDay?: number;
 }) {
   const [dragOver, setDragOver] = useState(false);
 
@@ -974,6 +979,7 @@ function LibraryDetail({
           onSaved={(updated) => onLibraryUpdated(updated)}
           onError={onError}
           onSuccess={onSuccess}
+          maxDripPerDay={maxDripPerDay}
         />
       )}
     </div>
@@ -982,13 +988,14 @@ function LibraryDetail({
 
 // ── Settings Panel ─────────────────────────────────────────────────────────
 
-function SettingsPanel({ library, accounts, onClose, onSaved, onError, onSuccess }: {
+function SettingsPanel({ library, accounts, onClose, onSaved, onError, onSuccess, maxDripPerDay = 50 }: {
   library: Library;
   accounts: Account[];
   onClose: () => void;
   onSaved: (updated: Partial<Library> & { id: string }) => void;
   onError: (msg: string) => void;
   onSuccess: (msg: string) => void;
+  maxDripPerDay?: number;
 }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -1039,11 +1046,14 @@ function SettingsPanel({ library, accounts, onClose, onSaved, onError, onSuccess
 
         {/* Posts per day */}
         <div>
-          <label className="block text-xs font-medium mb-1.5" style={{ color: "#888" }}>Posts per day</label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-medium" style={{ color: "#888" }}>Posts per day</label>
+            <span className="text-xs" style={{ color: "#555" }}>max {maxDripPerDay}</span>
+          </div>
           <input
-            type="number" min={1} max={50}
+            type="number" min={1} max={maxDripPerDay}
             value={form.postsPerDay}
-            onChange={e => setForm(f => ({ ...f, postsPerDay: Number(e.target.value) }))}
+            onChange={e => setForm(f => ({ ...f, postsPerDay: Math.min(Number(e.target.value), maxDripPerDay) }))}
             style={{ width: "100%", backgroundColor: "#111", border: "1px solid #2a2a2a", borderRadius: 7, padding: "7px 10px", fontSize: 12, color: "#ededed", outline: "none" }}
           />
         </div>
@@ -1125,7 +1135,7 @@ function SettingsPanel({ library, accounts, onClose, onSaved, onError, onSuccess
 
 // ── Create / Edit Modal ────────────────────────────────────────────────────
 
-function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClose }: {
+function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClose, maxDripPerDay = 50 }: {
   title: string;
   accounts: Account[];
   form: { name: string; postsPerDay: number; timeSlots: string[]; timezone: string; accountIds: string[] };
@@ -1133,6 +1143,7 @@ function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClos
   saving: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
+  maxDripPerDay?: number;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
@@ -1148,8 +1159,11 @@ function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClos
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "#888" }}>Posts per day</label>
-            <input type="number" min={1} max={50} required value={form.postsPerDay} onChange={e => setForm(f => ({ ...f, postsPerDay: Number(e.target.value) }))}
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium" style={{ color: "#888" }}>Posts per day</label>
+              <span className="text-xs" style={{ color: "#555" }}>max {maxDripPerDay} on your plan</span>
+            </div>
+            <input type="number" min={1} max={maxDripPerDay} required value={form.postsPerDay} onChange={e => setForm(f => ({ ...f, postsPerDay: Math.min(Number(e.target.value), maxDripPerDay) }))}
               style={{ width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 7, padding: "7px 10px", fontSize: 12, color: "#ededed", outline: "none" }} />
           </div>
 

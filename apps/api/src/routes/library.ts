@@ -56,6 +56,9 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
       },
     });
     // Add per-status counts
+    const planData = process.env.ENABLE_BILLING === "true" ? await getWorkspacePlan(workspaceId) : null;
+    const plan = planData?.plan ?? null;
+
     const result = await Promise.all(libraries.map(async (lib) => {
       const counts = await prisma.libraryItem.groupBy({
         by: ["status"],
@@ -65,7 +68,14 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
       const statusCounts = Object.fromEntries(counts.map(c => [c.status, c._count]));
       return { ...lib, statusCounts };
     }));
-    return reply.send(result);
+    return reply.send({
+      libraries: result,
+      planLimits: {
+        maxDripPerDay: plan ? plan.maxDripPerDay : 50,
+        maxLibraries: plan ? plan.maxLibraries : 999,
+        maxLibraryItems: plan ? plan.maxLibraryItems : 999999,
+      },
+    });
   });
 
   // POST /library — create a new library
