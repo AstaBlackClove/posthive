@@ -174,6 +174,10 @@ export default function LibraryPage() {
   // Settings edit
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Delete confirm
+  const [deleteTarget, setDeleteTarget] = useState<Library | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   // ── Load ────────────────────────────────────────────────────────────────
 
   async function loadLibraries() {
@@ -266,13 +270,20 @@ export default function LibraryPage() {
   // ── Delete ───────────────────────────────────────────────────────────────
 
   async function deleteLibrary(lib: Library) {
-    if (!confirm(`Delete "${lib.name}" and all ${lib._count?.items ?? 0} items? This cannot be undone.`)) return;
+    setDeleteTarget(lib);
+  }
+
+  async function confirmDeleteLibrary() {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await apiFetch(`/library/${lib.id}`, { method: "DELETE" });
-      setLibraries(prev => prev.filter(l => l.id !== lib.id));
-      if (selectedId === lib.id) setSelectedId(null);
+      await apiFetch(`/library/${deleteTarget.id}`, { method: "DELETE" });
+      setLibraries(prev => prev.filter(l => l.id !== deleteTarget.id));
+      if (selectedId === deleteTarget.id) setSelectedId(null);
+      setDeleteTarget(null);
       success("Library deleted");
     } catch (e) { error(e instanceof Error ? e.message : "Failed to delete"); }
+    finally { setDeleting(false); }
   }
 
   // ── CSV Upload ───────────────────────────────────────────────────────────
@@ -346,6 +357,37 @@ export default function LibraryPage() {
 
   return (
     <div className="flex h-full" style={{ backgroundColor: "#0a0a0a", color: "#ededed" }}>
+
+      {/* Delete confirm modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.75)" }}>
+          <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "#111", border: "1px solid #2a2a2a" }}>
+            <h3 className="text-base font-semibold mb-2" style={{ color: "#ededed" }}>Delete library</h3>
+            <p className="text-sm mb-6" style={{ color: "#888" }}>
+              Delete <span style={{ color: "#ededed" }}>"{deleteTarget.name}"</span> and all{" "}
+              <span style={{ color: "#ededed" }}>{deleteTarget._count?.items ?? 0} items</span>? This cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-white/5"
+                style={{ color: "#888", border: "1px solid #2a2a2a" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteLibrary}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: "#dc2626", color: "#fff", opacity: deleting ? 0.6 : 1 }}
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Left panel */}
       <div className="flex flex-col shrink-0" style={{ width: 260, borderRight: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
