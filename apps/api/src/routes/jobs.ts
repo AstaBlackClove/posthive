@@ -610,6 +610,58 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     return reply.status(204).send();
   });
 
+  // DELETE /jobs/bulk — delete up to 500 jobs in one request
+  app.delete("/jobs/bulk", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+
+    const parsed = z.object({
+      ids: z.array(z.string().cuid()).min(1).max(500),
+    }).safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
+    const { ids } = parsed.data;
+
+    // Fetch all jobs — verify ownership + skip running
+    const jobs = await prisma.postJob.findMany({
+      where: { id: { in: ids }, workspaceId },
+      select: { id: true, status: true, content: true, userId: true },
+    });
+
+    const role = await getWorkspaceRole(userId, workspaceId);
+    const isAdmin = ["owner", "admin"].includes(role ?? "");
+
+    const deletableIds: string[] = [];
+    const mediaUrlsToDelete: string[] = [];
+
+    for (const job of jobs) {
+      if (job.status === "running") continue;
+      if (!isAdmin && job.userId !== userId) continue;
+      deletableIds.push(job.id);
+      try {
+        const content = JSON.parse(job.content) as { mediaUrls?: string[]; youtubeThumbnailUrl?: string };
+        if (content.mediaUrls?.length) mediaUrlsToDelete.push(...content.mediaUrls);
+        if (content.youtubeThumbnailUrl) mediaUrlsToDelete.push(content.youtubeThumbnailUrl);
+      } catch { /* non-fatal */ }
+    }
+
+    if (!deletableIds.length) return reply.status(200).send({ deleted: 0 });
+
+    // Remove pending jobs from queue in parallel
+    const pendingIds = jobs.filter(j => j.status === "pending" && deletableIds.includes(j.id)).map(j => j.id);
+    await Promise.allSettled(pendingIds.map(id => postJobQueue.remove(id)));
+
+    // Delete media files
+    if (mediaUrlsToDelete.length) {
+      await Promise.allSettled(mediaUrlsToDelete.map(url => storage.delete(url)));
+      await prisma.upload.deleteMany({ where: { url: { in: mediaUrlsToDelete } } });
+    }
+
+    // Bulk delete — targets cascade
+    const { count } = await prisma.postJob.deleteMany({ where: { id: { in: deletableIds } } });
+
+    return reply.status(200).send({ deleted: count });
+  });
+
   // GET /jobs/targets/:targetId/analytics
   app.get("/jobs/targets/:targetId/analytics", { preHandler: [withAuth] }, async (req, reply) => {
     const workspaceId = getWorkspaceId(req);
