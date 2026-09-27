@@ -185,6 +185,7 @@ STRICT CSV FORMAT RULES:
 - Escape a literal double quote inside a value by doubling it: ""like this""
 - No extra columns, no headers other than the first row, no markdown, no explanation — output ONLY the raw CSV
 - Maximum 500 rows per upload
+- ⚠️ mediaUrls must be publicly accessible without authentication — Google Drive, Google Photos, and similar links require sign-in and WILL FAIL when the platform tries to fetch the image. Use a public CDN, Imgur, Cloudinary, S3 public URL, or upload via Posthive's upload first.
 
 EXAMPLE OUTPUT (copy the exact format):
 text,comment,mediaUrls
@@ -514,7 +515,7 @@ export default function LibraryPage() {
                 step="2"
                 title="Upload posts via CSV"
                 color="#0ea5e9"
-                description='Each row = one post. Required column: "text" (main post, max 5000 chars). Optional: "comment" (first comment posted after the post) and "mediaUrls" (pipe-separated "|" public image/video URLs). Always wrap values in double quotes. Escape a quote inside a value by doubling it: ""like this"".'
+                description='Each row = one post. Required column: "text" (main post, max 5000 chars). Optional: "comment" (first comment posted after the post) and "mediaUrls" (pipe-separated "|" public image/video URLs — must be publicly accessible; Google Drive/Photos links require sign-in and will fail). Always wrap values in double quotes. Escape a literal quote by doubling it: ""like this"".'
                 code={`text,comment,mediaUrls\n"Your first post 🚀","First comment here","https://cdn.example.com/img1.jpg|https://cdn.example.com/img2.jpg"\n"Second post — no media or comment","",""\n"Post with a comment only","Great thread below!",""`}
               />
 
