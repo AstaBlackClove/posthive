@@ -79,14 +79,16 @@ function computeSchedule(
 
   const queuedItems = items.filter(i => i.status === "queued");
 
-  while (queuedIdx < queuedItems.length) {
-    const dateStr = `${startY}-${String(startM).padStart(2,"0")}-${String(startD + dayOffset).padStart(2,"0")}`;
-    const [h, m] = slotsToUse[slotIdx].split(":").map(Number);
+  const startDate = new Date(startY, startM - 1, startD);
 
-    // Build a Date in the library's timezone
-    const iso = `${dateStr}T${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:00`;
-    const d = new Date(new Date(iso).toLocaleString("en-US", { timeZone: timezone }));
-    // Convert to UTC via offset
+  while (queuedIdx < queuedItems.length) {
+    const day = new Date(startDate);
+    day.setDate(startDate.getDate() + dayOffset);
+    const y = day.getFullYear();
+    const mo = String(day.getMonth() + 1).padStart(2, "0");
+    const d2 = String(day.getDate()).padStart(2, "0");
+    const [h, m] = slotsToUse[slotIdx].split(":").map(Number);
+    const iso = `${y}-${mo}-${d2}T${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:00`;
     const utcDate = new Date(iso);
 
     map.set(queuedItems[queuedIdx].id, utcDate);
