@@ -335,7 +335,11 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         where: streamWorkspaceId ? { workspaceId: streamWorkspaceId } : { userId },
         orderBy: { scheduledFor: "desc" },
         take: 100,
-        include: { targets: { select: TARGET_SELECT } },
+        select: {
+          id: true, status: true, scheduledFor: true, content: true,
+          createdAt: true, updatedAt: true, workspaceId: true, userId: true,
+          targets: { select: TARGET_SELECT },
+        },
       });
       return JSON.stringify(jobs);
     };
@@ -351,7 +355,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         const payload = await fetchJobs();
         if (payload !== lastPayload) { lastPayload = payload; reply.raw.write(`data: ${payload}\n\n`); }
       } catch { /* ignore */ }
-    }, 5000);
+    }, 30000);
 
     const keepAlive = setInterval(() => { reply.raw.write(": ping\n\n"); }, 25000);
 
