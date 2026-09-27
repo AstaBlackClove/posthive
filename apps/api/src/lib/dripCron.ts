@@ -1,136 +1,71 @@
 /**
- * Drip cron — fires every hour.
+ * Drip cron — fires every 5 minutes.
  *
  * For each active ContentLibrary:
- *   1. Determine which time slots fall within the next hour (in library's timezone).
+ *   1. Find slots that fall within the next 5-minute window (in library's timezone).
  *   2. For each slot, pick the next queued LibraryItem in order.
- *   3. Create a PostJob scheduled for that slot time.
- *   4. Mark the LibraryItem as "scheduled" with the new PostJob ID.
- *   5. If no queued items remain, mark library as "exhausted".
+ *   3. Create a PostJob + LibraryItem update atomically in a transaction.
+ *   4. Enqueue in BullMQ.
+ *   5. If no queued items remain, mark library exhausted.
  *
- * Idempotent: uses `lastDripAt` to skip libraries already dripped within
- * the current hour window, preventing double-fires on restarts or crashes.
+ * Safety:
+ *   - isRunning flag prevents overlapping runs if DB is slow.
+ *   - Libraries processed in parallel batches (CONCURRENCY = 5).
+ *   - Paginated in batches of BATCH_SIZE to avoid huge queries.
+ *   - PostJob create + LibraryItem update in one Prisma transaction — atomic.
+ *   - Items with status != "queued" excluded — safe to re-run anytime.
  */
 
 import * as Sentry from "@sentry/node";
 import { prisma } from "./prisma.js";
 import { schedulePostJob } from "./queue.js";
 
-const INTERVAL_MS = 5 * 60 * 1000; // 5 minutes — short window for responsive slot changes
+const INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const BATCH_SIZE = 100;             // libraries fetched per page
+const CONCURRENCY = 5;              // libraries processed in parallel
 
-/**
- * Given a "HH:MM" time slot and a timezone, return the next Date when that
- * slot fires. If the slot is still in the future today, return today's date
- * at that time. Otherwise return tomorrow.
- */
+let isRunning = false;
+
+function zonedToUtc(naiveDatetimeStr: string, timezone: string): Date {
+  const probe = new Date(naiveDatetimeStr + "Z");
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  }).formatToParts(probe);
+  const get = (type: string) => Number(parts.find(p => p.type === type)?.value ?? "0");
+  const tzLocal = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour") % 24, get("minute"), get("second"));
+  const naiveUtc = probe.getTime();
+  return new Date(naiveUtc + (naiveUtc - tzLocal));
+}
+
 function nextSlotDate(slot: string, timezone: string): Date {
   const [hh, mm] = slot.split(":").map(Number);
   const now = new Date();
-
-  // Build a date string in the library's timezone
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const localDateStr = formatter.format(now); // "YYYY-MM-DD"
-
-  // Construct slot datetime in that timezone via UTC offset
+  const localDateStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(now);
   const candidateStr = `${localDateStr}T${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:00`;
-  const candidate = new Date(
-    new Date(candidateStr).toLocaleString("en-US", { timeZone: timezone })
-  );
-  // Use Intl to get the UTC equivalent
   const utcCandidate = zonedToUtc(candidateStr, timezone);
-
-  // If already passed, schedule for tomorrow
   if (utcCandidate.getTime() <= now.getTime()) {
     utcCandidate.setUTCDate(utcCandidate.getUTCDate() + 1);
   }
-  void candidate; // unused — utcCandidate is what we return
   return utcCandidate;
 }
 
-/**
- * Convert a naive datetime string "YYYY-MM-DDTHH:MM:SS" expressed in `timezone`
- * to a UTC Date object.
- */
-function zonedToUtc(naiveDatetimeStr: string, timezone: string): Date {
-  // We abuse the fact that `new Date(str)` parses as local time by constructing
-  // a temporary Date and measuring the offset from Intl.
-  const probe = new Date(naiveDatetimeStr + "Z"); // treat as UTC first
-
-  // Get what Intl reports as the local time in the target timezone for that UTC instant
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(probe);
-
-  const get = (type: string) => Number(parts.find(p => p.type === type)?.value ?? "0");
-  const tzLocal = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour") % 24, get("minute"), get("second"));
-  const naiveUtc = new Date(naiveDatetimeStr + "Z").getTime();
-  const offset = naiveUtc - tzLocal; // offset = UTC - localTime → UTC = local + offset
-  return new Date(naiveUtc + offset);
-}
-
-/**
- * Which slots from this library's timeSlots array fall within [now, now + 1h)?
- * Returns their scheduled UTC Date objects.
- */
 function slotsInNextWindow(timeSlots: string[], timezone: string, postsPerDay: number): Date[] {
   const now = Date.now();
   const windowEnd = now + INTERVAL_MS;
-
-  // Only use up to postsPerDay slots (sorted ascending)
   const slots = [...timeSlots].sort().slice(0, postsPerDay);
-
   const result: Date[] = [];
   for (const slot of slots) {
-    const slotDate = nextSlotDate(slot, timezone);
-    const t = slotDate.getTime();
-    if (t >= now && t < windowEnd) {
-      result.push(slotDate);
-    }
+    const t = nextSlotDate(slot, timezone).getTime();
+    if (t >= now && t < windowEnd) result.push(new Date(t));
   }
   return result;
 }
 
-async function run() {
-  const libraries = await prisma.contentLibrary.findMany({
-    where: { status: "active" },
-    select: {
-      id: true,
-      workspaceId: true,
-      postsPerDay: true,
-      timeSlots: true,
-      timezone: true,
-      accountIds: true,
-      lastDripAt: true,
-      workspace: { select: { members: { where: { role: "owner" }, select: { userId: true }, take: 1 } } },
-    },
-  });
-
-  if (!libraries.length) return;
-  console.log(`[drip] checking ${libraries.length} active librar${libraries.length === 1 ? "y" : "ies"}`);
-
-  for (const lib of libraries) {
-    try {
-      await processLibrary(lib);
-    } catch (err) {
-      console.error(`[drip] error processing library ${lib.id}:`, err);
-      Sentry.captureException(err, { tags: { component: "drip-cron", libraryId: lib.id } });
-    }
-  }
-}
-
-async function processLibrary(lib: {
+type LibraryRow = {
   id: string;
   workspaceId: string;
   postsPerDay: number;
@@ -139,21 +74,21 @@ async function processLibrary(lib: {
   accountIds: unknown;
   lastDripAt: Date | null;
   workspace: { members: { userId: string }[] };
-}) {
+};
+
+async function processLibrary(lib: LibraryRow) {
   const timeSlots = lib.timeSlots as string[];
   const accountIds = lib.accountIds as string[];
   const timezone = lib.timezone || "UTC";
   const ownerUserId = lib.workspace.members[0]?.userId;
   if (!ownerUserId) {
-    console.warn(`[drip] library ${lib.id} — workspace has no owner, skipping`);
+    console.warn(`[drip] library ${lib.id} — no workspace owner, skipping`);
     return;
   }
 
   const slots = slotsInNextWindow(timeSlots, timezone, lib.postsPerDay);
-  if (!slots.length) return; // no slots fire in next hour for this library
+  if (!slots.length) return;
 
-  // Pick queued items — one per slot, in order
-  // (Idempotency: items already status="scheduled" are excluded by the query filter)
   const items = await prisma.libraryItem.findMany({
     where: { libraryId: lib.id, status: "queued" },
     orderBy: { order: "asc" },
@@ -162,12 +97,8 @@ async function processLibrary(lib: {
   });
 
   if (!items.length) {
-    // No queued items left — mark library exhausted
-    await prisma.contentLibrary.update({
-      where: { id: lib.id },
-      data: { status: "exhausted" },
-    });
-    console.log(`[drip] library ${lib.id} exhausted — no queued items remain`);
+    await prisma.contentLibrary.update({ where: { id: lib.id }, data: { status: "exhausted" } });
+    console.log(`[drip] library ${lib.id} exhausted`);
     return;
   }
 
@@ -178,55 +109,105 @@ async function processLibrary(lib: {
     if (!slot) break;
 
     try {
-      // Create PostJob
-      const job = await prisma.postJob.create({
-        data: {
-          scheduledFor: slot,
-          status: "pending",
-          content: JSON.stringify({
-            text: item.text,
-            mediaUrls: item.mediaUrls as string[],
-          }),
-          commentText: item.commentText ?? null,
-          dryRun: process.env.NODE_ENV !== "production",
-          userId: ownerUserId,
-          workspaceId: lib.workspaceId,
-          targets: { create: accountIds.map((accountId) => ({ accountId })) },
-        },
-        select: { id: true },
+      // Atomic: create PostJob + mark item scheduled in one transaction
+      const job = await prisma.$transaction(async (tx) => {
+        const j = await tx.postJob.create({
+          data: {
+            scheduledFor: slot,
+            status: "pending",
+            content: JSON.stringify({ text: item.text, mediaUrls: item.mediaUrls as string[] }),
+            commentText: item.commentText ?? null,
+            dryRun: process.env.NODE_ENV !== "production",
+            userId: ownerUserId,
+            workspaceId: lib.workspaceId,
+            targets: { create: (accountIds as string[]).map((accountId) => ({ accountId })) },
+          },
+          select: { id: true },
+        });
+        await tx.libraryItem.update({
+          where: { id: item.id },
+          data: { status: "scheduled", scheduledJobId: j.id },
+        });
+        return j;
       });
 
-      // Enqueue in BullMQ
+      // Enqueue outside transaction — BullMQ is not part of the DB tx
       await schedulePostJob(job.id, slot);
 
-      // Mark item as scheduled
-      await prisma.libraryItem.update({
-        where: { id: item.id },
-        data: { status: "scheduled", scheduledJobId: job.id },
-      });
-
-      console.log(`[drip] library ${lib.id} → item ${item.id} scheduled at ${slot.toISOString()} (job ${job.id})`);
+      console.log(`[drip] library ${lib.id} → item ${item.id} → job ${job.id} at ${slot.toISOString()}`);
       scheduled++;
     } catch (err) {
-      console.error(`[drip] failed to schedule item ${item.id}:`, err);
+      console.error(`[drip] failed item ${item.id}:`, err);
       Sentry.captureException(err, { tags: { component: "drip-cron", libraryId: lib.id, itemId: item.id } });
     }
   }
 
   if (scheduled > 0) {
-    await prisma.contentLibrary.update({
-      where: { id: lib.id },
-      data: { lastDripAt: new Date() },
-    });
+    await prisma.contentLibrary.update({ where: { id: lib.id }, data: { lastDripAt: new Date() } });
+    console.log(`[drip] library ${lib.id} — scheduled ${scheduled}/${slots.length}`);
   }
+}
 
-  console.log(`[drip] library ${lib.id} — scheduled ${scheduled}/${slots.length} slot(s)`);
+async function run() {
+  if (isRunning) {
+    console.log("[drip] previous run still in progress — skipping");
+    return;
+  }
+  isRunning = true;
+
+  try {
+    let cursor: string | undefined;
+    let totalLibraries = 0;
+
+    // Paginate through active libraries to avoid loading all at once
+    while (true) {
+      const batch: LibraryRow[] = await prisma.contentLibrary.findMany({
+        where: { status: "active" },
+        select: {
+          id: true,
+          workspaceId: true,
+          postsPerDay: true,
+          timeSlots: true,
+          timezone: true,
+          accountIds: true,
+          lastDripAt: true,
+          workspace: { select: { members: { where: { role: "owner" }, select: { userId: true }, take: 1 } } },
+        },
+        take: BATCH_SIZE,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        orderBy: { id: "asc" },
+      });
+
+      if (!batch.length) break;
+      totalLibraries += batch.length;
+
+      // Process in parallel with concurrency limit
+      for (let i = 0; i < batch.length; i += CONCURRENCY) {
+        await Promise.allSettled(
+          batch.slice(i, i + CONCURRENCY).map(lib =>
+            processLibrary(lib).catch(err => {
+              console.error(`[drip] error processing library ${lib.id}:`, err);
+              Sentry.captureException(err, { tags: { component: "drip-cron", libraryId: lib.id } });
+            })
+          )
+        );
+      }
+
+      if (batch.length < BATCH_SIZE) break;
+      cursor = batch[batch.length - 1].id;
+    }
+
+    if (totalLibraries > 0) {
+      console.log(`[drip] checked ${totalLibraries} librar${totalLibraries === 1 ? "y" : "ies"}`);
+    }
+  } finally {
+    isRunning = false;
+  }
 }
 
 export { run as runDripNow };
 
 export function startDripCron() {
-  // Run immediately at startup to catch any missed slots from downtime
   run().catch((e) => console.error("[drip] startup run error:", e));
   setInterval(() => run().catch((e) => console.error("[drip] error:", e)), INTERVAL_MS);
 }
