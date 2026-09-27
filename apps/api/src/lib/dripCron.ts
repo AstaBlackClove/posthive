@@ -16,7 +16,7 @@ import * as Sentry from "@sentry/node";
 import { prisma } from "./prisma.js";
 import { schedulePostJob } from "./queue.js";
 
-const INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+const INTERVAL_MS = 5 * 60 * 1000; // 5 minutes — short window for responsive slot changes
 
 /**
  * Given a "HH:MM" time slot and a timezone, return the next Date when that
@@ -84,7 +84,7 @@ function zonedToUtc(naiveDatetimeStr: string, timezone: string): Date {
  * Which slots from this library's timeSlots array fall within [now, now + 1h)?
  * Returns their scheduled UTC Date objects.
  */
-function slotsInNextHour(timeSlots: string[], timezone: string, postsPerDay: number): Date[] {
+function slotsInNextWindow(timeSlots: string[], timezone: string, postsPerDay: number): Date[] {
   const now = Date.now();
   const windowEnd = now + INTERVAL_MS;
 
@@ -149,7 +149,7 @@ async function processLibrary(lib: {
     return;
   }
 
-  const slots = slotsInNextHour(timeSlots, timezone, lib.postsPerDay);
+  const slots = slotsInNextWindow(timeSlots, timezone, lib.postsPerDay);
   if (!slots.length) return; // no slots fire in next hour for this library
 
   // Pick queued items — one per slot, in order
