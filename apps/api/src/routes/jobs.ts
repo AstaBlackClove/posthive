@@ -388,7 +388,11 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       orderBy: { scheduledFor: "desc" },
       take: limit + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      include: { targets: { select: TARGET_SELECT } },
+      select: {
+        id: true, status: true, scheduledFor: true, content: true,
+        createdAt: true, updatedAt: true, workspaceId: true, userId: true,
+        targets: { select: TARGET_SELECT },
+      },
     });
 
     const hasMore = jobs.length > limit;
