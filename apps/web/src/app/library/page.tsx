@@ -176,13 +176,13 @@ export default function LibraryPage() {
     if (form.timeSlots.length === 0) { error("Add at least one time slot"); return; }
     setCreating(true);
     try {
-      const lib = await apiFetch<Library>("/library", {
+      const lib = await apiFetch<{ id: string }>("/library", {
         method: "POST",
         body: JSON.stringify(form),
       });
-      setLibraries(prev => [lib, ...prev]);
       setCreateOpen(false);
       setForm({ name: "", postsPerDay: 1, timeSlots: ["09:00"], timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", accountIds: [] });
+      await loadLibraries();
       success("Library created");
       setSelectedId(lib.id);
     } catch (e) {
@@ -389,7 +389,7 @@ export default function LibraryPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 mt-1">
-                    <span style={{ fontSize: 11, color: "#555" }}>{lib._count.items} items</span>
+                    <span style={{ fontSize: 11, color: "#555" }}>{lib._count?.items ?? 0} items</span>
                     {queued > 0 && <span style={{ fontSize: 11, color: "#818cf8" }}>{queued} queued</span>}
                     <span style={{ fontSize: 11, color: "#555" }}>{lib.postsPerDay}/day</span>
                   </div>
