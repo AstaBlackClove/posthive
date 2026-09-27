@@ -56,6 +56,23 @@ const LIBRARY_STATUS: Record<string, { dot: string; label: string }> = {
 // ── Schedule preview calculator ────────────────────────────────────────────
 // Given queued items and drip settings, compute what date/time each item fires
 
+/** Convert "YYYY-MM-DDTHH:MM:SS" (naive, in `tz`) to a UTC Date. */
+function zonedToUtc(naiveIso: string, tz: string): Date {
+  // Probe: treat naive string as UTC to get a reference instant
+  const probe = new Date(naiveIso + "Z");
+  // Ask Intl what local time that UTC instant maps to in `tz`
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  }).formatToParts(probe);
+  const get = (t: string) => Number(parts.find(p => p.type === t)?.value ?? "0");
+  const tzLocal = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour") % 24, get("minute"), get("second"));
+  const naiveUtc = probe.getTime();
+  const offset = naiveUtc - tzLocal; // offset = how much to add to naive-as-UTC to get real UTC
+  return new Date(naiveUtc + offset);
+}
+
 function computeSchedule(
   items: LibraryItem[],
   timeSlots: string[],
@@ -89,7 +106,8 @@ function computeSchedule(
     const d2 = String(day.getDate()).padStart(2, "0");
     const [h, m] = slotsToUse[slotIdx].split(":").map(Number);
     const iso = `${y}-${mo}-${d2}T${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:00`;
-    const utcDate = new Date(iso);
+    // Convert slot time in library's timezone to UTC for correct comparison
+    const utcDate = zonedToUtc(iso, timezone);
 
     // Skip slots already in the past
     if (utcDate.getTime() <= now.getTime()) {
