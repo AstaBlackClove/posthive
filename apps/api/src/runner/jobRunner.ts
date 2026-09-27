@@ -116,6 +116,18 @@ export async function runJob(
   const finalStatus = allDone && !anyFailed ? "done" : anyFailed ? "failed" : "running";
   await prisma.postJob.update({ where: { id: job.id }, data: { status: finalStatus } });
 
+  // Sync LibraryItem status if this job was drip-scheduled
+  if (finalStatus === "done" || finalStatus === "failed") {
+    await prisma.libraryItem.updateMany({
+      where: { scheduledJobId: job.id },
+      data: {
+        status: finalStatus === "done" ? "published" : "failed",
+        publishedAt: finalStatus === "done" ? new Date().toISOString() : undefined,
+        errorMessage: finalStatus === "failed" ? "One or more platforms failed" : undefined,
+      },
+    });
+  }
+
   // Fire outbound webhook (silent fail — never affects job status)
   if (!job.dryRun) {
     const wsRow = job.workspaceId
