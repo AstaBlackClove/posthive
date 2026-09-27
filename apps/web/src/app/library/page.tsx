@@ -91,6 +91,13 @@ function computeSchedule(
     const iso = `${y}-${mo}-${d2}T${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:00`;
     const utcDate = new Date(iso);
 
+    // Skip slots already in the past
+    if (utcDate.getTime() <= now.getTime()) {
+      slotIdx++;
+      if (slotIdx >= slotsToUse.length) { slotIdx = 0; dayOffset++; }
+      continue;
+    }
+
     map.set(queuedItems[queuedIdx].id, utcDate);
     queuedIdx++;
     slotIdx++;
