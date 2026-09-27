@@ -570,7 +570,7 @@ export default function LibraryPage() {
 
       {/* Left panel — full width on mobile, 260px sidebar on desktop. Hidden on mobile when a library is selected. */}
       <div className={`flex flex-col shrink-0 ${selectedId ? "hidden md:flex" : "flex"}`} style={{ width: undefined, borderRight: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }} data-panel="left">
-      <style>{`@media (min-width: 768px) { [data-panel="left"] { width: 260px; } } @media (max-width: 767px) { [data-panel="left"] { width: 100%; flex: 1; } }`}</style>
+      <style>{`@media (min-width: 768px) { [data-panel="left"] { width: 300px; } } @media (max-width: 767px) { [data-panel="left"] { width: 100%; flex: 1; } }`}</style>
         <div className="flex items-center justify-between px-4 py-3 shrink-0 pl-14 md:pl-4" style={{ borderBottom: "1px solid #1e1e1e" }}>
           <div>
             <p className="text-xs font-bold" style={{ color: "#ededed", letterSpacing: "0.02em" }}>Content Library</p>
