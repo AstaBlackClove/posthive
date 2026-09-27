@@ -344,18 +344,29 @@ export default function JobsPage() {
 
   async function bulkDelete(ids: string[]) {
     setBulkDeleting(true);
-    let deleted = 0;
-    for (const id of ids) {
-      try {
-        await apiFetch(`/jobs/${id}`, { method: "DELETE" });
-        deleted++;
-      } catch {}
+    try {
+      const res = await apiFetch("/jobs/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      const { deleted } = res as { deleted: number };
+      setJobs(prev => prev.filter(j => !ids.includes(j.id)));
+      setSelectedIds(new Set());
+      success(`Deleted ${deleted} post${deleted !== 1 ? "s" : ""}.`);
+    } catch {
+      // fallback: individual deletes for partial success
+      let deleted = 0;
+      for (const id of ids) {
+        try { await apiFetch(`/jobs/${id}`, { method: "DELETE" }); deleted++; } catch {}
+      }
+      setJobs(prev => prev.filter(j => !ids.includes(j.id)));
+      setSelectedIds(new Set());
+      success(`Deleted ${deleted} post${deleted !== 1 ? "s" : ""}.`);
+    } finally {
+      setBulkDeleting(false);
+      setShowBulkDeleteConfirm(false);
     }
-    setJobs(prev => prev.filter(j => !ids.includes(j.id)));
-    setSelectedIds(new Set());
-    setBulkDeleting(false);
-    setShowBulkDeleteConfirm(false);
-    success(`Deleted ${deleted} post${deleted !== 1 ? "s" : ""}.`);
   }
 
   async function retryFailed(jobId: string) {
