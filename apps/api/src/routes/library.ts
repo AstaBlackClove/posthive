@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import * as Sentry from "@sentry/node";
 import { prisma } from "../lib/prisma.js";
 import { withAuth, getUser, getWorkspaceId } from "../lib/auth/withAuth.js";
 import { getPlan } from "../lib/plans.js";
@@ -127,20 +128,24 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
 
     const safePosts = Math.min(postsPerDay, maxDripPerDay);
 
-    const library = await prisma.contentLibrary.create({
-      data: {
-        workspaceId,
-        name,
-        postsPerDay: safePosts,
-        timeSlots: timeSlots as unknown as string[],
-        timezone,
-        accountIds: accountIds as unknown as string[],
-        status: "active",
-      },
-    });
-
-    void userId; // userId available for audit logging if needed later
-    return reply.status(201).send(library);
+    try {
+      const library = await prisma.contentLibrary.create({
+        data: {
+          workspaceId,
+          name,
+          postsPerDay: safePosts,
+          timeSlots: timeSlots as unknown as string[],
+          timezone,
+          accountIds: accountIds as unknown as string[],
+          status: "active",
+        },
+      });
+      void userId;
+      return reply.status(201).send(library);
+    } catch (err) {
+      Sentry.captureException(err, { tags: { route: "POST /library", workspaceId } });
+      throw err;
+    }
   });
 
   // GET /library/:id
@@ -184,18 +189,23 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
       }
     }
 
-    const updated = await prisma.contentLibrary.update({
-      where: { id },
-      data: {
-        ...(safeData.name !== undefined ? { name: safeData.name } : {}),
-        ...(safeData.status !== undefined ? { status: safeData.status } : {}),
-        ...(safeData.postsPerDay !== undefined ? { postsPerDay: safeData.postsPerDay } : {}),
-        ...(safeData.timeSlots !== undefined ? { timeSlots: safeData.timeSlots as unknown as string[] } : {}),
-        ...(safeData.timezone !== undefined ? { timezone: safeData.timezone } : {}),
-        ...(safeData.accountIds !== undefined ? { accountIds: safeData.accountIds as unknown as string[] } : {}),
-      },
-    });
-    return reply.send(updated);
+    try {
+      const updated = await prisma.contentLibrary.update({
+        where: { id },
+        data: {
+          ...(safeData.name !== undefined ? { name: safeData.name } : {}),
+          ...(safeData.status !== undefined ? { status: safeData.status } : {}),
+          ...(safeData.postsPerDay !== undefined ? { postsPerDay: safeData.postsPerDay } : {}),
+          ...(safeData.timeSlots !== undefined ? { timeSlots: safeData.timeSlots as unknown as string[] } : {}),
+          ...(safeData.timezone !== undefined ? { timezone: safeData.timezone } : {}),
+          ...(safeData.accountIds !== undefined ? { accountIds: safeData.accountIds as unknown as string[] } : {}),
+        },
+      });
+      return reply.send(updated);
+    } catch (err) {
+      Sentry.captureException(err, { tags: { route: "PATCH /library/:id", workspaceId, libraryId: id } });
+      throw err;
+    }
   });
 
   // DELETE /library/:id
@@ -204,8 +214,13 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
     const { id } = req.params as { id: string };
     const library = await prisma.contentLibrary.findFirst({ where: { id, workspaceId } });
     if (!library) return reply.status(404).send({ error: "Library not found" });
-    await prisma.contentLibrary.delete({ where: { id } }); // cascades to LibraryItem
-    return reply.status(204).send();
+    try {
+      await prisma.contentLibrary.delete({ where: { id } }); // cascades to LibraryItem
+      return reply.status(204).send();
+    } catch (err) {
+      Sentry.captureException(err, { tags: { route: "DELETE /library/:id", workspaceId, libraryId: id } });
+      throw err;
+    }
   });
 
   // GET /library/:id/items — paginated
@@ -286,20 +301,25 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
     // Batch insert
     const BATCH = 100;
     let created = 0;
-    for (let i = 0; i < items.length; i += BATCH) {
-      const chunk = items.slice(i, i + BATCH);
-      await prisma.libraryItem.createMany({
-        data: chunk.map((item, idx) => ({
-          libraryId: id,
-          workspaceId,
-          text: item.text,
-          commentText: item.commentText ?? null,
-          mediaUrls: (item.mediaUrls ?? []) as unknown as string[],
-          order: startOrder + i + idx,
-          status: "queued",
-        })),
-      });
-      created += chunk.length;
+    try {
+      for (let i = 0; i < items.length; i += BATCH) {
+        const chunk = items.slice(i, i + BATCH);
+        await prisma.libraryItem.createMany({
+          data: chunk.map((item, idx) => ({
+            libraryId: id,
+            workspaceId,
+            text: item.text,
+            commentText: item.commentText ?? null,
+            mediaUrls: (item.mediaUrls ?? []) as unknown as string[],
+            order: startOrder + i + idx,
+            status: "queued",
+          })),
+        });
+        created += chunk.length;
+      }
+    } catch (err) {
+      Sentry.captureException(err, { tags: { route: "POST /library/:id/items", workspaceId, libraryId: id }, extra: { itemCount: items.length, createdSoFar: created } });
+      throw err;
     }
 
     return reply.status(201).send({ created });
@@ -318,10 +338,14 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
     const library = await prisma.contentLibrary.findFirst({ where: { id, workspaceId }, select: { id: true } });
     if (!library) return reply.status(404).send({ error: "Library not found" });
 
-    const { count } = await prisma.libraryItem.deleteMany({
-      where: { id: { in: parsed.data.itemIds }, libraryId: id, status: { in: ["queued", "failed", "skipped"] } },
-    });
-
-    return reply.send({ deleted: count });
+    try {
+      const { count } = await prisma.libraryItem.deleteMany({
+        where: { id: { in: parsed.data.itemIds }, libraryId: id, status: { in: ["queued", "failed", "skipped"] } },
+      });
+      return reply.send({ deleted: count });
+    } catch (err) {
+      Sentry.captureException(err, { tags: { route: "DELETE /library/:id/items", workspaceId, libraryId: id } });
+      throw err;
+    }
   });
 }

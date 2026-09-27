@@ -174,16 +174,28 @@ function GuideSection({ step, title, color, description, code, rule, states }: {
   );
 }
 
-const AI_PROMPT = `Generate a CSV file for a social media content library.
+const AI_PROMPT = `Generate a CSV file for a Posthive social media content library.
 
-Rules:
-- Columns: text, comment, mediaUrls
-- "text" is required — the main post content (wrap in double quotes)
-- "comment" is optional — a first comment posted right after the post
-- "mediaUrls" is optional — pipe-separated URLs of images/videos
-- No extra columns, no markdown, no explanation — just the CSV
+STRICT CSV FORMAT RULES:
+- First row must be exactly: text,comment,mediaUrls
+- "text" column is REQUIRED — the main post content (max 5000 chars)
+- "comment" column is optional — a first comment posted right after the post (leave blank if none)
+- "mediaUrls" column is optional — pipe-separated ( | ) public image/video URLs (leave blank if none)
+- Always wrap cell values in double quotes, especially if they contain commas or newlines
+- Escape a literal double quote inside a value by doubling it: ""like this""
+- No extra columns, no headers other than the first row, no markdown, no explanation — output ONLY the raw CSV
+- Maximum 500 rows per upload
 
-Generate [NUMBER] posts about [TOPIC]. Each post should be engaging, unique, and end with a call-to-action question.`;
+EXAMPLE OUTPUT (copy the exact format):
+text,comment,mediaUrls
+"Your first post content here 🚀","First comment text here","https://example.com/image1.jpg|https://example.com/image2.jpg"
+"Second post — no comment or media","",""
+"Third post with just a comment","This is the first comment",""
+
+Now generate [NUMBER] posts about [TOPIC].
+Style: [e.g. educational / motivational / storytelling / product launch]
+Tone: [e.g. casual / professional / witty]
+Each post should be unique, platform-appropriate, and end with a call-to-action or question.`;
 
 function AiPromptSection() {
   const [copied, setCopied] = React.useState(false);
@@ -208,7 +220,7 @@ function AiPromptSection() {
         </button>
       </div>
       <p className="text-xs mb-2" style={{ color: "#555" }}>
-        Paste this into Claude, ChatGPT, or any AI. Replace <span style={{ color: "#818cf8" }}>[NUMBER]</span> and <span style={{ color: "#818cf8" }}>[TOPIC]</span>, then upload the CSV here.
+        Paste into Claude, ChatGPT, or any AI. Fill in <span style={{ color: "#818cf8" }}>[NUMBER]</span>, <span style={{ color: "#818cf8" }}>[TOPIC]</span>, <span style={{ color: "#818cf8" }}>[Style]</span> and <span style={{ color: "#818cf8" }}>[Tone]</span>. Save the AI output as <span style={{ color: "#818cf8" }}>posts.csv</span>, then upload here.
       </p>
       <pre className="text-xs rounded-lg p-3 overflow-x-auto" style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e", color: "#6366f1", fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
         {AI_PROMPT}
@@ -502,8 +514,8 @@ export default function LibraryPage() {
                 step="2"
                 title="Upload posts via CSV"
                 color="#0ea5e9"
-                description='Each row = one post. Required column: "text". Optional columns: "comment" (first comment posted after the post) and "mediaUrls" (pipe-separated image/video URLs).'
-                code={`text,comment,mediaUrls\n"Your post content here","First comment text","https://example.com/image.jpg"\n"Another post","",""`}
+                description='Each row = one post. Required column: "text" (main post, max 5000 chars). Optional: "comment" (first comment posted after the post) and "mediaUrls" (pipe-separated "|" public image/video URLs). Always wrap values in double quotes. Escape a quote inside a value by doubling it: ""like this"".'
+                code={`text,comment,mediaUrls\n"Your first post 🚀","First comment here","https://cdn.example.com/img1.jpg|https://cdn.example.com/img2.jpg"\n"Second post — no media or comment","",""\n"Post with a comment only","Great thread below!",""`}
               />
 
               {/* Time slots */}
