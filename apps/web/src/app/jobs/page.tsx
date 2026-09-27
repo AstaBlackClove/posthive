@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 import { CalendarView } from "../../components/CalendarView";
@@ -300,10 +300,14 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [viewTab, setViewTab] = useState<ViewTab>("list");
   const [filter, setFilter] = useState<FilterTab>("all");
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [deletingJob, setDeletingJob] = useState<Job | null>(null);
@@ -449,24 +453,77 @@ export default function JobsPage() {
     } catch (err) { toastError(String(err)); throw err; }
   }
 
+  // Initial load + filter change
+  const loadJobs = useCallback(async (statusFilter: FilterTab, cursor?: string) => {
+    const isFirstPage = !cursor;
+    if (isFirstPage) setLoading(true); else setLoadingMore(true);
+    try {
+      const params = new URLSearchParams({ limit: "50" });
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (cursor) params.set("cursor", cursor);
+      const data = await apiFetch<{ items: Job[]; nextCursor: string | null; hasMore: boolean }>(`/jobs?${params}`);
+      if (isFirstPage) {
+        setJobs(data.items);
+      } else {
+        setJobs(prev => [...prev, ...data.items]);
+      }
+      setNextCursor(data.nextCursor);
+      setHasMore(data.hasMore);
+      setLastRefresh(new Date());
+      setError(null);
+    } catch {
+      setError("Failed to load posts");
+    } finally {
+      if (isFirstPage) setLoading(false); else setLoadingMore(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setNextCursor(null);
+    setHasMore(false);
+    loadJobs(filter);
+  }, [filter, loadJobs]);
+
+  // Infinite scroll sentinel
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore) return;
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore && !loadingMore && nextCursor) {
+        loadJobs(filter, nextCursor);
+      }
+    }, { threshold: 0.1 });
+    obs.observe(sentinelRef.current);
+    return () => obs.disconnect();
+  }, [hasMore, loadingMore, nextCursor, filter, loadJobs]);
+
+  // SSE for live status updates on visible jobs — merges status changes only
   useEffect(() => {
     let es: EventSource;
 
     async function connect() {
       try {
         const res = await fetch(`${API_BASE}/auth/session`, { credentials: "include" });
-        if (!res.ok) { setError("Not authenticated"); setLoading(false); return; }
+        if (!res.ok) return;
         const { token } = await res.json() as { token: string; user: unknown };
         es = new EventSource(`${API_BASE}/jobs/stream?token=${encodeURIComponent(token)}`);
 
         es.onmessage = (e: MessageEvent<string>) => {
           try {
             const data = JSON.parse(e.data) as Job[] | { error: string };
-            if (!Array.isArray(data)) { setError("Not authenticated"); es.close(); return; }
-            setJobs(data);
+            if (!Array.isArray(data)) return;
+            // Merge status updates into existing list — don't replace
+            setJobs(prev => prev.map(j => {
+              const updated = data.find(d => d.id === j.id);
+              return updated ? { ...j, status: updated.status, targets: updated.targets } : j;
+            }));
+            // Add any new jobs from SSE (e.g. just created) that aren't in list yet
+            setJobs(prev => {
+              const existingIds = new Set(prev.map(j => j.id));
+              const newJobs = data.filter(d => !existingIds.has(d.id));
+              return newJobs.length ? [...newJobs, ...prev] : prev;
+            });
             setLastRefresh(new Date());
             setError(null);
-            setLoading(false);
           } catch { /* malformed frame — ignore */ }
         };
 
@@ -850,6 +907,19 @@ export default function JobsPage() {
                 </div>
               </section>
             )}
+
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="py-4 text-center">
+              {loadingMore && (
+                <div className="flex items-center justify-center gap-2 text-xs" style={{ color: "#555" }}>
+                  <div className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#555", borderTopColor: "transparent" }} />
+                  Loading more…
+                </div>
+              )}
+              {!hasMore && jobs.length > 0 && !loading && (
+                <p className="text-xs" style={{ color: "#333" }}>— {jobs.length} posts loaded —</p>
+              )}
+            </div>
           </>
         )}
       </div>

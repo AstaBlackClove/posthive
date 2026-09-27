@@ -334,6 +334,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       const jobs = await prisma.postJob.findMany({
         where: streamWorkspaceId ? { workspaceId: streamWorkspaceId } : { userId },
         orderBy: { scheduledFor: "desc" },
+        take: 100,
         include: { targets: { select: TARGET_SELECT } },
       });
       return JSON.stringify(jobs);
@@ -358,15 +359,39 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     await new Promise<void>((resolve) => req.raw.on("close", resolve));
   });
 
-  // List jobs for current workspace
+  // List jobs for current workspace — cursor-paginated
   app.get("/jobs", { preHandler: [withAuth] }, async (req, reply) => {
     const workspaceId = getWorkspaceId(req);
+    const query = req.query as { cursor?: string; limit?: string; status?: string };
+    const limit = Math.min(Number(query.limit ?? 50), 100);
+    const cursor = query.cursor ?? undefined;
+    const statusFilter = query.status;
+
+    const where: { workspaceId: string; status?: { in: string[] } } = { workspaceId };
+    if (statusFilter) {
+      const statusMap: Record<string, string[]> = {
+        draft: ["draft"],
+        pending: ["pending", "running"],
+        done: ["done", "comment_done", "post_done"],
+        failed: ["failed", "post_failed", "comment_failed"],
+      };
+      const statuses = statusMap[statusFilter] ?? [statusFilter];
+      where.status = { in: statuses };
+    }
+
     const jobs = await prisma.postJob.findMany({
-      where: { workspaceId },
+      where,
       orderBy: { scheduledFor: "desc" },
+      take: limit + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: { targets: { select: TARGET_SELECT } },
     });
-    return reply.send(jobs);
+
+    const hasMore = jobs.length > limit;
+    const items = hasMore ? jobs.slice(0, limit) : jobs;
+    const nextCursor = hasMore ? items[items.length - 1].id : null;
+
+    return reply.send({ items, nextCursor, hasMore });
   });
 
   // Single job detail — scoped to workspace
