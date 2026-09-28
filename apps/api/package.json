@@ -15,6 +15,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
     "@atproto/api": "^0.13.23",
+    "@aws-sdk/client-s3": "^3.1141.0",
     "@bull-board/api": "^5.23.0",
     "@bull-board/fastify": "^5.23.0",
     "@fastify/compress": "^6.5.0",

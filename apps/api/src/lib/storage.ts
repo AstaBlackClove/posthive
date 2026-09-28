@@ -15,6 +15,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 export const MAX_IMAGE_SIZE_BYTES = 10_000_000; // 10 MB
@@ -155,5 +156,70 @@ export class SupabaseStorage implements StorageAdapter {
     if (!res.ok) return [];
     const items = await res.json() as Array<{ name: string }>;
     return items.map((f) => `${this.baseUrl}/storage/v1/object/public/${this.bucket}/${folder}/${f.name}`);
+  }
+}
+
+/**
+ * R2Storage — Cloudflare R2 via S3-compatible API. Zero egress fees.
+ *
+ * Set env vars:
+ *   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
+ *   R2_BUCKET (default: "posthive-uploads"), R2_PUBLIC_URL (public dev URL)
+ */
+export class R2Storage implements StorageAdapter {
+  private readonly client: S3Client;
+  private readonly bucket: string;
+  private readonly publicUrl: string;
+
+  constructor() {
+    const accountId = process.env.R2_ACCOUNT_ID;
+    const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+    const publicUrl = process.env.R2_PUBLIC_URL;
+    if (!accountId || !accessKeyId || !secretAccessKey || !publicUrl) {
+      throw new Error("R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_URL are required for R2Storage");
+    }
+    this.bucket = process.env.R2_BUCKET ?? "posthive-uploads";
+    this.publicUrl = publicUrl.replace(/\/$/, "");
+    this.client = new S3Client({
+      region: "auto",
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      credentials: { accessKeyId, secretAccessKey },
+    });
+  }
+
+  async upload(buffer: Buffer, mimeType: string, folder?: string): Promise<string> {
+    const ext = EXT_MAP[mimeType] ?? ".bin";
+    const key = folder
+      ? `${folder}/${crypto.randomUUID()}${ext}`
+      : `${crypto.randomUUID()}${ext}`;
+    await this.client.send(new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: new Uint8Array(buffer),
+      ContentType: mimeType,
+    }));
+    return `${this.publicUrl}/${key}`;
+  }
+
+  async getBuffer(url: string): Promise<Buffer> {
+    const key = url.replace(`${this.publicUrl}/`, "");
+    const res = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    if (!res.Body) throw new Error(`R2 getBuffer: empty body for ${key}`);
+    return Buffer.from(await res.Body.transformToByteArray());
+  }
+
+  async delete(url: string): Promise<void> {
+    const key = url.replace(`${this.publicUrl}/`, "");
+    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
+  }
+
+  async listFolder(folder: string): Promise<string[]> {
+    const res = await this.client.send(new ListObjectsV2Command({
+      Bucket: this.bucket,
+      Prefix: `${folder}/`,
+      MaxKeys: 1000,
+    }));
+    return (res.Contents ?? []).map((obj) => `${this.publicUrl}/${obj.Key}`);
   }
 }

@@ -18,7 +18,7 @@ import { BullMQAdapter } from "@bull-board/api/bullMQAdapter.js";
 import { FastifyAdapter as BullBoardFastifyAdapter } from "@bull-board/fastify";
 import { Queue } from "bullmq";
 import { prisma } from "./lib/prisma.js";
-import { LocalDiskStorage, SupabaseStorage } from "./lib/storage.js";
+import { LocalDiskStorage, SupabaseStorage, R2Storage } from "./lib/storage.js";
 import { setBlueskyStorage } from "./adapters/bluesky.js";
 import { setStorageAdapter as setMastodonStorage } from "./adapters/mastodon.js";
 import { setStorageAdapter as setPixelfedStorage } from "./adapters/pixelfed.js";
@@ -62,7 +62,9 @@ const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
 const MAX_UPLOAD_SIZE = 100 * 1024 * 1024; // 100 MB — covers video
 
 async function main() {
-  const storage = process.env.STORAGE_PROVIDER === "supabase"
+  const storage = process.env.STORAGE_PROVIDER === "r2"
+    ? new R2Storage()
+    : process.env.STORAGE_PROVIDER === "supabase"
     ? new SupabaseStorage()
     : new LocalDiskStorage(UPLOADS_DIR);
   setBlueskyStorage(storage);
