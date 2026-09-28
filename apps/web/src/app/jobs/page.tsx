@@ -531,7 +531,7 @@ export default function JobsPage() {
             setJobs(prev => {
               const existingIds = new Set(prev.map(j => j.id));
               const newJobs = data.filter(d => !existingIds.has(d.id));
-              return newJobs.length ? [...newJobs, ...prev] : prev;
+              return newJobs.length ? [...prev, ...newJobs] : prev;
             });
             setLastRefresh(new Date());
             setError(null);
