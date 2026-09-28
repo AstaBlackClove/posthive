@@ -68,7 +68,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     });
 
     const parsed = z.object({
-      jobs: z.array(bulkItemSchema).min(1).max(500),
+      jobs: z.array(bulkItemSchema).min(1).max(250),
     }).safeParse(req.body);
 
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
@@ -123,7 +123,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     }
 
     // Cap pending jobs to prevent server overload — hard limit regardless of plan
-    const MAX_PENDING = 500;
+    const MAX_PENDING = 250;
     const pendingCount = await prisma.postJob.count({ where: { workspaceId, status: "pending" } });
     if (pendingCount >= MAX_PENDING) {
       return reply.status(429).send({

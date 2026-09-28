@@ -32,7 +32,7 @@ const EXAMPLE_CSV = `scheduled_for,text,accounts,comment,image_urls
 2026-07-12 18:00,Specific platforms with image,bluesky|mastodon,,https://example.com/img.jpg
 2026-07-13 10:00,Target FB page by name,My Page Name,,`;
 
-const MAX_BULK_ROWS = 500;
+const MAX_BULK_ROWS = 250;
 
 function parseCSV(csv: string, accounts: Account[]): ParsedRow[] {
   const lines = csv.trim().split("\n").filter(Boolean);
