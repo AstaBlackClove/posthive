@@ -185,6 +185,7 @@ export class R2Storage implements StorageAdapter {
       region: "auto",
       endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
       credentials: { accessKeyId, secretAccessKey },
+      forcePathStyle: true,
     });
   }
 
