@@ -334,7 +334,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       const jobs = await prisma.postJob.findMany({
         where: streamWorkspaceId ? { workspaceId: streamWorkspaceId } : { userId },
         orderBy: { scheduledFor: "desc" },
-        take: 100,
+        take: 20,
         select: {
           id: true, status: true, scheduledFor: true, content: true,
           createdAt: true, updatedAt: true, workspaceId: true, userId: true,
