@@ -332,6 +332,12 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
       throw err;
     }
 
+    // If library was marked exhausted before items were uploaded, reactivate it
+    await prisma.contentLibrary.updateMany({
+      where: { id, status: "exhausted" },
+      data: { status: "active" },
+    });
+
     return reply.status(201).send({ created });
   });
 
