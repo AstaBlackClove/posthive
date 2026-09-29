@@ -1151,7 +1151,7 @@ TIKTOK_REDIRECT_URI="https://your-domain.com/auth/tiktok/callback"`}</pre>
                 <li className="doc-li"><strong>Creator plan:</strong> up to 4 images per post (carousel).</li>
                 <li className="doc-li"><strong>Pro / Team plans:</strong> up to 10 images per carousel.</li>
                 <li className="doc-li">Alt text is supported click any thumbnail to add descriptive text for accessibility.</li>
-                <li className="doc-li">In development, files are stored on local disk. In production, set <span className="doc-inline-code">STORAGE_PROVIDER=supabase</span> and configure your bucket.</li>
+                <li className="doc-li">In development, files are stored on local disk. In production, set <span className="doc-inline-code">STORAGE_PROVIDER=r2</span> (Cloudflare R2, recommended) or <span className="doc-inline-code">STORAGE_PROVIDER=supabase</span> and configure the relevant env vars.</li>
               </ul>
 
               {/* ── Docker setup ── */}
@@ -1290,7 +1290,7 @@ volumes:
   postgres_data:
   redis_data:
   uploads:       # add this`}</CopyCode>
-              <p className="doc-p">For production, use <strong>Supabase Storage</strong> instead — set <span className="doc-inline-code">STORAGE_PROVIDER=supabase</span> and the <span className="doc-inline-code">SUPABASE_*</span> env vars. Files are stored off-server and survive rebuilds automatically.</p>
+              <p className="doc-p">For production, use <strong>Cloudflare R2</strong> (recommended, zero egress fees) or <strong>Supabase Storage</strong> — set <span className="doc-inline-code">STORAGE_PROVIDER=r2</span> or <span className="doc-inline-code">STORAGE_PROVIDER=supabase</span> with the relevant env vars. Files are stored off-server and survive rebuilds automatically.</p>
 
               {/* ── Updating ── */}
               <h3 className="doc-h2" id="updating">Updating</h3>
@@ -1339,11 +1339,26 @@ pnpm db:migrate`}</CopyCode>
               {/* ── Storage ── */}
               <h3 className="doc-h2" id="storage">Storage</h3>
               <p className="doc-p">
-                Uploaded media can be stored locally (dev) or in Supabase Storage (prod). Switch with the <span className="doc-inline-code">STORAGE_PROVIDER</span> env variable.
+                Uploaded media can be stored locally (dev), in Cloudflare R2 (recommended for production), or in Supabase Storage. Switch with the <span className="doc-inline-code">STORAGE_PROVIDER</span> env variable.
               </p>
               <h4 className="doc-h3">Local storage (default)</h4>
               <CopyCode>{`STORAGE_PROVIDER=local`}</CopyCode>
-              <p className="doc-p">Files are written to <span className="doc-inline-code">apps/api/uploads/</span>. Not recommended for production files are lost on redeploy.</p>
+              <p className="doc-p">Files are written to <span className="doc-inline-code">apps/api/uploads/</span>. Not recommended for production — files are lost on redeploy.</p>
+
+              <h4 className="doc-h3">Cloudflare R2 (recommended)</h4>
+              <p className="doc-p">Zero egress fees. Files survive redeploys. Works with any S3-compatible client.</p>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">Create a Cloudflare account and open <strong>R2</strong> in the dashboard.</li>
+                <li className="doc-li">Create a bucket (e.g. <span className="doc-inline-code">posthive-uploads</span>).</li>
+                <li className="doc-li">Under <strong>Settings → Public access</strong>, enable the public bucket URL (or connect a custom domain).</li>
+                <li className="doc-li">Go to <strong>Manage R2 API tokens</strong> and create a token with <em>Object Read &amp; Write</em> on your bucket. Copy the Account ID, Access Key ID, and Secret Access Key.</li>
+              </ol>
+              <CopyCode>{`STORAGE_PROVIDER=r2
+R2_ACCOUNT_ID="your-cloudflare-account-id"
+R2_ACCESS_KEY_ID="your-r2-access-key-id"
+R2_SECRET_ACCESS_KEY="your-r2-secret-access-key"
+R2_BUCKET="posthive-uploads"
+R2_PUBLIC_URL="https://pub-xxxx.r2.dev"   # your bucket's public URL`}</CopyCode>
 
               <h4 className="doc-h3">Supabase Storage</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
