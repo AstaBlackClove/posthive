@@ -95,6 +95,7 @@ const NAV = [
       { label: "First comment", id: "first-comment" },
       { label: "Per-platform overrides", id: "per-platform-overrides" },
       { label: "Media uploads", id: "media-uploads" },
+      { label: "Content Library", id: "content-library" },
     ],
   },
   {
@@ -1152,6 +1153,46 @@ TIKTOK_REDIRECT_URI="https://your-domain.com/auth/tiktok/callback"`}</pre>
                 <li className="doc-li"><strong>Pro / Team plans:</strong> up to 10 images per carousel.</li>
                 <li className="doc-li">Alt text is supported click any thumbnail to add descriptive text for accessibility.</li>
                 <li className="doc-li">In development, files are stored on local disk. In production, set <span className="doc-inline-code">STORAGE_PROVIDER=r2</span> (Cloudflare R2, recommended) or <span className="doc-inline-code">STORAGE_PROVIDER=supabase</span> and configure the relevant env vars.</li>
+              </ul>
+
+              {/* ── Content Library ── */}
+              <h3 className="doc-h2" id="content-library">Content Library</h3>
+              <p className="doc-p">
+                The Content Library lets you build an evergreen queue of posts that drip out automatically at your configured time slots — no manual scheduling needed. Upload a CSV once and posts go out on autopilot for weeks or months.
+              </p>
+              <p className="doc-p">Available on Creator, Pro, and Team plans (not available during trial).</p>
+
+              <h4 className="doc-h3">How it works</h4>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">Go to <strong>Library</strong> in the sidebar and create a new library.</li>
+                <li className="doc-li">Choose the social accounts to post to, your timezone, posts per day, and time slots.</li>
+                <li className="doc-li">Upload a CSV of content items.</li>
+                <li className="doc-li">The drip engine fires every 5 minutes and schedules one post per matching time slot — automatically.</li>
+                <li className="doc-li">When all items are posted the library is marked <strong>Exhausted</strong>. Upload more content to reactivate it.</li>
+              </ol>
+
+              <h4 className="doc-h3">CSV format</h4>
+              <p className="doc-p">Each row is one post. Supported columns:</p>
+              <CopyCode>{`text,commentText
+"Your post content here","Optional first comment"`}</CopyCode>
+              <ul className="doc-ul">
+                <li className="doc-li"><span className="doc-inline-code">text</span> — required. The post body.</li>
+                <li className="doc-li"><span className="doc-inline-code">commentText</span> — optional. Auto-posted as first comment after the post publishes.</li>
+              </ul>
+
+              <h4 className="doc-h3">Plan limits</h4>
+              <ul className="doc-ul">
+                <li className="doc-li"><strong>Creator:</strong> 1,000 items across all libraries.</li>
+                <li className="doc-li"><strong>Pro:</strong> 20,000 items.</li>
+                <li className="doc-li"><strong>Team:</strong> 100,000 items.</li>
+              </ul>
+
+              <h4 className="doc-h3">Tips</h4>
+              <ul className="doc-ul">
+                <li className="doc-li">Create multiple libraries for different content themes or languages.</li>
+                <li className="doc-li">Uploading new content to an exhausted library automatically reactivates it.</li>
+                <li className="doc-li">Delete and recreate a library to start fresh with a new content set.</li>
+                <li className="doc-li">The library respects your timezone — time slots are in local time.</li>
               </ul>
 
               {/* ── Docker setup ── */}
