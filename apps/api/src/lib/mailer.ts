@@ -324,6 +324,99 @@ export async function sendDay14WinbackEmail(to: string, name: string): Promise<v
   await resend.emails.send({ from: FROM, to, subject: "Your Posthive trial has ended", html });
 }
 
+export async function sendLibraryDigestEmail(
+  to: string,
+  name: string,
+  libraries: Array<{
+    name: string;
+    status: string;
+    queued: number;
+    succeeded: number;
+    failed: number;
+    hasWarning: boolean;
+  }>,
+  hasAnyWarning: boolean,
+): Promise<void> {
+  const dateStr = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+
+  const rows = libraries
+    .map((lib) => {
+      const total = lib.succeeded + lib.failed;
+      const statusDot = lib.status === "exhausted"
+        ? `<div style="width:7px;height:7px;border-radius:50%;background:#ef4444;display:inline-block;margin-right:5px;"></div>`
+        : lib.hasWarning
+          ? `<div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;display:inline-block;margin-right:5px;"></div>`
+          : `<div style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:5px;"></div>`;
+      const warningText = lib.hasWarning
+        ? `<div style="font-size:11px;color:#f59e0b;margin-top:3px;">⚠ High failure rate — check image URLs in your CSV</div>`
+        : lib.status === "exhausted"
+          ? `<div style="font-size:11px;color:#ef4444;margin-top:3px;">Library exhausted — no queued items remaining</div>`
+          : "";
+      return `
+        <tr style="border-bottom:1px solid #1e1e1e;">
+          <td style="padding:12px 0 ${lib.hasWarning || lib.status === "exhausted" ? "6" : "12"}px;">
+            <div style="display:flex;align-items:center;">${statusDot}<span style="font-size:13px;font-weight:600;color:#ededed;">${lib.name}</span></div>
+            ${warningText}
+          </td>
+          <td style="padding:12px 0;text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:#22c55e;font-weight:600;">${lib.succeeded.toLocaleString()}</td>
+          <td style="padding:12px 0;text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:${lib.failed > 0 ? "#ef4444" : "#555"};font-weight:600;">${lib.failed > 0 ? lib.failed.toLocaleString() : "—"}</td>
+          <td style="padding:12px 0;text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:#7a7a7a;">${lib.queued.toLocaleString()}</td>
+        </tr>`;
+    })
+    .join("");
+
+  const totalSucceeded = libraries.reduce((s, l) => s + l.succeeded, 0);
+  const totalFailed = libraries.reduce((s, l) => s + l.failed, 0);
+  const totalQueued = libraries.reduce((s, l) => s + l.queued, 0);
+
+  const body = `
+    ${hasAnyWarning ? eyebrow("Action needed", "#f59e0b") : eyebrow("Daily report", "#22c55e")}
+    ${heading(`Content Library — ${dateStr}`)}
+    ${bodyText(`Here's your library activity from the last 24 hours, ${name}.`)}
+    ${infoBox(`
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:1px solid #2a2a2a;">
+            <th style="padding:0 0 8px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#555;">Library</th>
+            <th style="padding:0 0 8px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#555;">Published</th>
+            <th style="padding:0 0 8px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#555;">Failed</th>
+            <th style="padding:0 0 8px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#555;">Queued</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr>
+            <td style="padding:10px 0 0;font-size:12px;font-weight:700;color:#7a7a7a;">Total</td>
+            <td style="padding:10px 0 0;text-align:right;font-size:12px;font-weight:700;color:#22c55e;font-variant-numeric:tabular-nums;">${totalSucceeded.toLocaleString()}</td>
+            <td style="padding:10px 0 0;text-align:right;font-size:12px;font-weight:700;color:${totalFailed > 0 ? "#ef4444" : "#555"};font-variant-numeric:tabular-nums;">${totalFailed > 0 ? totalFailed.toLocaleString() : "—"}</td>
+            <td style="padding:10px 0 0;text-align:right;font-size:12px;font-weight:700;color:#7a7a7a;font-variant-numeric:tabular-nums;">${totalQueued.toLocaleString()}</td>
+          </tr>
+        </tfoot>
+      </table>
+    `)}
+    ${hasAnyWarning
+      ? bodyText("One or more libraries have a high failure rate. This usually means image URLs in your CSV are broken or inaccessible. Re-upload with working image URLs to fix.", "font-size:12.5px;")
+      : bodyText(`${totalQueued.toLocaleString()} items still queued across all libraries.`, "font-size:12.5px;")}
+    ${ctaButton(`${APP_URL}/library`, "View libraries")}
+  `;
+
+  const topbar = hasAnyWarning ? "#f59e0b" : "#22c55e";
+  const html = emailShell(
+    topbar,
+    body,
+    `Daily digest sent every morning at 08:00 UTC.<br><a href="https://posthive.co" style="color:#555;">posthive.co</a>`,
+  );
+
+  if (!resend) {
+    console.log(`[mailer] Library digest for ${to}: ${totalSucceeded} published, ${totalFailed} failed`);
+    return;
+  }
+  const subject = hasAnyWarning
+    ? `⚠ Action needed: library posts failing — Posthive`
+    : `Content Library digest — ${totalSucceeded.toLocaleString()} posts published`;
+  await resend.emails.send({ from: FROM, to, subject, html });
+}
+
 export async function sendWorkspaceInviteEmail(
   to: string,
   inviterName: string,
