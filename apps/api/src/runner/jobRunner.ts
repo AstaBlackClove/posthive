@@ -160,14 +160,15 @@ export async function runJob(
       ...(content.mediaUrls ?? []),
       ...(content.youtubeThumbnailUrl ? [content.youtubeThumbnailUrl] : []),
     ];
-    if (urlsToClean.length) {
+    const ownedUrls = urlsToClean.filter((url) => storage.ownsUrl(url));
+    if (ownedUrls.length) {
       await Promise.allSettled(
-        urlsToClean.map((url) => {
+        ownedUrls.map((url) => {
           console.log(`[storage] deleting ${url} after successful post`);
           return storage.delete(url);
         })
       );
-      await prisma.upload.deleteMany({ where: { url: { in: urlsToClean } } });
+      await prisma.upload.deleteMany({ where: { url: { in: ownedUrls } } });
     }
   }
 }
