@@ -191,18 +191,24 @@ export const facebookAdapter: PlatformAdapter = {
   async getAnalytics(account: Account, platformPostId: string): Promise<AnalyticsResult> {
     const { pageAccessToken } = getCredentials(account);
 
-    const [reactionsRes, postRes] = await Promise.all([
+    const [reactionsRes, postRes, insightsRes] = await Promise.all([
       fetch(
         `${GRAPH}/${platformPostId}/reactions?summary=true&access_token=${pageAccessToken}`,
       ).then((r) => r.json()) as Promise<{ summary?: { total_count?: number } }>,
       fetch(
         `${GRAPH}/${platformPostId}?fields=comments.summary(true)&access_token=${pageAccessToken}`,
       ).then((r) => r.json()) as Promise<{ comments?: { summary?: { total_count?: number } } }>,
+      fetch(
+        `${GRAPH}/${platformPostId}/insights?metric=post_impressions_unique&access_token=${pageAccessToken}`,
+      ).then((r) => r.json()).catch(() => null) as Promise<{ data?: Array<{ values?: Array<{ value?: number }> }> } | null>,
     ]);
+
+    const rawViews = insightsRes?.data?.[0]?.values?.[0]?.value;
 
     return {
       likes:   reactionsRes.summary?.total_count ?? 0,
       replies: postRes.comments?.summary?.total_count ?? 0,
+      views:   typeof rawViews === "number" ? rawViews : undefined,
       fetchedAt: new Date().toISOString(),
     };
   },

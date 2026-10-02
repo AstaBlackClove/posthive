@@ -81,6 +81,7 @@ model Workspace {
   apiKeys          ApiKey[]
   feedbacks        Feedback[]
   contentLibraries ContentLibrary[]
+  accountGroups    AccountGroup[]
 
   // Back-ref for users whose activeWorkspace points here
   activeForUsers User[] @relation("UserActiveWorkspace")
@@ -147,7 +148,8 @@ model Account {
   workspaceId  String?
   workspace    Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  targets PostJobTarget[]
+  targets      PostJobTarget[]
+  groupMembers AccountGroupMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -375,6 +377,30 @@ model CancellationFeedback {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+// Account group — a named set of accounts for quick selection in compose.
+model AccountGroup {
+  id          String   @id @default(cuid())
+  name        String
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members     AccountGroupMember[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([workspaceId])
+}
+
+model AccountGroupMember {
+  id        String @id @default(cuid())
+  groupId   String
+  group     AccountGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, accountId])
+  @@index([groupId])
 }
 
 // Content Library — stores a collection of posts to drip-publish over time.

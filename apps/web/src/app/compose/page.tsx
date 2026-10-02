@@ -39,6 +39,7 @@ export default function ComposePage() {
   const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
+  const [groups, setGroups] = useState<{ id: string; name: string; accountIds: string[] }[]>([]);
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [commentText, setCommentText] = useState("");
@@ -188,6 +189,10 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     apiFetch<Account[]>("/accounts")
       .then((data) => { setAccounts(data); })
       .finally(() => setLoadingAccounts(false));
+
+    apiFetch<{ id: string; name: string; accountIds: string[] }[]>("/account-groups")
+      .then((data) => setGroups(data))
+      .catch(() => {});
 
     apiFetch<{ templates: { id: string; name: string; content: string }[] }>("/templates")
       .then((data) => setTemplates(data.templates))
@@ -840,6 +845,44 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                 </div>
               )}
             </div>
+
+            {/* Group quick-select pills */}
+            {!loadingAccounts && groups.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {groups.map((g) => {
+                  const groupAccounts = g.accountIds.filter((id) => accounts.some((a) => a.id === id));
+                  const allSelected = groupAccounts.length > 0 && groupAccounts.every((id) => selectedIds.includes(id));
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => {
+                        if (allSelected) {
+                          setSelectedIds((prev) => prev.filter((id) => !groupAccounts.includes(id)));
+                        } else {
+                          setSelectedIds((prev) => Array.from(new Set([...prev, ...groupAccounts])));
+                        }
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all"
+                      style={allSelected ? {
+                        background: "#5b63d318",
+                        border: "1px solid #5b63d350",
+                        color: "#5b63d3",
+                      } : {
+                        background: "#111111",
+                        border: "1px solid #2a2a2a",
+                        color: "#888",
+                      }}>
+                      <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {g.name}
+                      <span className="opacity-50 text-[10px]">{groupAccounts.length}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {loadingAccounts ? (
               <div className="flex gap-2">

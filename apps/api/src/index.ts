@@ -53,6 +53,7 @@ import { trackRoutes } from "./routes/track.js";
 import { feedbackRoutes } from "./routes/feedback.js";
 import { aiRoutes } from "./routes/ai.js";
 import { libraryRoutes } from "./routes/library.js";
+import { accountGroupRoutes } from "./routes/accountGroups.js";
 import { withAuth } from "./lib/auth/withAuth.js";
 import type { StorageAdapter } from "./lib/storage.js";
 
@@ -163,6 +164,7 @@ async function main() {
   await app.register(feedbackRoutes);
   await app.register(aiRoutes);
   await app.register(libraryRoutes);
+  await app.register(accountGroupRoutes);
 
   app.get("/health", async () => ({ ok: true }));
 
