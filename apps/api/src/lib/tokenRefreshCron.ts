@@ -79,7 +79,10 @@ async function run(skipRecentlyRefreshed = false) {
 }
 
 export function startTokenRefreshCron() {
-  // Run once at startup — skip accounts refreshed within last hour to avoid hammering OAuth on deploys
-  run(true).catch((e) => console.error("[token-refresh] error:", e));
+  // Delay startup run 15s to let the DB connection pool stabilise after cold start
+  setTimeout(
+    () => run(true).catch((e) => console.error("[token-refresh] error:", e)),
+    15_000,
+  );
   setInterval(() => run().catch((e) => console.error("[token-refresh] error:", e)), INTERVAL_MS);
 }
