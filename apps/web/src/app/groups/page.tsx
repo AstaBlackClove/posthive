@@ -216,10 +216,11 @@ export default function GroupsPage() {
     success("Group updated");
   }
 
-  async function deleteGroup(groupId: string) {
+  async function deleteGroup(group: Group) {
+    if (!confirm(`Delete "${group.name}"? This cannot be undone.`)) return;
     try {
-      await apiFetch(`/account-groups/${groupId}`, { method: "DELETE" });
-      setGroups(prev => prev.filter(g => g.id !== groupId));
+      await apiFetch(`/account-groups/${group.id}`, { method: "DELETE" });
+      setGroups(prev => prev.filter(g => g.id !== group.id));
       success("Group deleted");
     } catch { toastError("Failed to delete group"); }
   }
@@ -308,7 +309,7 @@ export default function GroupsPage() {
                   Edit
                 </button>
                 <button
-                  onClick={() => deleteGroup(group.id)}
+                  onClick={() => deleteGroup(group)}
                   className="text-xs transition-colors hover:opacity-80 flex-shrink-0"
                   style={{ color: "#ef4444" }}>
                   Delete
