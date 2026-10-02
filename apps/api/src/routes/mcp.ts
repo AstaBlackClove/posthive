@@ -755,10 +755,29 @@ async function serveMcp(req: FastifyRequest, reply: FastifyReply, userId: string
 
 export async function mcpRoutes(app: FastifyInstance): Promise<void> {
   // ── POST /mcp — Bearer token auth (used by Claude.ai OAuth connector) ────────
+  // Unauthenticated tools/list is allowed so OpenAI's scanner bot (which doesn't
+  // forward the Bearer token) can discover tools without hitting a 401.
   app.post(
     "/mcp",
-    { preHandler: [withApiKey, withMcpGate], config: { rawBody: true, rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    { config: { rawBody: true, rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req: FastifyRequest, reply: FastifyReply) => {
+      const body = req.body as Record<string, unknown> | null;
+      const method = body?.method as string | undefined;
+      const hasAuth = !!req.headers.authorization;
+
+      // Allow unauthenticated tools/list — OpenAI scanner skips forwarding Bearer tokens
+      if (method === "tools/list" && !hasAuth) {
+        return reply.send({
+          jsonrpc: "2.0",
+          id: body?.id ?? null,
+          result: { tools: TOOLS },
+        });
+      }
+
+      await withApiKey(req, reply);
+      if (reply.sent) return;
+      await withMcpGate(req, reply);
+      if (reply.sent) return;
       await serveMcp(req, reply, req.apiKeyUser!.id, req.apiKeyUser!.workspaceId);
     }
   );
