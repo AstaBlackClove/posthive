@@ -135,9 +135,25 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
     if (!client_id) {
       return reply.status(400).send({ error: "invalid_request", error_description: "client_id is required" });
     }
-    const client = await prisma.oAuthClient.findUnique({ where: { id: client_id } });
+    let client = await prisma.oAuthClient.findUnique({ where: { id: client_id } });
     if (!client) {
-      return reply.status(400).send({ error: "invalid_client", error_description: "Unknown client_id — register first via /oauth/register" });
+      // Auto-register if redirect_uri is from a known trusted MCP host.
+      // Handles stale cached client_ids from ChatGPT/Claude.ai that skip /oauth/register.
+      const TRUSTED_HOSTS = ["chatgpt.com", "claude.ai", "chat.openai.com"];
+      let parsedUri: URL;
+      try { parsedUri = new URL(redirect_uri); } catch {
+        return reply.status(400).send({ error: "invalid_request", error_description: "invalid redirect_uri" });
+      }
+      const isTrusted = TRUSTED_HOSTS.some(h => parsedUri.hostname === h || parsedUri.hostname.endsWith(`.${h}`));
+      if (!isTrusted) {
+        return reply.status(400).send({ error: "invalid_client", error_description: "Unknown client_id — register first via /oauth/register" });
+      }
+      // Upsert so concurrent requests don't race
+      client = await prisma.oAuthClient.upsert({
+        where: { id: client_id },
+        create: { id: client_id, clientName: "MCP Client", redirectUris: [redirect_uri] },
+        update: {},
+      });
     }
     const registeredUris = client.redirectUris as string[];
     if (registeredUris.length > 0 && !registeredUris.includes(redirect_uri)) {
