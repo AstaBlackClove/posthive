@@ -36,7 +36,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "Workspace",
+    label: "Manage",
     items: [
       {
         href: "/accounts",
