@@ -1,16 +1,15 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../lib/prisma.js";
-import { withAuth } from "../lib/auth/withAuth.js";
+import { withAuth, getWorkspaceId } from "../lib/auth/withAuth.js";
 
 export async function accountGroupRoutes(app: FastifyInstance) {
   // GET /account-groups — list groups for current workspace
   app.get("/account-groups", { preHandler: [withAuth] }, async (req, reply) => {
-    const userId = (req as any).userId as string;
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { activeWorkspaceId: true } });
-    if (!user?.activeWorkspaceId) return reply.status(400).send({ error: "No active workspace" });
+    const workspaceId = getWorkspaceId(req);
+    if (!workspaceId) return reply.status(400).send({ error: "No active workspace" });
 
     const groups = await prisma.accountGroup.findMany({
-      where: { workspaceId: user.activeWorkspaceId },
+      where: { workspaceId },
       include: { members: { select: { accountId: true } } },
       orderBy: { createdAt: "asc" },
     });
@@ -20,17 +19,15 @@ export async function accountGroupRoutes(app: FastifyInstance) {
 
   // POST /account-groups — create group
   app.post("/account-groups", { preHandler: [withAuth] }, async (req, reply) => {
-    const userId = (req as any).userId as string;
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { activeWorkspaceId: true } });
-    if (!user?.activeWorkspaceId) return reply.status(400).send({ error: "No active workspace" });
+    const workspaceId = getWorkspaceId(req);
+    if (!workspaceId) return reply.status(400).send({ error: "No active workspace" });
 
     const { name, accountIds = [] } = req.body as { name: string; accountIds?: string[] };
     if (!name?.trim()) return reply.status(400).send({ error: "name required" });
 
-    // Verify all accountIds belong to this workspace
     if (accountIds.length) {
       const valid = await prisma.account.count({
-        where: { id: { in: accountIds }, workspaceId: user.activeWorkspaceId },
+        where: { id: { in: accountIds }, workspaceId },
       });
       if (valid !== accountIds.length) return reply.status(400).send({ error: "Invalid account IDs" });
     }
@@ -38,7 +35,7 @@ export async function accountGroupRoutes(app: FastifyInstance) {
     const group = await prisma.accountGroup.create({
       data: {
         name: name.trim(),
-        workspaceId: user.activeWorkspaceId,
+        workspaceId,
         members: { create: accountIds.map((id) => ({ accountId: id })) },
       },
       include: { members: { select: { accountId: true } } },
@@ -49,12 +46,11 @@ export async function accountGroupRoutes(app: FastifyInstance) {
 
   // PATCH /account-groups/:id — rename + update members
   app.patch("/account-groups/:id", { preHandler: [withAuth] }, async (req, reply) => {
-    const userId = (req as any).userId as string;
-    const { id } = req.params as { id: string };
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { activeWorkspaceId: true } });
-    if (!user?.activeWorkspaceId) return reply.status(400).send({ error: "No active workspace" });
+    const workspaceId = getWorkspaceId(req);
+    if (!workspaceId) return reply.status(400).send({ error: "No active workspace" });
 
-    const group = await prisma.accountGroup.findFirst({ where: { id, workspaceId: user.activeWorkspaceId } });
+    const { id } = req.params as { id: string };
+    const group = await prisma.accountGroup.findFirst({ where: { id, workspaceId } });
     if (!group) return reply.status(404).send({ error: "Not found" });
 
     const { name, accountIds } = req.body as { name?: string; accountIds?: string[] };
@@ -62,11 +58,10 @@ export async function accountGroupRoutes(app: FastifyInstance) {
     if (accountIds !== undefined) {
       if (accountIds.length) {
         const valid = await prisma.account.count({
-          where: { id: { in: accountIds }, workspaceId: user.activeWorkspaceId },
+          where: { id: { in: accountIds }, workspaceId },
         });
         if (valid !== accountIds.length) return reply.status(400).send({ error: "Invalid account IDs" });
       }
-      // Replace members atomically
       await prisma.$transaction([
         prisma.accountGroupMember.deleteMany({ where: { groupId: id } }),
         ...(accountIds.length
@@ -86,12 +81,11 @@ export async function accountGroupRoutes(app: FastifyInstance) {
 
   // DELETE /account-groups/:id
   app.delete("/account-groups/:id", { preHandler: [withAuth] }, async (req, reply) => {
-    const userId = (req as any).userId as string;
-    const { id } = req.params as { id: string };
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { activeWorkspaceId: true } });
-    if (!user?.activeWorkspaceId) return reply.status(400).send({ error: "No active workspace" });
+    const workspaceId = getWorkspaceId(req);
+    if (!workspaceId) return reply.status(400).send({ error: "No active workspace" });
 
-    const group = await prisma.accountGroup.findFirst({ where: { id, workspaceId: user.activeWorkspaceId } });
+    const { id } = req.params as { id: string };
+    const group = await prisma.accountGroup.findFirst({ where: { id, workspaceId } });
     if (!group) return reply.status(404).send({ error: "Not found" });
 
     await prisma.accountGroup.delete({ where: { id } });
