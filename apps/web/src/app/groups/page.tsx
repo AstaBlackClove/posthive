@@ -305,49 +305,47 @@ export default function GroupsPage() {
             const memberCount = group.accountIds.filter(id => accounts.some(a => a.id === id)).length;
             const memberAccounts = accounts.filter(a => group.accountIds.includes(a.id));
             return (
-              <div key={group.id} className="rounded-2xl px-4 py-3 flex items-center gap-3"
+              <div key={group.id} className="rounded-2xl px-4 py-3"
                 style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
-
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke={ACCENT} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: TEXT }}>{group.name}</p>
-                  {memberAccounts.length > 0 ? (
-                    <div className="flex items-center gap-1 mt-1 flex-wrap">
-                      {memberAccounts.slice(0, 6).map(a => (
-                        <span key={a.id} className="text-xs px-1.5 py-0.5 rounded-md"
-                          style={{ backgroundColor: brandColor(a.platform) + "18", color: brandColor(a.platform), border: `1px solid ${brandColor(a.platform)}30` }}>
-                          {a.displayName}
-                        </span>
-                      ))}
-                      {memberCount > 6 && (
-                        <span className="text-xs" style={{ color: MUTED }}>+{memberCount - 6} more</span>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-xs mt-0.5" style={{ color: MUTED }}>No accounts — click Edit to add some</p>
-                  )}
+                {/* Top row: icon + name + actions */}
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke={ACCENT} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <p className="text-sm font-semibold flex-1 min-w-0 truncate" style={{ color: TEXT }}>{group.name}</p>
+                  <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: "#1a1a1a", color: MUTED, border: `1px solid ${BORDER}` }}>
+                    {memberCount}
+                  </span>
+                  <button
+                    onClick={() => setEditingGroup(group)}
+                    className="text-xs flex-shrink-0 transition-colors hover:opacity-80"
+                    style={{ color: MUTED }}>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setDeletingGroup(group)}
+                    className="text-xs flex-shrink-0 transition-colors hover:opacity-80"
+                    style={{ color: "#ef4444" }}>
+                    Delete
+                  </button>
                 </div>
-
-                <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: "#1a1a1a", color: MUTED, border: `1px solid ${BORDER}` }}>
-                  {memberCount}
-                </span>
-
-                <button
-                  onClick={() => setEditingGroup(group)}
-                  className="text-xs transition-colors hover:opacity-80 flex-shrink-0"
-                  style={{ color: MUTED }}>
-                  Edit
-                </button>
-                <button
-                  onClick={() => setDeletingGroup(group)}
-                  className="text-xs transition-colors hover:opacity-80 flex-shrink-0"
-                  style={{ color: "#ef4444" }}>
-                  Delete
-                </button>
+                {/* Member chips */}
+                {memberAccounts.length > 0 ? (
+                  <div className="flex flex-wrap gap-1 mt-2 ml-6">
+                    {memberAccounts.slice(0, 6).map(a => (
+                      <span key={a.id} className="text-xs px-1.5 py-0.5 rounded-md"
+                        style={{ backgroundColor: brandColor(a.platform) + "18", color: brandColor(a.platform), border: `1px solid ${brandColor(a.platform)}30` }}>
+                        {a.displayName}
+                      </span>
+                    ))}
+                    {memberCount > 6 && (
+                      <span className="text-xs" style={{ color: MUTED }}>+{memberCount - 6} more</span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs mt-1 ml-6" style={{ color: MUTED }}>No accounts — click Edit to add some</p>
+                )}
               </div>
             );
           })}
