@@ -765,13 +765,27 @@ export async function mcpRoutes(app: FastifyInstance): Promise<void> {
       const method = body?.method as string | undefined;
       const hasAuth = !!req.headers.authorization;
 
-      // Allow unauthenticated tools/list — OpenAI scanner skips forwarding Bearer tokens
-      if (method === "tools/list" && !hasAuth) {
-        return reply.send({
-          jsonrpc: "2.0",
-          id: body?.id ?? null,
-          result: { tools: TOOLS },
-        });
+      // Allow unauthenticated initialize + tools/list — OpenAI scanner doesn't forward Bearer tokens.
+      // Scanner must complete initialize → tools/list handshake before auth gate.
+      if (!hasAuth) {
+        if (method === "initialize") {
+          return reply.send({
+            jsonrpc: "2.0",
+            id: body?.id ?? null,
+            result: {
+              protocolVersion: "2024-11-05",
+              capabilities: { tools: {} },
+              serverInfo: { name: "posthive", version: "0.1.0" },
+            },
+          });
+        }
+        if (method === "tools/list") {
+          return reply.send({
+            jsonrpc: "2.0",
+            id: body?.id ?? null,
+            result: { tools: TOOLS },
+          });
+        }
       }
 
       await withApiKey(req, reply);
