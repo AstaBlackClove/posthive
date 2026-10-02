@@ -24,7 +24,10 @@ async function runCleanup(): Promise<void> {
   const cut14d = new Date(now - 14 * 24 * 60 * 60 * 1000);
   const cut1d  = new Date(now -  1 * 24 * 60 * 60 * 1000);
 
-  const [oldSessions, bounceSessions, oldEvents, oldPostJobs, oldOAuthStates, oldEmailVerifications] = await Promise.all([
+  const cut30d = new Date(now - 30 * 24 * 60 * 60 * 1000);
+  const cut7d  = new Date(now -  7 * 24 * 60 * 60 * 1000);
+
+  const [oldSessions, bounceSessions, oldEvents, oldPostJobs, oldOAuthStates, oldEmailVerifications, revokedApiKeys, staleApiKeys, staleOAuthClients] = await Promise.all([
     // Sessions older than 90 days
     prisma.session.deleteMany({ where: { createdAt: { lt: cut90d } } }),
 
@@ -54,6 +57,20 @@ async function runCleanup(): Promise<void> {
 
     // EmailVerification tokens older than 1 day
     prisma.emailVerification.deleteMany({ where: { createdAt: { lt: cut1d } } }),
+
+    // Revoked API keys older than 90 days — no longer useful
+    prisma.apiKey.deleteMany({
+      where: { revokedAt: { not: null }, createdAt: { lt: cut90d } },
+    }),
+
+    // API keys never used after 30 days — abandoned OAuth flows / test keys
+    prisma.apiKey.deleteMany({
+      where: { lastUsedAt: null, revokedAt: null, createdAt: { lt: cut30d } },
+    }),
+
+    // OAuthClient rows older than 30 days — scanner registrations, abandoned flows.
+    // Active MCP clients re-register automatically on next OAuth connect.
+    prisma.oAuthClient.deleteMany({ where: { createdAt: { lt: cut30d } } }),
   ]);
 
   const sessionCount = oldSessions.count + bounceSessions.count;
@@ -61,12 +78,15 @@ async function runCleanup(): Promise<void> {
     `[cleanup-cron] sessions: ${sessionCount} deleted` +
     ` (${oldSessions.count} old, ${bounceSessions.count} bounces), events: ${oldEvents.count} deleted,` +
     ` postJobs: ${oldPostJobs.count} deleted, oauthStates: ${oldOAuthStates.count} deleted,` +
-    ` emailVerifications: ${oldEmailVerifications.count} deleted`
+    ` emailVerifications: ${oldEmailVerifications.count} deleted,` +
+    ` apiKeys: ${revokedApiKeys.count + staleApiKeys.count} deleted` +
+    ` (${revokedApiKeys.count} revoked, ${staleApiKeys.count} stale),` +
+    ` oauthClients: ${staleOAuthClients.count} deleted`
   );
 
   // Only send summary email if something was actually deleted — suppresses
   // duplicate emails when multiple instances run the cron at the same time.
-  const totalDeleted = sessionCount + oldEvents.count + oldPostJobs.count + oldOAuthStates.count + oldEmailVerifications.count;
+  const totalDeleted = sessionCount + oldEvents.count + oldPostJobs.count + oldOAuthStates.count + oldEmailVerifications.count + revokedApiKeys.count + staleApiKeys.count + staleOAuthClients.count;
   if (totalDeleted > 0) {
     sendCleanupSummaryEmail("guna@posthive.co", {
       sessions: sessionCount,
