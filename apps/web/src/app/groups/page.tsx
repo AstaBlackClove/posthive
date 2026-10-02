@@ -173,6 +173,39 @@ function GroupDialog({
   );
 }
 
+// ── Confirm delete dialog ─────────────────────────────────────────────────────
+function ConfirmDeleteDialog({ group, onConfirm, onClose }: { group: Group; onConfirm: () => void; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+      onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-sm rounded-2xl" style={{ backgroundColor: "#111111", border: `1px solid ${BORDER}` }}>
+        <div className="px-5 py-5">
+          <h2 className="text-sm font-bold mb-1" style={{ color: TEXT }}>Delete group?</h2>
+          <p className="text-sm" style={{ color: MUTED }}>
+            <span style={{ color: TEXT }}>"{group.name}"</span> will be permanently deleted. This cannot be undone.
+          </p>
+        </div>
+        <div className="flex gap-2 px-5 pb-5">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:opacity-80"
+            style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, color: MUTED }}>
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
+            style={{ backgroundColor: "#ef4444", color: "#fff" }}>
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function GroupsPage() {
   const { success, error: toastError } = useToast();
@@ -183,6 +216,7 @@ export default function GroupsPage() {
   // Dialog state
   const [showCreate, setShowCreate] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+  const [deletingGroup, setDeletingGroup] = useState<Group | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -217,10 +251,10 @@ export default function GroupsPage() {
   }
 
   async function deleteGroup(group: Group) {
-    if (!confirm(`Delete "${group.name}"? This cannot be undone.`)) return;
     try {
       await apiFetch(`/account-groups/${group.id}`, { method: "DELETE" });
       setGroups(prev => prev.filter(g => g.id !== group.id));
+      setDeletingGroup(null);
       success("Group deleted");
     } catch { toastError("Failed to delete group"); }
   }
@@ -309,7 +343,7 @@ export default function GroupsPage() {
                   Edit
                 </button>
                 <button
-                  onClick={() => deleteGroup(group)}
+                  onClick={() => setDeletingGroup(group)}
                   className="text-xs transition-colors hover:opacity-80 flex-shrink-0"
                   style={{ color: "#ef4444" }}>
                   Delete
@@ -335,6 +369,14 @@ export default function GroupsPage() {
           initial={editingGroup}
           onSave={handleEdit}
           onClose={() => setEditingGroup(null)}
+        />
+      )}
+
+      {deletingGroup && (
+        <ConfirmDeleteDialog
+          group={deletingGroup}
+          onConfirm={() => deleteGroup(deletingGroup)}
+          onClose={() => setDeletingGroup(null)}
         />
       )}
     </div>
