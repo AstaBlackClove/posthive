@@ -115,32 +115,49 @@ function GroupDialog({
                 <Link href="/accounts" className="underline" style={{ color: ACCENT }}>Connect one first.</Link>
               </p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="space-y-1.5">
                 {accounts.map(a => {
                   const inGroup = selected.includes(a.id);
                   const color = brandColor(a.platform);
+                  const platformLabel = a.platform.charAt(0).toUpperCase() + a.platform.slice(1);
                   return (
                     <button
                       key={a.id}
                       type="button"
                       onClick={() => toggle(a.id)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left"
                       style={inGroup ? {
-                        background: color + "18",
-                        border: `1px solid ${color}50`,
-                        color: color,
+                        background: color + "12",
+                        border: `1px solid ${color}40`,
                       } : {
                         background: BG,
                         border: `1px solid ${BORDER}`,
-                        color: MUTED,
                       }}>
-                      {a.avatarUrl
-                        // eslint-disable-next-line @next/next/no-img-element
-                        ? <img src={a.avatarUrl} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
-                        : <PlatformIcon platform={a.platform} size={12} />}
-                      <span className="truncate max-w-[96px]">{a.displayName}</span>
+                      {/* Avatar */}
+                      <div className="relative flex-shrink-0">
+                        {a.avatarUrl
+                          // eslint-disable-next-line @next/next/no-img-element
+                          ? <img src={a.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                          : (
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: color + "20", border: `1px solid ${color}30` }}>
+                              <PlatformIcon platform={a.platform} size={16} />
+                            </div>
+                          )}
+                        {/* Platform badge */}
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: "#0a0a0a", border: `1px solid ${BORDER}` }}>
+                          <PlatformIcon platform={a.platform} size={10} />
+                        </div>
+                      </div>
+                      {/* Name + platform */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: inGroup ? TEXT : TEXT }}>{a.displayName}</p>
+                        <p className="text-xs" style={{ color: inGroup ? color : MUTED }}>{platformLabel}</p>
+                      </div>
+                      {/* Checkmark */}
                       {inGroup && (
-                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke={color} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
                       )}
