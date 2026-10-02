@@ -227,11 +227,16 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
 
     codeStore.delete(code);
 
-    // Issue a new API key scoped to this user (labelled so they can revoke it)
+    // Issue a new API key scoped to this user + their active workspace
     const { raw, hash, prefix } = generateApiKey();
+    const userWorkspace = await prisma.user.findUnique({
+      where: { id: stored.userId },
+      select: { activeWorkspaceId: true },
+    });
     await prisma.apiKey.create({
       data: {
         userId: stored.userId,
+        workspaceId: userWorkspace?.activeWorkspaceId ?? null,
         keyHash: hash,
         prefix,
         name: `${stored.clientName} (MCP)`,
