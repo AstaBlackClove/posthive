@@ -19,6 +19,7 @@ import { generateApiKey } from "../lib/auth/withApiKey.js";
 import { withAuth, getUser } from "../lib/auth/withAuth.js";
 
 // ─── In-memory code store (5-min TTL) ────────────────────────────────────────
+// OAuth clients are persisted in DB (OAuthClient table) — no restart loss.
 
 interface PendingCode {
   userId: string;
@@ -30,9 +31,6 @@ interface PendingCode {
 }
 
 const codeStore = new Map<string, PendingCode>();
-
-// In-memory client registry (populated on dynamic client registration)
-const clientStore = new Map<string, { redirectUris: string[]; clientName: string }>();
 
 setInterval(() => {
   const now = Date.now();
@@ -111,7 +109,7 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
 
     const clientId = `posthive_${crypto.randomBytes(16).toString("hex")}`;
     const clientName = typeof body.client_name === "string" && body.client_name.trim() ? body.client_name.trim() : "MCP Client";
-    clientStore.set(clientId, { redirectUris, clientName });
+    await prisma.oAuthClient.create({ data: { id: clientId, clientName, redirectUris } });
 
     return reply.status(201).send({
       client_id: clientId,
@@ -137,11 +135,12 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
     if (!client_id) {
       return reply.status(400).send({ error: "invalid_request", error_description: "client_id is required" });
     }
-    const client = clientStore.get(client_id);
+    const client = await prisma.oAuthClient.findUnique({ where: { id: client_id } });
     if (!client) {
       return reply.status(400).send({ error: "invalid_client", error_description: "Unknown client_id — register first via /oauth/register" });
     }
-    if (client.redirectUris.length > 0 && !client.redirectUris.includes(redirect_uri)) {
+    const registeredUris = client.redirectUris as string[];
+    if (registeredUris.length > 0 && !registeredUris.includes(redirect_uri)) {
       return reply.status(400).send({ error: "invalid_request", error_description: "redirect_uri not registered for this client" });
     }
 
@@ -166,7 +165,7 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: "redirect_uri and code_challenge are required" });
     }
 
-    const registeredClient = client_id ? clientStore.get(client_id) : undefined;
+    const registeredClient = client_id ? await prisma.oAuthClient.findUnique({ where: { id: client_id } }) : null;
     const clientName = registeredClient?.clientName || "MCP connector";
 
     const code = crypto.randomBytes(32).toString("base64url");

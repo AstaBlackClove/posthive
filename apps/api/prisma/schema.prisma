@@ -463,3 +463,10 @@ model LibraryItem {
   @@index([workspaceId])
   @@index([status])
 }
+
+model OAuthClient {
+  id           String   @id  // the client_id we issued
+  clientName   String
+  redirectUris Json              // String[]
+  createdAt    DateTime @default(now())
+}
