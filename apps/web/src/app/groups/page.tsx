@@ -260,8 +260,9 @@ export default function GroupsPage() {
   }
 
   return (
-    <div style={{ backgroundColor: BG, minHeight: "100vh", color: TEXT }}>
-      <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: BG, color: TEXT }}>
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
+      <div className="max-w-2xl mx-auto">
 
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
@@ -351,6 +352,7 @@ export default function GroupsPage() {
           })}
         </div>
 
+      </div>
       </div>
 
       {showCreate && (
