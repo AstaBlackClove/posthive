@@ -34,8 +34,11 @@ async function runLibraryDigest(): Promise<void> {
   const recentItems = await prisma.libraryItem.findMany({
     where: {
       libraryId: { in: libraryIds },
-      publishedAt: { gte: since.toISOString() },
       scheduledJobId: { not: null },
+      OR: [
+        { publishedAt: { gte: since.toISOString() } },
+        { status: "failed", createdAt: { gte: since } },
+      ],
     },
     select: { libraryId: true, scheduledJobId: true },
   });
