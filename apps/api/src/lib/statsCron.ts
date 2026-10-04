@@ -110,7 +110,6 @@ export async function runStatsCronNow(): Promise<void> {
 }
 
 export function startStatsCron(): void {
-  runStatsCronNow().catch((e) => console.error("[stats-cron] startup run failed:", e));
   setInterval(() => runStatsCronNow().catch((e) => console.error("[stats-cron] error:", e)), INTERVAL_MS);
   console.log("[stats-cron] started — syncing every 12h");
 }

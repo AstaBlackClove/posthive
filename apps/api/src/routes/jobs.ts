@@ -336,7 +336,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         orderBy: { scheduledFor: "desc" },
         take: 20,
         select: {
-          id: true, status: true, scheduledFor: true, content: true,
+          id: true, status: true, scheduledFor: true, content: true, commentText: true,
           createdAt: true, updatedAt: true, workspaceId: true, userId: true,
           targets: { select: TARGET_SELECT },
         },
@@ -389,7 +389,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       take: limit + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       select: {
-        id: true, status: true, scheduledFor: true, content: true,
+        id: true, status: true, scheduledFor: true, content: true, commentText: true,
         createdAt: true, updatedAt: true, workspaceId: true, userId: true,
         targets: { select: TARGET_SELECT },
       },
