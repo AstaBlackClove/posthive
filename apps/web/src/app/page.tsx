@@ -447,12 +447,10 @@ function useScrollReveal() {
 
 function LiveStat({ value, label, fallback }: { value: number | null; label: string; fallback: string }) {
   const { val, ref } = useCountUp(value ?? 0);
-  // Show fallback until API responds; once value arrives, show animated count
   const display = value === null ? fallback : val > 0 ? val.toLocaleString() : value.toLocaleString();
   return (
-    <span ref={ref} className="mono" style={{ fontSize: 13.5, color: "#9a9a9a" }}>
-      <span style={{ color: "#ededed", fontWeight: 500 }}>{display}</span>
-      {label}
+    <span ref={ref}>
+      {display}{label}
     </span>
   );
 }
@@ -1202,80 +1200,58 @@ export default function RootPage() {
         </section>
 
         {/* ── SOCIAL PROOF BAR ── */}
-        <section
-          style={{
-            borderTop: "1px solid #161616",
-            borderBottom: "1px solid #161616",
-            background: "#0c0c0c",
-          }}
-        >
+        {/* ── STATS TILES ── */}
+        <section style={{ borderTop: "1px solid #161616", background: "#0a0a0a" }}>
           <div
-            className="ph-proof-bar"
-            style={{
-              maxWidth: 1120,
-              margin: "0 auto",
-              padding: "22px 40px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 36,
-              flexWrap: "wrap",
-            }}
+            className="ph-stats-grid ph-section"
+            style={{ maxWidth: 1120, margin: "0 auto", padding: "56px 40px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}
           >
-            {/* Live stats */}
-            <LiveStat value={publicStats?.accounts ?? null} label=" accounts connected" fallback="260+" />
-            <span style={{ width: 1, height: 18, background: "#2a2a2a", display: "inline-block" }} />
-            <LiveStat value={publicStats?.published ?? null} label=" posts published" fallback="11k+" />
-            <span style={{ width: 1, height: 18, background: "#2a2a2a", display: "inline-block" }} />
-            {/* Static items */}
-            {[
-              ["14+", " platforms supported"],
-              ["1", " composer for all"],
-            ].map(([val, label]) => (
-              <span
-                key={label}
-                className="mono"
-                style={{ fontSize: 13.5, color: "#9a9a9a" }}
+            {/* Posts published — live count */}
+            <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px", position: "relative", overflow: "hidden" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, color: "#4ade80", background: "#4ade8015", border: "1px solid #4ade8030", borderRadius: 20, padding: "3px 10px", marginBottom: 20, letterSpacing: ".06em" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", display: "inline-block", animation: "pulse-green 2s ease-in-out infinite" }} />
+                LIVE COUNT
+              </span>
+              <div style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-0.03em", color: "#f2f2f2", lineHeight: 1 }}>
+                <LiveStat value={publicStats?.published ?? null} label="" fallback="11k+" />
+              </div>
+              <p style={{ fontSize: 13, color: "#666", margin: "10px 0 0", letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 600 }}>Posts published</p>
+            </div>
+
+            {/* Accounts connected */}
+            <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px" }}>
+              <div style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-0.03em", color: "#f2f2f2", lineHeight: 1, marginBottom: 10 }}>
+                <LiveStat value={publicStats?.accounts ?? null} label="" fallback="260+" />
+              </div>
+              <p style={{ fontSize: 13, color: "#666", margin: "0 0 20px", letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 600 }}>Accounts connected</p>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {["bluesky","threads","instagram","linkedin","twitter","youtube","tiktok","facebook"].map(p => (
+                  <PlatformIcon key={p} platform={p} size={18} />
+                ))}
+              </div>
+            </div>
+
+            {/* Platforms + mcp badge */}
+            <div style={{ background: "#5b63d3", border: "1px solid #6b73e3", borderRadius: 16, padding: "32px 28px" }}>
+              <div style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-0.03em", color: "#fff", lineHeight: 1, marginBottom: 10 }}>14+</div>
+              <p style={{ fontSize: 13, color: "#c4c7ff", margin: "0 0 20px", letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 600 }}>Platforms supported</p>
+              <a
+                href="https://github.com/punkpeye/awesome-mcp-servers"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#c4c7ff", textDecoration: "none", background: "#ffffff18", border: "1px solid #ffffff25", borderRadius: 20, padding: "5px 12px", transition: "background .15s" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#ffffff28")}
+                onMouseLeave={e => (e.currentTarget.style.background = "#ffffff18")}
               >
-                <span style={{ color: "#ededed", fontWeight: 500 }}>{val}</span>
-                {label}
-              </span>
-            ))}
-            <span
-              style={{
-                width: 1,
-                height: 18,
-                background: "#2a2a2a",
-                display: "inline-block",
-              }}
-            />
-            <a
-              href="https://github.com/punkpeye/awesome-mcp-servers"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 7,
-                fontSize: 13,
-                color: "#9a9a9a",
-                textDecoration: "none",
-                transition: "color .15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#ededed")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#9a9a9a")}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#f0a500">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-              <span>
-                Featured in{" "}
-                <span style={{ color: "#ededed", fontWeight: 500 }}>
-                  awesome-mcp-servers
-                </span>
-              </span>
-            </a>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="#f0a500"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                Featured in awesome-mcp-servers
+              </a>
+            </div>
           </div>
+          <style>{`
+            @keyframes pulse-green { 0%,100%{opacity:1} 50%{opacity:.4} }
+            @media(max-width:768px){.ph-stats-grid{grid-template-columns:1fr !important}}
+          `}</style>
         </section>
 
         {/* ── FEATURES ── */}
