@@ -436,4 +436,23 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     reply.clearCookie(REFRESH_COOKIE_NAME, { path: "/" });
     return reply.send({ ok: true });
   });
+
+  // Public stats — no auth, cached 1h in memory
+  let statsCache: { accounts: number; published: number; cachedAt: number } | null = null;
+  const STATS_TTL_MS = 60 * 60 * 1000;
+
+  app.get("/stats/public", async (_req, reply) => {
+    reply.header("Access-Control-Allow-Origin", "*");
+    if (statsCache && Date.now() - statsCache.cachedAt < STATS_TTL_MS) {
+      return reply.send(statsCache);
+    }
+    const [accounts, published] = await Promise.all([
+      prisma.account.count(),
+      prisma.postJobTarget.count({
+        where: { status: { in: ["post_done", "comment_done"] } },
+      }),
+    ]);
+    statsCache = { accounts, published, cachedAt: Date.now() };
+    return reply.send(statsCache);
+  });
 }

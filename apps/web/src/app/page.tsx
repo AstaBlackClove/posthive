@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { NavBar } from "../components/LandingNav";
 import { PlatformIcon } from "../components/PlatformIcon";
@@ -389,6 +389,43 @@ function useIsIndia(): [boolean, (v: boolean) => void] {
   return [india, setIndia];
 }
 
+function useCountUp(target: number, duration = 1200) {
+  const [val, setVal] = useState(0);
+  const started = useRef(false);
+  const ref = useRef<HTMLSpanElement | null>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const el = ref.current;
+    const io = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || started.current) return;
+      started.current = true;
+      const start = performance.now();
+      const tick = (now: number) => {
+        const p = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        setVal(Math.round(ease * target));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+      io.disconnect();
+    }, { threshold: 0.3 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [target, duration]);
+  return { val, ref };
+}
+
+function usePublicStats() {
+  const [stats, setStats] = useState<{ accounts: number; published: number } | null>(null);
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/stats/public`)
+      .then((r) => r.json())
+      .then((d) => setStats(d))
+      .catch(() => { /* silently fail — bar shows static fallbacks */ });
+  }, []);
+  return stats;
+}
+
 function useScrollReveal() {
   useEffect(() => {
     const els = document.querySelectorAll<HTMLElement>(".scroll-hidden");
@@ -408,6 +445,17 @@ function useScrollReveal() {
   }, []);
 }
 
+function LiveStat({ value, label, fallback }: { value: number | null; label: string; fallback: string }) {
+  const { val, ref } = useCountUp(value ?? 0);
+  const display = value === null ? fallback : val.toLocaleString();
+  return (
+    <span ref={ref} className="mono" style={{ fontSize: 13.5, color: "#9a9a9a" }}>
+      <span style={{ color: "#ededed", fontWeight: 500 }}>{display}</span>
+      {label}
+    </span>
+  );
+}
+
 export default function RootPage() {
   const { user, loading: authLoading } = useAuth();
   const [isIndia, setIsIndia] = useIsIndia();
@@ -415,6 +463,7 @@ export default function RootPage() {
   const ctaHref = user ? "/compose" : "/register";
   const ctaLabel = user ? "Go to scheduler" : "Get started free";
   const navCtaLabel = user ? "Go to scheduler" : "Get started free";
+  const publicStats = usePublicStats();
 
   const [cardIdx, setCardIdx] = useState([0, 0, 0, 0]);
   const [fade, setFade] = useState([true, true, true, true]);
@@ -1172,10 +1221,15 @@ export default function RootPage() {
               flexWrap: "wrap",
             }}
           >
+            {/* Live stats */}
+            <LiveStat value={publicStats?.accounts ?? null} label=" accounts connected" fallback="260+" />
+            <span style={{ width: 1, height: 18, background: "#2a2a2a", display: "inline-block" }} />
+            <LiveStat value={publicStats?.published ?? null} label=" posts published" fallback="11k+" />
+            <span style={{ width: 1, height: 18, background: "#2a2a2a", display: "inline-block" }} />
+            {/* Static items */}
             {[
-              ["Multi", " platforms"],
-              ["1", " composer"],
               ["14-day", " free trial"],
+              ["1", " composer"],
             ].map(([val, label]) => (
               <span
                 key={label}
