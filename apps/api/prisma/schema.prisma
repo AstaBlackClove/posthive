@@ -200,6 +200,10 @@ model PostJobTarget {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([postJobId])
+  @@index([accountId])
 }
 
 // Cached engagement stats per PostJobTarget — synced every 6h by statsCron.
