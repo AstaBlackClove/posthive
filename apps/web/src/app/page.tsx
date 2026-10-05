@@ -447,7 +447,8 @@ function useScrollReveal() {
 
 function LiveStat({ value, label, fallback }: { value: number | null; label: string; fallback: string }) {
   const { val, ref } = useCountUp(value ?? 0);
-  const display = value === null ? fallback : val.toLocaleString();
+  // Show fallback until API responds; once value arrives, show animated count
+  const display = value === null ? fallback : val > 0 ? val.toLocaleString() : value.toLocaleString();
   return (
     <span ref={ref} className="mono" style={{ fontSize: 13.5, color: "#9a9a9a" }}>
       <span style={{ color: "#ededed", fontWeight: 500 }}>{display}</span>
@@ -1228,8 +1229,8 @@ export default function RootPage() {
             <span style={{ width: 1, height: 18, background: "#2a2a2a", display: "inline-block" }} />
             {/* Static items */}
             {[
-              ["14-day", " free trial"],
-              ["1", " composer"],
+              ["14+", " platforms supported"],
+              ["1", " composer for all"],
             ].map(([val, label]) => (
               <span
                 key={label}
