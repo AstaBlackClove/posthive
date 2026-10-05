@@ -97,11 +97,52 @@ async function runCleanup(): Promise<void> {
     }).catch((e) => console.error("[cleanup-cron] summary email error:", e));
   }
 
-  // NOTE: Claimed post media (claimedAt != null) is intentionally NOT cleaned here.
+  // NOTE: Claimed post media (claimedAt != null) is intentionally NOT cleaned here
+  // for active/pending jobs. Failed job media is cleaned below after 30 days.
   // True orphans (claimedAt = null) are handled by startOrphanCleanup() in index.ts.
-  // Deleting claimed media by age caused posts scheduled days in advance to lose their
-  // images before publish time. Claimed uploads stay until manually deleted or the
-  // Upload record is removed when the PostJob is deleted.
+
+  // Delete media files for failed PostJobs older than 30 days
+  if (storageAdapter) {
+    try {
+      const failedJobs = await prisma.postJob.findMany({
+        where: { status: "failed", createdAt: { lt: cut30d } },
+        select: { id: true, content: true },
+      });
+
+      const allUrls: string[] = [];
+      for (const job of failedJobs) {
+        try {
+          const c = JSON.parse(job.content) as { mediaUrls?: string[]; youtubeThumbnailUrl?: string };
+          const urls = [
+            ...(c.mediaUrls ?? []),
+            ...(c.youtubeThumbnailUrl ? [c.youtubeThumbnailUrl] : []),
+          ].filter((url) => storageAdapter!.ownsUrl(url));
+          allUrls.push(...urls);
+        } catch { /* malformed content — skip */ }
+      }
+
+      const uniqueUrls = [...new Set(allUrls)];
+      if (uniqueUrls.length) {
+        const MEDIA_BATCH = 10;
+        const MEDIA_DELAY_MS = 200;
+        let deleted = 0;
+        for (let i = 0; i < uniqueUrls.length; i += MEDIA_BATCH) {
+          const batch = uniqueUrls.slice(i, i + MEDIA_BATCH);
+          await Promise.allSettled(batch.map((url) => storageAdapter!.delete(url)));
+          deleted += batch.length;
+          if (i + MEDIA_BATCH < uniqueUrls.length) {
+            await new Promise((r) => setTimeout(r, MEDIA_DELAY_MS));
+          }
+        }
+        await prisma.upload.deleteMany({ where: { url: { in: uniqueUrls } } });
+        console.log(`[cleanup-cron] failed-job media: ${deleted} file(s) deleted`);
+      } else {
+        console.log(`[cleanup-cron] failed-job media: nothing to clean`);
+      }
+    } catch (e) {
+      console.error("[cleanup-cron] failed-job media cleanup error:", e);
+    }
+  }
 
   // Clean up orphaned profile-pics from storage
   const adapter = storageAdapter;
