@@ -437,15 +437,14 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ ok: true });
   });
 
-  // Public stats — no auth, cached 1h in memory
+  // Public stats — no auth, cached 6h in memory.
+  // TTL is long because this is a vanity counter — staleness is fine.
+  // A single in-flight promise prevents concurrent requests from all hitting DB.
   let statsCache: { accounts: number; published: number; cachedAt: number } | null = null;
-  const STATS_TTL_MS = 60 * 60 * 1000;
+  const STATS_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+  let statsFlight: Promise<void> | null = null;
 
-  app.get("/stats/public", async (_req, reply) => {
-    reply.header("Access-Control-Allow-Origin", "*");
-    if (statsCache && Date.now() - statsCache.cachedAt < STATS_TTL_MS) {
-      return reply.send(statsCache);
-    }
+  async function refreshStats(): Promise<void> {
     const [accounts, published] = await Promise.all([
       prisma.account.count(),
       prisma.postJobTarget.count({
@@ -453,6 +452,18 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       }),
     ]);
     statsCache = { accounts, published, cachedAt: Date.now() };
+  }
+
+  app.get("/stats/public", async (_req, reply) => {
+    reply.header("Access-Control-Allow-Origin", "*");
+    if (statsCache && Date.now() - statsCache.cachedAt < STATS_TTL_MS) {
+      return reply.send(statsCache);
+    }
+    // Coalesce concurrent misses into one DB query
+    if (!statsFlight) {
+      statsFlight = refreshStats().finally(() => { statsFlight = null; });
+    }
+    await statsFlight;
     return reply.send(statsCache);
   });
 }
