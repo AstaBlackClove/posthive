@@ -64,7 +64,7 @@ interface AnalyticsResult {
   fetchedAt: string;
 }
 
-const ANALYTICS_PLATFORMS = new Set(["bluesky", "mastodon", "pixelfed", "lemmy"]);
+const ANALYTICS_PLATFORMS = new Set(["bluesky", "mastodon", "pixelfed", "lemmy", "instagram", "threads", "facebook"]);
 
 function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, selected, onToggleSelect }: {
   job: Job;

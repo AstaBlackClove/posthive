@@ -202,20 +202,39 @@ const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body)
 
   async getAnalytics(account: Account, platformPostId: string): Promise<AnalyticsResult> {
     const { accessToken } = getCredentials(account);
+
+    // Meta's reach/impressions metrics are broken for Reels since Sep 2024.
+    // Fetch basic metrics first; attempt reach separately and swallow the error.
     const res = await apiGet<{
       data: Array<{ name: string; values?: Array<{ value: number }> }>;
     }>(
       `/${platformPostId}/insights`,
       accessToken,
-      { metric: "likes,comments,reach,saved,shares", period: "lifetime" },
+      { metric: "likes,comments,saved,shares", period: "lifetime" },
     );
     const get = (name: string): number =>
       res.data.find((m) => m.name === name)?.values?.[0]?.value ?? 0;
+
+    let views: number | undefined;
+    try {
+      const reachRes = await apiGet<{
+        data: Array<{ name: string; values?: Array<{ value: number }> }>;
+      }>(
+        `/${platformPostId}/insights`,
+        accessToken,
+        { metric: "reach", period: "lifetime" },
+      );
+      const v = reachRes.data.find((m) => m.name === "reach")?.values?.[0]?.value;
+      if (v !== undefined) views = v;
+    } catch {
+      // Meta API does not support reach for Reels — silently omit
+    }
+
     return {
       likes:     get("likes"),
       replies:   get("comments"),
       reposts:   get("shares"),
-      views:     get("reach"),
+      views,
       fetchedAt: new Date().toISOString(),
     };
   },
