@@ -67,17 +67,18 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
       });
 
     // Aggregate totals
-    let totalLikes = 0, totalReposts = 0, totalReplies = 0;
+    let totalLikes = 0, totalReposts = 0, totalReplies = 0, totalViews = 0;
     for (const p of posts) {
       for (const t of p.targets) {
         totalLikes += t.likes;
         totalReposts += t.reposts;
         totalReplies += t.replies;
+        if (t.views != null) totalViews += t.views;
       }
     }
 
     return reply.send({
-      totals: { likes: totalLikes, reposts: totalReposts, replies: totalReplies, posts: posts.length },
+      totals: { likes: totalLikes, reposts: totalReposts, replies: totalReplies, views: totalViews, posts: posts.length },
       posts,
       lastSyncedAt: posts[0]?.targets[0]?.fetchedAt ?? null,
     });

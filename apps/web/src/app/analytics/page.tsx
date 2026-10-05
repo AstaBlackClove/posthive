@@ -30,7 +30,7 @@ interface PostGroup {
 }
 
 interface AnalyticsResponse {
-  totals: { likes: number; reposts: number; replies: number; posts: number };
+  totals: { likes: number; reposts: number; replies: number; views: number; posts: number };
   posts: PostGroup[];
   lastSyncedAt: string | null;
 }
@@ -49,6 +49,9 @@ const PLATFORM_LABEL: Record<string, string> = {
   bluesky: "Bluesky",
   mastodon: "Mastodon",
   pixelfed: "Pixelfed",
+  instagram: "Instagram",
+  threads: "Threads",
+  facebook: "Facebook",
 };
 
 const SERIES = [
@@ -115,16 +118,17 @@ function Tile({ label, value, sub }: { label: string; value: string | number; su
   );
 }
 
-function StatCell({ targets, statKey }: { targets: TargetStats[]; statKey: "likes" | "reposts" | "replies" }) {
+function StatCell({ targets, statKey }: { targets: TargetStats[]; statKey: "likes" | "reposts" | "replies" | "views" }) {
+  const fmt = (v: number | null) => v == null ? <span style={{ color: "#444" }}>—</span> : numFmt(v);
   if (targets.length === 1) {
-    return <span className="text-sm font-medium text-right block" style={{ color: "#ccc" }}>{numFmt(targets[0][statKey])}</span>;
+    return <span className="text-sm font-medium text-right block" style={{ color: "#ccc" }}>{fmt(targets[0][statKey] as number | null)}</span>;
   }
   return (
     <div className="flex flex-col items-end gap-0.5">
       {targets.map((t) => (
         <div key={t.targetId} className="flex items-center gap-1">
           <PlatformIcon platform={t.platform} size={11} />
-          <span className="text-xs font-medium" style={{ color: "#ccc" }}>{numFmt(t[statKey])}</span>
+          <span className="text-xs font-medium" style={{ color: "#ccc" }}>{fmt(t[statKey] as number | null)}</span>
         </div>
       ))}
     </div>
@@ -193,8 +197,11 @@ export default function AnalyticsPage() {
     .filter((g) => g.targets.length > 0);
 
   /* totals */
-  let likes = 0, reposts = 0, replies = 0;
-  for (const g of visibleGroups) for (const t of g.targets) { likes += t.likes; reposts += t.reposts; replies += t.replies; }
+  let likes = 0, reposts = 0, replies = 0, views = 0;
+  for (const g of visibleGroups) for (const t of g.targets) {
+    likes += t.likes; reposts += t.reposts; replies += t.replies;
+    if (t.views != null) views += t.views;
+  }
 
   /* chart data */
   const chartData = toWeekBuckets(visibleGroups);
@@ -274,10 +281,11 @@ export default function AnalyticsPage() {
         ) : (
           <>
             {/* Tiles */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <Tile label="Total Likes" value={numFmt(likes)} sub={`${visibleGroups.length} post${visibleGroups.length !== 1 ? "s" : ""}`} />
               <Tile label="Reposts" value={numFmt(reposts)} />
               <Tile label="Replies" value={numFmt(replies)} />
+              <Tile label="Views" value={numFmt(views)} sub="reach where available" />
               <Tile label="Posts Tracked" value={data?.totals.posts ?? 0} sub="synced every 6h" />
             </div>
 
@@ -350,7 +358,7 @@ export default function AnalyticsPage() {
               <div
                 className="grid text-xs font-semibold uppercase tracking-wide px-5 py-3"
                 style={{
-                  gridTemplateColumns: "1fr 100px 70px 70px 70px 80px",
+                  gridTemplateColumns: "1fr 100px 70px 70px 70px 70px 80px",
                   backgroundColor: "#0e0e0e",
                   borderBottom: "1px solid #2a2a2a",
                   color: "#555",
@@ -361,6 +369,7 @@ export default function AnalyticsPage() {
                 <span className="text-right">Likes</span>
                 <span className="text-right">Reposts</span>
                 <span className="text-right">Replies</span>
+                <span className="text-right">Views</span>
                 <span className="text-right">Posted</span>
               </div>
 
@@ -374,7 +383,7 @@ export default function AnalyticsPage() {
                       key={group.jobId}
                       className="grid px-5 py-4"
                       style={{
-                        gridTemplateColumns: "1fr 100px 70px 70px 70px 80px",
+                        gridTemplateColumns: "1fr 100px 70px 70px 70px 70px 80px",
                         borderBottom: i < topGroups.length - 1 ? "1px solid #1e1e1e" : "none",
                         alignItems: multi ? "start" : "center",
                       }}
@@ -390,6 +399,7 @@ export default function AnalyticsPage() {
                       <StatCell targets={group.targets} statKey="likes" />
                       <StatCell targets={group.targets} statKey="reposts" />
                       <StatCell targets={group.targets} statKey="replies" />
+                      <StatCell targets={group.targets} statKey="views" />
                       <span className="text-xs text-right pt-0.5" style={{ color: "#555" }}>{relDate(group.scheduledFor)}</span>
                     </div>
                   );
@@ -409,7 +419,7 @@ export default function AnalyticsPage() {
               <div>
                 <p className="text-sm font-medium" style={{ color: "#8b8fde" }}>More platforms coming soon</p>
                 <p className="text-xs mt-0.5" style={{ color: "#555" }}>
-                  Threads, Instagram, LinkedIn, YouTube, Facebook, X/Twitter, and Pinterest analytics pending platform API approvals.
+                  LinkedIn, YouTube, X/Twitter, and Pinterest analytics pending platform API approvals.
                 </p>
               </div>
             </div>
