@@ -1199,53 +1199,58 @@ export default function RootPage() {
           </div>
         </section>
 
-        {/* ── SOCIAL PROOF BAR ── */}
         {/* ── STATS TILES ── */}
         <section style={{ borderTop: "1px solid #161616", background: "#0a0a0a" }}>
           <div
             className="ph-stats-grid ph-section"
-            style={{ maxWidth: 1120, margin: "0 auto", padding: "56px 40px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}
+            style={{ maxWidth: 1120, margin: "0 auto", padding: "56px 40px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
           >
-            {/* Posts published — live count */}
-            <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px", position: "relative", overflow: "hidden" }}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, color: "#4ade80", background: "#4ade8015", border: "1px solid #4ade8030", borderRadius: 20, padding: "3px 10px", marginBottom: 20, letterSpacing: ".06em" }}>
+            {/* LEFT — posts published, tall dark card */}
+            <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "40px 36px", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 220 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, color: "#4ade80", background: "#4ade8015", border: "1px solid #4ade8030", borderRadius: 20, padding: "3px 10px", letterSpacing: ".06em", alignSelf: "flex-start" }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", display: "inline-block", animation: "pulse-green 2s ease-in-out infinite" }} />
                 LIVE COUNT
               </span>
-              <div style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-0.03em", color: "#f2f2f2", lineHeight: 1 }}>
-                <LiveStat value={publicStats?.published ?? null} label="" fallback="11k+" />
-              </div>
-              <p style={{ fontSize: 13, color: "#666", margin: "10px 0 0", letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 600 }}>Posts published</p>
-            </div>
-
-            {/* Accounts connected */}
-            <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px" }}>
-              <div style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-0.03em", color: "#f2f2f2", lineHeight: 1, marginBottom: 10 }}>
-                <LiveStat value={publicStats?.accounts ?? null} label="" fallback="260+" />
-              </div>
-              <p style={{ fontSize: 13, color: "#666", margin: "0 0 20px", letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 600 }}>Accounts connected</p>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {["bluesky","threads","instagram","linkedin","twitter","youtube","tiktok","facebook"].map(p => (
-                  <PlatformIcon key={p} platform={p} size={18} />
-                ))}
+              <div>
+                <div style={{ fontSize: 64, fontWeight: 700, letterSpacing: "-0.04em", color: "#f2f2f2", lineHeight: 1 }}>
+                  <LiveStat value={publicStats?.published ?? null} label="" fallback="11k+" />
+                </div>
+                <p style={{ fontSize: 13, color: "#555", margin: "10px 0 0", letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 600 }}>Posts published</p>
               </div>
             </div>
 
-            {/* Platforms + mcp badge */}
-            <div style={{ background: "#5b63d3", border: "1px solid #6b73e3", borderRadius: 16, padding: "32px 28px" }}>
-              <div style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-0.03em", color: "#fff", lineHeight: 1, marginBottom: 10 }}>14+</div>
-              <p style={{ fontSize: 13, color: "#c4c7ff", margin: "0 0 20px", letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 600 }}>Platforms supported</p>
-              <a
-                href="https://github.com/punkpeye/awesome-mcp-servers"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#c4c7ff", textDecoration: "none", background: "#ffffff18", border: "1px solid #ffffff25", borderRadius: 20, padding: "5px 12px", transition: "background .15s" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "#ffffff28")}
-                onMouseLeave={e => (e.currentTarget.style.background = "#ffffff18")}
-              >
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="#f0a500"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                Featured in awesome-mcp-servers
-              </a>
+            {/* RIGHT — two stacked cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+              {/* Accounts connected — accent purple */}
+              <div style={{ background: "#5b63d3", border: "1px solid #6b73e3", borderRadius: 16, padding: "28px 28px", flex: 1 }}>
+                <div style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-0.03em", color: "#fff", lineHeight: 1, marginBottom: 8 }}>
+                  <LiveStat value={publicStats?.accounts ?? null} label="" fallback="260+" />
+                </div>
+                <p style={{ fontSize: 13, color: "#c4c7ff", margin: "0 0 16px", letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 600 }}>Accounts connected</p>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {["bluesky","threads","instagram","linkedin","twitter","youtube","tiktok","facebook"].map(p => (
+                    <PlatformIcon key={p} platform={p} size={16} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Platforms + mcp badge — teal */}
+              <div style={{ background: "#0d2d2a", border: "1px solid #1a4a46", borderRadius: 16, padding: "28px 28px", flex: 1 }}>
+                <div style={{ fontSize: 48, fontWeight: 700, letterSpacing: "-0.03em", color: "#34d399", lineHeight: 1, marginBottom: 8 }}>14+</div>
+                <p style={{ fontSize: 13, color: "#6b9e98", margin: "0 0 16px", letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 600 }}>Platforms supported</p>
+                <a
+                  href="https://github.com/punkpeye/awesome-mcp-servers"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#34d399", textDecoration: "none", background: "#34d39915", border: "1px solid #34d39930", borderRadius: 20, padding: "5px 12px", transition: "background .15s" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "#34d39925")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "#34d39915")}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="#f0a500"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                  Featured in awesome-mcp-servers
+                </a>
+              </div>
             </div>
           </div>
           <style>{`
