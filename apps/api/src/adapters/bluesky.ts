@@ -203,8 +203,8 @@ export const blueskyAdapter: PlatformAdapter = {
     return { platformCommentId: response.uri };
   },
 
-  async getAnalytics(_account: Account, platformPostId: string): Promise<AnalyticsResult> {
-    const agent = new BskyAgent({ service: "https://bsky.social" });
+  async getAnalytics(account: Account, platformPostId: string): Promise<AnalyticsResult> {
+    const agent = await buildAgent(account);
     const res = await agent.api.app.bsky.feed.getPostThread({ uri: platformPostId, depth: 0 });
     const post = (res.data.thread as { post?: { likeCount?: number; repostCount?: number; replyCount?: number } }).post;
     return {
