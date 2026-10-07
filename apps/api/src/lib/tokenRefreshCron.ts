@@ -16,6 +16,7 @@
  * OAuth 1.0a, keypairs) return early from refreshTokenIfNeeded — safe to skip.
  */
 
+import cron from "node-cron";
 import * as Sentry from "@sentry/node";
 import { prisma } from "./prisma.js";
 import { getAdapter } from "../adapters/index.js";
@@ -25,7 +26,6 @@ const REFRESH_PLATFORMS = new Set([
   "tiktok", "linkedin", "pinterest", "googlebusiness",
 ]);
 const WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-const INTERVAL_MS = 12 * 60 * 60 * 1000;    // 12 hours
 const BATCH_SIZE = 50;
 const BATCH_CONCURRENCY = 5;
 
@@ -79,5 +79,9 @@ async function run(skipRecentlyRefreshed = false) {
 }
 
 export function startTokenRefreshCron() {
-  setInterval(() => run().catch((e) => console.error("[token-refresh] error:", e)), INTERVAL_MS);
+  // Fixed wall-clock schedule: 00:30 and 12:30 UTC — offset from statsCron, survives Railway restarts
+  cron.schedule("30 0,12 * * *", () => {
+    run().catch((e) => console.error("[token-refresh] error:", e));
+  });
+  console.log("[token-refresh] started — daily at 00:30 and 12:30 UTC");
 }

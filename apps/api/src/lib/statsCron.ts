@@ -8,11 +8,11 @@
  * Each adapter must implement getAnalytics().
  */
 
+import cron from "node-cron";
 import { prisma } from "./prisma.js";
 import { adapters } from "../adapters/index.js";
 
 const SUPPORTED = new Set(["bluesky", "mastodon", "pixelfed", "threads", "instagram", "facebook"]);
-const INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 hours
 const RECENCY_MS  = 11 * 60 * 60 * 1000; // skip targets synced within 11h
 const BATCH = 5;                          // concurrent platform API calls
 const BATCH_DELAY_MS = 300;               // pause between batches (rate-limit headroom)
@@ -110,6 +110,9 @@ export async function runStatsCronNow(): Promise<void> {
 }
 
 export function startStatsCron(): void {
-  setInterval(() => runStatsCronNow().catch((e) => console.error("[stats-cron] error:", e)), INTERVAL_MS);
-  console.log("[stats-cron] started — syncing every 12h");
+  // Fixed wall-clock schedule: 00:00 and 12:00 UTC — survives Railway restarts
+  cron.schedule("0 0,12 * * *", () => {
+    runStatsCronNow().catch((e) => console.error("[stats-cron] error:", e));
+  });
+  console.log("[stats-cron] started — daily at 00:00 and 12:00 UTC");
 }
