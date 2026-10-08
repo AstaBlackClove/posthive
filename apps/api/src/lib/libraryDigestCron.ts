@@ -31,13 +31,19 @@ async function runLibraryDigest(): Promise<void> {
   // LibraryItem.scheduledJobId is a bare FK string — join via LibraryItem
   const libraryIds = libraries.map((l) => l.id);
 
+  // Get PostJob IDs scheduled in the last 24h (for matching failed items)
+  const recentPostJobIds = (await prisma.postJob.findMany({
+    where: { scheduledFor: { gte: since } },
+    select: { id: true },
+  })).map((j) => j.id);
+
   const recentItems = await prisma.libraryItem.findMany({
     where: {
       libraryId: { in: libraryIds },
       scheduledJobId: { not: null },
       OR: [
         { publishedAt: { gte: since.toISOString() } },
-        { status: "failed", createdAt: { gte: since } },
+        { status: "failed", scheduledJobId: { in: recentPostJobIds } },
       ],
     },
     select: { libraryId: true, scheduledJobId: true },
