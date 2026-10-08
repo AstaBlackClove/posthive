@@ -240,10 +240,17 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
           data: { planStatus: "on_hold" },
         });
       } else if (type === "subscription.failed" || type === "subscription.cancelled") {
-        await prisma.workspace.update({
-          where: { id: workspaceId },
-          data: { plan: "cancelled", planStatus: "cancelled" },
-        });
+        // Only cancel if the sub ID in the event matches what we have stored.
+        // If workspace was found via customerId fallback, a different (failed) sub
+        // must not overwrite a newer active subscription.
+        if (subId && workspace.dodoSubId && workspace.dodoSubId !== subId) {
+          console.log(`[billing] ignoring ${type} for sub ${subId} — workspace has different active sub ${workspace.dodoSubId}`);
+        } else {
+          await prisma.workspace.update({
+            where: { id: workspaceId },
+            data: { plan: "cancelled", planStatus: "cancelled" },
+          });
+        }
       } else if (type === "subscription.plan_changed" || type === "subscription.updated") {
         // If subscription is already cancelled, treat same as subscription.cancelled — don't overwrite with plan name
         if (data.status === "cancelled") {
