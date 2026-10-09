@@ -216,18 +216,35 @@ const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body)
       res.data.find((m) => m.name === name)?.values?.[0]?.value ?? 0;
 
     let views: number | undefined;
+    // Try plays first (Reels/videos — matches what Instagram app shows).
+    // Fall back to reach for images/carousels (plays not available on those).
     try {
-      const reachRes = await apiGet<{
+      const playsRes = await apiGet<{
         data: Array<{ name: string; values?: Array<{ value: number }> }>;
       }>(
         `/${platformPostId}/insights`,
         accessToken,
-        { metric: "reach", period: "lifetime" },
+        { metric: "plays", period: "lifetime" },
       );
-      const v = reachRes.data.find((m) => m.name === "reach")?.values?.[0]?.value;
+      const v = playsRes.data.find((m) => m.name === "plays")?.values?.[0]?.value;
       if (v !== undefined) views = v;
     } catch {
-      // Meta API does not support reach for Reels — silently omit
+      // plays not available for this post type — fall back to reach
+    }
+    if (views === undefined) {
+      try {
+        const reachRes = await apiGet<{
+          data: Array<{ name: string; values?: Array<{ value: number }> }>;
+        }>(
+          `/${platformPostId}/insights`,
+          accessToken,
+          { metric: "reach", period: "lifetime" },
+        );
+        const v = reachRes.data.find((m) => m.name === "reach")?.values?.[0]?.value;
+        if (v !== undefined) views = v;
+      } catch {
+        // reach also not available — views stays undefined
+      }
     }
 
     return {
