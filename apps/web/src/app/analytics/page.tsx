@@ -285,7 +285,7 @@ export default function AnalyticsPage() {
               <Tile label="Total Likes" value={numFmt(likes)} sub={`${visibleGroups.length} post${visibleGroups.length !== 1 ? "s" : ""}`} />
               <Tile label="Reposts" value={numFmt(reposts)} />
               <Tile label="Replies" value={numFmt(replies)} />
-              <Tile label="Views" value={numFmt(views)} sub="reach where available" />
+              <Tile label="Views" value={numFmt(views)} sub="plays for Reels · reach for images" />
               <Tile label="Posts Tracked" value={data?.totals.posts ?? 0} sub="synced every 6h" />
             </div>
 
