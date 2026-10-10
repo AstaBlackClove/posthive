@@ -73,7 +73,16 @@ async function uploadPhotoBuffer(
     return data.post_id ?? data.id;
   }
 
-  let buffer = await storageAdapter.getBuffer(imageUrl);
+  // Use storageAdapter only for URLs it owns (Supabase/R2/local uploads).
+  // External URLs (Google Images, CDNs, etc.) are fetched directly.
+  let buffer: Buffer;
+  if (storageAdapter.ownsUrl(imageUrl)) {
+    buffer = await storageAdapter.getBuffer(imageUrl);
+  } else {
+    const fetched = await fetch(imageUrl, { signal: AbortSignal.timeout(15_000) });
+    if (!fetched.ok) throw new Error(`Facebook: could not fetch image ${imageUrl}: ${fetched.status}`);
+    buffer = Buffer.from(await fetched.arrayBuffer());
+  }
   let mimeType = "image/jpeg";
 
   // Detect format from magic bytes
