@@ -64,18 +64,32 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
         _count: { select: { items: true } },
       },
     });
-    // Add per-status counts
-    const planData = process.env.ENABLE_BILLING === "true" ? await getWorkspacePlan(workspaceId) : null;
+    // Single grouped query for all libraries — avoids N+1
+    const libraryIds = libraries.map((l) => l.id);
+    const [allCounts, planData] = await Promise.all([
+      libraryIds.length > 0
+        ? prisma.libraryItem.groupBy({
+            by: ["libraryId", "status"],
+            where: { libraryId: { in: libraryIds } },
+            _count: true,
+          })
+        : Promise.resolve([]),
+      process.env.ENABLE_BILLING === "true" ? getWorkspacePlan(workspaceId) : Promise.resolve(null),
+    ]);
+
     const plan = planData?.plan ?? null;
 
-    const result = await Promise.all(libraries.map(async (lib) => {
-      const counts = await prisma.libraryItem.groupBy({
-        by: ["status"],
-        where: { libraryId: lib.id },
-        _count: true,
-      });
-      const statusCounts = Object.fromEntries(counts.map(c => [c.status, c._count]));
-      return { ...lib, statusCounts };
+    // Build per-library status count map in JS
+    const countsByLibrary = new Map<string, Record<string, number>>();
+    for (const row of allCounts) {
+      const map = countsByLibrary.get(row.libraryId) ?? {};
+      map[row.status] = row._count;
+      countsByLibrary.set(row.libraryId, map);
+    }
+
+    const result = libraries.map((lib) => ({
+      ...lib,
+      statusCounts: countsByLibrary.get(lib.id) ?? {},
     }));
     return reply.send({
       libraries: result,
