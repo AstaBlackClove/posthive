@@ -29,81 +29,95 @@ export async function runStatsCronNow(): Promise<void> {
   try {
     const postCutoff   = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const recentCutoff = new Date(Date.now() - RECENCY_MS);
+    const PAGE_SIZE = 500;
 
-    const targets = await prisma.postJobTarget.findMany({
-      where: {
-        status: { in: ["done", "post_done", "comment_done"] },
-        platformPostId: { not: null },
-        account: { platform: { in: Array.from(SUPPORTED) } },
-        postJob: { scheduledFor: { gte: postCutoff } },
-        OR: [
-          { stats: null },
-          { stats: { fetchedAt: { lt: recentCutoff } } },
-        ],
-      },
-      select: {
-        id: true,
-        platformPostId: true,
-        account: {
-          select: {
-            id: true, platform: true, displayName: true,
-            credentials: true, refreshToken: true, expiresAt: true,
-          },
+    const baseWhere = {
+      status: { in: ["done", "post_done", "comment_done"] },
+      platformPostId: { not: null },
+      account: { platform: { in: Array.from(SUPPORTED) } },
+      postJob: { scheduledFor: { gte: postCutoff } },
+      OR: [
+        { stats: null },
+        { stats: { fetchedAt: { lt: recentCutoff } } },
+      ],
+    };
+
+    const targetSelect = {
+      id: true,
+      platformPostId: true,
+      account: {
+        select: {
+          id: true, platform: true, displayName: true,
+          credentials: true, refreshToken: true, expiresAt: true,
         },
       },
-    });
+    };
 
-    if (!targets.length) {
-      console.log("[stats-cron] nothing stale to sync");
-      return;
-    }
+    let ok = 0, fail = 0, total = 0;
+    let cursor: string | undefined;
 
-    console.log(`[stats-cron] syncing ${targets.length} stale target(s)`);
-    let ok = 0, fail = 0;
+    // Cursor-paginated loop — never loads more than PAGE_SIZE rows at once
+    for (;;) {
+      const page = await prisma.postJobTarget.findMany({
+        where: baseWhere,
+        orderBy: { id: "asc" },
+        take: PAGE_SIZE,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        select: targetSelect,
+      });
 
-    for (let i = 0; i < targets.length; i += BATCH) {
-      await Promise.allSettled(
-        targets.slice(i, i + BATCH).map(async (t) => {
-          const adapter = adapters.find((a) => a.name === t.account!.platform);
-          if (!adapter?.getAnalytics) return;
+      if (!page.length) break;
+      cursor = page[page.length - 1].id;
+      total += page.length;
 
-          try {
-            const stats = await adapter.getAnalytics(
-              t.account as Parameters<typeof adapter.getAnalytics>[0],
-              t.platformPostId!,
-            );
-            await prisma.postStats.upsert({
-              where: { targetId: t.id },
-              create: {
-                targetId: t.id,
-                likes:     stats.likes    ?? 0,
-                reposts:   stats.reposts  ?? 0,
-                replies:   stats.replies  ?? 0,
-                views:     stats.views    ?? null,
-                fetchedAt: new Date(stats.fetchedAt),
-              },
-              update: {
-                likes:     stats.likes    ?? 0,
-                reposts:   stats.reposts  ?? 0,
-                replies:   stats.replies  ?? 0,
-                views:     stats.views    ?? null,
-                fetchedAt: new Date(stats.fetchedAt),
-              },
-            });
-            ok++;
-          } catch (e) {
-            fail++;
-            console.warn(`[stats-cron] target ${t.id} failed:`, (e as Error).message);
-          }
-        }),
-      );
+      for (let i = 0; i < page.length; i += BATCH) {
+        await Promise.allSettled(
+          page.slice(i, i + BATCH).map(async (t) => {
+            const adapter = adapters.find((a) => a.name === t.account!.platform);
+            if (!adapter?.getAnalytics) return;
 
-      if (i + BATCH < targets.length) {
-        await new Promise((r) => setTimeout(r, BATCH_DELAY_MS));
+            try {
+              const stats = await adapter.getAnalytics(
+                t.account as Parameters<typeof adapter.getAnalytics>[0],
+                t.platformPostId!,
+              );
+              await prisma.postStats.upsert({
+                where: { targetId: t.id },
+                create: {
+                  targetId: t.id,
+                  likes:     stats.likes    ?? 0,
+                  reposts:   stats.reposts  ?? 0,
+                  replies:   stats.replies  ?? 0,
+                  views:     stats.views    ?? null,
+                  fetchedAt: new Date(stats.fetchedAt),
+                },
+                update: {
+                  likes:     stats.likes    ?? 0,
+                  reposts:   stats.reposts  ?? 0,
+                  replies:   stats.replies  ?? 0,
+                  views:     stats.views    ?? null,
+                  fetchedAt: new Date(stats.fetchedAt),
+                },
+              });
+              ok++;
+            } catch (e) {
+              fail++;
+              console.warn(`[stats-cron] target ${t.id} failed:`, (e as Error).message);
+            }
+          }),
+        );
+
+        if (i + BATCH < page.length) {
+          await new Promise((r) => setTimeout(r, BATCH_DELAY_MS));
+        }
       }
     }
 
-    console.log(`[stats-cron] done — ${ok} synced, ${fail} failed`);
+    if (!total) {
+      console.log("[stats-cron] nothing stale to sync");
+      return;
+    }
+    console.log(`[stats-cron] done — ${ok} synced, ${fail} failed (${total} total)`);
   } finally {
     isRunning = false;
   }
