@@ -2,12 +2,17 @@ import type { FastifyInstance } from "fastify";
 import { prisma } from "../lib/prisma.js";
 import { withAuth, getUser, getWorkspaceId } from "../lib/auth/withAuth.js";
 
+const analyticsCache = new Map<string, { data: unknown; expiresAt: number }>();
+
 export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
 
   // GET /analytics — aggregated stats from DB cache (no live platform calls)
   app.get("/analytics", { preHandler: [withAuth] }, async (req, reply) => {
     void getUser(req); // auth verified via preHandler
     const workspaceId = getWorkspaceId(req);
+
+    const cached = analyticsCache.get(workspaceId);
+    if (cached && cached.expiresAt > Date.now()) return reply.send(cached.data);
     const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
     const jobs = await prisma.postJob.findMany({
@@ -79,10 +84,12 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
       }
     }
 
-    return reply.send({
+    const result = {
       totals: { likes: totalLikes, reposts: totalReposts, replies: totalReplies, views: totalViews, posts: posts.length },
       posts,
       lastSyncedAt: posts[0]?.targets[0]?.fetchedAt ?? null,
-    });
+    };
+    analyticsCache.set(workspaceId, { data: result, expiresAt: Date.now() + 5 * 60_000 });
+    return reply.send(result);
   });
 }

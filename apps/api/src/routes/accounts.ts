@@ -1,5 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+
+const statsCache = new Map<string, { data: Record<string, number>; expiresAt: number }>();
 import { encryptBlueskyCredentials } from "../adapters/bluesky.js";
 import { decodeNsec, generateNostrKeypair, fetchNostrProfile } from "../adapters/nostr.js";
 import { nip19 } from "nostr-tools";
@@ -223,6 +225,10 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
   // Posts published per account this month
   app.get("/accounts/stats", { preHandler: [withAuth] }, async (req, reply) => {
     const workspaceId = getWorkspaceId(req);
+
+    const cached = statsCache.get(workspaceId);
+    if (cached && cached.expiresAt > Date.now()) return reply.send(cached.data);
+
     const start = new Date();
     start.setDate(1); start.setHours(0, 0, 0, 0);
 
@@ -238,6 +244,7 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
 
     const stats: Record<string, number> = {};
     for (const r of rows) stats[r.accountId] = r._count.accountId;
+    statsCache.set(workspaceId, { data: stats, expiresAt: Date.now() + 60_000 });
     return reply.send(stats);
   });
 

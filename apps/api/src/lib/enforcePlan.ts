@@ -31,7 +31,14 @@ export async function enforcePlan(
 
   const workspace = await db.workspace.findUnique({
     where: { id: workspaceId },
-    include: { _count: { select: { accounts: true, members: true } } },
+    select: {
+      plan: true,
+      planStatus: true,
+      trialEndsAt: true,
+      allowReels: true,
+      allowOverrides: true,
+      _count: { select: { accounts: true, members: true } },
+    },
   });
 
   if (!workspace) return { error: "Workspace not found", code: "CANCELLED", upgradeRequired: false };
