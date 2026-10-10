@@ -27,6 +27,7 @@ import { setLinkedInStorage } from "./adapters/linkedin.js";
 import { setTikTokStorage } from "./adapters/tiktok.js";
 import { setDiscordStorage } from "./adapters/discord.js";
 import { setStorageAdapter as setLemmyStorage } from "./adapters/lemmy.js";
+import { setFacebookStorage } from "./adapters/facebook.js";
 import { setAvatarStorage } from "./lib/avatarStore.js";
 import { accountRoutes } from "./routes/accounts.js";
 import { authRoutes } from "./routes/auth.js";
@@ -77,6 +78,7 @@ async function main() {
   setTikTokStorage(storage);
   setDiscordStorage(storage);
   setLemmyStorage(storage);
+  setFacebookStorage(storage);
   setAvatarStorage(storage);
 
   const isDev = process.env.NODE_ENV !== "production";
