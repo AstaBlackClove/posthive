@@ -12,12 +12,26 @@ const dodo = new DodoPayments({
 
 const WEB_URL = process.env.WEB_URL ?? "http://localhost:3000";
 
+// In-process cache for /billing/status — avoids 3 DB queries on every page load
+const STATUS_CACHE_TTL_MS = 30_000;
+const statusCache = new Map<string, { data: unknown; expiresAt: number }>();
+
+function invalidateBillingCache(workspaceId: string) {
+  statusCache.delete(workspaceId);
+}
+
 export async function billingRoutes(app: FastifyInstance): Promise<void> {
 
   // GET /billing/status — current plan + trial info for the active workspace
   app.get("/billing/status", { preHandler: [withAuth], config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     const u = getUser(req);
+    void u; // auth required; workspaceId is the cache key
     const workspaceId = getWorkspaceId(req);
+
+    const cached = statusCache.get(workspaceId);
+    if (cached && cached.expiresAt > Date.now()) {
+      return reply.send(cached.data);
+    }
 
     const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
     if (!workspace) return reply.status(404).send({ error: "Workspace not found" });
@@ -49,7 +63,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       }),
     ]);
 
-    return reply.send({
+    const statusData = {
       plan: workspace.plan,
       planStatus: workspace.planStatus,
       planName: plan.name,
@@ -69,7 +83,9 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       hasDodoSub: !!workspace.dodoSubId,
       workspaceId: workspace.id,
       workspaceName: workspace.name,
-    });
+    };
+    statusCache.set(workspaceId, { data: statusData, expiresAt: Date.now() + STATUS_CACHE_TTL_MS });
+    return reply.send(statusData);
   });
 
   // POST /billing/checkout — create Dodo checkout session for the active workspace
@@ -199,6 +215,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       if (!workspace) return reply.send({ ok: true });
 
       const workspaceId = workspace.id;
+      invalidateBillingCache(workspaceId); // plan changed — evict so next /billing/status reflects it
       const dodoCustomerId = data.customer?.customer_id ?? data.customer?.id ?? data.customer_id ?? null;
 
       if (type === "subscription.active") {
@@ -305,6 +322,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
         try {
           await dodo.subscriptions.update(workspace.dodoSubId, { cancel_at_next_billing_date: false } as Parameters<typeof dodo.subscriptions.update>[1]);
           await prisma.workspace.update({ where: { id: workspaceId }, data: { planStatus: "active" } });
+          invalidateBillingCache(workspaceId);
           return reply.send({ ok: true });
         } catch (err) {
           console.error("[billing] undo-cancel error:", err);
@@ -345,6 +363,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
           where: { id: workspaceId },
           data: { plan: planId, planStatus: "active" },
         });
+        invalidateBillingCache(workspaceId);
 
         return reply.send({ ok: true });
       } catch (err) {
@@ -380,6 +399,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
     try {
       await dodo.subscriptions.update(workspace.dodoSubId, { cancel_at_next_billing_date: true } as Parameters<typeof dodo.subscriptions.update>[1]);
       await prisma.workspace.update({ where: { id: workspaceId }, data: { planStatus: "cancelling" } });
+      invalidateBillingCache(workspaceId);
       await prisma.cancellationFeedback.create({
         data: { userId: u.id, plan: workspace.plan, reason: reason ?? null, feedback: feedback ?? null },
       });
