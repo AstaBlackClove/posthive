@@ -189,7 +189,7 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
   });
 
   // Instagram location search — proxies Facebook Places API using user's IG token
-  app.get("/accounts/instagram/locations", { preHandler: [withAuth] }, async (req, reply) => {
+  app.get("/accounts/instagram/locations", { preHandler: [withAuth], config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const workspaceId = getWorkspaceId(req);
     const { q } = req.query as { q?: string };
     if (!q || q.trim().length < 2) return reply.send([]);

@@ -15,7 +15,7 @@ const WEB_URL = process.env.WEB_URL ?? "http://localhost:3000";
 export async function billingRoutes(app: FastifyInstance): Promise<void> {
 
   // GET /billing/status — current plan + trial info for the active workspace
-  app.get("/billing/status", { preHandler: [withAuth] }, async (req, reply) => {
+  app.get("/billing/status", { preHandler: [withAuth], config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     const u = getUser(req);
     const workspaceId = getWorkspaceId(req);
 

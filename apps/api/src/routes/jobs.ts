@@ -295,7 +295,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
   // SSE stream — scoped to current user.
   // EventSource can't send cookies cross-origin so auth token comes via ?token= query param.
-  app.get("/jobs/stream", async (req, reply) => {
+  app.get("/jobs/stream", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
     const origin = req.headers.origin ?? process.env.WEB_URL ?? "http://localhost:3000";
     const sseHeaders: Record<string, string> = {
       "Content-Type": "text/event-stream",

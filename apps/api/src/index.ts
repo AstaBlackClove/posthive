@@ -118,11 +118,31 @@ async function main() {
   // Raw body — needed for webhook signature verification
   await app.register(rawBody, { global: false, encoding: "utf8" });
 
-  // Rate limiting — opt-in per route
+  // Rate limiting — global default 100 req/min per user (falls back to IP)
   await app.register(rateLimit, {
-    global: false,
+    global: true,
     max: 100,
     timeWindow: "1 minute",
+    keyGenerator: (req) => {
+      try {
+        const auth = req.headers["authorization"] ?? "";
+        if (auth.startsWith("Bearer ")) return auth.slice(7);
+        const cookie = req.headers["cookie"] ?? "";
+        const match = cookie.match(/access_token=([^;]+)/);
+        if (match) return match[1];
+      } catch { /* fall through */ }
+      return req.ip;
+    },
+    errorResponseBuilder: () => ({
+      statusCode: 429,
+      error: "Too Many Requests",
+      message: "Rate limit exceeded — slow down and try again shortly",
+    }),
+    // Exclude health check and webhooks from rate limiting
+    allowList: (req: import("fastify").FastifyRequest) =>
+      req.url === "/health" ||
+      req.url === "/billing/webhook" ||
+      req.url.startsWith("/uploads/"),
   });
 
   // Bull Board — queue dashboard (admin-only, dev always open)
