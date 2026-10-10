@@ -57,7 +57,7 @@ const createJobBody = z.object({
 export async function jobRoutes(app: FastifyInstance, { storage }: { storage: StorageAdapter }): Promise<void> {
 
   // Bulk create scheduled jobs — single request, server-side batching
-  app.post("/jobs/bulk", { preHandler: [withAuth] }, async (req, reply) => {
+  app.post("/jobs/bulk", { preHandler: [withAuth], config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const { id: userId } = getUser(req);
     const workspaceId = getWorkspaceId(req);
 
@@ -209,7 +209,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
   });
 
   // Create a new scheduled job
-  app.post("/jobs", { preHandler: [withAuth] }, async (req, reply) => {
+  app.post("/jobs", { preHandler: [withAuth], config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const { id: userId } = getUser(req);
     const workspaceId = getWorkspaceId(req);
 

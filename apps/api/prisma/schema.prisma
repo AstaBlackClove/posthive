@@ -129,6 +129,8 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // A connected social media account for a specific platform.
@@ -182,6 +184,7 @@ model PostJob {
   @@index([workspaceId, status])
   @@index([workspaceId, createdAt])
   @@index([workspaceId, scheduledFor])
+  @@index([workspaceId, scheduledFor, id])
 }
 
 // One row per (PostJob × Account).
@@ -191,7 +194,7 @@ model PostJobTarget {
   postJob   PostJob @relation(fields: [postJobId], references: [id], onDelete: Cascade)
   postJobId String
 
-  account   Account @relation(fields: [accountId], references: [id])
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
   accountId String
 
   status         String  @default("pending")

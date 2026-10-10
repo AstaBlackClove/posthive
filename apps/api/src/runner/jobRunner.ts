@@ -16,6 +16,7 @@ import * as Sentry from "@sentry/node";
 import type { PostJob, PostJobTarget, Account } from "@prisma/client";
 import { getAdapter } from "../adapters/index.js";
 import { prisma } from "../lib/prisma.js";
+import { isSsrfBlocked } from "../lib/ssrf.js";
 import type { PostResult, CommentResult } from "../adapters/types.js";
 import type { StorageAdapter } from "../lib/storage.js";
 
@@ -133,7 +134,7 @@ export async function runJob(
     const wsRow = job.workspaceId
       ? await prisma.workspace.findUnique({ where: { id: job.workspaceId }, select: { webhookUrl: true } })
       : null;
-    if (wsRow?.webhookUrl) {
+    if (wsRow?.webhookUrl && !isSsrfBlocked(wsRow.webhookUrl)) {
       const platforms = job.targets.map(t => t.account.platform);
       fetch(wsRow.webhookUrl, {
         method: "POST",

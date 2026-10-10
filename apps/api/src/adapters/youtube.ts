@@ -3,6 +3,7 @@ import { google } from "googleapis";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import type { PlatformAdapter } from "./types.js";
 import { prisma } from "../lib/prisma.js";
+import { isSsrfBlocked } from "../lib/ssrf.js";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const UPLOAD_URL = "https://www.googleapis.com/upload/youtube/v3/videos";
@@ -108,6 +109,7 @@ export const youtubeAdapter: PlatformAdapter = {
     const asShort = youtubeType !== "video"; // defaults to Short unless explicitly "video"
     const { title, description } = splitTitleDescription(text, asShort);
 
+    if (isSsrfBlocked(videoUrl)) throw new Error("YouTube video URL points to a private network address.");
     const videoRes = await fetch(videoUrl);
     if (!videoRes.ok || !videoRes.body) {
       throw new Error(`Failed to fetch video for upload: ${videoRes.status}`);
@@ -182,6 +184,7 @@ export const youtubeAdapter: PlatformAdapter = {
           ? youtubeThumbnailUrl
           : `${PUBLIC_API_URL2}${youtubeThumbnailUrl}`;
 
+        if (isSsrfBlocked(thumbUrl)) throw new Error("Thumbnail URL points to a private network address.");
         console.log(`[youtube] fetching thumbnail from ${thumbUrl}`);
         const thumbRes = await fetch(thumbUrl);
         const contentType = thumbRes.headers.get("content-type") ?? "unknown";
