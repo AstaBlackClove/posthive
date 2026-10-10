@@ -55,7 +55,7 @@ export function startWorker(storage: StorageAdapter): void {
     },
     {
       connection,
-      concurrency: 5,
+      concurrency: 3, // reduced from 5 — saves ~100MB at low traffic
     }
   );
 
