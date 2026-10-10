@@ -155,6 +155,7 @@ model Account {
   updatedAt DateTime @updatedAt
 
   @@index([workspaceId])
+  @@index([workspaceId, platform])
 }
 
 // A scheduled post job.
@@ -178,6 +179,9 @@ model PostJob {
   updatedAt DateTime @updatedAt
 
   @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, scheduledFor])
 }
 
 // One row per (PostJob × Account).
@@ -204,6 +208,8 @@ model PostJobTarget {
   @@index([status])
   @@index([postJobId])
   @@index([accountId])
+  @@index([accountId, status])
+  @@index([platformPostId])
 }
 
 // Cached engagement stats per PostJobTarget — synced every 6h by statsCron.
