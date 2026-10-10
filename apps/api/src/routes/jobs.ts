@@ -1,6 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
+
+// Track active SSE connections per userId — evicted on close
+const sseConnections = new Map<string, number>();
+const SSE_MAX_PER_USER = 3;
 import { schedulePostJob, postJobQueue } from "../lib/queue.js";
 import { withAuth, getUser, getWorkspaceId, getWorkspaceRole, ACCESS_COOKIE_NAME } from "../lib/auth/withAuth.js";
 import { authProvider } from "../lib/auth/index.js";
@@ -318,6 +322,16 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     const { id: userId } = user;
 
+    // Enforce per-user SSE connection limit
+    const activeConns = sseConnections.get(userId) ?? 0;
+    if (activeConns >= SSE_MAX_PER_USER) {
+      reply.raw.writeHead(429, { ...sseHeaders, "Retry-After": "10" });
+      reply.raw.write(`data: ${JSON.stringify({ error: "too_many_connections" })}\n\n`);
+      reply.raw.end();
+      return;
+    }
+    sseConnections.set(userId, activeConns + 1);
+
     // Resolve workspaceId for stream scoping — same logic as withAuth
     const dbUser = await prisma.user.findUnique({
       where: { id: userId },
@@ -359,7 +373,13 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     const keepAlive = setInterval(() => { reply.raw.write(": ping\n\n"); }, 25000);
 
-    req.raw.on("close", () => { clearInterval(poll); clearInterval(keepAlive); });
+    req.raw.on("close", () => {
+      clearInterval(poll);
+      clearInterval(keepAlive);
+      const cur = sseConnections.get(userId) ?? 1;
+      if (cur <= 1) sseConnections.delete(userId);
+      else sseConnections.set(userId, cur - 1);
+    });
     await new Promise<void>((resolve) => req.raw.on("close", resolve));
   });
 
