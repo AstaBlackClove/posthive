@@ -299,3 +299,41 @@ Schema at `apps/api/prisma/schema.prisma`. Compatible with Postgres — just cha
 11. Add docs section in `apps/web/src/app/docs/page.tsx`
 12. Add to `NO_COMMENT_PLATFORMS` in compose, EditPostDialog, and `jobRunner.ts` if the platform has no comment API
 13. Add env vars to `apps/api/.env.example` and document in `README.md`
+
+---
+
+## Development Workflow — Mandatory Skills
+
+Run these skills at the right moment. They are not optional.
+
+### Before every commit touching: adapters, worker, cron, auth, routes, billing
+```
+/ponytail-review
+```
+Catches bugs, security holes, scale issues before they hit prod.
+
+### Before any prod deploy (Railway push)
+```
+/shipping-and-launch
+```
+Pre-launch checklist: migrations safe, env vars set, rollback plan ready.
+
+### When changing: OAuth flows, API keys, credentials, encryption, tokens
+```
+/security-review
+```
+Auth bypass, injection, data exposure checks.
+
+### When adding: new DB queries, cron jobs, queue logic, list endpoints
+```
+/performance-optimization
+```
+N+1 queries, missing indexes, unbounded fetches, connection pool.
+
+### Workflow order
+1. Write code
+2. `/ponytail-review` — fix findings
+3. Commit
+4. `/shipping-and-launch` — check before Railway deploy
+5. Push to prod
+6. Monitor Railway logs + Sentry for 15 min after deploy
