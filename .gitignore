@@ -4,6 +4,10 @@ dist/
 # Claude Code internal planning — keep private
 .claude/
 
+# Agent skill files — local tooling, not part of source
+.agents/
+skills-lock.json
+
 # Environment variables — never commit real secrets
 .env
 .env.local
