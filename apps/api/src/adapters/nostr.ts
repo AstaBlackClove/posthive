@@ -2,6 +2,7 @@ import { finalizeEvent, generateSecretKey, getPublicKey, nip19 } from "nostr-too
 import { Relay } from "nostr-tools/relay";
 import { SimplePool } from "nostr-tools/pool";
 import { decrypt, encrypt } from "../lib/encryption.js";
+import { isSsrfBlocked } from "../lib/ssrf.js";
 import type { Account } from "@prisma/client";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
@@ -67,8 +68,11 @@ export async function fetchNostrProfile(
     let picture: string | null = meta.picture ?? null;
     if (picture) {
       try {
-        const check = await fetch(picture, { method: "HEAD", signal: AbortSignal.timeout(5_000) });
-        if (!check.ok) picture = null;
+        if (isSsrfBlocked(picture)) { picture = null; }
+        else {
+          const check = await fetch(picture, { method: "HEAD", signal: AbortSignal.timeout(5_000) });
+          if (!check.ok) picture = null;
+        }
       } catch { picture = null; }
     }
 

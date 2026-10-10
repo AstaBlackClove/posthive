@@ -31,9 +31,10 @@ async function runLibraryDigest(): Promise<void> {
   // LibraryItem.scheduledJobId is a bare FK string — join via LibraryItem
   const libraryIds = libraries.map((l) => l.id);
 
-  // Get PostJob IDs scheduled in the last 24h (for matching failed items)
+  // Get PostJob IDs scheduled in the last 24h — scoped to these workspaces only
+  const workspaceIds = libraries.map((l) => l.workspaceId);
   const recentPostJobIds = (await prisma.postJob.findMany({
-    where: { scheduledFor: { gte: since } },
+    where: { workspaceId: { in: workspaceIds }, scheduledFor: { gte: since } },
     select: { id: true },
   })).map((j) => j.id);
 
@@ -85,9 +86,9 @@ async function runLibraryDigest(): Promise<void> {
   }
 
   // For each workspace, find owner email and send digest
-  const workspaceIds = Array.from(byWorkspace.keys());
+  const workspaceIds2 = Array.from(byWorkspace.keys());
   const workspaces = await prisma.workspace.findMany({
-    where: { id: { in: workspaceIds } },
+    where: { id: { in: workspaceIds2 } },
     select: {
       id: true,
       members: {

@@ -171,6 +171,7 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
       where: { workspaceId },
       select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true, expiresAt: true, credentials: true },
       orderBy: { createdAt: "asc" },
+      take: 200,
     });
     // Expose npub for Nostr accounts (public key — not sensitive), strip credentials from response
     return reply.send(accounts.map(({ credentials, ...a }) => {
