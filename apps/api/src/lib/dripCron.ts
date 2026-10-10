@@ -113,9 +113,42 @@ async function processLibrary(lib: LibraryRow) {
     return;
   }
 
+  // Pre-flight: HEAD-check external image URLs. Mark items with dead URLs as failed immediately
+  // so they don't burn BullMQ slots and Sentry quota on every drip cycle.
+  const liveItems: typeof items = [];
+  await Promise.allSettled(items.map(async (item) => {
+    const urls = (item.mediaUrls as string[]).filter(u => u.startsWith("http"));
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(8_000) });
+        if (!res.ok) {
+          await prisma.libraryItem.update({
+            where: { id: item.id },
+            data: { status: "failed", errorMessage: `Image URL returned ${res.status}: ${url}` },
+          });
+          console.warn(`[drip] item ${item.id} — dead image URL (${res.status}), marking failed`);
+          return;
+        }
+      } catch {
+        await prisma.libraryItem.update({
+          where: { id: item.id },
+          data: { status: "failed", errorMessage: `Image URL unreachable: ${url}` },
+        });
+        console.warn(`[drip] item ${item.id} — unreachable image URL, marking failed`);
+        return;
+      }
+    }
+    liveItems.push(item);
+  }));
+
+  if (!liveItems.length) {
+    console.log(`[drip] library ${lib.id} — all items this cycle had dead URLs, skipping`);
+    return;
+  }
+
   let scheduled = 0;
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
+  for (let i = 0; i < liveItems.length; i++) {
+    const item = liveItems[i];
     const slot = slots[i];
     if (!slot) break;
 
@@ -165,7 +198,7 @@ async function processLibrary(lib: LibraryRow) {
 
   if (scheduled > 0) {
     await prisma.contentLibrary.update({ where: { id: lib.id }, data: { lastDripAt: new Date() } });
-    console.log(`[drip] library ${lib.id} — scheduled ${scheduled}/${slots.length}`);
+    console.log(`[drip] library ${lib.id} — scheduled ${scheduled}/${liveItems.length}`);
   }
 }
 
