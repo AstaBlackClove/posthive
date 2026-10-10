@@ -245,9 +245,7 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, selected, onTogg
                 async function fetchAnalytics() {
                   setAnalytics(prev => ({ ...prev, [t.id]: "loading" }));
                   try {
-                    const res = await apiFetch(`${API_BASE}/jobs/targets/${t.id}/analytics`) as Response;
-                    if (!res.ok) throw new Error();
-                    const data = await res.json() as AnalyticsResult;
+                    const data = await apiFetch<AnalyticsResult>(`/jobs/targets/${t.id}/analytics`);
                     setAnalytics(prev => ({ ...prev, [t.id]: data }));
                   } catch {
                     setAnalytics(prev => ({ ...prev, [t.id]: "error" }));
