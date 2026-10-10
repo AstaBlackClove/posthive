@@ -79,7 +79,10 @@ async function refreshIfNeeded(account: Account): Promise<Account> {
   };
   return prisma.account.update({
     where: { id: account.id },
-    data: { credentials: encrypt(JSON.stringify(newCreds)) },
+    data: {
+      credentials: encrypt(JSON.stringify(newCreds)),
+      expiresAt: new Date(newCreds.expiresAt),
+    },
   });
 }
 
