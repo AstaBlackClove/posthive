@@ -1,17 +1,18 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../lib/prisma.js";
-import { withAuth, getUser } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, getWorkspaceId } from "../lib/auth/withAuth.js";
 
 export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
 
   // GET /analytics — aggregated stats from DB cache (no live platform calls)
   app.get("/analytics", { preHandler: [withAuth] }, async (req, reply) => {
-    const { id: userId } = getUser(req);
+    void getUser(req); // auth verified via preHandler
+    const workspaceId = getWorkspaceId(req);
     const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
     const jobs = await prisma.postJob.findMany({
       where: {
-        userId,
+        workspaceId,
         scheduledFor: { gte: cutoff },
         targets: {
           some: {
@@ -22,6 +23,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       orderBy: { scheduledFor: "desc" },
+      take: 500,
       select: {
         id: true,
         scheduledFor: true,
