@@ -1,4 +1,3 @@
-import sharp from "sharp";
 import { BskyAgent } from "@atproto/api";
 import type { AppBskyEmbedImages, AppBskyEmbedExternal, AppBskyEmbedVideo } from "@atproto/api";
 import type { Account } from "@prisma/client";
@@ -53,6 +52,7 @@ async function buildImageEmbed(
       const { data } = await agent.uploadBlob(compressed, { encoding: outMime });
       let aspectRatio: { width: number; height: number } | undefined;
       try {
+        const sharp = (await import("sharp")).default;
         const meta = await sharp(compressed).metadata();
         if (meta.width && meta.height) aspectRatio = { width: meta.width, height: meta.height };
       } catch { /* aspectRatio optional */ }

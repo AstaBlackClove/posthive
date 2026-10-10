@@ -1,5 +1,3 @@
-import sharp from "sharp";
-
 export interface CompressOptions {
   maxBytes: number;   // hard size ceiling for the platform
   maxWidth?: number;  // longest edge cap
@@ -28,6 +26,9 @@ export async function compressForPlatform(
   if (buffer.length <= opts.maxBytes && !opts.maxWidth) {
     return { buffer, mimeType };
   }
+
+  // lazy-load sharp: libvips native lib (~60MB) loads only on first actual upload
+  const sharp = (await import("sharp")).default;
 
   const isGif = mimeType === "image/gif";
 
