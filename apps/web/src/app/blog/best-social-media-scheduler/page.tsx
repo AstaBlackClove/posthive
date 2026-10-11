@@ -7,8 +7,8 @@ const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "The Best Social Media Scheduler in 2026 (Free and Paid)",
-  description: "A no-fluff comparison of the best social media schedulers in 2026. We cover pricing, platform support, key features, and who each tool is actually built for.",
+  headline: "Best Social Media Scheduler 2026 — Free & Paid Picks",
+  description: "Honest comparison of the best social media schedulers in 2026. Free plans, pricing, platform support, and who each tool is actually built for.",
   datePublished: "2026-07-07",
   dateModified: "2026-08-01",
   image: `${WEB_URL}/og/landingogimage.jpg`,
@@ -50,8 +50,8 @@ const faqSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "The Best Social Media Scheduler in 2026 | Posthive",
-  description: "A no-fluff comparison of the best social media schedulers in 2026. Pricing, platform support, key features, and who each tool is built for.",
+  title: "Best Social Media Scheduler 2026 — Free & Paid Picks | Posthive",
+  description: "Honest comparison of the best social media schedulers in 2026. Free plans, pricing, platform support, and who each tool is actually built for.",
   keywords: ["best social media scheduler", "best free social media scheduler", "social media scheduler comparison", "cheapest social media scheduler", "top social media scheduling tools"],
   alternates: { canonical: `${WEB_URL}/blog/best-social-media-scheduler` },
   openGraph: {

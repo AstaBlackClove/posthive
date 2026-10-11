@@ -76,6 +76,7 @@ interface PlatformData {
   color: string;
   headline: string;
   subheadline: string;
+  metaTitle?: string;
   metaDescription?: string;
   supports: { label: string; icon: IconKey }[];
   steps: { n: string; title: string; desc: string }[];
@@ -158,6 +159,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#e1306c",
     headline: "Reels, Stories, and feed posts all scheduled",
     subheadline: "Posthive is one of the few schedulers that supports the full range of Instagram content types. Stop opening the app to post. Set it and forget it.",
+    metaTitle: "Schedule Instagram Posts, Reels & Stories Free | Posthive",
+    metaDescription: "Schedule Instagram feed posts, Reels, Stories, and carousels from one place. Posthive supports the full Instagram content mix — free 14-day trial.",
     supports: [
       { label: "Feed posts (single + carousel)", icon: "image" as IconKey },
       { label: "Instagram Reels", icon: "reel" as IconKey },
@@ -727,11 +730,11 @@ export async function generateMetadata({ params }: { params: Promise<{ platform:
   const data = PLATFORMS[platform];
   if (!data) return {};
   return {
-    title: `${data.name} Scheduler | Posthive`,
+    title: data.metaTitle ?? `${data.name} Scheduler | Posthive`,
     description: data.metaDescription ?? data.subheadline,
     alternates: { canonical: `${WEB_URL}/platforms/${platform}` },
     openGraph: {
-      title: `${data.name} Scheduler | Posthive`,
+      title: data.metaTitle ?? `${data.name} Scheduler | Posthive`,
       description: data.metaDescription ?? data.subheadline,
       url: `${WEB_URL}/platforms/${platform}`,
       images: [
