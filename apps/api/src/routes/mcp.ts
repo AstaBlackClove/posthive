@@ -59,7 +59,7 @@ const TOOLS = [
         },
       },
     },
-    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    annotations: { title: "List Accounts", readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "create_post",
@@ -126,7 +126,7 @@ const TOOLS = [
         _note:       { type: "string" },
       },
     },
-    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    annotations: { title: "Create Post", readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   },
   {
     name: "get_post",
@@ -164,7 +164,7 @@ const TOOLS = [
         },
       },
     },
-    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    annotations: { title: "Get Post", readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "list_scheduled_posts",
@@ -200,7 +200,7 @@ const TOOLS = [
         },
       },
     },
-    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    annotations: { title: "List Scheduled Posts", readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "approve_draft",
@@ -225,7 +225,7 @@ const TOOLS = [
         _note:       { type: "string" },
       },
     },
-    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    annotations: { title: "Approve Draft", readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   },
   {
     name: "update_post",
@@ -255,7 +255,7 @@ const TOOLS = [
         scheduledFor:{ type: ["string", "null"] },
       },
     },
-    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    annotations: { title: "Update Post", readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "duplicate_post",
@@ -278,7 +278,7 @@ const TOOLS = [
         _note:       { type: "string" },
       },
     },
-    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    annotations: { title: "Duplicate Post", readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "delete_post",
@@ -297,7 +297,7 @@ const TOOLS = [
         deleted: { type: "string" },
       },
     },
-    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
+    annotations: { title: "Delete Post", readOnlyHint: false, destructiveHint: true, openWorldHint: false },
   },
   {
     name: "list_templates",
@@ -322,7 +322,7 @@ const TOOLS = [
         },
       },
     },
-    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    annotations: { title: "List Templates", readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   },
   {
     name: "create_from_template",
@@ -361,7 +361,7 @@ const TOOLS = [
         _note:        { type: "string" },
       },
     },
-    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    annotations: { title: "Create from Template", readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   },
 ];
 
