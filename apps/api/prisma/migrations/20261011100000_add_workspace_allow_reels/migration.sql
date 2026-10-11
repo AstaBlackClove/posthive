@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Workspace" ADD COLUMN IF NOT EXISTS "allowReels" BOOLEAN NOT NULL DEFAULT true;
