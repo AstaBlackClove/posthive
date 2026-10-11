@@ -149,18 +149,38 @@ export async function publicApiRoutes(
     const statusFilter = status && (VALID_STATUSES as readonly string[]).includes(status) ? status : undefined;
 
     const take = Math.min(Number(limitStr ?? 20), 100);
+
+    // Decode cursor: "scheduledFor_ISO|id"
+    let cursorFilter = {};
+    if (cursor) {
+      const sep = cursor.lastIndexOf("|");
+      if (sep !== -1) {
+        const cursorDate = cursor.slice(0, sep);
+        const cursorId = cursor.slice(sep + 1);
+        cursorFilter = {
+          OR: [
+            { scheduledFor: { lt: new Date(cursorDate) } },
+            { scheduledFor: new Date(cursorDate), id: { lt: cursorId } },
+          ],
+        };
+      }
+    }
+
     const jobs = await prisma.postJob.findMany({
       where: {
         workspaceId,
         ...(statusFilter ? { status: statusFilter } : {}),
-        ...(cursor ? { id: { lt: cursor } } : {}),
+        ...cursorFilter,
       },
-      orderBy: { scheduledFor: "desc" },
+      orderBy: [{ scheduledFor: "desc" }, { id: "desc" }],
       take,
       include: {
         targets: { select: { id: true, accountId: true, status: true, error: true } },
       },
     });
+
+    const last = jobs.length === take ? jobs[jobs.length - 1] : null;
+    const nextCursor = last?.scheduledFor ? `${last.scheduledFor.toISOString()}|${last.id}` : null;
 
     return reply.send({
       posts: jobs.map((j) => ({
@@ -170,7 +190,7 @@ export async function publicApiRoutes(
         content: JSON.parse(j.content).text,
         targets: j.targets,
       })),
-      nextCursor: jobs.length === take ? jobs[jobs.length - 1].id : null,
+      nextCursor,
     });
   });
 

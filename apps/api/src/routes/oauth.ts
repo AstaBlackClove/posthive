@@ -14,12 +14,14 @@
 
 import crypto from "crypto";
 import type { FastifyInstance } from "fastify";
+import { Redis } from "ioredis";
 import { prisma } from "../lib/prisma.js";
 import { generateApiKey } from "../lib/auth/withApiKey.js";
 import { withAuth, getUser } from "../lib/auth/withAuth.js";
 
-// ─── In-memory code store (5-min TTL) ────────────────────────────────────────
-// OAuth clients are persisted in DB (OAuthClient table) — no restart loss.
+// ─── Redis-backed code store (5-min TTL) ─────────────────────────────────────
+// Uses Redis so codes survive Railway restarts and work across instances.
+// OAuth clients are persisted in DB (OAuthClient table).
 
 interface PendingCode {
   userId: string;
@@ -27,17 +29,24 @@ interface PendingCode {
   codeChallenge: string;
   codeChallengeMethod: string;
   clientName: string;
-  expiresAt: number;
 }
 
-const codeStore = new Map<string, PendingCode>();
+const CODE_TTL_SECONDS = 5 * 60;
 
-setInterval(() => {
-  const now = Date.now();
-  for (const [code, data] of codeStore.entries()) {
-    if (data.expiresAt < now) codeStore.delete(code);
-  }
-}, 60_000).unref();
+const redis = new Redis(process.env.REDIS_URL!, { lazyConnect: true, enableOfflineQueue: false });
+
+async function storeCode(code: string, data: PendingCode): Promise<void> {
+  await redis.set(`oauth:code:${code}`, JSON.stringify(data), "EX", CODE_TTL_SECONDS);
+}
+
+async function getCode(code: string): Promise<PendingCode | null> {
+  const raw = await redis.get(`oauth:code:${code}`);
+  return raw ? (JSON.parse(raw) as PendingCode) : null;
+}
+
+async function deleteCode(code: string): Promise<void> {
+  await redis.del(`oauth:code:${code}`);
+}
 
 function verifyPkce(verifier: string, challenge: string, method: string): boolean {
   if (method !== "S256") return false; // only S256 accepted
@@ -185,13 +194,12 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
     const clientName = registeredClient?.clientName || "MCP connector";
 
     const code = crypto.randomBytes(32).toString("base64url");
-    codeStore.set(code, {
+    await storeCode(code, {
       userId,
       redirectUri: redirect_uri,
       codeChallenge: code_challenge,
       codeChallengeMethod: code_challenge_method ?? "S256",
       clientName,
-      expiresAt: Date.now() + 5 * 60 * 1000,
     });
 
     const callbackUrl = new URL(redirect_uri);
@@ -214,8 +222,8 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: "invalid_request", error_description: "code, code_verifier, and redirect_uri are required" });
     }
 
-    const stored = codeStore.get(code);
-    if (!stored || stored.expiresAt < Date.now()) {
+    const stored = await getCode(code);
+    if (!stored) {
       return reply.status(400).send({ error: "invalid_grant", error_description: "Authorization code expired or invalid" });
     }
     if (stored.redirectUri !== redirect_uri) {
@@ -225,7 +233,7 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: "invalid_grant", error_description: "PKCE verification failed" });
     }
 
-    codeStore.delete(code);
+    await deleteCode(code);
 
     // Issue a new API key scoped to this user + their active workspace
     const { raw, hash, prefix } = generateApiKey();
