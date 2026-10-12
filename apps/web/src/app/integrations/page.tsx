@@ -4,27 +4,113 @@ import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
 
-const inputStyle = {
+const inputStyle: React.CSSProperties = {
   width: "100%",
   backgroundColor: "#0a0a0a",
   border: "1px solid #2a2a2a",
-  borderRadius: 10,
-  padding: "8px 12px",
+  borderRadius: 8,
+  padding: "9px 12px",
   fontSize: 13,
   color: "#ededed",
   outline: "none",
 };
 
-const btnStyle = {
+const btnPrimary: React.CSSProperties = {
   backgroundColor: "#ffffff",
   color: "#0a0a0a",
   border: "none",
-  borderRadius: 10,
-  padding: "8px 18px",
+  borderRadius: 8,
+  padding: "9px 18px",
   fontSize: 13,
   fontWeight: 600,
   cursor: "pointer",
+  whiteSpace: "nowrap",
 };
+
+const btnDanger: React.CSSProperties = {
+  backgroundColor: "#2a1010",
+  color: "#f87171",
+  border: "1px solid #5a2020",
+  borderRadius: 8,
+  padding: "7px 14px",
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
+const PAYLOAD_EXAMPLE = `{
+  "event": "post.published",
+  "postId": "clxyz…",
+  "status": "done",
+  "scheduledFor": "2026-07-04T10:00:00.000Z",
+  "platforms": ["bluesky", "threads"],
+  "text": "Hello world!"
+}`;
+
+function KeyIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+    </svg>
+  );
+}
+
+function WebhookIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </svg>
+  );
+}
+
+function SectionCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      backgroundColor: "#111111",
+      border: "1px solid #2a2a2a",
+      borderRadius: 14,
+      overflow: "hidden",
+    }}>
+      <div style={{ padding: 24 }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <div className="flex items-start gap-3 mb-5">
+      <div style={{ color: "#5b63d3", marginTop: 2, flexShrink: 0 }}>{icon}</div>
+      <div>
+        <h2 style={{ fontSize: 14, fontWeight: 600, color: "#ededed", margin: 0 }}>{title}</h2>
+        <p style={{ fontSize: 12, color: "#888", marginTop: 3 }}>{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function UpgradeGate({ description }: { description: string }) {
+  return (
+    <div style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "16px 18px" }}>
+      <p style={{ fontSize: 13, fontWeight: 600, color: "#ededed", marginBottom: 4 }}>Pro &amp; Team feature</p>
+      <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>{description}</p>
+      <a href="/billing" style={{ display: "inline-block", fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 7, backgroundColor: "#5b63d3", color: "#fff", textDecoration: "none" }}>
+        Upgrade plan
+      </a>
+    </div>
+  );
+}
 
 export default function IntegrationsPage() {
   const { toast } = useToast();
@@ -112,6 +198,7 @@ export default function IntegrationsPage() {
   }
 
   const validWebhookUrl = /^https?:\/\/.+/.test(webhookUrl.trim());
+  const webhookConnected = webhookUrl.trim() && validWebhookUrl;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -119,98 +206,121 @@ export default function IntegrationsPage() {
       <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
         <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Integrations</h1>
-          <p className="text-xs mt-0.5 hidden sm:block" style={{ color: "#aaaaaa" }}>API keys and webhook configuration</p>
+          <p className="text-xs mt-0.5 hidden sm:block" style={{ color: "#888" }}>Connect Posthive to your tools and workflows</p>
         </div>
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-5">
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-4">
 
         {/* API Keys */}
-        <div className="rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-          <div className="mb-5">
-            <h2 className="text-sm font-semibold" style={{ color: "#ededed" }}>API Keys</h2>
-            <p className="text-xs mt-0.5" style={{ color: "#aaaaaa" }}>Create keys to schedule posts programmatically. Pro and Team plans only.</p>
-          </div>
+        <SectionCard>
+          <SectionHeader
+            icon={<KeyIcon />}
+            title="API Keys"
+            description="Schedule and manage posts programmatically. Pro and Team plans only."
+          />
+
           {apiKeysLocked ? (
-            <div className="rounded-xl px-4 py-5 flex flex-col gap-2 items-start" style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a" }}>
-              <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Pro &amp; Team feature</p>
-              <p className="text-xs" style={{ color: "#888" }}>Upgrade to Pro or Team to create API keys and schedule posts programmatically.</p>
-              <a href="/billing" className="mt-1 text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#5b63d3", color: "#fff" }}>Upgrade plan</a>
-            </div>
+            <UpgradeGate description="Upgrade to Pro or Team to create API keys and automate posting." />
           ) : (
             <>
-              <form onSubmit={createApiKey} className="flex gap-2 mb-4">
-                <input
-                  value={newKeyName}
-                  onChange={(e) => setNewKeyName(e.target.value)}
-                  placeholder="Key name (e.g. My Claude agent)"
-                  style={{ ...inputStyle, flex: 1 }}
-                />
-                <button type="submit" disabled={creatingKey || !newKeyName.trim()}
-                  style={{ ...btnStyle, opacity: (creatingKey || !newKeyName.trim()) ? 0.5 : 1, whiteSpace: "nowrap" }}>
-                  {creatingKey ? "Creating…" : "Create key"}
-                </button>
+              <form onSubmit={createApiKey} className="space-y-2 mb-5">
+                <label style={{ fontSize: 12, color: "#888", display: "block", marginBottom: 6 }}>Key name</label>
+                <div className="flex gap-2">
+                  <input
+                    value={newKeyName}
+                    onChange={(e) => setNewKeyName(e.target.value)}
+                    placeholder="e.g. My Claude agent"
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                  <button type="submit" disabled={creatingKey || !newKeyName.trim()}
+                    style={{ ...btnPrimary, opacity: (creatingKey || !newKeyName.trim()) ? 0.45 : 1 }}>
+                    {creatingKey ? "Creating…" : "Create key"}
+                  </button>
+                </div>
               </form>
 
               {newKeyRaw && (
-                <div className="mb-4 rounded-xl p-4" style={{ backgroundColor: "#0d1f0d", border: "1px solid #1a4a1a" }}>
-                  <p className="text-xs font-semibold mb-1" style={{ color: "#4ade80" }}>Copy your key now — it won&apos;t be shown again</p>
-                  <div className="flex items-center gap-2">
-                    <code className="text-xs break-all flex-1" style={{ color: "#a7f3d0", fontFamily: "monospace" }}>{newKeyRaw}</code>
-                    <button onClick={() => { navigator.clipboard.writeText(newKeyRaw); toast("Copied!", "success"); }}
-                      style={{ ...btnStyle, padding: "4px 10px", fontSize: 11, flexShrink: 0 }}>
-                      Copy
+                <div className="mb-5 rounded-xl p-4" style={{ backgroundColor: "#0a1a0a", border: "1px solid #1a3a1a" }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p style={{ fontSize: 12, fontWeight: 600, color: "#4ade80" }}>Copy your key — it won&apos;t be shown again</p>
+                    <button onClick={() => setNewKeyRaw(null)} style={{ fontSize: 11, color: "#555", background: "none", border: "none", cursor: "pointer" }}>Dismiss</button>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1a3a1a" }}>
+                    <code style={{ fontSize: 12, color: "#a7f3d0", fontFamily: "monospace", flex: 1, wordBreak: "break-all" }}>{newKeyRaw}</code>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(newKeyRaw); toast("Copied!", "success"); }}
+                      className="flex items-center gap-1.5 flex-shrink-0"
+                      style={{ ...btnPrimary, padding: "5px 10px", fontSize: 12 }}>
+                      <CopyIcon /> Copy
                     </button>
                   </div>
-                  <button onClick={() => setNewKeyRaw(null)} className="text-xs mt-2" style={{ color: "#888" }}>Dismiss</button>
                 </div>
               )}
 
               {apiKeys.length === 0 ? (
-                <p className="text-xs" style={{ color: "#555" }}>No API keys yet.</p>
+                <div style={{ padding: "20px 0 4px", textAlign: "center" }}>
+                  <p style={{ fontSize: 13, color: "#444", marginBottom: 4 }}>No API keys yet</p>
+                  <p style={{ fontSize: 12, color: "#333" }}>Create a key to start scheduling posts via the REST API or MCP.</p>
+                </div>
               ) : (
-                <div className="space-y-2">
-                  {apiKeys.map((k) => (
-                    <div key={k.id} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3"
-                      style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a" }}>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate" style={{ color: "#ededed" }}>{k.name}</p>
-                        <p className="text-xs" style={{ color: "#555", fontFamily: "monospace" }}>
-                          {k.prefix}… · {k.lastUsedAt ? `last used ${new Date(k.lastUsedAt).toLocaleDateString()}` : "never used"}
-                        </p>
+                <div style={{ borderTop: "1px solid #1e1e1e", paddingTop: 16 }}>
+                  <p style={{ fontSize: 11, color: "#555", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Active keys</p>
+                  <div className="space-y-2">
+                    {apiKeys.map((k) => (
+                      <div key={k.id} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3"
+                        style={{ backgroundColor: "#0a0a0a", border: "1px solid #222" }}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: "#22c55e", flexShrink: 0 }} />
+                          <div className="min-w-0">
+                            <p style={{ fontSize: 13, fontWeight: 500, color: "#ededed", margin: 0 }}>{k.name}</p>
+                            <p style={{ fontSize: 11, color: "#555", fontFamily: "monospace", margin: 0 }}>
+                              {k.prefix}… · {k.lastUsedAt ? `last used ${new Date(k.lastUsedAt).toLocaleDateString()}` : "never used"}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setConfirmRevokeId(k.id)}
+                          disabled={revokingId === k.id}
+                          style={{ ...btnDanger, opacity: revokingId === k.id ? 0.5 : 1, flexShrink: 0 }}>
+                          {revokingId === k.id ? "Revoking…" : "Revoke"}
+                        </button>
                       </div>
-                      <button
-                        onClick={() => setConfirmRevokeId(k.id)}
-                        disabled={revokingId === k.id}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-lg flex-shrink-0"
-                        style={{ backgroundColor: "#2a1010", color: "#f87171", border: "1px solid #5a2020", opacity: revokingId === k.id ? 0.5 : 1 }}>
-                        {revokingId === k.id ? "Revoking…" : "Revoke"}
-                      </button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </>
           )}
-        </div>
+        </SectionCard>
 
         {/* Webhook */}
-        <div className="rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-          <div className="mb-5">
-            <h2 className="text-sm font-semibold" style={{ color: "#ededed" }}>Webhook</h2>
-            <p className="text-xs mt-0.5" style={{ color: "#aaaaaa" }}>Posthive will POST to this URL every time a post is published. Leave blank to disable.</p>
-          </div>
-          {webhookLocked ? (
-            <div className="rounded-xl px-4 py-5 flex flex-col gap-2 items-start" style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a" }}>
-              <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Pro &amp; Team feature</p>
-              <p className="text-xs" style={{ color: "#888" }}>Upgrade to Pro or Team to connect a webhook and integrate with n8n, Zapier, or Make.</p>
-              <a href="/billing" className="mt-1 text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#5b63d3", color: "#fff" }}>Upgrade plan</a>
+        <SectionCard>
+          <div className="flex items-start justify-between mb-5">
+            <div className="flex items-start gap-3">
+              <div style={{ color: "#5b63d3", marginTop: 2, flexShrink: 0 }}><WebhookIcon /></div>
+              <div>
+                <h2 style={{ fontSize: 14, fontWeight: 600, color: "#ededed", margin: 0 }}>Webhook</h2>
+                <p style={{ fontSize: 12, color: "#888", marginTop: 3 }}>Receive a POST request every time a post publishes.</p>
+              </div>
             </div>
+            {!webhookLocked && (
+              <div className="flex items-center gap-1.5 flex-shrink-0 ml-4" style={{ marginTop: 2 }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: webhookConnected ? "#22c55e" : "#333" }} />
+                <span style={{ fontSize: 11, color: webhookConnected ? "#4ade80" : "#555" }}>
+                  {webhookConnected ? "Connected" : "Not connected"}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {webhookLocked ? (
+            <UpgradeGate description="Upgrade to Pro or Team to connect a webhook and integrate with n8n, Zapier, or Make." />
           ) : (
             <form onSubmit={saveWebhook} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaaaaa" }}>Webhook URL</label>
+                <label style={{ fontSize: 12, color: "#888", display: "block", marginBottom: 6 }}>Webhook URL</label>
                 <input
                   type="url"
                   value={webhookUrl}
@@ -222,48 +332,61 @@ export default function IntegrationsPage() {
                   }}
                 />
                 {webhookUrl.trim() && !validWebhookUrl && (
-                  <p className="text-xs mt-1.5" style={{ color: "#ef4444" }}>Invalid URL — must start with http:// or https://</p>
+                  <p style={{ fontSize: 12, color: "#ef4444", marginTop: 6 }}>URL must start with http:// or https://</p>
                 )}
               </div>
-              <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#888" }}>
-                <p className="font-semibold" style={{ color: "#aaa" }}>Payload example</p>
-                <pre className="overflow-x-auto" style={{ fontFamily: "monospace", fontSize: 11, color: "#666" }}>{`{
-  "event": "post.published",
-  "postId": "clxyz…",
-  "status": "done",
-  "scheduledFor": "2026-07-04T10:00:00.000Z",
-  "platforms": ["bluesky", "threads"],
-  "text": "Hello world!"
-}`}</pre>
+
+              {/* Works with */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span style={{ fontSize: 11, color: "#555" }}>Works with</span>
+                {["Zapier", "n8n", "Make"].map((name) => (
+                  <span key={name} style={{ fontSize: 11, color: "#888", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 5, padding: "2px 8px" }}>{name}</span>
+                ))}
               </div>
+
+              {/* Payload example */}
+              <div style={{ backgroundColor: "#0a0a0a", border: "1px solid #222", borderRadius: 10, overflow: "hidden" }}>
+                <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: "1px solid #1e1e1e" }}>
+                  <span style={{ fontSize: 11, color: "#555" }}>Payload example</span>
+                  <button
+                    type="button"
+                    onClick={() => { navigator.clipboard.writeText(PAYLOAD_EXAMPLE); toast("Copied!", "success"); }}
+                    className="flex items-center gap-1"
+                    style={{ fontSize: 11, color: "#555", background: "none", border: "none", cursor: "pointer" }}>
+                    <CopyIcon /> Copy
+                  </button>
+                </div>
+                <pre style={{ fontFamily: "monospace", fontSize: 12, color: "#666", margin: 0, padding: "12px 16px", overflowX: "auto", lineHeight: 1.6 }}>
+                  {PAYLOAD_EXAMPLE}
+                </pre>
+              </div>
+
               <div className="flex justify-between items-center pt-1">
                 {webhookUrl.trim() ? (
                   <button
                     type="button"
                     onClick={() => setConfirmDeleteWebhook(true)}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                    style={{ backgroundColor: "#2a1010", color: "#f87171", border: "1px solid #5a2020" }}
-                  >
+                    style={btnDanger}>
                     Remove webhook
                   </button>
                 ) : <span />}
                 <button type="submit" disabled={webhookLoading || !webhookUrl.trim() || !validWebhookUrl}
-                  style={{ ...btnStyle, opacity: (webhookLoading || !webhookUrl.trim() || !validWebhookUrl) ? 0.5 : 1 }}>
+                  style={{ ...btnPrimary, opacity: (webhookLoading || !webhookUrl.trim() || !validWebhookUrl) ? 0.45 : 1 }}>
                   {webhookLoading ? "Saving…" : "Save webhook"}
                 </button>
               </div>
             </form>
           )}
-        </div>
+        </SectionCard>
       </div>
 
       {/* Remove webhook confirm */}
       {confirmDeleteWebhook && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
           <div className="w-full max-w-sm rounded-2xl p-6 modal-panel" style={{ backgroundColor: "#111111", border: "1px solid #3a1a1a" }}>
-            <h2 className="text-base font-bold mb-1" style={{ color: "#f87171" }}>Remove webhook?</h2>
-            <p className="text-xs mb-5" style={{ color: "#aaaaaa" }}>
-              Posthive will stop sending publish events to your webhook URL. You can re-add it at any time.
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: "#f87171", marginBottom: 6 }}>Remove webhook?</h2>
+            <p style={{ fontSize: 13, color: "#aaaaaa", marginBottom: 20 }}>
+              Posthive will stop sending publish events. You can re-add it at any time.
             </p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmDeleteWebhook(false)}
@@ -272,9 +395,9 @@ export default function IntegrationsPage() {
                 Cancel
               </button>
               <button onClick={deleteWebhook} disabled={webhookLoading}
-                className="flex-1 text-sm font-semibold py-2 rounded-xl transition-opacity"
+                className="flex-1 text-sm font-semibold py-2 rounded-xl"
                 style={{ backgroundColor: "#7f1d1d", color: "#fca5a5", opacity: webhookLoading ? 0.5 : 1 }}>
-                {webhookLoading ? "Removing…" : "Remove webhook"}
+                {webhookLoading ? "Removing…" : "Remove"}
               </button>
             </div>
           </div>
@@ -287,8 +410,8 @@ export default function IntegrationsPage() {
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
             <div className="w-full max-w-sm rounded-2xl p-6 modal-panel" style={{ backgroundColor: "#111111", border: "1px solid #3a1a1a" }}>
-              <h2 className="text-base font-bold mb-1" style={{ color: "#f87171" }}>Revoke API key?</h2>
-              <p className="text-xs mb-5" style={{ color: "#aaaaaa" }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: "#f87171", marginBottom: 6 }}>Revoke API key?</h2>
+              <p style={{ fontSize: 13, color: "#aaaaaa", marginBottom: 20 }}>
                 <strong style={{ color: "#ededed" }}>{key?.name}</strong> (<span style={{ fontFamily: "monospace" }}>{key?.prefix}…</span>) will stop working immediately.
               </p>
               <div className="flex gap-3">

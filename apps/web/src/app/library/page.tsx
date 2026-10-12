@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
+import { PlatformIcon } from "../../components/PlatformIcon";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -10,6 +11,7 @@ interface Account {
   id: string;
   platform: string;
   displayName: string;
+  avatarUrl: string | null;
 }
 
 interface LibraryItem {
@@ -1165,6 +1167,15 @@ function SettingsPanel({ library, accounts, onClose, onSaved, onError, onSuccess
 
 // ── Create / Edit Modal ────────────────────────────────────────────────────
 
+const PLATFORM_BRAND_LIB: Record<string, string> = {
+  bluesky: "#0085ff", threads: "#888888", linkedin: "#0077b5",
+  mastodon: "#6364ff", pixelfed: "#ff8c00", youtube: "#ff0000",
+  facebook: "#1877f2", pinterest: "#e60023", telegram: "#229ED9",
+  nostr: "#8B5CF6", twitter: "#000000", instagram: "#e1306c",
+  tumblr: "#35465c", lemmy: "#ff6314", googlebusiness: "#4285f4",
+  tiktok: "#ff004f", discord: "#5865f2",
+};
+
 function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClose, maxDripPerDay = 50 }: {
   title: string;
   accounts: Account[];
@@ -1175,81 +1186,160 @@ function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClos
   onClose: () => void;
   maxDripPerDay?: number;
 }) {
+  const inputStyle: React.CSSProperties = {
+    width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a",
+    borderRadius: 8, padding: "9px 12px", fontSize: 13, color: "#ededed", outline: "none",
+  };
+  const labelStyle: React.CSSProperties = { fontSize: 12, color: "#888", display: "block", marginBottom: 6 };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
-      <div className="w-full max-w-sm rounded-2xl p-5 overflow-y-auto max-h-[90vh]" style={{ backgroundColor: "#111", border: "1px solid #2a2a2a" }}>
-        <h2 className="text-sm font-bold mb-4" style={{ color: "#ededed" }}>{title}</h2>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
+      onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="w-full max-w-md rounded-2xl flex flex-col" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", maxHeight: "90vh" }}>
 
-        <form onSubmit={onSubmit} className="space-y-3">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "#888" }}>Library name</label>
-            <input autoFocus required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              placeholder="e.g. HTM Facebook Posts"
-              style={{ width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 7, padding: "7px 10px", fontSize: 12, color: "#ededed", outline: "none" }} />
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: 0 }}>{title}</h2>
+            <p style={{ fontSize: 12, color: "#555", marginTop: 2 }}>Configure drip schedule and target accounts</p>
           </div>
+          <button onClick={onClose} style={{ color: "#555", background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1 }} className="hover:text-white transition-colors">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium" style={{ color: "#888" }}>Posts per day</label>
-              <span className="text-xs" style={{ color: "#555" }}>max {maxDripPerDay} on your plan</span>
+        {/* Body */}
+        <form onSubmit={onSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+
+            {/* Library name */}
+            <div>
+              <label style={labelStyle}>Library name</label>
+              <input autoFocus required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="e.g. Facebook Motivational Posts"
+                style={inputStyle} />
             </div>
-            <input type="number" min={1} max={maxDripPerDay} required value={form.postsPerDay} onChange={e => setForm(f => ({ ...f, postsPerDay: Math.min(Number(e.target.value), maxDripPerDay) }))}
-              style={{ width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 7, padding: "7px 10px", fontSize: 12, color: "#ededed", outline: "none" }} />
-          </div>
 
-          <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "#888" }}>Time slots</label>
-            <div className="space-y-2">
-              {form.timeSlots.map((slot, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <input type="time" value={slot} onChange={e => setForm(f => ({ ...f, timeSlots: f.timeSlots.map((s, idx) => idx === i ? e.target.value : s) }))}
-                    style={{ flex: 1, backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 7, padding: "6px 8px", fontSize: 12, color: "#ededed", outline: "none" }} />
-                  {form.timeSlots.length > 1 && (
-                    <button type="button" onClick={() => setForm(f => ({ ...f, timeSlots: f.timeSlots.filter((_, idx) => idx !== i) }))}
-                      style={{ color: "#555", background: "none", border: "none", cursor: "pointer", fontSize: 16 }}>×</button>
-                  )}
+            {/* Posts per day + Time slots side by side */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label style={{ ...labelStyle, marginBottom: 0 }}>Posts per day</label>
+                  <span style={{ fontSize: 11, color: "#555" }}>max {maxDripPerDay}</span>
                 </div>
-              ))}
-              <button type="button" onClick={() => setForm(f => ({ ...f, timeSlots: [...f.timeSlots, "12:00"] }))}
-                className="text-xs hover:text-white transition-colors" style={{ color: "#555" }}>+ Add slot</button>
+                <input type="number" min={1} max={maxDripPerDay} required value={form.postsPerDay}
+                  onChange={e => setForm(f => ({ ...f, postsPerDay: Math.min(Number(e.target.value), maxDripPerDay) }))}
+                  style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Timezone</label>
+                <input value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} placeholder="UTC"
+                  style={inputStyle} />
+              </div>
+            </div>
+
+            {/* Time slots */}
+            <div>
+              <label style={labelStyle}>Time slots</label>
+              <div className="space-y-2">
+                {form.timeSlots.map((slot, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input type="time" value={slot}
+                      onChange={e => setForm(f => ({ ...f, timeSlots: f.timeSlots.map((s, idx) => idx === i ? e.target.value : s) }))}
+                      style={{ ...inputStyle, flex: 1, width: "auto" }} />
+                    {form.timeSlots.length > 1 && (
+                      <button type="button"
+                        onClick={() => setForm(f => ({ ...f, timeSlots: f.timeSlots.filter((_, idx) => idx !== i) }))}
+                        style={{ color: "#555", background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 18, lineHeight: 1 }}
+                        className="hover:text-white transition-colors">×</button>
+                    )}
+                  </div>
+                ))}
+                <button type="button"
+                  onClick={() => setForm(f => ({ ...f, timeSlots: [...f.timeSlots, "12:00"] }))}
+                  style={{ fontSize: 12, color: "#5b63d3", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  className="hover:opacity-80 transition-opacity">
+                  + Add slot
+                </button>
+              </div>
+            </div>
+
+            {/* Accounts */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label style={{ ...labelStyle, marginBottom: 0 }}>Accounts</label>
+                {form.accountIds.length > 0 && (
+                  <span style={{ fontSize: 11, color: "#5b63d3" }}>{form.accountIds.length} selected</span>
+                )}
+              </div>
+              {accounts.length === 0 ? (
+                <p style={{ fontSize: 12, color: "#555" }}>No accounts. <a href="/accounts" style={{ color: "#818cf8" }}>Connect one first.</a></p>
+              ) : (
+                <div className="space-y-1.5">
+                  {accounts.map(a => {
+                    const checked = form.accountIds.includes(a.id);
+                    const color = PLATFORM_BRAND_LIB[a.platform] ?? "#6b7280";
+                    const platformLabel = a.platform.charAt(0).toUpperCase() + a.platform.slice(1);
+                    return (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, accountIds: checked ? f.accountIds.filter(id => id !== a.id) : [...f.accountIds, a.id] }))}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left"
+                        style={checked ? {
+                          background: color + "12",
+                          border: `1px solid ${color}40`,
+                        } : {
+                          background: "#0a0a0a",
+                          border: "1px solid #222",
+                        }}
+                      >
+                        {/* Avatar with platform badge */}
+                        <div className="relative flex-shrink-0">
+                          {a.avatarUrl
+                            // eslint-disable-next-line @next/next/no-img-element
+                            ? <img src={a.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                            : (
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                                style={{ backgroundColor: color + "20", border: `1px solid ${color}30` }}>
+                                <PlatformIcon platform={a.platform} size={16} />
+                              </div>
+                            )}
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a" }}>
+                            <PlatformIcon platform={a.platform} size={10} />
+                          </div>
+                        </div>
+                        {/* Name + platform */}
+                        <div className="flex-1 min-w-0">
+                          <p style={{ fontSize: 13, fontWeight: 500, color: "#ededed", margin: 0 }} className="truncate">{a.displayName}</p>
+                          <p style={{ fontSize: 11, color: checked ? color : "#555", margin: 0 }}>{platformLabel}</p>
+                        </div>
+                        {/* Checkmark */}
+                        {checked && (
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke={color} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "#888" }}>Timezone</label>
-            <input value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} placeholder="UTC"
-              style={{ width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 7, padding: "7px 10px", fontSize: 12, color: "#ededed", outline: "none" }} />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "#888" }}>Accounts</label>
-            {accounts.length === 0 ? (
-              <p className="text-xs" style={{ color: "#555" }}>No accounts. <a href="/accounts" style={{ color: "#818cf8" }}>Connect one first.</a></p>
-            ) : (
-              <div className="space-y-1 max-h-36 overflow-y-auto rounded-lg p-1" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e" }}>
-                {accounts.map(a => {
-                  const checked = form.accountIds.includes(a.id);
-                  return (
-                    <label key={a.id} className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/5 transition-colors">
-                      <input type="checkbox" checked={checked}
-                        onChange={() => setForm(f => ({ ...f, accountIds: checked ? f.accountIds.filter(id => id !== a.id) : [...f.accountIds, a.id] }))}
-                        style={{ accentColor: "#818cf8" }} />
-                      <span style={{ fontSize: 12, color: "#ccc" }}>{a.displayName}</span>
-                      <span style={{ fontSize: 10, color: "#444", marginLeft: "auto" }}>{a.platform}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="flex gap-2 pt-1">
+          {/* Footer */}
+          <div className="flex gap-2 px-5 py-4 shrink-0" style={{ borderTop: "1px solid #2a2a2a" }}>
             <button type="button" onClick={onClose}
-              style={{ flex: 1, padding: "8px", borderRadius: 8, fontSize: 12, fontWeight: 600, backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a", cursor: "pointer" }}>
+              style={{ flex: 1, padding: "9px", borderRadius: 8, fontSize: 13, fontWeight: 600, backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a", cursor: "pointer" }}>
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              style={{ flex: 1, padding: "8px", borderRadius: 8, fontSize: 12, fontWeight: 600, backgroundColor: "#fff", color: "#0a0a0a", border: "none", cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}>
+              style={{ flex: 1, padding: "9px", borderRadius: 8, fontSize: 13, fontWeight: 600, backgroundColor: "#fff", color: "#0a0a0a", border: "none", cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}>
               {saving ? "Saving…" : "Create library"}
             </button>
           </div>

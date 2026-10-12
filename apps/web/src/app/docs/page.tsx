@@ -726,13 +726,6 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               <p className="doc-p">
                 On a successful connection, Posthive exchanges your short-lived token (1 hour) for a <strong>long-lived token (60 days)</strong> that is automatically refreshed in the background — you should never need to reconnect.
               </p>
-              <div className="doc-warn">
-                <strong>Known Meta API bug — "Unsupported request - method type: get" (code 100):</strong> A subset of Instagram accounts trigger this error during the long-lived token exchange, regardless of HTTP method or request parameters. This is a server-side bug on Meta&apos;s end (<a className="doc-a" href="https://developers.facebook.com/community/threads/1134548274667597/" target="_blank" rel="noreferrer">reported on Meta&apos;s developer forum</a>, status: unresolved).
-                <br /><br />
-                <strong>What happens:</strong> The connection still succeeds, but the token expires in ~1 hour instead of 60 days. The Accounts page will show an amber warning banner on the affected account. Scheduled posts will fail after the token expires.
-                <br /><br />
-                <strong>Workaround:</strong> Disconnect and reconnect the account — occasionally the exchange succeeds on a retry. If the warning banner reappears after reconnecting, the account is still affected by the Meta bug and there is no further action you can take until Meta resolves it on their end.
-              </div>
 
               {/* ── LinkedIn ── */}
               <h3 className="doc-h2" id="linkedin">LinkedIn</h3>
@@ -834,9 +827,6 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"`}</CopyCode>
               <p className="doc-p">
                 Posthive publishes <strong>Pins</strong> to Pinterest using the Pinterest API v5. Every Pinterest post requires an image — Pinterest is a visual platform and rejects posts without one.
               </p>
-              <div className="doc-warn">
-                <strong>Trial access only:</strong> Pinterest Standard access (required for production posting) requires approval from Pinterest. Until approved, Posthive connects to the Pinterest sandbox environment. The connect button on the Accounts page shows <em>Pending Approval</em> and is disabled until Standard access is granted. See below for what to do once approved.
-              </div>
               <h4 className="doc-h3">How it works</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><strong>Title</strong> — first line of your post text (max 100 chars).</li>
@@ -1738,6 +1728,32 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
                 </table>
               </div>
 
+              <h4 className="doc-h3" id="mcp-rate-limits">Rate limits</h4>
+              <p className="doc-p">The MCP endpoints are rate-limited to protect the service:</p>
+              <div style={{ overflowX: "auto", margin: "12px 0 24px" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #1e1e1e" }}>
+                      {["Endpoint", "Limit"].map(h => (
+                        <th key={h} style={{ textAlign: "left", padding: "8px 12px", color: "#666", fontWeight: 600, fontSize: 11, letterSpacing: ".06em" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ["POST /mcp (Bearer auth)", "60 requests / minute"],
+                      ["POST /mcp/:apiKey (key in URL)", "60 requests / minute"],
+                      ["POST /oauth/register", "10 registrations / minute per IP"],
+                    ].map(([endpoint, limit]) => (
+                      <tr key={endpoint} style={{ borderBottom: "1px solid #111" }}>
+                        <td style={{ padding: "10px 12px" }}><span className="doc-inline-code">{endpoint}</span></td>
+                        <td style={{ padding: "10px 12px", color: "#888" }}>{limit}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
               <h4 className="doc-h3" id="mcp-install">Sign in (recommended)</h4>
               <p className="doc-p">
                 Sign in once via your browser — no API key to generate, copy, or paste. This works for both the CLI and the MCP server, since they share the same stored login:
@@ -1808,6 +1824,12 @@ url = "https://api.posthive.co/mcp"`}</CopyCode>
               </div>
 
               <h4 className="doc-h3" id="mcp-claudeai">Hosted app connectors</h4>
+              <p className="doc-p">
+                Claude.ai, ChatGPT, and other hosted AI clients connect via the full OAuth 2.0 + PKCE flow. These clients are auto-registered on first use — you do not need to pre-register them via <span className="doc-inline-code">/oauth/register</span>. Specifically, redirect URIs from <span className="doc-inline-code">claude.ai</span>, <span className="doc-inline-code">chatgpt.com</span>, and <span className="doc-inline-code">chat.openai.com</span> are trusted automatically.
+              </p>
+              <p className="doc-p">
+                To disconnect, revoke the connector from the AI client&apos;s settings. This calls <span className="doc-inline-code">POST /oauth/revoke</span> with your token, which immediately invalidates the API key that was issued for that session.
+              </p>
               <DocsMcpConnectorTabs />
 
               <h4 className="doc-h3" id="mcp-url-key">Manual API key in URL (fallback)</h4>
@@ -1856,7 +1878,7 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
                   <tbody>
                     {[
                       ["list_accounts", "List all connected social accounts and their IDs", "—"],
-                      ["create_post", "Create a post (draft by default — nothing publishes without approval)", "content, account_ids, schedule_directly, scheduled_time, per_account, first_comment"],
+                      ["create_post", "Create a post (draft by default — nothing publishes without approval)", "content, account_ids, schedule_directly, scheduled_time, per_account, first_comment, dry_run"],
                       ["get_post", "Get full details + per-platform publish status for a single post", "post_id"],
                       ["list_scheduled_posts", "List queue — filter by status, limit results", "status, limit"],
                       ["approve_draft", "Promote a draft to scheduled — closes the agent → review → publish loop", "post_id, scheduled_time"],
@@ -1864,7 +1886,7 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
                       ["duplicate_post", "Clone any post as a new draft", "post_id"],
                       ["delete_post", "Delete a pending or draft post", "post_id"],
                       ["list_templates", "List saved post templates", "—"],
-                      ["create_from_template", "Draft or schedule a post from a saved template (with optional overrides)", "template_id, account_ids, content_override, schedule_directly, scheduled_time"],
+                      ["create_from_template", "Draft or schedule a post from a saved template (with optional overrides)", "template_id, account_ids, content_override, first_comment_override, schedule_directly, scheduled_time"],
                     ].map(([tool, desc, params]) => (
                       <tr key={tool} style={{ borderBottom: "1px solid #111" }}>
                         <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }}><span className="doc-inline-code">{tool}</span></td>
@@ -1875,6 +1897,9 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
                   </tbody>
                 </table>
               </div>
+
+              <h4 className="doc-h3" id="mcp-dry-run">Testing without publishing</h4>
+              <p className="doc-p">Pass <span className="doc-inline-code">dry_run: true</span> to <span className="doc-inline-code">create_post</span> to run the full pipeline — validation, target resolution, content parsing — without making any real API calls to social platforms. Useful for verifying your agent&apos;s post logic before going live.</p>
 
               <h4 className="doc-h3" id="mcp-media">Media, video types & platform formats</h4>
               <p className="doc-p">The <span className="doc-inline-code">create_post</span> tool supports images, videos, and platform-specific formats via three optional fields:</p>

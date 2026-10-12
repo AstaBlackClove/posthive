@@ -11,14 +11,20 @@ import type { ReactNode } from "react";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TIMEZONES: string[] = (Intl as any).supportedValuesOf("timeZone");
 
-function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+function Section({ title, description, icon, children }: { title: string; description?: string; icon: ReactNode; children: ReactNode }) {
   return (
-    <div className="rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-      <div className="mb-5">
-        <h2 className="text-sm font-semibold" style={{ color: "#ededed" }}>{title}</h2>
-        {description && <p className="text-xs mt-0.5" style={{ color: "#aaaaaa" }}>{description}</p>}
+    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+      <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: "#5b63d315", border: "1px solid #5b63d330" }}>
+          {icon}
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold" style={{ color: "#ededed" }}>{title}</h2>
+          {description && <p className="text-xs mt-0.5" style={{ color: "#555" }}>{description}</p>}
+        </div>
       </div>
-      {children}
+      <div className="p-5">{children}</div>
     </div>
   );
 }
@@ -26,7 +32,7 @@ function Section({ title, description, children }: { title: string; description?
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaaaaa" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "#888" }}>{label}</label>
       {children}
     </div>
   );
@@ -37,7 +43,7 @@ const inputStyle = {
   backgroundColor: "#0a0a0a",
   border: "1px solid #2a2a2a",
   borderRadius: 10,
-  padding: "8px 12px",
+  padding: "9px 12px",
   fontSize: 13,
   color: "#ededed",
   outline: "none",
@@ -162,13 +168,21 @@ export default function SettingsPage() {
 
         {/* Top row: Profile + Password */}
         <div className={`grid grid-cols-1 gap-5 ${user?.hasPassword ? "md:grid-cols-2" : ""}`}>
-          <Section title="Profile" description="Update your display name and email address.">
+          <Section
+            title="Profile"
+            description="Update your display name and email address"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            }
+          >
             <form onSubmit={saveProfile} className="space-y-4">
               <Field label="Name">
                 <input value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} placeholder="Your name" />
               </Field>
               <Field label="Email">
-                <input type="email" value={email} disabled style={{ ...inputStyle, opacity: 0.5, cursor: "not-allowed" }} />
+                <input type="email" value={email} disabled style={{ ...inputStyle, opacity: 0.4, cursor: "not-allowed" }} />
               </Field>
               <Field label="Timezone">
                 <select value={timezone} onChange={(e) => setTimezone(e.target.value)} style={inputStyle}>
@@ -186,7 +200,15 @@ export default function SettingsPage() {
           </Section>
 
           {user?.hasPassword && (
-            <Section title="Password" description="Choose a strong password at least 8 characters.">
+            <Section
+              title="Password"
+              description="Choose a strong password, at least 8 characters"
+              icon={
+                <svg className="w-4 h-4" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+              }
+            >
               <form onSubmit={changePassword} className="space-y-4">
                 <Field label="Current password">
                   <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} style={inputStyle} placeholder="••••••••" />
@@ -209,72 +231,86 @@ export default function SettingsPage() {
         </div>
 
         {/* Danger zone */}
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold px-1" style={{ color: "#ededed" }}>Danger zone</h2>
+        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+          {/* Section header */}
+          <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: "#f8717115", border: "1px solid #f8717130" }}>
+              <svg className="w-4 h-4" fill="none" stroke="#f87171" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold" style={{ color: "#f87171" }}>Danger zone</h2>
+              <p className="text-xs mt-0.5" style={{ color: "#555" }}>Irreversible actions proceed with caution</p>
+            </div>
+          </div>
 
-          {user?.role === "owner" ? (() => {
-            const isLastWorkspace = workspaces.filter((w) => w.role === "owner").length <= 1;
-            return (
-              <div className="rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                style={{ backgroundColor: "#111111", border: "1px solid #5a2020" }}>
-                <div>
-                  <p className="text-sm font-medium" style={{ color: "#ededed" }}>Delete workspace</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#aaaaaa" }}>
-                    Permanently delete <strong style={{ color: "#ededed" }}>{activeWorkspace?.name}</strong> and all its accounts, posts, and members. Cannot be undone.
+          <div>
+            {user?.role === "owner" ? (() => {
+              const isLastWorkspace = workspaces.filter((w) => w.role === "owner").length <= 1;
+              return (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium" style={{ color: "#ededed" }}>Delete workspace</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#555" }}>
+                      Permanently delete <strong style={{ color: "#aaa" }}>{activeWorkspace?.name}</strong> and all its accounts, posts, and members.
+                    </p>
+                    {isLastWorkspace && (
+                      <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: "#f87171" }}>
+                        <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>
+                        Cannot delete your only workspace
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowDeleteWorkspace(true)}
+                    disabled={isLastWorkspace}
+                    className="text-xs font-semibold px-4 py-2 rounded-xl flex-shrink-0 self-start transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: "#f8717112", color: "#f87171", border: "1px solid #f8717130" }}>
+                    Delete workspace
+                  </button>
+                </div>
+              );
+            })() : (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium" style={{ color: "#ededed" }}>Leave workspace</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#555" }}>
+                    Remove yourself from <strong style={{ color: "#aaa" }}> {activeWorkspace?.name} </strong>. You will lose access immediately.
                   </p>
-                  {isLastWorkspace && (
-                    <p className="text-xs mt-1.5" style={{ color: "#f87171" }}>You cannot delete your only workspace.</p>
-                  )}
                 </div>
                 <button
-                  onClick={() => setShowDeleteWorkspace(true)}
-                  disabled={isLastWorkspace}
-                  className="text-xs font-semibold px-4 py-2 rounded-xl flex-shrink-0 self-start transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: "#2a1010", color: "#f87171", border: "1px solid #5a2020" }}>
-                  Delete workspace
+                  onClick={async () => {
+                    if (!activeWorkspace) return;
+                    if (!confirm(`Leave ${activeWorkspace.name}? You will lose access immediately.`)) return;
+                    try {
+                      await apiFetch(`/workspaces/${activeWorkspace.id}/leave`, { method: "DELETE" });
+                      window.location.href = "/compose";
+                    } catch (err) {
+                      toast(err instanceof Error ? err.message : "Failed to leave workspace", "error");
+                    }
+                  }}
+                  className="text-xs font-semibold px-4 py-2 rounded-xl flex-shrink-0 self-start"
+                  style={{ backgroundColor: "#f8717112", color: "#f87171", border: "1px solid #f8717130" }}>
+                  Leave workspace
                 </button>
               </div>
-            );
-          })() : (
-            <div className="rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              style={{ backgroundColor: "#111111", border: "1px solid #5a2020" }}>
-              <div>
-                <p className="text-sm font-medium" style={{ color: "#ededed" }}>Leave workspace</p>
-                <p className="text-xs mt-0.5" style={{ color: "#aaaaaa" }}>
-                  Remove yourself from <strong style={{ color: "#ededed" }}>{activeWorkspace?.name}</strong>. You will lose access immediately.
+            )}
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4" style={{ borderTop: "1px solid #1e1e1e" }}>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium" style={{ color: "#ededed" }}>Delete account</p>
+                <p className="text-xs mt-0.5" style={{ color: "#555" }}>
+                  Permanently delete your account and all scheduled posts. Cannot be undone.
                 </p>
               </div>
-              <button
-                onClick={async () => {
-                  if (!activeWorkspace) return;
-                  if (!confirm(`Leave ${activeWorkspace.name}? You will lose access immediately.`)) return;
-                  try {
-                    await apiFetch(`/workspaces/${activeWorkspace.id}/leave`, { method: "DELETE" });
-                    window.location.href = "/compose";
-                  } catch (err) {
-                    toast(err instanceof Error ? err.message : "Failed to leave workspace", "error");
-                  }
-                }}
+              <button onClick={() => setShowDelete(true)}
                 className="text-xs font-semibold px-4 py-2 rounded-xl flex-shrink-0 self-start"
-                style={{ backgroundColor: "#2a1010", color: "#f87171", border: "1px solid #5a2020" }}>
-                Leave workspace
+                style={{ backgroundColor: "#7f1d1d", color: "#fca5a5", border: "1px solid #991b1b" }}>
+                Delete account
               </button>
             </div>
-          )}
-
-          <div className="rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            style={{ backgroundColor: "#111111", border: "1px solid #5a2020" }}>
-            <div>
-              <p className="text-sm font-medium" style={{ color: "#ededed" }}>Delete account</p>
-              <p className="text-xs mt-0.5" style={{ color: "#aaaaaa" }}>
-                Permanently delete your account and all scheduled posts. This cannot be undone.
-              </p>
-            </div>
-            <button onClick={() => setShowDelete(true)}
-              className="text-xs font-semibold px-4 py-2 rounded-xl flex-shrink-0 self-start"
-              style={{ backgroundColor: "#2a1010", color: "#f87171", border: "1px solid #5a2020" }}>
-              Delete account
-            </button>
           </div>
         </div>
       </div>

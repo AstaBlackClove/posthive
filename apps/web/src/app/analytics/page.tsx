@@ -198,9 +198,10 @@ export default function AnalyticsPage() {
 
   /* totals */
   let likes = 0, reposts = 0, replies = 0, views = 0;
+  let hasViews = false;
   for (const g of visibleGroups) for (const t of g.targets) {
     likes += t.likes; reposts += t.reposts; replies += t.replies;
-    if (t.views != null) views += t.views;
+    if (t.views != null) { views += t.views; hasViews = true; }
   }
 
   /* chart data */
@@ -281,11 +282,11 @@ export default function AnalyticsPage() {
         ) : (
           <>
             {/* Tiles */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className={`grid grid-cols-2 gap-4 ${hasViews ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
               <Tile label="Total Likes" value={numFmt(likes)} sub={`${visibleGroups.length} post${visibleGroups.length !== 1 ? "s" : ""}`} />
               <Tile label="Reposts" value={numFmt(reposts)} />
               <Tile label="Replies" value={numFmt(replies)} />
-              <Tile label="Views" value={numFmt(views)} sub="Instagram shows reach (unique viewers)" />
+              {hasViews && <Tile label="Views" value={numFmt(views)} sub="Instagram shows reach (unique viewers)" />}
               <Tile label="Posts Tracked" value={data?.totals.posts ?? 0} sub="synced every 6h" />
             </div>
 
@@ -355,56 +356,63 @@ export default function AnalyticsPage() {
             <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
               <div className="overflow-x-auto">
               <div style={{ minWidth: 580 }}>
-              <div
-                className="grid text-xs font-semibold uppercase tracking-wide px-5 py-3"
-                style={{
-                  gridTemplateColumns: "1fr 100px 70px 70px 70px 70px 80px",
-                  backgroundColor: "#0e0e0e",
-                  borderBottom: "1px solid #2a2a2a",
-                  color: "#555",
-                }}
-              >
-                <span>Top Posts · by engagement</span>
-                <span>Platforms</span>
-                <span className="text-right">Likes</span>
-                <span className="text-right">Reposts</span>
-                <span className="text-right">Replies</span>
-                <span className="text-right">Views</span>
-                <span className="text-right">Posted</span>
-              </div>
+              {(() => {
+                const cols = hasViews ? "1fr 100px 70px 70px 70px 70px 80px" : "1fr 100px 70px 70px 70px 80px";
+                return (
+                  <>
+                  <div
+                    className="grid text-xs font-semibold uppercase tracking-wide px-5 py-3"
+                    style={{
+                      gridTemplateColumns: cols,
+                      backgroundColor: "#0e0e0e",
+                      borderBottom: "1px solid #2a2a2a",
+                      color: "#555",
+                    }}
+                  >
+                    <span>Top Posts · by engagement</span>
+                    <span>Platforms</span>
+                    <span className="text-right">Likes</span>
+                    <span className="text-right">Reposts</span>
+                    <span className="text-right">Replies</span>
+                    {hasViews && <span className="text-right">Views</span>}
+                    <span className="text-right">Posted</span>
+                  </div>
 
-              {topGroups.length === 0 ? (
-                <div className="px-5 py-10 text-center text-sm" style={{ color: "#555" }}>No posts yet.</div>
-              ) : (
-                topGroups.map((group, i) => {
-                  const multi = group.targets.length > 1;
-                  return (
-                    <div
-                      key={group.jobId}
-                      className="grid px-5 py-4"
-                      style={{
-                        gridTemplateColumns: "1fr 100px 70px 70px 70px 70px 80px",
-                        borderBottom: i < topGroups.length - 1 ? "1px solid #1e1e1e" : "none",
-                        alignItems: multi ? "start" : "center",
-                      }}
-                    >
-                      <div className="min-w-0 pr-4 pt-0.5 overflow-hidden">
-                        <span className="text-sm block truncate" title={group.text} style={{ color: group.text ? "#ccc" : "#444" }}>
-                          {group.text ? excerpt(group.text) : "(no text)"}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1 pt-0.5">
-                        {group.targets.map((t) => <PlatformIcon key={t.targetId} platform={t.platform} size={15} />)}
-                      </div>
-                      <StatCell targets={group.targets} statKey="likes" />
-                      <StatCell targets={group.targets} statKey="reposts" />
-                      <StatCell targets={group.targets} statKey="replies" />
-                      <StatCell targets={group.targets} statKey="views" />
-                      <span className="text-xs text-right pt-0.5" style={{ color: "#555" }}>{relDate(group.scheduledFor)}</span>
-                    </div>
-                  );
-                })
-              )}
+                  {topGroups.length === 0 ? (
+                    <div className="px-5 py-10 text-center text-sm" style={{ color: "#555" }}>No posts yet.</div>
+                  ) : (
+                    topGroups.map((group, i) => {
+                      const multi = group.targets.length > 1;
+                      return (
+                        <div
+                          key={group.jobId}
+                          className="grid px-5 py-4"
+                          style={{
+                            gridTemplateColumns: cols,
+                            borderBottom: i < topGroups.length - 1 ? "1px solid #1e1e1e" : "none",
+                            alignItems: multi ? "start" : "center",
+                          }}
+                        >
+                          <div className="min-w-0 pr-4 pt-0.5 overflow-hidden">
+                            <span className="text-sm block truncate" title={group.text} style={{ color: group.text ? "#ccc" : "#444" }}>
+                              {group.text ? excerpt(group.text) : "(no text)"}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1 pt-0.5">
+                            {group.targets.map((t) => <PlatformIcon key={t.targetId} platform={t.platform} size={15} />)}
+                          </div>
+                          <StatCell targets={group.targets} statKey="likes" />
+                          <StatCell targets={group.targets} statKey="reposts" />
+                          <StatCell targets={group.targets} statKey="replies" />
+                          {hasViews && <StatCell targets={group.targets} statKey="views" />}
+                          <span className="text-xs text-right pt-0.5" style={{ color: "#555" }}>{relDate(group.scheduledFor)}</span>
+                        </div>
+                      );
+                    })
+                  )}
+                  </>
+                );
+              })()}
 
               </div>{/* end minWidth */}
               </div>{/* end overflow-x-auto */}

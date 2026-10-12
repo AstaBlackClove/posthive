@@ -24,7 +24,10 @@ const PLATFORM_BRAND: Record<string, string> = {
 
 function brandColor(platform: string) {
   const b = PLATFORM_BRAND[platform] ?? "#6b7280";
-  return b === "#010101" || b === "#000000" ? "#ff004f" : b;
+  // near-black brands invisible on dark bg → use visible substitute
+  if (b === "#010101" || b === "#000000") return "#ff004f"; // tiktok
+  if (b === "#1a1a1a") return "#ededed"; // threads
+  return b;
 }
 
 interface Account {
@@ -278,35 +281,34 @@ export default function GroupsPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: BG, color: TEXT }}>
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
-      <div className="max-w-2xl mx-auto">
 
-        {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <h1 className="text-xl font-bold mb-1" style={{ color: TEXT }}>Account Groups</h1>
-            <p className="text-sm" style={{ color: MUTED }}>
-              Group accounts to select them all at once in{" "}
-              <Link href="/compose" className="underline" style={{ color: ACCENT }}>Compose</Link>.
-            </p>
-          </div>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 flex-shrink-0"
-            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            New group
-          </button>
+      {/* Header */}
+      <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center justify-between" style={{ height: 65, borderBottom: `1px solid ${BORDER}` }}>
+        <div className="min-w-0">
+          <h1 className="text-lg font-bold" style={{ color: TEXT }}>Account Groups</h1>
+          <p className="text-xs mt-0.5 hidden sm:block" style={{ color: MUTED }}>
+            Group accounts to select them all at once in{" "}
+            <Link href="/compose" className="underline" style={{ color: ACCENT }}>Compose</Link>.
+          </p>
         </div>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 flex-shrink-0"
+          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          New group
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
+      <div>
 
         {/* Empty state */}
         {!loading && groups.length === 0 && (
           <div className="text-center py-16">
-            <svg className="w-10 h-10 mx-auto mb-4 opacity-20" fill="none" stroke={TEXT} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <svg className="w-10 h-10 mx-auto mb-4 opacity-20" fill="none" stroke={TEXT} viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/><rect x="14" y="3" width="7" height="7" rx="1.5" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/><rect x="3" y="14" width="7" height="7" rx="1.5" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/><rect x="14" y="14" width="7" height="7" rx="1.5" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/></svg>
             <p className="text-sm mb-4" style={{ color: MUTED }}>No groups yet.</p>
             <button
               onClick={() => setShowCreate(true)}
@@ -323,46 +325,92 @@ export default function GroupsPage() {
             const memberCount = group.accountIds.filter(id => accounts.some(a => a.id === id)).length;
             const memberAccounts = accounts.filter(a => group.accountIds.includes(a.id));
             return (
-              <div key={group.id} className="rounded-2xl px-4 py-3"
+              <div key={group.id} className="rounded-2xl p-4"
                 style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
-                {/* Top row: icon + name + actions */}
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke={ACCENT} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <p className="text-sm font-semibold flex-1 min-w-0 truncate" style={{ color: TEXT }}>{group.name}</p>
-                  <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: "#1a1a1a", color: MUTED, border: `1px solid ${BORDER}` }}>
-                    {memberCount}
-                  </span>
-                  <button
-                    onClick={() => setEditingGroup(group)}
-                    className="text-xs flex-shrink-0 transition-colors hover:opacity-80"
-                    style={{ color: MUTED }}>
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setDeletingGroup(group)}
-                    className="text-xs flex-shrink-0 transition-colors hover:opacity-80"
-                    style={{ color: "#ef4444" }}>
-                    Delete
-                  </button>
+                {/* Top row */}
+                <div className="flex items-center gap-3">
+                  {/* Group icon */}
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: ACCENT + "18", border: `1px solid ${ACCENT}30` }}>
+                    <svg className="w-4 h-4" fill="none" stroke={ACCENT} viewBox="0 0 24 24">
+                      <rect x="3" y="3" width="7" height="7" rx="1.5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                      <rect x="14" y="3" width="7" height="7" rx="1.5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                      <rect x="3" y="14" width="7" height="7" rx="1.5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                      <rect x="14" y="14" width="7" height="7" rx="1.5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  {/* Name + count */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate" style={{ color: TEXT }}>{group.name}</p>
+                    <p className="text-xs" style={{ color: MUTED }}>{memberCount} account{memberCount !== 1 ? "s" : ""}</p>
+                  </div>
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => setEditingGroup(group)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
+                      style={{ backgroundColor: "#1a1a1a", color: MUTED, border: `1px solid ${BORDER}` }}>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                      </svg>
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setDeletingGroup(group)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
+                      style={{ backgroundColor: "#ef444410", color: "#ef4444", border: "1px solid #ef444430" }}>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                      Delete
+                    </button>
+                  </div>
                 </div>
-                {/* Member chips */}
+                {/* Member avatars */}
                 {memberAccounts.length > 0 ? (
-                  <div className="flex flex-wrap gap-1 mt-2 ml-6">
-                    {memberAccounts.slice(0, 6).map(a => (
-                      <span key={a.id} className="text-xs px-1.5 py-0.5 rounded-md"
-                        style={{ backgroundColor: brandColor(a.platform) + "18", color: brandColor(a.platform), border: `1px solid ${brandColor(a.platform)}30` }}>
-                        {a.displayName}
-                      </span>
-                    ))}
-                    {memberCount > 6 && (
-                      <span className="text-xs" style={{ color: MUTED }}>+{memberCount - 6} more</span>
-                    )}
+                  <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: `1px solid ${BORDER}` }}>
+                    <div className="flex -space-x-2">
+                      {memberAccounts.slice(0, 8).map(a => {
+                        const color = brandColor(a.platform);
+                        return (
+                          <div key={a.id} className="relative w-7 h-7 rounded-full flex-shrink-0"
+                            style={{ border: `2px solid ${SURFACE}` }}
+                            title={a.displayName}>
+                            {a.avatarUrl
+                              // eslint-disable-next-line @next/next/no-img-element
+                              ? <img src={a.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
+                              : (
+                                <div className="w-full h-full rounded-full flex items-center justify-center"
+                                  style={{ backgroundColor: color + "20" }}>
+                                  <PlatformIcon platform={a.platform} size={12} />
+                                </div>
+                              )}
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}` }}>
+                              <PlatformIcon platform={a.platform} size={8} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex flex-wrap gap-1 min-w-0">
+                      {memberAccounts.slice(0, 4).map(a => (
+                        <span key={a.id} className="text-xs px-1.5 py-0.5 rounded-md truncate max-w-[120px]"
+                          style={{ backgroundColor: brandColor(a.platform) + "15", color: brandColor(a.platform) === "#010101" ? "#ff004f" : brandColor(a.platform) }}>
+                          {a.displayName}
+                        </span>
+                      ))}
+                      {memberCount > 4 && (
+                        <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: "#1a1a1a", color: MUTED }}>
+                          +{memberCount - 4} more
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-xs mt-1 ml-6" style={{ color: MUTED }}>No accounts — click Edit to add some</p>
+                  <div className="mt-3 pt-3 flex items-center gap-2" style={{ borderTop: `1px solid ${BORDER}` }}>
+                    <p className="text-xs" style={{ color: MUTED }}>No accounts — click Edit to add some.</p>
+                  </div>
                 )}
               </div>
             );
