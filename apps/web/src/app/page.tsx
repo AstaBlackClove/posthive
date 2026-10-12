@@ -2813,6 +2813,47 @@ export default function RootPage() {
           </div>
         </section>
 
+        {/* ── TESTIMONIALS ── */}
+        <section style={{ borderTop: "1px solid #161616", background: "#0a0a0a" }}>
+          <div style={{ maxWidth: 760, margin: "0 auto", padding: "80px 24px" }}>
+            <div style={{ textAlign: "center", marginBottom: 40 }}>
+              <p className="section-label" style={{ marginBottom: 12 }}>What people say</p>
+              <h2 style={{ fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 700, color: "#ededed", margin: 0 }}>
+                Loved by creators & teams
+              </h2>
+            </div>
+            <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 16, padding: "32px 36px" }}>
+              {/* Stars */}
+              <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                ))}
+              </div>
+              {/* Quote */}
+              <p style={{ fontSize: 17, color: "#ccc", lineHeight: 1.75, margin: "0 0 28px", fontStyle: "italic" }}>
+                &ldquo;Honestly, PostHive has been really helpful for me! ❤️ I usually post on Instagram, YouTube and LinkedIn, and managing everything separately takes time. With PostHive, I can schedule all my videos in one place and it&apos;s so much easier to manage. Makes my work a little less hectic! 😅✨&rdquo;
+              </p>
+              {/* Author */}
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://pub-3d086e1182384cb5a8b0b360696831bc.r2.dev/8e89cb88-a775-45d9-bc93-42f3d3c8ae83-avatar.png"
+                  alt="Vibe with Kiki"
+                  width={44}
+                  height={44}
+                  style={{ borderRadius: "50%", objectFit: "cover" }}
+                />
+                <div>
+                  <p style={{ margin: 0, fontWeight: 700, color: "#ededed", fontSize: 15 }}>Vibe with Kiki</p>
+                  <p style={{ margin: 0, fontSize: 13, color: "#555" }}>Content Creator · Instagram, YouTube & LinkedIn</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ── FINAL CTA ── */}
         <section
           style={{ borderTop: "1px solid #161616", background: "#0c0c0c" }}
