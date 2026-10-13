@@ -465,3 +465,55 @@ export async function sendWorkspaceInviteEmail(
     html,
   });
 }
+
+export async function sendPostFailedEmail(
+  to: string,
+  platforms: string[],
+  scheduledFor: Date,
+  postJobId: string,
+): Promise<void> {
+  const platformList = platforms.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(", ");
+  const scheduledStr = scheduledFor.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+  const jobsUrl = `${APP_URL}/jobs`;
+
+  const body = `
+    ${eyebrow("Post failed", "#ef4444")}
+    ${heading("A scheduled post failed to publish.")}
+    ${bodyText(`One or more platforms failed when your post was scheduled for <strong style="color:#ededed;">${scheduledStr}</strong>.`)}
+    ${infoBox(`
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="padding:0;">
+            <p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 5px;">Platforms</p>
+            <p style="font-size:14px;font-weight:600;color:#ededed;margin:0;">${platformList}</p>
+          </td>
+          <td style="padding:0;text-align:right;">
+            <p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 5px;">Scheduled for</p>
+            <p style="font-size:14px;font-weight:600;color:#ededed;margin:0;">${scheduledStr}</p>
+          </td>
+        </tr>
+      </table>
+    `)}
+    ${bodyText("Common causes: expired account token, revoked platform permissions, or a platform API error. Reconnect your account and reschedule.")}
+    ${ctaButton(jobsUrl, "View posts", "#ef4444", "#ffffff")}
+    ${divider()}
+    ${bodyText(`Post ID: <span style="color:#555;font-size:11px;font-family:monospace;">${postJobId}</span>`, "font-size:11.5px;")}
+  `;
+
+  const html = emailShell(
+    "linear-gradient(90deg,#ef4444,#f87171)",
+    body,
+    `You received this because a scheduled post failed. <a href="${APP_URL}/accounts" style="color:#555;">Check connected accounts</a>.`,
+  );
+
+  if (!resend) {
+    console.log(`[mailer] Post failed email for ${to}: job ${postJobId} on ${platformList}`);
+    return;
+  }
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Post failed to publish on ${platformList} — Posthive`,
+    html,
+  });
+}

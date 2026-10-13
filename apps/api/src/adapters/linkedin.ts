@@ -61,6 +61,7 @@ async function liRequest(
 }
 
 async function refreshAccessToken(creds: LinkedInCredentials): Promise<LinkedInCredentials> {
+  if (!creds.refreshToken) throw new Error("LinkedIn refresh token missing — reconnect your LinkedIn account");
   const clientId = process.env.LINKEDIN_CLIENT_ID;
   const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
   if (!clientId || !clientSecret) throw new Error("LinkedIn OAuth credentials not configured");

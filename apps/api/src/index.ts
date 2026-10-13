@@ -49,6 +49,7 @@ import { startCleanupCron, setCleanupStorage, runCleanupNow } from "./lib/cleanu
 import { startOnboardingCron } from "./lib/onboardingCron.js";
 import { startDripCron, runDripNow } from "./lib/dripCron.js";
 import { startLibraryDigestCron } from "./lib/libraryDigestCron.js";
+import { startStuckJobCron } from "./lib/stuckJobCron.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { trackRoutes } from "./routes/track.js";
 import { feedbackRoutes } from "./routes/feedback.js";
@@ -300,6 +301,7 @@ async function main() {
   startOnboardingCron();
   startDripCron();
   startLibraryDigestCron();
+  startStuckJobCron();
 }
 
 main().catch((err) => {

@@ -17,6 +17,7 @@ import type { PostJob, PostJobTarget, Account } from "@prisma/client";
 import { getAdapter } from "../adapters/index.js";
 import { prisma } from "../lib/prisma.js";
 import { isSsrfBlocked } from "../lib/ssrf.js";
+import { sendPostFailedEmail } from "../lib/mailer.js";
 import type { PostResult, CommentResult } from "../adapters/types.js";
 import type { StorageAdapter } from "../lib/storage.js";
 
@@ -127,6 +128,23 @@ export async function runJob(
         errorMessage: finalStatus === "failed" ? "One or more platforms failed" : undefined,
       },
     });
+  }
+
+  // Send failure email for non-library, non-dryRun failed jobs
+  if (finalStatus === "failed" && !job.dryRun) {
+    const isLibraryJob = await prisma.libraryItem.count({ where: { scheduledJobId: job.id } }) > 0;
+    if (!isLibraryJob) {
+      const user = await prisma.user.findUnique({
+        where: { id: job.userId },
+        select: { email: true },
+      });
+      if (user?.email && job.scheduledFor) {
+        const platforms = job.targets.map(t => t.account.platform);
+        sendPostFailedEmail(user.email, platforms, job.scheduledFor, job.id).catch((err) => {
+          console.warn(`[runner] failed to send failure email for job ${job.id}:`, err.message);
+        });
+      }
+    }
   }
 
   // Fire outbound webhook (silent fail — never affects job status)
