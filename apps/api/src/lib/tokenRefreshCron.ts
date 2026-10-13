@@ -6,11 +6,12 @@
  *   threads         60 days  (long-lived token refresh)
  *   instagram       60 days
  *   facebook        60 days
- *   youtube         ~1 hour  (Google OAuth refresh)
  *   tiktok          ~24h     (refresh token ~1 year)
  *   linkedin        60 days  (refresh token ~1 year)
  *   pinterest       ~30 days
- *   googlebusiness  ~1 hour  (Google OAuth refresh)
+ *
+ * Excluded: youtube, googlebusiness — 1-hour Google tokens; adapter refreshes
+ * inline at job time so proactive cron refresh is wasted API calls.
  *
  * Platforms with non-expiring tokens (Bluesky app passwords, bot tokens,
  * OAuth 1.0a, keypairs) return early from refreshTokenIfNeeded — safe to skip.
@@ -21,9 +22,11 @@ import * as Sentry from "@sentry/node";
 import { prisma } from "./prisma.js";
 import { getAdapter } from "../adapters/index.js";
 
+// youtube and googlebusiness use 1-hour Google tokens — inline refresh in the adapter
+// handles them at job time. Proactive cron refresh is wasted API calls for these.
 const REFRESH_PLATFORMS = new Set([
-  "threads", "instagram", "facebook", "youtube",
-  "tiktok", "linkedin", "pinterest", "googlebusiness",
+  "threads", "instagram", "facebook",
+  "tiktok", "linkedin", "pinterest",
 ]);
 const WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const BATCH_SIZE = 50;
