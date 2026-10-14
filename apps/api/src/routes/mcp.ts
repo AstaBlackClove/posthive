@@ -746,6 +746,12 @@ async function serveMcp(req: FastifyRequest, reply: FastifyReply, userId: string
     }
   });
 
+  // Some MCP clients (e.g. Glama health check) omit Accept header.
+  // StreamableHTTPServerTransport requires application/json or text/event-stream — inject if missing.
+  if (!req.raw.headers["accept"]) {
+    req.raw.headers["accept"] = "application/json, text/event-stream";
+  }
+
   reply.hijack();
   await server.connect(transport);
   await transport.handleRequest(req.raw, reply.raw, req.body);

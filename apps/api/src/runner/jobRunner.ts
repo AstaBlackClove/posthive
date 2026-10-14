@@ -139,7 +139,9 @@ export async function runJob(
         select: { email: true },
       });
       if (user?.email && job.scheduledFor) {
-        const platforms = job.targets.map(t => t.account.platform);
+        const platforms = job.targets
+          .filter(t => t.status === "post_failed" || t.status === "comment_failed")
+          .map(t => t.account.platform);
         sendPostFailedEmail(user.email, platforms, job.scheduledFor, job.id).catch((err) => {
           console.warn(`[runner] failed to send failure email for job ${job.id}:`, err.message);
         });
