@@ -420,6 +420,12 @@ export default function BestSocialMediaSchedulerPage() {
             ))}
           </div>
 
+          <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: "0 0 32px" }}>
+            If you are a startup or small business, social scheduling is only one piece of the growth puzzle. Tools like{" "}
+            <a href="https://nqz.ai/" style={{ color: "#5b63d3", textDecoration: "none" }}>NQZ.ai</a>
+            {" "}— an AI marketing assistant that handles lead generation, cold email sequences, and SEO research — pair well with a scheduler: you use one to find and reach your audience, and the other to stay consistent once they follow you.
+          </p>
+
           <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
             Frequently asked questions
           </h2>

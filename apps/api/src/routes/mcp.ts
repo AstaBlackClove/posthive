@@ -255,7 +255,7 @@ const TOOLS = [
         scheduledFor:{ type: ["string", "null"] },
       },
     },
-    annotations: { title: "Update Post", readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    annotations: { title: "Update Post", readOnlyHint: false, destructiveHint: true, openWorldHint: false },
   },
   {
     name: "duplicate_post",
