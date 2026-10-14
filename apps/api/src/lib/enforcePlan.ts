@@ -13,7 +13,7 @@ export type PlanResource = "accounts" | "scheduling" | "reels" | "overrides" | "
 
 export interface PlanError {
   error: string;
-  code: "INACTIVE" | "TRIAL_EXPIRED" | "PLAN_LIMIT" | "CANCELLED";
+  code: "INACTIVE" | "TRIAL_EXPIRED" | "PLAN_LIMIT" | "CANCELLED" | "ON_HOLD";
   upgradeRequired: boolean;
 }
 
@@ -47,6 +47,14 @@ export async function enforcePlan(
     return {
       error: "Your subscription has been cancelled. Resubscribe to continue using Posthive.",
       code: "CANCELLED",
+      upgradeRequired: true,
+    };
+  }
+
+  if (workspace.planStatus === "on_hold") {
+    return {
+      error: "Your subscription is on hold due to a payment issue. Update your payment method to continue using Posthive.",
+      code: "ON_HOLD",
       upgradeRequired: true,
     };
   }

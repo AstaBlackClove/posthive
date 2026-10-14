@@ -73,6 +73,23 @@ export async function runJob(
     console.log(`[runner] DRY RUN — job ${job.id} — no real API calls will be made`);
   }
 
+  // Block execution if workspace subscription is on hold or cancelled
+  if (job.workspaceId) {
+    const ws = await prisma.workspace.findUnique({
+      where: { id: job.workspaceId },
+      select: { planStatus: true },
+    });
+    if (ws?.planStatus === "on_hold" || ws?.planStatus === "cancelled") {
+      await prisma.postJobTarget.updateMany({
+        where: { postJobId: job.id },
+        data: { status: "post_failed", error: `Subscription ${ws.planStatus} — post skipped` },
+      });
+      await prisma.postJob.update({ where: { id: job.id }, data: { status: "failed" } });
+      console.warn(`[runner] job ${job.id} skipped — workspace ${job.workspaceId} planStatus=${ws.planStatus}`);
+      return;
+    }
+  }
+
   const content: JobContent = JSON.parse(job.content);
 
   await Promise.allSettled(
