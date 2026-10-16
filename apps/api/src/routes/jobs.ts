@@ -528,6 +528,28 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       }
     }
 
+    // Delete removed media files from storage (best-effort, non-fatal)
+    if (body.data.mediaUrls !== undefined || body.data.youtubeThumbnailUrl !== undefined) {
+      try {
+        const existing = JSON.parse(job.content) as { mediaUrls?: string[]; youtubeThumbnailUrl?: string };
+        const oldUrls = new Set<string>([
+          ...(existing.mediaUrls ?? []),
+          ...(existing.youtubeThumbnailUrl ? [existing.youtubeThumbnailUrl] : []),
+        ]);
+        const newUrls = new Set<string>([
+          ...(body.data.mediaUrls ?? existing.mediaUrls ?? []),
+          ...(body.data.youtubeThumbnailUrl !== undefined
+            ? (body.data.youtubeThumbnailUrl ? [body.data.youtubeThumbnailUrl] : [])
+            : (existing.youtubeThumbnailUrl ? [existing.youtubeThumbnailUrl] : [])),
+        ]);
+        const removed = [...oldUrls].filter(u => !newUrls.has(u));
+        if (removed.length) {
+          await Promise.allSettled(removed.map(u => storage.delete(u)));
+          await prisma.upload.deleteMany({ where: { url: { in: removed }, userId } });
+        }
+      } catch { /* non-fatal */ }
+    }
+
     if (body.data.scheduledFor) {
       const blocked = await enforcePlan(userId, workspaceId, "scheduling");
       if (blocked) return reply.status(402).send(blocked);

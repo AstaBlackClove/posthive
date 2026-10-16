@@ -106,6 +106,7 @@ export const PLATFORM_LIMIT: Record<string, number> = {
   lemmy:          10000,
   googlebusiness: 1500,
   tiktok: 2200,
+  instagram: 2200,
 };
 
 export const MAX_IMAGES = 4;
