@@ -22,7 +22,7 @@ async function upsertLocalUser(supabaseId: string, email: string, name: string, 
   if (existing) {
     const updated = await prisma.user.update({
       where: { supabaseId },
-      data: { email, name, avatarUrl: avatarUrl ?? null },
+      data: { email, name, ...(avatarUrl !== undefined ? { avatarUrl } : {}) },
     });
     // Guard: ensure workspace exists (backfill for users created before workspace feature)
     if (!updated.activeWorkspaceId) {
@@ -108,6 +108,12 @@ export const supabaseAuthProvider: AuthProvider = {
 
     const user = await prisma.user.findUnique({ where: { supabaseId: data.user.id } });
     if (!user) return null;
+    // Backfill avatar from Supabase user_metadata (Google OAuth sets avatar_url there)
+    const metaAvatar = data.user.user_metadata?.avatar_url as string | undefined;
+    if (metaAvatar && !user.avatarUrl) {
+      await prisma.user.update({ where: { id: user.id }, data: { avatarUrl: metaAvatar } });
+      user.avatarUrl = metaAvatar;
+    }
     return { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, timezone: user.timezone ?? "UTC" };
   },
 

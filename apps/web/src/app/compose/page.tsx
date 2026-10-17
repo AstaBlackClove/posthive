@@ -66,7 +66,8 @@ export default function ComposePage() {
   const [linkedinVisibility, setLinkedinVisibility] = useState<"PUBLIC" | "CONNECTIONS">("PUBLIC");
   const [blueskyContentWarning, setBlueskyContentWarning] = useState("");
 const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+  const uploading = uploadProgress !== null;
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dryRun, setDryRun] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -213,63 +214,57 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
 
   async function uploadFiles(files: File[]) {
     if (!files.length) return;
-    setUploading(true); setUploadError(null);
+    const validFiles = files.filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"));
+    if (!validFiles.length) return;
+    setUploadProgress({ done: 0, total: validFiles.length });
+    setUploadError(null);
 
-    for (const file of files) {
-      const isVid = file.type.startsWith("video/");
-      const isImg = file.type.startsWith("image/");
-      if (!isVid && !isImg) continue;
-
-      // Story: only 1 image allowed
-      if (igMediaType === "story") {
-        if (!isImg && !isVid) { setUploadError("Instagram Stories require an image or video."); continue; }
-      }
-
-      // Reel: single video only — replaces existing
-      if (igMediaType === "reel") {
-        if (!isVid) { setUploadError("Instagram Reels only support a single video."); continue; }
-        const previewUrl = URL.createObjectURL(file);
-        const formData = new FormData();
-        formData.append("file", file);
-        try {
-          const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
-          if (!res.ok) { const b = await res.json() as { error: string }; setUploadError(b.error); URL.revokeObjectURL(previewUrl); }
-          else {
-            const { url } = await res.json() as { url: string };
-            setMediaItems(prev => {
-              prev.forEach(m => { URL.revokeObjectURL(m.previewUrl); deleteFromStorage(m.url); });
-              return [{ url, previewUrl, name: file.name, isVideo: true }];
-            });
-            setAltTexts([]);
-          }
-        } catch { setUploadError("Upload failed is the API running?"); URL.revokeObjectURL(previewUrl); }
-        continue;
-      }
-
-      // Post mode: mixed image + video carousel, up to 10 items
-      if (mediaItems.length >= maxImagesPerPost) { setUploadError(`Maximum ${maxImagesPerPost} images per post on your plan. Upgrade to Pro for up to 10.`); continue; }
+    // Reel: single video only — sequential (replaces existing)
+    if (igMediaType === "reel") {
+      const file = validFiles[0];
+      if (!file.type.startsWith("video/")) { setUploadError("Instagram Reels only support a single video."); setUploadProgress(null); return; }
       const previewUrl = URL.createObjectURL(file);
       const formData = new FormData();
       formData.append("file", file);
       try {
         const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
-        if (!res.ok) { const b = await res.json() as { error: string }; setUploadError(b.error); URL.revokeObjectURL(previewUrl); continue; }
+        if (!res.ok) { const b = await res.json() as { error: string }; setUploadError(b.error); URL.revokeObjectURL(previewUrl); }
+        else {
+          const { url } = await res.json() as { url: string };
+          setMediaItems(prev => { prev.forEach(m => { URL.revokeObjectURL(m.previewUrl); deleteFromStorage(m.url); }); return [{ url, previewUrl, name: file.name, isVideo: true }]; });
+          setAltTexts([]);
+        }
+      } catch { setUploadError("Upload failed — is the API running?"); URL.revokeObjectURL(previewUrl); }
+      setUploadProgress(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    // Post / story mode: parallel uploads
+    const eligible = igMediaType === "story" ? validFiles.slice(0, 1) : validFiles.slice(0, Math.max(0, maxImagesPerPost - mediaItems.length));
+    if (eligible.length < validFiles.length) setUploadError(`Maximum ${maxImagesPerPost} images per post on your plan.`);
+
+    let done = 0;
+    await Promise.all(eligible.map(async (file) => {
+      const isVid = file.type.startsWith("video/");
+      const previewUrl = URL.createObjectURL(file);
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
+        if (!res.ok) { const b = await res.json() as { error: string }; setUploadError(b.error); URL.revokeObjectURL(previewUrl); return; }
         const { url } = await res.json() as { url: string };
         setMediaItems(prev => {
-          // Auto-detect: only switch to reel if not already in story/reel mode
-          if (isVid && prev.length === 0 && igMediaType === "post") {
-            setIgMediaType("reel");
-            return [{ url, previewUrl, name: file.name, isVideo: true }];
-          }
-          // Mixed or image only
-          if (isVid && prev.length > 0 && igMediaType === "post") setIgMediaType("post");
+          if (isVid && prev.length === 0 && igMediaType === "post") { setIgMediaType("reel"); return [{ url, previewUrl, name: file.name, isVideo: true }]; }
           if (!isVid) setAltTexts(a => [...a, ""]);
           return [...prev, { url, previewUrl, name: file.name || "image", isVideo: isVid }];
         });
-      } catch { setUploadError("Upload failed is the API running?"); URL.revokeObjectURL(previewUrl); }
-    }
+      } catch { setUploadError("Upload failed — is the API running?"); URL.revokeObjectURL(previewUrl); }
+      done++;
+      setUploadProgress({ done, total: eligible.length });
+    }));
 
-    setUploading(false);
+    setUploadProgress(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -284,7 +279,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   }
 
   async function uploadYtVideo(file: File) {
-    setUploading(true); setUploadError(null);
+    setUploadProgress({ done: 0, total: 1 }); setUploadError(null);
     const previewUrl = URL.createObjectURL(file);
     const formData = new FormData();
     formData.append("file", file);
@@ -300,12 +295,12 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         });
       }
     } catch { setUploadError("Upload failed — is the API running?"); URL.revokeObjectURL(previewUrl); }
-    setUploading(false);
+    setUploadProgress(null);
     if (ytVideoInputRef.current) ytVideoInputRef.current.value = "";
   }
 
   async function uploadReelVideo(file: File) {
-    setUploading(true); setUploadError(null);
+    setUploadProgress({ done: 0, total: 1 }); setUploadError(null);
     const previewUrl = URL.createObjectURL(file);
     const formData = new FormData();
     formData.append("file", file);
@@ -321,7 +316,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         setAltTexts([]);
       }
     } catch { setUploadError("Upload failed — is the API running?"); URL.revokeObjectURL(previewUrl); }
-    setUploading(false);
+    setUploadProgress(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -1241,6 +1236,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               altTexts={altTexts}
               onAltTextChange={(i, v) => setAltTexts(prev => { const n = [...prev]; n[i] = v; return n; })}
               uploading={uploading}
+              uploadProgress={uploadProgress}
               uploadError={uploadError}
               fileInputRef={fileInputRef}
               onFileUpload={uploadFiles}

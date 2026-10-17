@@ -33,6 +33,7 @@ interface Props {
 
   // Upload
   uploading: boolean;
+  uploadProgress?: { done: number; total: number } | null;
   uploadError: string | null;
   fileInputRef: RefObject<HTMLInputElement>;
   // Called for post/story file picks (images, or videos in story mode)
@@ -54,7 +55,7 @@ export function MediaSection({
   images, video, onRemoveImage, onRemoveVideo,
   instagramSelected, igMediaType, onIgMediaTypeChange,
   altTexts, onAltTextChange,
-  uploading, uploadError, fileInputRef, onFileUpload, onVideoUpload,
+  uploading, uploadProgress, uploadError, fileInputRef, onFileUpload, onVideoUpload,
   maxImageSizeMb, maxVideoSizeMb, showPasteHint, maxImages,
 }: Props) {
   const uid = useId();
@@ -191,7 +192,7 @@ export function MediaSection({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
             </svg>
-            {uploading ? "Uploading…" : video ? "Change YouTube video" : "Add YouTube video"}
+            {uploading ? (uploadProgress ? `Uploading…` : "Uploading…") : video ? "Change YouTube video" : "Add YouTube video"}
           </label>
           {video && <span className="text-xs" style={{ color: "#4ade80" }}>✓ Video ready</span>}
           <p className="text-[11px]" style={{ color: "#555" }}>Max {maxVideoSizeMb ?? 100} MB</p>
@@ -218,18 +219,29 @@ export function MediaSection({
             <label htmlFor={mediaUploadId}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${
                 uploading
-                || (igMediaType === "post" && images.length >= maxImg)
-                || (igMediaType === "story" && images.length >= 1)
+                  ? "pointer-events-none"
+                  : (igMediaType === "post" && images.length >= maxImg) || (igMediaType === "story" && images.length >= 1)
                   ? "opacity-40 pointer-events-none" : "hover:border-white/20"
               }`}
-              style={{ border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
+              style={uploading
+                ? { border: "1px solid #5b63d3", backgroundColor: "#1a1b3a", color: "#a0a6ff" }
+                : { border: "1px solid #2a2a2a", backgroundColor: "#111111", color: "#888" }}>
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d={igMediaType === "reel"
                     ? "M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
                     : "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"} />
               </svg>
-              {uploading ? "Uploading…"
+              {uploading
+                ? <>
+                    <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"/>
+                    </svg>
+                    {uploadProgress && uploadProgress.total > 1
+                      ? `Uploading ${uploadProgress.done}/${uploadProgress.total}`
+                      : "Uploading…"}
+                  </>
                 : igMediaType === "reel" ? (video ? "Change video" : "Add video")
                 : igMediaType === "story" ? (images.length > 0 ? "Change media" : "Add story image / video")
                 : images.length > 0 ? `${images.length} item${images.length > 1 ? "s" : ""}` : "Add photo / video"}

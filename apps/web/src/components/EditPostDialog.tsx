@@ -107,7 +107,8 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const [pixelfedVisibility, setPixelfedVisibility] = useState<"public" | "unlisted" | "private">(parsedContent.pixelfedVisibility ?? "public");
   const [linkedinVisibility, setLinkedinVisibility] = useState<"PUBLIC" | "CONNECTIONS">(parsedContent.linkedinVisibility ?? "PUBLIC");
   const [blueskyContentWarning, setBlueskyContentWarning] = useState(parsedContent.blueskyContentWarning ?? "");
-  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+  const uploading = uploadProgress !== null;
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -164,8 +165,10 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   async function uploadFiles(files: File[]) {
     const toUpload = files.filter(f => f.type.startsWith("image/")).slice(0, MAX_IMAGES - images.length);
     if (!toUpload.length) return;
-    setUploading(true); setUploadError(null);
-    for (const file of toUpload) {
+    setUploadProgress({ done: 0, total: toUpload.length });
+    setUploadError(null);
+    let done = 0;
+    await Promise.all(toUpload.map(async (file) => {
       const previewUrl = URL.createObjectURL(file);
       const formData = new FormData();
       formData.append("file", file);
@@ -175,7 +178,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           const b = await res.json().catch(() => ({})) as { error?: string };
           setUploadError(b.error ?? "Upload failed");
           URL.revokeObjectURL(previewUrl);
-          continue;
+          return;
         }
         const { url } = await res.json() as { url: string };
         setImages(prev => [...prev, { url, previewUrl, name: file.name }]);
@@ -183,13 +186,15 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
         setUploadError("Upload failed — is the API running?");
         URL.revokeObjectURL(previewUrl);
       }
-    }
-    setUploading(false);
+      done++;
+      setUploadProgress({ done, total: toUpload.length });
+    }));
+    setUploadProgress(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   async function uploadVideo(file: File) {
-    setUploading(true); setUploadError(null);
+    setUploadProgress({ done: 0, total: 1 }); setUploadError(null);
     const previewUrl = URL.createObjectURL(file);
     const formData = new FormData();
     formData.append("file", file);
@@ -207,12 +212,12 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
       setUploadError("Upload failed — is the API running?");
       URL.revokeObjectURL(previewUrl);
     }
-    setUploading(false);
+    setUploadProgress(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   async function uploadYtVideo(file: File) {
-    setUploading(true); setUploadError(null);
+    setUploadProgress({ done: 0, total: 1 }); setUploadError(null);
     const previewUrl = URL.createObjectURL(file);
     const formData = new FormData();
     formData.append("file", file);
@@ -230,7 +235,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
       setUploadError("Upload failed — is the API running?");
       URL.revokeObjectURL(previewUrl);
     }
-    setUploading(false);
+    setUploadProgress(null);
     if (ytVideoInputRef.current) ytVideoInputRef.current.value = "";
   }
 
@@ -652,6 +657,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
               if (t === "reel") setImages([]);
             }}
             uploading={uploading}
+            uploadProgress={uploadProgress}
             uploadError={uploadError}
             fileInputRef={fileInputRef}
             onFileUpload={uploadFiles}

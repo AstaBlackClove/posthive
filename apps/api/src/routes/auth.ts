@@ -2117,6 +2117,9 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         });
         await prisma.user.update({ where: { id: dbUser.id }, data: { activeWorkspaceId: workspace.id } });
         sendWelcomeEmail(dbUser.email, dbUser.name ?? "there").catch(() => {});
+      } else if (profile.picture && !dbUser.avatarUrl) {
+        // Backfill avatar for existing users who signed up before Google picture was saved
+        dbUser = await prisma.user.update({ where: { id: dbUser.id }, data: { avatarUrl: profile.picture } });
       }
 
       const { accessToken, refreshToken } = await createLocalTokens(dbUser.id);
