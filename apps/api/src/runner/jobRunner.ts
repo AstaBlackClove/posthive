@@ -18,6 +18,7 @@ import { getAdapter } from "../adapters/index.js";
 import { prisma } from "../lib/prisma.js";
 import { schedulePostJob } from "../lib/queue.js";
 import { isSsrfBlocked } from "../lib/ssrf.js";
+import { getPlan } from "../lib/plans.js";
 import { sendPostFailedEmail } from "../lib/mailer.js";
 import type { PostResult, CommentResult } from "../adapters/types.js";
 import type { StorageAdapter } from "../lib/storage.js";
@@ -144,7 +145,12 @@ export async function runJob(
                 content: true, commentText: true, userId: true, workspaceId: true,
                 targets: { select: { accountId: true } } },
     });
-    if (fullJob?.repeatInterval && fullJob.scheduledFor) {
+    // Check workspace plan is still active before spawning next repeat
+    const ws = fullJob?.workspaceId
+      ? await prisma.workspace.findUnique({ where: { id: fullJob.workspaceId }, select: { plan: true, planStatus: true } })
+      : null;
+    const planActive = !ws || (!["cancelled", "on_hold"].includes(ws.planStatus) && getPlan(ws.plan).maxPostsPerMonth !== 0);
+    if (fullJob?.repeatInterval && fullJob.scheduledFor && planActive) {
       const next = new Date(fullJob.scheduledFor);
       if (fullJob.repeatInterval === "daily")   next.setDate(next.getDate() + 1);
       if (fullJob.repeatInterval === "weekly")  next.setDate(next.getDate() + 7);

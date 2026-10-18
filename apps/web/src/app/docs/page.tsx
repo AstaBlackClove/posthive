@@ -89,6 +89,7 @@ const NAV = [
     items: [
       { label: "AI caption assist", id: "ai-caption" },
       { label: "Scheduling posts", id: "scheduling-posts" },
+      { label: "Repeat posts", id: "repeat-posts" },
       { label: "Post templates", id: "post-templates" },
       { label: "Bulk CSV scheduling", id: "bulk-csv" },
       { label: "Calendar view", id: "calendar-view" },
@@ -1038,6 +1039,31 @@ TIKTOK_REDIRECT_URI="https://your-domain.com/auth/tiktok/callback"`}</pre>
                 <li className="doc-li">Pick a scheduled time using the date-time picker. You can also post immediately.</li>
                 <li className="doc-li">Click <strong>Schedule</strong>. The post is enqueued and will fire at the chosen time.</li>
               </ol>
+
+              {/* ── Repeat posts ── */}
+              <h3 className="doc-h2" id="repeat-posts">Repeat posts</h3>
+              <p className="doc-p">
+                Repeat scheduling automatically creates the next occurrence of a post every time the current one publishes. The chain continues indefinitely until an optional end date is reached — no manual re-scheduling needed.
+              </p>
+              <h4 className="doc-h3">How to set it up</h4>
+              <ol className="doc-ul" style={{ listStyle: "decimal" }}>
+                <li className="doc-li">Open the <strong>Compose</strong> page and write your post.</li>
+                <li className="doc-li">In the bottom toolbar, click <strong>Repeat Post…</strong> and choose <strong>Every Day</strong>, <strong>Every Week</strong>, or <strong>Every Month</strong>.</li>
+                <li className="doc-li">Optionally set an <strong>until</strong> end date. Leave it blank for an indefinite repeating post.</li>
+                <li className="doc-li">Schedule as normal. The first post fires at your chosen time; each subsequent post fires exactly +1 day / +7 days / +1 month later.</li>
+              </ol>
+              <h4 className="doc-h3">How it works</h4>
+              <p className="doc-p">
+                When a repeat post publishes successfully, the worker automatically creates the next job in the DB and enqueues it in BullMQ. The new job has a <span className="doc-inline-code">repeatParentId</span> pointing back to the original post so the full chain is traceable. If a post fails, the chain does <strong>not</strong> advance — the failed job stays failed and no child is created.
+              </p>
+              <h4 className="doc-h3">Stopping a repeat chain</h4>
+              <p className="doc-p">
+                Delete the upcoming scheduled post from the Posts page. Because only one future job exists at a time, deleting it stops the chain completely.
+              </p>
+              <h4 className="doc-h3">Via API / MCP</h4>
+              <p className="doc-p">
+                Pass <span className="doc-inline-code">repeat_interval</span> (<span className="doc-inline-code">"daily"</span> | <span className="doc-inline-code">"weekly"</span> | <span className="doc-inline-code">"monthly"</span>) and optionally <span className="doc-inline-code">repeat_ends_at</span> (ISO 8601) to <span className="doc-inline-code">create_post</span>.
+              </p>
 
               {/* ── Post templates ── */}
               <h3 className="doc-h2" id="post-templates">Post templates</h3>

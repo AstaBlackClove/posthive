@@ -9,6 +9,7 @@ import { EditPostDialog } from "../../components/EditPostDialog";
 import { DeleteConfirmDialog } from "../../components/DeleteConfirmDialog";
 import { useToast } from "../../components/Toast";
 import { TrialUrgentBanner } from "../../components/TrialUrgentBanner";
+import { DatePicker } from "../../components/DatePicker";
 import type { Account, PerAccountOverride } from "../../components/PlatformPreview";
 
 interface Target {
@@ -68,12 +69,83 @@ interface AnalyticsResult {
 
 const ANALYTICS_PLATFORMS = new Set(["bluesky", "mastodon", "pixelfed", "lemmy", "instagram", "threads", "facebook"]);
 
-function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, selected, onToggleSelect }: {
+const REPEAT_OPTIONS = [
+  { value: "daily", label: "Every Day" },
+  { value: "weekly", label: "Every Week" },
+  { value: "monthly", label: "Every Month" },
+] as const;
+
+function RepeatModal({ job, onClose, onConfirm }: {
+  job: Job;
+  onClose: () => void;
+  onConfirm: (interval: "daily" | "weekly" | "monthly", endsAt: string) => Promise<void>;
+}) {
+  const [interval, setInterval] = useState<"daily" | "weekly" | "monthly">("weekly");
+  const [endsAt, setEndsAt] = useState("");
+  const [saving, setSaving] = useState(false);
+  const content = JSON.parse(job.content) as { text: string };
+
+  async function submit() {
+    setSaving(true);
+    try { await onConfirm(interval, endsAt); } finally { setSaving(false); }
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "#111111", border: "1px solid #2a2a2a", borderRadius: 16, padding: 24, width: 380, maxWidth: "calc(100vw - 32px)" }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: "#ededed", marginBottom: 4 }}>Repeat this post</h3>
+        <p style={{ fontSize: 13, color: "#666", marginBottom: 20 }} className="line-clamp-2">{content.text}</p>
+
+        <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em" }}>Frequency</label>
+        <div style={{ display: "flex", gap: 8, marginTop: 8, marginBottom: 20 }}>
+          {REPEAT_OPTIONS.map(opt => (
+            <button key={opt.value} type="button" onClick={() => { setInterval(opt.value); setEndsAt(""); }}
+              style={{
+                flex: 1, padding: "8px 0", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                border: `1px solid ${interval === opt.value ? "#5b63d3" : "#2a2a2a"}`,
+                background: interval === opt.value ? "rgba(91,99,211,0.15)" : "#0a0a0a",
+                color: interval === opt.value ? "#7c85e8" : "#888",
+              }}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <DatePicker
+            value={endsAt}
+            onChange={setEndsAt}
+            min={(() => {
+              const d = new Date();
+              if (interval === "daily") d.setDate(d.getDate() + 1);
+              else if (interval === "weekly") d.setDate(d.getDate() + 7);
+              else d.setMonth(d.getMonth() + 1);
+              return d.toISOString().slice(0, 10);
+            })()}
+            placeholder="End date (optional)"
+          />
+        </div>
+
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "1px solid #2a2a2a", background: "transparent", color: "#888", fontSize: 14, cursor: "pointer" }}>Cancel</button>
+          <button onClick={submit} disabled={saving}
+            style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "none", background: "#ffffff", color: "#0a0a0a", fontSize: 14, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+            {saving ? "Starting…" : "Start repeating"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, selected, onToggleSelect }: {
   job: Job;
   onEdit: () => void;
   onDelete: () => void;
   onRetry: () => Promise<void>;
   onDuplicate: () => void;
+  onRepeat: () => void;
   selected?: boolean;
   onToggleSelect?: () => void;
 }) {
@@ -186,6 +258,14 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, selected, onTogg
                     d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </button>
+              {(job.status === "done" || job.status === "comment_done") && !job.repeatInterval && (
+                <button onClick={onRepeat} className="job-action-btn" title="Repeat this post">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}>
+                    <path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                    <path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                  </svg>
+                </button>
+              )}
               <button onClick={onDelete} className="job-action-btn job-action-btn--danger" title="Delete post">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -317,6 +397,7 @@ export default function JobsPage() {
 
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [deletingJob, setDeletingJob] = useState<Job | null>(null);
+  const [repeatingJob, setRepeatingJob] = useState<Job | null>(null);
   const [platformFilter, setPlatformFilter] = useState<string>("all");
 
   // Bulk select state
@@ -429,6 +510,43 @@ export default function JobsPage() {
       ...(Object.keys(perAccount).length > 0 ? { perAccount } : {}),
     }));
     router.push("/compose");
+  }
+
+  async function startRepeat(job: Job, interval: "daily" | "weekly" | "monthly", endsAt: string) {
+    const content = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; perAccount?: Record<string, unknown> };
+    const next = new Date();
+    if (interval === "daily")   next.setDate(next.getDate() + 1);
+    if (interval === "weekly")  next.setDate(next.getDate() + 7);
+    if (interval === "monthly") next.setMonth(next.getMonth() + 1);
+    next.setSeconds(0, 0);
+    await apiFetch("/jobs", {
+      method: "POST",
+      body: JSON.stringify({
+        content: { text: content.text, mediaUrls: content.mediaUrls ?? [], mediaType: content.mediaType },
+        commentText: job.commentText ?? undefined,
+        accountIds: job.targets.map(t => t.accountId),
+        scheduledFor: next.toISOString(),
+        mediaUrls: content.mediaUrls ?? [],
+        mediaType: content.mediaType,
+        perAccount: content.perAccount,
+        repeatInterval: interval,
+        ...(endsAt ? { repeatEndsAt: new Date(endsAt).toISOString() } : {}),
+      }),
+    });
+    setRepeatingJob(null);
+    success("Repeat chain started — next post scheduled.");
+    // Fetch without resetting list — merge new job in
+    apiFetch<{ items: Job[] }>(`/jobs?limit=50${filter !== "all" ? `&status=${filter}` : ""}`).then(data => {
+      setJobs(prev => {
+        const existingIds = new Set(prev.map(j => j.id));
+        const incoming = data.items.map(d => {
+          const existing = prev.find(j => j.id === d.id);
+          return existing ? { ...existing, ...d } : d;
+        });
+        const newOnes = data.items.filter(d => !existingIds.has(d.id));
+        return [...incoming.filter(d => existingIds.has(d.id)), ...newOnes];
+      });
+    }).catch(() => {});
   }
 
   async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, isDraft?: boolean, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string) {
@@ -614,6 +732,15 @@ export default function JobsPage() {
             await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, editingJob.status === "draft", youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning);
           }}
           onClose={() => setEditingJob(null)}
+        />
+      )}
+
+      {/* Repeat post modal */}
+      {repeatingJob && (
+        <RepeatModal
+          job={repeatingJob}
+          onClose={() => setRepeatingJob(null)}
+          onConfirm={(interval, endsAt) => startRepeat(repeatingJob, interval, endsAt)}
         />
       )}
 
@@ -882,6 +1009,7 @@ export default function JobsPage() {
                       onDelete={() => setDeletingJob(job)}
                       onRetry={() => retryFailed(job.id)}
                       onDuplicate={() => duplicateJob(job)}
+                      onRepeat={() => setRepeatingJob(job)}
                       selected={selectedIds.has(job.id)}
                       onToggleSelect={() => toggleSelect(job.id)} />
                   ))}
@@ -904,6 +1032,7 @@ export default function JobsPage() {
                       onDelete={() => setDeletingJob(job)}
                       onRetry={() => retryFailed(job.id)}
                       onDuplicate={() => duplicateJob(job)}
+                      onRepeat={() => setRepeatingJob(job)}
                       selected={selectedIds.has(job.id)}
                       onToggleSelect={() => toggleSelect(job.id)} />
                   ))}
@@ -926,6 +1055,7 @@ export default function JobsPage() {
                       onDelete={() => setDeletingJob(job)}
                       onRetry={() => retryFailed(job.id)}
                       onDuplicate={() => duplicateJob(job)}
+                      onRepeat={() => setRepeatingJob(job)}
                       selected={selectedIds.has(job.id)}
                       onToggleSelect={() => toggleSelect(job.id)} />
                   ))}

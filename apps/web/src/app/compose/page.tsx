@@ -23,6 +23,7 @@ import { FirstComment } from "../../components/composer/FirstComment";
 import { WarningsBar } from "../../components/composer/WarningsBar";
 import { TrialUrgentBanner } from "../../components/TrialUrgentBanner";
 import { MediaSection } from "../../components/composer/MediaSection";
+import { RepeatPicker } from "../../components/RepeatPicker";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -1395,41 +1396,15 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         </button>
 
         {/* Schedule datetime */}
-        <DateTimePicker value={scheduledFor} onChange={setScheduledFor} />
+        <DateTimePicker value={scheduledFor} onChange={setScheduledFor} min={new Date().toISOString().slice(0, 10)} />
 
         {/* Repeat */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <select
-            value={repeatInterval}
-            onChange={e => setRepeatInterval(e.target.value as "" | "daily" | "weekly" | "monthly")}
-            style={{
-              background: "#1a1a1a", color: repeatInterval ? "#ededed" : "#666",
-              border: "1px solid #2a2a2a", borderRadius: 10, padding: "6px 10px",
-              fontSize: 13, cursor: "pointer", outline: "none",
-            }}
-            title="Repeat this post automatically"
-          >
-            <option value="">No repeat</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </select>
-          {repeatInterval && (
-            <input
-              type="date"
-              value={repeatEndsAt}
-              onChange={e => setRepeatEndsAt(e.target.value)}
-              min={new Date().toISOString().slice(0, 10)}
-              placeholder="End date (optional)"
-              title="Stop repeating after this date"
-              style={{
-                background: "#1a1a1a", color: repeatEndsAt ? "#ededed" : "#666",
-                border: "1px solid #2a2a2a", borderRadius: 10, padding: "6px 10px",
-                fontSize: 13, outline: "none", width: 140,
-              }}
-            />
-          )}
-        </div>
+        <RepeatPicker
+          value={repeatInterval}
+          endsAt={repeatEndsAt}
+          onChangeInterval={setRepeatInterval}
+          onChangeEndsAt={setRepeatEndsAt}
+        />
 
         {/* Spacer — pushes buttons to the right on desktop */}
         <div className="flex-1 hidden md:block" />

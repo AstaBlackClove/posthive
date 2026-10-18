@@ -835,6 +835,7 @@ export default function AccountsPage() {
     if (oauthConnected && !_shownConnectedToasts.has(oauthConnected)) {
       _shownConnectedToasts.add(oauthConnected);
       success(`${oauthConnected.charAt(0).toUpperCase() + oauthConnected.slice(1)} connected successfully!`);
+      window.dispatchEvent(new CustomEvent("ph:account-connected"));
       window.history.replaceState({}, "", "/accounts");
     }
     if (oauthError) {

@@ -7,6 +7,7 @@ interface Props {
   value: string; // "YYYY-MM-DDTHH:mm"
   onChange: (v: string) => void;
   dropdownDirection?: "up" | "down";
+  min?: string; // "YYYY-MM-DD" — days before this are disabled
 }
 
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -90,7 +91,7 @@ const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1));
 const MINUTES = Array.from({ length: 60 }, (_, i) => pad(i));
 const AMPM = ["AM", "PM"];
 
-export function DateTimePicker({ value, onChange, dropdownDirection = "up" }: Props) {
+export function DateTimePicker({ value, onChange, dropdownDirection = "up", min }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
@@ -128,7 +129,19 @@ export function DateTimePicker({ value, onChange, dropdownDirection = "up" }: Pr
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+  const minDate = (() => {
+    if (!min) return null;
+    const [y, m, d] = min.split("-").map(Number);
+    const dt = new Date(y, m - 1, d); dt.setHours(0, 0, 0, 0); return dt;
+  })();
+
+  function isDayDisabled(day: number) {
+    if (!minDate) return false;
+    return new Date(year, month, day) < minDate;
+  }
+
   function selectDay(day: number) {
+    if (isDayDisabled(day)) return;
     const next = new Date(year, month, day, selected.getHours(), selected.getMinutes());
     onChange(toLocal(next));
   }
@@ -188,12 +201,14 @@ export function DateTimePicker({ value, onChange, dropdownDirection = "up" }: Pr
         <div className="grid grid-cols-7 gap-0.5">
           {cells.map((day, i) => {
             if (!day) return <div key={i} />;
+            const disabled = isDayDisabled(day);
             const isSelected = day === selected.getDate() && month === selected.getMonth() && year === selected.getFullYear();
             const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
             return (
-              <button key={i} type="button" onClick={() => selectDay(day)}
+              <button key={i} type="button" onClick={() => selectDay(day)} disabled={disabled}
                 className="w-full aspect-square rounded-lg text-xs font-medium transition flex items-center justify-center"
-                style={isSelected ? { backgroundColor: "#5b63d3", color: "#fff" }
+                style={disabled ? { color: "#333", cursor: "not-allowed" }
+                  : isSelected ? { backgroundColor: "#5b63d3", color: "#fff" }
                   : isToday ? { backgroundColor: "#1a1a2e", color: "#5b63d3", fontWeight: 700 }
                   : { color: "#ccc" }}>
                 {day}

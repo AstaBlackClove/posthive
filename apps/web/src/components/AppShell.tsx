@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { AuthGuard } from "./AuthGuard";
 import { PlanGuard } from "./PlanGuard";
+import { OnboardingChecklist } from "./OnboardingChecklist";
 
 // No auth, no sidebar — public pages (exact) or prefixes
 const PUBLIC_EXACT = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/privacy", "/terms", "/features", "/docs", "/verify-email", "/pricing", "/blog", "/for-developers", "/agent", "/invite"];
@@ -30,6 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <main className="flex-1 overflow-hidden flex flex-col">
             {children}
           </main>
+          <OnboardingChecklist />
         </div>
       </PlanGuard>
     </AuthGuard>

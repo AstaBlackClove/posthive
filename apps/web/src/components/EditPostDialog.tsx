@@ -781,7 +781,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           </div>
         )}
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-          <DateTimePicker value={scheduledFor} onChange={setScheduledFor} />
+          <DateTimePicker value={scheduledFor} onChange={setScheduledFor} min={new Date().toISOString().slice(0, 10)} />
           <div className="flex-1" />
           <div className="flex items-center gap-2 justify-end">
             <button onClick={onClose} disabled={saving}

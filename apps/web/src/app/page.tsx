@@ -314,6 +314,7 @@ const PLANS = [
       { text: "All core platforms", included: true },
       { text: "Bulk CSV scheduling", included: true },
       { text: "Post templates", included: true },
+      { text: "Repeat post scheduling", included: true },
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
       { text: "1 team member", included: true },
@@ -338,6 +339,7 @@ const PLANS = [
       { text: "All core platforms", included: true },
       { text: "Bulk CSV scheduling", included: true },
       { text: "Post templates", included: true },
+      { text: "Repeat post scheduling", included: true },
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
       { text: "2 team members", included: true },
@@ -362,6 +364,7 @@ const PLANS = [
       { text: "All core platforms", included: true },
       { text: "Bulk CSV scheduling", included: true },
       { text: "Post templates", included: true },
+      { text: "Repeat post scheduling", included: true },
       { text: "Calendar & drag-reschedule", included: true },
       { text: "First comment automation", included: true },
       { text: "4 team members", included: true },
@@ -1344,6 +1347,12 @@ export default function RootPage() {
                 title: "Give your agents hands",
                 href: "/docs#mcp-overview",
                 body: "Drive Posthive from Claude Code or Cursor via MCP. Your agent drafts and schedules nothing publishes without your approval.",
+              },
+              {
+                icon: <RepeatIcon />,
+                title: "Repeat post scheduling",
+                href: "/docs#repeat-posts",
+                body: "Set a post to repeat daily, weekly, or monthly. Each occurrence auto-schedules the next — stop anytime by deleting the upcoming post.",
               },
               {
                 icon: <SparklesIcon />,
@@ -4520,6 +4529,16 @@ function McpIcon() {
       <circle cx="12" cy="12" r="3" />
       <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
       <path d="M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+    </svg>
+  );
+}
+function RepeatIcon() {
+  return (
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 1l4 4-4 4" />
+      <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+      <path d="M7 23l-4-4 4-4" />
+      <path d="M21 13v2a4 4 0 0 1-4 4H3" />
     </svg>
   );
 }
