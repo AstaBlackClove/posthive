@@ -16,6 +16,7 @@ import * as Sentry from "@sentry/node";
 import type { PostJob, PostJobTarget, Account } from "@prisma/client";
 import { getAdapter } from "../adapters/index.js";
 import { prisma } from "../lib/prisma.js";
+import { schedulePostJob } from "../lib/queue.js";
 import { isSsrfBlocked } from "../lib/ssrf.js";
 import { sendPostFailedEmail } from "../lib/mailer.js";
 import type { PostResult, CommentResult } from "../adapters/types.js";
@@ -134,6 +135,43 @@ export async function runJob(
 
   const finalStatus = allDone && !anyFailed ? "done" : anyFailed ? "failed" : "running";
   await prisma.postJob.update({ where: { id: job.id }, data: { status: finalStatus } });
+
+  // Spawn next repeat occurrence when this job succeeds
+  if (finalStatus === "done" && !job.dryRun) {
+    const fullJob = await prisma.postJob.findUnique({
+      where: { id: job.id },
+      select: { repeatInterval: true, repeatEndsAt: true, repeatParentId: true, scheduledFor: true,
+                content: true, commentText: true, userId: true, workspaceId: true,
+                targets: { select: { accountId: true } } },
+    });
+    if (fullJob?.repeatInterval && fullJob.scheduledFor) {
+      const next = new Date(fullJob.scheduledFor);
+      if (fullJob.repeatInterval === "daily")   next.setDate(next.getDate() + 1);
+      if (fullJob.repeatInterval === "weekly")  next.setDate(next.getDate() + 7);
+      if (fullJob.repeatInterval === "monthly") next.setMonth(next.getMonth() + 1);
+
+      const endsAt = fullJob.repeatEndsAt;
+      if (!endsAt || next <= endsAt) {
+        const parentId = fullJob.repeatParentId ?? job.id; // flat chain — always point to root
+        const nextJob = await prisma.postJob.create({
+          data: {
+            scheduledFor: next,
+            status: "pending",
+            content: fullJob.content,
+            commentText: fullJob.commentText,
+            userId: fullJob.userId,
+            workspaceId: fullJob.workspaceId,
+            repeatInterval: fullJob.repeatInterval,
+            repeatEndsAt: endsAt,
+            repeatParentId: parentId,
+            targets: { create: fullJob.targets.map(t => ({ accountId: t.accountId })) },
+          },
+        });
+        await schedulePostJob(nextJob.id, next);
+        console.log(`[runner] spawned repeat job ${nextJob.id} (${fullJob.repeatInterval}) for ${next.toISOString()}`);
+      }
+    }
+  }
 
   // Sync LibraryItem status if this job was drip-scheduled
   if (finalStatus === "done" || finalStatus === "failed") {

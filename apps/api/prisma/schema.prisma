@@ -171,6 +171,11 @@ model PostJob {
   commentText  String?
   dryRun       Boolean  @default(false)
 
+  // Repeat / evergreen
+  repeatInterval String?   // "daily" | "weekly" | "monthly"
+  repeatEndsAt   DateTime? // stop spawning after this date (inclusive)
+  repeatParentId String?   // ID of the first job in the chain (flat reference)
+
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -187,6 +192,7 @@ model PostJob {
   @@index([workspaceId, createdAt])
   @@index([workspaceId, scheduledFor])
   @@index([workspaceId, scheduledFor, id])
+  @@index([repeatParentId])
 }
 
 // One row per (PostJob × Account).

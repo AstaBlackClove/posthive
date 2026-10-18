@@ -61,6 +61,8 @@ export async function publicApiRoutes(
       youtubeType?: "short" | "video";
       dryRun?: boolean;
       perAccount?: Record<string, { text?: string; commentText?: string }> | Array<{ accountId: string; text?: string; commentText?: string }>;
+      repeatInterval?: "daily" | "weekly" | "monthly";
+      repeatEndsAt?: string;
     };
 
     if (!body.content?.trim()) return reply.status(400).send({ error: "content is required" });
@@ -115,6 +117,8 @@ export async function publicApiRoutes(
         content: contentPayload,
         commentText: body.commentText ?? null,
         dryRun: body.dryRun ?? false,
+        repeatInterval: body.repeatInterval ?? null,
+        repeatEndsAt: body.repeatEndsAt ? new Date(body.repeatEndsAt) : null,
         targets: {
           create: body.accountIds.map((accountId) => ({ accountId })),
         },

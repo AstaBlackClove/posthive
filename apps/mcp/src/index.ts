@@ -135,6 +135,15 @@ const TOOLS = [
           },
         },
         dry_run: { type: "boolean", description: "When true, runs the full pipeline without real API calls." },
+        repeat_interval: {
+          type: "string",
+          enum: ["daily", "weekly", "monthly"],
+          description: "Repeat this post automatically after each successful publish. Spawns the next occurrence at the same time.",
+        },
+        repeat_ends_at: {
+          type: "string",
+          description: "ISO 8601 datetime after which no more repeat occurrences are created. Omit for indefinite repeating.",
+        },
       },
       required: ["content", "account_ids"],
     },
@@ -296,6 +305,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           ...(a.first_comment ? { commentText: a.first_comment } : {}),
           ...(a.per_account ? { perAccount: a.per_account } : {}),
           ...(a.dry_run ? { dryRun: true } : {}),
+          ...(a.repeat_interval ? { repeatInterval: a.repeat_interval } : {}),
+          ...(a.repeat_ends_at ? { repeatEndsAt: a.repeat_ends_at } : {}),
         };
 
         const data = await apiCall("POST", "/api/v1/posts", body);

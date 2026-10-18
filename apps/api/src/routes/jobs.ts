@@ -52,6 +52,8 @@ const createJobBody = z.object({
   commentText: z.string().optional(),
   accountIds: z.array(z.string().cuid()).min(1),
   dryRun: z.boolean().default(false),
+  repeatInterval: z.enum(["daily", "weekly", "monthly"]).optional(),
+  repeatEndsAt: z.string().datetime().optional(),
 });
 
 export async function jobRoutes(app: FastifyInstance, { storage }: { storage: StorageAdapter }): Promise<void> {
@@ -216,7 +218,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const parsed = createJobBody.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
 
-    const { scheduledFor, draft, content, commentText, accountIds, dryRun } = parsed.data;
+    const { scheduledFor, draft, content, commentText, accountIds, dryRun, repeatInterval, repeatEndsAt } = parsed.data;
 
     if (!draft && !scheduledFor) {
       return reply.status(400).send({ error: "scheduledFor is required when not saving as draft" });
@@ -273,6 +275,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
           dryRun,
           userId,
           workspaceId,
+          repeatInterval: repeatInterval ?? null,
+          repeatEndsAt: repeatEndsAt ? new Date(repeatEndsAt) : null,
           targets: { create: accountIds.map((accountId) => ({ accountId })) },
         },
         include: { targets: { select: TARGET_SELECT } },
@@ -352,6 +356,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         select: {
           id: true, status: true, scheduledFor: true, content: true, commentText: true,
           createdAt: true, updatedAt: true, workspaceId: true, userId: true,
+          repeatInterval: true, repeatEndsAt: true, repeatParentId: true,
           targets: { select: TARGET_SELECT },
         },
       });
@@ -411,6 +416,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       select: {
         id: true, status: true, scheduledFor: true, content: true, commentText: true,
         createdAt: true, updatedAt: true, workspaceId: true, userId: true,
+        repeatInterval: true, repeatEndsAt: true, repeatParentId: true,
         targets: { select: TARGET_SELECT },
       },
     });

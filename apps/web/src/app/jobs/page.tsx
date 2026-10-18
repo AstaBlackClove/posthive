@@ -29,6 +29,8 @@ export interface Job {
   commentText: string | null;
   dryRun: boolean;
   createdAt: string;
+  repeatInterval?: string | null;
+  repeatParentId?: string | null;
   targets: Target[];
 }
 
@@ -152,6 +154,12 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, selected, onTogg
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
             <div className="flex items-center gap-1.5">
               <StatusBadge status={job.status} />
+              {job.repeatInterval && (
+                <span title={`Repeats ${job.repeatInterval}${job.repeatParentId ? " (chain)" : ""}`}
+                  style={{ fontSize: 11, padding: "1px 7px", borderRadius: 20, background: "#5b63d322", color: "#7c85e8", border: "1px solid #5b63d344", fontWeight: 600 }}>
+                  🔁 {job.repeatInterval}
+                </span>
+              )}
               {hasFailedTargets && (
                 <button
                   onClick={async () => { setRetrying(true); try { await onRetry(); } finally { setRetrying(false); } }}

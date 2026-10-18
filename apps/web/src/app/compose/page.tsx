@@ -70,6 +70,8 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const uploading = uploadProgress !== null;
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dryRun, setDryRun] = useState(false);
+  const [repeatInterval, setRepeatInterval] = useState<"" | "daily" | "weekly" | "monthly">("");
+  const [repeatEndsAt, setRepeatEndsAt] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [perAccountOverrides, setPerAccountOverrides] = useState<Record<string, PerAccountOverride>>({});
   const [showCustomize, setShowCustomize] = useState(false);
@@ -496,6 +498,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setPerAccountOverrides({}); setShowCustomize(false); setUploadError(null);
     mediaItems.forEach(m => URL.revokeObjectURL(m.previewUrl));
     setMediaItems([]); setAltTexts([]);
+    setRepeatInterval(""); setRepeatEndsAt("");
   }
 
   async function handleSaveDraft() {
@@ -577,9 +580,12 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           commentText: commentText.trim() || undefined,
           accountIds: selectedIds,
           dryRun,
+          ...(repeatInterval ? { repeatInterval } : {}),
+          ...(repeatInterval && repeatEndsAt ? { repeatEndsAt: new Date(repeatEndsAt).toISOString() } : {}),
         }),
       });
       if (!dryRun) trackEvent("post_scheduled", { platforms: selectedAccounts.map(a => a.platform) });
+      if (!dryRun) window.dispatchEvent(new CustomEvent("ph:post-scheduled"));
       toastSuccess(dryRun ? "Dry run scheduled no real post will be made." : "Post scheduled successfully!");
       if (!dryRun && !localStorage.getItem("posthive_first_post_done")) {
         localStorage.setItem("posthive_first_post_done", "1");
@@ -882,22 +888,6 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             {loadingAccounts ? (
               <div className="flex gap-2">
                 {[1,2].map(i => <div key={i} className="h-8 w-32 rounded-xl animate-pulse" style={{ backgroundColor: "#1a1a1a" }} />)}
-              </div>
-            ) : accounts.length === 0 ? (
-              <div className="w-full py-10 flex flex-col items-center text-center gap-4 px-4">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "#5b63d315", border: "1px solid #5b63d330" }}>
-                  <svg className="w-6 h-6" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold mb-1" style={{ color: "#ededed" }}>No accounts connected</p>
-                  <p className="text-xs max-w-xs" style={{ color: "#555" }}>Connect a social account to start scheduling posts across platforms.</p>
-                </div>
-                <a href="/accounts" className="px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-                  Connect your first account →
-                </a>
               </div>
             ) : (
               /* Scrollable when many accounts */
@@ -1406,6 +1396,40 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
 
         {/* Schedule datetime */}
         <DateTimePicker value={scheduledFor} onChange={setScheduledFor} />
+
+        {/* Repeat */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <select
+            value={repeatInterval}
+            onChange={e => setRepeatInterval(e.target.value as "" | "daily" | "weekly" | "monthly")}
+            style={{
+              background: "#1a1a1a", color: repeatInterval ? "#ededed" : "#666",
+              border: "1px solid #2a2a2a", borderRadius: 10, padding: "6px 10px",
+              fontSize: 13, cursor: "pointer", outline: "none",
+            }}
+            title="Repeat this post automatically"
+          >
+            <option value="">No repeat</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          {repeatInterval && (
+            <input
+              type="date"
+              value={repeatEndsAt}
+              onChange={e => setRepeatEndsAt(e.target.value)}
+              min={new Date().toISOString().slice(0, 10)}
+              placeholder="End date (optional)"
+              title="Stop repeating after this date"
+              style={{
+                background: "#1a1a1a", color: repeatEndsAt ? "#ededed" : "#666",
+                border: "1px solid #2a2a2a", borderRadius: 10, padding: "6px 10px",
+                fontSize: 13, outline: "none", width: 140,
+              }}
+            />
+          )}
+        </div>
 
         {/* Spacer — pushes buttons to the right on desktop */}
         <div className="flex-1 hidden md:block" />
