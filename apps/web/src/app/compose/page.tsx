@@ -884,13 +884,21 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                 {[1,2].map(i => <div key={i} className="h-8 w-32 rounded-xl animate-pulse" style={{ backgroundColor: "#1a1a1a" }} />)}
               </div>
             ) : accounts.length === 0 ? (
-              <a href="/accounts" className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors hover:opacity-80"
-                style={{ color: "#5b63d3" }}>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Connect an account to post
-              </a>
+              <div className="w-full py-10 flex flex-col items-center text-center gap-4 px-4">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "#5b63d315", border: "1px solid #5b63d330" }}>
+                  <svg className="w-6 h-6" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold mb-1" style={{ color: "#ededed" }}>No accounts connected</p>
+                  <p className="text-xs max-w-xs" style={{ color: "#555" }}>Connect a social account to start scheduling posts across platforms.</p>
+                </div>
+                <a href="/accounts" className="px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  Connect your first account →
+                </a>
+              </div>
             ) : (
               /* Scrollable when many accounts */
               <div className="flex flex-wrap gap-1.5" style={{ maxHeight: 120, overflowY: "auto" }}>

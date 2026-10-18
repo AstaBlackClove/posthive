@@ -838,15 +838,23 @@ export default function JobsPage() {
             )}
 
             {!loading && filteredJobs.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-32 text-center">
-                <p className="text-5xl mb-4">📭</p>
-                <p className="text-gray-500 text-sm font-medium">
-                  {filter === "all" ? "No posts yet" : `No ${filter} posts`}
-                </p>
-                {filter === "all" && (
-                  <a href="/" className="mt-3 text-sm text-blue-600 font-semibold hover:underline">
-                    Schedule your first post
-                  </a>
+              <div className="flex flex-col items-center justify-center py-24 text-center px-4">
+                {filter === "all" ? (
+                  <>
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ backgroundColor: "#5b63d315", border: "1px solid #5b63d330" }}>
+                      <svg className="w-7 h-7" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-base font-semibold mb-2" style={{ color: "#ededed" }}>No posts scheduled yet</p>
+                    <p className="text-sm mb-6 max-w-xs" style={{ color: "#555" }}>Schedule your first post and it will appear here. Write once, publish to multiple platforms.</p>
+                    <a href="/compose" className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100"
+                      style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                      Write your first post →
+                    </a>
+                  </>
+                ) : (
+                  <p className="text-sm" style={{ color: "#555" }}>No {filter} posts</p>
                 )}
               </div>
             )}
