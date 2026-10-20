@@ -77,6 +77,49 @@ const NAV_GROUPS = [
   },
 ];
 
+function WhatsNewCard() {
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("ph:dismissed:repeat-posts") === "1") setDismissed(true);
+    } catch { /* ignore */ }
+  }, []);
+
+  if (dismissed) return null;
+
+  function dismiss() {
+    setDismissed(true);
+    try { localStorage.setItem("ph:dismissed:repeat-posts", "1"); } catch { /* ignore */ }
+  }
+
+  return (
+    <div className="mx-2 mb-2 rounded-xl px-3 py-2.5" style={{ backgroundColor: "#0d0f1f", border: "1px solid #3a3a5a", position: "relative" }}>
+      <button
+        onClick={dismiss}
+        aria-label="Dismiss"
+        style={{ position: "absolute", top: 7, right: 7, background: "none", border: "none", cursor: "pointer", color: "#555", padding: 2, lineHeight: 1 }}
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+          <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      </button>
+      <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#818cf8" }}>New</p>
+      <p className="text-xs font-semibold mb-0.5" style={{ color: "#ededed" }}>Repeat post scheduling</p>
+      <p className="text-xs mb-2" style={{ color: "#888", lineHeight: 1.5 }}>
+        Schedule posts to repeat daily, weekly, or monthly. Set an end date and let it run.
+      </p>
+      <a
+        href="/compose"
+        style={{ fontSize: 11, fontWeight: 600, color: "#818cf8", textDecoration: "none" }}
+        className="hover:opacity-80 transition-opacity"
+      >
+        Try it →
+      </a>
+    </div>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -503,6 +546,9 @@ export function Sidebar() {
 
         {/* Trial banner */}
         {!showCollapsed && <TrialBanner />}
+
+        {/* What's new card */}
+        {!showCollapsed && <WhatsNewCard />}
 
         {/* Feedback button */}
         <div className="px-2 pb-1">
