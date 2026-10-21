@@ -194,6 +194,38 @@ export function LandingFooter() {
             ))}
           </div>
 
+          {/* Free Tools */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <span
+              className="mono"
+              style={{
+                fontSize: 11,
+                letterSpacing: ".1em",
+                color: "#999",
+                fontWeight: 700,
+                marginBottom: 6,
+                textTransform: "uppercase",
+              }}
+            >
+              Free Tools
+            </span>
+            {(
+              [
+                ["/tools/character-counter", "Character Counter"],
+              ] as [string, string][]
+            ).map(([href, label]) => (
+              <Link
+                key={label}
+                href={href}
+                style={{ textDecoration: "none", color: "#777", fontSize: 13.5 }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#ededed")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+
           {/* Product */}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <span
