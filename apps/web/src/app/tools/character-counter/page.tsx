@@ -73,6 +73,15 @@ export default function CharacterCounterPage() {
 
   return (
     <main style={{ minHeight: "100vh", backgroundColor: "#0a0a0a", color: "#ededed" }}>
+      <style>{`
+        .cc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+        .cc-ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+        @media (max-width: 640px) {
+          .cc-grid { grid-template-columns: 1fr; }
+          .cc-ref-grid { grid-template-columns: 1fr 1fr; }
+          .cc-h1 { font-size: 24px !important; }
+        }
+      `}</style>
       <MarketingNavBar />
 
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px 80px" }}>
@@ -81,7 +90,7 @@ export default function CharacterCounterPage() {
           <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: "#5b63d3", textTransform: "uppercase", marginBottom: 8 }}>
             Free Tool
           </p>
-          <h1 style={{ fontSize: 32, fontWeight: 800, color: "#ededed", margin: "0 0 10px", lineHeight: 1.2 }}>
+          <h1 className="cc-h1" style={{ fontSize: 32, fontWeight: 800, color: "#ededed", margin: "0 0 10px", lineHeight: 1.2 }}>
             Social Media Character Counter
           </h1>
           <p style={{ fontSize: 16, color: "#888", margin: 0, lineHeight: 1.6 }}>
@@ -89,7 +98,7 @@ export default function CharacterCounterPage() {
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start" }}>
+        <div className="cc-grid">
           {/* Left: textarea */}
           <div>
             <div style={{ position: "relative" }}>
@@ -162,7 +171,7 @@ export default function CharacterCounterPage() {
         {/* SEO content */}
         <div style={{ marginTop: 64, borderTop: "1px solid #1e1e1e", paddingTop: 48 }}>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", marginBottom: 24 }}>Character limits for every major platform (2026)</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
+          <div className="cc-ref-grid">
             {PLATFORMS.map((p) => (
               <div key={p.id} style={{ backgroundColor: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
