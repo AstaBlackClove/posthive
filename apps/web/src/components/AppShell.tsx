@@ -8,7 +8,7 @@ import { OnboardingChecklist } from "./OnboardingChecklist";
 
 // No auth, no sidebar — public pages (exact) or prefixes
 const PUBLIC_EXACT = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/privacy", "/terms", "/features", "/docs", "/verify-email", "/pricing", "/blog", "/for-developers", "/agent", "/invite"];
-const PUBLIC_PREFIXES = ["/features/", "/platforms/", "/docs/", "/blog/"];
+const PUBLIC_PREFIXES = ["/features/", "/platforms/", "/docs/", "/blog/", "/tools/"];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
