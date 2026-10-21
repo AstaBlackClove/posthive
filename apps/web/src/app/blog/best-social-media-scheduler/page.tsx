@@ -50,20 +50,20 @@ const faqSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "Best Social Media Scheduler 2026 — Free & Paid Picks | Posthive",
-  description: "Honest comparison of the best social media schedulers in 2026. Free plans, pricing, platform support, and who each tool is actually built for.",
+  title: "10 Best Social Media Schedulers 2026: Free & Paid Compared",
+  description: "Compared: Buffer, Hootsuite, Later, Posthive, and more. Pricing, platform support (Bluesky, Threads, Instagram), free plans, and who each tool is actually built for.",
   keywords: ["best social media scheduler", "best free social media scheduler", "social media scheduler comparison", "cheapest social media scheduler", "top social media scheduling tools"],
   alternates: { canonical: `${WEB_URL}/blog/best-social-media-scheduler` },
   openGraph: {
-    title: "The Best Social Media Scheduler in 2026 | Posthive",
-    description: "A no-fluff comparison of the best social media schedulers. Pricing, platform support, and who each tool is actually built for.",
+    title: "10 Best Social Media Schedulers 2026: Free & Paid Compared",
+    description: "Compared: Buffer, Hootsuite, Later, Posthive, and more. Pricing, platform support, free plans, and who each tool is actually built for.",
     url: `${WEB_URL}/blog/best-social-media-scheduler`,
     images: [{ url: "/api/og?layout=post&title=Best+Social+Media+Scheduler+2026&desc=Free+and+paid+options+compared&badge=Comparison&date=July+7%2C+2026", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Best Social Media Scheduler in 2026 | Posthive",
-    description: "A no-fluff comparison of the best social media schedulers. Pricing, platform support, and who each tool is actually built for.",
+    title: "10 Best Social Media Schedulers 2026: Free & Paid Compared",
+    description: "Compared: Buffer, Hootsuite, Later, Posthive, and more. Pricing, platform support, free plans, and who each tool is actually built for.",
   },
 };
 

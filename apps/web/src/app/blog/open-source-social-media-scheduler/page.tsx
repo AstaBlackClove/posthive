@@ -45,19 +45,19 @@ const faqSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "Best Open-Source Social Media Schedulers in 2026 | Posthive",
-  description: "Tired of paying $50-100/month for Buffer or Hootsuite? Here are the best open-source social media schedulers you can self-host for free in 2026.",
+  title: "7 Best Open-Source Social Media Schedulers 2026 (Self-Host Free)",
+  description: "Skip the $50–$100/month subscriptions. These open-source social media schedulers let you self-host for free — full data ownership, 14+ platforms, no vendor lock-in.",
   keywords: ["open source social media scheduler", "self-hosted social media scheduler", "free social media scheduler open source", "self-hostable social media scheduler", "open source buffer alternative", "open source hootsuite alternative"],
   alternates: { canonical: `${WEB_URL}/blog/open-source-social-media-scheduler` },
   openGraph: {
-    title: "Best Open-Source Social Media Schedulers in 2026 | Posthive",
-    description: "Self-host your social media scheduler for free. No $50/month subscriptions. Full control over your data.",
+    title: "7 Best Open-Source Social Media Schedulers 2026 (Self-Host Free)",
+    description: "Skip the $50–$100/month subscriptions. Self-host your social media scheduler for free — full data ownership, 14+ platforms, no vendor lock-in.",
     url: `${WEB_URL}/blog/open-source-social-media-scheduler`,
     images: [{ url: "/api/og?layout=post&title=Open-Source+Social+Media+Schedulers&desc=Self-host+for+free+%C2%B7+14+platforms+%C2%B7+AGPL-3.0&badge=Guide&date=July+17%2C+2026", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Best Open-Source Social Media Schedulers in 2026 | Posthive",
+    title: "7 Best Open-Source Social Media Schedulers 2026 (Self-Host Free)",
     description: "Self-host your social media scheduler for free. No $50/month subscriptions.",
   },
 };
