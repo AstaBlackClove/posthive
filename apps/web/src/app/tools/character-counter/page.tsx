@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { PlatformIcon } from "../../../components/PlatformIcon";
+import { MarketingNavBar } from "../../../components/MarketingNavBar";
+import { LandingFooter } from "../../../components/LandingFooter";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -71,22 +73,7 @@ export default function CharacterCounterPage() {
 
   return (
     <main style={{ minHeight: "100vh", backgroundColor: "#0a0a0a", color: "#ededed" }}>
-      {/* Nav */}
-      <nav style={{ borderBottom: "1px solid #1e1e1e", padding: "0 24px" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icon.png" alt="Posthive" width={24} height={24} style={{ borderRadius: 6 }} />
-            <span style={{ fontWeight: 700, fontSize: 15, color: "#ededed" }}>Posthive</span>
-          </Link>
-          <Link
-            href="/register"
-            style={{ fontSize: 13, fontWeight: 600, color: "#0a0a0a", backgroundColor: "#ffffff", padding: "6px 14px", borderRadius: 8, textDecoration: "none" }}
-          >
-            Try free →
-          </Link>
-        </div>
-      </nav>
+      <MarketingNavBar />
 
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px 80px" }}>
         {/* Header */}
@@ -98,7 +85,7 @@ export default function CharacterCounterPage() {
             Social Media Character Counter
           </h1>
           <p style={{ fontSize: 16, color: "#888", margin: 0, lineHeight: 1.6 }}>
-            Paste or type your post. See character limits for every major platform instantly — no sign-up required.
+            Paste or type your post. See character limits for every major platform instantly - no sign-up required.
           </p>
         </div>
 
@@ -148,7 +135,7 @@ export default function CharacterCounterPage() {
             <div style={{ marginTop: 24, backgroundColor: "#0d0f1f", border: "1px solid #3a3a5a", borderRadius: 12, padding: 18 }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 4px" }}>Schedule this post with Posthive</p>
               <p style={{ fontSize: 13, color: "#888", margin: "0 0 12px", lineHeight: 1.5 }}>
-                Schedule to 14 platforms at once. Bluesky, Threads, Instagram, LinkedIn — one composer.
+                Schedule to 14 platforms at once. Bluesky, Threads, Instagram, LinkedIn one composer.
               </p>
               <Link
                 href="/register"
@@ -194,6 +181,7 @@ export default function CharacterCounterPage() {
           </p>
         </div>
       </div>
+      <LandingFooter />
     </main>
   );
 }
