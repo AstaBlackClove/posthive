@@ -22,6 +22,7 @@ import {
 import { prisma } from "../lib/prisma.js";
 import { schedulePostJob } from "../lib/queue.js";
 import { withApiKey, canUseApi } from "../lib/auth/withApiKey.js";
+import { isManageRole } from "../lib/auth/withAuth.js";
 
 async function withMcpGate(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   const user = req.apiKeyUser!;
@@ -384,8 +385,13 @@ async function handleTool(
   name: string,
   args: Record<string, unknown>,
   userId: string,
-  workspaceId: string
+  workspaceId: string,
+  ctx: { role: string | null; approvalRequired: boolean }
 ) {
+  // Design-approval gate — member API keys in approval-enabled workspaces
+  // cannot schedule directly or approve drafts; everything goes to review.
+  const forcedDraft = !isManageRole(ctx.role) && ctx.approvalRequired;
+
   switch (name) {
     case "list_accounts": {
       const accounts = await prisma.account.findMany({
@@ -423,7 +429,7 @@ async function handleTool(
         throw new Error("One or more account_ids are invalid or do not belong to your workspace");
       }
 
-      const isDraft = !scheduleDirectly;
+      const isDraft = !scheduleDirectly || forcedDraft;
       const contentPayload = JSON.stringify({
         text: args.content,
         mediaUrls: (args.media_urls as string[] | undefined) ?? [],
@@ -438,6 +444,7 @@ async function handleTool(
           workspaceId,
           scheduledFor,
           status: isDraft ? "draft" : "pending",
+          approvalStatus: forcedDraft ? "pending" : null,
           content: contentPayload,
           commentText: (args.first_comment as string | undefined) ?? null,
           dryRun: args.dry_run === true,
@@ -454,10 +461,13 @@ async function handleTool(
         id: job.id,
         status: job.status,
         draft: isDraft,
+        pendingReview: forcedDraft,
         scheduledFor: isDraft ? null : job.scheduledFor,
         targets: job.targets,
         _note: isDraft
-          ? "Post saved as DRAFT. Open Posthive → Posts to review and schedule, or use approve_draft to schedule it now."
+          ? forcedDraft
+            ? "Post saved as DRAFT awaiting review. Workspace approval is required — a designer must promote it before it publishes."
+            : "Post saved as DRAFT. Open Posthive → Posts to review and schedule, or use approve_draft to schedule it now."
           : "Post scheduled — will publish at scheduled_time.",
       });
     }
@@ -537,6 +547,10 @@ async function handleTool(
         throw new Error("scheduled_time must be a future ISO date string");
       }
 
+      if (forcedDraft) {
+        throw new Error("Approval required — only workspace admins or designers can approve drafts in this workspace.");
+      }
+
       const job = await prisma.postJob.findUnique({ where: { id: postId } });
       if (!job || job.workspaceId !== workspaceId) throw new Error("Post not found");
       if (job.status !== "draft") {
@@ -545,7 +559,13 @@ async function handleTool(
 
       const updated = await prisma.postJob.update({
         where: { id: postId },
-        data: { status: "pending", scheduledFor },
+        data: {
+          status: "pending",
+          scheduledFor,
+          ...(job.approvalStatus === "pending"
+            ? { approvalStatus: "approved", reviewedByUserId: userId, reviewedAt: new Date() }
+            : {}),
+        },
       });
       await schedulePostJob(updated.id, scheduledFor);
 
@@ -563,6 +583,13 @@ async function handleTool(
       if (!job || job.workspaceId !== workspaceId) throw new Error("Post not found");
       if (job.status !== "pending" && job.status !== "draft") {
         throw new Error(`Cannot update a post with status '${job.status}'. Only pending or draft posts can be updated.`);
+      }
+
+      // Design-approval gate — member keys may only edit their own drafts,
+      // and editing resets the review when the draft was pending/rejected.
+      if (forcedDraft) {
+        if (job.userId !== userId) throw new Error("Member API keys can only edit their own posts.");
+        if (job.status !== "draft") throw new Error("Approved posts are frozen for member keys — duplicate the post instead.");
       }
 
       const existing = (() => { try { return JSON.parse(job.content) as Record<string, unknown>; } catch { return {} as Record<string, unknown>; } })();
@@ -586,7 +613,15 @@ async function handleTool(
         throw new Error("Provide at least one field to update");
       }
 
-      const updated = await prisma.postJob.update({ where: { id: postId }, data: updateData });
+      const updated = await prisma.postJob.update({
+        where: { id: postId },
+        data: {
+          ...updateData,
+          ...(forcedDraft && job.status === "draft" && (job.approvalStatus === "pending" || job.approvalStatus === "rejected")
+            ? { approvalStatus: null, reviewNote: null, reviewedByUserId: null, reviewedAt: null }
+            : {}),
+        },
+      });
       return ok({ id: updated.id, status: updated.status, scheduledFor: updated.scheduledFor });
     }
 
@@ -628,6 +663,10 @@ async function handleTool(
       if (!job || job.workspaceId !== workspaceId) throw new Error("Post not found");
       if (job.status !== "pending" && job.status !== "draft") {
         throw new Error(`Cannot delete a post with status '${job.status}'. Only pending or draft posts can be deleted.`);
+      }
+      // Design-approval gate — member keys may only delete their own drafts
+      if (forcedDraft && (job.userId !== userId || job.status !== "draft")) {
+        throw new Error("Member API keys can only delete their own drafts.");
       }
       await prisma.postJob.delete({ where: { id: postId } });
       return ok({ ok: true, deleted: postId });
@@ -687,7 +726,7 @@ async function handleTool(
         throw new Error("One or more account_ids are invalid or do not belong to your workspace");
       }
 
-      const isDraft = !scheduleDirectly;
+      const isDraft = !scheduleDirectly || forcedDraft;
       const text = (args.content_override as string | undefined) ?? (tc.text as string) ?? "";
       const commentText = (args.first_comment_override as string | undefined) ?? (tc.commentText as string | undefined) ?? null;
 
@@ -703,6 +742,7 @@ async function handleTool(
           workspaceId,
           scheduledFor,
           status: isDraft ? "draft" : "pending",
+          approvalStatus: forcedDraft ? "pending" : null,
           content: contentPayload,
           commentText,
           dryRun: false,
@@ -717,11 +757,14 @@ async function handleTool(
         id: job.id,
         status: job.status,
         draft: isDraft,
+        pendingReview: forcedDraft,
         scheduledFor: isDraft ? null : job.scheduledFor,
         templateUsed: template.name,
         targets: job.targets,
         _note: isDraft
-          ? "Post created from template as DRAFT. Use approve_draft to schedule it."
+          ? forcedDraft
+            ? "Post created from template as DRAFT awaiting review. A designer must promote it before it publishes."
+            : "Post created from template as DRAFT. Use approve_draft to schedule it."
           : "Post created from template and scheduled.",
       });
     }
@@ -736,6 +779,12 @@ async function handleTool(
 async function serveMcp(req: FastifyRequest, reply: FastifyReply, userId: string, workspaceId: string) {
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
+  // Design-approval context from the API key owner
+  const approvalCtx = {
+    role: req.apiKeyUser?.role ?? null,
+    approvalRequired: req.apiKeyUser?.approvalRequired ?? false,
+  };
+
   const server = new Server(
     { name: "posthive", version: "0.1.0" },
     { capabilities: { tools: {} } }
@@ -747,7 +796,7 @@ async function serveMcp(req: FastifyRequest, reply: FastifyReply, userId: string
     const { name, arguments: args } = mcpReq.params;
     const a = (args ?? {}) as Record<string, unknown>;
     try {
-      return await handleTool(name, a, userId, workspaceId);
+      return await handleTool(name, a, userId, workspaceId, approvalCtx);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return {

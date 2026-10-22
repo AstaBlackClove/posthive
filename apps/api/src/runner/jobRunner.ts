@@ -66,6 +66,14 @@ export async function runJob(
   job: PostJob & { targets: FullTarget[] },
   storage?: StorageAdapter
 ): Promise<void> {
+  // Defensive guard — only pending (approved & queued) jobs may run.
+  // Drafts awaiting design approval must never publish, even if a stale
+  // queue entry somehow fires (e.g. scheduler rehydrated before approval).
+  if (job.status !== "pending") {
+    console.warn(`[runner] job ${job.id} skipped — status '${job.status}' is not pending (approval gate)`);
+    return;
+  }
+
   await prisma.postJob.update({
     where: { id: job.id },
     data: { status: "running" },
@@ -142,7 +150,7 @@ export async function runJob(
     const fullJob = await prisma.postJob.findUnique({
       where: { id: job.id },
       select: { repeatInterval: true, repeatEndsAt: true, repeatParentId: true, scheduledFor: true,
-                content: true, commentText: true, userId: true, workspaceId: true,
+                content: true, commentText: true, userId: true, workspaceId: true, approvalStatus: true,
                 targets: { select: { accountId: true } } },
     });
     // Check workspace plan is still active before spawning next repeat
@@ -150,6 +158,9 @@ export async function runJob(
       ? await prisma.workspace.findUnique({ where: { id: fullJob.workspaceId }, select: { plan: true, planStatus: true } })
       : null;
     const planActive = !ws || (!["cancelled", "on_hold"].includes(ws.planStatus) && getPlan(ws.plan).maxPostsPerMonth !== 0);
+    // Jobs that went through design approval spawn their next occurrence as a
+    // draft awaiting review again — never straight into the queue.
+    const needsApproval = fullJob?.approvalStatus != null;
     if (fullJob?.repeatInterval && fullJob.scheduledFor && planActive) {
       const next = new Date(fullJob.scheduledFor);
       if (fullJob.repeatInterval === "daily")   next.setDate(next.getDate() + 1);
@@ -162,7 +173,8 @@ export async function runJob(
         const nextJob = await prisma.postJob.create({
           data: {
             scheduledFor: next,
-            status: "pending",
+            status: needsApproval ? "draft" : "pending",
+            approvalStatus: needsApproval ? "pending" : null,
             content: fullJob.content,
             commentText: fullJob.commentText,
             userId: fullJob.userId,
@@ -173,8 +185,10 @@ export async function runJob(
             targets: { create: fullJob.targets.map(t => ({ accountId: t.accountId })) },
           },
         });
-        await schedulePostJob(nextJob.id, next);
-        console.log(`[runner] spawned repeat job ${nextJob.id} (${fullJob.repeatInterval}) for ${next.toISOString()}`);
+        if (!needsApproval) {
+          await schedulePostJob(nextJob.id, next);
+        }
+        console.log(`[runner] spawned repeat job ${nextJob.id} (${fullJob.repeatInterval}) for ${next.toISOString()}` + (needsApproval ? " — awaiting design approval" : ""));
       }
     }
   }

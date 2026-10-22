@@ -11,16 +11,17 @@ const createBody = z.object({
 });
 
 const updateBody = z.object({
-  name: z.string().min(1).max(80).trim(),
+  name: z.string().min(1).max(80).trim().optional(),
+  approvalRequired: z.boolean().optional(),
 });
 
 const inviteBody = z.object({
   email: z.string().email(),
-  role: z.enum(["admin", "member"]).default("member"),
+  role: z.enum(["admin", "designer", "member"]).default("member"),
 });
 
 const changRoleBody = z.object({
-  role: z.enum(["admin", "member"]),
+  role: z.enum(["admin", "designer", "member"]),
 });
 
 export async function workspaceRoutes(app: FastifyInstance): Promise<void> {
@@ -40,6 +41,7 @@ export async function workspaceRoutes(app: FastifyInstance): Promise<void> {
             plan: true,
             planStatus: true,
             trialEndsAt: true,
+            approvalRequired: true,
             createdAt: true,
             _count: { select: { members: true } },
           },
@@ -64,6 +66,7 @@ export async function workspaceRoutes(app: FastifyInstance): Promise<void> {
         joinedAt: m.joinedAt,
         isActive: m.workspace.id === activeWorkspaceId,
         createdAt: m.workspace.createdAt,
+        approvalRequired: m.workspace.approvalRequired,
       })),
     });
   });
@@ -108,25 +111,31 @@ export async function workspaceRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ ok: true, activeWorkspaceId: id });
   });
 
-  // PATCH /workspaces/:id — rename workspace (owner/admin only)
+  // PATCH /workspaces/:id — rename workspace / toggle approval (owner/admin only)
   app.patch("/workspaces/:id", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
     const { id } = req.params as { id: string };
     const parsed = updateBody.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
+    if (!parsed.data.name && !parsed.data.approvalRequired) {
+      return reply.status(400).send({ error: "Nothing to update" });
+    }
 
     const membership = await prisma.workspaceMember.findUnique({
       where: { workspaceId_userId: { workspaceId: id, userId } },
     });
     if (!membership) return reply.status(404).send({ error: "Workspace not found" });
     if (!["owner", "admin"].includes(membership.role)) {
-      return reply.status(403).send({ error: "Only owners and admins can rename the workspace" });
+      return reply.status(403).send({ error: "Only owners and admins can update the workspace" });
     }
 
     const workspace = await prisma.workspace.update({
       where: { id },
-      data: { name: parsed.data.name },
-      select: { id: true, name: true },
+      data: {
+        ...(parsed.data.name ? { name: parsed.data.name } : {}),
+        ...(parsed.data.approvalRequired !== undefined ? { approvalRequired: parsed.data.approvalRequired } : {}),
+      },
+      select: { id: true, name: true, approvalRequired: true },
     });
 
     return reply.send({ workspace });

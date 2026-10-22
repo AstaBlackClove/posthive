@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
-import { withAuth, withAuthOrToken, getUser, getWorkspaceId } from "../lib/auth/withAuth.js";
+import { withAuth, withAuthOrToken, getUser, getWorkspaceId, requireManageRole } from "../lib/auth/withAuth.js";
 
 const templateBody = z.object({
   name: z.string().min(1).max(100),
@@ -34,10 +34,14 @@ export async function templateRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ templates });
   });
 
-  // Create a new template
+  // Create a new template — owner/admin/designer only (design team manages templates)
   app.post("/templates", { preHandler: [withAuthOrToken] }, async (req, reply) => {
     const { id: userId } = getUser(req);
     const workspaceId = getWorkspaceId(req);
+
+    const forbidden = await requireManageRole(userId, workspaceId);
+    if (forbidden) return reply.status(403).send(forbidden);
+
     const parsed = templateBody.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
 
@@ -58,10 +62,15 @@ export async function templateRoutes(app: FastifyInstance): Promise<void> {
     return reply.status(201).send({ template });
   });
 
-  // Update template name
+  // Update template name — owner/admin/designer only
   app.patch("/templates/:id", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
     const workspaceId = getWorkspaceId(req);
     const { id } = req.params as { id: string };
+
+    const forbidden = await requireManageRole(userId, workspaceId);
+    if (forbidden) return reply.status(403).send(forbidden);
+
     const { name } = req.body as { name?: string };
     if (!name) return reply.status(400).send({ error: "Name required" });
 
@@ -76,10 +85,14 @@ export async function templateRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ template: updated });
   });
 
-  // Delete a template
+  // Delete a template — owner/admin/designer only
   app.delete("/templates/:id", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
     const workspaceId = getWorkspaceId(req);
     const { id } = req.params as { id: string };
+
+    const forbidden = await requireManageRole(userId, workspaceId);
+    if (forbidden) return reply.status(403).send(forbidden);
 
     const template = await prisma.template.findFirst({ where: { id, workspaceId } });
     if (!template) return reply.status(404).send({ error: "Not found" });

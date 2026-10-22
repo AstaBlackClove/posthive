@@ -16,15 +16,15 @@ datasource db {
 // App user — created via local JWT auth or Supabase (cloud).
 // supabaseId is null for local auth users.
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  name        String
+  id           String  @id @default(cuid())
+  email        String  @unique
+  name         String
   passwordHash String? // null for Supabase auth users
-  supabaseId  String?  @unique // null for local auth users
-  avatarUrl   String?
-  timezone    String    @default("UTC")
+  supabaseId   String? @unique // null for local auth users
+  avatarUrl    String?
+  timezone     String  @default("UTC")
 
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean @default(false)
 
   // Onboarding email tracking — prevent duplicate sends
   day3NudgeSentAt    DateTime?
@@ -36,16 +36,17 @@ model User {
   activeWorkspaceId String?
   activeWorkspace   Workspace? @relation("UserActiveWorkspace", fields: [activeWorkspaceId], references: [id])
 
-  accounts      Account[]
-  postJobs      PostJob[]
-  refreshTokens RefreshToken[]
-  apiKeys       ApiKey[]
+  accounts           Account[]
+  postJobs           PostJob[]
+  reviewedJobs       PostJob[]           @relation("PostJobReviewedBy")
+  refreshTokens      RefreshToken[]
+  apiKeys            ApiKey[]
   emailVerifications EmailVerification[]
-  templates     Template[]
-  sessions      Session[]
-  events        Event[]
-  workspaceMembers WorkspaceMember[]
-  feedbacks     Feedback[]
+  templates          Template[]
+  sessions           Session[]
+  events             Event[]
+  workspaceMembers   WorkspaceMember[]
+  feedbacks          Feedback[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -59,20 +60,21 @@ model Workspace {
   name String
 
   // Billing (moved from User)
-  plan           String    @default("trialing")  // trialing | creator | pro | team | cancelled
-  planStatus     String    @default("trialing")  // trialing | active | cancelled
-  trialEndsAt    DateTime?
-  dodoCustomerId String?   @unique
-  dodoSubId      String?   @unique
-  allowTrial     Boolean   @default(true)        // false after first trial used (abuse prevention)
-  allowReels     Boolean   @default(true)        // Instagram Reels & Stories (Pro/Team only; default true so existing workspaces keep access)
-  allowOverrides Boolean   @default(true)        // per-platform text/comment overrides (Pro/Team only; default true so existing workspaces keep access)
+  plan             String    @default("trialing") // trialing | creator | pro | team | cancelled
+  planStatus       String    @default("trialing") // trialing | active | cancelled
+  trialEndsAt      DateTime?
+  dodoCustomerId   String?   @unique
+  dodoSubId        String?   @unique
+  allowTrial       Boolean   @default(true) // false after first trial used (abuse prevention)
+  allowReels       Boolean   @default(true) // Instagram Reels & Stories (Pro/Team only; default true so existing workspaces keep access)
+  allowOverrides   Boolean   @default(true) // per-platform text/comment overrides (Pro/Team only; default true so existing workspaces keep access)
+  approvalRequired Boolean   @default(false) // member posts must be approved by owner/admin/designer before scheduling
 
-  webhookUrl String?  // outbound webhook fired on post publish
+  webhookUrl String? // outbound webhook fired on post publish
 
   // Per-workspace overrides — set by admin to give a specific workspace higher limits than their plan
-  customMaxLibraries   Int?  // overrides plan.maxLibraries when set
-  customMaxDripPerDay  Int?  // overrides plan.maxDripPerDay when set
+  customMaxLibraries    Int? // overrides plan.maxLibraries when set
+  customMaxDripPerDay   Int? // overrides plan.maxDripPerDay when set
   customMaxLibraryItems Int? // overrides plan.maxLibraryItems when set
 
   members          WorkspaceMember[]
@@ -99,7 +101,7 @@ model WorkspaceMember {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role        String    @default("member")  // owner | admin | member
+  role        String    @default("member") // owner | admin | designer | member
   joinedAt    DateTime  @default(now())
 
   @@unique([workspaceId, userId])
@@ -113,7 +115,7 @@ model WorkspaceInvite {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   email       String
-  role        String    @default("member")  // admin | member
+  role        String    @default("member")
   token       String    @unique
   expiresAt   DateTime
   acceptedAt  DateTime?
@@ -137,20 +139,20 @@ model RefreshToken {
 
 // A connected social media account for a specific platform.
 model Account {
-  id           String    @id @default(cuid())
-  platform     String    // "bluesky" | "threads" | "linkedin"
-  displayName  String
-  credentials  String    // AES-256-GCM encrypted JSON, never plaintext
-  avatarUrl    String?
-  refreshToken String?
+  id             String    @id @default(cuid())
+  platform       String // "bluesky" | "threads" | "linkedin"
+  displayName    String
+  credentials    String // AES-256-GCM encrypted JSON, never plaintext
+  avatarUrl      String?
+  refreshToken   String?
   expiresAt      DateTime?
   warnedExpiryAt DateTime? // set when expiry warning email was sent (prevents re-sending)
 
-  userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  workspaceId  String?
-  workspace    Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   targets      PostJobTarget[]
   groupMembers AccountGroupMember[]
@@ -169,18 +171,29 @@ model PostJob {
   status       String    @default("pending")
   content      String
   commentText  String?
-  dryRun       Boolean  @default(false)
+  dryRun       Boolean   @default(false)
+
+  // Design-team approval — only used when Workspace.approvalRequired is on.
+  // null = approval not required / plain user draft.
+  // "pending" = waiting for review (status stays "draft", never enqueued)
+  // "approved" = approved and promoted to pending
+  // "rejected" = reviewer sent it back with reviewNote
+  approvalStatus   String?
+  reviewNote       String?
+  reviewedByUserId String?
+  reviewedBy       User?     @relation("PostJobReviewedBy", fields: [reviewedByUserId], references: [id])
+  reviewedAt       DateTime?
 
   // Repeat / evergreen
-  repeatInterval String?   // "daily" | "weekly" | "monthly"
+  repeatInterval String? // "daily" | "weekly" | "monthly"
   repeatEndsAt   DateTime? // stop spawning after this date (inclusive)
-  repeatParentId String?   // ID of the first job in the chain (flat reference)
+  repeatParentId String? // ID of the first job in the chain (flat reference)
 
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  workspaceId  String?
-  workspace    Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   targets PostJobTarget[]
 
@@ -192,6 +205,7 @@ model PostJob {
   @@index([workspaceId, createdAt])
   @@index([workspaceId, scheduledFor])
   @@index([workspaceId, scheduledFor, id])
+  @@index([workspaceId, approvalStatus])
   @@index([repeatParentId])
 }
 
@@ -230,10 +244,10 @@ model PostStats {
 
   target PostJobTarget @relation(fields: [targetId], references: [id], onDelete: Cascade)
 
-  likes    Int  @default(0)
-  reposts  Int  @default(0)
-  replies  Int  @default(0)
-  views    Int?
+  likes   Int  @default(0)
+  reposts Int  @default(0)
+  replies Int  @default(0)
+  views   Int?
 
   fetchedAt DateTime
   createdAt DateTime @default(now())
@@ -244,25 +258,25 @@ model PostStats {
 
 // Email verification token — single-use, 24-hour TTL.
 model EmailVerification {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([token])
 }
 
 // Password reset token — single-use, 1-hour TTL.
 model PasswordReset {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  token     String   @unique
+  token     String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([token])
 }
@@ -292,17 +306,17 @@ model OAuthState {
 
 // API key for programmatic access (Pro/Team plans, or all users when billing disabled).
 model ApiKey {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspaceId String?
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name       String                      // human label e.g. "My Claude agent"
-  keyHash    String    @unique           // SHA-256 hash of the raw key
-  prefix     String                      // first 12 chars shown in UI e.g. "ph_abc12345"
-  lastUsedAt DateTime?
-  revokedAt  DateTime?                   // null = active
-  createdAt  DateTime  @default(now())
+  name        String // human label e.g. "My Claude agent"
+  keyHash     String     @unique // SHA-256 hash of the raw key
+  prefix      String // first 12 chars shown in UI e.g. "ph_abc12345"
+  lastUsedAt  DateTime?
+  revokedAt   DateTime? // null = active
+  createdAt   DateTime   @default(now())
 
   @@index([userId])
   @@index([workspaceId])
@@ -311,15 +325,15 @@ model ApiKey {
 
 // Saved post template — reusable content for compose.
 model Template {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspaceId String?
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name      String
-  content   String   // JSON: { text, commentText, mediaUrls, altTexts, mediaType, youtubeType }
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  name        String
+  content     String // JSON: { text, commentText, mediaUrls, altTexts, mediaType, youtubeType }
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   @@index([userId])
   @@index([workspaceId])
@@ -361,17 +375,17 @@ model Event {
 
 // In-app feedback / bug reports submitted via sidebar modal.
 model Feedback {
-  id              String           @id @default(cuid())
-  userId          String?
-  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
-  workspaceId     String?
-  workspace       Workspace?       @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
-  type            String           // "bug" | "feature" | "general"
-  message         String
-  url             String?          // page path the user was on
-  unreadByUser    Int              @default(0) // count of admin replies not yet seen by user
-  createdAt       DateTime         @default(now())
-  replies         FeedbackReply[]
+  id           String          @id @default(cuid())
+  userId       String?
+  user         User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  workspaceId  String?
+  workspace    Workspace?      @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  type         String // "bug" | "feature" | "general"
+  message      String
+  url          String? // page path the user was on
+  unreadByUser Int             @default(0) // count of admin replies not yet seen by user
+  createdAt    DateTime        @default(now())
+  replies      FeedbackReply[]
 
   @@index([userId])
   @@index([createdAt])
@@ -381,7 +395,7 @@ model FeedbackReply {
   id         String   @id @default(cuid())
   feedbackId String
   feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
-  sender     String   // "admin" | "user"
+  sender     String // "admin" | "user"
   message    String
   createdAt  DateTime @default(now())
 
@@ -402,23 +416,23 @@ model CancellationFeedback {
 
 // Account group — a named set of accounts for quick selection in compose.
 model AccountGroup {
-  id          String   @id @default(cuid())
+  id          String               @id @default(cuid())
   name        String
   workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace   Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   members     AccountGroupMember[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 
   @@index([workspaceId])
 }
 
 model AccountGroupMember {
-  id        String @id @default(cuid())
+  id        String       @id @default(cuid())
   groupId   String
   group     AccountGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
   accountId String
-  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account   Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, accountId])
   @@index([groupId])
@@ -427,26 +441,26 @@ model AccountGroupMember {
 // Content Library — stores a collection of posts to drip-publish over time.
 // Users upload CSV once; the drip cron picks items daily and creates PostJobs.
 model ContentLibrary {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  name        String
-  status      String   @default("active")  // "active" | "paused" | "exhausted"
+  name   String
+  status String @default("active") // "active" | "paused" | "exhausted"
 
   // Drip settings
-  postsPerDay Int      @default(1)          // how many items to publish per day (plan-capped)
-  timeSlots   Json                          // String[] — "HH:MM" in user's timezone e.g. ["09:00","14:00"]
-  timezone    String   @default("UTC")
-  accountIds  Json                          // String[] — account IDs to post to
+  postsPerDay Int    @default(1) // how many items to publish per day (plan-capped)
+  timeSlots   Json // String[] — "HH:MM" in user's timezone e.g. ["09:00","14:00"]
+  timezone    String @default("UTC")
+  accountIds  Json // String[] — account IDs to post to
 
   // Safety: track last drip run to avoid double-firing
-  lastDripAt  DateTime?
+  lastDripAt DateTime?
 
-  items       LibraryItem[]
+  items LibraryItem[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([workspaceId])
   @@index([status])
@@ -455,24 +469,24 @@ model ContentLibrary {
 // A single content item inside a ContentLibrary.
 // status flow: queued → scheduled → published | skipped | failed
 model LibraryItem {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   libraryId String
   library   ContentLibrary @relation(fields: [libraryId], references: [id], onDelete: Cascade)
 
-  workspaceId String   // denormalized for fast workspace-scoped queries
+  workspaceId String // denormalized for fast workspace-scoped queries
 
   // Content (mirrors PostJob content structure)
-  text        String   @default("")
+  text        String  @default("")
   commentText String?
-  mediaUrls   Json     @default("[]")   // String[]
+  mediaUrls   Json    @default("[]") // String[]
 
   // Ordering — preserves CSV row order for drip sequence
-  order       Int
+  order Int
 
   // Lifecycle
-  status      String   @default("queued")  // "queued" | "scheduled" | "published" | "skipped" | "failed"
-  scheduledJobId String?                   // FK to PostJob.id (set when scheduled, nullable)
-  publishedAt String?                      // ISO string — when the PostJob finished
+  status         String  @default("queued") // "queued" | "scheduled" | "published" | "skipped" | "failed"
+  scheduledJobId String? // FK to PostJob.id (set when scheduled, nullable)
+  publishedAt    String? // ISO string — when the PostJob finished
 
   // Error tracking
   errorMessage String?
@@ -486,8 +500,8 @@ model LibraryItem {
 }
 
 model OAuthClient {
-  id           String   @id  // the client_id we issued
+  id           String   @id // the client_id we issued
   clientName   String
-  redirectUris Json              // String[]
+  redirectUris Json // String[]
   createdAt    DateTime @default(now())
 }

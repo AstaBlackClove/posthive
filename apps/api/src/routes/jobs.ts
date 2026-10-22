@@ -6,7 +6,7 @@ import { prisma } from "../lib/prisma.js";
 const sseConnections = new Map<string, number>();
 const SSE_MAX_PER_USER = 3;
 import { schedulePostJob, postJobQueue } from "../lib/queue.js";
-import { withAuth, getUser, getWorkspaceId, getWorkspaceRole, ACCESS_COOKIE_NAME } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, getWorkspaceId, getWorkspaceRole, isManageRole, requireManageRole, ACCESS_COOKIE_NAME } from "../lib/auth/withAuth.js";
 import { authProvider } from "../lib/auth/index.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
 import { getPlan } from "../lib/plans.js";
@@ -58,6 +58,15 @@ const createJobBody = z.object({
 
 export async function jobRoutes(app: FastifyInstance, { storage }: { storage: StorageAdapter }): Promise<void> {
 
+  // Design-approval gate — when workspace.approvalRequired is on, non-manage
+  // roles (marketing members) cannot schedule directly; their posts become
+  // drafts awaiting review instead of entering the queue.
+  const needsReviewGate = async (userId: string, workspaceId: string): Promise<boolean> => {
+    if (isManageRole(await getWorkspaceRole(userId, workspaceId))) return false;
+    const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { approvalRequired: true } });
+    return ws?.approvalRequired ?? false;
+  };
+
   // Bulk create scheduled jobs — single request, server-side batching
   app.post("/jobs/bulk", { preHandler: [withAuth], config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const { id: userId } = getUser(req);
@@ -79,6 +88,9 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
     const { jobs } = parsed.data;
+
+    // Approval gate — member posts in approval-enabled workspaces stay drafts
+    const needsReview = await needsReviewGate(userId, workspaceId);
 
     // Verify all referenced accountIds belong to this workspace (one query)
     const allAccountIds = [...new Set(jobs.flatMap(j => j.accountIds))];
@@ -130,7 +142,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     // Cap pending jobs to prevent server overload — hard limit regardless of plan
     const MAX_PENDING = 250;
-    const pendingCount = await prisma.postJob.count({ where: { workspaceId, status: "pending" } });
+    const pendingCount = await prisma.postJob.count({ where: { workspaceId, status: needsReview ? "draft" : "pending" } });
     if (pendingCount >= MAX_PENDING) {
       return reply.status(429).send({
         error: `You already have ${pendingCount} pending scheduled posts. Wait for them to process or delete some before adding more (max ${MAX_PENDING} pending at a time).`,
@@ -178,7 +190,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
             const j = await tx.postJob.create({
               data: {
                 scheduledFor: new Date(job.scheduledFor),
-                status: "pending",
+                status: needsReview ? "draft" : "pending",
+                approvalStatus: needsReview ? "pending" : null,
                 content: JSON.stringify(job.content),
                 commentText: job.commentText ?? null,
                 dryRun: false,
@@ -186,13 +199,13 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
                 workspaceId,
                 targets: { create: job.accountIds.map(accountId => ({ accountId })) },
               },
-              select: { id: true, scheduledFor: true },
+              select: { id: true, scheduledFor: true, status: true },
             });
             results.push(j);
           }
           return results;
         }, { timeout: 30_000 });
-        createdJobs.push(...created.filter(j => j.scheduledFor).map(j => ({ id: j.id, scheduledFor: j.scheduledFor! })));
+        createdJobs.push(...created.filter(j => j.scheduledFor && j.status === "pending").map(j => ({ id: j.id, scheduledFor: j.scheduledFor! })));
       } catch (err) {
         const chunkStart = i;
         for (let k = 0; k < chunk.length; k++) {
@@ -223,6 +236,10 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (!draft && !scheduledFor) {
       return reply.status(400).send({ error: "scheduledFor is required when not saving as draft" });
     }
+
+    // Approval gate — member posts in approval-enabled workspaces stay drafts
+    // awaiting design review; scheduledFor is kept as the requested time.
+    const needsReview = !draft && (await needsReviewGate(userId, workspaceId));
 
     // Non-scheduling gates (reels, overrides, images) — no race risk, check outside tx
     if (content.mediaType === "reel" || content.mediaType === "story") {
@@ -258,7 +275,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     // so concurrent bulk-CSV requests can't all pass the count check simultaneously.
     let planError: Awaited<ReturnType<typeof enforcePlan>> = null;
     const job = await prisma.$transaction(async (tx) => {
-      if (!draft) {
+      if (!draft && !needsReview) {
         // Lock per workspace — serializes concurrent scheduling requests (Postgres only)
         if (!process.env.DATABASE_URL?.startsWith("file:")) {
           await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${workspaceId}))`;
@@ -269,7 +286,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       return tx.postJob.create({
         data: {
           scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
-          status: draft ? "draft" : "pending",
+          status: draft || needsReview ? "draft" : "pending",
+          approvalStatus: needsReview ? "pending" : null,
           content: JSON.stringify(content),
           commentText: commentText ?? null,
           dryRun,
@@ -286,7 +304,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (planError) return reply.status(402).send(planError);
     if (!job) return reply.status(500).send({ error: "Failed to create job" });
 
-    if (!draft) {
+    if (!draft && !needsReview) {
       await schedulePostJob(job.id, new Date(scheduledFor!));
     }
 
@@ -356,6 +374,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         select: {
           id: true, status: true, scheduledFor: true, content: true, commentText: true,
           createdAt: true, updatedAt: true, workspaceId: true, userId: true,
+          approvalStatus: true, reviewNote: true,
           repeatInterval: true, repeatEndsAt: true, repeatParentId: true,
           targets: { select: TARGET_SELECT },
         },
@@ -391,12 +410,12 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
   // List jobs for current workspace — cursor-paginated
   app.get("/jobs", { preHandler: [withAuth] }, async (req, reply) => {
     const workspaceId = getWorkspaceId(req);
-    const query = req.query as { cursor?: string; limit?: string; status?: string };
+    const query = req.query as { cursor?: string; limit?: string; status?: string; review?: string };
     const limit = Math.min(Number(query.limit ?? 50), 100);
     const cursor = query.cursor ?? undefined;
     const statusFilter = query.status;
 
-    const where: { workspaceId: string; status?: { in: string[] } } = { workspaceId };
+    const where: { workspaceId: string; status?: { in: string[] }; approvalStatus?: string } = { workspaceId };
     if (statusFilter) {
       const statusMap: Record<string, string[]> = {
         draft: ["draft"],
@@ -407,6 +426,11 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       const statuses = statusMap[statusFilter] ?? [statusFilter];
       where.status = { in: statuses };
     }
+    // Review queue — drafts awaiting design approval
+    if (query.review === "pending") {
+      where.status = { in: ["draft"] };
+      where.approvalStatus = "pending";
+    }
 
     const jobs = await prisma.postJob.findMany({
       where,
@@ -416,6 +440,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       select: {
         id: true, status: true, scheduledFor: true, content: true, commentText: true,
         createdAt: true, updatedAt: true, workspaceId: true, userId: true,
+        approvalStatus: true, reviewNote: true, reviewedByUserId: true, reviewedAt: true,
+        reviewedBy: { select: { name: true } },
         repeatInterval: true, repeatEndsAt: true, repeatParentId: true,
         targets: { select: TARGET_SELECT },
       },
@@ -468,7 +494,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     }).safeParse(req.body);
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
 
-    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, content: true, userId: true } });
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, content: true, userId: true, approvalStatus: true } });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status !== "pending" && job.status !== "draft") {
       return reply.status(409).send({ error: `Cannot edit a job with status "${job.status}"` });
@@ -479,6 +505,20 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     }
 
     const updateData: Record<string, unknown> = {};
+
+    // Creator editing their own submitted/rejected draft resets the review —
+    // it must be re-submitted for design approval afterwards.
+    // Manage roles (owner/admin/) may edit without resetting the review.
+    if (
+      job.status === "draft" &&
+      (job.approvalStatus === "pending" || job.approvalStatus === "rejected") &&
+      !isManageRole(role)
+    ) {
+      updateData.approvalStatus = null;
+      updateData.reviewNote = null;
+      updateData.reviewedByUserId = null;
+      updateData.reviewedAt = null;
+    }
 
     if (body.data.scheduledFor) {
       updateData.scheduledFor = new Date(body.data.scheduledFor);
@@ -559,14 +599,20 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (body.data.scheduledFor) {
       const blocked = await enforcePlan(userId, workspaceId, "scheduling");
       if (blocked) return reply.status(402).send(blocked);
-      await postJobQueue.remove(id);
-      await schedulePostJob(id, new Date(body.data.scheduledFor));
+      // Drafts (including those awaiting design approval) are never queued —
+      // they enter the queue only via the approve endpoint.
+      if (updated.status !== "draft") {
+        await postJobQueue.remove(id);
+        await schedulePostJob(id, new Date(body.data.scheduledFor));
+      }
     }
 
     return reply.send(updated);
   });
 
-  // Promote a draft to a scheduled job
+  // Promote a draft to a scheduled job — this is the approve action.
+  // Only owner/admin/ (design team) may promote; a draft awaiting
+  // review gets approvalStatus=approved before entering the queue.
   app.post("/jobs/:id/schedule", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
     const workspaceId = getWorkspaceId(req);
@@ -574,7 +620,10 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const body = z.object({ scheduledFor: z.string().datetime() }).safeParse(req.body);
     if (!body.success) return reply.status(400).send({ error: "scheduledFor is required" });
 
-    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true } });
+    const forbidden = await requireManageRole(userId, workspaceId);
+    if (forbidden) return reply.status(403).send(forbidden);
+
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, approvalStatus: true } });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status !== "draft") return reply.status(409).send({ error: "Only draft jobs can be scheduled" });
 
@@ -584,11 +633,74 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const scheduledFor = new Date(body.data.scheduledFor);
     const updated = await prisma.postJob.update({
       where: { id },
-      data: { status: "pending", scheduledFor },
+      data: {
+        status: "pending",
+        scheduledFor,
+        reviewNote: null,
+        ...(job.approvalStatus === "pending"
+          ? { approvalStatus: "approved", reviewedByUserId: userId, reviewedAt: new Date() }
+          : {}),
+      },
       include: { targets: { select: TARGET_SELECT } },
     });
 
     await schedulePostJob(id, scheduledFor);
+    return reply.send(updated);
+  });
+
+  // Reject a post awaiting design approval — sent back to the creator with a note.
+  app.post("/jobs/:id/reject", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const { id } = req.params as { id: string };
+    const body = z.object({ note: z.string().min(1).max(2000).trim() }).safeParse(req.body);
+    if (!body.success) return reply.status(400).send({ error: "A review note is required" });
+
+    const forbidden = await requireManageRole(userId, workspaceId);
+    if (forbidden) return reply.status(403).send(forbidden);
+
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, approvalStatus: true } });
+    if (!job) return reply.status(404).send({ error: "Job not found" });
+    if (job.status !== "draft" || job.approvalStatus !== "pending") {
+      return reply.status(409).send({ error: "Only posts awaiting review can be rejected" });
+    }
+
+    const updated = await prisma.postJob.update({
+      where: { id },
+      data: {
+        approvalStatus: "rejected",
+        reviewNote: body.data.note,
+        reviewedByUserId: userId,
+        reviewedAt: new Date(),
+      },
+      include: { targets: { select: TARGET_SELECT } },
+    });
+    return reply.send(updated);
+  });
+
+  // Submit a draft for design approval (approval-enabled workspaces only).
+  app.post("/jobs/:id/submit", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const { id } = req.params as { id: string };
+
+    const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { approvalRequired: true } });
+    if (!ws?.approvalRequired) return reply.status(400).send({ error: "Approval is not enabled for this workspace" });
+
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, approvalStatus: true, userId: true } });
+    if (!job) return reply.status(404).send({ error: "Job not found" });
+    if (job.status !== "draft") return reply.status(409).send({ error: "Only drafts can be submitted for review" });
+    if (job.approvalStatus === "pending") return reply.status(409).send({ error: "Already awaiting review" });
+    const role = await getWorkspaceRole(userId, workspaceId);
+    if (job.userId !== userId && !isManageRole(role)) {
+      return reply.status(403).send({ error: "You can only submit your own posts.", code: "FORBIDDEN" });
+    }
+
+    const updated = await prisma.postJob.update({
+      where: { id },
+      data: { approvalStatus: "pending", reviewNote: null, reviewedByUserId: null, reviewedAt: null },
+      include: { targets: { select: TARGET_SELECT } },
+    });
     return reply.send(updated);
   });
 

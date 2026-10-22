@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../lib/prisma.js";
 import { withApiKey } from "../lib/auth/withApiKey.js";
+import { isManageRole } from "../lib/auth/withAuth.js";
 import { schedulePostJob, postJobQueue } from "../lib/queue.js";
 import { compressForPlatform } from "../lib/compress.js";
 import { ALLOWED_IMAGE_TYPES, type StorageAdapter } from "../lib/storage.js";
@@ -48,7 +49,7 @@ export async function publicApiRoutes(
 
   // POST /api/v1/posts — schedule or draft a post
   app.post("/api/v1/posts", { preHandler }, async (req, reply) => {
-    const { id: userId, workspaceId } = req.apiKeyUser!;
+    const { id: userId, workspaceId, role, approvalRequired } = req.apiKeyUser!;
     const body = req.body as {
       content: string;
       accountIds: string[];
@@ -77,9 +78,14 @@ export async function publicApiRoutes(
 
     const isDraft = body.draft === true;
 
+    // Design-approval gate — member keys in approval-enabled workspaces can
+    // never schedule directly; their posts become drafts awaiting review.
+    const needsReview = !isDraft && approvalRequired && !isManageRole(role);
+    const staysDraft = isDraft || needsReview;
+
     // scheduledFor required unless saving as draft
     let scheduledFor: Date | null = null;
-    if (!isDraft) {
+    if (!staysDraft) {
       if (!body.scheduledFor) return reply.status(400).send({ error: "scheduledFor is required when draft is false" });
       scheduledFor = new Date(body.scheduledFor);
       if (isNaN(scheduledFor.getTime()) || scheduledFor <= new Date())
@@ -113,7 +119,8 @@ export async function publicApiRoutes(
         userId,
         workspaceId,
         scheduledFor: scheduledFor ?? new Date(0),
-        status: isDraft ? "draft" : "pending",
+        status: staysDraft ? "draft" : "pending",
+        approvalStatus: needsReview ? "pending" : null,
         content: contentPayload,
         commentText: body.commentText ?? null,
         dryRun: body.dryRun ?? false,
@@ -128,13 +135,14 @@ export async function publicApiRoutes(
       },
     });
 
-    if (!isDraft) await schedulePostJob(job.id, scheduledFor!);
+    if (!staysDraft) await schedulePostJob(job.id, scheduledFor!);
 
     return reply.status(201).send({
       id: job.id,
       scheduledFor: isDraft ? null : job.scheduledFor,
       status: job.status,
       draft: isDraft,
+      pendingReview: needsReview,
       dryRun: job.dryRun,
       targets: job.targets,
     });
@@ -223,7 +231,7 @@ export async function publicApiRoutes(
 
   // PATCH /api/v1/posts/:id — reschedule or update a pending post
   app.patch("/api/v1/posts/:id", { preHandler }, async (req, reply) => {
-    const { workspaceId } = req.apiKeyUser!;
+    const { workspaceId, role, approvalRequired } = req.apiKeyUser!;
     const { id } = req.params as { id: string };
     const body = req.body as {
       scheduledFor?: string;
@@ -241,6 +249,14 @@ export async function publicApiRoutes(
     if (!job) return reply.status(404).send({ error: "Post not found" });
     if (job.status !== "pending")
       return reply.status(409).send({ error: `Cannot update a post with status "${job.status}"` });
+
+    // Design-approval gate — approved posts are frozen for member keys
+    if (approvalRequired && !isManageRole(role)) {
+      return reply.status(403).send({
+        error: "Approved posts can no longer be edited. Delete this post and submit a new draft.",
+        code: "FORBIDDEN",
+      });
+    }
 
     if (body.mediaType && !["post", "reel", "story"].includes(body.mediaType))
       return reply.status(400).send({ error: "mediaType must be 'post', 'reel', or 'story'" });
@@ -335,7 +351,7 @@ export async function publicApiRoutes(
 
   // POST /api/v1/posts/:id/approve — promote a draft to scheduled
   app.post("/api/v1/posts/:id/approve", { preHandler }, async (req, reply) => {
-    const { workspaceId } = req.apiKeyUser!;
+    const { workspaceId, role, approvalRequired } = req.apiKeyUser!;
     const { id } = req.params as { id: string };
     const body = req.body as { scheduledFor: string };
 
@@ -345,13 +361,24 @@ export async function publicApiRoutes(
     if (isNaN(scheduledFor.getTime()) || scheduledFor <= new Date())
       return reply.status(400).send({ error: "scheduledFor must be a future ISO date string" });
 
+    // Design-approval gate — member keys cannot self-approve
+    if (approvalRequired && !isManageRole(role)) {
+      return reply.status(403).send({ error: "Only workspace admins or designers can approve drafts.", code: "FORBIDDEN" });
+    }
+
     const job = await prisma.postJob.findFirst({ where: { id, workspaceId } });
     if (!job) return reply.status(404).send({ error: "Post not found" });
     if (job.status !== "draft") return reply.status(409).send({ error: `Post status is '${job.status}' — only drafts can be approved` });
 
     const updated = await prisma.postJob.update({
       where: { id },
-      data: { status: "pending", scheduledFor },
+      data: {
+        status: "pending",
+        scheduledFor,
+        ...(job.approvalStatus === "pending"
+          ? { approvalStatus: "approved", reviewedByUserId: req.apiKeyUser!.id, reviewedAt: new Date() }
+          : {}),
+      },
     });
     await schedulePostJob(updated.id, scheduledFor);
 
@@ -417,7 +444,7 @@ export async function publicApiRoutes(
 
   // POST /api/v1/templates/:id/use — create a post from a template
   app.post("/api/v1/templates/:id/use", { preHandler }, async (req, reply) => {
-    const { id: userId, workspaceId } = req.apiKeyUser!;
+    const { id: userId, workspaceId, role, approvalRequired } = req.apiKeyUser!;
     const { id } = req.params as { id: string };
     const body = req.body as {
       accountIds: string[];
@@ -436,8 +463,11 @@ export async function publicApiRoutes(
     const tc = (() => { try { return JSON.parse(template.content) as Record<string, unknown>; } catch { return {}; } })();
 
     const isDraft = body.draft !== false && !body.scheduledFor;
+    // Design-approval gate — member keys stay in the review queue
+    const needsReview = !isDraft && approvalRequired && !isManageRole(role);
+    const staysDraft = isDraft || needsReview;
     let scheduledFor = new Date(0);
-    if (!isDraft) {
+    if (!staysDraft) {
       if (!body.scheduledFor) return reply.status(400).send({ error: "scheduledFor is required when draft is false" });
       scheduledFor = new Date(body.scheduledFor);
       if (isNaN(scheduledFor.getTime()) || scheduledFor <= new Date())
@@ -456,7 +486,8 @@ export async function publicApiRoutes(
         userId,
         workspaceId,
         scheduledFor,
-        status: isDraft ? "draft" : "pending",
+        status: staysDraft ? "draft" : "pending",
+        approvalStatus: needsReview ? "pending" : null,
         content: JSON.stringify({ ...tc, text, commentText }),
         commentText,
         dryRun: false,
@@ -465,12 +496,13 @@ export async function publicApiRoutes(
       include: { targets: { select: { id: true, accountId: true, status: true } } },
     });
 
-    if (!isDraft) await schedulePostJob(job.id, scheduledFor);
+    if (!staysDraft) await schedulePostJob(job.id, scheduledFor);
 
     return reply.status(201).send({
       id: job.id,
       status: job.status,
       draft: isDraft,
+      pendingReview: needsReview,
       scheduledFor: isDraft ? null : job.scheduledFor,
       templateUsed: template.name,
       targets: job.targets,

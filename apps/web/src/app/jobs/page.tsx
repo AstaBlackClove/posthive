@@ -10,6 +10,8 @@ import { DeleteConfirmDialog } from "../../components/DeleteConfirmDialog";
 import { useToast } from "../../components/Toast";
 import { TrialUrgentBanner } from "../../components/TrialUrgentBanner";
 import { DatePicker } from "../../components/DatePicker";
+import { useAuth } from "../../context/AuthContext";
+import { useWorkspace } from "../../context/WorkspaceContext";
 import type { Account, PerAccountOverride } from "../../components/PlatformPreview";
 
 interface Target {
@@ -24,6 +26,7 @@ interface Target {
 
 export interface Job {
   id: string;
+  userId?: string;
   scheduledFor: string | null;
   status: string;
   content: string;
@@ -32,6 +35,10 @@ export interface Job {
   createdAt: string;
   repeatInterval?: string | null;
   repeatParentId?: string | null;
+  approvalStatus?: string | null;  // pending | approved | rejected | null
+  reviewNote?: string | null;
+  reviewedBy?: { name: string } | null;
+  reviewedAt?: string | null;
   targets: Target[];
 }
 
@@ -55,6 +62,25 @@ function StatusBadge({ status }: { status: string }) {
     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border ${cfg.badge}`}>
       <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
       {cfg.label}
+    </span>
+  );
+}
+
+// Design-approval state chip — shown on draft cards under the approval flow
+function ApprovalChip({ approvalStatus, reviewedBy }: { approvalStatus: string; reviewedBy?: { name: string } | null }) {
+  const label = approvalStatus === "pending" ? "In review" : approvalStatus === "rejected" ? "Rejected" : "Approved";
+  const style =
+    approvalStatus === "pending"
+      ? { backgroundColor: "#1f1f2e", color: "#818cf8", border: "1px solid #3730a3" }
+      : approvalStatus === "rejected"
+      ? { backgroundColor: "#1f0a0a", color: "#f87171", border: "1px solid #7f1d1d" }
+      : { backgroundColor: "#0a1f12", color: "#4ade80", border: "1px solid #14532d" };
+  return (
+    <span
+      title={reviewedBy ? `${label} by ${reviewedBy.name}` : label}
+      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+      style={style}>
+      {label}
     </span>
   );
 }
@@ -139,7 +165,54 @@ function RepeatModal({ job, onClose, onConfirm }: {
   );
 }
 
-function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, selected, onToggleSelect }: {
+// Send a post back to its creator with a review note (design-approval flow)
+function RejectModal({ job, onClose, onConfirm }: {
+  job: Job;
+  onClose: () => void;
+  onConfirm: (note: string) => Promise<void>;
+}) {
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const content = JSON.parse(job.content) as { text: string };
+
+  async function submit() {
+    if (!note.trim()) return;
+    setSaving(true);
+    try { await onConfirm(note.trim()); } finally { setSaving(false); }
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "#111111", border: "1px solid #2a2a2a", borderRadius: 16, padding: 24, width: 420, maxWidth: "calc(100vw - 32px)" }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: "#ededed", marginBottom: 4 }}>Reject & send back</h3>
+        <p style={{ fontSize: 13, color: "#666", marginBottom: 20 }} className="line-clamp-2">{content.text}</p>
+
+        <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Review note — what should be fixed?
+        </label>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          autoFocus
+          rows={4}
+          placeholder="e.g. Replace the header image with the new brand template, and shorten the copy."
+          className="w-full mt-2" style={{ background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "10px 12px", fontSize: 14, color: "#ededed", resize: "vertical", outline: "none" }}
+        />
+
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "1px solid #2a2a2a", background: "transparent", color: "#888", fontSize: 14, cursor: "pointer" }}>Cancel</button>
+          <button onClick={submit} disabled={saving || !note.trim()}
+            style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "none", background: "#7f1d1d", color: "#fca5a5", fontSize: 14, fontWeight: 600, cursor: saving || !note.trim() ? "not-allowed" : "pointer", opacity: saving || !note.trim() ? 0.6 : 1 }}>
+            {saving ? "Rejecting…" : "Reject & send back"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, selected, onToggleSelect, canReview, canSubmitOwn, isOwn, onApprove, onReject, onSubmitOwn }: {
   job: Job;
   onEdit: () => void;
   onDelete: () => void;
@@ -148,6 +221,12 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
   onRepeat: () => void;
   selected?: boolean;
   onToggleSelect?: () => void;
+  canReview?: boolean;
+  canSubmitOwn?: boolean;
+  isOwn?: boolean;
+  onApprove?: () => void;
+  onReject?: () => void;
+  onSubmitOwn?: () => void;
 }) {
   const [retrying, setRetrying] = useState(false);
   const [analytics, setAnalytics] = useState<Record<string, AnalyticsResult | "loading" | "error">>({});
@@ -220,12 +299,20 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
                 <span>↳</span><span className="italic line-clamp-1">{job.commentText}</span>
               </p>
             )}
+            {isDraft && job.approvalStatus === "rejected" && job.reviewNote && (
+              <p className="mt-1.5 text-xs rounded-lg px-2 py-1.5" style={{ backgroundColor: "#1f0a0a", color: "#fca5a5", border: "1px solid #7f1d1d" }}>
+                <span className="font-semibold">Design review:</span> {job.reviewNote}
+              </p>
+            )}
           </div>
 
           {/* Action buttons */}
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
             <div className="flex items-center gap-1.5">
               <StatusBadge status={job.status} />
+              {isDraft && job.approvalStatus && (
+                <ApprovalChip approvalStatus={job.approvalStatus} reviewedBy={job.reviewedBy} />
+              )}
               {job.repeatInterval && (
                 <span title={`Repeats ${job.repeatInterval}${job.repeatParentId ? " (chain)" : ""}`}
                   style={{ fontSize: 11, padding: "1px 7px", borderRadius: 20, background: "#5b63d322", color: "#7c85e8", border: "1px solid #5b63d344", fontWeight: 600 }}>
@@ -249,6 +336,31 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+              )}
+              {canReview && isDraft && job.approvalStatus === "pending" && (
+                <button onClick={onApprove} className="job-action-btn" title="Approve & schedule"
+                  style={{ color: "#4ade80" }}>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </button>
+              )}
+              {canReview && isDraft && job.approvalStatus === "pending" && (
+                <button onClick={onReject} className="job-action-btn" title="Reject & send back"
+                  style={{ color: "#f87171" }}>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+              {canSubmitOwn && isOwn && isDraft && (job.approvalStatus === null || job.approvalStatus === undefined || job.approvalStatus === "rejected") && (
+                <button onClick={onSubmitOwn} className="job-action-btn" title="Send for design approval"
+                  style={{ color: "#818cf8" }}>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
                 </button>
               )}
@@ -378,11 +490,13 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
 }
 
 type ViewTab = "list" | "calendar";
-type FilterTab = "all" | "draft" | "pending" | "done" | "failed";
+type FilterTab = "all" | "draft" | "review" | "pending" | "done" | "failed";
 
 export default function JobsPage() {
   const router = useRouter();
   const { success, error: toastError } = useToast();
+  const { user } = useAuth();
+  const { activeWorkspace } = useWorkspace();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
@@ -398,7 +512,13 @@ export default function JobsPage() {
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [deletingJob, setDeletingJob] = useState<Job | null>(null);
   const [repeatingJob, setRepeatingJob] = useState<Job | null>(null);
+  const [rejectingJob, setRejectingJob] = useState<Job | null>(null);
   const [platformFilter, setPlatformFilter] = useState<string>("all");
+
+  // Design-approval flow — owner/admin/designer review; members submit for review
+  const role = activeWorkspace?.role ?? "member";
+  const canReview = role === "owner" || role === "admin" || role === "designer";
+  const canSubmitOwn = (activeWorkspace?.approvalRequired ?? false) && !canReview;
 
   // Bulk select state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -460,6 +580,46 @@ export default function JobsPage() {
     try {
       await apiFetch(`/jobs/${jobId}/retry-failed`, { method: "POST" });
       success("Retrying failed platforms…");
+    } catch (err) { toastError(String(err)); }
+  }
+
+  // ─── Design-approval actions ──────────────────────────────────────────────
+
+  function applyJobUpdate(updated: Job) {
+    setJobs(prev => prev.map(j => j.id === updated.id ? { ...j, ...updated } : j));
+  }
+
+  async function approveJob(job: Job) {
+    const requested = job.scheduledFor ? new Date(job.scheduledFor) : null;
+    // Keep the creator's requested time, or schedule 5 minutes from now.
+    const when = requested && requested > new Date() ? requested.toISOString() : new Date(Date.now() + 5 * 60_000).toISOString();
+    try {
+      const updated = await apiFetch<Job>(`/jobs/${job.id}/schedule`, {
+        method: "POST",
+        body: JSON.stringify({ scheduledFor: when }),
+      });
+      applyJobUpdate(updated);
+      success("Approved — post is scheduled.");
+      window.dispatchEvent(new CustomEvent("ph:post-scheduled"));
+    } catch (err) { toastError(String(err)); }
+  }
+
+  async function rejectJob(job: Job, note: string) {
+    try {
+      const updated = await apiFetch<Job>(`/jobs/${job.id}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ note }),
+      });
+      applyJobUpdate(updated);
+      success("Rejected — sent back to the creator with your note.");
+    } catch (err) { toastError(String(err)); throw err; }
+  }
+
+  async function submitForReview(job: Job) {
+    try {
+      const updated = await apiFetch<Job>(`/jobs/${job.id}/submit`, { method: "POST" });
+      applyJobUpdate(updated);
+      success("Sent for design review — waiting for approval.");
     } catch (err) { toastError(String(err)); }
   }
 
@@ -575,16 +735,21 @@ export default function JobsPage() {
           ...(Object.keys(perAccount).length > 0 ? { perAccount } : { perAccount: {} }),
         }),
       });
-      // If it was a draft, promote it to scheduled
+      // If it was a draft, members submit it for design approval while
+      // owner/admin/designer promote it straight to the schedule.
       if (isDraft) {
-        await apiFetch(`/jobs/${jobId}/schedule`, {
-          method: "POST",
-          body: JSON.stringify({ scheduledFor: scheduledFor.toISOString() }),
-        });
+        if (canSubmitOwn) {
+          await apiFetch(`/jobs/${jobId}/submit`, { method: "POST" });
+        } else {
+          await apiFetch(`/jobs/${jobId}/schedule`, {
+            method: "POST",
+            body: JSON.stringify({ scheduledFor: scheduledFor.toISOString() }),
+          });
+        }
       }
       const updated = await apiFetch<Job>(`/jobs/${jobId}`);
       setJobs((prev) => prev.map((j) => j.id === jobId ? updated : j));
-      success(isDraft ? "Draft scheduled!" : "Post updated.");
+      success(isDraft ? (canSubmitOwn ? "Draft saved — sent for design review." : "Draft scheduled!") : "Post updated.");
     } catch (err) { toastError(String(err)); throw err; }
   }
 
@@ -594,7 +759,8 @@ export default function JobsPage() {
     if (isFirstPage) setLoading(true); else setLoadingMore(true);
     try {
       const params = new URLSearchParams({ limit: "50" });
-      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (statusFilter === "review") params.set("review", "pending");
+      else if (statusFilter !== "all") params.set("status", statusFilter);
       if (cursor) params.set("cursor", cursor);
       const data = await apiFetch<{ items: Job[]; nextCursor: string | null; hasMore: boolean }>(`/jobs?${params}`);
       if (isFirstPage) {
@@ -649,7 +815,9 @@ export default function JobsPage() {
             // Merge status updates into existing list — don't replace
             setJobs(prev => prev.map(j => {
               const updated = data.find(d => d.id === j.id);
-              return updated ? { ...j, status: updated.status, targets: updated.targets } : j;
+              return updated
+                ? { ...j, status: updated.status, targets: updated.targets, approvalStatus: updated.approvalStatus, reviewNote: updated.reviewNote }
+                : j;
             }));
             // Add any new jobs from SSE (e.g. just created) that aren't in list yet
             setJobs(prev => {
@@ -675,6 +843,7 @@ export default function JobsPage() {
   const counts = {
     all: jobs.length,
     draft: jobs.filter((j) => j.status === "draft").length,
+    review: jobs.filter((j) => j.status === "draft" && j.approvalStatus === "pending").length,
     pending: jobs.filter((j) => j.status === "pending" || j.status === "running").length,
     done: jobs.filter((j) => j.status === "done").length,
     failed: jobs.filter((j) => j.status === "failed").length,
@@ -706,8 +875,13 @@ export default function JobsPage() {
 
   const filteredJobs = jobs.filter((j) => {
     if (filter !== "all") {
-      if (filter === "pending" && j.status !== "pending" && j.status !== "running") return false;
-      if (filter !== "pending" && j.status !== filter) return false;
+      if (filter === "review") {
+        if (j.status !== "draft" || j.approvalStatus !== "pending") return false;
+      } else if (filter === "pending" && j.status !== "pending" && j.status !== "running") {
+        return false;
+      } else if (filter !== "pending" && j.status !== filter) {
+        return false;
+      }
     }
     if (platformFilter !== "all" && !j.targets.some((t) => t.account?.platform === platformFilter)) return false;
     return true;
@@ -728,6 +902,7 @@ export default function JobsPage() {
           open={!!editingJob}
           job={editingJob}
           accounts={accounts}
+          submitLabel={editingJob.status === "draft" && canSubmitOwn ? "Kirim untuk Review" : undefined}
           onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning) => {
             await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, editingJob.status === "draft", youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning);
           }}
@@ -741,6 +916,18 @@ export default function JobsPage() {
           job={repeatingJob}
           onClose={() => setRepeatingJob(null)}
           onConfirm={(interval, endsAt) => startRepeat(repeatingJob, interval, endsAt)}
+        />
+      )}
+
+      {/* Reject (send back) modal */}
+      {rejectingJob && (
+        <RejectModal
+          job={rejectingJob}
+          onClose={() => setRejectingJob(null)}
+          onConfirm={async (note) => {
+            const job = rejectingJob;
+            try { await rejectJob(job, note); setRejectingJob(null); } catch { /* modal keeps input */ }
+          }}
         />
       )}
 
@@ -839,13 +1026,14 @@ export default function JobsPage() {
           <>
             <div className="h-4 w-px hidden sm:block" style={{ backgroundColor: "#2a2a2a" }} />
             <div className="flex gap-1.5 flex-wrap">
-              {([
-                { id: "all",     label: "All",       dot: null,       activeColor: "#ededed", activeBg: "#2a2a2a" },
-                { id: "draft",   label: "Drafts",    dot: "#6b7280",  activeColor: "#9ca3af", activeBg: "#1a1a1a" },
-                { id: "pending", label: "Scheduled",  dot: "#f59e0b", activeColor: "#fbbf24", activeBg: "#1c1a10" },
-                { id: "done",    label: "Published",  dot: "#22c55e", activeColor: "#4ade80", activeBg: "#0a1f12" },
-                { id: "failed",  label: "Failed",     dot: "#ef4444", activeColor: "#f87171", activeBg: "#1f0a0a" },
-              ] as { id: FilterTab; label: string; dot: string | null; activeColor: string; activeBg: string }[]).map((f) => (
+          {([
+            { id: "all",     label: "All",       dot: null,       activeColor: "#ededed", activeBg: "#2a2a2a" },
+            { id: "draft",   label: "Drafts",    dot: "#6b7280",  activeColor: "#9ca3af", activeBg: "#1a1a1a" },
+            ...(canReview ? ([{ id: "review", label: "In review", dot: "#818cf8", activeColor: "#a5b4fc", activeBg: "#1c1a24" }] as const) : []),
+            { id: "pending", label: "Scheduled",  dot: "#f59e0b", activeColor: "#fbbf24", activeBg: "#1c1a10" },
+            { id: "done",    label: "Published",  dot: "#22c55e", activeColor: "#4ade80", activeBg: "#0a1f12" },
+            { id: "failed",  label: "Failed",     dot: "#ef4444", activeColor: "#f87171", activeBg: "#1f0a0a" },
+          ] as { id: FilterTab; label: string; dot: string | null; activeColor: string; activeBg: string }[]).map((f) => (
                 <button key={f.id} onClick={() => { setFilter(f.id); clearSelection(); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
                   style={filter === f.id
@@ -989,7 +1177,7 @@ export default function JobsPage() {
                     </a>
                   </>
                 ) : (
-                  <p className="text-sm" style={{ color: "#555" }}>No {filter} posts</p>
+                  <p className="text-sm" style={{ color: "#555" }}>{filter === "review" ? "Nothing waiting for review" : `No ${filter} posts`}</p>
                 )}
               </div>
             )}
@@ -999,7 +1187,7 @@ export default function JobsPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <span className="w-2 h-2 rounded-full bg-gray-500" />
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Drafts · {drafts.length}
+                    {filter === "review" ? "In review" : "Drafts"} · {drafts.length}
                   </p>
                 </div>
                 <div className="space-y-3">
@@ -1011,7 +1199,13 @@ export default function JobsPage() {
                       onDuplicate={() => duplicateJob(job)}
                       onRepeat={() => setRepeatingJob(job)}
                       selected={selectedIds.has(job.id)}
-                      onToggleSelect={() => toggleSelect(job.id)} />
+                      onToggleSelect={() => toggleSelect(job.id)}
+                      canReview={canReview}
+                      canSubmitOwn={canSubmitOwn}
+                      isOwn={!!user && job.userId === user.id}
+                      onApprove={() => approveJob(job)}
+                      onReject={() => setRejectingJob(job)}
+                      onSubmitOwn={() => submitForReview(job)} />
                   ))}
                 </div>
               </section>

@@ -34,11 +34,12 @@ interface Props {
   open: boolean;
   job: EditableJob;
   accounts: Account[];
+  submitLabel?: string;
   onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string) => Promise<void>;
   onClose: () => void;
 }
 
-export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) {
+export function EditPostDialog({ open, job, accounts, submitLabel, onSave, onClose }: Props) {
   const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; youtubeVideoMode?: "upload" | "url"; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; perAccount?: Record<string, PerAccountOverride>; pixelfedSensitive?: boolean; pixelfedVisibility?: "public" | "unlisted" | "private"; linkedinVisibility?: "PUBLIC" | "CONNECTIONS"; blueskyContentWarning?: string };
 
   const [text, setText] = useState(parsedContent.text);
@@ -793,7 +794,9 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
               disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink}
               className="px-5 py-2 text-sm font-semibold rounded-xl disabled:opacity-40"
               style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
-              {saving ? (isDraft ? "Scheduling…" : "Saving…") : isDraft ? "Schedule Post" : "Save changes"}
+              {saving
+                ? (submitLabel?.includes("Review") ? "Submitting…" : "Saving…")
+                : (submitLabel ?? (isDraft ? "Schedule Post" : "Save changes"))}
             </button>
           </div>
         </div>

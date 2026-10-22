@@ -24,6 +24,7 @@ import { WarningsBar } from "../../components/composer/WarningsBar";
 import { TrialUrgentBanner } from "../../components/TrialUrgentBanner";
 import { MediaSection } from "../../components/composer/MediaSection";
 import { RepeatPicker } from "../../components/RepeatPicker";
+import { useWorkspace } from "../../context/WorkspaceContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -38,6 +39,10 @@ function defaultScheduledFor(): string {
 
 export default function ComposePage() {
   const router = useRouter();
+  const { activeWorkspace } = useWorkspace();
+  // Design-approval flow — members send posts for review instead of scheduling
+  const canReview = ["owner", "admin", "designer"].includes(activeWorkspace?.role ?? "");
+  const needsApprovalFlow = (activeWorkspace?.approvalRequired ?? false) && !canReview;
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [groups, setGroups] = useState<{ id: string; name: string; accountIds: string[] }[]>([]);
@@ -585,13 +590,17 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           ...(repeatInterval && repeatEndsAt ? { repeatEndsAt: new Date(repeatEndsAt).toISOString() } : {}),
         }),
       });
-      if (!dryRun) trackEvent("post_scheduled", { platforms: selectedAccounts.map(a => a.platform) });
-      if (!dryRun) window.dispatchEvent(new CustomEvent("ph:post-scheduled"));
-      toastSuccess(dryRun ? "Dry run scheduled no real post will be made." : "Post scheduled successfully!");
-      if (!dryRun && !localStorage.getItem("posthive_first_post_done")) {
-        localStorage.setItem("posthive_first_post_done", "1");
-        confetti({ particleCount: 160, spread: 80, origin: { y: 0.6 }, zIndex: 9999 });
-        setTimeout(() => confetti({ particleCount: 80, spread: 120, origin: { y: 0.55 }, zIndex: 9999 }), 300);
+      if (!dryRun && needsApprovalFlow) {
+        toastSuccess("Sent for review — waiting for design team approval.");
+      } else {
+        if (!dryRun) trackEvent("post_scheduled", { platforms: selectedAccounts.map(a => a.platform) });
+        if (!dryRun) window.dispatchEvent(new CustomEvent("ph:post-scheduled"));
+        toastSuccess(dryRun ? "Dry run scheduled no real post will be made." : "Post scheduled successfully!");
+        if (!dryRun && !localStorage.getItem("posthive_first_post_done")) {
+          localStorage.setItem("posthive_first_post_done", "1");
+          confetti({ particleCount: 160, spread: 80, origin: { y: 0.6 }, zIndex: 9999 });
+          setTimeout(() => confetti({ particleCount: 80, spread: 120, origin: { y: 0.55 }, zIndex: 9999 }), 300);
+        }
       }
       resetForm();
     } catch (err) {
@@ -1003,11 +1012,13 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                       </svg>
                       Templates
                     </button>
-                    <button type="button" onClick={() => { setSaveTemplateName(""); setSaveTemplateDialog(true); }} disabled={savingTemplate || !text.trim()}
-                      className="text-[11px] font-medium transition-opacity hover:opacity-80 disabled:opacity-30"
-                      style={{ color: "#5b63d3" }}>
-                      {savingTemplate ? "Saving…" : "+ Save"}
-                    </button>
+                    {canReview && (
+                      <button type="button" onClick={() => { setSaveTemplateName(""); setSaveTemplateDialog(true); }} disabled={savingTemplate || !text.trim()}
+                        className="text-[11px] font-medium transition-opacity hover:opacity-80 disabled:opacity-30"
+                        style={{ color: "#5b63d3" }}>
+                        {savingTemplate ? "Saving…" : "+ Save"}
+                      </button>
+                    )}
                     {showTemplates && (
                       <div className="absolute top-6 right-0 z-30 w-56 rounded-xl overflow-hidden shadow-xl"
                         style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a" }}>
@@ -1023,9 +1034,11 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                                 style={{ borderColor: "#1f1f1f" }}
                                 onClick={() => loadTemplate(tpl)}>
                                 <span className="flex-1 text-xs font-medium truncate" style={{ color: "#ededed" }}>{tpl.name}</span>
-                                <button type="button" onClick={(e) => { e.stopPropagation(); setShowTemplates(false); setDeleteTemplateTarget({ id: tpl.id, name: tpl.name }); }}
-                                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs hover:text-red-400"
-                                  style={{ color: "#555" }}>✕</button>
+                                {canReview && (
+                                  <button type="button" onClick={(e) => { e.stopPropagation(); setShowTemplates(false); setDeleteTemplateTarget({ id: tpl.id, name: tpl.name }); }}
+                                    className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs hover:text-red-400"
+                                    style={{ color: "#555" }}>✕</button>
+                                )}
                               </li>
                             ))}
                           </ul>
@@ -1448,7 +1461,13 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             className="flex-1 md:flex-none px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-colors hover:bg-gray-100"
             style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
           >
-            {submitting ? "Scheduling…" : dryRun ? "Schedule Dry Run" : "Schedule Post"}
+            {submitting
+              ? (needsApprovalFlow ? "Submitting…" : "Scheduling…")
+              : dryRun
+                ? "Schedule Dry Run"
+                : needsApprovalFlow
+                  ? "Kirim untuk Review"
+                  : "Schedule Post"}
           </button>
         </div>
       </div>

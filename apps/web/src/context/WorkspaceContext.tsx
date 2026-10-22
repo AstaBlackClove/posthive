@@ -11,9 +11,10 @@ export interface Workspace {
   planStatus: string;
   trialEndsAt: string | null;
   memberCount: number;
-  role: string; // owner | admin | member
+  role: string; // owner | admin | designer | member
   isActive: boolean;
   createdAt: string;
+  approvalRequired?: boolean;
 }
 
 interface WorkspaceContextValue {

@@ -7,6 +7,10 @@ export interface ApiKeyUser {
   workspaceId: string;
   plan: string;
   planStatus: string;
+  /** Key owner's workspace role — owner | admin | designer | member (null if left the workspace) */
+  role: string | null;
+  /** Workspace-level design-approval toggle */
+  approvalRequired: boolean;
 }
 
 declare module "fastify" {
@@ -35,7 +39,7 @@ export async function withApiKey(req: FastifyRequest, reply: FastifyReply): Prom
     where: { keyHash },
     include: {
       user: { select: { id: true } },
-      workspace: { select: { id: true, plan: true, planStatus: true } },
+      workspace: { select: { id: true, plan: true, planStatus: true, approvalRequired: true } },
     },
   });
 
@@ -50,11 +54,18 @@ export async function withApiKey(req: FastifyRequest, reply: FastifyReply): Prom
   // Update lastUsedAt without blocking the request
   prisma.apiKey.update({ where: { id: apiKey.id }, data: { lastUsedAt: new Date() } }).catch(() => {});
 
+  const membership = await prisma.workspaceMember.findUnique({
+    where: { workspaceId_userId: { workspaceId: apiKey.workspace.id, userId: apiKey.user.id } },
+    select: { role: true },
+  });
+
   req.apiKeyUser = {
     id: apiKey.user.id,
     workspaceId: apiKey.workspace.id,
     plan: apiKey.workspace.plan,
     planStatus: apiKey.workspace.planStatus,
+    role: membership?.role ?? null,
+    approvalRequired: apiKey.workspace.approvalRequired,
   };
 
   // Also expose on workspaceId so shared route helpers work

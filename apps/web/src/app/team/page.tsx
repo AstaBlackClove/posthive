@@ -24,8 +24,10 @@ interface Invite {
   createdAt: string;
 }
 
+type RoleChoice = "admin" | "designer" | "member";
+
 export default function TeamPage() {
-  const { activeWorkspace } = useWorkspace();
+  const { activeWorkspace, refresh } = useWorkspace();
   const { toast } = useToast();
 
   const [members, setMembers] = useState<Member[]>([]);
@@ -33,10 +35,17 @@ export default function TeamPage() {
   const [teamLoading, setTeamLoading] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
+  const [inviteRole, setInviteRole] = useState<RoleChoice>("member");
   const [inviteLoading, setInviteLoading] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [cancellingInviteId, setCancellingInviteId] = useState<string | null>(null);
+  const [approvalRequired, setApprovalRequired] = useState(false);
+  const [approvalLoading, setApprovalLoading] = useState(false);
+
+  useEffect(() => {
+    setApprovalRequired(activeWorkspace?.approvalRequired ?? false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeWorkspace?.id, activeWorkspace?.approvalRequired]);
 
   useEffect(() => {
     if (activeWorkspace) loadTeam();
@@ -95,7 +104,7 @@ export default function TeamPage() {
     }
   }
 
-  async function changeRole(memberId: string, role: "admin" | "member") {
+  async function changeRole(memberId: string, role: RoleChoice) {
     if (!activeWorkspace) return;
     try {
       await apiFetch(`/workspaces/${activeWorkspace.id}/members/${memberId}`, {
@@ -120,6 +129,25 @@ export default function TeamPage() {
       toast(err instanceof Error ? err.message : "Failed to cancel invite", "error");
     } finally {
       setCancellingInviteId(null);
+    }
+  }
+
+  async function toggleApproval() {
+    if (!activeWorkspace) return;
+    const next = !approvalRequired;
+    setApprovalLoading(true);
+    try {
+      await apiFetch(`/workspaces/${activeWorkspace.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ approvalRequired: next }),
+      });
+      setApprovalRequired(next);
+      refresh();
+      toast(next ? "Design review on — member posts need approval" : "Design review off", "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to update setting", "error");
+    } finally {
+      setApprovalLoading(false);
     }
   }
 
@@ -203,19 +231,20 @@ export default function TeamPage() {
                       {canChangeRole ? (
                         <select
                           value={m.role}
-                          onChange={(e) => changeRole(m.id, e.target.value as "admin" | "member")}
+                          onChange={(e) => changeRole(m.id, e.target.value as RoleChoice)}
                           style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 99, border: "1px solid #3a3a3a", backgroundColor: "#1a1a1a", color: "#aaa", cursor: "pointer", outline: "none" }}
                         >
                           <option value="admin">Admin</option>
+                          <option value="designer">Designer</option>
                           <option value="member">Member</option>
                         </select>
                       ) : (
                         <span style={{
                           fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 99, flexShrink: 0,
-                          backgroundColor: m.role === "owner" ? "rgba(91,99,211,0.2)" : m.role === "admin" ? "rgba(91,99,211,0.12)" : "rgba(136,136,136,0.1)",
-                          color: m.role === "owner" ? "#a5aaff" : m.role === "admin" ? "#8a8fff" : "#666",
+                          backgroundColor: m.role === "owner" ? "rgba(91,99,211,0.2)" : m.role === "admin" ? "rgba(91,99,211,0.12)" : m.role === "designer" ? "rgba(52,211,153,0.12)" : "rgba(136,136,136,0.1)",
+                          color: m.role === "owner" ? "#a5aaff" : m.role === "admin" ? "#8a8fff" : m.role === "designer" ? "#34d399" : "#666",
                           textTransform: "capitalize",
-                          border: m.role === "owner" ? "1px solid rgba(91,99,211,0.3)" : m.role === "admin" ? "1px solid rgba(91,99,211,0.15)" : "1px solid transparent",
+                          border: m.role === "owner" ? "1px solid rgba(91,99,211,0.3)" : m.role === "admin" ? "1px solid rgba(91,99,211,0.15)" : m.role === "designer" ? "1px solid rgba(52,211,153,0.25)" : "1px solid transparent",
                         }}>
                           {m.role}
                         </span>
@@ -240,6 +269,53 @@ export default function TeamPage() {
             )}
           </div>
         </div>
+
+        {/* Design review toggle */}
+        {(activeWorkspace?.role === "owner" || activeWorkspace?.role === "admin") && (
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#818cf815", border: "1px solid #818cf830" }}>
+                <svg className="w-4 h-4" fill="none" stroke="#818cf8" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Design review</p>
+                <p className="text-xs" style={{ color: "#555" }}>Require approval before members can schedule posts</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-4 px-5 py-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs" style={{ color: "#aaa" }}>
+                  Member posts stay as drafts until a <strong style={{ color: "#34d399" }}>Designer</strong>, Admin, or Owner approves them.
+                  {approvalRequired && members.some((m) => m.role === "designer") ? "" : " Invite a design team member with the Designer role first."}
+                </p>
+              </div>
+              <button
+                onClick={toggleApproval}
+                disabled={approvalLoading}
+                aria-label={approvalRequired ? "Disable design review" : "Enable design review"}
+                className="relative flex-shrink-0 rounded-full transition-colors"
+                style={{
+                  width: 44, height: 24,
+                  backgroundColor: approvalRequired ? "#5b63d3" : "#2a2a2a",
+                  border: "1px solid " + (approvalRequired ? "#5b63d3" : "#3a3a3a"),
+                  cursor: approvalLoading ? "wait" : "pointer",
+                }}
+              >
+                <span
+                  className="absolute top-1/2 rounded-full transition-all"
+                  style={{
+                    width: 16, height: 16,
+                    left: approvalRequired ? 24 : 3,
+                    transform: "translateY(-50%)",
+                    backgroundColor: "#ffffff",
+                  }}
+                />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Pending invites */}
         {(activeWorkspace?.role === "owner" || activeWorkspace?.role === "admin") && (
@@ -330,14 +406,15 @@ export default function TeamPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Role</label>
-                <select
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as "admin" | "member")}
-                  style={{ width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "8px 12px", fontSize: 13, color: "#ededed", outline: "none" }}
-                >
-                  <option value="member">Member - can compose and view posts</option>
-                  <option value="admin">Admin - can manage accounts and members</option>
-                </select>
+                  <select
+                   value={inviteRole}
+                   onChange={(e) => setInviteRole(e.target.value as RoleChoice)}
+                   style={{ width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "8px 12px", fontSize: 13, color: "#ededed", outline: "none" }}
+                 >
+                   <option value="member">Member — can compose and view posts</option>
+                   <option value="designer">Designer — reviews and approves member posts</option>
+                   <option value="admin">Admin — can manage accounts and members</option>
+                 </select>
               </div>
               <div className="flex gap-3 pt-1">
                 <button
