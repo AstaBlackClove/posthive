@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { NavBar } from "../components/LandingNav";
 import { PlatformIcon } from "../components/PlatformIcon";
 import { LandingFooter } from "@/components/LandingFooter";
+import { LaunchVideo } from "@/components/LaunchVideo";
 
 const GITHUB_URL = "https://github.com/AstaBlackClove/posthive";
 
@@ -1197,14 +1197,7 @@ export default function RootPage() {
                   }}
                 />
               </div>
-              <Image
-                src="/app-screenshot.png"
-                alt="Posthive composer — schedule posts across all platforms"
-                width={1120}
-                height={630}
-                style={{ width: "100%", height: "auto", display: "block" }}
-                priority
-              />
+              <LaunchVideo />
             </div>
           </div>
         </section>
