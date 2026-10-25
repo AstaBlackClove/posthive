@@ -1,5 +1,7 @@
 <p align="center">
-  <img src="apps/web/public/posthivemain.png" alt="Posthive" width="160" />
+  <a href="https://posthive.co">
+    <img src="apps/web/public/posthivemain.png" alt="Posthive" width="160" />
+  </a>
 </p>
 
 <h1 align="center">Posthive</h1>
@@ -34,6 +36,7 @@
   <img src="https://img.shields.io/badge/LinkedIn-0A66C2?logo=linkedin&logoColor=white&style=flat" />
   <img src="https://img.shields.io/badge/Mastodon-6364FF?logo=mastodon&logoColor=white&style=flat" />
   <img src="https://img.shields.io/badge/Pinterest-E60023?logo=pinterest&logoColor=white&style=flat" />
+  <img src="https://img.shields.io/badge/Pixelfed-6364FF?style=flat" />
   <img src="https://img.shields.io/badge/X%2FTwitter-000000?logo=x&logoColor=white&style=flat" />
   <img src="https://img.shields.io/badge/Telegram-26A5E4?logo=telegram&logoColor=white&style=flat" />
   <img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white&style=flat" />
@@ -45,7 +48,9 @@
 <br/>
 
 <p align="center">
-  <img src="apps/web/public/posthiveconver.png" alt="Posthive dashboard" width="100%" />
+  <a href="https://www.youtube.com/watch?v=uKsbnNJRYLk" target="_blank">
+    <img alt="Posthive" src="https://img.youtube.com/vi/uKsbnNJRYLk/hqdefault.jpg" width="100%" />
+  </a>
 </p>
 
 ---
@@ -54,6 +59,10 @@
 
 - **Multi-platform posting** - write once, publish to 14+ platforms simultaneously
 - **AI agent support** - connect Claude, ChatGPT, Cursor, VS Code via MCP; OAuth 2.0 + PKCE, no API key to paste
+- **AI caption assist** - generate post copy directly in the composer
+- **Content Library** - upload a CSV once, drip-publish automatically over time with configurable posts/day and time slots
+- **Repeat post scheduling** - repeat a post daily, weekly, or monthly with an end date
+- **Account Groups** - named sets of accounts for quick selection in compose
 - **Calendar view** - FullCalendar month/week/day with drag-to-reschedule
 - **Bulk CSV scheduling** - upload a spreadsheet to schedule hundreds of posts at once
 - **Post templates** - save and reuse post drafts
@@ -61,6 +70,7 @@
 - **Per-platform overrides** - custom text and first comment per account
 - **Instagram Reels & Stories** - full media type support including carousels
 - **YouTube Shorts & videos** - dedicated title/description fields, custom thumbnail upload
+- **TikTok Direct Post** - full Content Posting API UX compliance (privacy, interaction, disclosure controls)
 - **Dry run mode** - test the full pipeline without real API calls
 - **Draft posts** - save compose state, schedule later
 - **Public REST API** - full CRUD with Bearer auth (Pro/Team)
