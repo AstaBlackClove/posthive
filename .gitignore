@@ -49,3 +49,6 @@ Thumbs.db
 .claude/worktrees/
 
 posthive-daily-playbook.md
+
+videos/
+/apps/api/scripts/rotate-encryption-key.ts

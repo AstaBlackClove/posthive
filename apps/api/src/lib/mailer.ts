@@ -466,6 +466,52 @@ export async function sendWorkspaceInviteEmail(
   });
 }
 
+export async function sendLibraryExhaustedEmail(
+  to: string,
+  name: string,
+  libraryName: string,
+): Promise<void> {
+  const libraryUrl = `${APP_URL}/library`;
+  const body = `
+    ${eyebrow("Action needed", "#f59e0b")}
+    ${heading(`Your content library ran out of posts.`)}
+    ${infoBox(`
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="padding:0;">
+            <p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 5px;">Library</p>
+            <p style="font-size:14px;font-weight:600;color:#ededed;margin:0;">${libraryName}</p>
+          </td>
+          <td style="padding:0;text-align:right;">
+            <p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 5px;">Status</p>
+            <p style="font-size:14px;font-weight:600;color:#f59e0b;margin:0;">Exhausted</p>
+          </td>
+        </tr>
+      </table>
+    `)}
+    ${bodyText(`Hi ${name}, the <strong style="color:#ededed;">${libraryName}</strong> library has published all its queued items and is now paused. Upload a new CSV to resume automatic posting.`)}
+    ${ctaButton(libraryUrl, "Upload more content", "#f59e0b", "#0a0a0a")}
+    ${divider()}
+    ${bodyText("Go to your library, click Upload, and add a new CSV with content rows. Posting resumes automatically within 5 minutes.", "font-size:12.5px;")}
+  `;
+  const html = emailShell(
+    "#f59e0b",
+    body,
+    `You received this because your Posthive content library ran out of posts.<br><a href="https://posthive.co" style="color:#555;">posthive.co</a>`,
+  );
+
+  if (!resend) {
+    console.log(`[mailer] Library exhausted for ${to}: ${libraryName}`);
+    return;
+  }
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Your content library "${libraryName}" ran out of posts — Posthive`,
+    html,
+  });
+}
+
 export async function sendPostFailedEmail(
   to: string,
   platforms: string[],

@@ -28,6 +28,7 @@ export function LaunchVideo() {
     <div style={{ position: "relative" }}>
       <video
         ref={ref}
+        suppressHydrationWarning
         autoPlay
         muted
         loop

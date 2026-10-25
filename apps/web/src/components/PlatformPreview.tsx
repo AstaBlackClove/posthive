@@ -1145,7 +1145,8 @@ function DiscordPreview({ account, text, commentText, images, video }: {
   );
 }
 
-function TikTokPreview({ account, text, video }: { account: Account; text: string; video: UploadedImage | null }) {
+function TikTokPreview({ account, text, tiktokTitle, video }: { account: Account; text: string; tiktokTitle?: string; video: UploadedImage | null }) {
+  const caption = tiktokTitle?.trim() ? tiktokTitle : text;
   const initial = account.displayName[0]?.toUpperCase() ?? "?";
   return (
     <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#111", border: "1px solid #2a2a2a" }}>
@@ -1203,8 +1204,8 @@ function TikTokPreview({ account, text, video }: { account: Account; text: strin
             )}
             <span className="text-sm font-semibold text-white drop-shadow">@{account.displayName}</span>
           </div>
-          {text ? (
-            <p className="text-xs text-white/80 leading-relaxed line-clamp-3 drop-shadow">{text}</p>
+          {caption ? (
+            <p className="text-xs text-white/80 leading-relaxed line-clamp-3 drop-shadow">{caption}</p>
           ) : (
             <p className="text-xs italic" style={{ color: "#666" }}>Your caption here…</p>
           )}
@@ -1214,13 +1215,14 @@ function TikTokPreview({ account, text, video }: { account: Account; text: strin
   );
 }
 
-export function PlatformPreview({ account, text, commentText, mediaItems = [], igMediaType, youtubeType }: {
+export function PlatformPreview({ account, text, commentText, mediaItems = [], igMediaType, youtubeType, tiktokTitle }: {
   account: Account;
   text: string;
   commentText: string;
   mediaItems?: UploadedImage[];
   igMediaType?: "post" | "reel" | "story";
   youtubeType?: "short" | "video";
+  tiktokTitle?: string;
 }) {
   const images = mediaItems.filter(m => !m.isVideo);
   const video = mediaItems.find(m => m.isVideo) ?? null;
@@ -1262,7 +1264,7 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
     return <LemmyPreview account={account} text={text} commentText={commentText} images={images} />;
   }
   if (account.platform === "tiktok") {
-    return <TikTokPreview account={account} text={text} video={video} />;
+    return <TikTokPreview account={account} text={text} tiktokTitle={tiktokTitle} video={video} />;
   }
 
   const color = PLATFORM_COLOR[account.platform] ?? "#6b7280";

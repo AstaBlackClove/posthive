@@ -94,13 +94,25 @@ export const tiktokAdapter: PlatformAdapter = {
 
   async createPost(
     account: Account,
-    content: { text: string; mediaUrls: string[] }
+    content: {
+      text: string;
+      mediaUrls: string[];
+      tiktokTitle?: string;
+      tiktokPrivacyLevel?: string;
+      tiktokDisableComment?: boolean;
+      tiktokDisableDuet?: boolean;
+      tiktokDisableStitch?: boolean;
+      tiktokBrandedContent?: boolean;
+      tiktokYourBrand?: boolean;
+    }
   ): Promise<PostResult> {
     if (!storageAdapter) throw new Error("Storage adapter not configured");
 
     const isVideo = (u: string) => /\.(mp4|mov|quicktime)$/i.test(u);
     const videoUrl = content.mediaUrls.find(u => isVideo(u));
     if (!videoUrl) throw new Error("TikTok requires a video — attach an mp4 or mov file");
+    if (!content.tiktokPrivacyLevel)
+      throw new Error("TikTok requires a privacy level to be selected before posting");
 
     const creds = getCredentials(account);
     const token = creds.accessToken;
@@ -109,7 +121,7 @@ export const tiktokAdapter: PlatformAdapter = {
     const videoSize = videoBuffer.length;
     const chunkSize = Math.min(CHUNK_SIZE, videoSize);
     const totalChunkCount = Math.ceil(videoSize / chunkSize);
-    const caption = content.text.slice(0, 2200);
+    const caption = (content.tiktokTitle ?? content.text).slice(0, 2200);
 
     const initRes = await fetch(`${API_BASE}/v2/post/publish/video/init/`, {
       method: "POST",
@@ -120,11 +132,13 @@ export const tiktokAdapter: PlatformAdapter = {
       body: JSON.stringify({
         post_info: {
           title: caption,
-          privacy_level: "PUBLIC_TO_EVERYONE",
-          disable_duet: false,
-          disable_comment: false,
-          disable_stitch: false,
+          privacy_level: content.tiktokPrivacyLevel,
+          disable_duet: content.tiktokDisableDuet ?? true,
+          disable_comment: content.tiktokDisableComment ?? true,
+          disable_stitch: content.tiktokDisableStitch ?? true,
           video_cover_timestamp_ms: 1000,
+          brand_content_toggle: content.tiktokBrandedContent ?? false,
+          brand_organic_toggle: content.tiktokYourBrand ?? false,
         },
         source_info: {
           source: "FILE_UPLOAD",
@@ -168,6 +182,49 @@ export const tiktokAdapter: PlatformAdapter = {
     throw new Error("TikTok does not support first comments via API");
   },
 };
+
+export interface TikTokCreatorInfo {
+  creatorNickname: string;
+  creatorAvatarUrl: string;
+  privacyLevelOptions: string[];
+  commentDisabled: boolean;
+  duetDisabled: boolean;
+  stitchDisabled: boolean;
+  maxVideoPostDurationSec: number;
+}
+
+export async function fetchTikTokCreatorInfo(account: Account): Promise<TikTokCreatorInfo> {
+  const creds = getCredentials(account);
+  const res = await fetch(`${API_BASE}/v2/post/publish/creator_info/query/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${creds.accessToken}`,
+      "Content-Type": "application/json; charset=UTF-8",
+    },
+  });
+  const json = await res.json() as {
+    data: {
+      creator_nickname: string;
+      creator_avatar_url: string;
+      privacy_level_options: string[];
+      comment_disabled: boolean;
+      duet_disabled: boolean;
+      stitch_disabled: boolean;
+      max_video_post_duration_sec: number;
+    };
+    error: { code: string; message: string };
+  };
+  if (json.error.code !== "ok") throw new Error(`TikTok creator_info error: ${json.error.message}`);
+  return {
+    creatorNickname: json.data.creator_nickname,
+    creatorAvatarUrl: json.data.creator_avatar_url,
+    privacyLevelOptions: json.data.privacy_level_options,
+    commentDisabled: json.data.comment_disabled,
+    duetDisabled: json.data.duet_disabled,
+    stitchDisabled: json.data.stitch_disabled,
+    maxVideoPostDurationSec: json.data.max_video_post_duration_sec,
+  };
+}
 
 export function encryptTikTokCredentials(
   accessToken: string,

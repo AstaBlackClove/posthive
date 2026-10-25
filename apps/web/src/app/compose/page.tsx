@@ -15,6 +15,7 @@ import {
 } from "../../components/PlatformPreview";
 import type { Account, UploadedImage, PerAccountOverride } from "../../components/PlatformPreview";
 import { YoutubeFields } from "../../components/composer/YoutubeFields";
+import { TiktokFields } from "../../components/composer/TiktokFields";
 import { PinterestFields } from "../../components/composer/PinterestFields";
 import { PixelfedFields } from "../../components/composer/PixelfedFields";
 import { LinkedinFields } from "../../components/composer/LinkedinFields";
@@ -59,6 +60,15 @@ export default function ComposePage() {
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
   const [youtubeVisibility, setYoutubeVisibility] = useState<"public" | "unlisted" | "private">("public");
   const [youtubeTags, setYoutubeTags] = useState("");
+  const [tiktokTitle, setTiktokTitle] = useState("");
+  const [tiktokPrivacyLevel, setTiktokPrivacyLevel] = useState("");
+  const [tiktokDisableComment, setTiktokDisableComment] = useState(true);
+  const [tiktokDisableDuet, setTiktokDisableDuet] = useState(true);
+  const [tiktokDisableStitch, setTiktokDisableStitch] = useState(true);
+  const [tiktokCommercialEnabled, setTiktokCommercialEnabled] = useState(false);
+  const [tiktokYourBrand, setTiktokYourBrand] = useState(false);
+  const [tiktokBrandedContent, setTiktokBrandedContent] = useState(false);
+  const [tiktokConsentChecked, setTiktokConsentChecked] = useState(false);
   const [youtubeMadeForKids, setYoutubeMadeForKids] = useState(false);
   const [pinterestTitle, setPinterestTitle] = useState("");
   const [pinterestDescription, setPinterestDescription] = useState("");
@@ -404,9 +414,13 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     // Threads "" text required, video supported (single video only)
     if (hasThreads && !text.trim()) return "Threads requires a caption.";
 
-    // TikTok — video required
+    // TikTok — video required + required UX fields (TikTok policy)
     const hasTikTok = selectedAccounts.some(a => a.platform === "tiktok");
     if (hasTikTok && !video) return "TikTok requires a video — attach an mp4 or mov file.";
+    if (hasTikTok && !tiktokPrivacyLevel) return "Select who can view your TikTok video.";
+    if (hasTikTok && tiktokCommercialEnabled && !tiktokYourBrand && !tiktokBrandedContent)
+      return "Select at least one commercial content disclosure option for TikTok, or turn the toggle off.";
+    if (hasTikTok && !tiktokConsentChecked) return "Agree to TikTok's Music Usage Confirmation before posting.";
 
     // YouTube — title required, video required (either uploaded or external URL)
     if (youtubeSelected) {
@@ -496,6 +510,10 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setPixelfedSensitive(false); setPixelfedVisibility("public");
     setLinkedinVisibility("PUBLIC");
     setBlueskyContentWarning("");
+    setTiktokTitle(""); setTiktokPrivacyLevel("");
+    setTiktokDisableComment(true); setTiktokDisableDuet(true); setTiktokDisableStitch(true);
+    setTiktokCommercialEnabled(false); setTiktokYourBrand(false); setTiktokBrandedContent(false);
+    setTiktokConsentChecked(false);
     setPerAccountOverrides({}); setShowCustomize(false); setUploadError(null);
     mediaItems.forEach(m => URL.revokeObjectURL(m.previewUrl));
     setMediaItems([]); setAltTexts([]);
@@ -512,6 +530,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
       );
       const mediaUrls = mediaItems.map(m => m.url);
       const hasInstagram = selectedAccounts.some((a) => a.platform === "instagram");
+      const hasTikTokDraft = selectedAccounts.some((a) => a.platform === "tiktok");
       await apiFetch("/jobs", {
         method: "POST",
         body: JSON.stringify({
@@ -530,6 +549,13 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(linkedinSelected ? { linkedinVisibility } : {}),
             ...(blueskySelected && blueskyContentWarning ? { blueskyContentWarning } : {}),
+            ...(hasTikTokDraft ? {
+              tiktokTitle: tiktokTitle.trim() || undefined,
+              tiktokPrivacyLevel: tiktokPrivacyLevel || undefined,
+              tiktokDisableComment, tiktokDisableDuet, tiktokDisableStitch,
+              tiktokBrandedContent: tiktokCommercialEnabled && tiktokBrandedContent,
+              tiktokYourBrand: tiktokCommercialEnabled && tiktokYourBrand,
+            } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -558,6 +584,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
       );
       const mediaUrls = mediaItems.map(m => m.url);
       const hasInstagram = selectedAccounts.some((a) => a.platform === "instagram");
+      const hasTikTokSubmit = selectedAccounts.some((a) => a.platform === "tiktok");
       await apiFetch("/jobs", {
         method: "POST",
         body: JSON.stringify({
@@ -576,6 +603,13 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(linkedinSelected ? { linkedinVisibility } : {}),
             ...(blueskySelected && blueskyContentWarning ? { blueskyContentWarning } : {}),
+            ...(hasTikTokSubmit ? {
+              tiktokTitle: tiktokTitle.trim() || undefined,
+              tiktokPrivacyLevel: tiktokPrivacyLevel || undefined,
+              tiktokDisableComment, tiktokDisableDuet, tiktokDisableStitch,
+              tiktokBrandedContent: tiktokCommercialEnabled && tiktokBrandedContent,
+              tiktokYourBrand: tiktokCommercialEnabled && tiktokYourBrand,
+            } : {}),
             ...(Object.keys(cleanOverrides).length > 0 ? { perAccount: cleanOverrides } : {}),
           },
           commentText: commentText.trim() || undefined,
@@ -636,6 +670,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const pixelfedAccounts = selectedAccounts.filter((a) => a.platform === "pixelfed");
   const pixelfedSelected = pixelfedAccounts.length > 0;
   const linkedinSelected = selectedAccounts.some((a) => a.platform === "linkedin");
+  const tiktokAccount = selectedAccounts.find((a) => a.platform === "tiktok") ?? null;
   const pixelfedSelectedWithNoImage = pixelfedSelected && images.length === 0;
   const youtubeAccounts = selectedAccounts.filter((a) => a.platform === "youtube");
   const youtubeSelected = youtubeAccounts.length > 0;
@@ -644,7 +679,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const onlyYoutube = youtubeSelected && selectedAccounts.every((a) => a.platform === "youtube");
   const onlyPinterest = pinterestSelected && selectedAccounts.every((a) => a.platform === "pinterest");
   // True when every selected account is YouTube or Pinterest — both have their own title/description fields
-  const noPostTextNeeded = selectedAccounts.length > 0 && selectedAccounts.every((a) => a.platform === "youtube" || a.platform === "pinterest");
+  const noPostTextNeeded = selectedAccounts.length > 0 && selectedAccounts.every((a) => a.platform === "youtube" || a.platform === "pinterest" || a.platform === "tiktok");
   // Telegram channels don't support first comments — hide the field when all selected accounts don't support comments
   const NO_COMMENT_PLATFORMS = new Set(["pinterest", "telegram", "tumblr", "linkedin", "tiktok"]);
   const noCommentSupport = selectedAccounts.length > 0 && selectedAccounts.every((a) => NO_COMMENT_PLATFORMS.has(a.platform));
@@ -737,6 +772,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           mediaItems={mediaItems}
           igMediaType={a.platform === "instagram" ? igMediaType : undefined}
           youtubeType={a.platform === "youtube" ? youtubeType : undefined}
+          tiktokTitle={a.platform === "tiktok" ? tiktokTitle : undefined}
         />
       );
     })
@@ -1175,6 +1211,23 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               onThumbnailUpload={uploadThumbnail}
               onThumbnailRemove={removeThumbnail}
               thumbnailUploading={thumbnailUploading}
+            />
+          )}
+
+          {/* TikTok — required creator info, privacy, interaction + commercial disclosure */}
+          {tiktokAccount && !loadingAccounts && (
+            <TiktokFields
+              accountId={tiktokAccount.id}
+              video={video}
+              tiktokTitle={tiktokTitle} onTitleChange={setTiktokTitle}
+              privacyLevel={tiktokPrivacyLevel} onPrivacyChange={setTiktokPrivacyLevel}
+              disableComment={tiktokDisableComment} onDisableCommentChange={setTiktokDisableComment}
+              disableDuet={tiktokDisableDuet} onDisableDuetChange={setTiktokDisableDuet}
+              disableStitch={tiktokDisableStitch} onDisableStitchChange={setTiktokDisableStitch}
+              commercialEnabled={tiktokCommercialEnabled} onCommercialEnabledChange={setTiktokCommercialEnabled}
+              yourBrand={tiktokYourBrand} onYourBrandChange={setTiktokYourBrand}
+              brandedContent={tiktokBrandedContent} onBrandedContentChange={setTiktokBrandedContent}
+              consentChecked={tiktokConsentChecked} onConsentChange={setTiktokConsentChecked}
             />
           )}
 

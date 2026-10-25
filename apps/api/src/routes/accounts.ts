@@ -164,6 +164,21 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
     return reply.send(updated);
   });
 
+  // TikTok creator info — required before showing privacy/interaction options (TikTok UX policy)
+  app.get("/accounts/:id/tiktok/creator-info", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const workspaceId = getWorkspaceId(req);
+    const account = await prisma.account.findFirst({ where: { id, workspaceId, platform: "tiktok" } });
+    if (!account) return reply.status(404).send({ error: "TikTok account not found" });
+    try {
+      const { fetchTikTokCreatorInfo } = await import("../adapters/tiktok.js");
+      const info = await fetchTikTokCreatorInfo(account);
+      return reply.send(info);
+    } catch (err) {
+      return reply.status(502).send({ error: err instanceof Error ? err.message : "Failed to fetch TikTok creator info" });
+    }
+  });
+
   // List accounts for current workspace
   app.get("/accounts", { preHandler: [withAuth] }, async (req, reply) => {
     const workspaceId = getWorkspaceId(req);

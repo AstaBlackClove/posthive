@@ -46,6 +46,13 @@ type JobContent = {
   linkedinVisibility?: "PUBLIC" | "CONNECTIONS";
   blueskyLanguage?: string;
   blueskyContentWarning?: string;
+  tiktokTitle?: string;
+  tiktokPrivacyLevel?: string;
+  tiktokDisableComment?: boolean;
+  tiktokDisableDuet?: boolean;
+  tiktokDisableStitch?: boolean;
+  tiktokBrandedContent?: boolean;
+  tiktokYourBrand?: boolean;
   perAccount?: Record<string, PerAccountOverride>;
 };
 
@@ -116,6 +123,13 @@ export async function runJob(
         linkedinVisibility: content.linkedinVisibility,
         blueskyLanguage: content.blueskyLanguage,
         blueskyContentWarning: content.blueskyContentWarning,
+        tiktokTitle: content.tiktokTitle,
+        tiktokPrivacyLevel: content.tiktokPrivacyLevel,
+        tiktokDisableComment: content.tiktokDisableComment,
+        tiktokDisableDuet: content.tiktokDisableDuet,
+        tiktokDisableStitch: content.tiktokDisableStitch,
+        tiktokBrandedContent: content.tiktokBrandedContent,
+        tiktokYourBrand: content.tiktokYourBrand,
       };
       const effectiveComment = override?.commentText !== undefined ? override.commentText : job.commentText;
       return runTarget(target, effectiveContent, effectiveComment, job.dryRun);
@@ -269,6 +283,13 @@ type EffectiveContent = {
   linkedinVisibility?: "PUBLIC" | "CONNECTIONS";
   blueskyLanguage?: string;
   blueskyContentWarning?: string;
+  tiktokTitle?: string;
+  tiktokPrivacyLevel?: string;
+  tiktokDisableComment?: boolean;
+  tiktokDisableDuet?: boolean;
+  tiktokDisableStitch?: boolean;
+  tiktokBrandedContent?: boolean;
+  tiktokYourBrand?: boolean;
 };
 
 async function runTarget(

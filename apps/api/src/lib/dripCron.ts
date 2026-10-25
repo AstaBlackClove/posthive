@@ -19,6 +19,7 @@
 import * as Sentry from "@sentry/node";
 import { prisma } from "./prisma.js";
 import { schedulePostJob } from "./queue.js";
+import { sendLibraryExhaustedEmail } from "./mailer.js";
 
 const INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const BATCH_SIZE = 100;             // libraries fetched per page
@@ -67,13 +68,14 @@ function slotsInNextWindow(timeSlots: string[], timezone: string, postsPerDay: n
 
 type LibraryRow = {
   id: string;
+  name: string;
   workspaceId: string;
   postsPerDay: number;
   timeSlots: unknown;
   timezone: string;
   accountIds: unknown;
   lastDripAt: Date | null;
-  workspace: { members: { userId: string }[] };
+  workspace: { members: { userId: string; user: { email: string; name: string | null } }[] };
 };
 
 async function processLibrary(lib: LibraryRow) {
@@ -110,6 +112,14 @@ async function processLibrary(lib: LibraryRow) {
   if (!items.length) {
     await prisma.contentLibrary.update({ where: { id: lib.id }, data: { status: "exhausted" } });
     console.log(`[drip] library ${lib.id} exhausted`);
+    const owner = lib.workspace.members[0];
+    if (owner) {
+      sendLibraryExhaustedEmail(
+        owner.user.email,
+        owner.user.name ?? "there",
+        lib.name,
+      ).catch((err) => console.error(`[drip] exhaustion email failed for library ${lib.id}:`, err));
+    }
     return;
   }
 
@@ -219,13 +229,14 @@ async function run() {
         where: { status: "active" },
         select: {
           id: true,
+          name: true,
           workspaceId: true,
           postsPerDay: true,
           timeSlots: true,
           timezone: true,
           accountIds: true,
           lastDripAt: true,
-          workspace: { select: { members: { where: { role: "owner" }, select: { userId: true }, take: 1 } } },
+          workspace: { select: { members: { where: { role: "owner" }, select: { userId: true, user: { select: { email: true, name: true } } }, take: 1 } } },
         },
         take: BATCH_SIZE,
         ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
