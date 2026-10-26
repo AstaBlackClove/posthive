@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Read Posthive's Terms of Service. These terms govern your use of Posthive — including account access, scheduling features, billing, and acceptable use.",
 };
 
-const LAST_UPDATED = "July 20, 2026";
+const LAST_UPDATED = "October 26, 2026";
 const CONTACT_EMAIL = "guna@posthive.co";
 
 export default function TermsPage() {
@@ -86,7 +86,7 @@ export default function TermsPage() {
 
           <h2>5. Social platform compliance</h2>
           <p>
-            You are solely responsible for ensuring your use of connected social platforms (Bluesky, Threads, Instagram, LinkedIn, Mastodon) complies with each platform's own terms of service and community guidelines. Posthive is a scheduling tool we do not control and are not responsible for the content you publish.
+            You are solely responsible for ensuring your use of any social platform you connect to Posthive — including, but not limited to, Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr, X, Discord, Tumblr, Lemmy, Google Business Profile, TikTok, and Pixelfed — complies with that platform's own terms of service and community guidelines. Posthive is a scheduling tool; we do not control and are not responsible for the content you publish.
           </p>
 
           <h2>6. Billing & subscriptions</h2>

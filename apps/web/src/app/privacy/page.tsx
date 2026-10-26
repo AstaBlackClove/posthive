@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Read Posthive's Privacy Policy. Learn how we collect, use, and protect your data — including OAuth tokens, post content, and account information.",
 };
 
-const LAST_UPDATED = "July 23, 2026";
+const LAST_UPDATED = "October 26, 2026";
 const CONTACT_EMAIL = "guna@posthive.co";
 
 export default function PrivacyPage() {
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
           </p>
 
           <h3>Post content & media</h3>
-          <p>The text and images you schedule are stored so we can publish them at the time you choose. Media files are stored on Supabase Storage (hosted version) or local disk (self-hosted). We do not analyse your content.</p>
+          <p>The text and images you schedule are stored so we can publish them at the time you choose. Media files are stored on Cloudflare R2 (hosted version) or local disk (self-hosted). We do not analyse your content.</p>
 
           <h3>Usage data</h3>
           <p>We collect basic server logs (IP address, request path, timestamp) for debugging and abuse prevention. These are not sold or shared with third parties.</p>
@@ -95,7 +95,8 @@ export default function PrivacyPage() {
           <h2>6. Third-party services</h2>
           <p>The hosted version of Posthive uses the following sub-processors:</p>
           <ul>
-            <li><strong style={{ color: "#cfcfcf" }}>Supabase</strong> - database and file storage (EU/US regions)</li>
+            <li><strong style={{ color: "#cfcfcf" }}>Supabase</strong> - database (EU/US regions)</li>
+            <li><strong style={{ color: "#cfcfcf" }}>Cloudflare R2</strong> - media and file storage</li>
             <li><strong style={{ color: "#cfcfcf" }}>Upstash / Railway Redis</strong> - job queue</li>
             <li><strong style={{ color: "#cfcfcf" }}>Dodo Payments</strong> - payment processing</li>
             <li><strong style={{ color: "#cfcfcf" }}>Resend</strong> - transactional email</li>
@@ -178,57 +179,17 @@ export default function PrivacyPage() {
             , including the Limited Use requirements.
           </p>
 
-          <h2>11. Reddit API Data</h2>
-          <p>
-            Posthive integrates with the Reddit API to allow users to schedule and publish posts to Reddit on their behalf. Our use of the Reddit API complies with the{" "}
-            <a href="https://www.redditinc.com/policies/data-api-terms" target="_blank" rel="noreferrer">Reddit Data API Terms</a>{" "}
-            and the{" "}
-            <a href="https://support.reddithelp.com/hc/en-us/articles/16160319875092" target="_blank" rel="noreferrer">Responsible Builder Policy</a>.
-          </p>
-
-          <h3>What Reddit data we access</h3>
-          <p>When you connect a Reddit account, Posthive requests the following OAuth scopes:</p>
-          <ul>
-            <li><strong style={{ color: "#cfcfcf" }}>identity</strong> — to verify your Reddit username and confirm successful authentication</li>
-            <li><strong style={{ color: "#cfcfcf" }}>submit</strong> — to publish text and link posts to subreddits you explicitly select</li>
-          </ul>
-          <p>We do not request access to your Reddit inbox, comments, votes, moderation tools, subscriptions, or any other Reddit data beyond what is listed above.</p>
-
-          <h3>How we use Reddit data</h3>
-          <p>
-            Reddit user data is used <strong style={{ color: "#ededed" }}>exclusively</strong> to publish posts you have written and scheduled inside Posthive. Every post is user-initiated — you write the content, choose the subreddit, and set the publish time. Posthive never posts to Reddit automatically without your explicit instruction.
-          </p>
-          <ul>
-            <li>We do not scrape Reddit content, posts, comments, or user data.</li>
-            <li>We do not store Reddit posts, comments, votes, or any content retrieved from Reddit.</li>
-            <li>We do not use your Reddit credentials to read Reddit feeds or aggregate content.</li>
-            <li>We do not resell, license, or share any Reddit data with third parties.</li>
-            <li>We do not use Reddit data to train, develop, or improve any AI or machine learning model.</li>
-            <li>We do not perform any automated bulk posting, spam, or vote manipulation.</li>
-            <li>We respect all Reddit API rate limits and terms at all times.</li>
-          </ul>
-
-          <h3>How we protect Reddit data</h3>
-          <p>
-            Your Reddit OAuth tokens are encrypted at rest using AES-256-GCM with a key stored only in the server environment — never in the database. Tokens are transmitted only over HTTPS and are never logged, exposed in API responses, or accessible to any third party.
-          </p>
-
-          <h3>Data retention and deletion — Reddit data</h3>
-          <p>
-            Your Reddit OAuth tokens are retained only while your Reddit account is connected in Posthive. Scheduled post content (title, text, subreddit) is stored until the post is published, after which it remains in your post history for your reference but is never re-used or re-posted automatically. You can disconnect your Reddit account at any time from the Accounts page — this immediately and permanently deletes your stored Reddit token. When you delete your Posthive account, all Reddit tokens and associated data are permanently deleted within 30 days.
-          </p>
-
-          <h2>12. Self-hosted instances</h2>
+          <h2>11. Self-hosted instances</h2>
           <p>
             If you run Posthive on your own infrastructure, this policy does not apply to your instance. You are the data controller and are responsible for your users' data under applicable law.
           </p>
 
-          <h2>13. Changes to this policy</h2>
+          <h2>12. Changes to this policy</h2>
           <p>
             We may update this policy as the product evolves. Material changes will be communicated via email or an in-app notice at least 14 days before they take effect. The "Last updated" date at the top will always reflect the current version.
           </p>
 
-          <h2>14. Contact</h2>
+          <h2>13. Contact</h2>
           <p>
             Questions about this policy? Reach us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
           </p>
