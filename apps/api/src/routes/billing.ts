@@ -3,6 +3,7 @@ import DodoPayments from "dodopayments";
 import { Redis } from "ioredis";
 import { withAuth, getUser, getWorkspaceId, requireOwnerRole } from "../lib/auth/withAuth.js";
 import { prisma } from "../lib/prisma.js";
+import { sendSubscriptionOnHoldEmail } from "../lib/mailer.js";
 import { PLANS, getPlan, dodoProductIdFor, resolvePlanByDodoProductId, type PlanId, type BillingInterval } from "../lib/plans.js";
 import crypto from "node:crypto";
 
@@ -249,6 +250,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
             dodoCustomerId: dodoCustomerId ?? undefined,
             dodoSubId: data.subscription_id,
             trialEndsAt,
+            onHoldSince: null,
           },
         });
         // Mark the user's most recent session as converted — server-side only
@@ -267,13 +269,24 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       } else if (type === "subscription.renewed") {
         await prisma.workspace.update({
           where: { id: workspaceId },
-          data: { planStatus: "active" },
+          data: { planStatus: "active", onHoldSince: null },
         });
       } else if (type === "subscription.on_hold") {
         await prisma.workspace.update({
           where: { id: workspaceId },
-          data: { planStatus: "on_hold" },
+          data: { planStatus: "on_hold", onHoldSince: new Date() },
         });
+        // Notify owner
+        const owner = await prisma.workspaceMember.findFirst({
+          where: { workspaceId, role: "owner" },
+          select: { user: { select: { email: true, name: true } } },
+        });
+        if (owner?.user) {
+          const plan = getPlan(workspace.plan);
+          await sendSubscriptionOnHoldEmail(owner.user.email, owner.user.name ?? "there", plan.name).catch((err) =>
+            console.error("[billing] on_hold email failed:", err),
+          );
+        }
       } else if (type === "subscription.failed" || type === "subscription.cancelled") {
         // Only cancel if the sub ID in the event matches what we have stored.
         // If workspace was found via customerId fallback, a different (failed) sub
@@ -407,6 +420,29 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       }
     }
   );
+
+  // POST /billing/retry — manually trigger a payment retry for an on_hold subscription
+  app.post("/billing/retry", { preHandler: [withAuth] }, async (req, reply) => {
+    const u = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const roleBlocked = await requireOwnerRole(u.id, workspaceId);
+    if (roleBlocked) return reply.status(403).send(roleBlocked);
+    const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
+    if (!workspace) return reply.status(404).send({ error: "Workspace not found" });
+    if (workspace.planStatus !== "on_hold") return reply.status(400).send({ error: "Subscription is not on hold" });
+    if (!workspace.dodoSubId) return reply.status(400).send({ error: "No active subscription found" });
+
+    try {
+      // Dodo retries payment when we update the subscription — toggling cancel_at_next_billing_date
+      // is the documented way to trigger an immediate collection attempt on a paused sub.
+      await (dodo.subscriptions as unknown as { chargeNow: (id: string) => Promise<unknown> }).chargeNow?.(workspace.dodoSubId)
+        ?? dodo.subscriptions.update(workspace.dodoSubId, { cancel_at_next_billing_date: false } as Parameters<typeof dodo.subscriptions.update>[1]);
+      return reply.send({ ok: true });
+    } catch (err) {
+      console.error("[billing] retry error:", err);
+      return reply.status(500).send({ error: "Failed to retry payment — please try again or contact support" });
+    }
+  });
 
   // POST /billing/cancel — cancel subscription at period end
   app.post("/billing/cancel", { preHandler: [withAuth] }, async (req, reply) => {

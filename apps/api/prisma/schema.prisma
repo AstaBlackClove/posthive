@@ -69,6 +69,8 @@ model Workspace {
   allowReels     Boolean   @default(true)        // Instagram Reels & Stories (Pro/Team only; default true so existing workspaces keep access)
   allowOverrides Boolean   @default(true)        // per-platform text/comment overrides (Pro/Team only; default true so existing workspaces keep access)
 
+  onHoldSince DateTime? // set when planStatus moves to on_hold; cleared on renewal
+
   webhookUrl String?  // outbound webhook fired on post publish
 
   // Per-workspace overrides — set by admin to give a specific workspace higher limits than their plan
