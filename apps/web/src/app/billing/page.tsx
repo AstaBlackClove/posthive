@@ -477,7 +477,7 @@ function BillingContent() {
             <div>
               <p className="text-sm font-semibold" style={{ color: "#f87171" }}>Payment failed</p>
               <p className="text-xs mt-1" style={{ color: "#888" }}>
-                We couldn&apos;t process your last payment. Update your payment method via the Dodo customer portal to restore full access.
+                We couldn&apos;t process your last payment. We&apos;ll retry automatically — contact your bank to allow recurring transactions or update your payment method.
               </p>
             </div>
           </div>
@@ -620,8 +620,8 @@ function BillingContent() {
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              {/* Billing interval toggle */}
-              <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              {/* Billing interval toggle — hidden until yearly Dodo products are live */}
+              {false && <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
                 {([{ label: "Monthly", val: "monthly" }, { label: "Yearly", val: "yearly" }] as const).map(({ label, val }) => (
                   <button
                     key={val}
@@ -633,15 +633,27 @@ function BillingContent() {
                       fontWeight: 500,
                       border: "none",
                       cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
                       backgroundColor: billingInterval === val ? "#ffffff" : "transparent",
                       color: billingInterval === val ? "#0a0a0a" : "#666",
                       transition: "all 0.15s",
                     }}
                   >
                     {label}
+                    {val === "yearly" && (
+                      <span style={{
+                        fontSize: 9, fontWeight: 700, padding: "2px 5px", borderRadius: 999,
+                        background: billingInterval === val ? "#dcfce7" : "rgba(74,222,128,.15)",
+                        color: "#16a34a",
+                      }}>
+                        2 mo free
+                      </span>
+                    )}
                   </button>
                 ))}
-              </div>
+              </div>}
               {/* Currency toggle */}
               <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
               {([{ label: "INR ₹", india: true }, { label: "USD $", india: false }] as const).map(({ label, india }) => (

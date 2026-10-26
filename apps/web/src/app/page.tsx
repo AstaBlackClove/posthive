@@ -2635,7 +2635,7 @@ export default function RootPage() {
                     </button>
                   ))}
                 </div>
-                <div
+                {false && <div
                   style={{
                     display: "inline-flex",
                     padding: 3,
@@ -2661,6 +2661,9 @@ export default function RootPage() {
                         fontWeight: 500,
                         border: "none",
                         cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
                         backgroundColor:
                           billingInterval === val ? "#ffffff" : "transparent",
                         color: billingInterval === val ? "#0a0a0a" : "#555",
@@ -2668,9 +2671,23 @@ export default function RootPage() {
                       }}
                     >
                       {label}
+                      {val === "yearly" && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: "2px 6px",
+                            borderRadius: 999,
+                            background: billingInterval === val ? "#dcfce7" : "rgba(74,222,128,.15)",
+                            color: "#16a34a",
+                          }}
+                        >
+                          2 mo free
+                        </span>
+                      )}
                     </button>
                   ))}
-                </div>
+                </div>}
               </div>
               <div
                 style={{

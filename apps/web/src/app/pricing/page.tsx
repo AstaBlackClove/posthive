@@ -199,22 +199,31 @@ export default function PricingPage() {
 
           {/* Billing interval + currency toggles */}
           <div style={{ display: "inline-flex", gap: 10 }}>
-            <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
+            {false && <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
               {[{ label: "Monthly", val: "monthly" as const }, { label: "Yearly", val: "yearly" as const }].map(({ label, val }) => (
                 <button
                   key={label}
                   onClick={() => setBillingInterval(val)}
                   style={{
                     padding: "7px 20px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                    border: "none", transition: "all .15s",
+                    border: "none", transition: "all .15s", display: "inline-flex", alignItems: "center", gap: 6,
                     background: billingInterval === val ? "#fff" : "transparent",
                     color: billingInterval === val ? "#0a0a0a" : "#666",
                   }}
                 >
                   {label}
+                  {val === "yearly" && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 999,
+                      background: billingInterval === val ? "#dcfce7" : "rgba(74,222,128,.15)",
+                      color: "#16a34a",
+                    }}>
+                      2 mo free
+                    </span>
+                  )}
                 </button>
               ))}
-            </div>
+            </div>}
             <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
               {[{ label: "INR ₹", val: true }, { label: "USD $", val: false }].map(({ label, val }) => (
                 <button
