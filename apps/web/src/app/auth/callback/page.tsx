@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useAuth } from "../../../context/AuthContext";
+import { safeReturnTo } from "../../../lib/safeReturnTo";
 
 function CallbackContent() {
   const router = useRouter();
@@ -16,7 +17,7 @@ function CallbackContent() {
     if (ran.current) return;
     ran.current = true;
 
-    const returnTo = searchParams.get("returnTo") ?? "/compose";
+    const returnTo = safeReturnTo(searchParams.get("returnTo"), "/compose");
 
     // API already set cookies (both local and Supabase PKCE modes).
     // Just refresh the auth context and navigate.

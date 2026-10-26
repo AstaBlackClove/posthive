@@ -5,13 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { register } from "../../lib/auth";
 import { useAuth } from "../../context/AuthContext";
+import { safeReturnTo } from "../../lib/safeReturnTo";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+  const returnTo = safeReturnTo(searchParams.get("returnTo"), "/onboarding");
   const { refresh } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -30,7 +31,7 @@ function RegisterContent() {
     try {
       await register(email, password, name);
       await refresh();
-      router.replace(returnTo ?? "/onboarding");
+      router.replace(returnTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

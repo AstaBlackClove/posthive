@@ -319,7 +319,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case "get_post": {
-        const data = await apiCall("GET", `/api/v1/posts/${a.post_id as string}`);
+        const data = await apiCall("GET", `/api/v1/posts/${encodeURIComponent(a.post_id as string)}`);
         return ok(data);
       }
 
@@ -333,7 +333,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case "approve_draft": {
-        const data = await apiCall("POST", `/api/v1/posts/${a.post_id as string}/approve`, {
+        const data = await apiCall("POST", `/api/v1/posts/${encodeURIComponent(a.post_id as string)}/approve`, {
           scheduledFor: a.scheduled_time,
         });
         return ok({
@@ -362,12 +362,12 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           throw new Error("Provide at least one field to update");
         }
 
-        const data = await apiCall("PATCH", `/api/v1/posts/${post_id}`, body);
+        const data = await apiCall("PATCH", `/api/v1/posts/${encodeURIComponent(post_id)}`, body);
         return ok(data);
       }
 
       case "duplicate_post": {
-        const data = await apiCall("POST", `/api/v1/posts/${a.post_id as string}/duplicate`);
+        const data = await apiCall("POST", `/api/v1/posts/${encodeURIComponent(a.post_id as string)}/duplicate`);
         return ok({
           ...(data as object),
           _note: "Post duplicated as a new draft. Use approve_draft to schedule it.",
@@ -375,7 +375,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case "delete_post": {
-        const data = await apiCall("DELETE", `/api/v1/posts/${a.post_id as string}`);
+        const data = await apiCall("DELETE", `/api/v1/posts/${encodeURIComponent(a.post_id as string)}`);
         return ok(data);
       }
 
@@ -400,7 +400,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           ...(a.first_comment_override ? { firstCommentOverride: a.first_comment_override } : {}),
         };
 
-        const data = await apiCall("POST", `/api/v1/templates/${a.template_id as string}/use`, body);
+        const data = await apiCall("POST", `/api/v1/templates/${encodeURIComponent(a.template_id as string)}/use`, body);
         return ok({
           ...(data as object),
           _note: scheduleDirectly

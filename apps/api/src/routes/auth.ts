@@ -1930,7 +1930,9 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const { returnTo } = req.query as { returnTo?: string };
-    const safeReturnTo = returnTo && /^\//.test(returnTo) ? returnTo : "/compose";
+    // Single leading slash only — "//evil.com" and "/\evil.com" are protocol-relative
+    // off-site URLs the browser will happily follow, not internal paths.
+    const safeReturnTo = returnTo && /^\/(?!\/|\\)/.test(returnTo) ? returnTo : "/compose";
 
     if (process.env.AUTH_PROVIDER === "supabase") {
       const supabaseUrl = process.env.SUPABASE_URL!;
@@ -2065,7 +2067,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     let returnTo = "/compose";
     try {
       const parsed = JSON.parse(Buffer.from(state ?? "", "base64url").toString()) as { returnTo?: string };
-      if (parsed.returnTo?.startsWith("/")) returnTo = parsed.returnTo;
+      if (parsed.returnTo && /^\/(?!\/|\\)/.test(parsed.returnTo)) returnTo = parsed.returnTo;
     } catch { /* ignore bad state */ }
 
     try {

@@ -581,9 +581,13 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const body = z.object({ scheduledFor: z.string().datetime() }).safeParse(req.body);
     if (!body.success) return reply.status(400).send({ error: "scheduledFor is required" });
 
-    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true } });
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, userId: true } });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status !== "draft") return reply.status(409).send({ error: "Only draft jobs can be scheduled" });
+    const role = await getWorkspaceRole(userId, workspaceId);
+    if (!["owner", "admin"].includes(role ?? "") && job.userId !== userId) {
+      return reply.status(403).send({ error: "You can only schedule your own posts.", code: "FORBIDDEN" });
+    }
 
     const blocked = await enforcePlan(userId, workspaceId, "scheduling");
     if (blocked) return reply.status(402).send(blocked);
@@ -601,6 +605,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
   // Retry only the failed targets on a partially-failed job
   app.post("/jobs/:id/retry-failed", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
     const workspaceId = getWorkspaceId(req);
     const { id } = req.params as { id: string };
 
@@ -610,6 +615,10 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status === "running") return reply.status(409).send({ error: "Job is currently running" });
+    const role = await getWorkspaceRole(userId, workspaceId);
+    if (!["owner", "admin"].includes(role ?? "") && job.userId !== userId) {
+      return reply.status(403).send({ error: "You can only retry your own posts.", code: "FORBIDDEN" });
+    }
 
     const failedTargetIds = job.targets
       .filter((t) => t.status === "post_failed")

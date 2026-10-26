@@ -5,13 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { login } from "../../lib/auth";
 import { useAuth } from "../../context/AuthContext";
+import { safeReturnTo } from "../../lib/safeReturnTo";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+  const returnTo = safeReturnTo(searchParams.get("returnTo"), "/compose");
   const { refresh } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +30,7 @@ function LoginContent() {
     try {
       await login(email, password);
       await refresh();
-      router.replace(returnTo ?? "/compose");
+      router.replace(returnTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
