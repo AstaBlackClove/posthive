@@ -3,7 +3,7 @@ import DodoPayments from "dodopayments";
 import { Redis } from "ioredis";
 import { withAuth, getUser, getWorkspaceId, requireOwnerRole } from "../lib/auth/withAuth.js";
 import { prisma } from "../lib/prisma.js";
-import { PLANS, getPlan, type PlanId } from "../lib/plans.js";
+import { PLANS, getPlan, dodoProductIdFor, resolvePlanByDodoProductId, type PlanId, type BillingInterval } from "../lib/plans.js";
 import crypto from "node:crypto";
 
 const dodo = new DodoPayments({
@@ -73,6 +73,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
     const statusData = {
       plan: workspace.plan,
       planStatus: workspace.planStatus,
+      billingInterval: workspace.billingInterval,
       planName: plan.name,
       maxAccounts: plan.maxAccounts,
       maxSeats: plan.maxSeats,
@@ -96,7 +97,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // POST /billing/checkout — create Dodo checkout session for the active workspace
-  app.post<{ Body: { planId: PlanId; successUrl?: string } }>(
+  app.post<{ Body: { planId: PlanId; interval?: BillingInterval; successUrl?: string } }>(
     "/billing/checkout",
     { preHandler: [withAuth] },
     async (req, reply) => {
@@ -105,8 +106,10 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       const roleBlocked = await requireOwnerRole(u.id, workspaceId);
       if (roleBlocked) return reply.status(403).send(roleBlocked);
       const { planId, successUrl } = req.body;
+      const interval: BillingInterval = req.body.interval === "yearly" ? "yearly" : "monthly";
       const plan = PLANS[planId];
-      if (!plan || !plan.dodoProductId) {
+      const dodoProductId = plan ? dodoProductIdFor(plan, interval) : "";
+      if (!plan || !dodoProductId) {
         return reply.status(400).send({ error: "Invalid plan" });
       }
 
@@ -125,10 +128,10 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
         : `${WEB_URL}/billing?success=1`;
 
       const session = await dodo.checkoutSessions.create({
-        product_cart: [{ product_id: plan.dodoProductId, quantity: 1 }],
+        product_cart: [{ product_id: dodoProductId, quantity: 1 }],
         customer: { email: user.email, name: user.name },
         return_url: resolvedSuccessUrl,
-        metadata: { workspaceId: workspace.id, planId },
+        metadata: { workspaceId: workspace.id, planId, interval },
         ...(skipTrial ? { trial_period_days: 0 } : {}),
       } as Parameters<typeof dodo.checkoutSessions.create>[0]);
 
@@ -209,18 +212,11 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
 
       const { type, data } = event;
 
-      // Resolve plan from product_id (authoritative — always reflects current subscription)
-      // Fall back to metadata.planId only when product_id is absent or unrecognised
-      const resolvedPlanId = (() => {
-        if (data.product_id) {
-          const entry = (Object.entries(PLANS) as [PlanId, typeof PLANS[PlanId]][])
-            .find(([, p]) => p.dodoProductId && p.dodoProductId === data.product_id);
-          if (entry) return entry[0];
-        }
-        return (data.metadata?.planId ?? "creator") as PlanId;
-      })();
-
-      const planId = resolvedPlanId;
+      // Resolve plan + billing interval from product_id (authoritative — always reflects
+      // current subscription). Fall back to metadata only when product_id is absent or unrecognised.
+      const resolved = data.product_id ? resolvePlanByDodoProductId(data.product_id) : null;
+      const planId = resolved?.planId ?? ((data.metadata?.planId ?? "creator") as PlanId);
+      const billingInterval: BillingInterval = resolved?.interval ?? "monthly";
 
       // Resolve workspace from DB using subscription/customer IDs, fall back to metadata
       const subId = data.subscription_id;
@@ -249,6 +245,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
           data: {
             plan: planId,
             planStatus: isTrial ? "trialing" : "active",
+            billingInterval,
             dodoCustomerId: dodoCustomerId ?? undefined,
             dodoSubId: data.subscription_id,
             trialEndsAt,
@@ -300,6 +297,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
           const updateData: Record<string, unknown> = {};
           if (planId && PLANS[planId] && planId !== "cancelled" && planId !== "trialing") {
             updateData.plan = planId;
+            if (resolved) updateData.billingInterval = billingInterval;
           }
           if (data.cancel_at_next_billing_date === true) {
             updateData.planStatus = "cancelling";
@@ -317,7 +315,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
   );
 
   // POST /billing/change-plan — upgrade/downgrade existing subscription
-  app.post<{ Body: { planId: PlanId } }>(
+  app.post<{ Body: { planId: PlanId; interval?: BillingInterval } }>(
     "/billing/change-plan",
     { preHandler: [withAuth] },
     async (req, reply) => {
@@ -326,8 +324,10 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       const roleBlocked = await requireOwnerRole(userId, workspaceId);
       if (roleBlocked) return reply.status(403).send(roleBlocked);
       const { planId } = req.body;
+      const interval: BillingInterval = req.body.interval === "yearly" ? "yearly" : "monthly";
       const plan = PLANS[planId];
-      if (!plan || !plan.dodoProductId) {
+      const dodoProductId = plan ? dodoProductIdFor(plan, interval) : "";
+      if (!plan || !dodoProductId) {
         return reply.status(400).send({ error: "Invalid plan" });
       }
 
@@ -336,10 +336,13 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
         prisma.workspace.findUnique({ where: { id: workspaceId } }),
       ]);
       if (!user || !workspace) return reply.status(404).send({ error: "Workspace not found" });
-      if (workspace.plan === planId && workspace.planStatus === "active") return reply.status(400).send({ error: "Already on this plan" });
+      if (workspace.plan === planId && workspace.planStatus === "active" && workspace.billingInterval === interval) {
+        return reply.status(400).send({ error: "Already on this plan" });
+      }
 
-      // Cancelling + same plan = undo cancellation, not a plan change
-      if (workspace.planStatus === "cancelling" && workspace.plan === planId && workspace.dodoSubId) {
+      // Cancelling + same plan + same interval = undo cancellation, not a plan change.
+      // A different interval still needs the full changePlan path below.
+      if (workspace.planStatus === "cancelling" && workspace.plan === planId && workspace.billingInterval === interval && workspace.dodoSubId) {
         try {
           await dodo.subscriptions.update(workspace.dodoSubId, { cancel_at_next_billing_date: false } as Parameters<typeof dodo.subscriptions.update>[1]);
           await prisma.workspace.update({ where: { id: workspaceId }, data: { planStatus: "active" } });
@@ -354,10 +357,10 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       // DB-based trial (no Dodo subscription yet) — send to checkout for a new subscription
       if (!workspace.dodoSubId) {
         const session = await dodo.checkoutSessions.create({
-          product_cart: [{ product_id: plan.dodoProductId, quantity: 1 }],
+          product_cart: [{ product_id: dodoProductId, quantity: 1 }],
           customer: { email: user.email, name: user.name },
           return_url: `${WEB_URL}/billing?success=1`,
-          metadata: { workspaceId, planId },
+          metadata: { workspaceId, planId, interval },
           trial_period_days: 0,
         } as Parameters<typeof dodo.checkoutSessions.create>[0]);
         return reply.send({ url: (session as { url?: string; checkout_url?: string }).url ?? (session as { url?: string; checkout_url?: string }).checkout_url });
@@ -372,17 +375,17 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
         }
 
         await dodo.subscriptions.changePlan(workspace.dodoSubId, {
-          product_id: plan.dodoProductId,
+          product_id: dodoProductId,
           proration_billing_mode: "prorated_immediately",
           quantity: 1,
           effective_at: "immediately",
-          metadata: { workspaceId, planId },
+          metadata: { workspaceId, planId, interval },
         });
 
         // Update DB immediately — webhook will confirm but we don't wait for it
         await prisma.workspace.update({
           where: { id: workspaceId },
-          data: { plan: planId, planStatus: "active" },
+          data: { plan: planId, planStatus: "active", billingInterval: interval },
         });
         invalidateBillingCache(workspaceId);
 

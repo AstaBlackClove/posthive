@@ -61,6 +61,7 @@ model Workspace {
   // Billing (moved from User)
   plan           String    @default("trialing")  // trialing | creator | pro | team | cancelled
   planStatus     String    @default("trialing")  // trialing | active | cancelled
+  billingInterval String   @default("monthly")   // monthly | yearly
   trialEndsAt    DateTime?
   dodoCustomerId String?   @unique
   dodoSubId      String?   @unique

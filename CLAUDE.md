@@ -277,7 +277,8 @@ Schema at `apps/api/prisma/schema.prisma`. Compatible with Postgres — just cha
 
 ## Billing — Dodo Payments
 
-- Plans: Creator (₹550), Pro (₹1,700), Team (₹2,600)
+- Plans: Creator (₹550/mo, ₹5,500/yr), Pro (₹1,700/mo, ₹17,000/yr), Team (₹2,600/mo, ₹26,000/yr) — yearly is ~2 months free
+- `Workspace.billingInterval` ("monthly" | "yearly") tracks which the workspace is on; `lib/plans.ts`'s `dodoProductIdFor()`/`resolvePlanByDodoProductId()` map between a (plan, interval) pair and its Dodo product ID
 - SDK: `dodopayments` — use `dodo.checkoutSessions.create()` (not `payments.createPaymentLink`)
 - Webhook secret: strip `whsec_` prefix before base64 decode
 - Test mode: set `DODO_ENV=test_mode`

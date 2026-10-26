@@ -10,6 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 interface BillingStatus {
   plan: string;
   planStatus: string;
+  billingInterval: string;
   planName: string;
   maxAccounts: number;
   maxSeats: number;
@@ -30,6 +31,8 @@ const PLANS = [
     name: "Creator",
     priceInr: "₹550",
     priceUsd: "$9",
+    priceInrYearly: "₹5,500",
+    priceUsdYearly: "$90",
     period: "/mo",
     description: "For solo creators building their audience",
     color: "#5b63d3",
@@ -57,6 +60,8 @@ const PLANS = [
     name: "Pro",
     priceInr: "₹1,700",
     priceUsd: "$29",
+    priceInrYearly: "₹17,000",
+    priceUsdYearly: "$290",
     period: "/mo",
     description: "For power users who post without limits",
     color: "#7c3aed",
@@ -85,6 +90,8 @@ const PLANS = [
     name: "Team",
     priceInr: "₹2,600",
     priceUsd: "$49",
+    priceInrYearly: "₹26,000",
+    priceUsdYearly: "$490",
     period: "/mo",
     description: "For agencies & small teams",
     color: "#0891b2",
@@ -297,6 +304,7 @@ function BillingContent() {
   const [cancelDone, setCancelDone] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isIndia, setIsIndia] = useState(true);
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
   const { success: toastSuccess, error: toastError } = useToast();
   const success = searchParams.get("success");
 
@@ -320,7 +328,7 @@ function BillingContent() {
       if (isTrialing || isActive || isCancelling) {
         const result = await apiFetch<{ ok?: boolean; url?: string }>("/billing/change-plan", {
           method: "POST",
-          body: JSON.stringify({ planId }),
+          body: JSON.stringify({ planId, interval: billingInterval }),
         });
         if (result.url) {
           window.location.href = result.url;
@@ -334,7 +342,7 @@ function BillingContent() {
       // New users — open Dodo checkout
       const { url } = await apiFetch<{ url: string }>("/billing/checkout", {
         method: "POST",
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ planId, interval: billingInterval }),
       });
       window.location.href = url;
     } catch (err) {
@@ -374,7 +382,11 @@ function BillingContent() {
 
   const now = new Date();
   const monthName = now.toLocaleString("default", { month: "long" });
-  const planPrice = (plan: typeof PLANS[number]) => isIndia ? plan.priceInr : plan.priceUsd;
+  const planPrice = (plan: typeof PLANS[number]) =>
+    billingInterval === "yearly"
+      ? (isIndia ? plan.priceInrYearly : plan.priceUsdYearly)
+      : (isIndia ? plan.priceInr : plan.priceUsd);
+  const planPeriod = billingInterval === "yearly" ? "/yr" : "/mo";
 
   if (!billingEnabled) {
     return (
@@ -607,8 +619,31 @@ function BillingContent() {
                   : "Subscribe to keep access after your trial ends"}
               </p>
             </div>
-            {/* Currency toggle */}
-            <div className="flex shrink-0 p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <div className="flex shrink-0 items-center gap-2">
+              {/* Billing interval toggle */}
+              <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                {([{ label: "Monthly", val: "monthly" }, { label: "Yearly", val: "yearly" }] as const).map(({ label, val }) => (
+                  <button
+                    key={val}
+                    onClick={() => setBillingInterval(val)}
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 500,
+                      border: "none",
+                      cursor: "pointer",
+                      backgroundColor: billingInterval === val ? "#ffffff" : "transparent",
+                      color: billingInterval === val ? "#0a0a0a" : "#666",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {/* Currency toggle */}
+              <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
               {([{ label: "INR ₹", india: true }, { label: "USD $", india: false }] as const).map(({ label, india }) => (
                 <button
                   key={label}
@@ -628,17 +663,22 @@ function BillingContent() {
                   {label}
                 </button>
               ))}
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {PLANS.map((plan) => {
-              const isCurrent = status?.plan === plan.id && (isActive || isTrialing);
+              const isCurrent = status?.plan === plan.id && (isActive || isTrialing)
+                && (!isActive || status?.billingInterval === billingInterval);
               const planOrder = ["creator", "pro", "team"];
               const currentIdx = planOrder.indexOf(status?.plan ?? "");
               const thisIdx = planOrder.indexOf(plan.id);
               const isUpgrade = thisIdx > currentIdx;
-              const changeLabel = isUpgrade ? `Upgrade to ${plan.name}` : `Downgrade to ${plan.name}`;
+              const isSamePlanDifferentInterval = thisIdx === currentIdx && status?.billingInterval !== billingInterval;
+              const changeLabel = isSamePlanDifferentInterval
+                ? `Switch to ${billingInterval === "yearly" ? "yearly" : "monthly"} billing`
+                : isUpgrade ? `Upgrade to ${plan.name}` : `Downgrade to ${plan.name}`;
 
               return (
                 <div key={plan.id} className="relative rounded-2xl flex flex-col overflow-hidden"
@@ -674,9 +714,12 @@ function BillingContent() {
 
                     <div className="flex items-baseline gap-1 mb-1">
                       <span className="text-3xl font-bold tracking-tight" style={{ color: "#ededed" }}>{planPrice(plan)}</span>
-                      <span className="text-sm">{plan.period}</span>
+                      <span className="text-sm">{planPeriod}</span>
                     </div>
-                    <p className="text-[11px] mb-4">{isIndia ? "billed in INR" : "billed in USD"}</p>
+                    <p className="text-[11px] mb-4">
+                      {isIndia ? "billed in INR" : "billed in USD"}
+                      {billingInterval === "yearly" && <span style={{ color: "#4ade80" }}> · 2 months free</span>}
+                    </p>
 
                     <div className="flex gap-2 mb-5 flex-wrap">
                       <span className="text-[11px] font-semibold px-2 py-1 rounded-lg"
