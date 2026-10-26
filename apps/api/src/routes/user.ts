@@ -268,6 +268,14 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+
+    // Revoke every other session — a stolen refresh token shouldn't survive the
+    // user's own password change. Keep the current browser's session alive.
+    const currentRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+    await prisma.refreshToken.deleteMany({
+      where: { userId, ...(currentRefreshToken ? { token: { not: currentRefreshToken } } : {}) },
+    });
+
     return reply.send({ ok: true });
   });
 

@@ -33,7 +33,9 @@ interface PendingCode {
 
 const CODE_TTL_SECONDS = 5 * 60;
 
-const redis = new Redis(process.env.REDIS_URL!, { lazyConnect: true, enableOfflineQueue: false });
+// enableOfflineQueue left at its default (true): with lazyConnect, the very first
+// command can arrive before the connection finishes — queue it instead of throwing.
+const redis = new Redis(process.env.REDIS_URL!, { lazyConnect: true });
 
 async function storeCode(code: string, data: PendingCode): Promise<void> {
   await redis.set(`oauth:code:${code}`, JSON.stringify(data), "EX", CODE_TTL_SECONDS);
@@ -189,9 +191,23 @@ export async function oauthRoutes(app: FastifyInstance): Promise<void> {
     if (!redirect_uri || !code_challenge) {
       return reply.status(400).send({ error: "redirect_uri and code_challenge are required" });
     }
+    if (!client_id) {
+      return reply.status(400).send({ error: "invalid_request", error_description: "client_id is required" });
+    }
 
-    const registeredClient = client_id ? await prisma.oAuthClient.findUnique({ where: { id: client_id } }) : null;
-    const clientName = registeredClient?.clientName || "MCP connector";
+    // Validate redirect_uri against the registered client — same check /oauth/authorize
+    // performs. Without this, /oauth/approve could be reached directly (bypassing
+    // /oauth/authorize) with an attacker-controlled redirect_uri, handing them an
+    // authorization code — and from it a full API key — for the approving user.
+    const registeredClient = await prisma.oAuthClient.findUnique({ where: { id: client_id } });
+    if (!registeredClient) {
+      return reply.status(400).send({ error: "invalid_client", error_description: "Unknown client_id" });
+    }
+    const registeredUris = registeredClient.redirectUris as string[];
+    if (registeredUris.length > 0 && !registeredUris.includes(redirect_uri)) {
+      return reply.status(400).send({ error: "invalid_request", error_description: "redirect_uri not registered for this client" });
+    }
+    const clientName = registeredClient.clientName || "MCP connector";
 
     const code = crypto.randomBytes(32).toString("base64url");
     await storeCode(code, {

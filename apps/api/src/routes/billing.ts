@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import DodoPayments from "dodopayments";
+import { Redis } from "ioredis";
 import { withAuth, getUser, getWorkspaceId, requireOwnerRole } from "../lib/auth/withAuth.js";
 import { prisma } from "../lib/prisma.js";
 import { PLANS, getPlan, type PlanId } from "../lib/plans.js";
@@ -9,6 +10,12 @@ const dodo = new DodoPayments({
   bearerToken: process.env.DODO_API_KEY ?? "",
   environment: (process.env.DODO_ENV as "test_mode" | "live_mode") ?? "test_mode",
 });
+
+// enableOfflineQueue left at its default (true): with lazyConnect, the very first
+// command can arrive before the connection finishes — queue it instead of throwing.
+const redis = new Redis(process.env.REDIS_URL!, { lazyConnect: true });
+const WEBHOOK_MAX_AGE_SECONDS = 5 * 60; // reject events older than 5 minutes — replay protection
+const WEBHOOK_ID_TTL_SECONDS = 24 * 60 * 60; // how long a webhook-id is remembered for dedup
 
 const WEB_URL = process.env.WEB_URL ?? "http://localhost:3000";
 
@@ -169,6 +176,20 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
         } catch { return false; }
       })) {
         return reply.status(401).send({ error: "Invalid signature" });
+      }
+
+      // Replay protection: reject stale events, and skip ones we've already processed.
+      const timestampSeconds = Number(timestamp);
+      if (!timestampSeconds || Math.abs(Date.now() / 1000 - timestampSeconds) > WEBHOOK_MAX_AGE_SECONDS) {
+        return reply.status(401).send({ error: "Webhook timestamp too old" });
+      }
+      if (!webhookId) {
+        return reply.status(400).send({ error: "Missing webhook-id" });
+      }
+      const isNew = await redis.set(`billing:webhook:${webhookId}`, "1", "EX", WEBHOOK_ID_TTL_SECONDS, "NX");
+      if (!isNew) {
+        // Already processed this exact event — ack without reapplying it.
+        return reply.send({ ok: true });
       }
 
       const event = req.body as {

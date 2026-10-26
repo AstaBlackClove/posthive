@@ -69,14 +69,22 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
       return reply.status(200).send(updated);
     }
 
-    const blocked = await enforcePlan(userId, workspaceId, "accounts");
-    if (blocked) return reply.status(402).send(blocked);
-
-    const account = await prisma.account.create({
-      data: { platform: "bluesky", displayName: handle, credentials: encryptedCredentials, avatarUrl, userId, workspaceId },
-      select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
+    // Lock per workspace + check-then-create in one transaction, so concurrent
+    // connect requests can't all pass the account-count check simultaneously.
+    let blocked: Awaited<ReturnType<typeof enforcePlan>> = null;
+    const account = await prisma.$transaction(async (tx) => {
+      if (!process.env.DATABASE_URL?.startsWith("file:")) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${workspaceId}))`;
+      }
+      blocked = await enforcePlan(userId, workspaceId, "accounts", tx);
+      if (blocked) return null;
+      return tx.account.create({
+        data: { platform: "bluesky", displayName: handle, credentials: encryptedCredentials, avatarUrl, userId, workspaceId },
+        select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
+      });
     });
 
+    if (blocked) return reply.status(402).send(blocked);
     return reply.status(201).send(account);
   });
 
@@ -129,13 +137,22 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
       return reply.status(200).send(updated);
     }
 
-    const blocked = await enforcePlan(userId, workspaceId, "accounts");
-    if (blocked) return reply.status(402).send(blocked);
-
-    const account = await prisma.account.create({
-      data: { platform: "nostr", displayName, credentials, avatarUrl, userId, workspaceId },
-      select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
+    // Lock per workspace + check-then-create in one transaction, so concurrent
+    // connect requests can't all pass the account-count check simultaneously.
+    let blocked: Awaited<ReturnType<typeof enforcePlan>> = null;
+    const account = await prisma.$transaction(async (tx) => {
+      if (!process.env.DATABASE_URL?.startsWith("file:")) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${workspaceId}))`;
+      }
+      blocked = await enforcePlan(userId, workspaceId, "accounts", tx);
+      if (blocked) return null;
+      return tx.account.create({
+        data: { platform: "nostr", displayName, credentials, avatarUrl, userId, workspaceId },
+        select: { id: true, platform: true, displayName: true, avatarUrl: true, createdAt: true },
+      });
     });
+
+    if (blocked) return reply.status(402).send(blocked);
     return reply.status(201).send(account);
   });
 

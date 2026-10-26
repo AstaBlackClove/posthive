@@ -1598,9 +1598,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     try { parsed = new URL(instanceUrl.trim()); } catch {
       return reply.status(400).send({ error: "Invalid instance URL" });
     }
-    if (parsed.protocol !== "https:") return reply.status(400).send({ error: "Instance URL must use HTTPS" });
-    const hostname = parsed.hostname;
-    if (["localhost", "127.0.0.1", "0.0.0.0", "::1"].includes(hostname) || hostname.startsWith("192.168.") || hostname.startsWith("10.") || hostname.endsWith(".internal")) {
+    if (isSsrfBlocked(instanceUrl.trim())) {
       return reply.status(400).send({ error: "Invalid instance URL" });
     }
 
