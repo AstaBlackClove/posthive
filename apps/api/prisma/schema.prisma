@@ -61,12 +61,15 @@ model Workspace {
   // Billing (moved from User)
   plan           String    @default("trialing")  // trialing | creator | pro | team | cancelled
   planStatus     String    @default("trialing")  // trialing | active | cancelled
+  billingInterval String   @default("monthly")   // monthly | yearly
   trialEndsAt    DateTime?
   dodoCustomerId String?   @unique
   dodoSubId      String?   @unique
   allowTrial     Boolean   @default(true)        // false after first trial used (abuse prevention)
   allowReels     Boolean   @default(true)        // Instagram Reels & Stories (Pro/Team only; default true so existing workspaces keep access)
   allowOverrides Boolean   @default(true)        // per-platform text/comment overrides (Pro/Team only; default true so existing workspaces keep access)
+
+  onHoldSince DateTime? // set when planStatus moves to on_hold; cleared on renewal
 
   webhookUrl String?  // outbound webhook fired on post publish
 

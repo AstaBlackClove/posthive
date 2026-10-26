@@ -66,6 +66,8 @@ function slotsInNextWindow(timeSlots: string[], timezone: string, postsPerDay: n
   return result;
 }
 
+const GRACE_MS = 3 * 24 * 60 * 60 * 1000;
+
 type LibraryRow = {
   id: string;
   name: string;
@@ -75,10 +77,16 @@ type LibraryRow = {
   timezone: string;
   accountIds: unknown;
   lastDripAt: Date | null;
-  workspace: { members: { userId: string; user: { email: string; name: string | null } }[] };
+  workspace: { planStatus: string; onHoldSince: Date | null; members: { userId: string; user: { email: string; name: string | null } }[] };
 };
 
 async function processLibrary(lib: LibraryRow) {
+  // Grace period: on_hold workspaces keep dripping for 3 days after payment failure
+  if (lib.workspace.planStatus === "on_hold") {
+    const held = lib.workspace.onHoldSince;
+    if (!held || Date.now() - held.getTime() >= GRACE_MS) return;
+  }
+
   const timeSlots = lib.timeSlots as string[];
   const accountIds = lib.accountIds as string[];
   const timezone = lib.timezone || "UTC";
@@ -226,7 +234,10 @@ async function run() {
     // Paginate through active libraries to avoid loading all at once
     while (true) {
       const batch: LibraryRow[] = await prisma.contentLibrary.findMany({
-        where: { status: "active" },
+        where: {
+          status: "active",
+          workspace: { planStatus: { not: "cancelled" } },
+        },
         select: {
           id: true,
           name: true,
@@ -236,7 +247,7 @@ async function run() {
           timezone: true,
           accountIds: true,
           lastDripAt: true,
-          workspace: { select: { members: { where: { role: "owner" }, select: { userId: true, user: { select: { email: true, name: true } } }, take: 1 } } },
+          workspace: { select: { planStatus: true, onHoldSince: true, members: { where: { role: "owner" }, select: { userId: true, user: { select: { email: true, name: true } } }, take: 1 } } },
         },
         take: BATCH_SIZE,
         ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),

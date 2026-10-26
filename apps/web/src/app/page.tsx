@@ -308,6 +308,8 @@ const PLANS = [
     desc: "For solo creators finding their rhythm.",
     inr: "₹550",
     usd: "$9",
+    inrYearly: "₹5,500",
+    usdYearly: "$90",
     features: [
       { text: "5 connected accounts", included: true },
       { text: "400 posts / month", included: true },
@@ -333,6 +335,8 @@ const PLANS = [
     desc: "For creators who are serious about growth.",
     inr: "₹1,700",
     usd: "$29",
+    inrYearly: "₹17,000",
+    usdYearly: "$290",
     features: [
       { text: "15 connected accounts", included: true },
       { text: "Unlimited posts", included: true },
@@ -358,6 +362,8 @@ const PLANS = [
     desc: "For agencies and fast-moving teams.",
     inr: "₹2,600",
     usd: "$49",
+    inrYearly: "₹26,000",
+    usdYearly: "$490",
     features: [
       { text: "50 connected accounts", included: true },
       { text: "Unlimited posts", included: true },
@@ -468,6 +474,7 @@ function LiveStat({ value, label, skeletonWidth = 120, skeletonHeight = 56 }: { 
 export default function RootPage() {
   const { user, loading: authLoading } = useAuth();
   const [isIndia, setIsIndia] = useIsIndia();
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
   useScrollReveal();
   const ctaHref = user ? "/compose" : "/register";
   const ctaLabel = user ? "Go to scheduler" : "Get started free";
@@ -2628,6 +2635,59 @@ export default function RootPage() {
                     </button>
                   ))}
                 </div>
+                {false && <div
+                  style={{
+                    display: "inline-flex",
+                    padding: 3,
+                    borderRadius: 10,
+                    backgroundColor: "#111",
+                    border: "1px solid #2a2a2a",
+                    marginLeft: 8,
+                  }}
+                >
+                  {(
+                    [
+                      { label: "Monthly", val: "monthly" as const },
+                      { label: "Yearly", val: "yearly" as const },
+                    ]
+                  ).map(({ label, val }) => (
+                    <button
+                      key={label}
+                      onClick={() => setBillingInterval(val)}
+                      style={{
+                        padding: "5px 16px",
+                        borderRadius: 7,
+                        fontSize: 13,
+                        fontWeight: 500,
+                        border: "none",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        backgroundColor:
+                          billingInterval === val ? "#ffffff" : "transparent",
+                        color: billingInterval === val ? "#0a0a0a" : "#555",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {label}
+                      {val === "yearly" && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: "2px 6px",
+                            borderRadius: 999,
+                            background: billingInterval === val ? "#dcfce7" : "rgba(74,222,128,.15)",
+                            color: "#16a34a",
+                          }}
+                        >
+                          2 mo free
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>}
               </div>
               <div
                 style={{
@@ -2743,12 +2803,20 @@ export default function RootPage() {
                         letterSpacing: "-0.03em",
                       }}
                     >
-                      {isIndia ? plan.inr : plan.usd}
+                      {billingInterval === "yearly"
+                        ? isIndia ? plan.inrYearly : plan.usdYearly
+                        : isIndia ? plan.inr : plan.usd}
                     </span>
                     <span
                       style={{ fontSize: 14, color: "#555", marginLeft: 4 }}
                     >
-                      /mo · {isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}
+                      {billingInterval === "yearly" ? "/yr" : "/mo"} ·{" "}
+                      {billingInterval === "yearly"
+                        ? isIndia ? `≈ ${plan.usdYearly}` : `≈ ${plan.inrYearly}`
+                        : isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}
+                      {billingInterval === "yearly" && (
+                        <span style={{ color: "#4ade80" }}> · 2 months free</span>
+                      )}
                     </span>
                   </div>
                   <Link

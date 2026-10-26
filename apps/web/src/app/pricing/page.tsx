@@ -19,6 +19,8 @@ const PLANS = [
     desc: "For solo creators finding their rhythm.",
     inr: "₹550",
     usd: "$9",
+    inrYearly: "₹5,500",
+    usdYearly: "$90",
     popular: false,
     features: [
       { text: "5 connected accounts", included: true },
@@ -44,6 +46,8 @@ const PLANS = [
     desc: "For creators who are serious about growth.",
     inr: "₹1,700",
     usd: "$29",
+    inrYearly: "₹17,000",
+    usdYearly: "$290",
     popular: true,
     features: [
       { text: "15 connected accounts", included: true },
@@ -69,6 +73,8 @@ const PLANS = [
     desc: "For agencies and fast-moving teams.",
     inr: "₹2,600",
     usd: "$49",
+    inrYearly: "₹26,000",
+    usdYearly: "$490",
     popular: false,
     features: [
       { text: "50 connected accounts", included: true },
@@ -151,6 +157,7 @@ export default function PricingPage() {
   const ctaHref = user ? "/compose" : "/register";
   const navCtaLabel = user ? "Go to scheduler" : "Get started free";
   const [isIndia, setIsIndia] = useState(false);
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
 
@@ -190,22 +197,49 @@ export default function PricingPage() {
             Start free. Upgrade when you&apos;re ready. No hidden fees, no per-seat nonsense.
           </p>
 
-          {/* Currency toggle */}
-          <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
-            {[{ label: "INR ₹", val: true }, { label: "USD $", val: false }].map(({ label, val }) => (
-              <button
-                key={label}
-                onClick={() => setIsIndia(val)}
-                style={{
-                  padding: "7px 20px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  border: "none", transition: "all .15s",
-                  background: isIndia === val ? "#fff" : "transparent",
-                  color: isIndia === val ? "#0a0a0a" : "#666",
-                }}
-              >
-                {label}
-              </button>
-            ))}
+          {/* Billing interval + currency toggles */}
+          <div style={{ display: "inline-flex", gap: 10 }}>
+            {false && <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
+              {[{ label: "Monthly", val: "monthly" as const }, { label: "Yearly", val: "yearly" as const }].map(({ label, val }) => (
+                <button
+                  key={label}
+                  onClick={() => setBillingInterval(val)}
+                  style={{
+                    padding: "7px 20px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    border: "none", transition: "all .15s", display: "inline-flex", alignItems: "center", gap: 6,
+                    background: billingInterval === val ? "#fff" : "transparent",
+                    color: billingInterval === val ? "#0a0a0a" : "#666",
+                  }}
+                >
+                  {label}
+                  {val === "yearly" && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 999,
+                      background: billingInterval === val ? "#dcfce7" : "rgba(74,222,128,.15)",
+                      color: "#16a34a",
+                    }}>
+                      2 mo free
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>}
+            <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
+              {[{ label: "INR ₹", val: true }, { label: "USD $", val: false }].map(({ label, val }) => (
+                <button
+                  key={label}
+                  onClick={() => setIsIndia(val)}
+                  style={{
+                    padding: "7px 20px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    border: "none", transition: "all .15s",
+                    background: isIndia === val ? "#fff" : "transparent",
+                    color: isIndia === val ? "#0a0a0a" : "#666",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -254,10 +288,16 @@ export default function PricingPage() {
 
               <div style={{ marginBottom: 28 }}>
                 <span style={{ fontSize: 44, fontWeight: 800, color: "#ededed", letterSpacing: "-0.03em" }}>
-                  {isIndia ? plan.inr : plan.usd}
+                  {billingInterval === "yearly"
+                    ? isIndia ? plan.inrYearly : plan.usdYearly
+                    : isIndia ? plan.inr : plan.usd}
                 </span>
                 <span style={{ fontSize: 14, color: "#555", marginLeft: 6 }}>
-                  /mo · {isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}
+                  {billingInterval === "yearly" ? "/yr" : "/mo"} ·{" "}
+                  {billingInterval === "yearly"
+                    ? isIndia ? `≈ ${plan.usdYearly}` : `≈ ${plan.inrYearly}`
+                    : isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}
+                  {billingInterval === "yearly" && <span style={{ color: "#4ade80" }}> · 2 months free</span>}
                 </span>
               </div>
 

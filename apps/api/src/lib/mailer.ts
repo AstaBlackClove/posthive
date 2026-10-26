@@ -512,6 +512,53 @@ export async function sendLibraryExhaustedEmail(
   });
 }
 
+export async function sendSubscriptionOnHoldEmail(
+  to: string,
+  name: string,
+  planName: string,
+): Promise<void> {
+  const billingUrl = `${APP_URL}/billing`;
+  const body = `
+    ${eyebrow("Action required", "#ef4444")}
+    ${heading("Your subscription payment failed.")}
+    ${bodyText(`Hi ${name}, we could not collect payment for your <strong style="color:#ededed;">${planName}</strong> plan. Your subscription is on hold.`)}
+    ${infoBox(`
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="padding:0;">
+            <p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 5px;">Plan</p>
+            <p style="font-size:14px;font-weight:600;color:#ededed;margin:0;">${planName}</p>
+          </td>
+          <td style="padding:0;text-align:right;">
+            <p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 5px;">Status</p>
+            <p style="font-size:14px;font-weight:600;color:#ef4444;margin:0;">On Hold</p>
+          </td>
+        </tr>
+      </table>
+    `)}
+    ${bodyText("Posting continues for now, but we will keep retrying the payment. If the payment cannot be collected, your subscription will be cancelled.")}
+    ${bodyText("To fix this now: contact your bank to allow recurring transactions, or update your payment method.")}
+    ${ctaButton(billingUrl, "Update payment method", "#ef4444", "#ffffff")}
+    ${divider()}
+    ${bodyText("If you think this is a mistake, reply to this email and we will help.", "font-size:12.5px;")}
+  `;
+  const html = emailShell(
+    "linear-gradient(90deg,#ef4444,#f87171)",
+    body,
+    `You received this because a payment for your Posthive subscription failed.<br><a href="https://posthive.co" style="color:#555;">posthive.co</a>`,
+  );
+  if (!resend) {
+    console.log(`[mailer] Subscription on_hold email for ${to}: plan ${planName}`);
+    return;
+  }
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Payment failed — your Posthive subscription is on hold`,
+    html,
+  });
+}
+
 export async function sendPostFailedEmail(
   to: string,
   platforms: string[],
