@@ -199,7 +199,7 @@ export default function PricingPage() {
 
           {/* Billing interval + currency toggles */}
           <div style={{ display: "inline-flex", gap: 10 }}>
-            {false && <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
+            <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
               {[{ label: "Monthly", val: "monthly" as const }, { label: "Yearly", val: "yearly" as const }].map(({ label, val }) => (
                 <button
                   key={label}
@@ -223,7 +223,7 @@ export default function PricingPage() {
                   )}
                 </button>
               ))}
-            </div>}
+            </div>
             <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
               {[{ label: "INR ₹", val: true }, { label: "USD $", val: false }].map(({ label, val }) => (
                 <button
