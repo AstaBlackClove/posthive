@@ -1,31 +1,49 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { apiFetch } from "../lib/api";
+
+type AccessState = "active" | "expired" | "onboarding";
+const accessCache = { state: null as AccessState | null };
 
 export function PlanGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
+  const checked = useRef(false);
 
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_ENABLE_BILLING !== "true") { setReady(true); return; }
-    apiFetch<{ planStatus: string; trialEndsAt: string | null }>("/billing/status")
-      .then(({ planStatus, trialEndsAt }) => {
+
+    const applyState = (state: AccessState) => {
+      accessCache.state = state;
+      if (state === "onboarding") {
+        router.replace("/onboarding?step=4");
+      } else if (state === "expired" && pathname !== "/billing" && pathname !== "/settings") {
+        router.replace("/billing");
+      } else {
+        setReady(true);
+      }
+    };
+
+    // Already fetched — just apply cached result (no extra API call)
+    if (checked.current && accessCache.state) {
+      applyState(accessCache.state);
+      return;
+    }
+
+    checked.current = true;
+    apiFetch<{ planStatus: string; trialEndsAt: string | null; onHoldSince: string | null }>("/billing/status")
+      .then(({ planStatus, trialEndsAt, onHoldSince }) => {
         const trialExpired = planStatus === "trialing" && !!trialEndsAt && new Date(trialEndsAt) < new Date();
-        // cancelling = still has access until period ends; trialing = always has access
-        const hasActivePlan = (planStatus === "active" || planStatus === "trialing" || planStatus === "cancelling") && !trialExpired;
-        const isExpired = planStatus === "cancelled" || planStatus === "on_hold" || trialExpired;
-        if (!hasActivePlan && !isExpired) {
-          router.replace("/onboarding?step=4");
-        } else if (isExpired && pathname !== "/billing" && pathname !== "/settings") {
-          router.replace("/billing");
-        } else {
-          setReady(true);
-        }
+        const GRACE_MS = 3 * 24 * 60 * 60 * 1000;
+        const inGrace = planStatus === "on_hold" && !!onHoldSince && Date.now() - new Date(onHoldSince).getTime() < GRACE_MS;
+        const hasActivePlan = (planStatus === "active" || planStatus === "trialing" || planStatus === "cancelling" || inGrace) && !trialExpired;
+        const isExpired = planStatus === "cancelled" || (planStatus === "on_hold" && !inGrace) || trialExpired;
+        applyState(!hasActivePlan && !isExpired ? "onboarding" : isExpired ? "expired" : "active");
       })
-      .catch(() => setReady(true)); // billing check failure → let through
+      .catch(() => setReady(true));
   }, [pathname, router]);
 
   if (!ready) {

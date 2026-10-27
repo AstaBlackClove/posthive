@@ -74,6 +74,23 @@ export async function workspaceRoutes(app: FastifyInstance): Promise<void> {
     const parsed = createBody.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
 
+    // Block if user already has a cancelled or previously-paid workspace (trial abuse)
+    const existingCancelledOrPaid = await prisma.workspace.findFirst({
+      where: {
+        members: { some: { userId } },
+        OR: [
+          { planStatus: "cancelled" },
+          { planStatus: "on_hold" },
+          { plan: { in: ["creator", "pro", "team"] } },
+          { allowTrial: false },
+        ],
+      },
+      select: { id: true },
+    });
+    if (existingCancelledOrPaid) {
+      return reply.status(403).send({ error: "You already have an existing subscription. Please resubscribe from your billing page." });
+    }
+
     const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
     const workspace = await prisma.workspace.create({

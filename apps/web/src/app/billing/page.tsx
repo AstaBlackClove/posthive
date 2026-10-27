@@ -21,6 +21,7 @@ interface BillingStatus {
   trialExpired: boolean;
   trialEndsAt: string | null;
   hasDodoSub: boolean;
+  onHoldSince: string | null;
   workspaceId: string;
   workspaceName: string;
 }
@@ -378,6 +379,15 @@ function BillingContent() {
   const isActive = status?.planStatus === "active";
   const hasDodoSub = status?.hasDodoSub ?? false;
 
+  async function openCustomerPortal() {
+    try {
+      const res = await apiFetch<{ url: string }>("/billing/customer-portal");
+      if (res.url) window.open(res.url, "_blank", "noopener");
+    } catch {
+      toastError("Could not open customer portal — please contact support");
+    }
+  }
+
   const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === "true";
 
   const now = new Date();
@@ -467,32 +477,65 @@ function BillingContent() {
         )}
 
         {/* Status banners */}
-        {isOnHold && (
+        {isOnHold && (() => {
+          const GRACE_MS = 3 * 24 * 60 * 60 * 1000;
+          const heldAt = status?.onHoldSince ? new Date(status.onHoldSince).getTime() : Date.now();
+          const msLeft = Math.max(0, heldAt + GRACE_MS - Date.now());
+          const hoursLeft = Math.floor(msLeft / (1000 * 60 * 60));
+          const daysLeft = Math.floor(hoursLeft / 24);
+          const remainingHours = hoursLeft % 24;
+          const graceLabel = daysLeft > 0
+            ? `${daysLeft}d ${remainingHours}h`
+            : hoursLeft > 0
+            ? `${hoursLeft}h`
+            : "ended";
+          return (
+            <div className="px-5 py-4 rounded-2xl"
+              style={{ backgroundColor: "#1f0a0a", border: "1px solid #7f1d1d" }}>
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="#f87171" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold" style={{ color: "#f87171" }}>Payment failed</p>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: "#3f0808", color: "#f87171" }}>
+                      Grace period: {graceLabel} left
+                    </span>
+                  </div>
+                  <p className="text-xs mt-1" style={{ color: "#888" }}>
+                    We couldn&apos;t process your last payment. Posts keep publishing during your 3-day grace period.
+                    Contact your bank to allow recurring transactions, or update your payment method.
+                  </p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <a href="https://dodopayments.com" target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+                      style={{ backgroundColor: "#f87171", color: "#0a0a0a" }}>
+                      Manage subscription
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                    <span className="text-xs" style={{ color: "#555" }}>Dodo Payments</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {isCancelled && (
           <div className="flex items-start gap-3 px-5 py-4 rounded-2xl"
             style={{ backgroundColor: "#1f0a0a", border: "1px solid #7f1d1d" }}>
             <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="#f87171" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div>
-              <p className="text-sm font-semibold" style={{ color: "#f87171" }}>Payment failed</p>
-              <p className="text-xs mt-1" style={{ color: "#888" }}>
-                We couldn&apos;t process your last payment. We&apos;ll retry automatically — contact your bank to allow recurring transactions or update your payment method.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {isCancelled && (
-          <div className="flex items-start gap-3 px-5 py-4 rounded-2xl"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-            <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="#555" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <p className="text-sm font-semibold" style={{ color: "#888" }}>Subscription cancelled</p>
-              <p className="text-xs mt-1" style={{ color: "#555" }}>
+              <p className="text-sm font-semibold" style={{ color: "#f87171" }}>Subscription cancelled</p>
+              <p className="text-xs mt-1" style={{ color: "#888" }}>
                 Your access has ended. Subscribe to a plan below to continue scheduling posts.
               </p>
             </div>
@@ -540,7 +583,7 @@ function BillingContent() {
                 )}
               </div>
               {isActive && hasDodoSub && !isCancelling && isOwner && (
-                <a href="https://app.dodopayments.com" target="_blank" rel="noreferrer"
+                <a href="https://dodopayments.com" target="_blank" rel="noreferrer"
                   className="flex-shrink-0 text-xs font-medium px-4 py-2 rounded-xl transition-opacity hover:opacity-70"
                   style={{ backgroundColor: "#161616", color: "#999", border: "1px solid #555" }}>
                   Manage ↗
@@ -620,8 +663,8 @@ function BillingContent() {
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              {/* Billing interval toggle */}
-              <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              {/* Billing interval toggle — yearly hidden until tested */}
+              {false && <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
                 {([{ label: "Monthly", val: "monthly" }, { label: "Yearly", val: "yearly" }] as const).map(({ label, val }) => (
                   <button
                     key={val}
@@ -653,7 +696,7 @@ function BillingContent() {
                     )}
                   </button>
                 ))}
-              </div>
+              </div>}
               {/* Currency toggle */}
               <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
               {([{ label: "INR ₹", india: true }, { label: "USD $", india: false }] as const).map(({ label, india }) => (
@@ -681,7 +724,7 @@ function BillingContent() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {PLANS.map((plan) => {
-              const isCurrent = status?.plan === plan.id && (isActive || isTrialing)
+              const isCurrent = status?.plan === plan.id && (isActive || isTrialing || isOnHold)
                 && (!isActive || status?.billingInterval === billingInterval);
               const planOrder = ["creator", "pro", "team"];
               const currentIdx = planOrder.indexOf(status?.plan ?? "");

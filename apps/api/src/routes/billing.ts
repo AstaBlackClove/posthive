@@ -90,6 +90,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       trialExpired,
       trialEndsAt: workspace.trialEndsAt,
       hasDodoSub: !!workspace.dodoSubId,
+      onHoldSince: workspace.onHoldSince?.toISOString() ?? null,
       workspaceId: workspace.id,
       workspaceName: workspace.name,
     };
@@ -420,6 +421,25 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       }
     }
   );
+
+  // GET /billing/customer-portal — generate Dodo customer portal session URL
+  app.get("/billing/customer-portal", { preHandler: [withAuth] }, async (req, reply) => {
+    const u = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const roleBlocked = await requireOwnerRole(u.id, workspaceId);
+    if (roleBlocked) return reply.status(403).send(roleBlocked);
+    const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
+    if (!workspace?.dodoCustomerId) return reply.status(400).send({ error: "No billing account found" });
+    try {
+      const session = await dodo.customers.customerPortal.create(workspace.dodoCustomerId, {
+        return_url: `${process.env.WEB_URL}/billing`,
+      });
+      return reply.send({ url: session.link });
+    } catch (err) {
+      console.error("[billing] customer portal error:", err);
+      return reply.status(500).send({ error: "Failed to open customer portal" });
+    }
+  });
 
   // POST /billing/retry — manually trigger a payment retry for an on_hold subscription
   app.post("/billing/retry", { preHandler: [withAuth] }, async (req, reply) => {

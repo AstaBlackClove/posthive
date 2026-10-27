@@ -8,6 +8,7 @@ interface BillingStatus {
   planStatus: string;
   trialDaysLeft: number;
   trialExpired: boolean;
+  onHoldSince: string | null;
 }
 
 export function TrialBanner() {
@@ -20,6 +21,39 @@ export function TrialBanner() {
 
   if (!status) return null;
   if (status.planStatus === "active") return null;
+
+  if (status.planStatus === "on_hold") {
+    const GRACE_MS = 3 * 24 * 60 * 60 * 1000;
+    const heldAt = status.onHoldSince ? new Date(status.onHoldSince).getTime() : Date.now();
+    const graceEndsAt = heldAt + GRACE_MS;
+    const msLeft = graceEndsAt - Date.now();
+    const hoursLeft = Math.max(0, Math.floor(msLeft / (1000 * 60 * 60)));
+    const daysLeft = Math.floor(hoursLeft / 24);
+    const remainingHours = hoursLeft % 24;
+    const graceLabel = daysLeft > 0
+      ? `${daysLeft}d ${remainingHours}h left`
+      : hoursLeft > 0
+      ? `${hoursLeft}h left`
+      : "Grace period ended";
+    const urgent = hoursLeft < 24;
+    return (
+      <div className="mx-3 mb-2 px-3 py-2.5 rounded-xl text-xs"
+        style={{ backgroundColor: "#1f0a0a", border: `1px solid ${urgent ? "#dc2626" : "#7f1d1d"}` }}>
+        <div className="flex items-center justify-between mb-1">
+          <p className="font-semibold" style={{ color: "#f87171" }}>Payment failed</p>
+          <span className="font-semibold" style={{ color: urgent ? "#f87171" : "#f87171", opacity: 0.8 }}>
+            {graceLabel}
+          </span>
+        </div>
+        <p className="mb-1.5" style={{ color: "#888" }}>Posts still publishing during grace period.</p>
+        <Link href="/billing"
+          className="inline-flex items-center gap-1 font-semibold px-2.5 py-1 rounded-lg hover:opacity-90 transition-opacity"
+          style={{ backgroundColor: "#f87171", color: "#0a0a0a" }}>
+          Fix payment
+        </Link>
+      </div>
+    );
+  }
 
   if (status.planStatus === "cancelled") {
     return (
@@ -70,6 +104,20 @@ export function TrialBanner() {
               width: `${Math.max(5, (status.trialDaysLeft / 14) * 100)}%`,
               backgroundColor: urgent ? "#f59e0b" : "#5b63d3",
             }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (status.planStatus === "cancelling") {
+    return (
+      <div className="mx-3 mb-2 px-3 py-2.5 rounded-xl text-xs"
+        style={{ backgroundColor: "#1c1209", border: "1px solid #78350f" }}>
+        <div className="flex items-center justify-between">
+          <p className="font-semibold" style={{ color: "#fb923c" }}>Cancels at period end</p>
+          <Link href="/billing" className="font-semibold hover:opacity-80" style={{ color: "#5b63d3" }}>
+            Resubscribe
+          </Link>
         </div>
       </div>
     );
