@@ -664,7 +664,7 @@ function BillingContent() {
             </div>
             <div className="flex shrink-0 items-center gap-2">
               {/* Billing interval toggle — yearly hidden until tested */}
-              {false && <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
                 {([{ label: "Monthly", val: "monthly" }, { label: "Yearly", val: "yearly" }] as const).map(({ label, val }) => (
                   <button
                     key={val}
@@ -696,7 +696,7 @@ function BillingContent() {
                     )}
                   </button>
                 ))}
-              </div>}
+              </div>
               {/* Currency toggle */}
               <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
               {([{ label: "INR ₹", india: true }, { label: "USD $", india: false }] as const).map(({ label, india }) => (
