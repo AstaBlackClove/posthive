@@ -631,6 +631,10 @@ export default function RootPage() {
           background: #111111; border: 1px solid #1e1e1e; border-radius: 16px; padding: 30px;
           display: flex; flex-direction: column; gap: 18px; position: relative;
         }
+        .ph-plan-card-team {
+          background: #111111; border: 1px solid #333; border-radius: 16px; padding: 30px;
+          display: flex; flex-direction: column; gap: 18px; position: relative;
+        }
         .ph-plan-card-pro {
           background: #0f0f14; border: 1px solid #5b63d3; border-radius: 16px; padding: 30px;
           display: flex; flex-direction: column; gap: 18px; position: relative;
@@ -666,6 +670,12 @@ export default function RootPage() {
           border: 1px solid #2a2a2a; transition: background .15s;
         }
         .ph-plan-btn:hover { background: #202020; }
+        .ph-plan-btn-team {
+          display: block; text-align: center; background: #1a1a1a; color: #ededed;
+          font-size: 14.5px; font-weight: 600; padding: 11px; border-radius: 10px; text-decoration: none;
+          border: 1px solid #3a3a3a; transition: background .15s;
+        }
+        .ph-plan-btn-team:hover { background: #222; }
 
         .ph-gh-btn {
           display: inline-flex; align-items: center; justify-content: center; gap: 9px;
@@ -2592,11 +2602,13 @@ export default function RootPage() {
                 Start free. Upgrade when you&apos;re ready. No hidden fees, no
                 per-channel tax.
               </p>
-              {/* Currency toggle */}
+              {/* Billing interval toggle */}
               <div
                 style={{
                   display: "flex",
                   justifyContent: "center",
+                  alignItems: "center",
+                  gap: 10,
                   marginBottom: 28,
                 }}
               >
@@ -2607,42 +2619,6 @@ export default function RootPage() {
                     borderRadius: 10,
                     backgroundColor: "#111",
                     border: "1px solid #2a2a2a",
-                  }}
-                >
-                  {(
-                    [
-                      { label: "INR ₹", val: true },
-                      { label: "USD $", val: false },
-                    ] as const
-                  ).map(({ label, val }) => (
-                    <button
-                      key={label}
-                      onClick={() => setIsIndia(val)}
-                      style={{
-                        padding: "5px 16px",
-                        borderRadius: 7,
-                        fontSize: 13,
-                        fontWeight: 500,
-                        border: "none",
-                        cursor: "pointer",
-                        backgroundColor:
-                          isIndia === val ? "#ffffff" : "transparent",
-                        color: isIndia === val ? "#0a0a0a" : "#555",
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                {false && <div
-                  style={{
-                    display: "inline-flex",
-                    padding: 3,
-                    borderRadius: 10,
-                    backgroundColor: "#111",
-                    border: "1px solid #2a2a2a",
-                    marginLeft: 8,
                   }}
                 >
                   {(
@@ -2661,35 +2637,30 @@ export default function RootPage() {
                         fontWeight: 500,
                         border: "none",
                         cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        backgroundColor:
-                          billingInterval === val ? "#ffffff" : "transparent",
+                        backgroundColor: billingInterval === val ? "#ffffff" : "transparent",
                         color: billingInterval === val ? "#0a0a0a" : "#555",
                         transition: "all 0.15s",
                       }}
                     >
                       {label}
-                      {val === "yearly" && (
-                        <span
-                          style={{
-                            fontSize: 10,
-                            fontWeight: 700,
-                            padding: "2px 6px",
-                            borderRadius: 999,
-                            background: billingInterval === val ? "#dcfce7" : "rgba(74,222,128,.15)",
-                            color: "#16a34a",
-                          }}
-                        >
-                          2 mo free
-                        </span>
-                      )}
                     </button>
                   ))}
-                </div>}
+                </div>
+                <span style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "4px 12px",
+                  borderRadius: 999,
+                  border: "1px solid #4ade80",
+                  background: "rgba(74,222,128,.12)",
+                  color: "#4ade80",
+                  letterSpacing: "0.03em",
+                  whiteSpace: "nowrap" as const,
+                }}>
+                  2 MONTHS FREE
+                </span>
               </div>
-              <div
+              {/* <div
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -2733,7 +2704,7 @@ export default function RootPage() {
                 >
                   Same channels.
                 </span>
-              </div>
+              </div> */}
             </div>
             <div
               className="ph-pricing-grid"
@@ -2747,7 +2718,7 @@ export default function RootPage() {
               {PLANS.map((plan) => (
                 <div
                   key={plan.id}
-                  className={plan.popular ? "ph-plan-card-pro" : "ph-plan-card"}
+                  className={plan.popular ? "ph-plan-card-pro" : plan.id === "team" ? "ph-plan-card-team" : "ph-plan-card"}
                 >
                   {plan.popular && (
                     <div
@@ -2792,36 +2763,34 @@ export default function RootPage() {
                       {plan.desc}
                     </p>
                   </div>
-                  <div
-                    style={{ display: "flex", alignItems: "baseline", gap: 8 }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 44,
-                        fontWeight: 800,
-                        color: "#f2f2f2",
-                        letterSpacing: "-0.03em",
-                      }}
-                    >
-                      {billingInterval === "yearly"
-                        ? isIndia ? plan.inrYearly : plan.usdYearly
-                        : isIndia ? plan.inr : plan.usd}
-                    </span>
-                    <span
-                      style={{ fontSize: 14, color: "#555", marginLeft: 4 }}
-                    >
-                      {billingInterval === "yearly" ? "/yr" : "/mo"} ·{" "}
-                      {billingInterval === "yearly"
-                        ? isIndia ? `≈ ${plan.usdYearly}` : `≈ ${plan.inrYearly}`
-                        : isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}
-                      {billingInterval === "yearly" && (
-                        <span style={{ color: "#4ade80" }}> · 2 months free</span>
-                      )}
-                    </span>
+                  <div style={{ marginBottom: 4 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                      <span
+                        style={{
+                          fontSize: 44,
+                          fontWeight: 800,
+                          color: "#f2f2f2",
+                          letterSpacing: "-0.03em",
+                        }}
+                      >
+                        {billingInterval === "yearly"
+                          ? isIndia ? plan.inrYearly : plan.usdYearly
+                          : isIndia ? plan.inr : plan.usd}
+                      </span>
+                      <span style={{ fontSize: 14, color: "#555", marginLeft: 4 }}>
+                        {billingInterval === "yearly" ? "/yr" : "/mo"} ·{" "}
+                        {billingInterval === "yearly"
+                          ? isIndia ? `≈ ${plan.usdYearly}` : `≈ ${plan.inrYearly}`
+                          : isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}
+                      </span>
+                    </div>
+                    {billingInterval === "yearly" && (
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#4ade80", marginTop: 4 }}>2 months free</div>
+                    )}
                   </div>
                   <Link
                     href={ctaHref}
-                    className={plan.popular ? "ph-plan-btn-pro" : "ph-plan-btn"}
+                    className={plan.popular ? "ph-plan-btn-pro" : plan.id === "team" ? "ph-plan-btn-team" : "ph-plan-btn"}
                   >
                     {user ? "Go to scheduler" : "Get started"}
                   </Link>

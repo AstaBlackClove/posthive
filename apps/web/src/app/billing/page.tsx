@@ -663,62 +663,43 @@ function BillingContent() {
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              {/* Billing interval toggle — yearly hidden until tested */}
-              {false && <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-                {([{ label: "Monthly", val: "monthly" }, { label: "Yearly", val: "yearly" }] as const).map(({ label, val }) => (
-                  <button
-                    key={val}
-                    onClick={() => setBillingInterval(val)}
-                    style={{
-                      padding: "4px 12px",
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      border: "none",
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                      backgroundColor: billingInterval === val ? "#ffffff" : "transparent",
-                      color: billingInterval === val ? "#0a0a0a" : "#666",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {label}
-                    {val === "yearly" && (
-                      <span style={{
-                        fontSize: 9, fontWeight: 700, padding: "2px 5px", borderRadius: 999,
-                        background: billingInterval === val ? "#dcfce7" : "rgba(74,222,128,.15)",
-                        color: "#16a34a",
-                      }}>
-                        2 mo free
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>}
-              {/* Currency toggle */}
-              <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-              {([{ label: "INR ₹", india: true }, { label: "USD $", india: false }] as const).map(({ label, india }) => (
-                <button
-                  key={label}
-                  onClick={() => setIsIndia(india)}
-                  style={{
-                    padding: "4px 12px",
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: 500,
-                    border: "none",
-                    cursor: "pointer",
-                    backgroundColor: isIndia === india ? "#ffffff" : "transparent",
-                    color: isIndia === india ? "#0a0a0a" : "#666",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-              </div>
+              {/* Billing interval toggle */}
+              {true && <>
+                <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                  {([{ label: "Monthly", val: "monthly" }, { label: "Yearly", val: "yearly" }] as const).map(({ label, val }) => (
+                    <button
+                      key={val}
+                      onClick={() => setBillingInterval(val)}
+                      style={{
+                        padding: "4px 14px",
+                        borderRadius: 6,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        border: "none",
+                        cursor: "pointer",
+                        backgroundColor: billingInterval === val ? "#ffffff" : "transparent",
+                        color: billingInterval === val ? "#0a0a0a" : "#666",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <span style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "3px 10px",
+                  borderRadius: 999,
+                  border: "1px solid #4ade80",
+                  background: "rgba(74,222,128,.12)",
+                  color: "#4ade80",
+                  letterSpacing: "0.03em",
+                  whiteSpace: "nowrap" as const,
+                }}>
+                  2 MONTHS FREE
+                </span>
+              </>}
             </div>
           </div>
 
@@ -771,10 +752,13 @@ function BillingContent() {
                       <span className="text-3xl font-bold tracking-tight" style={{ color: "#ededed" }}>{planPrice(plan)}</span>
                       <span className="text-sm">{planPeriod}</span>
                     </div>
-                    <p className="text-[11px] mb-4">
+                    <p className="text-[11px] mb-1">
                       {isIndia ? "billed in INR" : "billed in USD"}
-                      {billingInterval === "yearly" && <span style={{ color: "#4ade80" }}> · 2 months free</span>}
                     </p>
+                    {billingInterval === "yearly" && (
+                      <p className="text-[11px] font-bold mb-4" style={{ color: "#4ade80" }}>2 months free</p>
+                    )}
+                    {billingInterval !== "yearly" && <div className="mb-4" />}
 
                     <div className="flex gap-2 mb-5 flex-wrap">
                       <span className="text-[11px] font-semibold px-2 py-1 rounded-lg"

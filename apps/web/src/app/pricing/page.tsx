@@ -198,48 +198,34 @@ export default function PricingPage() {
           </p>
 
           {/* Billing interval + currency toggles */}
-          <div style={{ display: "inline-flex", gap: 10 }}>
-            {false && <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
-              {[{ label: "Monthly", val: "monthly" as const }, { label: "Yearly", val: "yearly" as const }].map(({ label, val }) => (
-                <button
-                  key={label}
-                  onClick={() => setBillingInterval(val)}
-                  style={{
-                    padding: "7px 20px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                    border: "none", transition: "all .15s", display: "inline-flex", alignItems: "center", gap: 6,
-                    background: billingInterval === val ? "#fff" : "transparent",
-                    color: billingInterval === val ? "#0a0a0a" : "#666",
-                  }}
-                >
-                  {label}
-                  {val === "yearly" && (
-                    <span style={{
-                      fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 999,
-                      background: billingInterval === val ? "#dcfce7" : "rgba(74,222,128,.15)",
-                      color: "#16a34a",
-                    }}>
-                      2 mo free
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>}
-            <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
-              {[{ label: "INR ₹", val: true }, { label: "USD $", val: false }].map(({ label, val }) => (
-                <button
-                  key={label}
-                  onClick={() => setIsIndia(val)}
-                  style={{
-                    padding: "7px 20px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                    border: "none", transition: "all .15s",
-                    background: isIndia === val ? "#fff" : "transparent",
-                    color: isIndia === val ? "#0a0a0a" : "#666",
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+          <div style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
+            {true && <>
+              <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
+                {[{ label: "Monthly", val: "monthly" as const }, { label: "Yearly", val: "yearly" as const }].map(({ label, val }) => (
+                  <button
+                    key={label}
+                    onClick={() => setBillingInterval(val)}
+                    style={{
+                      padding: "7px 20px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                      border: "none", transition: "all .15s",
+                      background: billingInterval === val ? "#fff" : "transparent",
+                      color: billingInterval === val ? "#0a0a0a" : "#666",
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <span style={{
+                fontSize: 11, fontWeight: 700, padding: "4px 12px", borderRadius: 999,
+                border: "1px solid #4ade80",
+                background: "rgba(74,222,128,.12)",
+                color: "#4ade80",
+                letterSpacing: "0.03em", whiteSpace: "nowrap",
+              }}>
+                2 MONTHS FREE
+              </span>
+            </>}
           </div>
         </div>
 
@@ -287,18 +273,22 @@ export default function PricingPage() {
               </div>
 
               <div style={{ marginBottom: 28 }}>
-                <span style={{ fontSize: 44, fontWeight: 800, color: "#ededed", letterSpacing: "-0.03em" }}>
-                  {billingInterval === "yearly"
-                    ? isIndia ? plan.inrYearly : plan.usdYearly
-                    : isIndia ? plan.inr : plan.usd}
-                </span>
-                <span style={{ fontSize: 14, color: "#555", marginLeft: 6 }}>
-                  {billingInterval === "yearly" ? "/yr" : "/mo"} ·{" "}
-                  {billingInterval === "yearly"
-                    ? isIndia ? `≈ ${plan.usdYearly}` : `≈ ${plan.inrYearly}`
-                    : isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}
-                  {billingInterval === "yearly" && <span style={{ color: "#4ade80" }}> · 2 months free</span>}
-                </span>
+                <div>
+                  <span style={{ fontSize: 44, fontWeight: 800, color: "#ededed", letterSpacing: "-0.03em" }}>
+                    {billingInterval === "yearly"
+                      ? isIndia ? plan.inrYearly : plan.usdYearly
+                      : isIndia ? plan.inr : plan.usd}
+                  </span>
+                  <span style={{ fontSize: 14, color: "#555", marginLeft: 6 }}>
+                    {billingInterval === "yearly" ? "/yr" : "/mo"} ·{" "}
+                    {billingInterval === "yearly"
+                      ? isIndia ? `≈ ${plan.usdYearly}` : `≈ ${plan.inrYearly}`
+                      : isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}
+                  </span>
+                </div>
+                {billingInterval === "yearly" && (
+                  <div style={{ marginTop: 4, fontSize: 12, fontWeight: 700, color: "#4ade80" }}>2 months free</div>
+                )}
               </div>
 
               <Link
