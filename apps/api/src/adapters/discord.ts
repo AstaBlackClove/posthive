@@ -94,7 +94,12 @@ export const discordAdapter: PlatformAdapter = {
       const form = new FormData();
       form.append("payload_json", JSON.stringify(payload));
       for (let i = 0; i < mediaUrls.length; i++) {
-        const buffer = await storageAdapter.getBuffer(mediaUrls[i]);
+        const buffer = storageAdapter.ownsUrl(mediaUrls[i])
+          ? await storageAdapter.getBuffer(mediaUrls[i])
+          : await fetch(mediaUrls[i]).then(r => {
+              if (!r.ok) throw new Error(`Failed to fetch media ${mediaUrls[i]}: ${r.status}`);
+              return r.arrayBuffer();
+            }).then(Buffer.from);
         const ext = mediaUrls[i].split(".").pop()?.toLowerCase() ?? "jpg";
         const mime = videoUrl
           ? "video/mp4"

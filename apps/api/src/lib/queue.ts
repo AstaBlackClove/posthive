@@ -37,6 +37,17 @@ export async function schedulePostJob(
 ): Promise<void> {
   const delay = Math.max(0, scheduledFor.getTime() - Date.now());
 
+  // BullMQ's add() is a no-op if a job with this jobId already exists —
+  // it does NOT update the delay. Remove any stale entry first so a
+  // reschedule actually takes effect.
+  const existing = await postJobQueue.getJob(postJobId);
+  if (existing) {
+    const state = await existing.getState();
+    if (state !== "active") {
+      await existing.remove().catch(() => {});
+    }
+  }
+
   await postJobQueue.add(
     postJobId,
     { postJobId } satisfies PostJobPayload,
