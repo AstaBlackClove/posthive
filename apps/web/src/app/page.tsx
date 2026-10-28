@@ -2659,6 +2659,40 @@ export default function RootPage() {
                 }}>
                   2 MONTHS FREE
                 </span>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    padding: 3,
+                    borderRadius: 10,
+                    backgroundColor: "#111",
+                    border: "1px solid #2a2a2a",
+                  }}
+                >
+                  {(
+                    [
+                      { label: "INR ₹", val: true },
+                      { label: "USD $", val: false },
+                    ] as const
+                  ).map(({ label, val }) => (
+                    <button
+                      key={label}
+                      onClick={() => setIsIndia(val)}
+                      style={{
+                        padding: "5px 16px",
+                        borderRadius: 7,
+                        fontSize: 13,
+                        fontWeight: 500,
+                        border: "none",
+                        cursor: "pointer",
+                        backgroundColor: isIndia === val ? "#ffffff" : "transparent",
+                        color: isIndia === val ? "#0a0a0a" : "#555",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
               {/* <div
                 style={{

@@ -754,6 +754,28 @@ function BillingContent() {
                   2 MONTHS FREE
                 </span>
               </>}
+              {/* Currency toggle */}
+              <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                {([{ label: "INR ₹", india: true }, { label: "USD $", india: false }] as const).map(({ label, india }) => (
+                  <button
+                    key={label}
+                    onClick={() => setIsIndia(india)}
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 500,
+                      border: "none",
+                      cursor: "pointer",
+                      backgroundColor: isIndia === india ? "#ffffff" : "transparent",
+                      color: isIndia === india ? "#0a0a0a" : "#666",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

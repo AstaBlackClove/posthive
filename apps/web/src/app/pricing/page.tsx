@@ -226,6 +226,22 @@ export default function PricingPage() {
                 2 MONTHS FREE
               </span>
             </>}
+            <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
+              {[{ label: "INR ₹", val: true }, { label: "USD $", val: false }].map(({ label, val }) => (
+                <button
+                  key={label}
+                  onClick={() => setIsIndia(val)}
+                  style={{
+                    padding: "7px 20px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    border: "none", transition: "all .15s",
+                    background: isIndia === val ? "#fff" : "transparent",
+                    color: isIndia === val ? "#0a0a0a" : "#666",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
