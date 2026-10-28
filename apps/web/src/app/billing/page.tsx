@@ -304,6 +304,7 @@ function BillingContent() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelDone, setCancelDone] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [confirmPlan, setConfirmPlan] = useState<string | null>(null);
   const [isIndia, setIsIndia] = useState(true);
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
   const { success: toastSuccess, error: toastError } = useToast();
@@ -436,6 +437,59 @@ function BillingContent() {
           loading={cancelling}
         />
       )}
+
+      {confirmPlan && (() => {
+        const toPlan = PLANS.find((p) => p.id === confirmPlan)!;
+        const planOrder = ["creator", "pro", "team"];
+        const currentIdx = planOrder.indexOf(status?.plan ?? "");
+        const thisIdx = planOrder.indexOf(confirmPlan);
+        const isSameInterval = status?.billingInterval === billingInterval;
+        const isSamePlanDifferentInterval = thisIdx === currentIdx && !isSameInterval;
+        const isUpgrade = thisIdx > currentIdx;
+        const actionLabel = isSamePlanDifferentInterval
+          ? `Switch to ${billingInterval === "yearly" ? "yearly" : "monthly"} billing`
+          : isUpgrade ? `Upgrade to ${toPlan.name}` : `Downgrade to ${toPlan.name}`;
+        const newPrice = billingInterval === "yearly"
+          ? (isIndia ? toPlan.priceInrYearly : toPlan.priceUsdYearly)
+          : (isIndia ? toPlan.priceInr : toPlan.priceUsd);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
+            onClick={() => setConfirmPlan(null)}>
+            <div className="w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4"
+              style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+              onClick={(e) => e.stopPropagation()}>
+              <div>
+                <h3 className="text-base font-bold" style={{ color: "#ededed" }}>{actionLabel}</h3>
+                <p className="text-sm mt-1" style={{ color: "#888" }}>
+                  {isSamePlanDifferentInterval
+                    ? `Your billing cycle will change to ${billingInterval} at ${newPrice}/${billingInterval === "yearly" ? "yr" : "mo"}.`
+                    : `You're switching from ${currentPlanDef?.name ?? status?.plan} to ${toPlan.name} (${newPrice}/${billingInterval === "yearly" ? "yr" : "mo"}).`}
+                  {" "}This takes effect immediately.
+                </p>
+                {!isUpgrade && !isSamePlanDifferentInterval && (
+                  <p className="text-xs mt-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#1a1200", color: "#f59e0b", border: "1px solid #78350f" }}>
+                    Downgrading may remove access to features and accounts above the new plan limit.
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmPlan(null)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
+                  style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { setConfirmPlan(null); checkout(confirmPlan); }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-100 active:scale-[0.98] transition-all"
+                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Header */}
       <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
@@ -807,7 +861,7 @@ function BillingContent() {
                         ? "Resubscribe to your current plan first, then switch"
                         : undefined;
                       return (
-                        <button onClick={() => !btnDisabled && checkout(plan.id)} disabled={btnDisabled}
+                        <button onClick={() => !btnDisabled && (isTrialing || isActive || isCancelling ? setConfirmPlan(plan.id) : checkout(plan.id))} disabled={btnDisabled}
                           title={btnTitle}
                           className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 active:scale-[0.98]"
                           style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
