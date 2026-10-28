@@ -9,7 +9,7 @@ import type { PrismaClient } from "@prisma/client";
  * "overrides"  — checks allowOverrides flag (Pro/Team only)
  * "seats"      — checks team member seat limit (Team plan only allows invites)
  */
-export type PlanResource = "accounts" | "scheduling" | "reels" | "overrides" | "seats";
+export type PlanResource = "accounts" | "scheduling" | "reels" | "overrides" | "seats" | "libraries" | "libraryItems";
 
 export interface PlanError {
   error: string;
@@ -37,7 +37,9 @@ export async function enforcePlan(
       trialEndsAt: true,
       allowReels: true,
       allowOverrides: true,
-      _count: { select: { accounts: true, members: true } },
+      customMaxLibraries: true,
+      customMaxLibraryItems: true,
+      _count: { select: { accounts: true, members: true, contentLibraries: true } },
     },
   });
 
@@ -127,6 +129,39 @@ export async function enforcePlan(
       code: "PLAN_LIMIT",
       upgradeRequired: true,
     };
+  }
+
+  const maxLibraries = workspace.customMaxLibraries ?? plan.maxLibraries;
+  const maxLibraryItems = workspace.customMaxLibraryItems ?? plan.maxLibraryItems;
+
+  if (resource === "libraries") {
+    if (maxLibraries === 0) {
+      return {
+        error: "Content Library is not available on your current plan. Upgrade to Creator or higher to use this feature.",
+        code: "PLAN_LIMIT",
+        upgradeRequired: true,
+      };
+    }
+    if (workspace._count.contentLibraries >= maxLibraries) {
+      const nextPlan = workspace.plan === "creator" ? "Pro" : workspace.plan === "pro" ? "Team" : null;
+      const upgradeHint = nextPlan ? ` Upgrade to ${nextPlan} to create more.` : " Contact support to increase your limit.";
+      return {
+        error: `You've reached your plan limit of ${maxLibraries} content librar${maxLibraries === 1 ? "y" : "ies"}.${upgradeHint}`,
+        code: "PLAN_LIMIT",
+        upgradeRequired: true,
+      };
+    }
+  }
+
+  if (resource === "libraryItems") {
+    const itemCount = await db.libraryItem.count({ where: { workspaceId } });
+    if (itemCount >= maxLibraryItems) {
+      return {
+        error: `You've reached your library item limit of ${maxLibraryItems.toLocaleString()} items. Delete some items or upgrade your plan.`,
+        code: "PLAN_LIMIT",
+        upgradeRequired: true,
+      };
+    }
   }
 
   return null;

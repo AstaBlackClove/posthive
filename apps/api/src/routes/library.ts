@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/node";
 import { prisma } from "../lib/prisma.js";
 import { withAuth, getUser, getWorkspaceId } from "../lib/auth/withAuth.js";
 import { getPlan } from "../lib/plans.js";
+import { enforcePlan } from "../lib/enforcePlan.js";
 
 const MAX_CSV_ROWS = 500;
 const MAX_TEXT_LENGTH = 5000;
@@ -113,32 +114,12 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
     // Plan gate (skipped when billing is disabled — self-hosted mode)
     let maxDripPerDay = postsPerDay; // uncapped in self-hosted
     if (process.env.ENABLE_BILLING === "true") {
+      const planErr = await enforcePlan(userId, workspaceId, "libraries");
+      if (planErr) return reply.status(402).send(planErr);
+
       const planData = await getWorkspacePlan(workspaceId);
       if (!planData) return reply.status(400).send({ error: "Workspace not found" });
-      const { plan, ws } = planData;
-      maxDripPerDay = plan.maxDripPerDay;
-
-      if (plan.maxLibraries === 0) {
-        return reply.status(402).send({
-          error: "Content Library is not available on your current plan. Upgrade to Creator or higher to use this feature.",
-          code: "PLAN_LIMIT",
-          upgradeRequired: true,
-        });
-      }
-      if (ws.planStatus === "cancelled" || ws.plan === "cancelled") {
-        return reply.status(402).send({ error: "Your subscription has been cancelled.", code: "CANCELLED", upgradeRequired: true });
-      }
-
-      const libraryCount = await prisma.contentLibrary.count({ where: { workspaceId } });
-      if (libraryCount >= plan.maxLibraries) {
-        const nextPlan = ws.plan === "creator" ? "Pro" : ws.plan === "pro" ? "Team" : null;
-        const upgradeHint = nextPlan ? ` Upgrade to ${nextPlan} to create more.` : " Contact support to increase your limit.";
-        return reply.status(402).send({
-          error: `You've reached your plan limit of ${plan.maxLibraries} content librar${plan.maxLibraries === 1 ? "y" : "ies"}.${upgradeHint}`,
-          code: "PLAN_LIMIT",
-          upgradeRequired: true,
-        });
-      }
+      maxDripPerDay = planData.plan.maxDripPerDay;
     }
 
     // Validate accountIds belong to workspace
@@ -279,6 +260,7 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
   // Expects { items: [{ text, commentText?, mediaUrls? }] }
   app.post("/library/:id/items", { preHandler: [withAuth] }, async (req, reply) => {
     const workspaceId = getWorkspaceId(req);
+    const { id: userId } = getUser(req);
     const { id } = req.params as { id: string };
 
     const library = await prisma.contentLibrary.findFirst({ where: { id, workspaceId }, select: { id: true } });
@@ -291,20 +273,16 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
     const { items } = parsed.data;
 
-    // Plan: check total items limit (skipped in self-hosted mode)
+    // Plan: check subscription status + total items limit (skipped in self-hosted mode)
     if (process.env.ENABLE_BILLING === "true") {
+      const planErr = await enforcePlan(userId, workspaceId, "libraryItems");
+      if (planErr) return reply.status(429).send(planErr);
+
       const planData = await getWorkspacePlan(workspaceId);
       if (!planData) return reply.status(400).send({ error: "Workspace not found" });
       const { plan } = planData;
 
       const currentCount = await prisma.libraryItem.count({ where: { workspaceId } });
-      if (currentCount >= plan.maxLibraryItems) {
-        return reply.status(429).send({
-          error: `You've reached your library item limit of ${plan.maxLibraryItems.toLocaleString()} items. Delete some items or upgrade your plan.`,
-          code: "ITEM_LIMIT",
-          upgradeRequired: true,
-        });
-      }
       if (currentCount + items.length > plan.maxLibraryItems) {
         const remaining = plan.maxLibraryItems - currentCount;
         return reply.status(429).send({
