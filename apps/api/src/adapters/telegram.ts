@@ -1,7 +1,7 @@
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
-import type { StorageAdapter } from "../lib/storage.js";
+import { getMediaBuffer, type StorageAdapter } from "../lib/storage.js";
 
 interface TelegramCredentials {
   botToken: string;
@@ -52,7 +52,7 @@ export const telegramAdapter: PlatformAdapter = {
 
     if (videoUrl && storageAdapter) {
       // Send video
-      const buffer = await storageAdapter.getBuffer(videoUrl);
+      const buffer = await getMediaBuffer(storageAdapter, videoUrl);
       const form = new FormData();
       form.append("chat_id", chatId);
       form.append("caption", content.text);
@@ -68,7 +68,7 @@ export const telegramAdapter: PlatformAdapter = {
       result = json.result;
     } else if (imageUrls.length === 1 && storageAdapter) {
       // Single image
-      const buffer = await storageAdapter.getBuffer(imageUrls[0]);
+      const buffer = await getMediaBuffer(storageAdapter, imageUrls[0]);
       const form = new FormData();
       form.append("chat_id", chatId);
       form.append("caption", content.text);
@@ -86,7 +86,7 @@ export const telegramAdapter: PlatformAdapter = {
       // Media group (up to 10 images)
       const media = await Promise.all(
         imageUrls.slice(0, 10).map(async (url, i) => {
-          const buffer = await storageAdapter!.getBuffer(url);
+          const buffer = await getMediaBuffer(storageAdapter!, url);
           const form = new FormData();
           const key = `photo${i}`;
           form.append(key, new Blob([Buffer.from(buffer).buffer as ArrayBuffer], { type: "image/jpeg" }), `photo${i}.jpg`);

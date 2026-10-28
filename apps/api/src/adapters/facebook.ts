@@ -13,7 +13,7 @@
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
-import type { StorageAdapter } from "../lib/storage.js";
+import { getMediaBuffer, type StorageAdapter } from "../lib/storage.js";
 import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
@@ -73,16 +73,7 @@ async function uploadPhotoBuffer(
     return data.post_id ?? data.id;
   }
 
-  // Use storageAdapter only for URLs it owns (Supabase/R2/local uploads).
-  // External URLs (Google Images, CDNs, etc.) are fetched directly.
-  let buffer: Buffer;
-  if (storageAdapter.ownsUrl(imageUrl)) {
-    buffer = await storageAdapter.getBuffer(imageUrl);
-  } else {
-    const fetched = await fetch(imageUrl, { signal: AbortSignal.timeout(15_000) });
-    if (!fetched.ok) throw new Error(`Facebook: could not fetch image ${imageUrl}: ${fetched.status}`);
-    buffer = Buffer.from(await fetched.arrayBuffer());
-  }
+  let buffer = await getMediaBuffer(storageAdapter, imageUrl);
   let mimeType = "image/jpeg";
 
   // Detect format from magic bytes

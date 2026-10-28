@@ -3,7 +3,7 @@ import type { AppBskyEmbedImages, AppBskyEmbedExternal, AppBskyEmbedVideo } from
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { compressForPlatform } from "../lib/compress.js";
-import type { StorageAdapter } from "../lib/storage.js";
+import { getMediaBuffer, type StorageAdapter } from "../lib/storage.js";
 import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 interface BlueskyCredentials {
@@ -39,7 +39,7 @@ async function buildImageEmbed(
 
   const images: AppBskyEmbedImages.Image[] = await Promise.all(
     mediaUrls.slice(0, 4).map(async (url, i) => {
-      const buffer = await storage.getBuffer(url);
+      const buffer = await getMediaBuffer(storage, url);
 
       const ext = url.split(".").pop()?.toLowerCase() ?? "jpg";
       const mimeMap: Record<string, string> = {
@@ -121,7 +121,7 @@ async function buildVideoEmbed(
   storage: StorageAdapter
 ): Promise<AppBskyEmbedVideo.Main | undefined> {
   try {
-    const buffer = await storage.getBuffer(videoUrl);
+    const buffer = await getMediaBuffer(storage, videoUrl);
     const { data } = await agent.uploadBlob(buffer, { encoding: "video/mp4" });
     return { $type: "app.bsky.embed.video", video: data.blob };
   } catch (err) {

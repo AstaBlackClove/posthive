@@ -1,6 +1,6 @@
 import type { Account } from "@prisma/client";
 import { decrypt } from "../lib/encryption.js";
-import type { StorageAdapter } from "../lib/storage.js";
+import { getMediaBuffer, type StorageAdapter } from "../lib/storage.js";
 import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 let storageAdapter: StorageAdapter | null = null;
@@ -68,7 +68,7 @@ export const mastodonAdapter: PlatformAdapter = {
     if (mediaUrls && mediaUrls.length > 0 && storageAdapter) {
       for (let i = 0; i < Math.min(mediaUrls.length, 4); i++) {
         const url = mediaUrls[i];
-        const buffer = await storageAdapter.getBuffer(url);
+        const buffer = await getMediaBuffer(storageAdapter, url);
         const ext = url.split(".").pop()?.toLowerCase() ?? "jpg";
         const mimeMap: Record<string, string> = {
           jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",

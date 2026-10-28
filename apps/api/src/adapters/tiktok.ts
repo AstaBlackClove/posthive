@@ -10,7 +10,7 @@
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
-import type { StorageAdapter } from "../lib/storage.js";
+import { getMediaBuffer, type StorageAdapter } from "../lib/storage.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 const API_BASE = "https://open.tiktokapis.com";
@@ -117,7 +117,7 @@ export const tiktokAdapter: PlatformAdapter = {
     const creds = getCredentials(account);
     const token = creds.accessToken;
 
-    const videoBuffer = await storageAdapter.getBuffer(videoUrl);
+    const videoBuffer = await getMediaBuffer(storageAdapter, videoUrl);
     const videoSize = videoBuffer.length;
     const chunkSize = Math.min(CHUNK_SIZE, videoSize);
     const totalChunkCount = Math.ceil(videoSize / chunkSize);

@@ -1,6 +1,6 @@
 import type { Account } from "@prisma/client";
 import { decrypt } from "../lib/encryption.js";
-import type { StorageAdapter } from "../lib/storage.js";
+import { getMediaBuffer, type StorageAdapter } from "../lib/storage.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 let storageAdapter: StorageAdapter | null = null;
@@ -91,7 +91,7 @@ export const lemmyAdapter: PlatformAdapter = {
     // Upload first image if present
     let url: string | undefined;
     if (mediaUrls && mediaUrls.length > 0 && storageAdapter) {
-      const buffer = await storageAdapter.getBuffer(mediaUrls[0]);
+      const buffer = await getMediaBuffer(storageAdapter, mediaUrls[0]);
       const ext = mediaUrls[0].split(".").pop()?.toLowerCase() ?? "jpg";
       const mimeMap: Record<string, string> = {
         jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",

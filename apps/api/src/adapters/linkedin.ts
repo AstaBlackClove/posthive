@@ -16,7 +16,7 @@
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
-import type { StorageAdapter } from "../lib/storage.js";
+import { getMediaBuffer, type StorageAdapter } from "../lib/storage.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 const API_BASE = "https://api.linkedin.com";
@@ -198,7 +198,7 @@ export const linkedinAdapter: PlatformAdapter = {
 
     if (storageAdapter && videoUrls.length > 0) {
       try {
-        const buffer = await storageAdapter.getBuffer(videoUrls[0]);
+        const buffer = await getMediaBuffer(storageAdapter, videoUrls[0]);
         const videoUrn = await uploadVideo(token, author, buffer);
         mediaContent = { media: { id: videoUrn } };
       } catch (err) {
@@ -208,7 +208,7 @@ export const linkedinAdapter: PlatformAdapter = {
       try {
         const imageUrns = await Promise.all(
           imageUrls.slice(0, 9).map(async (url) => {
-            const buffer = await storageAdapter!.getBuffer(url);
+            const buffer = await getMediaBuffer(storageAdapter!, url);
             const ext = url.split(".").pop()?.toLowerCase() ?? "jpg";
             const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
             return uploadImage(token, author, buffer, mime);

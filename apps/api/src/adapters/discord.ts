@@ -12,7 +12,7 @@
 
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
-import type { StorageAdapter } from "../lib/storage.js";
+import { getMediaBuffer, type StorageAdapter } from "../lib/storage.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 const DISCORD_API = "https://discord.com/api/v10";
@@ -94,12 +94,7 @@ export const discordAdapter: PlatformAdapter = {
       const form = new FormData();
       form.append("payload_json", JSON.stringify(payload));
       for (let i = 0; i < mediaUrls.length; i++) {
-        const buffer = storageAdapter.ownsUrl(mediaUrls[i])
-          ? await storageAdapter.getBuffer(mediaUrls[i])
-          : await fetch(mediaUrls[i]).then(r => {
-              if (!r.ok) throw new Error(`Failed to fetch media ${mediaUrls[i]}: ${r.status}`);
-              return r.arrayBuffer();
-            }).then(Buffer.from);
+        const buffer = await getMediaBuffer(storageAdapter, mediaUrls[i]);
         const ext = mediaUrls[i].split(".").pop()?.toLowerCase() ?? "jpg";
         const mime = videoUrl
           ? "video/mp4"

@@ -48,6 +48,18 @@ export interface StorageAdapter {
   ownsUrl(url: string): boolean;
 }
 
+/**
+ * Fetch media for a post, whichever URL it came from.
+ * A URL the storage adapter owns is read from internal storage; any other
+ * URL (e.g. a customer's own CDN) is fetched directly over HTTP.
+ */
+export async function getMediaBuffer(storageAdapter: StorageAdapter, url: string): Promise<Buffer> {
+  if (storageAdapter.ownsUrl(url)) return storageAdapter.getBuffer(url);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch media ${url}: ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
 export class LocalDiskStorage implements StorageAdapter {
   constructor(private readonly uploadsDir: string) {}
 
