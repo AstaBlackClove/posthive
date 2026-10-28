@@ -106,17 +106,14 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     // Plan limit check — once for the entire batch
     if (process.env.ENABLE_BILLING === "true") {
+      const planErr = await enforcePlan(userId, workspaceId, "scheduling");
+      if (planErr) return reply.status(402).send(planErr);
+
       const workspace = await prisma.workspace.findUnique({
         where: { id: workspaceId },
-        select: { plan: true, planStatus: true, trialEndsAt: true },
+        select: { plan: true },
       });
       if (!workspace) return reply.status(400).send({ error: "Workspace not found" });
-      if (workspace.planStatus === "cancelled" || workspace.plan === "cancelled") {
-        return reply.status(402).send({ error: "Your subscription has been cancelled.", code: "CANCELLED", upgradeRequired: true });
-      }
-      if (workspace.planStatus === "trialing" && workspace.trialEndsAt && workspace.trialEndsAt < new Date()) {
-        return reply.status(402).send({ error: "Your free trial has expired.", code: "TRIAL_EXPIRED", upgradeRequired: true });
-      }
       const plan = getPlan(workspace.plan);
       if (plan.maxPostsPerMonth !== null) {
         const startOfMonth = new Date();
