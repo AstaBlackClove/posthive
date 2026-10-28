@@ -2635,7 +2635,7 @@ export default function RootPage() {
                     </button>
                   ))}
                 </div>
-                <div
+                {false && <div
                   style={{
                     display: "inline-flex",
                     padding: 3,
@@ -2687,7 +2687,7 @@ export default function RootPage() {
                       )}
                     </button>
                   ))}
-                </div>
+                </div>}
               </div>
               <div
                 style={{
