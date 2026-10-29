@@ -661,6 +661,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const images = mediaItems.filter(m => !m.isVideo);
   const video = mediaItems.find(m => m.isVideo) ?? null;
   const instagramSelected = selectedAccounts.some((a) => a.platform === "instagram");
+  const threadsSelected = selectedAccounts.some((a) => a.platform === "threads");
   const instagramSelectedWithNoMedia = instagramSelected && mediaItems.length === 0 && igMediaType !== "story";
   const instagramStoryWithNoImage = instagramSelected && igMediaType === "story" && mediaItems.length === 0;
   const onlyInstagramStory = instagramSelected && igMediaType === "story" && selectedAccounts.every((a) => a.platform === "instagram");
@@ -1284,6 +1285,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               onRemoveImage={(i) => removeMediaItem(mediaItems.indexOf(images[i]))}
               onRemoveVideo={() => { if (video) removeMediaItem(mediaItems.indexOf(video)); }}
               instagramSelected={instagramSelected}
+              threadsSelected={threadsSelected}
               igMediaType={igMediaType}
               altTexts={altTexts}
               onAltTextChange={(i, v) => setAltTexts(prev => { const n = [...prev]; n[i] = v; return n; })}

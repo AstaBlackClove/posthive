@@ -317,6 +317,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
 
   const selectedAccounts = accounts.filter(a => selectedIds.includes(a.id));
   const instagramSelected = selectedAccounts.some(a => a.platform === "instagram");
+  const threadsSelected = selectedAccounts.some(a => a.platform === "threads");
   const pixelfedSelected = selectedAccounts.some(a => a.platform === "pixelfed");
   const linkedinSelected = selectedAccounts.some(a => a.platform === "linkedin");
   const youtubeAccounts = selectedAccounts.filter(a => a.platform === "youtube");
@@ -650,6 +651,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
             onRemoveImage={removeImage}
             onRemoveVideo={() => setVideo(null)}
             instagramSelected={instagramSelected}
+            threadsSelected={threadsSelected}
             igMediaType={igMediaType}
             onIgMediaTypeChange={(t) => {
               setIgMediaType(t);

@@ -23,6 +23,7 @@ interface Props {
 
   // Instagram
   instagramSelected: boolean;
+  threadsSelected?: boolean;
   igMediaType: "post" | "reel" | "story";
   // Only passed by EditPostDialog — renders the toggle in Media header
   onIgMediaTypeChange?: (t: "post" | "reel" | "story") => void;
@@ -53,7 +54,7 @@ export function MediaSection({
   youtubeVideoUrl, onYoutubeVideoUrlChange,
   onlyYoutube, ytVideoInputRef, onYtVideoUpload,
   images, video, onRemoveImage, onRemoveVideo,
-  instagramSelected, igMediaType, onIgMediaTypeChange,
+  instagramSelected, threadsSelected, igMediaType, onIgMediaTypeChange,
   altTexts, onAltTextChange,
   uploading, uploadProgress, uploadError, fileInputRef, onFileUpload, onVideoUpload,
   maxImageSizeMb, maxVideoSizeMb, showPasteHint, maxImages,
@@ -257,6 +258,9 @@ export function MediaSection({
               {maxVideoSizeMb && `Videos up to ${maxVideoSizeMb}MB`}
               {youtubeSelected && youtubeVideoMode === "upload" && !video && (
                 <> · <span style={{ color: "#ff0000" }}>YouTube requires a video</span></>
+              )}
+              {(instagramSelected || threadsSelected) && (
+                <> · <span style={{ color: "#f59e0b" }}>Instagram &amp; Threads only support JPEG/PNG images — WEBP/GIF may fail</span></>
               )}
             </p>
           )}
