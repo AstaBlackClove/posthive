@@ -383,10 +383,15 @@ function BillingContent() {
   async function openCustomerPortal() {
     try {
       const res = await apiFetch<{ url: string }>("/billing/customer-portal");
-      if (res.url) window.open(res.url, "_blank", "noopener");
+      if (res.url) {
+        window.open(res.url, "_blank", "noopener");
+        return;
+      }
     } catch {
-      toastError("Could not open customer portal — please contact support");
+      // fall through to the generic Dodo customer login below
     }
+    // Fallback: Dodo's business-level customer portal login (enter email to find your subscription)
+    window.open("https://customer.dodopayments.com/login/bus_0NhtEy57CkK3pyIWHGUfv", "_blank", "noopener");
   }
 
   const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === "true";
@@ -564,14 +569,14 @@ function BillingContent() {
                     Contact your bank to allow recurring transactions, or update your payment method.
                   </p>
                   <div className="flex items-center gap-2 mt-3">
-                    <a href="https://dodopayments.com" target="_blank" rel="noopener noreferrer"
+                    <button onClick={openCustomerPortal}
                       className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-                      style={{ backgroundColor: "#f87171", color: "#0a0a0a" }}>
+                      style={{ backgroundColor: "#f87171", color: "#0a0a0a", border: "none", cursor: "pointer" }}>
                       Manage subscription
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
-                    </a>
+                    </button>
                     <span className="text-xs" style={{ color: "#555" }}>Dodo Payments</span>
                   </div>
                 </div>
@@ -637,11 +642,11 @@ function BillingContent() {
                 )}
               </div>
               {isActive && hasDodoSub && !isCancelling && isOwner && (
-                <a href="https://dodopayments.com" target="_blank" rel="noreferrer"
+                <button onClick={openCustomerPortal}
                   className="flex-shrink-0 text-xs font-medium px-4 py-2 rounded-xl transition-opacity hover:opacity-70"
-                  style={{ backgroundColor: "#161616", color: "#999", border: "1px solid #555" }}>
+                  style={{ backgroundColor: "#161616", color: "#999", border: "1px solid #555", cursor: "pointer" }}>
                   Manage ↗
-                </a>
+                </button>
               )}
             </div>
 
