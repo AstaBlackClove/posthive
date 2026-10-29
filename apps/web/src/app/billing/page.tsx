@@ -683,7 +683,12 @@ function BillingContent() {
 
             {/* Cancel link */}
             {isActive && hasDodoSub && !isCancelling && !cancelDone && isOwner && (
-              <div className="mt-5 pt-4 flex justify-end" style={{ borderTop: "1px solid #2a2a2a" }}>
+              <div className="mt-5 pt-4 flex justify-end items-center gap-4" style={{ borderTop: "1px solid #2a2a2a" }}>
+                <button onClick={openCustomerPortal}
+                  className="text-xs underline transition-opacity hover:opacity-70"
+                  style={{ color: "#999" }}>
+                  Manage subscription
+                </button>
                 <button onClick={() => setShowCancelModal(true)}
                   className="text-xs underline transition-opacity hover:opacity-70"
                   style={{ color: "#ef4444" }}>
