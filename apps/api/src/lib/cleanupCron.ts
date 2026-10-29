@@ -5,8 +5,8 @@
  * - Sessions older than 90 days
  * - Bounce sessions (≤3s, single page, anonymous, no referrer) older than 14 days
  * - Events older than 90 days
- * - Consumed LibraryItems (published/failed) older than CLEANUP_LIBRARYITEM_RETENTION_DAYS
- *   (default 30) — queued/scheduled items are never touched regardless of age
+ * - Consumed LibraryItems (published/failed) older than 30 days — queued/scheduled
+ *   items are never touched regardless of age
  *
  * Also cleans up orphaned profile-pics from storage:
  * - Any file in the profile-pics/ folder not referenced by Account.avatarUrl or User.avatarUrl
