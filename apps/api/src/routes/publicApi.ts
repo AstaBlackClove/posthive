@@ -344,7 +344,7 @@ export async function publicApiRoutes(
 
   // POST /api/v1/posts/:id/approve — promote a draft to scheduled
   app.post("/api/v1/posts/:id/approve", { preHandler }, async (req, reply) => {
-    const { id: userId, workspaceId } = req.apiKeyUser!;
+    const { workspaceId } = req.apiKeyUser!;
     const { id } = req.params as { id: string };
     const body = req.body as { scheduledFor: string };
 
