@@ -596,6 +596,18 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       include: { targets: { select: TARGET_SELECT } },
     });
 
+    // Mark uploaded files as claimed so the orphan cron leaves them alone —
+    // drafts skip this at creation, so it must happen here before the job goes live.
+    try {
+      const content = JSON.parse(updated.content) as { mediaUrls?: string[] };
+      if (content.mediaUrls?.length) {
+        await prisma.upload.updateMany({
+          where: { url: { in: content.mediaUrls }, userId: updated.userId },
+          data: { claimedAt: new Date() },
+        });
+      }
+    } catch { /* malformed content — nothing to claim */ }
+
     await schedulePostJob(id, scheduledFor);
     return reply.send(updated);
   });

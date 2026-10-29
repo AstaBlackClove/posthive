@@ -130,6 +130,14 @@ export async function publicApiRoutes(
 
     if (!isDraft) await schedulePostJob(job.id, scheduledFor!);
 
+    // Mark uploaded files as claimed so the orphan cron leaves them alone
+    if (body.images?.length) {
+      await prisma.upload.updateMany({
+        where: { url: { in: body.images }, userId },
+        data: { claimedAt: new Date() },
+      });
+    }
+
     return reply.status(201).send({
       id: job.id,
       scheduledFor: isDraft ? null : job.scheduledFor,
@@ -335,7 +343,7 @@ export async function publicApiRoutes(
 
   // POST /api/v1/posts/:id/approve — promote a draft to scheduled
   app.post("/api/v1/posts/:id/approve", { preHandler }, async (req, reply) => {
-    const { workspaceId } = req.apiKeyUser!;
+    const { id: userId, workspaceId } = req.apiKeyUser!;
     const { id } = req.params as { id: string };
     const body = req.body as { scheduledFor: string };
 
@@ -354,6 +362,18 @@ export async function publicApiRoutes(
       data: { status: "pending", scheduledFor },
     });
     await schedulePostJob(updated.id, scheduledFor);
+
+    // Mark uploaded files as claimed so the orphan cron leaves them alone —
+    // drafts skip this at creation, so it must happen here before the job goes live.
+    try {
+      const content = JSON.parse(updated.content) as { mediaUrls?: string[] };
+      if (content.mediaUrls?.length) {
+        await prisma.upload.updateMany({
+          where: { url: { in: content.mediaUrls }, userId },
+          data: { claimedAt: new Date() },
+        });
+      }
+    } catch { /* malformed content — nothing to claim */ }
 
     return reply.send({
       id: updated.id,
@@ -466,6 +486,15 @@ export async function publicApiRoutes(
     });
 
     if (!isDraft) await schedulePostJob(job.id, scheduledFor);
+
+    // Mark uploaded files as claimed so the orphan cron leaves them alone
+    const jobMediaUrls = (tc.mediaUrls as string[] | undefined) ?? [];
+    if (jobMediaUrls.length) {
+      await prisma.upload.updateMany({
+        where: { url: { in: jobMediaUrls }, userId },
+        data: { claimedAt: new Date() },
+      });
+    }
 
     return reply.status(201).send({
       id: job.id,
