@@ -294,10 +294,12 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       await schedulePostJob(job.id, new Date(scheduledFor!));
     }
 
-    // Mark uploaded files as claimed so the orphan cron leaves them alone
+    // Mark uploaded files as claimed so the orphan cron leaves them alone.
+    // Matched by URL only (a random UUID filename) — not scoped to userId, since
+    // in a team workspace the uploader and the job creator can be different users.
     if (content.mediaUrls?.length) {
       await prisma.upload.updateMany({
-        where: { url: { in: content.mediaUrls }, userId },
+        where: { url: { in: content.mediaUrls } },
         data: { claimedAt: new Date() },
       });
     }
@@ -598,11 +600,12 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     // Mark uploaded files as claimed so the orphan cron leaves them alone —
     // drafts skip this at creation, so it must happen here before the job goes live.
+    // Matched by URL only — the uploader and the job creator can differ in a team workspace.
     try {
       const content = JSON.parse(updated.content) as { mediaUrls?: string[] };
       if (content.mediaUrls?.length) {
         await prisma.upload.updateMany({
-          where: { url: { in: content.mediaUrls }, userId: updated.userId },
+          where: { url: { in: content.mediaUrls } },
           data: { claimedAt: new Date() },
         });
       }

@@ -130,10 +130,11 @@ export async function publicApiRoutes(
 
     if (!isDraft) await schedulePostJob(job.id, scheduledFor!);
 
-    // Mark uploaded files as claimed so the orphan cron leaves them alone
+    // Mark uploaded files as claimed so the orphan cron leaves them alone.
+    // Matched by URL only — the uploader and the job creator can differ in a team workspace.
     if (body.images?.length) {
       await prisma.upload.updateMany({
-        where: { url: { in: body.images }, userId },
+        where: { url: { in: body.images } },
         data: { claimedAt: new Date() },
       });
     }
@@ -365,11 +366,12 @@ export async function publicApiRoutes(
 
     // Mark uploaded files as claimed so the orphan cron leaves them alone —
     // drafts skip this at creation, so it must happen here before the job goes live.
+    // Matched by URL only — the uploader and the job creator can differ in a team workspace.
     try {
       const content = JSON.parse(updated.content) as { mediaUrls?: string[] };
       if (content.mediaUrls?.length) {
         await prisma.upload.updateMany({
-          where: { url: { in: content.mediaUrls }, userId },
+          where: { url: { in: content.mediaUrls } },
           data: { claimedAt: new Date() },
         });
       }
@@ -487,11 +489,12 @@ export async function publicApiRoutes(
 
     if (!isDraft) await schedulePostJob(job.id, scheduledFor);
 
-    // Mark uploaded files as claimed so the orphan cron leaves them alone
+    // Mark uploaded files as claimed so the orphan cron leaves them alone.
+    // Matched by URL only — the uploader and the job creator can differ in a team workspace.
     const jobMediaUrls = (tc.mediaUrls as string[] | undefined) ?? [];
     if (jobMediaUrls.length) {
       await prisma.upload.updateMany({
-        where: { url: { in: jobMediaUrls }, userId },
+        where: { url: { in: jobMediaUrls } },
         data: { claimedAt: new Date() },
       });
     }
