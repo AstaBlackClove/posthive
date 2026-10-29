@@ -29,9 +29,6 @@ async function runCleanup(): Promise<void> {
   const cut30d = new Date(now - 30 * 24 * 60 * 60 * 1000);
   const cut7d  = new Date(now -  7 * 24 * 60 * 60 * 1000);
 
-  const libraryItemRetentionDays = Number(process.env.CLEANUP_LIBRARYITEM_RETENTION_DAYS) || 30;
-  const cutLibraryItems = new Date(now - libraryItemRetentionDays * 24 * 60 * 60 * 1000);
-
   const [oldSessions, bounceSessions, oldEvents, oldPostJobs, oldOAuthStates, oldEmailVerifications, revokedApiKeys, staleApiKeys, staleOAuthClients, oldLibraryItems] = await Promise.all([
     // Sessions older than 90 days
     prisma.session.deleteMany({ where: { createdAt: { lt: cut90d } } }),
@@ -82,7 +79,7 @@ async function runCleanup(): Promise<void> {
     prisma.libraryItem.deleteMany({
       where: {
         status: { in: ["published", "failed"] },
-        createdAt: { lt: cutLibraryItems },
+        createdAt: { lt: cut30d },
       },
     }),
   ]);
@@ -96,7 +93,7 @@ async function runCleanup(): Promise<void> {
     ` apiKeys: ${revokedApiKeys.count + staleApiKeys.count} deleted` +
     ` (${revokedApiKeys.count} revoked, ${staleApiKeys.count} stale),` +
     ` oauthClients: ${staleOAuthClients.count} deleted,` +
-    ` libraryItems: ${oldLibraryItems.count} deleted (retention: ${libraryItemRetentionDays}d)`
+    ` libraryItems: ${oldLibraryItems.count} deleted`
   );
 
   // Only send summary email if something was actually deleted — suppresses
