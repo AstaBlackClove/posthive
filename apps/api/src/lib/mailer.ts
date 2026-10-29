@@ -161,7 +161,7 @@ export async function sendWelcomeEmail(to: string, name: string): Promise<void> 
 
 export async function sendCleanupSummaryEmail(
   to: string,
-  stats: { sessions: number; events: number; postJobs: number; oauthStates: number; emailVerifications: number },
+  stats: { sessions: number; events: number; postJobs: number; oauthStates: number; emailVerifications: number; libraryItems?: number },
 ): Promise<void> {
   const now = new Date().toUTCString();
   const rows = [
@@ -170,6 +170,7 @@ export async function sendCleanupSummaryEmail(
     ["PostJobs deleted", stats.postJobs],
     ["OAuth states cleared", stats.oauthStates],
     ["Email verifications cleared", stats.emailVerifications],
+    ...(stats.libraryItems !== undefined ? [["Library items deleted", stats.libraryItems] as [string, number]] : []),
   ] as [string, number][];
 
   const tableRows = rows

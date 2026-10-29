@@ -5,6 +5,8 @@
  * - Sessions older than 90 days
  * - Bounce sessions (≤3s, single page, anonymous, no referrer) older than 14 days
  * - Events older than 90 days
+ * - Consumed LibraryItems (published/failed) older than CLEANUP_LIBRARYITEM_RETENTION_DAYS
+ *   (default 30) — queued/scheduled items are never touched regardless of age
  *
  * Also cleans up orphaned profile-pics from storage:
  * - Any file in the profile-pics/ folder not referenced by Account.avatarUrl or User.avatarUrl
@@ -27,7 +29,10 @@ async function runCleanup(): Promise<void> {
   const cut30d = new Date(now - 30 * 24 * 60 * 60 * 1000);
   const cut7d  = new Date(now -  7 * 24 * 60 * 60 * 1000);
 
-  const [oldSessions, bounceSessions, oldEvents, oldPostJobs, oldOAuthStates, oldEmailVerifications, revokedApiKeys, staleApiKeys, staleOAuthClients] = await Promise.all([
+  const libraryItemRetentionDays = Number(process.env.CLEANUP_LIBRARYITEM_RETENTION_DAYS) || 30;
+  const cutLibraryItems = new Date(now - libraryItemRetentionDays * 24 * 60 * 60 * 1000);
+
+  const [oldSessions, bounceSessions, oldEvents, oldPostJobs, oldOAuthStates, oldEmailVerifications, revokedApiKeys, staleApiKeys, staleOAuthClients, oldLibraryItems] = await Promise.all([
     // Sessions older than 90 days
     prisma.session.deleteMany({ where: { createdAt: { lt: cut90d } } }),
 
@@ -71,6 +76,15 @@ async function runCleanup(): Promise<void> {
     // OAuthClient rows older than 30 days — scanner registrations, abandoned flows.
     // Active MCP clients re-register automatically on next OAuth connect.
     prisma.oAuthClient.deleteMany({ where: { createdAt: { lt: cut30d } } }),
+
+    // Consumed LibraryItems (published/failed) older than retention window.
+    // Queued/scheduled items are never deleted — they're still future drip content.
+    prisma.libraryItem.deleteMany({
+      where: {
+        status: { in: ["published", "failed"] },
+        createdAt: { lt: cutLibraryItems },
+      },
+    }),
   ]);
 
   const sessionCount = oldSessions.count + bounceSessions.count;
@@ -81,12 +95,13 @@ async function runCleanup(): Promise<void> {
     ` emailVerifications: ${oldEmailVerifications.count} deleted,` +
     ` apiKeys: ${revokedApiKeys.count + staleApiKeys.count} deleted` +
     ` (${revokedApiKeys.count} revoked, ${staleApiKeys.count} stale),` +
-    ` oauthClients: ${staleOAuthClients.count} deleted`
+    ` oauthClients: ${staleOAuthClients.count} deleted,` +
+    ` libraryItems: ${oldLibraryItems.count} deleted (retention: ${libraryItemRetentionDays}d)`
   );
 
   // Only send summary email if something was actually deleted — suppresses
   // duplicate emails when multiple instances run the cron at the same time.
-  const totalDeleted = sessionCount + oldEvents.count + oldPostJobs.count + oldOAuthStates.count + oldEmailVerifications.count + revokedApiKeys.count + staleApiKeys.count + staleOAuthClients.count;
+  const totalDeleted = sessionCount + oldEvents.count + oldPostJobs.count + oldOAuthStates.count + oldEmailVerifications.count + revokedApiKeys.count + staleApiKeys.count + staleOAuthClients.count + oldLibraryItems.count;
   if (totalDeleted > 0) {
     sendCleanupSummaryEmail("guna@posthive.co", {
       sessions: sessionCount,
@@ -94,6 +109,7 @@ async function runCleanup(): Promise<void> {
       postJobs: oldPostJobs.count,
       oauthStates: oldOAuthStates.count,
       emailVerifications: oldEmailVerifications.count,
+      libraryItems: oldLibraryItems.count,
     }).catch((e) => console.error("[cleanup-cron] summary email error:", e));
   }
 
