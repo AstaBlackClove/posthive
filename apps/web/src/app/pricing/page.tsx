@@ -198,7 +198,7 @@ export default function PricingPage() {
           </p>
 
           {/* Billing interval + currency toggles */}
-          <div style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10, alignItems: "center" }}>
             {true && <>
               <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
                 {[{ label: "Monthly", val: "monthly" as const }, { label: "Yearly", val: "yearly" as const }].map(({ label, val }) => (

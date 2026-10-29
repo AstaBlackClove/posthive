@@ -713,7 +713,7 @@ function BillingContent() {
 
         {/* Plan cards */}
         <div>
-          <div className="mb-5 flex items-start justify-between gap-4">
+          <div className="mb-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <h3 className="text-sm font-semibold" style={{ color: "#ededed" }}>
                 {isActive ? "Switch plan" : isTrialing ? "Upgrade your plan" : isCancelling ? "Resubscribe" : "Choose a plan"}
@@ -726,7 +726,7 @@ function BillingContent() {
                   : "Subscribe to keep access after your trial ends"}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex flex-wrap sm:shrink-0 items-center gap-2">
               {/* Billing interval toggle */}
               {true && <>
                 <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>

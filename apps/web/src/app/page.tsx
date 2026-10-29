@@ -2606,6 +2606,7 @@ export default function RootPage() {
               <div
                 style={{
                   display: "flex",
+                  flexWrap: "wrap",
                   justifyContent: "center",
                   alignItems: "center",
                   gap: 10,
