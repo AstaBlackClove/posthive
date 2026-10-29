@@ -453,12 +453,16 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   let statsFlight: Promise<void> | null = null;
 
   async function refreshStats(): Promise<void> {
-    const [accounts, published] = await Promise.all([
+    const [accounts, liveDone, lifetimeStat] = await Promise.all([
       prisma.account.count(),
       prisma.postJobTarget.count({
         where: { status: { in: ["post_done", "comment_done"] } },
       }),
+      prisma.lifetimeStat.findUnique({ where: { id: 1 }, select: { postsPublished: true } }),
     ]);
+    // Live count (rows still in the DB) + archived count (pruned by cleanupCron,
+    // but already counted before deletion) — the true lifetime total.
+    const published = liveDone + (lifetimeStat?.postsPublished ?? 0);
     statsCache = { accounts, published, cachedAt: Date.now() };
   }
 

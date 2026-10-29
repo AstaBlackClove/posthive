@@ -8,6 +8,9 @@
  * - Consumed LibraryItems (published/failed) older than 30 days — queued/scheduled
  *   items are never touched regardless of age
  *
+ * Before pruning old PostJobs, archives their published-target count into
+ * LifetimeStat so /stats/public's lifetime total survives the cascade delete.
+ *
  * Also cleans up orphaned profile-pics from storage:
  * - Any file in the profile-pics/ folder not referenced by Account.avatarUrl or User.avatarUrl
  */
@@ -29,6 +32,27 @@ async function runCleanup(): Promise<void> {
   const cut30d = new Date(now - 30 * 24 * 60 * 60 * 1000);
   const cut7d  = new Date(now -  7 * 24 * 60 * 60 * 1000);
 
+  // Archive the published-post count of PostJobs about to be pruned, so the
+  // /stats/public lifetime total survives the cascade delete below. Must run
+  // before the delete — PostJobTarget cascades off PostJob.
+  const prunedJobIdsResult = await prisma.postJob.findMany({
+    where: { status: { in: ["done", "failed"] }, createdAt: { lt: cut90d } },
+    select: { id: true },
+  });
+  const prunedJobIds = prunedJobIdsResult.map((j) => j.id);
+  if (prunedJobIds.length) {
+    const archivedCount = await prisma.postJobTarget.count({
+      where: { postJobId: { in: prunedJobIds }, status: { in: ["post_done", "comment_done"] } },
+    });
+    if (archivedCount > 0) {
+      await prisma.lifetimeStat.upsert({
+        where: { id: 1 },
+        create: { id: 1, postsPublished: archivedCount },
+        update: { postsPublished: { increment: archivedCount } },
+      });
+    }
+  }
+
   const [oldSessions, bounceSessions, oldEvents, oldPostJobs, oldOAuthStates, oldEmailVerifications, revokedApiKeys, staleApiKeys, staleOAuthClients, oldLibraryItems] = await Promise.all([
     // Sessions older than 90 days
     prisma.session.deleteMany({ where: { createdAt: { lt: cut90d } } }),
@@ -46,12 +70,10 @@ async function runCleanup(): Promise<void> {
     // Events older than 90 days
     prisma.event.deleteMany({ where: { createdAt: { lt: cut90d } } }),
 
-    // Completed/failed PostJobs older than 90 days (cascades to PostJobTarget + PostStats)
+    // Completed/failed PostJobs older than 90 days (cascades to PostJobTarget + PostStats).
+    // The published-target count for these was already archived to LifetimeStat above.
     prisma.postJob.deleteMany({
-      where: {
-        status: { in: ["done", "failed"] },
-        createdAt: { lt: cut90d },
-      },
+      where: { id: { in: prunedJobIds } },
     }),
 
     // OAuthState older than 1 day — flows that never completed

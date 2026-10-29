@@ -494,3 +494,13 @@ model OAuthClient {
   redirectUris Json              // String[]
   createdAt    DateTime @default(now())
 }
+
+// Single-row table for lifetime counters that must survive the cleanup cron
+// pruning old PostJob/PostJobTarget rows. Bumped by cleanupCron right before
+// it deletes old done/failed PostJobs, so /stats/public can report
+// (live PostJobTarget count) + (this archived count) as the true lifetime total.
+model LifetimeStat {
+  id             Int      @id @default(1)
+  postsPublished Int      @default(0)
+  updatedAt      DateTime @updatedAt
+}
