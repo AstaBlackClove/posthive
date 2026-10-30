@@ -110,42 +110,53 @@ export const tumblrAdapter: PlatformAdapter = {
     // Build NPF content blocks
     const blocks: unknown[] = [];
     if (content.text) blocks.push({ type: "text", text: content.text });
+    const convertedUrls: string[] = []; // cleaned up in finally below — single-use, untracked by any cleanup cron
     for (const u of imageUrls) {
       let fullUrl = u.startsWith("http") ? u : `${apiBase}${u}`;
       // Tumblr fetches image URLs itself and only reliably accepts JPEG/PNG —
       // convert unsupported formats (WEBP/GIF/etc.) before they're sent.
-      if (storageAdapter) fullUrl = await ensureSupportedImageUrl(fullUrl, storageAdapter);
+      if (storageAdapter) {
+        const converted = await ensureSupportedImageUrl(fullUrl, storageAdapter);
+        if (converted !== fullUrl) convertedUrls.push(converted);
+        fullUrl = converted;
+      }
       blocks.push({ type: "image", media: [{ url: fullUrl }] });
     }
 
-    const url = `${TUMBLR_API}/blog/${blogName}/posts`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: tumblrApiAuthHeader("POST", url, accessToken, accessSecret),
-        "Content-Type": "application/json",
-        "User-Agent": "Posthive/1.0",
-      },
-      body: JSON.stringify({ content: blocks, state: "published" }),
-    });
+    try {
+      const url = `${TUMBLR_API}/blog/${blogName}/posts`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: tumblrApiAuthHeader("POST", url, accessToken, accessSecret),
+          "Content-Type": "application/json",
+          "User-Agent": "Posthive/1.0",
+        },
+        body: JSON.stringify({ content: blocks, state: "published" }),
+      });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({})) as {
-        meta?: { msg?: string };
-        errors?: { title?: string; detail?: string }[];
-      };
-      const detail = err.errors?.[0]?.detail ?? err.errors?.[0]?.title;
-      throw new Error(`Tumblr post failed: ${detail ?? err.meta?.msg ?? res.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as {
+          meta?: { msg?: string };
+          errors?: { title?: string; detail?: string }[];
+        };
+        const detail = err.errors?.[0]?.detail ?? err.errors?.[0]?.title;
+        throw new Error(`Tumblr post failed: ${detail ?? err.meta?.msg ?? res.status}`);
+      }
+
+      const data = await res.json() as { response?: { id_string?: string } };
+      const postId = data.response?.id_string ?? null;
+
+      return {
+        platformPostId: postId ?? "",
+        replyContext: null,
+        url: postId ? `https://${blogName}.tumblr.com/post/${postId}` : null,
+      } as unknown as PostResult;
+    } finally {
+      if (convertedUrls.length && storageAdapter) {
+        await Promise.allSettled(convertedUrls.map((u) => storageAdapter!.delete(u)));
+      }
     }
-
-    const data = await res.json() as { response?: { id_string?: string } };
-    const postId = data.response?.id_string ?? null;
-
-    return {
-      platformPostId: postId ?? "",
-      replyContext: null,
-      url: postId ? `https://${blogName}.tumblr.com/post/${postId}` : null,
-    } as unknown as PostResult;
   },
 
   async createComment(_account: Account, _replyContext: unknown, _comment: string): Promise<CommentResult> {

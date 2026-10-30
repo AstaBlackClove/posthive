@@ -115,16 +115,28 @@ export const instagramAdapter: PlatformAdapter = {
     const { accessToken, userId } = getCredentials(account);
 
     const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "";
+    const convertedUrls: string[] = []; // cleaned up in finally below — these are single-use, untracked by any cleanup cron
     const absoluteUrls = await Promise.all(
       (mediaUrls ?? []).map(async (url) => {
         const abs = url.startsWith("http") ? url : `${PUBLIC_API_URL}${url}`;
         // Instagram fetches image URLs itself and only reliably accepts JPEG/PNG —
         // convert unsupported formats (WEBP/GIF/etc.) before they're sent, videos untouched.
         if (isVideoUrl(abs) || !storageAdapter) return abs;
-        return ensureSupportedImageUrl(abs, storageAdapter);
+        const converted = await ensureSupportedImageUrl(abs, storageAdapter);
+        if (converted !== abs) convertedUrls.push(converted);
+        return converted;
       })
     );
 
+    try {
+      return await publishInstagramPost();
+    } finally {
+      if (convertedUrls.length && storageAdapter) {
+        await Promise.allSettled(convertedUrls.map((u) => storageAdapter!.delete(u)));
+      }
+    }
+
+    async function publishInstagramPost(): Promise<PostResult> {
     const hasVideo = absoluteUrls.some(isVideoUrl);
     const hasMixed = absoluteUrls.length > 1 && absoluteUrls.some(isVideoUrl) && absoluteUrls.some(u => !isVideoUrl(u));
     const type = mediaType ?? (hasVideo && !hasMixed ? "reel" : "post");
@@ -202,6 +214,7 @@ const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body)
     await waitForContainer(userId, accessToken, containerId);
     const postId = await publishContainer(userId, accessToken, containerId);
     return { platformPostId: postId, replyContext: { postId, userId } };
+    }
   },
 
   async createComment(account, replyContext, comment) {

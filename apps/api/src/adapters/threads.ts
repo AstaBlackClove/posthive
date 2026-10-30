@@ -154,15 +154,28 @@ export const threadsAdapter: PlatformAdapter = {
     }
     const isVideo = (u: string) => /\.(mp4|mov|quicktime)$/i.test(u);
 
+    const convertedUrls: string[] = []; // cleaned up in finally below — single-use, untracked by any cleanup cron
     const resolvedUrls = await Promise.all(
       content.mediaUrls.map(async (u) => {
         const abs = u.startsWith("http") ? u : `${publicBase}${u}`;
         // Threads fetches image URLs itself and only reliably accepts JPEG/PNG —
         // convert unsupported formats (WEBP/GIF/etc.) before they're sent, videos untouched.
         if (isVideo(abs) || !storageAdapter) return abs;
-        return ensureSupportedImageUrl(abs, storageAdapter);
+        const converted = await ensureSupportedImageUrl(abs, storageAdapter);
+        if (converted !== abs) convertedUrls.push(converted);
+        return converted;
       })
     );
+
+    try {
+      return await publishThreadsPost();
+    } finally {
+      if (convertedUrls.length && storageAdapter) {
+        await Promise.allSettled(convertedUrls.map((u) => storageAdapter!.delete(u)));
+      }
+    }
+
+    async function publishThreadsPost(): Promise<PostResult> {
 
     let containerId: string;
 
@@ -215,6 +228,7 @@ export const threadsAdapter: PlatformAdapter = {
       platformPostId: threadId,
       replyContext: { threadId } satisfies ThreadsReplyContext,
     };
+    }
   },
 
   async createComment(
