@@ -32,7 +32,9 @@ export async function ensureSupportedImageUrl(url: string, storage: StorageAdapt
     .jpeg({ quality: 85, mozjpeg: true })
     .toBuffer();
 
-  return storage.upload(jpeg, "image/jpeg", "converted");
+  const convertedUrl = await storage.upload(jpeg, "image/jpeg", "converted");
+  console.log(`[media-format] converted ${url} -> ${convertedUrl}`);
+  return convertedUrl;
 }
 
 /**
@@ -47,6 +49,8 @@ export async function ensureSupportedImageUrl(url: string, storage: StorageAdapt
 export function cleanupConvertedLater(urls: string[], storage: StorageAdapter): void {
   if (!urls.length) return;
   setTimeout(() => {
-    Promise.allSettled(urls.map((u) => storage.delete(u))).catch(() => { /* best-effort */ });
+    Promise.allSettled(urls.map((u) => storage.delete(u)))
+      .then(() => console.log(`[media-format] cleaned up ${urls.length} converted file(s): ${urls.join(", ")}`))
+      .catch(() => { /* best-effort */ });
   }, 30_000);
 }
