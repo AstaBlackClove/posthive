@@ -290,6 +290,10 @@ model OAuthState {
   expiresAt DateTime
   createdAt DateTime @default(now())
 
+  // Pixelfed dynamic client registration — encrypted, set only for the pixelfed flow
+  pixelfedClientId     String?
+  pixelfedClientSecret String?
+
   @@index([nonce])
 }
 

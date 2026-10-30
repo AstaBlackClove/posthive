@@ -1,7 +1,7 @@
 ﻿import { randomBytes, createHash } from "crypto";
 import type { FastifyInstance } from "fastify";
 import { TwitterApi } from "twitter-api-v2";
-import { encrypt } from "../lib/encryption.js";
+import { encrypt, decrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import { getPlan } from "../lib/plans.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
@@ -47,9 +47,8 @@ const MASTODON_SCOPES = "read:accounts write:statuses write:media";
 const PF_REDIRECT_URI = process.env.PIXELFED_REDIRECT_URI!;
 const PIXELFED_SCOPES = "read write";
 
-// Server-side store for Pixelfed dynamic client credentials (keyed by nonce)
-// Avoids placing client_secret in the unsigned state URL parameter
-const pixelfedClientStore = new Map<string, { clientId: string; clientSecret: string }>();
+// Pixelfed dynamic client credentials are stored encrypted on OAuthState (DB), not in memory —
+// an in-memory Map doesn't survive a Railway restart/redeploy between initiate and callback.
 
 
 const YT_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID!;
@@ -721,10 +720,15 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     const nonce = randomBytes(32).toString("hex");
     await prisma.oAuthState.create({
-      data: { userId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
+      data: {
+        userId,
+        nonce,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        // Store client credentials server-side — never put client_secret in the state URL
+        pixelfedClientId: encrypt(pfApp.client_id),
+        pixelfedClientSecret: encrypt(pfApp.client_secret),
+      },
     });
-    // Store client credentials server-side — never put client_secret in the state URL
-    pixelfedClientStore.set(nonce, { clientId: pfApp.client_id, clientSecret: pfApp.client_secret });
     const state = Buffer.from(JSON.stringify({ userId, nonce, instanceUrl })).toString("base64url");
 
     const url = new URL(`${instanceUrl}/oauth/authorize`);
@@ -751,24 +755,17 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const storedState = await prisma.oAuthState.findFirst({ where: { userId, nonce } });
-    if (!storedState || storedState.expiresAt < new Date()) {
+    if (!storedState || storedState.expiresAt < new Date() || !storedState.pixelfedClientId || !storedState.pixelfedClientSecret) {
       return reply.redirect(`${WEB_URL}/accounts?error=state_expired`);
     }
+    const clientId = decrypt(storedState.pixelfedClientId);
+    const clientSecret = decrypt(storedState.pixelfedClientSecret);
     await prisma.oAuthState.delete({ where: { id: storedState.id } });
 
     // Re-validate instanceUrl — state is unsigned so must re-check SSRF blocklist
     if (isSsrfBlocked(instanceUrl)) {
-      pixelfedClientStore.delete(nonce);
       return reply.redirect(`${WEB_URL}/accounts?error=invalid_instance`);
     }
-
-    // Retrieve client credentials stored server-side during initiation
-    const pfCreds = pixelfedClientStore.get(nonce);
-    pixelfedClientStore.delete(nonce);
-    if (!pfCreds) {
-      return reply.redirect(`${WEB_URL}/accounts?error=state_expired`);
-    }
-    const { clientId, clientSecret } = pfCreds;
 
     const tokenRes = await fetch(`${instanceUrl}/oauth/token`, {
       method: "POST",
