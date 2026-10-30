@@ -734,9 +734,15 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const pendingIds = jobs.filter(j => j.status === "pending" && deletableIds.includes(j.id)).map(j => j.id);
     await Promise.allSettled(pendingIds.map(id => postJobQueue.remove(id)));
 
-    // Delete media files
+    // Delete media files — capped concurrency so a large bulk delete doesn't fire
+    // hundreds/thousands of storage calls at once. No delay between batches (unlike
+    // cleanupCron's background throttling) since this is a request a user is waiting on.
     if (mediaUrlsToDelete.length) {
-      await Promise.allSettled(mediaUrlsToDelete.map(url => storage.delete(url)));
+      const DELETE_BATCH = 50;
+      for (let i = 0; i < mediaUrlsToDelete.length; i += DELETE_BATCH) {
+        const batch = mediaUrlsToDelete.slice(i, i + DELETE_BATCH);
+        await Promise.allSettled(batch.map((url) => storage.delete(url)));
+      }
       await prisma.upload.deleteMany({ where: { url: { in: mediaUrlsToDelete } } });
     }
 
