@@ -12,6 +12,7 @@ import { enforcePlan } from "../lib/enforcePlan.js";
 import { getPlan } from "../lib/plans.js";
 import type { StorageAdapter } from "../lib/storage.js";
 import { adapters } from "../adapters/index.js";
+import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
 
 const TARGET_SELECT = {
   id: true, accountId: true, status: true,
@@ -91,7 +92,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const allAccountIds = [...new Set(jobs.flatMap(j => j.accountIds))];
     const validAccounts = await prisma.account.findMany({
       where: { id: { in: allAccountIds }, workspaceId },
-      select: { id: true },
+      select: { id: true, platform: true },
     });
     const validAccountSet = new Set(validAccounts.map(a => a.id));
     const invalidAccountJobs = jobs
@@ -102,6 +103,20 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       return reply.status(400).send({
         error: `${invalidAccountJobs.length} rows reference account IDs not in this workspace`,
       });
+    }
+
+    const platformById = new Map(validAccounts.map((a) => [a.id, a.platform]));
+    const textLimitErrors: string[] = [];
+    jobs.forEach((j, i) => {
+      const violations = checkTextLimits(j.accountIds.map((id) => ({
+        platform: platformById.get(id)!,
+        text: j.content.text,
+        commentText: j.commentText,
+      })));
+      if (violations.length) textLimitErrors.push(`Row ${i + 1}: ${formatTextLimitError(violations)}`);
+    });
+    if (textLimitErrors.length) {
+      return reply.status(400).send({ error: textLimitErrors.join(" | "), code: "TEXT_LIMIT" });
     }
 
     // Plan limit check — once for the entire batch
@@ -252,10 +267,19 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     // Verify accounts belong to this workspace
     const accounts = await prisma.account.findMany({
       where: { id: { in: accountIds }, workspaceId },
-      select: { id: true },
+      select: { id: true, platform: true },
     });
     if (accounts.length !== accountIds.length) {
       return reply.status(400).send({ error: "One or more accountIds not found" });
+    }
+
+    const violations = checkTextLimits(accounts.map((a) => ({
+      platform: a.platform,
+      text: content.perAccount?.[a.id]?.text ?? content.text,
+      commentText: content.perAccount?.[a.id]?.commentText ?? commentText,
+    })));
+    if (violations.length) {
+      return reply.status(400).send({ error: formatTextLimitError(violations), code: "TEXT_LIMIT", violations });
     }
 
     // Wrap plan-limit check + job creation in a transaction with an advisory lock
@@ -474,7 +498,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     }).safeParse(req.body);
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
 
-    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, content: true, userId: true } });
+    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, content: true, userId: true, commentText: true } });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status !== "pending" && job.status !== "draft") {
       return reply.status(409).send({ error: `Cannot edit a job with status "${job.status}"` });
@@ -515,22 +539,44 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       updateData.commentText = body.data.commentText || null;
     }
 
+    // Current targets, fetched once — used both to resolve the final account list
+    // for the text-limit check below and for the add/remove diff further down.
+    const currentTargets = await prisma.postJobTarget.findMany({
+      where: { postJobId: id },
+      select: { id: true, accountId: true, account: { select: { platform: true } } },
+    });
+
+    const finalAccountIds = body.data.accountIds ?? currentTargets.map((t) => t.accountId);
+    const finalPlatformById = new Map(currentTargets.map((t) => [t.accountId, t.account.platform]));
+    if (body.data.accountIds) {
+      const toAdd = body.data.accountIds.filter((nid) => !currentTargets.some((t) => t.accountId === nid));
+      if (toAdd.length > 0) {
+        const added = await prisma.account.findMany({ where: { id: { in: toAdd }, workspaceId }, select: { id: true, platform: true } });
+        if (added.length !== toAdd.length) return reply.status(400).send({ error: "One or more accountIds not found" });
+        for (const a of added) finalPlatformById.set(a.id, a.platform);
+      }
+    }
+
+    const existingParsed = JSON.parse(job.content) as { text: string; perAccount?: Record<string, { text?: string; commentText?: string }> };
+    const finalPerAccount = body.data.perAccount ?? existingParsed.perAccount;
+    const finalText = body.data.text ?? existingParsed.text;
+    const finalCommentText = body.data.commentText !== undefined ? body.data.commentText : job.commentText;
+
+    const editViolations = checkTextLimits(finalAccountIds.map((accountId) => ({
+      platform: finalPlatformById.get(accountId)!,
+      text: finalPerAccount?.[accountId]?.text ?? finalText,
+      commentText: finalPerAccount?.[accountId]?.commentText ?? finalCommentText,
+    })));
+    if (editViolations.length) {
+      return reply.status(400).send({ error: formatTextLimitError(editViolations), code: "TEXT_LIMIT", violations: editViolations });
+    }
+
     const updated = await prisma.postJob.update({ where: { id }, data: updateData });
 
     if (body.data.accountIds) {
       const newIds = body.data.accountIds;
-      const currentTargets = await prisma.postJobTarget.findMany({
-        where: { postJobId: id },
-        select: { id: true, accountId: true },
-      });
-
       const toRemove = currentTargets.filter(t => !newIds.includes(t.accountId));
       const toAdd = newIds.filter(nid => !currentTargets.some(t => t.accountId === nid));
-
-      if (toAdd.length > 0) {
-        const valid = await prisma.account.findMany({ where: { id: { in: toAdd }, workspaceId }, select: { id: true } });
-        if (valid.length !== toAdd.length) return reply.status(400).send({ error: "One or more accountIds not found" });
-      }
 
       if (toRemove.length > 0) {
         await prisma.postJobTarget.deleteMany({ where: { id: { in: toRemove.map(t => t.id) } } });

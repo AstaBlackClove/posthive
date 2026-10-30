@@ -5,6 +5,7 @@ import { prisma } from "../lib/prisma.js";
 import { withAuth, getUser, getWorkspaceId } from "../lib/auth/withAuth.js";
 import { getPlan } from "../lib/plans.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
+import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
 
 const MAX_CSV_ROWS = 500;
 const MAX_TEXT_LENGTH = 5000;
@@ -263,7 +264,7 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
     const { id: userId } = getUser(req);
     const { id } = req.params as { id: string };
 
-    const library = await prisma.contentLibrary.findFirst({ where: { id, workspaceId }, select: { id: true } });
+    const library = await prisma.contentLibrary.findFirst({ where: { id, workspaceId }, select: { id: true, accountIds: true } });
     if (!library) return reply.status(404).send({ error: "Library not found" });
 
     const parsed = z.object({
@@ -272,6 +273,25 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
 
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
     const { items } = parsed.data;
+
+    // Every item in a library posts to the same linked accounts — check text/comment
+    // length against each linked platform's limit before accepting the CSV.
+    const libraryAccountIds = library.accountIds as unknown as string[];
+    const linkedAccounts = await prisma.account.findMany({
+      where: { id: { in: libraryAccountIds } },
+      select: { platform: true },
+    });
+    const linkedPlatforms = [...new Set(linkedAccounts.map((a) => a.platform))];
+    const textLimitErrors: string[] = [];
+    items.forEach((item, i) => {
+      const violations = checkTextLimits(linkedPlatforms.map((platform) => ({
+        platform, text: item.text, commentText: item.commentText,
+      })));
+      if (violations.length) textLimitErrors.push(`Row ${i + 1}: ${formatTextLimitError(violations)}`);
+    });
+    if (textLimitErrors.length) {
+      return reply.status(400).send({ error: textLimitErrors.slice(0, 10).join(" | ") + (textLimitErrors.length > 10 ? ` (+${textLimitErrors.length - 10} more)` : ""), code: "TEXT_LIMIT" });
+    }
 
     // Plan: check subscription status + total items limit (skipped in self-hosted mode)
     if (process.env.ENABLE_BILLING === "true") {

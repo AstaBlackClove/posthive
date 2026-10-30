@@ -1,9 +1,19 @@
+import { PlatformIcon } from "../PlatformIcon";
+
+interface PlatformCommentLimit {
+  platform: string;
+  limit: number;
+  commentCount: number;
+  commentOver: boolean;
+}
+
 interface Props {
   value: string;
   onChange: (v: string) => void;
+  platformLimits?: PlatformCommentLimit[];
 }
 
-export function FirstComment({ value, onChange }: Props) {
+export function FirstComment({ value, onChange, platformLimits }: Props) {
   return (
     <div className="px-6 pb-5 pt-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-2 mb-1">
@@ -22,6 +32,16 @@ export function FirstComment({ value, onChange }: Props) {
         className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"
         style={{ minHeight: "72px", overflow: "hidden", borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
       />
+      {value && platformLimits && platformLimits.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {platformLimits.map((p) => (
+            <span key={p.platform} className="text-xs font-medium flex items-center gap-1"
+              style={{ color: p.commentOver ? "#ef4444" : p.commentCount > p.limit * 0.8 ? "#f59e0b" : "#444" }}>
+              <PlatformIcon platform={p.platform} size={11} /> {p.commentCount}/{p.limit}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

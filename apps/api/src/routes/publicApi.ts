@@ -4,6 +4,7 @@ import { withApiKey } from "../lib/auth/withApiKey.js";
 import { schedulePostJob, postJobQueue } from "../lib/queue.js";
 import { compressForPlatform } from "../lib/compress.js";
 import { ALLOWED_IMAGE_TYPES, type StorageAdapter } from "../lib/storage.js";
+import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
 
 const preHandler = [withApiKey];
 
@@ -94,10 +95,20 @@ export async function publicApiRoutes(
 
     const accounts = await prisma.account.findMany({
       where: { id: { in: body.accountIds }, workspaceId },
-      select: { id: true },
+      select: { id: true, platform: true },
     });
     if (accounts.length !== body.accountIds.length)
       return reply.status(400).send({ error: "One or more accountIds are invalid" });
+
+    const normalizedPerAccount = body.perAccount ? normalizePerAccount(body.perAccount) : undefined;
+    const textViolations = checkTextLimits(accounts.map((a) => ({
+      platform: a.platform,
+      text: normalizedPerAccount?.[a.id]?.text ?? body.content,
+      commentText: normalizedPerAccount?.[a.id]?.commentText ?? body.commentText,
+    })));
+    if (textViolations.length) {
+      return reply.status(400).send({ error: formatTextLimitError(textViolations), code: "TEXT_LIMIT", violations: textViolations });
+    }
 
     const contentPayload = JSON.stringify({
       text: body.content,
@@ -105,7 +116,7 @@ export async function publicApiRoutes(
       ...(body.altTexts?.length ? { altTexts: body.altTexts } : {}),
       ...(body.mediaType ? { mediaType: body.mediaType } : {}),
       ...(body.youtubeType ? { youtubeType: body.youtubeType } : {}),
-      ...(body.perAccount ? { perAccount: normalizePerAccount(body.perAccount) } : {}),
+      ...(normalizedPerAccount ? { perAccount: normalizedPerAccount } : {}),
     });
 
     const job = await prisma.postJob.create({
@@ -292,17 +303,44 @@ export async function publicApiRoutes(
     if (body.commentText !== undefined)
       updateData.commentText = body.commentText || null;
 
-    const updated = await prisma.postJob.update({ where: { id }, data: updateData });
-
+    // Resolve the final accountIds + their platforms before writing anything,
+    // so a text-limit violation is rejected instead of silently failing at publish time.
+    let finalAccounts: { id: string; platform: string }[];
     if (body.accountIds !== undefined) {
       if (!Array.isArray(body.accountIds) || body.accountIds.length === 0)
         return reply.status(400).send({ error: "accountIds must be a non-empty array" });
-      const valid = await prisma.account.findMany({
+      finalAccounts = await prisma.account.findMany({
         where: { id: { in: body.accountIds }, workspaceId },
-        select: { id: true },
+        select: { id: true, platform: true },
       });
-      if (valid.length !== body.accountIds.length)
+      if (finalAccounts.length !== body.accountIds.length)
         return reply.status(400).send({ error: "One or more accountIds are invalid" });
+    } else {
+      const existingTargets = await prisma.postJobTarget.findMany({
+        where: { postJobId: id },
+        select: { account: { select: { id: true, platform: true } } },
+      });
+      finalAccounts = existingTargets.map((t) => t.account);
+    }
+
+    const finalPerAccount = body.perAccount !== undefined
+      ? normalizePerAccount(body.perAccount)
+      : (JSON.parse(job.content) as { perAccount?: Record<string, { text?: string; commentText?: string }> }).perAccount;
+    const finalText = body.content ?? (JSON.parse(job.content) as { text: string }).text;
+    const finalCommentText = body.commentText !== undefined ? body.commentText : job.commentText;
+
+    const updateViolations = checkTextLimits(finalAccounts.map((a) => ({
+      platform: a.platform,
+      text: finalPerAccount?.[a.id]?.text ?? finalText,
+      commentText: finalPerAccount?.[a.id]?.commentText ?? finalCommentText,
+    })));
+    if (updateViolations.length) {
+      return reply.status(400).send({ error: formatTextLimitError(updateViolations), code: "TEXT_LIMIT", violations: updateViolations });
+    }
+
+    const updated = await prisma.postJob.update({ where: { id }, data: updateData });
+
+    if (body.accountIds !== undefined) {
       await prisma.postJobTarget.deleteMany({ where: { postJobId: id } });
       await prisma.postJobTarget.createMany({
         data: body.accountIds.map((accountId) => ({ postJobId: id, accountId })),
@@ -466,12 +504,17 @@ export async function publicApiRoutes(
         return reply.status(400).send({ error: "scheduledFor must be a future ISO date string" });
     }
 
-    const accounts = await prisma.account.findMany({ where: { id: { in: body.accountIds }, workspaceId }, select: { id: true } });
+    const accounts = await prisma.account.findMany({ where: { id: { in: body.accountIds }, workspaceId }, select: { id: true, platform: true } });
     if (accounts.length !== body.accountIds.length)
       return reply.status(400).send({ error: "One or more accountIds are invalid" });
 
     const text = body.contentOverride ?? (tc.text as string) ?? "";
     const commentText = body.firstCommentOverride ?? (tc.commentText as string | undefined) ?? null;
+
+    const templateViolations = checkTextLimits(accounts.map((a) => ({ platform: a.platform, text, commentText })));
+    if (templateViolations.length) {
+      return reply.status(400).send({ error: formatTextLimitError(templateViolations), code: "TEXT_LIMIT", violations: templateViolations });
+    }
 
     const job = await prisma.postJob.create({
       data: {

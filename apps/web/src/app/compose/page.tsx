@@ -436,6 +436,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     // Character limits
     for (const p of platformLimits) {
       if (p.over) return `Your caption is too long for ${p.platform} (${p.effectiveCount}/${p.limit} characters).`;
+      if (p.commentOver) return `Your first comment is too long for ${p.platform} (${p.commentCount}/${p.limit} characters).`;
     }
 
     // Scheduled time must be in the future
@@ -654,10 +655,13 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     const limit = PLATFORM_LIMIT[a.platform] ?? 300;
     const effectiveText = perAccountOverrides[a.id]?.text ?? text;
     const effectiveCount = countGraphemes(effectiveText);
-    return { platform: a.platform, limit, icon: a.platform, over: effectiveCount > limit, effectiveCount, color: PLATFORM_COLOR[a.platform] ?? "#6b7280" };
+    const effectiveComment = perAccountOverrides[a.id]?.commentText ?? commentText;
+    const commentCount = countGraphemes(effectiveComment);
+    const commentOver = commentCount > limit;
+    return { platform: a.platform, limit, icon: a.platform, over: effectiveCount > limit, effectiveCount, commentOver, commentCount, color: PLATFORM_COLOR[a.platform] ?? "#6b7280" };
   });
   const mostRestrictiveLimit = platformLimits.length > 0 ? Math.min(...platformLimits.map((p) => p.limit)) : 300;
-  const overAnyLimit = platformLimits.some((p) => p.over);
+  const overAnyLimit = platformLimits.some((p) => p.over || p.commentOver);
   const images = mediaItems.filter(m => !m.isVideo);
   const video = mediaItems.find(m => m.isVideo) ?? null;
   const instagramSelected = selectedAccounts.some((a) => a.platform === "instagram");
@@ -1265,7 +1269,8 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
 
           {/* First comment */}
           {!loadingAccounts && !noCommentSupport && (
-            <FirstComment value={commentText} onChange={setCommentText} />
+            <FirstComment value={commentText} onChange={setCommentText}
+              platformLimits={platformLimits.map((p) => ({ platform: p.platform, limit: p.limit, commentCount: p.commentCount, commentOver: p.commentOver }))} />
           )}
 
 

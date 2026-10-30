@@ -366,9 +366,12 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     const limit = PLATFORM_LIMIT[a.platform] ?? 500;
     const effectiveText = perAccountOverrides[a.id]?.text ?? text;
     const effectiveCount = countGraphemes(effectiveText);
-    return { platform: a.platform, limit, effectiveCount, over: effectiveCount > limit };
+    const effectiveComment = perAccountOverrides[a.id]?.commentText ?? commentText;
+    const commentCount = countGraphemes(effectiveComment);
+    const commentOver = commentCount > limit;
+    return { platform: a.platform, limit, effectiveCount, over: effectiveCount > limit, commentCount, commentOver };
   });
-  const overAnyLimit = platformLimits.some(p => p.over);
+  const overAnyLimit = platformLimits.some(p => p.over || p.commentOver);
 
   // Twitter link block
   const urlPattern = /https?:\/\/[^\s]+|(?<![a-zA-Z0-9])(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+(?:com|co|io|ai|app|dev|net|org|xyz|me|gg|tv|fm|so|sh|ly|link|pro|studio|online|site|shop|store|tech|club|news|live|blog|media|social|chat|run|tools|uk|us|ca|au|de|fr|jp|br|in|nl|se|no|fi|dk|it|es|pl|ru|id|mx|ar|za|ph|sg|my|th|vn|eg|ng|ke|gh|tz|rw)[/a-zA-Z0-9._~:/?#[\]@!$&'()*+,;=%]*/i;
@@ -633,7 +636,8 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
 
           {/* First comment */}
           {!noCommentSupport && (
-            <FirstComment value={commentText} onChange={setCommentText} />
+            <FirstComment value={commentText} onChange={setCommentText}
+              platformLimits={platformLimits.map(p => ({ platform: p.platform, limit: p.limit, commentCount: p.commentCount, commentOver: p.commentOver }))} />
           )}
 
           {/* Media */}

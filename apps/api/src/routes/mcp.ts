@@ -67,7 +67,10 @@ const TOOLS = [
       "Create a post in Posthive. " +
       "BY DEFAULT posts are saved as DRAFTS and require manual approval in the Posthive review queue before anything is published. " +
       "Nothing is published automatically unless schedule_directly is explicitly set to true with a future scheduled_time. " +
-      "Use list_accounts to get valid account IDs before calling this tool.",
+      "Use list_accounts to get valid account IDs before calling this tool. " +
+      "Each platform has its own character limit for both the post text and the first_comment — the request is rejected with a 400 if either exceeds it for any selected account: " +
+      "Bluesky 300, Threads/Mastodon/Pinterest 500, Instagram/TikTok 2200, Discord 2000, LinkedIn 3000, Telegram/Tumblr 4096, YouTube 5000, Nostr/Lemmy 10000, Twitter/X 25000, Facebook 63206. " +
+      "Check the content and first_comment length against the shortest limit among the selected platforms before calling, and warn the user if a caption (especially a long hashtag block) would be rejected.",
     inputSchema: {
       type: "object" as const,
       properties: {
