@@ -10,9 +10,14 @@ import crypto from "crypto";
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
+import { ensureSupportedImageUrl } from "../lib/mediaFormat.js";
+import type { StorageAdapter } from "../lib/storage.js";
 
 const TUMBLR_API = "https://api.tumblr.com/v2";
 const pct = encodeURIComponent;
+
+let storageAdapter: StorageAdapter | null = null;
+export function setTumblrStorage(s: StorageAdapter): void { storageAdapter = s; }
 
 interface TumblrCredentials {
   accessToken: string;
@@ -106,7 +111,10 @@ export const tumblrAdapter: PlatformAdapter = {
     const blocks: unknown[] = [];
     if (content.text) blocks.push({ type: "text", text: content.text });
     for (const u of imageUrls) {
-      const fullUrl = u.startsWith("http") ? u : `${apiBase}${u}`;
+      let fullUrl = u.startsWith("http") ? u : `${apiBase}${u}`;
+      // Tumblr fetches image URLs itself and only reliably accepts JPEG/PNG —
+      // convert unsupported formats (WEBP/GIF/etc.) before they're sent.
+      if (storageAdapter) fullUrl = await ensureSupportedImageUrl(fullUrl, storageAdapter);
       blocks.push({ type: "image", media: [{ url: fullUrl }] });
     }
 

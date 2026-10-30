@@ -12,8 +12,13 @@ import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
+import { ensureSupportedImageUrl } from "../lib/mediaFormat.js";
+import type { StorageAdapter } from "../lib/storage.js";
 
 const BASE = "https://graph.threads.net/v1.0";
+
+let storageAdapter: StorageAdapter | null = null;
+export function setThreadsStorage(s: StorageAdapter): void { storageAdapter = s; }
 
 interface ThreadsCredentials {
   accessToken: string;
@@ -147,11 +152,17 @@ export const threadsAdapter: PlatformAdapter = {
     if (!publicBase && content.mediaUrls.length > 0) {
       console.warn("[threads] PUBLIC_API_URL is not set — media URLs may not be publicly accessible");
     }
-    const resolvedUrls = content.mediaUrls.map((u) =>
-      u.startsWith("http") ? u : `${publicBase}${u}`
-    );
-
     const isVideo = (u: string) => /\.(mp4|mov|quicktime)$/i.test(u);
+
+    const resolvedUrls = await Promise.all(
+      content.mediaUrls.map(async (u) => {
+        const abs = u.startsWith("http") ? u : `${publicBase}${u}`;
+        // Threads fetches image URLs itself and only reliably accepts JPEG/PNG —
+        // convert unsupported formats (WEBP/GIF/etc.) before they're sent, videos untouched.
+        if (isVideo(abs) || !storageAdapter) return abs;
+        return ensureSupportedImageUrl(abs, storageAdapter);
+      })
+    );
 
     let containerId: string;
 

@@ -28,6 +28,9 @@ import { setTikTokStorage } from "./adapters/tiktok.js";
 import { setDiscordStorage } from "./adapters/discord.js";
 import { setStorageAdapter as setLemmyStorage } from "./adapters/lemmy.js";
 import { setFacebookStorage } from "./adapters/facebook.js";
+import { setInstagramStorage } from "./adapters/instagram.js";
+import { setThreadsStorage } from "./adapters/threads.js";
+import { setTumblrStorage } from "./adapters/tumblr.js";
 import { setAvatarStorage } from "./lib/avatarStore.js";
 import { accountRoutes } from "./routes/accounts.js";
 import { authRoutes } from "./routes/auth.js";
@@ -80,6 +83,9 @@ async function main() {
   setDiscordStorage(storage);
   setLemmyStorage(storage);
   setFacebookStorage(storage);
+  setInstagramStorage(storage);
+  setThreadsStorage(storage);
+  setTumblrStorage(storage);
   setAvatarStorage(storage);
 
   const isDev = process.env.NODE_ENV !== "production";

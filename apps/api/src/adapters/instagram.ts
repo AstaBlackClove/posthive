@@ -2,8 +2,13 @@ import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 import { prisma } from "../lib/prisma.js";
+import { ensureSupportedImageUrl } from "../lib/mediaFormat.js";
+import type { StorageAdapter } from "../lib/storage.js";
 
 const API = "https://graph.instagram.com/v21.0";
+
+let storageAdapter: StorageAdapter | null = null;
+export function setInstagramStorage(s: StorageAdapter): void { storageAdapter = s; }
 
 interface InstagramCredentials {
   accessToken: string;
@@ -110,8 +115,14 @@ export const instagramAdapter: PlatformAdapter = {
     const { accessToken, userId } = getCredentials(account);
 
     const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "";
-    const absoluteUrls = (mediaUrls ?? []).map((url) =>
-      url.startsWith("http") ? url : `${PUBLIC_API_URL}${url}`
+    const absoluteUrls = await Promise.all(
+      (mediaUrls ?? []).map(async (url) => {
+        const abs = url.startsWith("http") ? url : `${PUBLIC_API_URL}${url}`;
+        // Instagram fetches image URLs itself and only reliably accepts JPEG/PNG —
+        // convert unsupported formats (WEBP/GIF/etc.) before they're sent, videos untouched.
+        if (isVideoUrl(abs) || !storageAdapter) return abs;
+        return ensureSupportedImageUrl(abs, storageAdapter);
+      })
     );
 
     const hasVideo = absoluteUrls.some(isVideoUrl);
