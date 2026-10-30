@@ -2,7 +2,7 @@ import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 import { prisma } from "../lib/prisma.js";
-import { ensureSupportedImageUrl } from "../lib/mediaFormat.js";
+import { ensureSupportedImageUrl, cleanupConvertedLater } from "../lib/mediaFormat.js";
 import type { StorageAdapter } from "../lib/storage.js";
 
 const API = "https://graph.instagram.com/v21.0";
@@ -131,9 +131,7 @@ export const instagramAdapter: PlatformAdapter = {
     try {
       return await publishInstagramPost();
     } finally {
-      if (convertedUrls.length && storageAdapter) {
-        await Promise.allSettled(convertedUrls.map((u) => storageAdapter!.delete(u)));
-      }
+      if (storageAdapter) cleanupConvertedLater(convertedUrls, storageAdapter);
     }
 
     async function publishInstagramPost(): Promise<PostResult> {

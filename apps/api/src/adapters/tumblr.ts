@@ -10,7 +10,7 @@ import crypto from "crypto";
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
-import { ensureSupportedImageUrl } from "../lib/mediaFormat.js";
+import { ensureSupportedImageUrl, cleanupConvertedLater } from "../lib/mediaFormat.js";
 import type { StorageAdapter } from "../lib/storage.js";
 
 const TUMBLR_API = "https://api.tumblr.com/v2";
@@ -153,9 +153,7 @@ export const tumblrAdapter: PlatformAdapter = {
         url: postId ? `https://${blogName}.tumblr.com/post/${postId}` : null,
       } as unknown as PostResult;
     } finally {
-      if (convertedUrls.length && storageAdapter) {
-        await Promise.allSettled(convertedUrls.map((u) => storageAdapter!.delete(u)));
-      }
+      if (storageAdapter) cleanupConvertedLater(convertedUrls, storageAdapter);
     }
   },
 

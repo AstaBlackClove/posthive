@@ -34,3 +34,19 @@ export async function ensureSupportedImageUrl(url: string, storage: StorageAdapt
 
   return storage.upload(jpeg, "image/jpeg", "converted");
 }
+
+/**
+ * Deletes converted-image files created by ensureSupportedImageUrl, after a
+ * delay — not immediately. Instagram/Threads fetch the image synchronously
+ * during container creation (confirmed by format-error timing), but we
+ * can't confirm Tumblr fetches it within the single create-post call rather
+ * than asynchronously afterward. A safety delay avoids a race where we
+ * delete the file before the platform has actually finished fetching it.
+ * Non-blocking — doesn't hold up the job that called it.
+ */
+export function cleanupConvertedLater(urls: string[], storage: StorageAdapter): void {
+  if (!urls.length) return;
+  setTimeout(() => {
+    Promise.allSettled(urls.map((u) => storage.delete(u))).catch(() => { /* best-effort */ });
+  }, 30_000);
+}

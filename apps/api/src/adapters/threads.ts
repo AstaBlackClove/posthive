@@ -12,7 +12,7 @@ import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
-import { ensureSupportedImageUrl } from "../lib/mediaFormat.js";
+import { ensureSupportedImageUrl, cleanupConvertedLater } from "../lib/mediaFormat.js";
 import type { StorageAdapter } from "../lib/storage.js";
 
 const BASE = "https://graph.threads.net/v1.0";
@@ -170,9 +170,7 @@ export const threadsAdapter: PlatformAdapter = {
     try {
       return await publishThreadsPost();
     } finally {
-      if (convertedUrls.length && storageAdapter) {
-        await Promise.allSettled(convertedUrls.map((u) => storageAdapter!.delete(u)));
-      }
+      if (storageAdapter) cleanupConvertedLater(convertedUrls, storageAdapter);
     }
 
     async function publishThreadsPost(): Promise<PostResult> {
