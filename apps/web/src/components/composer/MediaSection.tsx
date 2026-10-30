@@ -260,7 +260,7 @@ export function MediaSection({
                 <> · <span style={{ color: "#ff0000" }}>YouTube requires a video</span></>
               )}
               {(instagramSelected || threadsSelected) && (
-                <> · <span style={{ color: "#f59e0b" }}>Instagram &amp; Threads only support JPEG/PNG images — WEBP/GIF may fail</span></>
+                <> · <span style={{ color: "#999" }}>WEBP/GIF images are auto-converted to JPEG for Instagram &amp; Threads</span></>
               )}
             </p>
           )}

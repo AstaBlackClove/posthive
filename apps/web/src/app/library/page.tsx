@@ -517,7 +517,7 @@ export default function LibraryPage() {
                 step="2"
                 title="Upload posts via CSV"
                 color="#0ea5e9"
-                description='Each row = one post. Required column: "text" (main post, max 5000 chars). Optional: "comment" (first comment posted after the post) and "mediaUrls" (pipe-separated "|" public image/video URLs — must be publicly accessible; Google Drive/Photos links require sign-in and will fail). Use JPEG or PNG images — Instagram and Threads reject WEBP/GIF with a confusing error. Always wrap values in double quotes. Escape a literal quote by doubling it: ""like this"".'
+                description='Each row = one post. Required column: "text" (main post, max 5000 chars). Optional: "comment" (first comment posted after the post) and "mediaUrls" (pipe-separated "|" public image/video URLs — must be publicly accessible; Google Drive/Photos links require sign-in and will fail). WEBP/GIF images are automatically converted to JPEG for Instagram and Threads. Always wrap values in double quotes. Escape a literal quote by doubling it: ""like this"".'
                 code={`text,comment,mediaUrls\n"Your first post 🚀","First comment here","https://cdn.example.com/img1.jpg|https://cdn.example.com/img2.jpg"\n"Second post — no media or comment","",""\n"Post with a comment only","Great thread below!",""`}
               />
 
@@ -556,7 +556,7 @@ export default function LibraryPage() {
                     "Pausing stops new posts from being scheduled; existing scheduled posts still fire.",
                     "When all items are posted, the library becomes Exhausted upload more to resume.",
                     "Max 500 rows per CSV upload.",
-                    "Instagram and Threads only accept JPEG/PNG images — WEBP and GIF will fail at publish time.",
+                    "WEBP and GIF images are automatically converted to JPEG for Instagram and Threads.",
                   ].map((rule, i) => (
                     <li key={i} className="text-xs" style={{ color: "#888", paddingLeft: 2 }}>
                       {rule}
@@ -901,9 +901,6 @@ function LibraryDetail({
             <div>
               <p style={{ fontSize: 12, color: "#aaa", fontWeight: 500 }}>Drop CSV or click to upload</p>
               <p style={{ fontSize: 11, color: "#777", marginTop: 1 }}>Columns: text, comment (opt), mediaUrls pipe-separated (opt) · max {MAX_CSV_ROWS} rows</p>
-              {linkedAccounts.some(a => a.platform === "instagram" || a.platform === "threads") && (
-                <p style={{ fontSize: 11, color: "#f59e0b", marginTop: 1 }}>Use JPEG/PNG images — Instagram &amp; Threads reject WEBP/GIF</p>
-              )}
             </div>
           )}
         </div>
