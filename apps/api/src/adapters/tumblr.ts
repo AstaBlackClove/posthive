@@ -122,8 +122,12 @@ export const tumblrAdapter: PlatformAdapter = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({})) as { meta?: { msg?: string } };
-      throw new Error(`Tumblr post failed: ${err.meta?.msg ?? res.status}`);
+      const err = await res.json().catch(() => ({})) as {
+        meta?: { msg?: string };
+        errors?: { title?: string; detail?: string }[];
+      };
+      const detail = err.errors?.[0]?.detail ?? err.errors?.[0]?.title;
+      throw new Error(`Tumblr post failed: ${detail ?? err.meta?.msg ?? res.status}`);
     }
 
     const data = await res.json() as { response?: { id_string?: string } };
