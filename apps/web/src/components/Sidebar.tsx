@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { useWorkspace } from "../context/WorkspaceContext";
 import { apiFetch } from "../lib/api";
+import { cn } from "../lib/cn";
 import { TrialBanner } from "./TrialBanner";
 import { useToast } from "./Toast";
 import { navByRole, canEditContent } from "../lib/permissions";
@@ -27,25 +28,24 @@ function WhatsNewCard() {
   }
 
   return (
-    <div className="mx-2 mb-2 rounded-xl px-3 py-2.5" style={{ backgroundColor: "#0d0f1f", border: "1px solid #3a3a5a", position: "relative" }}>
+    <div className="relative mx-2 mb-2 rounded-xl border border-brand-300 bg-brand-100 px-3 py-2.5">
       <button
         onClick={dismiss}
         aria-label="Dismiss"
-        style={{ position: "absolute", top: 7, right: 7, background: "none", border: "none", cursor: "pointer", color: "#555", padding: 2, lineHeight: 1 }}
+        className="absolute top-2 right-2 cursor-pointer p-0.5 leading-none text-neutral-500"
       >
         <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
           <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       </button>
-      <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#818cf8" }}>New</p>
-      <p className="text-xs font-semibold mb-0.5" style={{ color: "#ededed" }}>Repeat post scheduling</p>
-      <p className="text-xs mb-2" style={{ color: "#888", lineHeight: 1.5 }}>
+      <p className="mb-1 type-body-sb-xxs uppercase tracking-widest text-brand-800">New</p>
+      <p className="mb-0.5 type-body-sb-xs text-fg">Repeat post scheduling</p>
+      <p className="mb-2 type-body-r-xs text-muted">
         Schedule posts to repeat daily, weekly, or monthly. Set an end date and let it run.
       </p>
       <a
         href="/compose"
-        style={{ fontSize: 11, fontWeight: 600, color: "#818cf8", textDecoration: "none" }}
-        className="hover:opacity-80 transition-opacity"
+        className="type-body-sb-xs text-brand-800 transition-opacity hover:opacity-80"
       >
         Try it →
       </a>
@@ -234,8 +234,7 @@ export function Sidebar() {
       <button
         onClick={() => setMobileOpen(true)}
         aria-label="Open menu"
-        className="md:hidden fixed z-40 flex items-center justify-center"
-        style={{ top: 14, left: 14, width: 36, height: 36, borderRadius: 9, backgroundColor: "#161616", border: "1px solid #2a2a2a", color: "#ededed" }}
+        className="md:hidden fixed top-3.5 left-3.5 z-40 flex size-9 items-center justify-center rounded-lg border border-border bg-surface text-fg"
       >
         <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -244,21 +243,24 @@ export function Sidebar() {
 
       {/* Mobile backdrop */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-40" style={{ backgroundColor: "rgba(0,0,0,.6)" }} onClick={() => setMobileOpen(false)} />
+        <div className="md:hidden fixed inset-0 z-40 bg-black/60" onClick={() => setMobileOpen(false)} />
       )}
 
       <aside
-        style={{ backgroundColor: "var(--color-bg)", borderRight: "1px solid #2a2a2a" }}
-        className={`fixed md:relative inset-y-0 left-0 z-50 flex flex-col shrink-0 h-full w-60 transition-transform duration-200 md:transition-all md:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "md:w-[60px]" : "md:w-60"}`}
+        className={cn(
+          "fixed md:relative inset-y-0 left-0 z-50 flex flex-col shrink-0 h-full w-60 border-r border-border bg-bg transition-transform duration-200 md:transition-all md:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+          collapsed ? "md:w-15" : "md:w-60",
+        )}
       >
         {/* Logo */}
-        <div className="flex items-center shrink-0 px-3 gap-2 relative" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
+        <div className="relative flex h-16 shrink-0 items-center gap-2 border-b border-border px-3">
+          <Link href="/" className="flex items-center gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/posthivemain.png" alt="Posthive" width={28} height={28} style={{ objectFit: "contain" }} />
+            <img src="/posthivemain.png" alt="Posthive" width={28} height={28} className="object-contain" />
             {!showCollapsed && (
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm leading-tight text-white">Posthive</p>
+                <p className="type-body-sb-s text-fg">Posthive</p>
               </div>
             )}
           </Link>
@@ -268,8 +270,7 @@ export function Sidebar() {
         <button
           onClick={toggleCollapsed}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="hidden md:flex absolute z-10 items-center justify-center transition-colors hover:bg-white/10"
-          style={{ top: "50%", right: -12, transform: "translateY(-50%)", width: 24, height: 24, borderRadius: "50%", backgroundColor: "#1f1f2e", border: "1px solid #3a3a5a", color: "#818cf8" }}
+          className="hidden md:flex absolute top-1/2 -right-3 z-10 size-6 -translate-y-1/2 items-center justify-center rounded-full border border-brand-300 bg-brand-100 text-brand-800 transition-colors hover:bg-brand-200"
         >
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={showCollapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"} />
@@ -278,39 +279,26 @@ export function Sidebar() {
 
         {/* ── Workspace switcher ── */}
         {activeWorkspace && (
-          <div className="px-2 pt-2" ref={wsRef} style={{ position: "relative" }}>
+          <div className="relative px-2 pt-2" ref={wsRef}>
             <button
               onClick={() => setWsOpen((o) => !o)}
               title={showCollapsed ? activeWorkspace.name : undefined}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: showCollapsed ? "6px 0" : "6px 10px",
-                borderRadius: 8,
-                background: wsOpen ? "#1a1a2e" : "transparent",
-                border: "1px solid",
-                borderColor: wsOpen ? "#3a3a5a" : "transparent",
-                cursor: "pointer",
-                justifyContent: showCollapsed ? "center" : "flex-start",
-              }}
+              className={cn(
+                "flex w-full cursor-pointer items-center gap-2 rounded-lg border py-1.5",
+                showCollapsed ? "justify-center" : "justify-start px-2.5",
+                wsOpen ? "border-brand-300 bg-brand-100" : "border-transparent",
+              )}
             >
               {/* Workspace avatar */}
-              <div style={{
-                width: 26, height: 26, borderRadius: 6, flexShrink: 0,
-                background: "#5b63d3",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 11, fontWeight: 700, color: "#fff",
-              }}>
+              <div className="flex size-6.5 shrink-0 items-center justify-center rounded-md bg-accent type-body-sb-xs text-accent-fg">
                 {wsInitial}
               </div>
               {!showCollapsed && (
                 <>
-                  <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: "#ededed", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span className="flex-1 truncate text-left type-body-m-s text-fg">
                     {activeWorkspace.name}
                   </span>
-                  <svg style={{ width: 12, height: 12, color: "#555", flexShrink: 0, transform: wsOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={cn("size-3 shrink-0 text-neutral-500 transition-transform duration-150", wsOpen && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </>
@@ -319,48 +307,29 @@ export function Sidebar() {
 
             {/* Dropdown */}
             {wsOpen && (
-              <div style={{
-                position: "absolute",
-                top: "calc(100% + 4px)",
-                left: 8, right: 8,
-                background: "#161616",
-                border: "1px solid #2a2a2a",
-                borderRadius: 10,
-                padding: "4px",
-                zIndex: 100,
-                boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-              }}>
+              <div className="absolute inset-x-2 top-full z-100 mt-1 rounded-xl border border-border bg-surface p-1 shadow-lg">
                 {workspaces.map((ws) => (
                   <button
                     key={ws.id}
                     onClick={() => handleSwitch(ws.id)}
                     disabled={switchingId === ws.id}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      padding: "7px 8px",
-                      borderRadius: 7,
-                      background: ws.isActive ? "#1a1a2e" : "transparent",
-                      border: "none",
-                      cursor: switchingId === ws.id ? "wait" : "pointer",
-                      textAlign: "left",
-                    }}
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-md p-2 text-left",
+                      ws.isActive && "bg-brand-100",
+                      switchingId === ws.id ? "cursor-wait" : "cursor-pointer",
+                    )}
                   >
-                    <div style={{
-                      width: 22, height: 22, borderRadius: 5, flexShrink: 0,
-                      background: ws.isActive ? "#5b63d3" : "#2a2a2a",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 10, fontWeight: 700, color: "#fff",
-                    }}>
+                    <div className={cn(
+                      "flex size-5.5 shrink-0 items-center justify-center rounded-md type-body-sb-xxs",
+                      ws.isActive ? "bg-accent text-accent-fg" : "bg-neutral-100 text-fg",
+                    )}>
                       {ws.name[0]?.toUpperCase()}
                     </div>
-                    <span style={{ flex: 1, fontSize: 12, color: ws.isActive ? "#ededed" : "#aaa", fontWeight: ws.isActive ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <span className={cn("flex-1 truncate", ws.isActive ? "type-body-sb-xs text-fg" : "type-body-r-xs text-muted")}>
                       {ws.name}
                     </span>
                     {ws.isActive && (
-                      <svg style={{ width: 12, height: 12, color: "#5b63d3", flexShrink: 0 }} fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="size-3 shrink-0 text-brand-800" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
@@ -368,31 +337,15 @@ export function Sidebar() {
                 ))}
 
                 {/* Divider + New workspace */}
-                <div style={{ borderTop: "1px solid #2a2a2a", margin: "4px 0" }} />
+                <div className="my-1 border-t border-border" />
                 <button
                   onClick={() => { setWsOpen(false); setNewWsOpen(true); }}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "7px 8px",
-                    borderRadius: 7,
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    textAlign: "left",
-                  }}
+                  className="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-left"
                 >
-                  <div style={{
-                    width: 22, height: 22, borderRadius: 5, flexShrink: 0,
-                    background: "#1a1a1a", border: "1px dashed #3a3a3a",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 14, color: "#555",
-                  }}>
+                  <div className="flex size-5.5 shrink-0 items-center justify-center rounded-md border border-dashed border-neutral-300 bg-bg type-body-r-s text-neutral-500">
                     +
                   </div>
-                  <span style={{ fontSize: 12, color: "#666" }}>New workspace</span>
+                  <span className="type-body-r-xs text-neutral-500">New workspace</span>
                 </button>
               </div>
             )}
@@ -405,23 +358,9 @@ export function Sidebar() {
           <Link
             href="/compose"
             title={showCollapsed ? "New post" : undefined}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: showCollapsed ? "center" : "flex-start",
-              gap: 8,
-              padding: showCollapsed ? "8px 0" : "8px 14px",
-              borderRadius: 9,
-              backgroundColor: "#5b63d3",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 600,
-              textDecoration: "none",
-              transition: "opacity 0.15s",
-            }}
-            className="hover:opacity-90"
+            className={cn("btn-primary flex rounded-lg py-2", showCollapsed ? "px-0" : "justify-start px-3.5")}
           >
-            <svg style={{ width: 15, height: 15, flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
             {!showCollapsed && "New post"}
@@ -434,11 +373,11 @@ export function Sidebar() {
           {navGroups.map((group) => (
             <div key={group.label} className="mb-4">
               {!showCollapsed && (
-                <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", padding: "0 10px", marginBottom: 4 }}>
+                <p className="mb-1 px-2.5 type-body-sb-xxs uppercase tracking-widest">
                   {group.label}
                 </p>
               )}
-              {showCollapsed && <div style={{ height: 1, backgroundColor: "#1e1e1e", margin: "6px 4px 6px" }} />}
+              {showCollapsed && <div className="mx-1 my-1.5 h-px bg-border" />}
               <div className="space-y-0.5">
                 {group.items.map((item) => {
                   const active = pathname === item.href;
@@ -447,14 +386,14 @@ export function Sidebar() {
                       key={item.label}
                       href={item.href}
                       title={showCollapsed ? item.label : undefined}
-                      style={active
-                        ? { backgroundColor: "#18183a", color: "#818cf8" }
-                        : { color: "#999" }
-                      }
-                      className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors ${!active ? "hover:bg-white/5 hover:text-white" : ""} ${showCollapsed ? "justify-center" : ""}`}
+                      className={cn(
+                        "flex items-center gap-2.5 px-2.5 py-2 rounded-lg type-body-m-s transition-colors",
+                        active ? "bg-brand-100 text-brand-800" : "text-muted hover:bg-neutral-100 hover:text-fg",
+                        showCollapsed && "justify-center",
+                      )}
                     >
-                      <span style={{ color: active ? "#818cf8" : "inherit" }}>{item.icon}</span>
-                      {!showCollapsed && <span style={{ fontSize: 13 }}>{item.label}</span>}
+                      <span>{item.icon}</span>
+                      {!showCollapsed && <span>{item.label}</span>}
                     </Link>
                   );
                 })}
@@ -465,9 +404,9 @@ export function Sidebar() {
 
         {/* Email verification banner */}
         {!showCollapsed && user && !user.emailVerified && (
-          <div className="mx-2 mb-2 rounded-xl px-3 py-2.5" style={{ backgroundColor: "#1c1209", border: "1px solid #78560a" }}>
-            <p className="text-xs font-semibold mb-0.5" style={{ color: "#fbbf24" }}>Verify your email</p>
-            <p className="text-xs mb-2" style={{ color: "#888" }}>Check your inbox for a verification link.</p>
+          <div className="mx-2 mb-2 rounded-xl border border-brand-400 bg-brand-100 px-3 py-2.5">
+            <p className="mb-0.5 type-body-sb-xs text-brand-800">Verify your email</p>
+            <p className="mb-2 type-body-r-xs text-muted">Check your inbox for a verification link.</p>
             <button
               onClick={async () => {
                 try {
@@ -476,8 +415,7 @@ export function Sidebar() {
                   else { const d = await res.json().catch(() => ({})); error(d.error ?? "Failed to send email. Try again."); }
                 } catch { error("Failed to send email. Try again."); }
               }}
-              className="text-xs font-semibold hover:opacity-80 transition-opacity"
-              style={{ color: "#fbbf24" }}>
+              className="type-body-sb-xs text-brand-800 transition-opacity hover:opacity-80">
               Resend email
             </button>
           </div>
@@ -494,42 +432,43 @@ export function Sidebar() {
           <button
             onClick={() => setFbOpen(true)}
             title={showCollapsed ? "Send feedback" : undefined}
-            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors hover:bg-white/5"
-            style={{justifyContent: showCollapsed ? "center" : "flex-start" }}
+            className={cn(
+              "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg type-body-r-s transition-colors hover:bg-neutral-100",
+              showCollapsed ? "justify-center" : "justify-start",
+            )}
           >
             <div className="relative">
               <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h6m-9 8l4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
               </svg>
               {unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 flex items-center justify-center rounded-full text-[9px] font-bold px-0.5"
-                  style={{ backgroundColor: "#ef4444", color: "#fff" }}>
+                <span className="absolute -top-1.5 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 type-body-sb-xxs text-white">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </div>
-            {!showCollapsed && <span style={{ fontSize: 13 }}>Feedback</span>}
+            {!showCollapsed && <span>Feedback</span>}
           </button>
         </div>
 
         {/* User footer */}
-        <div className="px-2 py-3" style={{ borderTop: "1px solid #2a2a2a" }}>
+        <div className="border-t border-border px-2 py-3">
           <div className={`flex items-center gap-3 px-2 py-2 rounded-lg ${showCollapsed ? "justify-center" : ""}`}>
             {user?.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 text-white" style={{ backgroundColor: "var(--color-accent)" }}>
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent type-body-sb-xs text-accent-fg">
                 {initial}
               </div>
             )}
             {!showCollapsed && (
               <>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
-                  <p className="text-xs truncate" style={{ color: "var(--color-muted)" }}>{user?.email}</p>
+                  <p className="truncate type-body-sb-s text-fg">{user?.name}</p>
+                  <p className="truncate type-body-r-xs text-muted">{user?.email}</p>
                 </div>
-                <button onClick={handleLogout} title="Sign out" className="transition-colors shrink-0 hover:text-red-400" style={{ color: "var(--color-muted)" }}>
+                <button onClick={handleLogout} title="Sign out" className="shrink-0 text-muted transition-colors hover:text-red-600">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
@@ -542,20 +481,24 @@ export function Sidebar() {
 
       {/* Feedback modal */}
       {fbOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
-          <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+        <div className="modal-backdrop fixed inset-0 z-60 flex items-center justify-center p-4">
+          <div className="card w-full max-w-sm p-6">
             {/* Tabs */}
-            <div className="flex gap-1 mb-4 p-1 rounded-xl" style={{ backgroundColor: "#1a1a1a" }}>
+            <div className="mb-4 flex gap-1 rounded-xl bg-neutral-100 p-1">
               <button
                 onClick={() => setFbTab("send")}
-                className="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors"
-                style={{ backgroundColor: fbTab === "send" ? "#2a2a2a" : "transparent", color: fbTab === "send" ? "#ededed" : "#888" }}>
+                className={cn(
+                  "flex-1 rounded-lg py-1.5 type-body-sb-xs transition-colors",
+                  fbTab === "send" ? "bg-surface text-fg shadow-sm" : "text-muted",
+                )}>
                 Send feedback
               </button>
               <button
                 onClick={() => { setFbTab("mine"); loadMyFeedback(); }}
-                className="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors"
-                style={{ backgroundColor: fbTab === "mine" ? "#2a2a2a" : "transparent", color: fbTab === "mine" ? "#ededed" : "#888" }}>
+                className={cn(
+                  "flex-1 rounded-lg py-1.5 type-body-sb-xs transition-colors",
+                  fbTab === "mine" ? "bg-surface text-fg shadow-sm" : "text-muted",
+                )}>
                 My feedback
               </button>
             </div>
@@ -564,30 +507,28 @@ export function Sidebar() {
             {fbTab === "mine" && (
               <div>
                 {myFeedbackLoading ? (
-                  <p className="text-xs text-center py-8" style={{ color: "#888" }}>Loading…</p>
+                  <p className="py-8 text-center type-body-r-xs text-muted">Loading…</p>
                 ) : myFeedback.length === 0 ? (
-                  <p className="text-xs text-center py-8" style={{ color: "#888" }}>No feedback submitted yet.</p>
+                  <p className="py-8 text-center type-body-r-xs text-muted">No feedback submitted yet.</p>
                 ) : openThread ? (() => {
                   const f = myFeedback.find(x => x.id === openThread);
                   if (!f) return null;
                   return (
                     <div>
-                      <button onClick={() => setOpenThread(null)} className="text-xs mb-3 flex items-center gap-1" style={{ color: "#888" }}>
+                      <button onClick={() => setOpenThread(null)} className="mb-3 flex items-center gap-1 type-body-r-xs text-muted">
                         ← Back
                       </button>
                       <div className="space-y-2 max-h-64 overflow-y-auto mb-3">
                         {f.replies.map(r => (
-                          <div key={r.id} style={{
-                            display: "flex",
-                            justifyContent: r.sender === "user" ? "flex-end" : "flex-start",
-                          }}>
-                            <div style={{
-                              maxWidth: "85%", padding: "7px 11px", borderRadius: r.sender === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-                              backgroundColor: r.sender === "user" ? "#1e1e1e" : "#0a1a0a",
-                              border: `1px solid ${r.sender === "user" ? "#2a2a2a" : "#14532d"}`,
-                            }}>
-                              {r.sender === "admin" && <p style={{ fontSize: 10, fontWeight: 600, color: "#4ade80", margin: "0 0 2px" }}>Posthive</p>}
-                              <p style={{ fontSize: 12, color: "#ededed", margin: 0, whiteSpace: "pre-wrap" }}>{r.message}</p>
+                          <div key={r.id} className={cn("flex", r.sender === "user" ? "justify-end" : "justify-start")}>
+                            <div className={cn(
+                              "max-w-[85%] rounded-xl border px-3 py-2",
+                              r.sender === "user"
+                                ? "rounded-br-xs border-border bg-neutral-100"
+                                : "rounded-bl-xs border-green-200 bg-green-50",
+                            )}>
+                              {r.sender === "admin" && <p className="mb-0.5 type-body-sb-xxs text-green-700">Posthive</p>}
+                              <p className="whitespace-pre-wrap type-body-r-xs text-fg">{r.message}</p>
                             </div>
                           </div>
                         ))}
@@ -598,12 +539,12 @@ export function Sidebar() {
                           onChange={e => setThreadDraft(e.target.value)}
                           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendThreadReply(f.id); } }}
                           placeholder="Reply…"
-                          style={{ flex: 1, fontSize: 12, padding: "6px 10px", borderRadius: 8, backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ededed", outline: "none" }}
+                          className="field flex-1 rounded-lg px-2.5 py-1.5 type-body-r-xs"
                         />
                         <button
                           onClick={() => sendThreadReply(f.id)}
                           disabled={threadSending || !threadDraft.trim()}
-                          style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, backgroundColor: "#fff", color: "#0a0a0a", border: "none", cursor: "pointer", opacity: (!threadDraft.trim() || threadSending) ? 0.4 : 1 }}>
+                          className="btn-primary rounded-lg px-3 py-1.5 type-body-sb-xs">
                           {threadSending ? "…" : "Send"}
                         </button>
                       </div>
@@ -618,22 +559,24 @@ export function Sidebar() {
                         <button
                           key={f.id}
                           onClick={() => { setOpenThread(f.id); if (hasUnread) markRead(f.id); }}
-                          className="w-full text-left rounded-xl p-3 space-y-1.5 transition-colors hover:bg-white/5"
-                          style={{ backgroundColor: "#1a1a1a", border: `1px solid ${hasUnread ? "#14532d" : "#2a2a2a"}` }}>
+                          className={cn(
+                            "w-full text-left rounded-xl border bg-bg p-3 space-y-1.5 transition-colors hover:bg-neutral-100",
+                            hasUnread ? "border-green-200" : "border-border",
+                          )}>
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-[11px] font-semibold" style={{ color: "#888" }}>{typeLabel}</span>
+                            <span className="type-body-sb-xs text-muted">{typeLabel}</span>
                             <div className="flex items-center gap-2">
                               {hasUnread && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#14532d", color: "#4ade80" }}>
+                                <span className="rounded-full bg-green-100 px-1.5 py-0.5 type-body-sb-xxs text-green-700">
                                   {f.unreadByUser} new
                                 </span>
                               )}
-                              <span className="text-[11px]" style={{ color: "#555" }}>{f.replies.length} msg{f.replies.length !== 1 ? "s" : ""}</span>
+                              <span className="type-body-r-xs text-neutral-500">{f.replies.length} msg{f.replies.length !== 1 ? "s" : ""}</span>
                             </div>
                           </div>
-                          <p className="text-xs truncate" style={{ color: "#ededed" }}>{f.message}</p>
+                          <p className="truncate type-body-r-xs text-fg">{f.message}</p>
                           {f.replies.length > 1 && (
-                            <p className="text-[11px]" style={{ color: "#555" }}>
+                            <p className="type-body-r-xs text-neutral-500">
                               Last: {f.replies[f.replies.length - 1].message.slice(0, 50)}…
                             </p>
                           )}
@@ -645,8 +588,7 @@ export function Sidebar() {
                 {!openThread && (
                   <button
                     onClick={() => { setFbOpen(false); setFbTab("send"); }}
-                    className="w-full mt-3 py-2 rounded-xl text-sm font-semibold"
-                    style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+                    className="btn-secondary mt-3 w-full text-muted">
                     Close
                   </button>
                 )}
@@ -655,8 +597,8 @@ export function Sidebar() {
 
             {/* Send feedback tab */}
             {fbTab === "send" && <>
-            <h2 className="text-base font-bold mb-1" style={{ color: "#ededed" }}>Send feedback</h2>
-            <p className="text-xs mb-4" style={{ color: "#888" }}>Report a bug or suggest a feature — we read every message.</p>
+            <h2 className="mb-1 type-body-sb-m text-fg">Send feedback</h2>
+            <p className="mb-4 type-body-r-xs text-muted">Report a bug or suggest a feature — we read every message.</p>
             <form onSubmit={submitFeedback} className="space-y-4">
               {/* Type selector */}
               <div className="flex gap-2">
@@ -665,18 +607,16 @@ export function Sidebar() {
                     key={t}
                     type="button"
                     onClick={() => setFbType(t)}
-                    style={{
-                      flex: 1,
-                      padding: "6px 0",
-                      borderRadius: 8,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      border: "1px solid",
-                      cursor: "pointer",
-                      backgroundColor: fbType === t ? (t === "bug" ? "#1f0a0a" : t === "feature" ? "#0a1a0a" : "#0d0d1f") : "#1a1a1a",
-                      borderColor: fbType === t ? (t === "bug" ? "#7f1d1d" : t === "feature" ? "#14532d" : "#3a3a5a") : "#2a2a2a",
-                      color: fbType === t ? (t === "bug" ? "#f87171" : t === "feature" ? "#4ade80" : "#818cf8") : "#555",
-                    }}
+                    className={cn(
+                      "flex-1 cursor-pointer rounded-lg border py-1.5 type-body-sb-xs",
+                      fbType !== t
+                        ? "border-border bg-bg text-neutral-500"
+                        : t === "bug"
+                        ? "border-red-200 bg-red-50 text-red-600"
+                        : t === "feature"
+                        ? "border-green-200 bg-green-50 text-green-700"
+                        : "border-brand-300 bg-brand-100 text-brand-800",
+                    )}
                   >
                     {t === "bug" ? "🐛 Bug" : t === "feature" ? "✨ Feature" : "💬 General"}
                   </button>
@@ -690,21 +630,21 @@ export function Sidebar() {
                   placeholder={fbType === "bug" ? "What happened? What did you expect?" : fbType === "feature" ? "What would you like to see?" : "What's on your mind?"}
                   rows={4}
                   required
-                  style={{ width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "8px 12px", fontSize: 13, color: "#ededed", outline: "none", resize: "none" }}
+                  className="field resize-none"
                 />
               </div>
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => { setFbOpen(false); setFbMessage(""); setFbType("general"); setFbTab("send"); }}
-                  style={{ flex: 1, padding: "8px", borderRadius: 10, fontSize: 13, fontWeight: 600, backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a", cursor: "pointer" }}
+                  className="btn-secondary flex-1"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={fbLoading || !fbMessage.trim()}
-                  style={{ flex: 1, padding: "8px", borderRadius: 10, fontSize: 13, fontWeight: 600, backgroundColor: "#ffffff", color: "#0a0a0a", border: "none", cursor: (fbLoading || !fbMessage.trim()) ? "not-allowed" : "pointer", opacity: (fbLoading || !fbMessage.trim()) ? 0.5 : 1 }}
+                  className="btn-primary flex-1"
                 >
                   {fbLoading ? "Sending…" : "Send feedback"}
                 </button>
@@ -717,33 +657,33 @@ export function Sidebar() {
 
       {/* New workspace modal */}
       {newWsOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
-          <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-            <h2 className="text-base font-bold mb-1" style={{ color: "#ededed" }}>New workspace</h2>
-            <p className="text-xs mb-5" style={{ color: "#888" }}>Create a separate workspace for a team or project. You can upgrade it to a paid plan later.</p>
+        <div className="modal-backdrop fixed inset-0 z-60 flex items-center justify-center p-4">
+          <div className="card w-full max-w-sm p-6">
+            <h2 className="mb-1 type-body-sb-m text-fg">New workspace</h2>
+            <p className="mb-5 type-body-r-xs text-muted">Create a separate workspace for a team or project. You can upgrade it to a paid plan later.</p>
             <form onSubmit={createWorkspace} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Workspace name</label>
+                <label className="mb-1.5 block type-body-m-xs text-muted">Workspace name</label>
                 <input
                   autoFocus
                   value={newWsName}
                   onChange={(e) => setNewWsName(e.target.value)}
                   placeholder="e.g. Marketing Team"
-                  style={{ width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "8px 12px", fontSize: 13, color: "#ededed", outline: "none" }}
+                  className="field"
                 />
               </div>
               <div className="flex gap-3 pt-1">
                 <button
                   type="button"
                   onClick={() => { setNewWsOpen(false); setNewWsName(""); }}
-                  style={{ flex: 1, padding: "8px", borderRadius: 10, fontSize: 13, fontWeight: 600, backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a", cursor: "pointer" }}
+                  className="btn-secondary flex-1"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={newWsLoading || !newWsName.trim()}
-                  style={{ flex: 1, padding: "8px", borderRadius: 10, fontSize: 13, fontWeight: 600, backgroundColor: "#ffffff", color: "#0a0a0a", border: "none", cursor: (newWsLoading || !newWsName.trim()) ? "not-allowed" : "pointer", opacity: (newWsLoading || !newWsName.trim()) ? 0.5 : 1 }}
+                  className="btn-primary flex-1"
                 >
                   {newWsLoading ? "Creating…" : "Create"}
                 </button>
