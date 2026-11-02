@@ -6,6 +6,7 @@ import { apiFetch } from "../../lib/api";
 import { PlatformIcon } from "../../components/PlatformIcon";
 import { DateTimePicker } from "../../components/DateTimePicker";
 import { fromWibInput, toWibInput, wibDateKey } from "../../lib/datetime";
+import { cn } from "../../lib/cn";
 import confetti from "canvas-confetti";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -25,7 +26,6 @@ const PLANS = [
     priceInr: "₹550",
     priceUsd: "$9",
     period: "/mo",
-    color: "#5b63d3",
     maxAccounts: 5,
     maxPosts: "400 posts/mo",
     trialAccounts: 3,
@@ -49,7 +49,6 @@ const PLANS = [
     priceInr: "₹1,700",
     priceUsd: "$29",
     period: "/mo",
-    color: "#7c3aed",
     maxAccounts: 15,
     maxPosts: "Unlimited",
     popular: true,
@@ -72,7 +71,6 @@ const PLANS = [
     priceInr: "₹2,600",
     priceUsd: "$49",
     period: "/mo",
-    color: "#0891b2",
     maxAccounts: 50,
     maxPosts: "Unlimited",
     features: [
@@ -124,14 +122,14 @@ function StepIndicator({ current, billingEnabled }: { current: number; billingEn
         <div key={s.n} className="flex items-center">
           <div className="flex flex-col items-center gap-1.5">
             <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-              style={
+              className={cn(
+                "w-7 h-7 rounded-full flex items-center justify-center type-body-sb-xs transition-all",
                 s.n < current
-                  ? { backgroundColor: "#22c55e", color: "#fff" }
+                  ? "bg-green-500 text-white"
                   : s.n === current
-                    ? { backgroundColor: "#5b63d3", color: "#fff" }
-                    : { backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#444" }
-              }
+                    ? "bg-accent text-accent-fg"
+                    : "bg-neutral-100 text-muted",
+              )}
             >
               {s.n < current ? (
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,16 +140,17 @@ function StepIndicator({ current, billingEnabled }: { current: number; billingEn
               )}
             </div>
             <span
-              className="text-[10px] font-medium whitespace-nowrap"
-              style={{ color: s.n === current ? "#ededed" : s.n < current ? "#22c55e" : "#333" }}
+              className={cn(
+                "type-body-m-xxs whitespace-nowrap",
+                s.n === current ? "text-fg" : s.n < current ? "text-green-700" : "text-neutral-500",
+              )}
             >
               {s.label}
             </span>
           </div>
           {i < steps.length - 1 && (
             <div
-              className="w-12 h-px mb-5 mx-1.5"
-              style={{ backgroundColor: current > s.n ? "#22c55e30" : "#1e1e1e" }}
+              className={cn("w-12 h-px mb-5 mx-1.5", current > s.n ? "bg-green-200" : "bg-border")}
             />
           )}
         </div>
@@ -192,17 +191,16 @@ function BlueskyConnect({ onConnected }: { onConnected: () => void }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-3 w-full p-3.5 rounded-xl text-left transition-all hover:border-blue-500/30"
-        style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+        className="card flex items-center gap-3 w-full p-3.5 rounded-xl text-left transition-all hover:border-neutral-300"
       >
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#0a1830" }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-blue-50">
           <PlatformIcon platform="bluesky" size={18} />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Bluesky</p>
-          <p className="text-xs" style={{ color: "#555" }}>App password · free</p>
+          <p className="type-body-sb-s text-fg">Bluesky</p>
+          <p className="type-body-r-xs text-muted">App password · free</p>
         </div>
-        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
+        <span className="type-body-sb-xs px-2 py-0.5 rounded-full border border-border bg-bg text-muted">
           Connect
         </span>
       </button>
@@ -210,13 +208,13 @@ function BlueskyConnect({ onConnected }: { onConnected: () => void }) {
   }
 
   return (
-    <div className="rounded-xl p-4" style={{ backgroundColor: "#111111", border: "1px solid #5b63d340" }}>
+    <div className="card rounded-xl p-4 border-brand-300">
       <div className="flex items-center gap-2.5 mb-3">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#0a1830" }}>
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-blue-50">
           <PlatformIcon platform="bluesky" size={16} />
         </div>
-        <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Connect Bluesky</p>
-        <button onClick={() => setOpen(false)} className="ml-auto text-xs hover:opacity-70" style={{ color: "#444" }}>
+        <p className="type-body-sb-s text-fg">Connect Bluesky</p>
+        <button onClick={() => setOpen(false)} className="ml-auto type-body-r-xs text-muted hover:opacity-70">
           Cancel
         </button>
       </div>
@@ -227,8 +225,7 @@ function BlueskyConnect({ onConnected }: { onConnected: () => void }) {
           onChange={(e) => setHandle(e.target.value)}
           required
           autoFocus
-          className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-white/10"
-          style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+          className="field rounded-lg px-3.5"
         />
         <input
           type="password"
@@ -236,19 +233,17 @@ function BlueskyConnect({ onConnected }: { onConnected: () => void }) {
           value={appPassword}
           onChange={(e) => setAppPassword(e.target.value)}
           required
-          className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-white/10"
-          style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+          className="field rounded-lg px-3.5"
         />
         {error && (
-          <p className="text-xs rounded-lg px-3 py-2" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1a1a", color: "#f87171" }}>
+          <p className="type-body-r-xs rounded-lg px-3 py-2 border border-red-200 bg-red-50 text-red-600">
             {error}
           </p>
         )}
         <button
           type="submit"
           disabled={connecting}
-          className="w-full py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 hover:bg-gray-100"
-          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+          className="btn-primary w-full rounded-lg"
         >
           {connecting ? "Connecting…" : "Connect Bluesky"}
         </button>
@@ -340,7 +335,7 @@ function OnboardingContent() {
   const planPrice = (p: (typeof PLANS)[number]) => (isIndia ? p.priceInr : p.priceUsd);
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-12" style={{ backgroundColor: "#0a0a0a" }}>
+    <div className="min-h-screen flex flex-col items-center px-4 py-12 bg-bg">
 
       {/* Step indicator — skip on welcome */}
       {step > 1 && (
@@ -353,17 +348,16 @@ function OnboardingContent() {
       {step === 1 && (
         <div className="w-full max-w-lg flex flex-col items-center text-center">
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
-            style={{ backgroundColor: "#5b63d315", border: "1px solid #5b63d330" }}
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border border-brand-300 bg-brand-100"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/posthivemain.png" alt="Posthive" className="w-10 h-10 rounded-xl object-cover" />
           </div>
 
-          <h1 className="text-3xl font-bold mb-3 leading-tight" style={{ color: "#ededed" }}>
+          <h1 className="type-head-sb-3 mb-3 text-fg">
             Schedule smarter,<br />post everywhere.
           </h1>
-          <p className="text-base mb-8 max-w-sm" style={{ color: "#666" }}>
+          <p className="type-body-r-m mb-8 max-w-sm text-muted">
             Write once, publish to multiple social platforms Bluesky, Threads, Instagram, LinkedIn, YouTube, and more.
           </p>
 
@@ -372,8 +366,7 @@ function OnboardingContent() {
             {WELCOME_PLATFORMS.map((p) => (
               <div
                 key={p}
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: "#111111", border: "1px solid #1e1e1e" }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center border border-border bg-surface"
               >
                 <PlatformIcon platform={p} size={20} />
               </div>
@@ -390,8 +383,7 @@ function OnboardingContent() {
             ].map((f) => (
               <span
                 key={f}
-                className="text-xs font-medium px-3 py-1.5 rounded-full"
-                style={{ backgroundColor: "#111111", border: "1px solid #1e1e1e", color: "#666" }}
+                className="type-body-m-xs px-3 py-1.5 rounded-full border border-border bg-surface text-muted"
               >
                 {f}
               </span>
@@ -400,13 +392,12 @@ function OnboardingContent() {
 
           <button
             onClick={() => goStep(2)}
-            className="w-full max-w-xs py-3.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100 active:scale-[0.98]"
-            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+            className="btn-primary w-full max-w-xs py-3.5 transition-all active:scale-[0.98]"
           >
             Get started →
           </button>
 
-          <p className="mt-4 text-xs" style={{ color: "#999" }}>
+          <p className="mt-4 type-body-r-xs text-muted">
             {billingEnabled
               ? "14-day free trial · no card required to start · cancel any time"
               : "Free to use · open source · self-hostable"}
@@ -418,35 +409,35 @@ function OnboardingContent() {
       {step === 2 && (
         <div className="w-full max-w-lg">
           {connected && (
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5" style={{ backgroundColor: "#052e16", border: "1px solid #14532d" }}>
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="#4ade80" viewBox="0 0 24 24">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5 border border-green-200 bg-green-50">
+              <svg className="w-4 h-4 shrink-0 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <p className="text-sm" style={{ color: "#4ade80" }}>
+              <p className="type-body-r-s text-green-700">
                 {connected.charAt(0).toUpperCase() + connected.slice(1)} connected!
               </p>
             </div>
           )}
 
           {oauthError && (
-            <div className="px-4 py-3 rounded-xl mb-5 text-sm" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1a1a", color: "#f87171" }}>
+            <div className="px-4 py-3 rounded-xl mb-5 type-body-r-s border border-red-200 bg-red-50 text-red-600">
               ⚠️ {decodeURIComponent(oauthError)}
             </div>
           )}
 
           <div className="mb-5">
-            <h1 className="text-2xl font-bold mb-1.5" style={{ color: "#ededed" }}>Connect your accounts</h1>
-            <p className="text-sm" style={{ color: "#555" }}>Connect at least one platform to start scheduling.</p>
+            <h1 className="type-head-sb-5 mb-1.5 text-fg">Connect your accounts</h1>
+            <p className="type-body-r-s text-muted">Connect at least one platform to start scheduling.</p>
           </div>
 
           {/* Trial account note */}
           {billingEnabled && (
-            <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl mb-5" style={{ backgroundColor: "#0d1117", border: "1px solid #5b63d330" }}>
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
+            <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl mb-5 border border-brand-300 bg-brand-100">
+              <svg className="w-4 h-4 shrink-0 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p className="text-xs" style={{ color: "#888" }}>
-                Free trial includes <span style={{ color: "#ededed", fontWeight: 600 }}>3 connected accounts</span> connect more after upgrading.
+              <p className="type-body-r-xs text-muted">
+                Free trial includes <span className="type-body-sb-xs text-fg">3 connected accounts</span> connect more after upgrading.
               </p>
             </div>
           )}
@@ -455,15 +446,15 @@ function OnboardingContent() {
           {accounts.length > 0 && (
             <div className="mb-5 space-y-2">
               {accounts.map((a) => (
-                <div key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ backgroundColor: "#0a1a0a", border: "1px solid #14532d" }}>
-                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="#4ade80" viewBox="0 0 24 24">
+                <div key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-green-200 bg-green-50">
+                  <svg className="w-4 h-4 shrink-0 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
                   <PlatformIcon platform={a.platform} size={16} />
-                  <span className="text-sm font-semibold" style={{ color: "#ededed" }}>
+                  <span className="type-body-sb-s text-fg">
                     {a.platform === "threads" ? "@" : ""}{a.displayName}
                   </span>
-                  <span className="ml-auto text-xs capitalize" style={{ color: "#4ade80" }}>{a.platform}</span>
+                  <span className="ml-auto type-body-r-xs capitalize text-green-700">{a.platform}</span>
                 </div>
               ))}
             </div>
@@ -471,9 +462,9 @@ function OnboardingContent() {
 
           {/* Trial limit reached — hide connect UI */}
           {billingEnabled && accounts.length >= 3 ? (
-            <div className="rounded-xl px-5 py-4 mb-6 text-center" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-              <p className="text-sm font-semibold mb-1" style={{ color: "#ededed" }}>Trial limit reached</p>
-              <p className="text-xs" style={{ color: "#555" }}>
+            <div className="card rounded-xl px-5 py-4 mb-6 text-center">
+              <p className="type-body-sb-s mb-1 text-fg">Trial limit reached</p>
+              <p className="type-body-r-xs text-muted">
                 Your free trial includes 3 connected accounts. Upgrade after signing in to connect more.
               </p>
             </div>
@@ -490,18 +481,17 @@ function OnboardingContent() {
                   proOnly && billingEnabled ? (
                     <div
                       key={platform}
-                      className="flex items-center gap-3 p-3.5 rounded-xl opacity-50 cursor-not-allowed"
-                      style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+                      className="card flex items-center gap-3 p-3.5 rounded-xl opacity-50 cursor-not-allowed"
                       title="Available on Pro and Team plans"
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-bg">
                         <PlatformIcon platform={platform} size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: "#ededed" }}>{label}</p>
-                        <p className="text-xs truncate" style={{ color: "#555" }}>{sub}</p>
+                        <p className="type-body-sb-s text-fg">{label}</p>
+                        <p className="type-body-r-xs truncate text-muted">{sub}</p>
                       </div>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "#1c1209", color: "#fbbf24", border: "1px solid #78560a" }}>
+                      <span className="type-body-sb-xs px-2 py-0.5 rounded-full shrink-0 border border-brand-400 bg-brand-100 text-brand-800">
                         Pro
                       </span>
                     </div>
@@ -509,17 +499,16 @@ function OnboardingContent() {
                     <a
                       key={platform}
                       href={`${API_BASE}${path}?from=onboarding`}
-                      className="flex items-center gap-3 p-3.5 rounded-xl transition-all hover:border-gray-600/50"
-                      style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+                      className="card flex items-center gap-3 p-3.5 rounded-xl transition-all hover:border-neutral-300"
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-bg">
                         <PlatformIcon platform={platform} size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: "#ededed" }}>{label}</p>
-                        <p className="text-xs truncate" style={{ color: "#555" }}>{sub}</p>
+                        <p className="type-body-sb-s text-fg">{label}</p>
+                        <p className="type-body-r-xs truncate text-muted">{sub}</p>
                       </div>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
+                      <span className="type-body-sb-xs px-2 py-0.5 rounded-full shrink-0 border border-border bg-bg text-muted">
                         Connect
                       </span>
                     </a>
@@ -527,7 +516,7 @@ function OnboardingContent() {
                 )}
               </div>
 
-              <p className="text-xs mb-6 text-center" style={{ color: "#999" }}>
+              <p className="type-body-r-xs mb-6 text-center text-muted">
                 Instagram, Threads, Facebook, Pinterest, Mastodon, Telegram, Nostr & more →{" "}
                 <span>available after setup in Settings</span>
               </p>
@@ -538,8 +527,7 @@ function OnboardingContent() {
             <button
               onClick={() => goStep(3)}
               disabled={accounts.length === 0}
-              className="w-full py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 active:scale-[0.98]"
-              style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+              className="btn-primary w-full py-3 transition-all active:scale-[0.98]"
             >
               {accounts.length === 0
                 ? "Connect an account to continue"
@@ -547,8 +535,7 @@ function OnboardingContent() {
             </button>
             <button
               onClick={() => goStep(3)}
-              className="text-xs text-center py-1 hover:opacity-70 transition-opacity"
-              style={{ color: "#555" }}
+              className="type-body-r-xs text-center py-1 text-muted hover:opacity-70 transition-opacity"
             >
               Skip for now
             </button>
@@ -560,8 +547,8 @@ function OnboardingContent() {
       {step === 3 && (
         <div className="w-full max-w-lg">
           <div className="mb-7">
-            <h1 className="text-2xl font-bold mb-1.5" style={{ color: "#ededed" }}>Schedule your first post</h1>
-            <p className="text-sm" style={{ color: "#555" }}>
+            <h1 className="type-head-sb-5 mb-1.5 text-fg">Schedule your first post</h1>
+            <p className="type-body-r-s text-muted">
               {accounts.length > 0
                 ? "Write something, pick a time, and you're live."
                 : "You can schedule from the compose page once you're set up."}
@@ -569,17 +556,17 @@ function OnboardingContent() {
           </div>
 
           {accounts.length === 0 && !loadingAccounts ? (
-            <div className="rounded-xl p-6 text-center mb-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-              <p className="text-sm mb-3" style={{ color: "#666" }}>No accounts connected yet.</p>
-              <button onClick={() => goStep(2)} className="text-sm font-semibold hover:opacity-70" style={{ color: "#5b63d3" }}>
+            <div className="card rounded-xl p-6 text-center mb-6">
+              <p className="type-body-r-s mb-3 text-muted">No accounts connected yet.</p>
+              <button onClick={() => goStep(2)} className="type-body-sb-s text-brand-800 hover:opacity-70">
                 ← Connect an account first
               </button>
             </div>
           ) : (
-            <div className="rounded-xl overflow-hidden mb-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+            <div className="card rounded-xl overflow-hidden mb-6">
               {accounts.length > 0 && (
-                <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid #1a1a1a" }}>
-                  <p className="text-xs font-semibold mb-3" style={{ color: "#555" }}>POST TO</p>
+                <div className="px-5 pt-5 pb-4 border-b border-border">
+                  <p className="section-label mb-3">POST TO</p>
                   <div className="flex flex-wrap gap-2">
                     {accounts.map((a) => {
                       const selected = selectedIds.includes(a.id);
@@ -591,12 +578,10 @@ function OnboardingContent() {
                               prev.includes(a.id) ? prev.filter((id) => id !== a.id) : [...prev, a.id],
                             )
                           }
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-                          style={
-                            selected
-                              ? { backgroundColor: "#5b63d320", color: "#ededed", border: "1px solid #5b63d360" }
-                              : { backgroundColor: "#1a1a1a", color: "#555", border: "1px solid #2a2a2a" }
-                          }
+                          className={cn(
+                            "chip gap-2 px-3 py-1.5 rounded-full transition-all",
+                            selected ? "chip-active" : "bg-bg",
+                          )}
                         >
                           <PlatformIcon platform={a.platform} size={12} />
                           {a.displayName}
@@ -607,18 +592,17 @@ function OnboardingContent() {
                 </div>
               )}
 
-              <div className="px-5 py-4" style={{ borderBottom: "1px solid #1a1a1a" }}>
+              <div className="px-5 py-4 border-b border-border">
                 <textarea
                   placeholder="What do you want to share today?"
                   value={postText}
                   onChange={(e) => setPostText(e.target.value)}
                   rows={5}
-                  className="w-full bg-transparent text-sm resize-none focus:outline-hidden"
-                  style={{ color: "#ededed" }}
+                  className="w-full bg-transparent type-body-r-s text-fg resize-none focus:outline-hidden"
                   autoFocus
                 />
                 <div className="flex justify-end">
-                  <span className="text-xs" style={{ color: postText.length > 280 ? "#fb923c" : "#444" }}>
+                  <span className={cn("type-body-r-xs", postText.length > 280 ? "text-brand-800" : "text-neutral-500")}>
                     {postText.length} / 300
                   </span>
                 </div>
@@ -631,17 +615,17 @@ function OnboardingContent() {
               )}
               {billingEnabled && (
                 <div className="px-5 py-3 flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="#444" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 shrink-0 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="text-xs" style={{ color: "#444" }}>Saved as draft · activate after choosing a plan</span>
+                  <span className="type-body-r-xs text-muted">Saved as draft · activate after choosing a plan</span>
                 </div>
               )}
             </div>
           )}
 
           {scheduleError && (
-            <div className="px-4 py-3 rounded-xl mb-4 text-xs" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1a1a", color: "#f87171" }}>
+            <div className="px-4 py-3 rounded-xl mb-4 type-body-r-xs border border-red-200 bg-red-50 text-red-600">
               {scheduleError}
             </div>
           )}
@@ -651,8 +635,7 @@ function OnboardingContent() {
               <button
                 onClick={scheduleFirstPost}
                 disabled={scheduling || !postText.trim() || selectedIds.length === 0}
-                className="w-full py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 active:scale-[0.98]"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+                className="btn-primary w-full py-3 transition-all active:scale-[0.98]"
               >
                 {scheduling ? "Saving…" : billingEnabled ? "Save draft & choose plan →" : "Schedule my first post"}
               </button>
@@ -662,8 +645,7 @@ function OnboardingContent() {
                 if (billingEnabled) goStep(4);
                 else router.replace("/compose?onboarded=1");
               }}
-              className="text-xs text-center py-1 hover:opacity-70 transition-opacity"
-              style={{ color: "#444" }}
+              className="type-body-r-xs text-center py-1 text-muted hover:opacity-70 transition-opacity"
             >
               {billingEnabled ? "Skip — choose a plan →" : "Skip — take me to the app"}
             </button>
@@ -676,18 +658,18 @@ function OnboardingContent() {
         <div className="w-full max-w-3xl">
 
           {/* Trial active banner */}
-          <div className="rounded-2xl p-5 mb-7" style={{ backgroundColor: "#0a1a0a", border: "1px solid #22c55e30" }}>
+          <div className="rounded-2xl p-5 mb-7 border border-green-200 bg-green-50">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#22c55e20", border: "1px solid #22c55e30" }}>
-                <svg className="w-5 h-5" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-green-200 bg-green-100">
+                <svg className="w-5 h-5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="text-sm font-bold mb-1" style={{ color: "#ededed" }}>
+                <p className="type-body-sb-s mb-1 text-fg">
                   Your 14-day free trial is active 🎉
                 </p>
-                <p className="text-xs mb-3" style={{ color: "#666" }}>
+                <p className="type-body-r-xs mb-3 text-muted">
                   Start scheduling right now no card needed. You get 14 days to explore everything. Pick a plan to keep access after the trial ends.
                 </p>
                 <div className="flex flex-wrap gap-x-5 gap-y-1.5">
@@ -698,7 +680,7 @@ function OnboardingContent() {
                     { icon: "📋", text: "Bulk CSV scheduling" },
                     { icon: "💬", text: "First comment automation" },
                   ].map(({ icon, text }) => (
-                    <span key={text} className="flex items-center gap-1.5 text-xs" style={{ color: "#888" }}>
+                    <span key={text} className="flex items-center gap-1.5 type-body-r-xs text-muted">
                       <span>{icon}</span>
                       <span>{text}</span>
                     </span>
@@ -712,48 +694,37 @@ function OnboardingContent() {
             {PLANS.map((plan) => (
               <div
                 key={plan.id}
-                className="relative rounded-2xl flex flex-col overflow-hidden"
-                style={{
-                  backgroundColor: "#111111",
-                  border: plan.popular ? `1px solid ${plan.color}40` : "1px solid #2a2a2a",
-                }}
+                className={cn("card relative flex flex-col overflow-hidden", plan.popular && "border-brand-300")}
               >
-                {plan.popular && <div className="h-px w-full" style={{ backgroundColor: plan.color }} />}
+                {plan.popular && <div className="h-px w-full bg-accent" />}
 
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="h-5 mb-3">
                     {plan.popular && (
                       <span
-                        className="text-[10px] font-bold tracking-wide px-2 py-0.5 rounded-full"
-                        style={{
-                          backgroundColor: `${plan.color}18`,
-                          color: plan.color,
-                          border: `1px solid ${plan.color}35`,
-                        }}
+                        className="type-body-sb-xxs tracking-wide px-2 py-0.5 rounded-full bg-accent text-accent-fg"
                       >
                         MOST POPULAR
                       </span>
                     )}
                   </div>
 
-                  <p className="font-bold text-base mb-0.5" style={{ color: "#ededed" }}>{plan.name}</p>
+                  <p className="type-body-sb-m mb-0.5 text-fg">{plan.name}</p>
 
                   <div className="flex items-baseline gap-1 mt-2 mb-1">
-                    <span className="text-3xl font-bold tracking-tight" style={{ color: "#ededed" }}>{planPrice(plan)}</span>
-                    <span className="text-sm" style={{ color: "#444" }}>{plan.period}</span>
+                    <span className="type-head-sb-4 tracking-tight text-fg">{planPrice(plan)}</span>
+                    <span className="type-body-r-s text-muted">{plan.period}</span>
                   </div>
-                  <p className="text-[11px] mb-4" style={{ color: "#333" }}>{isIndia ? "billed in INR" : "billed in USD"}</p>
+                  <p className="type-body-r-xs mb-4 text-muted">{isIndia ? "billed in INR" : "billed in USD"}</p>
 
                   <div className="flex gap-1.5 mb-4 flex-wrap">
                     <span
-                      className="text-[11px] font-semibold px-2 py-0.5 rounded-lg"
-                      style={{ backgroundColor: plan.color + "15", color: plan.color, border: `1px solid ${plan.color}30` }}
+                      className="type-body-sb-xs px-2 py-0.5 rounded-lg border border-brand-300 bg-brand-100 text-brand-800"
                     >
                       {plan.maxAccounts} accounts
                     </span>
                     <span
-                      className="text-[11px] font-semibold px-2 py-0.5 rounded-lg"
-                      style={{ backgroundColor: plan.color + "15", color: plan.color, border: `1px solid ${plan.color}30` }}
+                      className="type-body-sb-xs px-2 py-0.5 rounded-lg border border-brand-300 bg-brand-100 text-brand-800"
                     >
                       {plan.maxPosts}
                     </span>
@@ -762,10 +733,10 @@ function OnboardingContent() {
                   <ul className="space-y-2 flex-1 mb-5">
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-start gap-2">
-                        <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke={plan.color} viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 shrink-0 mt-0.5 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span className="text-xs leading-snug" style={{ color: "#666" }}>{f}</span>
+                        <span className="type-body-r-xs text-muted">{f}</span>
                       </li>
                     ))}
                   </ul>
@@ -778,13 +749,12 @@ function OnboardingContent() {
           {/* Primary CTA — go to app, no checkout required */}
           <button
             onClick={() => router.replace("/compose?onboarded=1")}
-            className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100 active:scale-[0.98] mb-3"
-            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+            className="btn-primary w-full py-3.5 transition-all active:scale-[0.98] mb-3"
           >
             Start posting →
           </button>
 
-          <p className="text-center text-xs" style={{ color: "#999" }}>
+          <p className="text-center type-body-r-xs text-muted">
             Set up billing later in{" "}
             <button
               onClick={() => router.replace("/billing")}
