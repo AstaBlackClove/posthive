@@ -27,25 +27,21 @@ function CallbackContent() {
 
   if (failed) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
-        <div style={{ textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "#f87171", marginBottom: 12 }}>Sign-in failed. Please try again.</p>
-          <a href="/login" style={{ fontSize: 13, color: "#5b63d3" }}>Back to login</a>
+      <div className="flex min-h-screen items-center justify-center bg-bg">
+        <div className="text-center">
+          <p className="mb-3 type-body-r-s text-red-600">Sign-in failed. Please try again.</p>
+          <a href="/login" className="type-body-r-s text-brand-800 hover:underline">Back to login</a>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-        <div style={{
-          width: 32, height: 32, border: "2px solid #2a2a2a", borderTopColor: "#5b63d3",
-          borderRadius: "50%", animation: "spin 0.7s linear infinite",
-        }} />
-        <p style={{ fontSize: 13, color: "#555" }}>Signing you in…</p>
+    <div className="flex min-h-screen items-center justify-center bg-bg">
+      <div className="flex flex-col items-center gap-4">
+        <div className="size-8 animate-spin rounded-full border-2 border-border border-t-accent" />
+        <p className="type-body-r-s text-muted">Signing you in…</p>
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
