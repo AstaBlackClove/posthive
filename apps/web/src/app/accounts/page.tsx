@@ -229,7 +229,7 @@ function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMo
               : (isShortLived ? "Instagram token expires in ~1 hour (Meta limitation) — reconnect to get a long-lived token" : "Token expires soon — reconnect to avoid interruption")}
           </p>
           <a href={reconnectUrl}
-            className="text-xs font-semibold px-2.5 py-1 rounded-lg flex-shrink-0 transition-opacity hover:opacity-80"
+            className="text-xs font-semibold px-2.5 py-1 rounded-lg shrink-0 transition-opacity hover:opacity-80"
             style={{ backgroundColor: status === "expired" ? "#7f1d1d" : "#78350f", color: status === "expired" ? "#fca5a5" : "#fde68a" }}>
             Reconnect
           </a>
@@ -239,7 +239,7 @@ function ConnectedAccountRow({ account, onDisconnect, disconnecting, postsThisMo
   );
 }
 
-const inputCls = "w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 transition";
+const inputCls = "w-full rounded-xl px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-white/20 transition";
 const inputStyle = { border: `1px solid ${BORDER}`, backgroundColor: "#0d0d0d", color: TEXT };
 
 // ── Bluesky connect dialog ────────────────────────────────────────────────────
@@ -574,7 +574,7 @@ function PixelfedDialog({ onClose }: { onClose: () => void }) {
               onKeyDown={e => e.key === "Enter" && instance.trim() && connect()}
               placeholder="pixelfed.social"
               autoFocus
-              className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+              className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-white/10"
               style={{ backgroundColor: "#0a0a0a", border: `1px solid ${BORDER}`, color: TEXT }}
             />
             <p className="text-xs mt-1.5" style={{ color: "#555" }}>
@@ -634,7 +634,7 @@ function MastodonDialog({ onClose }: { onClose: () => void }) {
               onKeyDown={e => e.key === "Enter" && instance.trim() && connect()}
               placeholder="mastodon.social"
               autoFocus
-              className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+              className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-white/10"
               style={{ backgroundColor: "#0a0a0a", border: `1px solid ${BORDER}`, color: TEXT }}
             />
             <p className="text-xs mt-1.5" style={{ color: "#555" }}>
@@ -719,7 +719,7 @@ function NostrDialog({ onClose, onConnected }: { onClose: () => void; onConnecte
               placeholder="nsec1… or 64-char hex"
               value={nsec} onChange={(e) => setNsec(e.target.value)}
               required autoFocus
-              className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/10 font-mono"
+              className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-white/10 font-mono"
               style={{ backgroundColor: "#0a0a0a", border: `1px solid ${BORDER}`, color: TEXT }} />
             <p className="text-xs mt-1.5" style={{ color: "#555" }}>
               Stored encrypted. Never shared or logged.
@@ -975,13 +975,13 @@ export default function AccountsPage() {
       )}
 
       {/* Top bar */}
-      <div className="flex items-center justify-between pl-16 pr-4 md:px-8 flex-shrink-0"
+      <div className="flex items-center justify-between pl-16 pr-4 md:px-8 shrink-0"
         style={{ height: 65, borderBottom: `1px solid ${BORDER}`, backgroundColor: SURFACE }}>
         <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: TEXT }}>Accounts</h1>
           <p className="text-xs mt-0.5 truncate hidden sm:block" style={{ color: MUTED }}>Connect the social accounts you want to post to.</p>
         </div>
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0"
           style={accounts.length > 0
             ? { backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }
             : { backgroundColor: "#1a1a1a", color: MUTED, border: `1px solid ${BORDER}` }}>
@@ -996,7 +996,7 @@ export default function AccountsPage() {
         {isCancelled && (
           <div className="mb-5 flex items-center gap-3 text-sm rounded-xl px-4 py-3"
             style={{ backgroundColor: "#1f0a0a", border: "1px solid #7f1d1d" }}>
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="#f87171" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="#f87171" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>
@@ -1011,7 +1011,7 @@ export default function AccountsPage() {
           <div className="mb-5 flex items-center justify-between gap-4 text-sm rounded-xl px-4 py-3"
             style={{ backgroundColor: "#1c1209", border: "1px solid #78560a" }}>
             <div className="flex items-center gap-2.5">
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="#fbbf24" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="#fbbf24" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
@@ -1033,7 +1033,7 @@ export default function AccountsPage() {
             placeholder="Filter platforms…"
             value={platformSearch}
             onChange={(e) => setPlatformSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 transition"
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border focus:outline-hidden focus:ring-2 transition"
             style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, color: TEXT }}
           />
           {platformSearch && (
@@ -1049,8 +1049,8 @@ export default function AccountsPage() {
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
                   <div className="w-9 h-9 rounded-xl" style={{ backgroundColor: "#1e1e1e" }} />
                   <div className="flex-1 space-y-2">
-                    <div className="h-3 w-20 rounded" style={{ backgroundColor: "#1e1e1e" }} />
-                    <div className="h-2.5 w-32 rounded" style={{ backgroundColor: "#1a1a1a" }} />
+                    <div className="h-3 w-20 rounded-sm" style={{ backgroundColor: "#1e1e1e" }} />
+                    <div className="h-2.5 w-32 rounded-sm" style={{ backgroundColor: "#1a1a1a" }} />
                   </div>
                   <div className="h-5 w-10 rounded-full" style={{ backgroundColor: "#1e1e1e" }} />
                 </div>
@@ -1067,7 +1067,7 @@ export default function AccountsPage() {
           {/* ── Bluesky ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("bluesky") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                 <PlatformIcon platform="bluesky" size={20} />
               </div>
               <div className="flex-1">
@@ -1101,7 +1101,7 @@ export default function AccountsPage() {
           {/* ── Threads ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("threads") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                 <PlatformIcon platform="threads" size={20} />
               </div>
               <div className="flex-1">
@@ -1143,7 +1143,7 @@ export default function AccountsPage() {
           {/* ── Instagram ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("instagram") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                 <PlatformIcon platform="instagram" size={20} />
               </div>
               <div className="flex-1">
@@ -1184,7 +1184,7 @@ export default function AccountsPage() {
           {/* ── LinkedIn ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("linkedin") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                 <PlatformIcon platform="linkedin" size={20} />
               </div>
               <div className="flex-1">
@@ -1228,7 +1228,7 @@ export default function AccountsPage() {
           {/* ── YouTube ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("youtube") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                 <PlatformIcon platform="youtube" size={20} />
               </div>
               <div className="flex-1">
@@ -1267,7 +1267,7 @@ export default function AccountsPage() {
           {/* ── Facebook Pages ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("facebook") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                 <PlatformIcon platform="facebook" size={20} />
               </div>
               <div className="flex-1">
@@ -1378,7 +1378,7 @@ export default function AccountsPage() {
           {/* ── Pinterest ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("pinterest") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                 <PlatformIcon platform="pinterest" size={20} />
               </div>
               <div className="flex-1">
@@ -1420,7 +1420,7 @@ export default function AccountsPage() {
             return (
               <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("telegram") }}>
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                     <PlatformIcon platform="telegram" size={20} />
                   </div>
                   <div className="flex-1">
@@ -1468,7 +1468,7 @@ export default function AccountsPage() {
             return (
               <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("nostr") }}>
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                     <PlatformIcon platform="nostr" size={20} />
                   </div>
                   <div className="flex-1">
@@ -1514,7 +1514,7 @@ export default function AccountsPage() {
           {/* ── X / Twitter ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("twitter") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                 <PlatformIcon platform="twitter" size={20} />
               </div>
               <div className="flex-1">
@@ -1597,7 +1597,7 @@ export default function AccountsPage() {
             return (
               <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("discord") }}>
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                     <PlatformIcon platform="discord" size={20} />
                   </div>
                   <div className="flex-1">
@@ -1646,7 +1646,7 @@ export default function AccountsPage() {
             return (
               <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("tumblr") }}>
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                     <PlatformIcon platform="tumblr" size={20} />
                   </div>
                   <div className="flex-1">
@@ -1693,7 +1693,7 @@ export default function AccountsPage() {
             return (
               <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("lemmy") }}>
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                     <PlatformIcon platform="lemmy" size={20} />
                   </div>
                   <div className="flex-1">
@@ -1729,7 +1729,7 @@ export default function AccountsPage() {
           {/* ── Google Business Profile ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("googlebusiness") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                 <PlatformIcon platform="googlebusiness" size={20} />
               </div>
               <div className="flex-1">
@@ -1755,7 +1755,7 @@ export default function AccountsPage() {
           {/* ── TikTok ── */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, ...show("tiktok") }}>
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
                 <PlatformIcon platform="tiktok" size={20} />
               </div>
               <div className="flex-1">

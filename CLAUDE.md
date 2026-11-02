@@ -193,17 +193,36 @@ Templates are design references (docs/content-types.md): `create_from_template` 
 
 ## Design System
 
-**Dark theme — all inline styles:**
-| Token | Value |
-|-------|-------|
-| Background | `#0a0a0a` |
-| Surface | `#111111` |
-| Border | `#2a2a2a` |
-| Text | `#ededed` |
-| Muted | `#888888` |
-| Accent | `#5b63d3` |
+Tailwind CSS v4, tokens in `apps/web/src/app/globals.css`. **Light theme only** (`.dark` tokens exist but the class is never applied). Fonts: KoHo (headings) + Inter (body) via `next/font` in `app/layout.tsx`.
 
-**Buttons:** always `backgroundColor: "#ffffff", color: "#0a0a0a"` with `hover:bg-gray-100`
+**No inline `style={{}}`.** Style with utilities from the tokens below. Allowed exceptions only:
+- `app/api/og/route.tsx` (Satori requires inline styles)
+- Runtime values (progress %, positions, data-driven colors) → set a CSS variable, read it in a class: `style={{ "--w": \`${pct}%\` } as React.CSSProperties}` + `className="w-(--w)"`
+- Platform-native colors in `PlatformPreview.tsx` / `PLATFORM_COLOR` → arbitrary classes (`text-[#536471]`), never brand tokens
+
+**Semantic colors** (use these, not hex):
+| Utility | Use |
+|---------|-----|
+| `bg-bg` | Page background (cream) |
+| `bg-surface` | Cards, panels, inputs on surface |
+| `border-border` | Default borders (also the base border color) |
+| `text-fg` | Primary text |
+| `text-muted` | Secondary text; `text-neutral-500` for dimmer |
+| `bg-accent` / `text-accent-fg` | Brand-yellow fills (buttons, active badges) |
+
+Scales: `brand-*` (yellow), `neutral-*` (olive), `red-*`, `blue-*`, `green-*`. Status: success `text-green-700 bg-green-50 border-green-200`, danger `text-red-600 bg-red-50 border-red-200`, warning `text-brand-800 bg-brand-100 border-brand-400`, info `text-blue-700 bg-blue-50 border-blue-200`.
+
+**Never use `text-accent` for text or icons** — yellow on cream is unreadable. Use `text-brand-800` (active nav: `bg-brand-100 text-brand-800`).
+
+**Typography:** use `type-{display|head|body|mono}-{weight}-{size}` utilities (e.g. `type-body-sb-s` = Inter 600 14px, `type-head-sb-5` = KoHo 600 24px). They set the `font` shorthand, so don't combine them with `text-[size]`, `font-{weight}` or `leading-*`.
+
+**Component classes** (in `globals.css`, override with utilities):
+- `btn-primary` (yellow), `btn-secondary` (surface + border), `btn-danger` (red)
+- `field` — input / select / textarea
+- `card` — `rounded-2xl border border-border bg-surface`
+- Existing: `job-card`, `job-action-btn`, `modal-backdrop`, `modal-panel`, `masonry-accounts`
+
+Conditional classes: `cn()` from `apps/web/src/lib/cn.ts`.
 
 ---
 

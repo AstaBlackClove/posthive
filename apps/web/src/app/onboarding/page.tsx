@@ -195,7 +195,7 @@ function BlueskyConnect({ onConnected }: { onConnected: () => void }) {
         className="flex items-center gap-3 w-full p-3.5 rounded-xl text-left transition-all hover:border-blue-500/30"
         style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
       >
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#0a1830" }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#0a1830" }}>
           <PlatformIcon platform="bluesky" size={18} />
         </div>
         <div className="flex-1">
@@ -227,7 +227,7 @@ function BlueskyConnect({ onConnected }: { onConnected: () => void }) {
           onChange={(e) => setHandle(e.target.value)}
           required
           autoFocus
-          className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+          className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-white/10"
           style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
         />
         <input
@@ -236,7 +236,7 @@ function BlueskyConnect({ onConnected }: { onConnected: () => void }) {
           value={appPassword}
           onChange={(e) => setAppPassword(e.target.value)}
           required
-          className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+          className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-white/10"
           style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
         />
         {error && (
@@ -419,7 +419,7 @@ function OnboardingContent() {
         <div className="w-full max-w-lg">
           {connected && (
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5" style={{ backgroundColor: "#052e16", border: "1px solid #14532d" }}>
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="#4ade80" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="#4ade80" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               <p className="text-sm" style={{ color: "#4ade80" }}>
@@ -442,7 +442,7 @@ function OnboardingContent() {
           {/* Trial account note */}
           {billingEnabled && (
             <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl mb-5" style={{ backgroundColor: "#0d1117", border: "1px solid #5b63d330" }}>
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p className="text-xs" style={{ color: "#888" }}>
@@ -456,7 +456,7 @@ function OnboardingContent() {
             <div className="mb-5 space-y-2">
               {accounts.map((a) => (
                 <div key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ backgroundColor: "#0a1a0a", border: "1px solid #14532d" }}>
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="#4ade80" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="#4ade80" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
                   <PlatformIcon platform={a.platform} size={16} />
@@ -494,14 +494,14 @@ function OnboardingContent() {
                       style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
                       title="Available on Pro and Team plans"
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
                         <PlatformIcon platform={platform} size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold" style={{ color: "#ededed" }}>{label}</p>
                         <p className="text-xs truncate" style={{ color: "#555" }}>{sub}</p>
                       </div>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#1c1209", color: "#fbbf24", border: "1px solid #78560a" }}>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "#1c1209", color: "#fbbf24", border: "1px solid #78560a" }}>
                         Pro
                       </span>
                     </div>
@@ -512,14 +512,14 @@ function OnboardingContent() {
                       className="flex items-center gap-3 p-3.5 rounded-xl transition-all hover:border-gray-600/50"
                       style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
                         <PlatformIcon platform={platform} size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold" style={{ color: "#ededed" }}>{label}</p>
                         <p className="text-xs truncate" style={{ color: "#555" }}>{sub}</p>
                       </div>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
                         Connect
                       </span>
                     </a>
@@ -613,7 +613,7 @@ function OnboardingContent() {
                   value={postText}
                   onChange={(e) => setPostText(e.target.value)}
                   rows={5}
-                  className="w-full bg-transparent text-sm resize-none focus:outline-none"
+                  className="w-full bg-transparent text-sm resize-none focus:outline-hidden"
                   style={{ color: "#ededed" }}
                   autoFocus
                 />
@@ -631,7 +631,7 @@ function OnboardingContent() {
               )}
               {billingEnabled && (
                 <div className="px-5 py-3 flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="#444" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="#444" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   <span className="text-xs" style={{ color: "#444" }}>Saved as draft · activate after choosing a plan</span>
@@ -678,7 +678,7 @@ function OnboardingContent() {
           {/* Trial active banner */}
           <div className="rounded-2xl p-5 mb-7" style={{ backgroundColor: "#0a1a0a", border: "1px solid #22c55e30" }}>
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#22c55e20", border: "1px solid #22c55e30" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#22c55e20", border: "1px solid #22c55e30" }}>
                 <svg className="w-5 h-5" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
@@ -762,7 +762,7 @@ function OnboardingContent() {
                   <ul className="space-y-2 flex-1 mb-5">
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-start gap-2">
-                        <svg className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" fill="none" stroke={plan.color} viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke={plan.color} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
                         <span className="text-xs leading-snug" style={{ color: "#666" }}>{f}</span>

@@ -154,7 +154,7 @@ export default function TeamPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center justify-between" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
+      <div className="pl-16 pr-4 md:px-8 shrink-0 flex items-center justify-between" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
         <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Team</h1>
           <p className="text-xs mt-0.5 hidden sm:block" style={{ color: "#aaaaaa" }}>Manage members and invitations for {activeWorkspace?.name}</p>
@@ -206,7 +206,7 @@ export default function TeamPage() {
                   return (
                     <div key={m.id} className="flex items-center gap-3 rounded-xl px-4 py-3 transition-colors" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e" }}>
                       {/* Avatar */}
-                      <div className="relative flex-shrink-0">
+                      <div className="relative shrink-0">
                         {m.avatarUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={m.avatarUrl} alt={m.name} className="w-9 h-9 rounded-full object-cover" />
@@ -223,7 +223,7 @@ export default function TeamPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-medium truncate" style={{ color: "#ededed" }}>{m.name}</p>
-                          {m.isCurrentUser && <span className="text-xs flex-shrink-0" style={{ color: "#555" }}>you</span>}
+                          {m.isCurrentUser && <span className="text-xs shrink-0" style={{ color: "#555" }}>you</span>}
                         </div>
                         <p className="text-xs truncate" style={{ color: "#555" }}>{m.email}</p>
                       </div>
@@ -253,7 +253,7 @@ export default function TeamPage() {
                         <button
                           onClick={() => removeMember(m.id)}
                           disabled={removingId === m.id}
-                          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex-shrink-0 transition-opacity"
+                          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg shrink-0 transition-opacity"
                           style={{ backgroundColor: "#2a101010", color: "#f87171", border: "1px solid #f8717130", opacity: removingId === m.id ? 0.5 : 1, cursor: removingId === m.id ? "wait" : "pointer" }}
                         >
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -295,7 +295,7 @@ export default function TeamPage() {
                 onClick={toggleApproval}
                 disabled={approvalLoading}
                 aria-label={approvalRequired ? "Disable design review" : "Enable design review"}
-                className="relative flex-shrink-0 rounded-full transition-colors"
+                className="relative shrink-0 rounded-full transition-colors"
                 style={{
                   width: 44, height: 24,
                   backgroundColor: approvalRequired ? "#5b63d3" : "#2a2a2a",
@@ -343,7 +343,7 @@ export default function TeamPage() {
             <div className="p-4">
               {invites.length === 0 ? (
                 <div className="flex items-center gap-2 px-2 py-1">
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="#555" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="#555" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                   </svg>
                   <p className="text-xs" style={{ color: "#555" }}>No pending invites. Use "Invite member" to add someone.</p>
@@ -354,7 +354,7 @@ export default function TeamPage() {
                     const daysLeft = Math.max(0, Math.ceil((new Date(inv.expiresAt).getTime() - Date.now()) / 86400000));
                     return (
                       <div key={inv.id} className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e" }}>
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b15", border: "1px solid #f59e0b20" }}>
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: "#f59e0b15", border: "1px solid #f59e0b20" }}>
                           <svg className="w-4 h-4" fill="none" stroke="#f59e0b" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                           </svg>
@@ -370,7 +370,7 @@ export default function TeamPage() {
                         <button
                           onClick={() => cancelInvite(inv.id)}
                           disabled={cancellingInviteId === inv.id}
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg flex-shrink-0"
+                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg shrink-0"
                           style={{ backgroundColor: "transparent", color: "#f87171", border: "1px solid #f8717130", opacity: cancellingInviteId === inv.id ? 0.5 : 1, cursor: cancellingInviteId === inv.id ? "wait" : "pointer" }}
                         >
                           {cancellingInviteId === inv.id ? "…" : "Revoke"}

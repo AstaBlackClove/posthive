@@ -67,11 +67,11 @@ export function MediaStage({ media, index, onIndexChange, labels }: {
           </>
         )}
       </div>
-      <div className="flex items-center gap-2 px-4 py-3 flex-shrink-0 overflow-x-auto" style={{ borderTop: "1px solid #1f1f1f" }}>
+      <div className="flex items-center gap-2 px-4 py-3 shrink-0 overflow-x-auto" style={{ borderTop: "1px solid #1f1f1f" }}>
         {count > 1 && media.map((m, i) => (
           <button key={m.previewUrl + i} type="button" onClick={() => onIndexChange(i)}
             aria-label={`Show ${labels?.[i] ?? `media ${i + 1}`}`} aria-current={i === index}
-            className="flex-shrink-0 rounded-lg overflow-hidden"
+            className="shrink-0 rounded-lg overflow-hidden"
             style={{ width: 48, height: 48, border: i === index ? "2px solid #5b63d3" : "1px solid #2a2a2a", opacity: i === index ? 1 : 0.6 }}>
             {m.isVideo ? (
               <video src={m.previewUrl} muted playsInline preload="metadata" className="w-full h-full object-cover" />
@@ -81,7 +81,7 @@ export function MediaStage({ media, index, onIndexChange, labels }: {
             )}
           </button>
         ))}
-        <span className="text-xs ml-auto flex-shrink-0" style={{ color: "#888" }}>
+        <span className="text-xs ml-auto shrink-0" style={{ color: "#888" }}>
           {count > 1 && `${position} · `}
           <a href={current.previewUrl} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#ededed" }}>
             Open original

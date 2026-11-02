@@ -29,7 +29,7 @@ export function DesignReferenceCard({ template, category, showPreview = false }:
   return (
     <div className="flex gap-3 rounded-xl p-3" style={{ border: "1px solid #2a2a2a", background: "#0a0a0a" }}>
       {preview && (
-        <a href={preview} target="_blank" rel="noopener noreferrer" className="flex-shrink-0" aria-label="Open the template preview">
+        <a href={preview} target="_blank" rel="noopener noreferrer" className="shrink-0" aria-label="Open the template preview">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="" className="rounded-lg object-cover" style={{ width: 56, height: 70, border: "1px solid #2a2a2a" }} />
         </a>

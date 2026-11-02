@@ -422,7 +422,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
     <Modal open={open} onClose={onClose} maxWidth={1400} onPaste={handlePaste}>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
+      <div className="flex items-center justify-between px-6 py-4 shrink-0"
         style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
         <div>
           <h2 className="text-base font-bold" style={{ color: "#ededed" }}>Edit Post</h2>
@@ -492,11 +492,11 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
                           : { background: "#111111", border: "1px solid #2a2a2a", color: "#888" }}>
                         {a.avatarUrl && (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={a.avatarUrl} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                          <img src={a.avatarUrl} alt="" className="w-4 h-4 rounded-full object-cover shrink-0" />
                         )}
                         <span className="truncate max-w-[96px]">{a.displayName}</span>
                         {sel && (
-                          <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                           </svg>
                         )}
@@ -550,7 +550,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
               onChange={e => { setText(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
               ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
               placeholder="What do you want to share?"
-              className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-none transition"
+              className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-hidden transition"
               style={{
                 minHeight: "140px", overflow: "hidden",
                 border: overAnyLimit ? "1px solid #fca5a5" : "1px solid #2a2a2a",
@@ -726,7 +726,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
                               onChange={e => { setOverrideField(a.id, "text", e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
                               ref={el => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
                               placeholder={`Custom caption for ${a.displayName}…`}
-                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
+                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-hidden"
                               style={{ minHeight: 100, overflow: "hidden", backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }}
                             />
                           </div>
@@ -738,7 +738,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
                               onChange={e => { setOverrideField(a.id, "commentText", e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
                               ref={el => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
                               placeholder={`Custom first comment for ${a.displayName}…`}
-                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
+                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-hidden"
                               style={{ minHeight: 60, overflow: "hidden", backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}
                             />
                           </div>
@@ -754,7 +754,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
         </div>
 
         {/* Right: live previews — hidden on mobile, shown on sm+ */}
-        <div className="hidden sm:flex flex-shrink-0 flex-col overflow-y-auto" style={{ width: 480, backgroundColor: "#0a0a0a" }}>
+        <div className="hidden sm:flex shrink-0 flex-col overflow-y-auto" style={{ width: 480, backgroundColor: "#0a0a0a" }}>
           <div className="px-5 pt-5 pb-3">
             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Preview</p>
           </div>
@@ -784,7 +784,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
       </div>
 
       {/* Footer */}
-      <div className="flex flex-col gap-2 px-6 py-4 flex-shrink-0"
+      <div className="flex flex-col gap-2 px-6 py-4 shrink-0"
         style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
         <WarningsBar
           youtubeSelectedWithNoVideo={youtubeSelectedWithNoVideo}
@@ -824,17 +824,17 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
       </div>
       {/* Mobile preview bottom sheet */}
       {previewOpen && (
-        <div className="sm:hidden fixed inset-0 z-[1100]" onClick={() => setPreviewOpen(false)}>
+        <div className="sm:hidden fixed inset-0 z-1100" onClick={() => setPreviewOpen(false)}>
           <div className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,.6)" }} />
           <div
             className="absolute inset-x-0 bottom-0 rounded-t-2xl flex flex-col"
             style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderBottom: "none", maxHeight: "80vh" }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-center pt-2.5 pb-1 flex-shrink-0">
+            <div className="flex items-center justify-center pt-2.5 pb-1 shrink-0">
               <div className="w-9 h-1 rounded-full" style={{ backgroundColor: "#2a2a2a" }} />
             </div>
-            <div className="flex items-center justify-between px-5 pt-1 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+            <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
               <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Preview</p>
               <button type="button" onClick={() => setPreviewOpen(false)}
                 className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/5"
@@ -867,7 +867,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
         </div>
       )}
       {showReorder && (
-        <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+        <div className="fixed inset-0 z-1200 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
           onClick={() => setShowReorder(false)}>
           <div className="rounded-2xl w-full max-w-sm overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
             onClick={e => e.stopPropagation()}>

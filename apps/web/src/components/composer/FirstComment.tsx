@@ -19,7 +19,7 @@ export function FirstComment({ value, onChange }: Props) {
         onChange={(e) => { onChange(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
         ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
         placeholder="Add a link, thread continuation, or extra context…"
-        className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"
+        className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-hidden focus:ring-2 transition"
         style={{ minHeight: "72px", overflow: "hidden", borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
       />
     </div>

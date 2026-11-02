@@ -133,7 +133,7 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
   const FORMAT_LABEL: Record<string, string> = { post: "Post", reel: "Reel", story: "Story" };
 
   function Avatar({ size = 8 }: { size?: number }) {
-    const cls = `w-${size} h-${size} rounded-full flex-shrink-0`;
+    const cls = `w-${size} h-${size} rounded-full shrink-0`;
     return account.avatarUrl ? (
       // eslint-disable-next-line @next/next/no-img-element
       <img src={account.avatarUrl} alt="" className={`${cls} object-cover`} />
@@ -151,7 +151,7 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
           style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a", borderLeft: "3px solid #e1306c" }}>
           <PlatformIcon platform="instagram" size={16} />
           <span className="text-xs font-semibold" style={{ color: "#e1306c" }}>Instagram</span>
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ backgroundColor: "#E1306C20", color: "#E1306C" }}>STORY</span>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm ml-1" style={{ backgroundColor: "#E1306C20", color: "#E1306C" }}>STORY</span>
           <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
         </div>
 
@@ -179,8 +179,8 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
             <div className="ring-2 ring-white rounded-full">
               <Avatar size={8} />
             </div>
-            <span className="text-xs font-semibold text-white drop-shadow">{account.displayName}</span>
-            <span className="text-xs text-white/60 drop-shadow ml-1">· just now</span>
+            <span className="text-xs font-semibold text-white drop-shadow-sm">{account.displayName}</span>
+            <span className="text-xs text-white/60 drop-shadow-sm ml-1">· just now</span>
           </div>
           {/* reply bar bottom */}
           <div className="absolute bottom-4 left-3 right-3 flex items-center gap-2">
@@ -202,7 +202,7 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
           style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a", borderLeft: "3px solid #e1306c" }}>
           <PlatformIcon platform="instagram" size={16} />
           <span className="text-xs font-semibold" style={{ color: "#e1306c" }}>Instagram</span>
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ backgroundColor: "#E1306C20", color: "#E1306C" }}>REEL</span>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm ml-1" style={{ backgroundColor: "#E1306C20", color: "#E1306C" }}>REEL</span>
           <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
         </div>
 
@@ -247,11 +247,11 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
           <div className="absolute bottom-4 left-3 right-12">
             <div className="flex items-center gap-2 mb-1.5">
               <div className="ring-1 ring-white/50 rounded-full"><Avatar size={7} /></div>
-              <span className="text-sm font-semibold text-white drop-shadow">{account.displayName}</span>
-              <span className="text-xs font-semibold text-white border border-white/50 rounded px-1.5 py-0.5 ml-1">Follow</span>
+              <span className="text-sm font-semibold text-white drop-shadow-sm">{account.displayName}</span>
+              <span className="text-xs font-semibold text-white border border-white/50 rounded-sm px-1.5 py-0.5 ml-1">Follow</span>
             </div>
             {text && (
-              <p className="text-xs text-white/80 leading-relaxed line-clamp-2 drop-shadow">{text}</p>
+              <p className="text-xs text-white/80 leading-relaxed line-clamp-2 drop-shadow-sm">{text}</p>
             )}
           </div>
         </div>
@@ -266,7 +266,7 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
         style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a", borderLeft: "3px solid #e1306c" }}>
         <PlatformIcon platform="instagram" size={16} />
         <span className="text-xs font-semibold" style={{ color: "#e1306c" }}>Instagram</span>
-        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ backgroundColor: "#E1306C20", color: "#E1306C" }}>{FORMAT_LABEL[igMediaType]}</span>
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm ml-1" style={{ backgroundColor: "#E1306C20", color: "#E1306C" }}>{FORMAT_LABEL[igMediaType]}</span>
         <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
       </div>
 
@@ -290,7 +290,7 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
 
           {/* Video badge */}
           {mediaItems[carouselIdx]?.isVideo && (
-            <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+            <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm">
               VIDEO
             </div>
           )}
@@ -378,9 +378,9 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
           <div className="flex gap-2 mt-2">
             {account.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={account.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0 mt-0.5" />
+              <img src={account.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5" />
             ) : (
-              <div className="w-5 h-5 rounded-full flex-shrink-0 mt-0.5"
+              <div className="w-5 h-5 rounded-full shrink-0 mt-0.5"
                 style={{ background: "linear-gradient(135deg, #f09433, #bc1888)" }} />
             )}
             <p className="text-xs leading-relaxed" style={{ color: "#ededed" }}>
@@ -403,7 +403,7 @@ function LinkedInPreview({ account, text, commentText, images }: {
 }) {
   const initial = account.displayName[0]?.toUpperCase() ?? "?";
   return (
-    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#1b1f23", border: "1px solid #2a2a2a" }}>
+    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#1b1f23", border: "1px solid #2a2a2a" }}>
       {/* Header bar */}
       <div className="flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #0077b5", backgroundColor: "#0a0a0a" }}>
@@ -417,9 +417,9 @@ function LinkedInPreview({ account, text, commentText, images }: {
         <div className="flex gap-3 mb-3">
           {account.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={account.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+            <img src={account.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white"
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white"
               style={{ background: "#0077b5" }}>
               {initial}
             </div>
@@ -432,7 +432,7 @@ function LinkedInPreview({ account, text, commentText, images }: {
 
         {/* Post text — LinkedIn shows "...more" after 3 lines */}
         {text ? (
-          <p className="text-sm whitespace-pre-wrap break-words leading-relaxed line-clamp-6" style={{ color: "#d4d4d4" }}>{text}</p>
+          <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed line-clamp-6" style={{ color: "#d4d4d4" }}>{text}</p>
         ) : (
           <p className="text-sm italic" style={{ color: "#444" }}>Start writing your post for a preview…</p>
         )}
@@ -484,12 +484,12 @@ function YouTubePreview({ account, text, commentText, mediaItems = [], youtubeTy
   const initial = account.displayName[0]?.toUpperCase() ?? "?";
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#0f0f0f", border: "1px solid #2a2a2a" }}>
+    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#0f0f0f", border: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #ff0000", backgroundColor: "#0a0a0a" }}>
         <PlatformIcon platform="youtube" size={16} />
         <span className="text-xs font-semibold" style={{ color: "#ff0000" }}>YouTube</span>
-        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ backgroundColor: "#ff000020", color: "#ff0000" }}>
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm ml-1" style={{ backgroundColor: "#ff000020", color: "#ff0000" }}>
           {isShort ? "SHORT" : "VIDEO"}
         </span>
         <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
@@ -529,9 +529,9 @@ function YouTubePreview({ account, text, commentText, mediaItems = [], youtubeTy
         <div className="mt-3 flex gap-3">
           {account.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white"
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white"
               style={{ background: "#ff0000" }}>
               {account.displayName[0]?.toUpperCase() ?? "?"}
             </div>
@@ -544,7 +544,7 @@ function YouTubePreview({ account, text, commentText, mediaItems = [], youtubeTy
             )}
             <p className="text-xs mt-1" style={{ color: "#888" }}>{account.displayName}</p>
             {description ? (
-              <p className="text-xs mt-2 whitespace-pre-wrap break-words leading-relaxed line-clamp-3" style={{ color: "#aaa" }}>{description}</p>
+              <p className="text-xs mt-2 whitespace-pre-wrap wrap-break-word leading-relaxed line-clamp-3" style={{ color: "#aaa" }}>{description}</p>
             ) : (
               <p className="text-xs mt-2 italic" style={{ color: "#444" }}>Description everything after the first line</p>
             )}
@@ -554,7 +554,7 @@ function YouTubePreview({ account, text, commentText, mediaItems = [], youtubeTy
         {/* First comment */}
         {commentText && (
           <div className="mt-3 pt-2.5 flex gap-2" style={{ borderTop: "1px solid #1a1a1a" }}>
-            <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
+            <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
               style={{ background: "#ff0000" }}>{initial}</div>
             <div className="flex-1 rounded-lg px-3 py-2" style={{ backgroundColor: "#111111" }}>
               <p className="text-xs font-semibold mb-0.5" style={{ color: "#ededed" }}>{account.displayName}</p>
@@ -578,7 +578,7 @@ function PixelfedPreview({ account, text, commentText, images, video }: {
   const timeStr = formatTime(new Date());
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#1a1215", border: "1px solid #2a2a2a" }}>
+    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#1a1215", border: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #ff8c00", backgroundColor: "#0a0a0a" }}>
         <PlatformIcon platform="pixelfed" size={16} />
@@ -590,9 +590,9 @@ function PixelfedPreview({ account, text, commentText, images, video }: {
         <div className="flex gap-3">
           {account.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white"
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white"
               style={{ background: "#ff8c00" }}>
               {initial}
             </div>
@@ -603,7 +603,7 @@ function PixelfedPreview({ account, text, commentText, images, video }: {
               <span className="text-xs" style={{ color: "#555" }}>{timeStr}</span>
             </div>
             {text ? (
-              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#d4d4d4" }}>{text}</p>
+              <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#d4d4d4" }}>{text}</p>
             ) : (
               <p className="text-sm italic" style={{ color: "#444" }}>Start writing your post…</p>
             )}
@@ -647,7 +647,7 @@ function MastodonPreview({ account, text, commentText, images, video }: {
   const timeStr = formatTime(new Date());
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#1f1f2e", border: "1px solid #2a2a2a" }}>
+    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#1f1f2e", border: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #6364ff", backgroundColor: "#0a0a0a" }}>
         <PlatformIcon platform="mastodon" size={16} />
@@ -659,9 +659,9 @@ function MastodonPreview({ account, text, commentText, images, video }: {
         <div className="flex gap-3">
           {account.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white"
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white"
               style={{ background: "#6364ff" }}>
               {initial}
             </div>
@@ -672,7 +672,7 @@ function MastodonPreview({ account, text, commentText, images, video }: {
               <span className="text-xs" style={{ color: "#555" }}>{timeStr}</span>
             </div>
             {text ? (
-              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#d4d4d4" }}>{text}</p>
+              <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#d4d4d4" }}>{text}</p>
             ) : (
               <p className="text-sm italic" style={{ color: "#444" }}>Start writing your post…</p>
             )}
@@ -701,7 +701,7 @@ function MastodonPreview({ account, text, commentText, images, video }: {
 
             {commentText && (
               <div className="mt-3 pt-2.5 flex gap-2" style={{ borderTop: "1px solid #2a2a2a" }}>
-                <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
+                <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
                   style={{ background: "#6364ff" }}>{initial}</div>
                 <div className="flex-1 rounded-lg px-3 py-2" style={{ backgroundColor: "#111111" }}>
                   <p className="text-xs font-semibold mb-0.5" style={{ color: "#ededed" }}>@{account.displayName}</p>
@@ -728,7 +728,7 @@ function PinterestPreview({ account, text, images }: {
   const initial = account.displayName[0]?.toUpperCase() ?? "?";
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #e60023", backgroundColor: "#0a0a0a" }}>
         <PlatformIcon platform="pinterest" size={16} />
@@ -790,7 +790,7 @@ function TwitterPreview({ account, text, commentText, images, video }: {
   const timeStr = formatTime(new Date());
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#000000", border: "1px solid #2f3336" }}>
+    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#000000", border: "1px solid #2f3336" }}>
       <div className="flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid #2f3336", borderLeft: "3px solid #e7e9ea", backgroundColor: "#000000" }}>
         <PlatformIcon platform="twitter" size={16} />
@@ -802,9 +802,9 @@ function TwitterPreview({ account, text, commentText, images, video }: {
         <div className="flex gap-3">
           {account.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-black"
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-black"
               style={{ background: "#e7e9ea" }}>
               {initial}
             </div>
@@ -815,7 +815,7 @@ function TwitterPreview({ account, text, commentText, images, video }: {
               <span className="text-xs" style={{ color: "#71767b" }}>@{account.displayName} · {timeStr}</span>
             </div>
             {text ? (
-              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#e7e9ea" }}>{text}</p>
+              <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#e7e9ea" }}>{text}</p>
             ) : (
               <p className="text-sm italic" style={{ color: "#555" }}>Start writing your tweet…</p>
             )}
@@ -848,7 +848,7 @@ function TwitterPreview({ account, text, commentText, images, video }: {
 
             {commentText && (
               <div className="mt-3 pt-2.5 flex gap-2" style={{ borderTop: "1px solid #2f3336" }}>
-                <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-black"
+                <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-black"
                   style={{ background: "#e7e9ea" }}>{initial}</div>
                 <div className="flex-1 rounded-lg px-3 py-2" style={{ backgroundColor: "#0d0d0d", border: "1px solid #2f3336" }}>
                   <p className="text-xs font-semibold mb-0.5" style={{ color: "#e7e9ea" }}>@{account.displayName}</p>
@@ -873,7 +873,7 @@ function TelegramPreview({ account, text, images, video }: {
   const hasMedia = images.length > 0 || video !== null;
 
   return (
-    <div className="rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+    <div className="rounded-2xl shadow-xs overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #229ED9", backgroundColor: "#0a0a0a" }}>
         <PlatformIcon platform="telegram" size={16} />
@@ -888,7 +888,7 @@ function TelegramPreview({ account, text, images, video }: {
             {video ? (
               <div className="relative w-full" style={{ aspectRatio: "9/16", maxHeight: 240, backgroundColor: "#1a1a1a" }}>
                 <video src={video.previewUrl} className="w-full h-full object-cover" muted />
-                <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-sm text-[10px] font-semibold"
                   style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#fff" }}>▶ Video</div>
               </div>
             ) : images.length === 1 ? (
@@ -912,7 +912,7 @@ function TelegramPreview({ account, text, images, video }: {
             {/* Text */}
             {text && (
               <div className={`px-3 ${hasMedia ? "py-2" : "pt-2 pb-1"}`}>
-                <p className="text-sm whitespace-pre-wrap break-words" style={{ color: "#e8e8e8" }}>{text}</p>
+                <p className="text-sm whitespace-pre-wrap wrap-break-word" style={{ color: "#e8e8e8" }}>{text}</p>
                 <div className="flex justify-end mt-1">
                   <span className="text-[10px]" style={{ color: "#7d9bb9" }}>{timeStr} ✓✓</span>
                 </div>
@@ -937,7 +937,7 @@ function NostrPreview({ account, text, images }: {
 }) {
   const timeStr = formatTime(new Date());
   return (
-    <div className="rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+    <div className="rounded-2xl shadow-xs overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #7B5EA7", backgroundColor: "#0a0a0a" }}>
         <PlatformIcon platform="nostr" size={16} />
@@ -949,9 +949,9 @@ function NostrPreview({ account, text, images }: {
           {account.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={account.avatarUrl} alt={account.displayName}
-              className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+              className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-bold"
               style={{ background: "#7B5EA7", color: "#fff" }}>
               {account.displayName[0]?.toUpperCase() ?? "N"}
             </div>
@@ -961,12 +961,12 @@ function NostrPreview({ account, text, images }: {
               <span className="text-sm font-semibold" style={{ color: "#ededed" }}>{account.displayName}</span>
               <span className="text-xs" style={{ color: "#555" }}>{timeStr}</span>
             </div>
-            {text && <p className="text-sm whitespace-pre-wrap break-words" style={{ color: "#ccc" }}>{text}</p>}
+            {text && <p className="text-sm whitespace-pre-wrap wrap-break-word" style={{ color: "#ccc" }}>{text}</p>}
             {images.length > 0 && (
               <div className="mt-2 grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(images.length, 2)}, 1fr)` }}>
                 {images.slice(0, 4).map((img, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={i} src={img.previewUrl} alt="" className="w-full rounded object-cover" style={{ height: 120 }} />
+                  <img key={i} src={img.previewUrl} alt="" className="w-full rounded-sm object-cover" style={{ height: 120 }} />
                 ))}
               </div>
             )}
@@ -988,7 +988,7 @@ function TumblrPreview({ account, text, images }: { account: Account; text: stri
     <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#35465c", fontFamily: "sans-serif" }}>
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3" style={{ backgroundColor: "#2c3e50" }}>
-        <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+        <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
           style={{ backgroundColor: "#00b8ff", color: "#fff" }}>
           {account.avatarUrl
             // eslint-disable-next-line @next/next/no-img-element
@@ -1001,7 +1001,7 @@ function TumblrPreview({ account, text, images }: { account: Account; text: stri
       {/* Body */}
       <div className="px-4 py-3 space-y-3">
         {text && (
-          <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#ffffff" }}>
+          <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#ffffff" }}>
             {text.length > 280 ? text.slice(0, 280) + "…" : text}
           </p>
         )}
@@ -1054,7 +1054,7 @@ function LemmyPreview({ account, text, commentText, images }: { account: Account
           <img src={images[0].previewUrl} alt="" className="w-full rounded-lg object-cover" style={{ maxHeight: 220 }} />
         )}
         {body && (
-          <p className="text-xs whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#aaa" }}>
+          <p className="text-xs whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#aaa" }}>
             {body.length > 300 ? body.slice(0, 300) + "…" : body}
           </p>
         )}
@@ -1071,7 +1071,7 @@ function LemmyPreview({ account, text, commentText, images }: { account: Account
         <div className="px-4 pb-3">
           <div className="rounded-xl p-2.5" style={{ backgroundColor: "#111", border: "1px solid #2a2a2a" }}>
             <p className="text-xs font-semibold mb-1" style={{ color: "#ff6314" }}>First comment</p>
-            <p className="text-xs whitespace-pre-wrap break-words" style={{ color: "#aaa" }}>{commentText}</p>
+            <p className="text-xs whitespace-pre-wrap wrap-break-word" style={{ color: "#aaa" }}>{commentText}</p>
           </div>
         </div>
       )}
@@ -1092,7 +1092,7 @@ function DiscordPreview({ account, text, commentText, images, video }: {
   const serverName = serverMatch ? serverMatch[1] : account.displayName;
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#313338", border: "1px solid #2a2a2a" }}>
+    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#313338", border: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #5865F2", backgroundColor: "#0a0a0a" }}>
         <PlatformIcon platform="discord" size={16} />
@@ -1103,9 +1103,9 @@ function DiscordPreview({ account, text, commentText, images, video }: {
       <div className="px-4 py-3 flex gap-3">
         {account.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={account.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0 mt-0.5" />
+          <img src={account.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0 mt-0.5" />
         ) : (
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5"
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-0.5"
             style={{ background: "#5865F2", color: "#fff" }}>
             {initial}
           </div>
@@ -1116,7 +1116,7 @@ function DiscordPreview({ account, text, commentText, images, video }: {
             <span className="text-[10px]" style={{ color: "#949ba4" }}>Today at {formatTime(new Date())}</span>
           </div>
           {text ? (
-            <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#dbdee1" }}>{text}</p>
+            <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#dbdee1" }}>{text}</p>
           ) : (
             <p className="text-sm italic" style={{ color: "#4e5058" }}>Start writing your post for a preview…</p>
           )}
@@ -1149,7 +1149,7 @@ function DiscordPreview({ account, text, commentText, images, video }: {
 function TikTokPreview({ account, text, video }: { account: Account; text: string; video: UploadedImage | null }) {
   const initial = account.displayName[0]?.toUpperCase() ?? "?";
   return (
-    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: "#111", border: "1px solid #2a2a2a" }}>
+    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#111", border: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #ff004f", backgroundColor: "#0a0a0a" }}>
         <PlatformIcon platform="tiktok" size={16} />
@@ -1202,10 +1202,10 @@ function TikTokPreview({ account, text, video }: { account: Account; text: strin
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ring-1 ring-white/50"
                 style={{ backgroundColor: "#ff004f" }}>{initial}</div>
             )}
-            <span className="text-sm font-semibold text-white drop-shadow">@{account.displayName}</span>
+            <span className="text-sm font-semibold text-white drop-shadow-sm">@{account.displayName}</span>
           </div>
           {text ? (
-            <p className="text-xs text-white/80 leading-relaxed line-clamp-3 drop-shadow">{text}</p>
+            <p className="text-xs text-white/80 leading-relaxed line-clamp-3 drop-shadow-sm">{text}</p>
           ) : (
             <p className="text-xs italic" style={{ color: "#666" }}>Your caption here…</p>
           )}
@@ -1275,7 +1275,7 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   const og = useLinkCard(text, showLinkCard);
 
   return (
-    <div className="rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+    <div className="rounded-2xl shadow-xs overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid #2a2a2a", borderLeft: `3px solid ${color}`, backgroundColor: "#0a0a0a" }}>
         <PlatformIcon platform={account.platform} size={16} />
@@ -1287,9 +1287,9 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
         <div className="flex gap-3">
           {account.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+            <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white"
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white"
               style={{ background: color }}>
               {initial}
             </div>
@@ -1300,7 +1300,7 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
               <span className="text-xs" style={{ color: "#555" }}>{timeStr}</span>
             </div>
             {text ? (
-              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed" style={{ color: "#d4d4d4" }}>{text}</p>
+              <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#d4d4d4" }}>{text}</p>
             ) : (
               <p className="text-sm italic" style={{ color: "#444" }}>Start writing your post for a preview…</p>
             )}
@@ -1342,9 +1342,9 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
           <div className="mt-3 pt-3 flex gap-2.5" style={{ borderTop: "1px solid #1f1f1f" }}>
             {account.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={account.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+              <img src={account.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white"
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 text-white"
                 style={{ background: color }}>
                 {initial}
               </div>
@@ -1352,7 +1352,7 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
             <div className="flex-1 min-w-0">
               <span className="text-xs font-bold" style={{ color: "#aaa" }}>{account.displayName} </span>
               <span className="text-xs" style={{ color: "#555" }}>· first comment</span>
-              <p className="text-sm mt-0.5 whitespace-pre-wrap break-words" style={{ color: "#888" }}>{commentText}</p>
+              <p className="text-sm mt-0.5 whitespace-pre-wrap wrap-break-word" style={{ color: "#888" }}>{commentText}</p>
             </div>
           </div>
         )}

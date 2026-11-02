@@ -101,7 +101,7 @@ function GroupDialog({
               onChange={e => setName(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") handleSave(); }}
               placeholder="e.g. Brand channels, Personal, Clients…"
-              className="w-full px-3 py-2 rounded-xl text-sm outline-none"
+              className="w-full px-3 py-2 rounded-xl text-sm outline-hidden"
               style={{ backgroundColor: BG, border: `1px solid ${BORDER}`, color: TEXT }}
             />
           </div>
@@ -137,7 +137,7 @@ function GroupDialog({
                         border: `1px solid ${BORDER}`,
                       }}>
                       {/* Avatar */}
-                      <div className="relative flex-shrink-0">
+                      <div className="relative shrink-0">
                         {a.avatarUrl
                           // eslint-disable-next-line @next/next/no-img-element
                           ? <img src={a.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
@@ -160,7 +160,7 @@ function GroupDialog({
                       </div>
                       {/* Checkmark */}
                       {inGroup && (
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke={color} viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 shrink-0" fill="none" stroke={color} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
                       )}
@@ -283,7 +283,7 @@ export default function GroupsPage() {
     <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: BG, color: TEXT }}>
 
       {/* Header */}
-      <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center justify-between" style={{ height: 65, borderBottom: `1px solid ${BORDER}` }}>
+      <div className="pl-16 pr-4 md:px-8 shrink-0 flex items-center justify-between" style={{ height: 65, borderBottom: `1px solid ${BORDER}` }}>
         <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: TEXT }}>Account Groups</h1>
           <p className="text-xs mt-0.5 hidden sm:block" style={{ color: MUTED }}>
@@ -293,7 +293,7 @@ export default function GroupsPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 flex-shrink-0"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 shrink-0"
           style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -330,7 +330,7 @@ export default function GroupsPage() {
                 {/* Top row */}
                 <div className="flex items-center gap-3">
                   {/* Group icon */}
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                     style={{ backgroundColor: ACCENT + "18", border: `1px solid ${ACCENT}30` }}>
                     <svg className="w-4 h-4" fill="none" stroke={ACCENT} viewBox="0 0 24 24">
                       <rect x="3" y="3" width="7" height="7" rx="1.5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
@@ -345,7 +345,7 @@ export default function GroupsPage() {
                     <p className="text-xs" style={{ color: MUTED }}>{memberCount} account{memberCount !== 1 ? "s" : ""}</p>
                   </div>
                   {/* Actions */}
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => setEditingGroup(group)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
@@ -373,7 +373,7 @@ export default function GroupsPage() {
                       {memberAccounts.slice(0, 8).map(a => {
                         const color = brandColor(a.platform);
                         return (
-                          <div key={a.id} className="relative w-7 h-7 rounded-full flex-shrink-0"
+                          <div key={a.id} className="relative w-7 h-7 rounded-full shrink-0"
                             style={{ border: `2px solid ${SURFACE}` }}
                             title={a.displayName}>
                             {a.avatarUrl

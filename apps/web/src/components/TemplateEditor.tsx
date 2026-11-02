@@ -151,7 +151,7 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
   const otherTaken = new Set([...takenCategories].filter((c) => c !== template?.category));
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4"
+    <div className="fixed inset-0 z-1000 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.75)" }}
       onMouseDown={(e) => { if (e.target === e.currentTarget && !saving) close(); }}>
       <style>{`.template-editor :focus-visible { outline: 2px solid #5b63d3; outline-offset: 2px; }`}</style>
@@ -159,7 +159,7 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
         className="template-editor w-full flex flex-col overflow-hidden"
         style={{ maxWidth: 640, maxHeight: "92vh", background: "#111111", border: "1px solid #2a2a2a", borderRadius: 16 }}>
 
-        <div className="flex items-start gap-3 px-6 pt-5 pb-4 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+        <div className="flex items-start gap-3 px-6 pt-5 pb-4 shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
           <div className="flex-1">
             <h2 className="text-base font-bold" style={{ color: "#ededed" }}>{template ? "Edit template" : "New template"}</h2>
             <p className="text-xs mt-1" style={{ color: "#888" }}>
@@ -167,7 +167,7 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
             </p>
           </div>
           <button type="button" onClick={close} disabled={saving} aria-label="Close"
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
             style={{ color: "#888", border: "1px solid #2a2a2a" }}>✕</button>
         </div>
 
@@ -185,11 +185,11 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
             </p>
             {file ? (
               <div className="flex items-center gap-3 mt-2 p-3 rounded-xl" style={{ border: "1px solid #2a2a2a", background: "#0a0a0a" }}>
-                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "#1f1f1f", color: "#ededed" }}>FIG</span>
+                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-sm shrink-0" style={{ background: "#1f1f1f", color: "#ededed" }}>FIG</span>
                 <a href={fileHref(file.url)} download={file.fileName} className="flex-1 min-w-0 text-sm truncate underline-offset-2 hover:underline" style={{ color: "#ededed" }}>
                   {file.fileName}
                 </a>
-                {file.fileSize ? <span className="text-xs flex-shrink-0" style={{ color: "#888" }}>{formatBytes(file.fileSize)}</span> : null}
+                {file.fileSize ? <span className="text-xs shrink-0" style={{ color: "#888" }}>{formatBytes(file.fileSize)}</span> : null}
                 <button type="button" onClick={() => fileRef.current?.click()} disabled={busy}
                   className="px-2.5 py-1 rounded-lg text-xs disabled:opacity-50" style={secondaryButton}>Replace</button>
                 <button type="button" onClick={removeFile} disabled={busy} aria-label="Remove the design file"
@@ -244,7 +244,7 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
           </section>
         </div>
 
-        <div className="flex items-center gap-3 px-6 py-4 flex-shrink-0" style={{ borderTop: "1px solid #2a2a2a" }}>
+        <div className="flex items-center gap-3 px-6 py-4 shrink-0" style={{ borderTop: "1px solid #2a2a2a" }}>
           <p role="alert" className="flex-1 text-xs" style={{ color: "#f87171" }}>{error}</p>
           <button type="button" onClick={close} disabled={saving}
             className="px-4 py-2 rounded-xl text-sm" style={{ border: "1px solid #2a2a2a", color: "#888" }}>Cancel</button>

@@ -110,15 +110,15 @@ export function ReviewDialog({ job, templates, onClose, onApprove, onReject }: {
 
         {/* Media stage — the focal point of the review */}
         {media.length > 0 && (
-          <div className="flex flex-col md:flex-[3] min-h-0 h-[45vh] md:h-auto flex-shrink-0 md:flex-shrink" style={{ borderRight: "1px solid #2a2a2a" }}>
+          <div className="flex flex-col md:flex-3 min-h-0 h-[45vh] md:h-auto shrink-0 md:shrink" style={{ borderRight: "1px solid #2a2a2a" }}>
             <MediaStage media={media} index={mediaIndex} onIndexChange={setMediaIndex}
               labels={slidesMatchMedia ? slides.map((sl) => sl.label) : undefined} />
           </div>
         )}
 
         {/* Details + decision */}
-        <div className={`flex flex-col min-h-0 ${media.length > 0 ? "md:flex-[2]" : "flex-1"}`} style={{ minWidth: 0 }}>
-          <div className="flex items-start gap-3 px-5 pt-5 pb-3 flex-shrink-0">
+        <div className={`flex flex-col min-h-0 ${media.length > 0 ? "md:flex-2" : "flex-1"}`} style={{ minWidth: 0 }}>
+          <div className="flex items-start gap-3 px-5 pt-5 pb-3 shrink-0">
             <div className="flex-1 min-w-0">
               <h2 className="text-base font-bold leading-snug" style={{ color: "#ededed" }}>
                 {content.title?.trim() || "Review post"}
@@ -131,11 +131,11 @@ export function ReviewDialog({ job, templates, onClose, onApprove, onReject }: {
               )}
             </div>
             <button type="button" onClick={onClose} disabled={!!saving} aria-label="Close"
-              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
               style={{ color: "#888", border: "1px solid #2a2a2a" }}>✕</button>
           </div>
 
-          <div role="tablist" className="flex gap-1 px-5 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+          <div role="tablist" className="flex gap-1 px-5 shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
             {([["copy", "Copy"], ["preview", "Platform preview"]] as const).map(([id, label]) => (
               <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
                 className="px-3 py-2 text-sm font-semibold"
@@ -162,7 +162,7 @@ export function ReviewDialog({ job, templates, onClose, onApprove, onReject }: {
                               className="w-full text-left rounded-xl px-3 py-2.5"
                               style={{ background: active ? "#1a1a1a" : "transparent", border: `1px solid ${active ? "#5b63d3" : "#2a2a2a"}`, cursor: slidesMatchMedia ? "pointer" : "default" }}>
                               <span className="block text-xs font-semibold" style={{ color: active ? "#ededed" : "#888" }}>{sl.label}</span>
-                              <span className="block text-sm leading-relaxed whitespace-pre-wrap break-words mt-0.5" style={{ color: "#ededed" }}>
+                              <span className="block text-sm leading-relaxed whitespace-pre-wrap wrap-break-word mt-0.5" style={{ color: "#ededed" }}>
                                 {sl.text.trim() || <span style={{ color: "#888" }}>No copy</span>}
                               </span>
                             </button>
@@ -174,14 +174,14 @@ export function ReviewDialog({ job, templates, onClose, onApprove, onReject }: {
                 )}
                 <section>
                   <h3 className="text-xs font-semibold mb-1.5" style={{ color: "#888" }}>Caption</h3>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words" style={{ color: "#ededed" }}>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word" style={{ color: "#ededed" }}>
                     {content.text?.trim() || <span style={{ color: "#888" }}>No caption</span>}
                   </p>
                 </section>
                 {job.commentText && (
                   <section>
                     <h3 className="text-xs font-semibold mb-1.5" style={{ color: "#888" }}>First comment</h3>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words" style={{ color: "#ededed" }}>{job.commentText}</p>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word" style={{ color: "#ededed" }}>{job.commentText}</p>
                   </section>
                 )}
                 {overrides.map((a) => (
@@ -189,7 +189,7 @@ export function ReviewDialog({ job, templates, onClose, onApprove, onReject }: {
                     <h3 className="text-xs font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "#888" }}>
                       <PlatformIcon platform={a.platform} size={12} /> Caption for {a.displayName}
                     </h3>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words" style={{ color: "#ededed" }}>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word" style={{ color: "#ededed" }}>
                       {content.perAccount?.[a.id]?.text}
                     </p>
                   </section>
@@ -232,7 +232,7 @@ export function ReviewDialog({ job, templates, onClose, onApprove, onReject }: {
           </div>
 
           {/* Decision footer */}
-          <div className="px-5 py-4 flex-shrink-0" style={{ borderTop: "1px solid #2a2a2a", background: "#111111" }}>
+          <div className="px-5 py-4 shrink-0" style={{ borderTop: "1px solid #2a2a2a", background: "#111111" }}>
             {rejecting ? (
               <div>
                 <label htmlFor="review-note" className="text-xs font-semibold" style={{ color: "#888" }}>

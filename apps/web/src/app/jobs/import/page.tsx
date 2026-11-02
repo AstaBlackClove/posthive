@@ -423,12 +423,12 @@ export default function ImportContentPlanPage() {
     <div className="flex flex-col h-full" style={{ backgroundColor: "#0a0a0a", color: "#ededed" }}>
 
       {/* Top bar — pl-14 on mobile to clear the sidebar hamburger */}
-      <div className="flex-shrink-0 pl-14 pr-4 py-3 md:px-4" style={{ borderBottom: "1px solid #1e1e1e" }}>
+      <div className="shrink-0 pl-14 pr-4 py-3 md:px-4" style={{ borderBottom: "1px solid #1e1e1e" }}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/jobs")}
             disabled={isBusy}
-            className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70 disabled:opacity-30 flex-shrink-0"
+            className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70 disabled:opacity-30 shrink-0"
             style={{ color: "#888" }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -436,7 +436,7 @@ export default function ImportContentPlanPage() {
             </svg>
             Back
           </button>
-          <div className="w-px h-4 flex-shrink-0" style={{ backgroundColor: "#2a2a2a" }} />
+          <div className="w-px h-4 shrink-0" style={{ backgroundColor: "#2a2a2a" }} />
           <h1 className="text-sm font-bold truncate" style={{ color: "#ededed" }}>Import Content Plan</h1>
         </div>
 
@@ -453,7 +453,7 @@ export default function ImportContentPlanPage() {
                 <button
                   onClick={clearAll}
                   disabled={isBusy}
-                  className="px-3 py-1.5 rounded-xl text-sm font-medium transition-colors hover:opacity-80 disabled:opacity-40 flex-shrink-0"
+                  className="px-3 py-1.5 rounded-xl text-sm font-medium transition-colors hover:opacity-80 disabled:opacity-40 shrink-0"
                   style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}
                 >
                   Clear
@@ -461,7 +461,7 @@ export default function ImportContentPlanPage() {
                 <button
                   onClick={handleCommit}
                   disabled={!canImport}
-                  className="px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 disabled:opacity-40 flex-shrink-0"
+                  className="px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 disabled:opacity-40 shrink-0"
                   style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
                 >
                   {phase === "committing" ? "Importing…" : `Import ${selectedCount}`}
@@ -473,14 +473,14 @@ export default function ImportContentPlanPage() {
               <>
                 <button
                   onClick={clearAll}
-                  className="px-3 py-1.5 rounded-xl text-sm font-medium transition-colors hover:opacity-80 flex-shrink-0"
+                  className="px-3 py-1.5 rounded-xl text-sm font-medium transition-colors hover:opacity-80 shrink-0"
                   style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}
                 >
                   Import another
                 </button>
                 <button
                   onClick={() => router.push("/jobs")}
-                  className="px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 flex-shrink-0"
+                  className="px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 shrink-0"
                   style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
                 >
                   View drafts →
@@ -495,7 +495,7 @@ export default function ImportContentPlanPage() {
       <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
 
         {/* LEFT — input panel */}
-        <div className="flex flex-col w-full lg:w-96 lg:flex-shrink-0 lg:overflow-y-auto border-b lg:border-b-0 lg:border-r" style={{ borderColor: "#1e1e1e" }}>
+        <div className="flex flex-col w-full lg:w-96 lg:shrink-0 lg:overflow-y-auto border-b lg:border-b-0 lg:border-r" style={{ borderColor: "#1e1e1e" }}>
           <div className="flex" style={{ borderBottom: "1px solid #1e1e1e" }}>
             {(["input", "format"] as const).map((tab) => (
               <button
@@ -542,7 +542,7 @@ export default function ImportContentPlanPage() {
 
                 {file && (
                   <div className="rounded-xl px-3 py-2.5 flex items-center gap-2" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "#818cf8" }}>
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "#818cf8" }}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <div className="min-w-0 flex-1">
@@ -581,7 +581,7 @@ export default function ImportContentPlanPage() {
                   placeholder={"Content Title,Post Date,Platform\nSlope Stability Before the Rain Peaks,22-10-2026,Mirroring (LI&Ig)"}
                   rows={10}
                   disabled={isBusy}
-                  className="w-full resize-none rounded-xl border px-4 py-3 text-xs focus:outline-none font-mono disabled:opacity-40"
+                  className="w-full resize-none rounded-xl border px-4 py-3 text-xs focus:outline-hidden font-mono disabled:opacity-40"
                   style={{ backgroundColor: "#111", borderColor: "#2a2a2a", color: "#ededed", lineHeight: "1.6" }}
                 />
 
@@ -652,7 +652,7 @@ export default function ImportContentPlanPage() {
                   <div className="space-y-2 rounded-xl p-3" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
                     {PLATFORM_GUIDE.map((item) => (
                       <div key={item.value} className="flex gap-3 text-[11px]">
-                        <code className="flex-shrink-0 font-mono" style={{ color: "#818cf8", minWidth: "132px" }}>{item.value}</code>
+                        <code className="shrink-0 font-mono" style={{ color: "#818cf8", minWidth: "132px" }}>{item.value}</code>
                         <span style={{ color: "#666" }}>{item.result}</span>
                       </div>
                     ))}
@@ -679,9 +679,9 @@ export default function ImportContentPlanPage() {
         <div className="flex flex-col lg:flex-1 lg:overflow-hidden">
 
           {phase === "previewing" && (
-            <div className="flex-shrink-0 px-6 py-4" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d1a" }}>
+            <div className="shrink-0 px-6 py-4" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d1a" }}>
               <div className="flex items-center gap-3">
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0" style={{ borderColor: "#5b63d3", borderTopColor: "transparent" }} />
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin shrink-0" style={{ borderColor: "#5b63d3", borderTopColor: "transparent" }} />
                 <span className="text-sm font-medium" style={{ color: "#818cf8" }}>Checking file…</span>
               </div>
               <p className="text-xs mt-2" style={{ color: "#444" }}>Validasi kolom, tanggal, platform, dan duplikat.</p>
@@ -689,9 +689,9 @@ export default function ImportContentPlanPage() {
           )}
 
           {phase === "committing" && (
-            <div className="flex-shrink-0 px-6 py-4" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d1a" }}>
+            <div className="shrink-0 px-6 py-4" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d1a" }}>
               <div className="flex items-center gap-3">
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0" style={{ borderColor: "#5b63d3", borderTopColor: "transparent" }} />
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin shrink-0" style={{ borderColor: "#5b63d3", borderTopColor: "transparent" }} />
                 <span className="text-sm font-medium" style={{ color: "#818cf8" }}>Creating drafts…</span>
               </div>
               <p className="text-xs mt-2" style={{ color: "#444" }}>Jangan tutup halaman ini.</p>
@@ -699,8 +699,8 @@ export default function ImportContentPlanPage() {
           )}
 
           {error && (
-            <div className="flex-shrink-0 mx-6 mt-4 rounded-xl p-3 flex gap-3" style={{ backgroundColor: "#1a0a0a", border: "1px solid #7f1d1d" }}>
-              <span className="text-base flex-shrink-0" style={{ color: "#f87171" }}>!</span>
+            <div className="shrink-0 mx-6 mt-4 rounded-xl p-3 flex gap-3" style={{ backgroundColor: "#1a0a0a", border: "1px solid #7f1d1d" }}>
+              <span className="text-base shrink-0" style={{ color: "#f87171" }}>!</span>
               <div className="flex-1">
                 <p className="text-xs font-semibold" style={{ color: "#f87171" }}>Import gagal</p>
                 <p className="text-xs mt-1 leading-relaxed" style={{ color: "#fca5a5" }}>{error}</p>
@@ -712,7 +712,7 @@ export default function ImportContentPlanPage() {
           )}
 
           {phase === "done" && commitResult && (
-            <div className="flex-shrink-0 px-6 py-4" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0a1a0a" }}>
+            <div className="shrink-0 px-6 py-4" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0a1a0a" }}>
               <div className="flex items-center gap-3">
                 <span className="text-xl" style={{ color: "#4ade80" }}>✓</span>
                 <div>
@@ -743,7 +743,7 @@ export default function ImportContentPlanPage() {
 
           {preview && (
             <>
-              <div className="flex-shrink-0 flex flex-wrap items-center gap-4 lg:gap-6 px-4 py-3" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
+              <div className="shrink-0 flex flex-wrap items-center gap-4 lg:gap-6 px-4 py-3" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
                 <Stat label="Total rows" value={totalRows} />
                 <Stat label="Valid" value={validRows.length} color="#4ade80" />
                 <Stat label="Invalid" value={invalidCount} color={invalidCount > 0 ? "#f87171" : undefined} />
@@ -752,7 +752,7 @@ export default function ImportContentPlanPage() {
               </div>
 
               {preview.file.format === "xlsx" ? (
-                <div className="flex-shrink-0 mx-6 mt-4 rounded-xl p-3 text-xs" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e", color: "#888" }}>
+                <div className="shrink-0 mx-6 mt-4 rounded-xl p-3 text-xs" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e", color: "#888" }}>
                   Sheet terpilih: <code style={{ color: "#818cf8" }}>{preview.file.sheetName}</code>. Header di baris {preview.file.headerRow}
                   {preview.file.subHeaderRow ? ` dan ${preview.file.subHeaderRow}` : ""}.
                   {preview.file.candidateSheets.length > 1 && (
@@ -760,7 +760,7 @@ export default function ImportContentPlanPage() {
                   )}
                 </div>
               ) : preview.file.subHeaderRow ? (
-                <div className="flex-shrink-0 mx-6 mt-4 rounded-xl p-3 text-xs" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e", color: "#888" }}>
+                <div className="shrink-0 mx-6 mt-4 rounded-xl p-3 text-xs" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e", color: "#888" }}>
                   Header terdeteksi di baris {preview.file.headerRow} dan {preview.file.subHeaderRow}.
                   {preview.file.delimiter && <> Delimiter: <code style={{ color: "#818cf8" }}>{preview.file.delimiter}</code>.</>}
                 </div>
@@ -926,7 +926,7 @@ export default function ImportContentPlanPage() {
                                     <div>
                                       <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "#555" }}>Link Copywrite / Design Copy (preview)</p>
                                       {entry.row.designCopyPreview ? (
-                                        <pre className="text-[11px] whitespace-pre-wrap break-words rounded-xl p-3 max-h-56 overflow-y-auto" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e", color: "#aaa", fontFamily: "monospace" }}>
+                                        <pre className="text-[11px] whitespace-pre-wrap wrap-break-word rounded-xl p-3 max-h-56 overflow-y-auto" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e", color: "#aaa", fontFamily: "monospace" }}>
                                           {entry.row.designCopyPreview}
                                         </pre>
                                       ) : (
@@ -937,7 +937,7 @@ export default function ImportContentPlanPage() {
                                     <div>
                                       <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "#555" }}>Caption / content.text (preview)</p>
                                       {entry.row.captionPreview ? (
-                                        <pre className="text-[11px] whitespace-pre-wrap break-words rounded-xl p-3 max-h-56 overflow-y-auto" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e", color: "#aaa", fontFamily: "monospace" }}>
+                                        <pre className="text-[11px] whitespace-pre-wrap wrap-break-word rounded-xl p-3 max-h-56 overflow-y-auto" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e", color: "#aaa", fontFamily: "monospace" }}>
                                           {entry.row.captionPreview}
                                         </pre>
                                       ) : (

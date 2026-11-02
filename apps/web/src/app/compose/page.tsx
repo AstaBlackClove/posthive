@@ -741,7 +741,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           <p className="text-xs text-gray-400 mt-0.5 hidden sm:block">Write once · schedule across platforms</p>
         </div>
         {!loadingAccounts && accounts.length === 0 && (
-          <a href="/accounts" className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg font-medium flex-shrink-0">
+          <a href="/accounts" className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg font-medium shrink-0">
             ⚠️ Connect an account first
           </a>
         )}
@@ -757,7 +757,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           <div className="px-6 pt-4 pb-3" style={{ borderBottom: "1px solid #2a2a2a" }}>
             <div className="flex items-center justify-between mb-2.5">
               <p className="text-xs font-semibold uppercase tracking-widest">Post to</p>
-              {loadingAccounts && <div className="h-3 w-24 rounded animate-pulse" style={{ backgroundColor: "#1a1a1a" }} />}
+              {loadingAccounts && <div className="h-3 w-24 rounded-sm animate-pulse" style={{ backgroundColor: "#1a1a1a" }} />}
               {!loadingAccounts && accounts.length > 1 && (
                 <div className="flex items-center gap-3">
                   <span className="text-xs">
@@ -808,7 +808,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                         border: "1px solid #2a2a2a",
                         color: "#888",
                       }}>
-                      <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                       {g.name}
@@ -858,11 +858,11 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                           }}>
                           {a.avatarUrl
                             // eslint-disable-next-line @next/next/no-img-element
-                            ? <img src={a.avatarUrl} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                            ? <img src={a.avatarUrl} alt="" className="w-4 h-4 rounded-full object-cover shrink-0" />
                             : null}
                           <span className="truncate max-w-[96px]">{a.displayName}</span>
                           {selected && (
-                            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                             </svg>
                           )}
@@ -881,17 +881,17 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           {/* Skeleton — shown while accounts load */}
           {loadingAccounts && (
             <div className="px-6 py-5 flex flex-col gap-4 animate-pulse">
-              <div className="h-3 w-20 rounded" style={{ backgroundColor: "#1a1a1a" }} />
+              <div className="h-3 w-20 rounded-sm" style={{ backgroundColor: "#1a1a1a" }} />
               <div className="rounded-xl" style={{ height: 160, backgroundColor: "#1a1a1a" }} />
               <div className="flex gap-2">
                 <div className="h-8 w-28 rounded-lg" style={{ backgroundColor: "#1a1a1a" }} />
                 <div className="h-8 w-20 rounded-lg" style={{ backgroundColor: "#1a1a1a" }} />
               </div>
               <div className="h-px" style={{ backgroundColor: "#1e1e1e" }} />
-              <div className="h-3 w-24 rounded" style={{ backgroundColor: "#1a1a1a" }} />
+              <div className="h-3 w-24 rounded-sm" style={{ backgroundColor: "#1a1a1a" }} />
               <div className="h-8 w-44 rounded-lg" style={{ backgroundColor: "#1a1a1a" }} />
               <div className="h-px" style={{ backgroundColor: "#1e1e1e" }} />
-              <div className="h-3 w-16 rounded" style={{ backgroundColor: "#1a1a1a" }} />
+              <div className="h-3 w-16 rounded-sm" style={{ backgroundColor: "#1a1a1a" }} />
               <div className="h-9 w-full rounded-xl" style={{ backgroundColor: "#1a1a1a" }} />
               <div className="mt-2 h-10 w-36 rounded-xl self-end" style={{ backgroundColor: "#1a1a1a" }} />
             </div>
@@ -924,9 +924,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                                 className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-white/5 transition-colors">
                                 {t.previewUrl ? (
                                   // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={fileHref(t.previewUrl)} alt="" className="w-8 h-10 rounded object-cover flex-shrink-0" style={{ border: "1px solid #2a2a2a" }} />
+                                  <img src={fileHref(t.previewUrl)} alt="" className="w-8 h-10 rounded-sm object-cover shrink-0" style={{ border: "1px solid #2a2a2a" }} />
                                 ) : (
-                                  <span className="w-8 h-10 rounded flex-shrink-0 flex items-center justify-center text-[9px] font-bold" style={{ border: "1px solid #2a2a2a", color: "#888" }}>FIG</span>
+                                  <span className="w-8 h-10 rounded-sm shrink-0 flex items-center justify-center text-[9px] font-bold" style={{ border: "1px solid #2a2a2a", color: "#888" }}>FIG</span>
                                 )}
                                 <span className="min-w-0">
                                   <span className="block text-xs font-medium truncate" style={{ color: "#ededed" }}>{t.category}</span>
@@ -977,7 +977,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                     {!allowOverrides && (
                       <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><rect x="2" y="5" width="8" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M4 5V3.5a2 2 0 014 0V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     )}
-                    {(() => { const c = Object.keys(perAccountOverrides).filter(id => { const acc = selectedAccounts.find(a => a.id === id); return acc && acc.platform !== "youtube" && acc.platform !== "pinterest"; }).length; return c > 0 ? <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ backgroundColor: "#5b63d320", color: "#5b63d3" }}>{c}</span> : null; })()}
+                    {(() => { const c = Object.keys(perAccountOverrides).filter(id => { const acc = selectedAccounts.find(a => a.id === id); return acc && acc.platform !== "youtube" && acc.platform !== "pinterest"; }).length; return c > 0 ? <span className="text-[10px] font-bold px-1 py-0.5 rounded-sm" style={{ backgroundColor: "#5b63d320", color: "#5b63d3" }}>{c}</span> : null; })()}
                   </button>
                 )}
               </div>
@@ -1043,7 +1043,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                 ref={(el) => { (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el; if (el) { el.style.height = el.value ? `${el.scrollHeight}px` : "160px"; } }}
                 placeholder="What do you want to share?"
                 required={!noPostTextNeeded}
-                className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"
+                className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-hidden focus:ring-2 transition"
                 style={overAnyLimit
                   ? { minHeight: "160px", overflow: "hidden", borderColor: "#fca5a5", backgroundColor: "#111111", color: "#ededed" }
                   : { minHeight: "160px", overflow: "hidden", borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }
@@ -1199,7 +1199,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         </div>
 
         {/* Right "" per-platform previews — desktop only, fixed 480px. Mobile uses the drawer instead */}
-        <div className="hidden md:flex md:w-[480px] flex-shrink-0 flex-col md:overflow-y-auto" style={{ backgroundColor: "#0a0a0a" }}>
+        <div className="hidden md:flex md:w-[480px] shrink-0 flex-col md:overflow-y-auto" style={{ backgroundColor: "#0a0a0a" }}>
           <div className="px-5 pt-5 pb-3">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Preview</p>
           </div>
@@ -1218,10 +1218,10 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderBottom: "none", maxHeight: "80vh" }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-center pt-2.5 pb-1 flex-shrink-0">
+            <div className="flex items-center justify-center pt-2.5 pb-1 shrink-0">
               <div className="w-9 h-1 rounded-full" style={{ backgroundColor: "#2a2a2a" }} />
             </div>
-            <div className="flex items-center justify-between px-5 pt-1 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+            <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Preview</p>
               <button type="button" onClick={() => setPreviewOpen(false)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: "#666" }}>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
@@ -1282,7 +1282,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                                   onChange={e => { setOverrideField(a.id, "text", e.target.value); const sc = e.target.closest("[data-customize-scroll]") as HTMLElement | null; const sv = sc?.scrollTop ?? 0; e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; if (sc) sc.scrollTop = sv; }}
                                   ref={el => { if (el) { el.style.height = `${el.scrollHeight}px`; } }}
                                   placeholder={`Custom caption for ${a.displayName}…`}
-                                  className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
+                                  className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-hidden"
                                   style={{ minHeight: 100, overflow: "hidden", backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }} />
                               </div>
                               {!NO_COMMENT_PLATFORMS.has(a.platform) && (
@@ -1292,7 +1292,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                                   onChange={e => { setOverrideField(a.id, "commentText", e.target.value); const sc = e.target.closest("[data-customize-scroll]") as HTMLElement | null; const sv = sc?.scrollTop ?? 0; e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; if (sc) sc.scrollTop = sv; }}
                                   ref={el => { if (el) { el.style.height = `${el.scrollHeight}px`; } }}
                                   placeholder={`Custom first comment for ${a.displayName}…`}
-                                  className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-none"
+                                  className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-hidden"
                                   style={{ minHeight: 60, overflow: "hidden", backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }} />
                               </div>
                               )}

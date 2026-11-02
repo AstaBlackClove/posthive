@@ -542,7 +542,7 @@ export function Sidebar() {
 
       {/* Feedback modal */}
       {fbOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
           <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
             {/* Tabs */}
             <div className="flex gap-1 mb-4 p-1 rounded-xl" style={{ backgroundColor: "#1a1a1a" }}>
@@ -717,7 +717,7 @@ export function Sidebar() {
 
       {/* New workspace modal */}
       {newWsOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
           <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
             <h2 className="text-base font-bold mb-1" style={{ color: "#ededed" }}>New workspace</h2>
             <p className="text-xs mb-5" style={{ color: "#888" }}>Create a separate workspace for a team or project. You can upgrade it to a paid plan later.</p>

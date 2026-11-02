@@ -91,7 +91,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: BG, color: TEXT }}>
-      <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center justify-between gap-4" style={{ height: 65, borderBottom: `1px solid ${BORDER}` }}>
+      <div className="pl-16 pr-4 md:px-8 shrink-0 flex items-center justify-between gap-4" style={{ height: 65, borderBottom: `1px solid ${BORDER}` }}>
         <div className="min-w-0">
           <h1 className="text-lg font-bold">Templates</h1>
           <p className="text-xs mt-0.5 hidden sm:block truncate" style={{ color: MUTED }}>
@@ -102,7 +102,7 @@ export default function TemplatesPage() {
         </div>
         {canManage && (
           <button type="button" onClick={() => setEditing({ template: null })}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 flex-shrink-0"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 shrink-0"
             style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -180,7 +180,7 @@ export default function TemplatesPage() {
           onClose={() => setEditing(null)} onSaved={saved} />
       )}
       {deleting && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}
+        <div className="fixed inset-0 z-1000 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}
           onMouseDown={(e) => { if (e.target === e.currentTarget && !removing) setDeleting(null); }}>
           <div role="alertdialog" aria-modal="true" aria-labelledby="delete-template-title"
             className="w-full max-w-sm rounded-2xl p-5" style={{ background: "#111111", border: `1px solid ${BORDER}` }}>
@@ -211,7 +211,7 @@ function TemplateCover({ template }: { template: DesignTemplate }) {
   }
   return (
     <span className="flex flex-col items-center gap-2 px-4 text-center">
-      <span className="text-xs font-bold px-2 py-1 rounded" style={{ background: "#1f1f1f", color: TEXT }}>
+      <span className="text-xs font-bold px-2 py-1 rounded-sm" style={{ background: "#1f1f1f", color: TEXT }}>
         {template.fileUrl ? "FIG" : "LINK"}
       </span>
       <span className="text-xs" style={{ color: MUTED }}>No preview</span>
@@ -229,7 +229,7 @@ function TemplateTile({ template, onOpen }: { template: DesignTemplate; onOpen: 
           style={{ aspectRatio: "4 / 5", border: `1px solid ${BORDER}`, background: "#111111" }}>
           <TemplateCover template={template} />
           {incomplete && (
-            <span className="absolute top-2 left-2 text-[11px] font-semibold px-1.5 py-0.5 rounded" style={{ background: "#422006", color: "#fbbf24" }}>
+            <span className="absolute top-2 left-2 text-[11px] font-semibold px-1.5 py-0.5 rounded-sm" style={{ background: "#422006", color: "#fbbf24" }}>
               Incomplete
             </span>
           )}
@@ -287,21 +287,21 @@ function TemplateDetail({ template, canManage, canUse, onClose, onUse, onEdit, o
   const updated = template.updatedAt ? new Date(template.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" }) : null;
 
   return (
-    <div className="fixed inset-0 z-[900] flex items-center justify-center p-4"
+    <div className="fixed inset-0 z-900 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.75)" }}
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <style>{`.template-detail :focus-visible { outline: 2px solid #5b63d3; outline-offset: 2px; }`}</style>
       <div role="dialog" aria-modal="true" aria-label={`Template for ${template.category}`}
         className="template-detail flex flex-col sm:flex-row overflow-hidden w-full"
         style={{ background: "#111111", border: `1px solid ${BORDER}`, borderRadius: 16, maxWidth: 760, maxHeight: "90vh" }}>
-        <div className="sm:w-[42%] flex-shrink-0 flex items-center justify-center p-4" style={{ background: BG, borderRight: `1px solid ${BORDER}` }}>
+        <div className="sm:w-[42%] shrink-0 flex items-center justify-center p-4" style={{ background: BG, borderRight: `1px solid ${BORDER}` }}>
           <div className="w-full rounded-xl overflow-hidden flex items-center justify-center" style={{ aspectRatio: "4 / 5", border: `1px solid ${BORDER}`, maxHeight: "40vh" }}>
             <TemplateCover template={template} />
           </div>
         </div>
 
         <div className="flex flex-col min-h-0 flex-1" style={{ minWidth: 0 }}>
-          <div className="flex items-start gap-3 px-5 pt-5 pb-4 flex-shrink-0" style={{ borderBottom: `1px solid ${BORDER}` }}>
+          <div className="flex items-start gap-3 px-5 pt-5 pb-4 shrink-0" style={{ borderBottom: `1px solid ${BORDER}` }}>
             <div className="flex-1 min-w-0">
               <h2 className="text-base font-bold leading-snug" style={{ color: TEXT }}>{template.category}</h2>
               <p className="text-xs mt-1" style={{ color: MUTED }}>
@@ -309,7 +309,7 @@ function TemplateDetail({ template, canManage, canUse, onClose, onUse, onEdit, o
               </p>
             </div>
             <button type="button" onClick={onClose} aria-label="Close"
-              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
               style={{ color: MUTED, border: `1px solid ${BORDER}` }}>✕</button>
           </div>
 
@@ -321,7 +321,7 @@ function TemplateDetail({ template, canManage, canUse, onClose, onUse, onEdit, o
           </div>
 
           {(canManage || canUse) && (
-            <div className="flex gap-2 px-5 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${BORDER}` }}>
+            <div className="flex gap-2 px-5 py-4 shrink-0" style={{ borderTop: `1px solid ${BORDER}` }}>
               {canManage && (
                 <>
                   <button type="button" onClick={onDelete}
