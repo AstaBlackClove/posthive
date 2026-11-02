@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { cn } from "../lib/cn";
 
 type ToastType = "success" | "error" | "warning" | "info";
 
@@ -27,15 +28,16 @@ const ICONS: Record<ToastType, string> = {
   info: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
 };
 
-const STYLES: Record<ToastType, { bg: string; border: string; icon: string; text: string }> = {
-  success: { bg: "#052e16", border: "#14532d", icon: "#4ade80", text: "#86efac" },
-  error:   { bg: "#1a0a0a", border: "#7f1d1d", icon: "#f87171", text: "#fca5a5" },
-  warning: { bg: "#1c1209", border: "#7c2d12", icon: "#fb923c", text: "#fdba74" },
-  info:    { bg: "#0d0d1a", border: "#2a2a5a", icon: "#818cf8", text: "#a5b4fc" },
+// box: panel + text/icon color (icons use currentColor); icon: badge behind the icon
+const CLASSES: Record<ToastType, { box: string; icon: string }> = {
+  success: { box: "bg-green-50 border-green-200 text-green-700", icon: "bg-green-100" },
+  error:   { box: "bg-red-50 border-red-200 text-red-600",       icon: "bg-red-100" },
+  warning: { box: "bg-brand-100 border-brand-400 text-brand-800", icon: "bg-brand-200" },
+  info:    { box: "bg-blue-50 border-blue-200 text-blue-700",    icon: "bg-blue-100" },
 };
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
-  const s = STYLES[toast.type];
+  const s = CLASSES[toast.type];
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -49,23 +51,15 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
 
   return (
     <div
-      className="flex items-start gap-3 px-4 py-3 rounded-2xl shadow-2xl transition-all duration-300"
-      style={{
-        backgroundColor: s.bg,
-        border: `1px solid ${s.border}`,
-        maxWidth: 360,
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0) scale(1)" : "translateY(8px) scale(0.97)",
-      }}>
-      <div className="w-5 h-5 shrink-0 mt-0.5 rounded-full flex items-center justify-center"
-        style={{ backgroundColor: s.icon + "20" }}>
-        <svg className="w-3 h-3" fill="none" stroke={s.icon} viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}>
+      className={cn("flex items-start gap-3 px-4 py-3 rounded-2xl border max-w-90 shadow-2xl transition-all duration-300", s.box,
+        visible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-2 scale-97")}>
+      <div className={cn("w-5 h-5 shrink-0 mt-0.5 rounded-full flex items-center justify-center", s.icon)}>
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}>
           <path d={ICONS[toast.type]} />
         </svg>
       </div>
-      <p className="text-sm flex-1 leading-snug" style={{ color: s.text }}>{toast.message}</p>
-      <button onClick={() => onDismiss(toast.id)} className="shrink-0 mt-0.5 hover:opacity-60 transition-opacity"
-        style={{ color: s.icon }}>
+      <p className="type-body-r-s flex-1">{toast.message}</p>
+      <button onClick={() => onDismiss(toast.id)} className="shrink-0 mt-0.5 hover:opacity-60 transition-opacity">
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>

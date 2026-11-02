@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Modal } from "./Modal";
-import { PlatformPreview, PLATFORM_COLOR, PLATFORM_LIMIT, MAX_IMAGES, countGraphemes } from "./PlatformPreview";
+import { PlatformPreview, PLATFORM_LIMIT, MAX_IMAGES, countGraphemes } from "./PlatformPreview";
 import type { Account, UploadedImage, PerAccountOverride } from "./PlatformPreview";
 import { DateTimePicker } from "./DateTimePicker";
 import { PlatformIcon } from "./PlatformIcon";
@@ -19,6 +19,7 @@ import { normalizeCategory } from "../lib/contentTypes";
 import { templatesByCategory, type DesignTemplate } from "../lib/templates";
 import { ContentTypeSelects, type ContentType } from "./ContentTypeSelects";
 import { DesignReferenceCard } from "./DesignReferenceCard";
+import { cn } from "../lib/cn";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -422,22 +423,19 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
     <Modal open={open} onClose={onClose} maxWidth={1400} onPaste={handlePaste}>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 shrink-0"
-        style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
+      <div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-border bg-bg">
         <div>
-          <h2 className="text-base font-bold" style={{ color: "#ededed" }}>Edit Post</h2>
-          <p className="text-xs mt-0.5" style={{ color: "#555" }}>Edits apply to the pending scheduled post</p>
+          <h2 className="type-body-sb-m text-fg">Edit Post</h2>
+          <p className="type-body-r-xs mt-0.5 text-neutral-500">Edits apply to the pending scheduled post</p>
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => setPreviewOpen(true)}
-            className="sm:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
-            style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}>
+            className="btn-secondary sm:hidden gap-1.5 px-3 py-1.5 type-body-sb-xs">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Preview
           </button>
           <button onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
-            style={{ color: "#666" }}>
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors text-neutral-500 hover:bg-surface">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -446,16 +444,15 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
       </div>
 
       {/* Body — editor left, preview right */}
-      <div className="flex min-h-0 overflow-hidden" style={{ height: "calc(90vh - 136px)" }}>
+      <div className="flex min-h-0 overflow-hidden h-[calc(90vh-136px)]">
 
         {/* Left: editor */}
-        <div className="flex flex-col flex-1 overflow-y-auto min-w-0"
-          style={{ borderRight: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
+        <div className="flex flex-col flex-1 overflow-y-auto min-w-0 border-r border-border bg-bg">
 
           {/* Platform selector */}
-          <div className="px-6 pt-5 pb-4" style={{ borderBottom: "1px solid #1a1a1a" }}>
+          <div className="px-6 pt-5 pb-4 border-b border-border">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#444" }}>Post to</p>
+              <p className="section-label">Post to</p>
               {accounts.length > 1 && (
                 <div className="flex items-center gap-3">
                   <button type="button"
@@ -464,11 +461,11 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
                       if (!next.some(id => accounts.find(a => a.id === id)?.platform === "instagram")) setIgMediaType("post");
                       setSelectedIds(next);
                     }}
-                    className="text-xs font-semibold" style={{ color: "#5b63d3" }}>
+                    className="type-body-sb-xs text-brand-800">
                     {selectedIds.length === accounts.length ? "Deselect all" : "Select all"}
                   </button>
                   <button type="button" onClick={() => setShowReorder(true)}
-                    className="text-xs font-semibold" style={{ color: "#888" }}>
+                    className="type-body-sb-xs text-muted">
                     ⇅ Reorder
                   </button>
                 </div>
@@ -477,24 +474,20 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
             <div className="flex flex-wrap gap-1.5">
               {Object.entries(groupedAccounts).map(([platform, accs]) => (
                 <div key={platform} className="flex items-center gap-1.5 flex-wrap">
-                  <span className="flex items-center px-2 py-1 rounded-lg"
-                    style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+                  <span className="flex items-center px-2 py-1 rounded-lg bg-surface border border-border">
                     <PlatformIcon platform={platform} size={11} />
                   </span>
                   {accs.map(a => {
                     const sel = selectedIds.includes(a.id);
-                    const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
                     return (
                       <button key={a.id} type="button" onClick={() => toggleAccount(a.id)}
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
-                        style={sel
-                          ? { background: color + "18", border: `1px solid ${color}50`, color }
-                          : { background: "#111111", border: "1px solid #2a2a2a", color: "#888" }}>
+                        className={cn("chip type-body-m-xs",
+                          sel && "chip-active")}>
                         {a.avatarUrl && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={a.avatarUrl} alt="" className="w-4 h-4 rounded-full object-cover shrink-0" />
                         )}
-                        <span className="truncate max-w-[96px]">{a.displayName}</span>
+                        <span className="truncate max-w-24">{a.displayName}</span>
                         {sel && (
                           <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -503,24 +496,23 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
                       </button>
                     );
                   })}
-                  <div className="w-px h-5 self-center" style={{ backgroundColor: "#2a2a2a" }} />
+                  <div className="w-px h-5 self-center bg-border" />
                 </div>
               ))}
             </div>
             {selectedIds.length === 0 && (
-              <p className="mt-2 text-xs" style={{ color: "#ef4444" }}>Select at least one account</p>
+              <p className="mt-2 type-body-r-xs text-red-600">Select at least one account</p>
             )}
           </div>
 
           {/* Content type — the design template for it is a reference, never attached */}
-          <div className="px-6 py-5" style={{ borderBottom: "1px solid #1e1e1e" }}>
-            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Content type</span>
+          <div className="px-6 py-5 border-b border-border">
+            <span className="section-label">Content type</span>
             <div className="mt-2">
               <ContentTypeSelects idPrefix="edit-post"
                 pillar={contentType ? contentType.pillar : parsedContent.pillar}
                 category={contentType ? contentType.category : parsedContent.category}
-                onChange={setContentType}
-                selectStyle={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", borderRadius: 12, padding: "8px 12px", fontSize: 14, color: "#ededed" }} />
+                onChange={setContentType} />
             </div>
             {(() => {
               const category = normalizeCategory(contentType ? contentType.category : parsedContent.category);
@@ -533,13 +525,14 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
           </div>
 
           {/* Caption */}
-          <div className="px-6 py-5" style={{ display: noPostTextNeeded ? "none" : undefined }}>
+          <div className={cn("px-6 py-5", noPostTextNeeded && "hidden")}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Caption</span>
+              <span className="section-label">Caption</span>
               <div className="flex items-center gap-3">
                 {platformLimits.map(p => (
-                  <span key={p.platform} className="text-xs font-medium flex items-center gap-1"
-                    style={{ color: p.over ? "#ef4444" : p.effectiveCount > p.limit * 0.8 ? "#f59e0b" : "#555" }}>
+                  <span key={p.platform}
+                    className={cn("type-body-m-xs flex items-center gap-1",
+                      p.over ? "text-red-600" : p.effectiveCount > p.limit * 0.8 ? "text-brand-800" : "text-neutral-500")}>
                     <PlatformIcon platform={p.platform} size={12} /> {p.effectiveCount}/{p.limit}
                   </span>
                 ))}
@@ -550,23 +543,18 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
               onChange={e => { setText(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
               ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
               placeholder="What do you want to share?"
-              className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-hidden transition"
-              style={{
-                minHeight: "140px", overflow: "hidden",
-                border: overAnyLimit ? "1px solid #fca5a5" : "1px solid #2a2a2a",
-                backgroundColor: "#111111", color: "#ededed",
-              }}
+              className={cn("field resize-none px-4 py-3 min-h-35 overflow-hidden", overAnyLimit && "border-red-300")}
             />
             {overAnyLimit && (
-              <p className="mt-1 text-xs" style={{ color: "#ef4444" }}>
+              <p className="mt-1 type-body-r-xs text-red-600">
                 Over the character limit for one of your selected platforms
               </p>
             )}
             {/* AI caption button */}
             <div ref={aiMenuRef} className="relative flex justify-end mt-1.5">
               <button type="button" onClick={() => setShowAiMenu(v => !v)} disabled={aiLoading || !text.trim()}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all disabled:opacity-40"
-                style={{ backgroundColor: aiLoading ? "#2e2458" : "#1e1e2e", color: aiLoading ? "#ede9fe" : "#a5b4fc", border: `1px solid ${aiLoading ? "#6d28d9" : "#3d3d6b"}` }}>
+                className={cn("flex items-center gap-1.5 px-3 py-1 rounded-lg border type-body-sb-xs transition-all disabled:opacity-40",
+                  aiLoading ? "bg-brand-200 border-brand-400 text-brand-900" : "bg-brand-100 border-brand-300 text-brand-800")}>
                 {aiLoading ? (
                   <>
                     <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
@@ -580,21 +568,19 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
                 )}
               </button>
               {showAiMenu && (
-                <div className="absolute top-full right-0 mt-1 rounded-xl overflow-hidden z-50 min-w-[180px]"
-                  style={{ backgroundColor: "#111", border: "1px solid #2a2a2a", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+                <div className="absolute top-full right-0 mt-1 rounded-xl overflow-hidden z-50 min-w-45 bg-surface border border-border shadow-xl">
                   {[
-                    { action: "fix_grammar",       label: "Fix Grammar",        color: "#a78bfa", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg> },
-                    { action: "concise",            label: "Make it Concise",    color: "#60a5fa", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 9l7-7 7 7M5 15l7 7 7-7"/></svg> },
-                    { action: "expand",             label: "Expand",             color: "#34d399", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg> },
-                    { action: "rephrase",           label: "Rephrase",           color: "#fb923c", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg> },
-                    { action: "improve_structure",  label: "Improve Structure",  color: "#f472b6", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 10h10M4 14h12M4 18h8"/></svg> },
-                    { action: "simplify",           label: "Simplify Language",  color: "#38bdf8", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg> },
-                    { action: "polish",             label: "Polish my Caption",  color: "#fbbf24", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2zM4.5 14L5.5 17 8.5 18l-3 1-1 3-1-3-3-1 3-1 1-3z"/></svg> },
-                  ].map(({ action, label, color, icon }) => (
+                    { action: "fix_grammar",       label: "Fix Grammar",        icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg> },
+                    { action: "concise",            label: "Make it Concise",    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 9l7-7 7 7M5 15l7 7 7-7"/></svg> },
+                    { action: "expand",             label: "Expand",             icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg> },
+                    { action: "rephrase",           label: "Rephrase",           icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg> },
+                    { action: "improve_structure",  label: "Improve Structure",  icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 10h10M4 14h12M4 18h8"/></svg> },
+                    { action: "simplify",           label: "Simplify Language",  icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg> },
+                    { action: "polish",             label: "Polish my Caption",  icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2zM4.5 14L5.5 17 8.5 18l-3 1-1 3-1-3-3-1 3-1 1-3z"/></svg> },
+                  ].map(({ action, label, icon }) => (
                     <button key={action} type="button" onClick={() => runAiAction(action)}
-                      className="w-full text-left px-3 py-2 text-xs transition-colors hover:bg-white/5 flex items-center gap-2.5"
-                      style={{ color: "#ededed" }}>
-                      <span style={{ color }}>{icon}</span>
+                      className="w-full text-left px-3 py-2 type-body-r-xs text-fg transition-colors hover:bg-neutral-100 flex items-center gap-2.5">
+                      <span className="text-brand-800">{icon}</span>
                       {label}
                     </button>
                   ))}
@@ -691,55 +677,51 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
           {selectedAccounts.filter(a => a.platform !== "youtube" && a.platform !== "pinterest").length > 1 && (
             <div className="px-6 py-5">
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Customize per platform</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: "#555", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>optional</span>
+                <span className="section-label">Customize per platform</span>
+                <span className="type-body-r-xxs px-1.5 py-0.5 rounded-full text-neutral-500 bg-surface border border-border">optional</span>
               </div>
               <div className="space-y-2">
                 {selectedAccounts.filter(a => a.platform !== "youtube" && a.platform !== "pinterest").map(a => {
                   const hasOverride = a.id in perAccountOverrides;
                   const override = perAccountOverrides[a.id];
-                  const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
                   const limit = PLATFORM_LIMIT[a.platform] ?? 500;
                   const overrideCount = countGraphemes(override?.text ?? "");
                   return (
-                    <div key={a.id} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${hasOverride ? color + "40" : "#1f1f1f"}`, backgroundColor: "#0d0d0d" }}>
+                    <div key={a.id} className={cn("rounded-xl overflow-hidden border bg-surface", hasOverride ? "border-brand-300" : "border-border")}>
                       <button type="button" onClick={() => toggleOverride(a.id, text, commentText)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left"
-                        style={{ backgroundColor: hasOverride ? color + "10" : "transparent" }}>
+                        className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 text-left", hasOverride && "bg-brand-100")}>
                         <PlatformIcon platform={a.platform} size={14} />
-                        <span className="text-xs font-medium flex-1" style={{ color: hasOverride ? color : "#666" }}>{a.displayName}</span>
+                        <span className={cn("type-body-m-xs flex-1", hasOverride ? "text-brand-800" : "text-neutral-500")}>{a.displayName}</span>
                         {hasOverride ? (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: color + "20", color }}>Custom ✓</span>
+                          <span className="type-body-sb-xxs px-1.5 py-0.5 rounded-full bg-brand-200 text-brand-800">Custom ✓</span>
                         ) : (
-                          <span className="text-[10px]" style={{ color: "#444" }}>✎ Customize</span>
+                          <span className="type-body-r-xxs text-neutral-500">✎ Customize</span>
                         )}
                       </button>
                       {hasOverride && (
                         <div className="px-3 pb-3 space-y-2">
                           <div>
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Caption</span>
-                              <span className="text-[10px]" style={{ color: overrideCount > limit ? "#ef4444" : "#444" }}>{overrideCount}/{limit}</span>
+                              <span className="type-body-sb-xxs uppercase tracking-wide text-muted">Caption</span>
+                              <span className={cn("type-body-r-xxs", overrideCount > limit ? "text-red-600" : "text-neutral-500")}>{overrideCount}/{limit}</span>
                             </div>
                             <textarea
                               value={override?.text ?? ""}
                               onChange={e => { setOverrideField(a.id, "text", e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
                               ref={el => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
                               placeholder={`Custom caption for ${a.displayName}…`}
-                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-hidden"
-                              style={{ minHeight: 100, overflow: "hidden", backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }}
+                              className={cn("field resize-none rounded-lg type-body-r-xs min-h-25 overflow-hidden", overrideCount > limit && "border-red-300")}
                             />
                           </div>
                           {!NO_COMMENT_PLATFORMS.has(a.platform) && (
                           <div>
-                            <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1">First Comment</span>
+                            <span className="type-body-sb-xxs uppercase tracking-wide block mb-1 text-muted">First Comment</span>
                             <textarea
                               value={override?.commentText ?? ""}
                               onChange={e => { setOverrideField(a.id, "commentText", e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
                               ref={el => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
                               placeholder={`Custom first comment for ${a.displayName}…`}
-                              className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-hidden"
-                              style={{ minHeight: 60, overflow: "hidden", backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}
+                              className="field resize-none rounded-lg type-body-r-xs min-h-15 overflow-hidden"
                             />
                           </div>
                           )}
@@ -754,14 +736,14 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
         </div>
 
         {/* Right: live previews — hidden on mobile, shown on sm+ */}
-        <div className="hidden sm:flex shrink-0 flex-col overflow-y-auto" style={{ width: 480, backgroundColor: "#0a0a0a" }}>
+        <div className="hidden sm:flex shrink-0 flex-col overflow-y-auto w-120 bg-bg">
           <div className="px-5 pt-5 pb-3">
-            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Preview</p>
+            <p className="section-label">Preview</p>
           </div>
           <div className="px-5 pb-5 space-y-4 flex-1">
             {selectedAccounts.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed p-10 text-center" style={{ borderColor: "#1f1f1f" }}>
-                <p className="text-sm" style={{ color: "#444" }}>Select an account above to see a preview</p>
+              <div className="dropzone rounded-2xl p-10 text-center">
+                <p className="type-body-r-s text-neutral-500">Select an account above to see a preview</p>
               </div>
             ) : (
               selectedAccounts.map(a => {
@@ -784,8 +766,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
       </div>
 
       {/* Footer */}
-      <div className="flex flex-col gap-2 px-6 py-4 shrink-0"
-        style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
+      <div className="flex flex-col gap-2 px-6 py-4 shrink-0 border-t border-border bg-bg">
         <WarningsBar
           youtubeSelectedWithNoVideo={youtubeSelectedWithNoVideo}
           pinterestSelectedWithNoImage={pinterestSelectedWithNoImage}
@@ -798,23 +779,20 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
         />
         {(mediaWarning || saveError) && (
           <div className="flex flex-col gap-1">
-            {mediaWarning && <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>{mediaWarning}</p>}
-            {saveError && <p className="text-xs" style={{ color: "#ef4444" }}>{saveError}</p>}
+            {mediaWarning && <p className="type-body-m-xs text-brand-800">{mediaWarning}</p>}
+            {saveError && <p className="type-body-r-xs text-red-600">{saveError}</p>}
           </div>
         )}
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <DateTimePicker value={scheduledFor} onChange={setScheduledFor} min={wibDateKey(new Date())} />
           <div className="flex-1" />
           <div className="flex items-center gap-2 justify-end">
-            <button onClick={onClose} disabled={saving}
-              className="px-4 py-2 text-sm rounded-xl font-medium disabled:opacity-40"
-              style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+            <button onClick={onClose} disabled={saving} className="btn-secondary">
               Cancel
             </button>
             <button onClick={handleSave}
               disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink}
-              className="px-5 py-2 text-sm font-semibold rounded-xl disabled:opacity-40"
-              style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+              className="btn-primary px-5">
               {saving
                 ? (submitLabel?.includes("Review") ? "Submitting…" : "Saving…")
                 : (submitLabel ?? (isDraft ? "Schedule Post" : "Save changes"))}
@@ -825,20 +803,18 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
       {/* Mobile preview bottom sheet */}
       {previewOpen && (
         <div className="sm:hidden fixed inset-0 z-1100" onClick={() => setPreviewOpen(false)}>
-          <div className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,.6)" }} />
+          <div className="absolute inset-0 bg-black/60" />
           <div
-            className="absolute inset-x-0 bottom-0 rounded-t-2xl flex flex-col"
-            style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderBottom: "none", maxHeight: "80vh" }}
+            className="absolute inset-x-0 bottom-0 rounded-t-2xl flex flex-col bg-bg border border-border border-b-0 max-h-[80vh]"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-center pt-2.5 pb-1 shrink-0">
-              <div className="w-9 h-1 rounded-full" style={{ backgroundColor: "#2a2a2a" }} />
+              <div className="w-9 h-1 rounded-full bg-border" />
             </div>
-            <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
-              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Preview</p>
+            <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0 border-b border-border">
+              <p className="section-label">Preview</p>
               <button type="button" onClick={() => setPreviewOpen(false)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/5"
-                style={{ color: "#666" }}>
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-500 hover:bg-surface">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
                 </svg>
@@ -846,7 +822,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
             </div>
             <div className="overflow-y-auto px-5 py-4 space-y-4">
               {selectedAccounts.length === 0 ? (
-                <p className="text-sm text-center py-8" style={{ color: "#444" }}>Select an account to see a preview</p>
+                <p className="type-body-r-s text-center py-8 text-neutral-500">Select an account to see a preview</p>
               ) : (
                 selectedAccounts.map(a => {
                   const ov = perAccountOverrides[a.id];
@@ -867,16 +843,16 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
         </div>
       )}
       {showReorder && (
-        <div className="fixed inset-0 z-1200 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+        <div className="fixed inset-0 z-1200 flex items-center justify-center p-4 bg-black/70"
           onClick={() => setShowReorder(false)}>
-          <div className="rounded-2xl w-full max-w-sm overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+          <div className="card w-full max-w-sm overflow-hidden"
             onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div>
-                <p className="font-semibold text-sm" style={{ color: "#ededed" }}>Reorder Accounts</p>
-                <p className="text-xs mt-0.5" style={{ color: "#888" }}>Drag to set the order they appear</p>
+                <p className="type-body-sb-s text-fg">Reorder Accounts</p>
+                <p className="type-body-r-xs mt-0.5 text-muted">Drag to set the order they appear</p>
               </div>
-              <button onClick={() => setShowReorder(false)} style={{ color: "#888", fontSize: 18, lineHeight: 1 }}>×</button>
+              <button onClick={() => setShowReorder(false)} className="type-body-r-l text-muted">×</button>
             </div>
             <div className="p-4 space-y-1.5 max-h-96 overflow-y-auto">
               {sortedAccounts.map((a, idx) => (
@@ -899,31 +875,26 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
                     setAccountOrder(next);
                     localStorage.setItem("posthive_account_order", JSON.stringify(next));
                   }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-grab select-none"
-                  style={{
-                    backgroundColor: dragOverId === a.id ? "#1e1e1e" : "#1a1a1a",
-                    border: `1px solid ${dragOverId === a.id ? "#5b63d3" : "#2a2a2a"}`,
-                  }}>
-                  <span style={{ color: "#555", fontSize: 14 }}>⠿</span>
+                  className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-grab select-none",
+                    dragOverId === a.id ? "bg-neutral-100 border-accent" : "bg-bg border-border")}>
+                  <span className="type-body-r-s text-neutral-500">⠿</span>
                   <PlatformIcon platform={a.platform} size={16} />
                   {a.avatarUrl
                     // eslint-disable-next-line @next/next/no-img-element
                     ? <img src={a.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
                     : null}
-                  <span className="text-sm flex-1 truncate" style={{ color: "#ededed" }}>{a.displayName}</span>
-                  <span className="text-xs" style={{ color: "#555" }}>{idx + 1}</span>
+                  <span className="type-body-r-s flex-1 truncate text-fg">{a.displayName}</span>
+                  <span className="type-body-r-xs text-neutral-500">{idx + 1}</span>
                 </div>
               ))}
             </div>
             <div className="px-4 pb-4 pt-2 flex gap-2">
               <button onClick={() => { setAccountOrder([]); localStorage.removeItem("posthive_account_order"); }}
-                className="flex-1 py-2 rounded-xl text-sm font-semibold"
-                style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+                className="btn-secondary flex-1">
                 Reset order
               </button>
               <button onClick={() => setShowReorder(false)}
-                className="flex-1 py-2 rounded-xl text-sm font-semibold"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                className="btn-primary flex-1">
                 Done
               </button>
             </div>
