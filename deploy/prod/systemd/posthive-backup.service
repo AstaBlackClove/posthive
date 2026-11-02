@@ -1,0 +1,10 @@
+[Unit]
+Description=Posthive verified database and uploads backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/posthive/scripts/backup.sh daily
+Nice=10
+IOSchedulingClass=idle

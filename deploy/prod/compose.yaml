@@ -1,0 +1,129 @@
+# Posthive — production stack for the server.
+#
+# Installed at /opt/posthive/compose.yaml, outside the git checkout in /opt/posthive/app.
+# This file never builds: images are built on a workstation by scripts/build-and-ship.sh
+# (the API's tsc step needs ~2 GB RAM) and loaded here. scripts/deploy.sh retags them as :current.
+# Secrets come from /opt/posthive/.env (root:root 0600). See README.md.
+#
+# The project name differs from the repo's own docker-compose.yml ("posthive") so that running
+# that file by accident can never replace these containers or volumes.
+name: posthive-prod
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: posthive
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      POSTGRES_DB: posthive
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      # TCP, not the socket: the image's first-boot init server only listens on the socket.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U posthive -d posthive"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      start_interval: 2s
+    stop_grace_period: 60s
+    mem_limit: 512m
+    logging: *logging
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # AOF keeps delayed BullMQ jobs across restarts; noeviction is required by BullMQ.
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis_data:/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+      start_interval: 2s
+    mem_limit: 192m
+    logging: *logging
+
+  api:
+    image: posthive-prod-api:current
+    pull_policy: never
+    restart: unless-stopped
+    init: true
+    # The API process also runs the BullMQ worker and all crons — run exactly one replica.
+    # Waits for db/redis on every start (depends_on is not applied when dockerd restarts
+    # containers after a reboot). Migrations are NOT run here: scripts/deploy.sh runs them
+    # after a verified backup.
+    command: ["sh", "-c", "until nc -z db 5432 && nc -z redis 6379; do sleep 1; done; exec node dist/index.js"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://posthive:${POSTGRES_PASSWORD}@db:5432/posthive
+      DIRECT_URL: postgresql://posthive:${POSTGRES_PASSWORD}@db:5432/posthive
+      REDIS_URL: redis://redis:6379
+      NODE_OPTIONS: --dns-result-order=ipv4first --max-old-space-size=640
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/apps/api/uploads
+    networks: [backend, default]
+    ports:
+      - "127.0.0.1:3001:3001"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+      start_interval: 3s
+    stop_grace_period: 30s
+    mem_limit: 900m
+    logging: *logging
+
+  web:
+    image: posthive-prod-web:current
+    pull_policy: never
+    restart: unless-stopped
+    init: true
+    # No env_file on purpose: NEXT_PUBLIC_* are baked in at build time, and .env holds
+    # PORT=3001 plus secrets. Docker sets HOSTNAME to the container id; Next must bind 0.0.0.0.
+    environment:
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      - api
+    networks: [default]
+    ports:
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/robots.txt"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 3s
+    mem_limit: 512m
+    logging: *logging
+
+networks:
+  default: {}
+  # No gateway: db and redis cannot reach the internet, and nothing outside can reach them.
+  backend:
+    internal: true
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads:
