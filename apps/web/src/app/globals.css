@@ -277,6 +277,26 @@
   .card {
     @apply rounded-2xl border border-border bg-surface;
   }
+
+  /* Toggle / segmented option: cn("chip", selected && "chip-active") */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1
+      type-body-sb-xs text-muted transition-colors cursor-pointer
+      hover:text-fg disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .chip-active {
+    @apply border-brand-300 bg-brand-100 text-brand-800 hover:text-brand-800;
+  }
+
+  /* Small uppercase heading above a field group */
+  .section-label {
+    @apply type-body-sb-xs uppercase tracking-wide text-muted;
+  }
+
+  /* Dashed empty / upload area. On a bg-surface container add `bg-bg` */
+  .dropzone {
+    @apply rounded-xl border-2 border-dashed border-border bg-surface transition-colors;
+  }
 }
 
 /* Footer responsive (bisa dihapus setelah inline style di footer
@@ -434,7 +454,8 @@
   font-size: 0.75rem;
 }
 .fc .fc-day-today .fc-daygrid-day-number {
-  color: var(--c-accent) !important;
+  /* accent yellow is unreadable as text on cream */
+  color: var(--color-brand-800) !important;
   font-weight: 700;
 }
 .fc .fc-daygrid-more-link {
