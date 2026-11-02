@@ -1,3 +1,5 @@
+import { cn } from "../lib/cn";
+
 const PLATFORM_DOMAIN: Record<string, string> = {
   bluesky:        "bsky.app",
   threads:        "threads.net",
@@ -35,17 +37,19 @@ export function PlatformIcon({ platform, size = 16, className }: Props) {
   if (platform === "nostr") return (
     // eslint-disable-next-line @next/next/no-img-element
     <img src="/Nostr.svg" alt="nostr" width={size} height={size}
-      style={{ objectFit: "contain", display: "inline-block", borderRadius: size * 0.18 }} />
+      className="inline-block rounded-[18%] object-contain" />
   );
   if (platform === "telegram") return <TelegramSvg size={size} />;
   if (platform === "googlebusiness") return (
     // eslint-disable-next-line @next/next/no-img-element
     <img src="/googlemybusinesslogo.svg" alt="google business profile" width={size} height={size}
-      style={{ objectFit: "contain", display: "inline-block", borderRadius: size * 0.18 }} />
+      className="inline-block rounded-[18%] object-contain" />
   );
 
   const domain = PLATFORM_DOMAIN[platform];
-  if (!domain) return <span style={{ fontSize: size * 0.75 }}>🌐</span>;
+  if (!domain) return (
+    <span className="text-(length:--s)" style={{ "--s": `${size * 0.75}px` } as React.CSSProperties}>🌐</span>
+  );
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -54,8 +58,7 @@ export function PlatformIcon({ platform, size = 16, className }: Props) {
       alt={platform}
       width={size}
       height={size}
-      className={className}
-      style={{ objectFit: "contain", display: "inline-block" }}
+      className={cn("inline-block object-contain", className)}
     />
   );
 }

@@ -11,13 +11,15 @@ import { useRef, useEffect, useCallback, useState } from "react";
 import type { Job } from "../app/jobs/page";
 import { PlatformIcon } from "./PlatformIcon";
 import { APP_TIMEZONE, wibDateKey } from "../lib/datetime";
+import { cn } from "../lib/cn";
 
-const STATUS_STYLE: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-  draft:    { bg: "#171717", border: "#404040", text: "#a3a3a3", dot: "#6b7280" },
-  pending:  { bg: "#1c1a10", border: "#78560a", text: "#fbbf24", dot: "#f59e0b" },
-  running:  { bg: "#0d1526", border: "#1e3a6e", text: "#60a5fa", dot: "#3b82f6" },
-  done:     { bg: "#0a1f12", border: "#14532d", text: "#4ade80", dot: "#22c55e" },
-  failed:   { bg: "#1f0a0a", border: "#7f1d1d", text: "#f87171", dot: "#ef4444" },
+// card = bg + border + text, bar = timegrid left border, dot = month-view status dot
+const STATUS_CLASS: Record<string, { card: string; bar: string; dot: string }> = {
+  draft:    { card: "bg-surface border-border text-muted",          bar: "border-l-neutral-500", dot: "bg-neutral-500" },
+  pending:  { card: "bg-brand-100 border-brand-400 text-brand-800", bar: "border-l-accent",      dot: "bg-accent" },
+  running:  { card: "bg-blue-50 border-blue-200 text-blue-700",     bar: "border-l-blue-500",    dot: "bg-blue-500" },
+  done:     { card: "bg-green-50 border-green-200 text-green-700",  bar: "border-l-green-500",   dot: "bg-green-500" },
+  failed:   { card: "bg-red-50 border-red-200 text-red-600",        bar: "border-l-red-500",     dot: "bg-red-500" },
 };
 
 
@@ -37,56 +39,38 @@ function EventCard({ info }: { info: EventContentArg }) {
   const job = info.event.extendedProps.job as Job;
   const content = JSON.parse(job.content) as { text?: string; title?: string };
   const displayTitle = jobDisplayTitle(content);
-  const style = STATUS_STYLE[job.status] ?? STATUS_STYLE.pending;
+  const tone = STATUS_CLASS[job.status] ?? STATUS_CLASS.pending;
   const isTimegrid = info.view.type.startsWith("timeGrid");
 
   if (isTimegrid) {
     return (
-      <div style={{
-        background: style.bg,
-        border: `1px solid ${style.border}`,
-        borderLeft: `3px solid ${style.dot}`,
-        borderRadius: 8,
-        padding: "3px 7px",
-        width: "100%",
-        height: "100%",
-        overflow: "hidden",
-        cursor: "pointer",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        gap: 2,
-        boxSizing: "border-box",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <span style={{ fontSize: 10, color: style.text, fontWeight: 700, opacity: 0.9, whiteSpace: "nowrap", flexShrink: 0 }}>
+      <div className={cn(
+        "flex size-full cursor-pointer flex-col justify-center gap-0.5 overflow-hidden rounded-lg border border-l-3 px-2 py-0.5",
+        tone.card, tone.bar,
+      )}>
+        <div className="flex items-center gap-1">
+          <span className="shrink-0 whitespace-nowrap type-body-sb-xxs opacity-90">
             {info.timeText}
           </span>
-          <span style={{ display: "flex", gap: 2, marginLeft: "auto", flexShrink: 0 }}>
+          <span className="ml-auto flex shrink-0 gap-0.5">
             {job.targets.slice(0, 4).map((t, i) => (
-              <span key={i} style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+              <span key={i} className="relative inline-flex shrink-0">
                 {t.account?.avatarUrl ? (
                   <img src={t.account.avatarUrl} alt={t.account.displayName}
-                    style={{ width: 13, height: 13, borderRadius: "50%", objectFit: "cover" }} />
+                    className="size-3 rounded-full object-cover" />
                 ) : (
-                  <span style={{ width: 13, height: 13, borderRadius: "50%", backgroundColor: "#333",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 7, fontWeight: 700, color: "#888" }}>
+                  <span className="flex size-3 items-center justify-center rounded-full bg-neutral-100 type-body-sb-xxs text-muted">
                     {t.account?.displayName?.[0]?.toUpperCase() ?? "?"}
                   </span>
                 )}
-                <span style={{ position: "absolute", bottom: -1, right: -1,
-                  width: 8, height: 8, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 0 }}>
+                <span className="absolute -right-px -bottom-px flex size-2 items-center justify-center leading-0">
                   <PlatformIcon platform={t.account?.platform ?? "unknown"} size={7} />
                 </span>
               </span>
             ))}
           </span>
         </div>
-        <p style={{
-          fontSize: 11, fontWeight: 600, color: style.text, lineHeight: 1.3,
-          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0,
-        }}>
+        <p className="truncate type-body-sb-xs">
           {displayTitle}
         </p>
       </div>
@@ -95,53 +79,39 @@ function EventCard({ info }: { info: EventContentArg }) {
 
   // Month view card
   return (
-    <div style={{
-      background: style.bg,
-      border: `1px solid ${style.border}`,
-      borderRadius: 10,
-      padding: "4px 8px",
-      width: "100%",
-      overflow: "hidden",
-      cursor: job.status === "pending" ? "grab" : "default",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
-        <span style={{ width: 5, height: 5, borderRadius: "50%", background: style.dot, flexShrink: 0 }} />
-        <span style={{ fontSize: 9, color: style.text, fontWeight: 700, opacity: 0.8, letterSpacing: "0.03em" }}>
+    <div className={cn(
+      "w-full overflow-hidden rounded-xl border px-2 py-1",
+      tone.card,
+      job.status === "pending" ? "cursor-grab" : "cursor-default",
+    )}>
+      <div className="mb-0.5 flex items-center gap-1">
+        <span className={cn("size-1.5 shrink-0 rounded-full", tone.dot)} />
+        <span className="type-body-sb-xxs tracking-wide opacity-80">
           {info.timeText}
         </span>
-        <span style={{ display: "flex", gap: 3, marginLeft: "auto" }}>
+        <span className="ml-auto flex gap-0.5">
           {job.targets.map((t, i) => (
-            <span key={i} style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+            <span key={i} className="relative inline-flex shrink-0">
               {t.account?.avatarUrl ? (
                 <img src={t.account.avatarUrl} alt={t.account.displayName}
-                  style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover" }} />
+                  className="size-3.5 rounded-full object-cover" />
               ) : (
-                <span style={{ width: 14, height: 14, borderRadius: "50%", backgroundColor: "#333",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 7, fontWeight: 700, color: "#888" }}>
+                <span className="flex size-3.5 items-center justify-center rounded-full bg-neutral-100 type-body-sb-xxs text-muted">
                   {t.account?.displayName?.[0]?.toUpperCase() ?? "?"}
                 </span>
               )}
-              <span style={{ position: "absolute", bottom: -1, right: -1,
-                width: 9, height: 9, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 0 }}>
+              <span className="absolute -right-px -bottom-px flex size-2 items-center justify-center leading-0">
                 <PlatformIcon platform={t.account?.platform ?? "unknown"} size={8} />
               </span>
             </span>
           ))}
         </span>
       </div>
-      <p style={{
-        fontSize: 11, fontWeight: 600, color: style.text, lineHeight: 1.35,
-        overflow: "hidden", display: "-webkit-box",
-        WebkitLineClamp: 2, WebkitBoxOrient: "vertical", margin: 0,
-      }}>
+      <p className="line-clamp-2 type-body-sb-xs">
         {displayTitle}
       </p>
       {job.commentText && (
-        <p style={{
-          fontSize: 10, color: style.text, opacity: 0.55, marginTop: 2,
-          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        }}>
+        <p className="mt-0.5 truncate type-body-r-xxs opacity-55">
           ↳ {job.commentText}
         </p>
       )}
@@ -149,151 +119,114 @@ function EventCard({ info }: { info: EventContentArg }) {
   );
 }
 
-const DARK_CSS = `
+// FullCalendar layout + EventCard chrome on top of the token-based `.fc` theme in
+// globals.css (colors live there; only token vars here).
+const CALENDAR_CSS = `
   /* Base */
-  .fc-dark { color: #ededed; }
-  .fc-dark .fc-scrollgrid { border-color: #2a2a2a !important; border-radius: 16px; overflow: hidden; }
-  .fc-dark td, .fc-dark th { border-color: #2a2a2a !important; }
+  .ph-calendar .fc-scrollgrid { border-radius: 16px; overflow: hidden; }
 
   /* Header row */
-  .fc-dark .fc-col-header { background: #161616; }
-  .fc-dark .fc-col-header-cell { background: transparent !important; padding: 12px 0 !important; }
-  .fc-dark .fc-col-header-cell-cushion {
-    font-size: 0.7rem; font-weight: 700; color: #777;
-    text-transform: uppercase; letter-spacing: 0.1em;
-    text-decoration: none !important;
-  }
+  .ph-calendar .fc-col-header-cell { padding: 12px 0 !important; }
+  .ph-calendar .fc-col-header-cell-cushion { text-decoration: none !important; }
 
   /* Day cells */
-  .fc-dark .fc-daygrid-day { background: #111111 !important; transition: background 0.15s; }
-  .fc-dark .fc-daygrid-day:hover { background: #181818 !important; position: relative; }
-  .fc-dark .fc-daygrid-day:hover::after {
+  .ph-calendar .fc-daygrid-day { transition: background-color 0.15s; }
+  .ph-calendar .fc-daygrid-day:hover { position: relative; }
+  .ph-calendar .fc-daygrid-day:hover::after {
     content: '';
     position: absolute;
     inset: 0;
-    border: 1px solid #3a3a3a;
+    border: 1px solid var(--color-neutral-300);
     pointer-events: none;
     z-index: 5;
   }
-  .fc-dark .fc-daygrid-day.fc-day-today { background: #13132a !important; box-shadow: inset 0 0 0 1.5px #5b63d3; }
-  .fc-dark .fc-daygrid-day.fc-day-other { background: #0d0d0d !important; }
-  .fc-dark .fc-daygrid-day.fc-day-other .fc-daygrid-day-number { color: #555 !important; }
-  .fc-dark .fc-daygrid-day.fc-day-other .fc-daygrid-event-harness { opacity: 0.7; }
-  .fc-dark .fc-daygrid-day-number {
-    font-size: 0.78rem; font-weight: 600; color: #aaa; padding: 7px 10px;
+  .ph-calendar .fc-daygrid-day.fc-day-other .fc-daygrid-day-number { color: var(--color-neutral-500) !important; }
+  .ph-calendar .fc-daygrid-day.fc-day-other .fc-daygrid-event-harness { opacity: 0.7; }
+  .ph-calendar .fc-daygrid-day-number {
+    font-weight: 600; padding: 7px 10px;
     text-decoration: none !important;
   }
-  .fc-dark .fc-day-today .fc-daygrid-day-number {
-    color: #818cf8 !important; font-weight: 800;
-  }
 
-  /* Events */
-  .fc-dark .fc-event { background: transparent !important; border: none !important; padding: 1px 3px; }
-  .fc-dark .fc-event:active { cursor: grabbing; }
-  .fc-dark .fc-daygrid-event-harness { margin: 1px 3px; }
-  .fc-dark .fc-daygrid-more-link {
-    color: #818cf8 !important; font-size: 0.7rem; font-weight: 700;
-    background: #1e1e3a; border-radius: 6px; padding: 1px 6px;
+  /* Events — EventCard draws the status-colored card itself */
+  .ph-calendar .fc-event { background: transparent !important; border: none !important; padding: 1px 3px; }
+  .ph-calendar .fc-event:active { cursor: grabbing; }
+  .ph-calendar .fc-daygrid-event-harness { margin: 1px 3px; }
+  .ph-calendar .fc-daygrid-more-link {
+    color: var(--color-brand-800) !important; font-size: 0.7rem; font-weight: 700;
+    background: var(--color-brand-100); border-radius: 6px; padding: 1px 6px;
     text-decoration: none !important;
   }
 
   /* Toolbar title */
-  .fc-dark .fc-toolbar-title {
-    font-size: 1.05rem !important; font-weight: 700 !important; color: #ededed !important;
-    letter-spacing: -0.02em;
-  }
+  .ph-calendar .fc-toolbar-title { font-weight: 700 !important; letter-spacing: -0.02em; }
 
   /* Toolbar buttons */
-  .fc-dark .fc-button {
-    background: #1a1a1a !important; border: 1px solid #333 !important;
-    color: #bbb !important; border-radius: 10px !important;
-    font-size: 0.72rem !important; font-weight: 600 !important;
+  .ph-calendar .fc-button {
+    border-radius: 10px !important; font-weight: 600 !important;
     box-shadow: none !important; padding: 5px 12px !important;
     transition: all 0.15s !important; text-transform: capitalize !important;
   }
-  .fc-dark .fc-button:hover { background: #222 !important; color: #fff !important; border-color: #444 !important; }
-  .fc-dark .fc-button-primary:not(:disabled).fc-button-active,
-  .fc-dark .fc-button-primary:not(:disabled):active {
-    background: #5b63d3 !important; border-color: #5b63d3 !important; color: #fff !important;
-  }
-  .fc-dark .fc-button-group { gap: 3px; }
-  .fc-dark .fc-button-group .fc-button { border-radius: 8px !important; }
+  .ph-calendar .fc-button:hover { border-color: var(--color-neutral-300) !important; }
+  .ph-calendar .fc-button-group { gap: 3px; }
+  .ph-calendar .fc-button-group .fc-button { border-radius: 8px !important; }
 
   /* Prev/next icons */
-  .fc-dark .fc-icon { font-size: 0.9rem !important; }
-  .fc-dark .fc-toolbar { margin-bottom: 16px !important; align-items: center; }
+  .ph-calendar .fc-icon { font-size: 0.9rem !important; }
+  .ph-calendar .fc-toolbar { margin-bottom: 16px !important; align-items: center; }
 
   /* Timegrid */
-  .fc-dark .fc-timegrid-slot { background: #111 !important; border-color: #1e1e1e !important; height: 48px !important; }
-  .fc-dark .fc-timegrid-slot-minor { border-color: #181818 !important; }
-  .fc-dark .fc-timegrid-slot-label { color: #555 !important; font-size: 0.68rem !important; vertical-align: top; padding-top: 4px !important; }
-  .fc-dark .fc-timegrid-axis { background: #111 !important; border-color: #1e1e1e !important; }
-  .fc-dark .fc-timegrid-col { background: #111 !important; }
-  .fc-dark .fc-timegrid-col.fc-day-today { background: #13132a !important; }
-  .fc-dark .fc-timegrid-now-indicator-line { border-color: #5b63d3 !important; border-width: 2px !important; }
-  .fc-dark .fc-timegrid-now-indicator-arrow { border-top-color: #5b63d3 !important; border-bottom-color: #5b63d3 !important; }
+  .ph-calendar .fc-timegrid-slot { height: 48px !important; }
+  .ph-calendar .fc-timegrid-slot-label { color: var(--color-neutral-500) !important; font-size: 0.68rem !important; vertical-align: top; padding-top: 4px !important; }
+  .ph-calendar .fc-timegrid-col.fc-day-today { background: color-mix(in oklab, var(--c-accent) 12%, transparent) !important; }
+  .ph-calendar .fc-timegrid-now-indicator-line { border-color: var(--c-accent) !important; border-width: 2px !important; }
+  .ph-calendar .fc-timegrid-now-indicator-arrow { border-top-color: var(--c-accent) !important; border-bottom-color: var(--c-accent) !important; }
 
   /* Timegrid events */
-  .fc-dark .fc-timegrid-event { border-radius: 8px !important; border: none !important; background: transparent !important; box-shadow: none !important; }
-  .fc-dark .fc-timegrid-event .fc-event-main { padding: 0 !important; height: 100%; }
-  .fc-dark .fc-timegrid-event-harness { margin: 1px 2px !important; }
+  .ph-calendar .fc-timegrid-event { border-radius: 8px !important; border: none !important; background: transparent !important; box-shadow: none !important; }
+  .ph-calendar .fc-timegrid-event .fc-event-main { padding: 0 !important; height: 100%; }
+  .ph-calendar .fc-timegrid-event-harness { margin: 1px 2px !important; }
 
-  /* Week view column headers — show day number prominently */
-  .fc-dark .fc-timegrid-axis-cushion { font-size: 0.62rem !important; color: #444 !important; }
-  .fc-dark .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { color: #818cf8 !important; }
-  .fc-dark .fc-col-header-cell.fc-day-today { border-bottom: 2px solid #5b63d3 !important; }
-
-  /* Scrollgrid */
-  .fc-dark .fc-scrollgrid-section-header th { border-color: #2a2a2a !important; }
+  /* Week view column headers — today highlighted */
+  .ph-calendar .fc-timegrid-axis-cushion { font-size: 0.62rem !important; color: var(--color-neutral-500) !important; }
+  .ph-calendar .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { color: var(--color-brand-800) !important; }
+  .ph-calendar .fc-col-header-cell.fc-day-today { border-bottom: 2px solid var(--c-accent) !important; }
 
   /* Past days — no dimming, same as future days */
-  .fc-dark .fc-day-past { background: #111111 !important; }
-  .fc-dark .fc-day-past .fc-daygrid-day-number { color: #aaa !important; }
-  .fc-dark .fc-day-past .fc-daygrid-event-harness { opacity: 1 !important; }
+  .ph-calendar .fc-day-past .fc-daygrid-event-harness { opacity: 1 !important; }
 
   /* Drag mirror & placeholder */
-  .fc-dark .fc-event-mirror { opacity: 0.75 !important; }
-  .fc-dark .fc-daygrid-event-harness.fc-event-dragging { opacity: 0.3 !important; }
-  .fc-dark .fc-highlight {
-    background: rgba(91, 99, 211, 0.12) !important;
-    border: 1px dashed #5b63d3 !important;
+  .ph-calendar .fc-event-mirror { opacity: 0.75 !important; }
+  .ph-calendar .fc-daygrid-event-harness.fc-event-dragging { opacity: 0.3 !important; }
+  .ph-calendar .fc-highlight {
+    background: color-mix(in oklab, var(--c-accent) 12%, transparent) !important;
+    border: 1px dashed var(--c-accent) !important;
     border-radius: 8px !important;
   }
 
   /* Today — full border via pseudo-element to avoid scrollgrid clipping */
-  .fc-dark .fc-daygrid-day.fc-day-today {
-    background: #13132a !important;
-    position: relative;
-  }
-  .fc-dark .fc-daygrid-day.fc-day-today::after {
+  .ph-calendar .fc-daygrid-day.fc-day-today { position: relative; }
+  .ph-calendar .fc-daygrid-day.fc-day-today::after {
     content: '';
     position: absolute;
     inset: 0;
-    border: 2px solid #5b63d3;
+    border: 2px solid var(--c-accent);
     pointer-events: none;
     z-index: 5;
   }
 
   /* Day popover — scrollable */
-  .fc-dark .fc-popover {
-    background: #111111 !important;
-    border: 1px solid #2a2a2a !important;
+  .ph-calendar .fc-popover {
     border-radius: 12px !important;
     overflow: hidden !important;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
   }
-  .fc-dark .fc-popover-header {
-    background: #161616 !important;
-    border-bottom: 1px solid #2a2a2a !important;
+  .ph-calendar .fc-popover-header {
     padding: 8px 12px !important;
-    color: #ededed !important;
     font-size: 12px !important;
     font-weight: 600 !important;
   }
-  .fc-dark .fc-popover-close {
-    color: #888 !important;
-  }
-  .fc-dark .fc-popover-body {
+  .ph-calendar .fc-popover-close { color: var(--c-muted) !important; }
+  .ph-calendar .fc-popover-body {
     max-height: 320px !important;
     overflow-y: auto !important;
     padding: 6px !important;
@@ -302,28 +235,28 @@ const DARK_CSS = `
   /* ── Mobile ── */
   @media (max-width: 640px) {
     /* Toolbar: stack into clean rows instead of squeezing everything in */
-    .fc-dark .fc-toolbar {
+    .ph-calendar .fc-toolbar {
       flex-direction: column !important;
       align-items: stretch !important;
       gap: 10px !important;
     }
-    .fc-dark .fc-toolbar-chunk {
+    .ph-calendar .fc-toolbar-chunk {
       display: flex !important;
       justify-content: center !important;
     }
-    .fc-dark .fc-toolbar-title { font-size: 0.95rem !important; }
-    .fc-dark .fc-button { font-size: 0.68rem !important; padding: 5px 9px !important; }
+    .ph-calendar .fc-toolbar-title { font-size: 0.95rem !important; }
+    .ph-calendar .fc-button { font-size: 0.68rem !important; padding: 5px 9px !important; }
 
     /* Let just the day grid scroll horizontally instead of squashing columns unreadably —
        the toolbar (prev/next/title/view buttons) stays full-width and fully visible */
-    .fc-dark .fc-view-harness { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
-    .fc-dark .fc-scrollgrid { min-width: 560px; }
+    .ph-calendar .fc-view-harness { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+    .ph-calendar .fc-scrollgrid { min-width: 560px; }
 
-    .fc-dark .fc-col-header-cell-cushion { font-size: 0.62rem; letter-spacing: 0.02em; }
-    .fc-dark .fc-daygrid-day-number { font-size: 0.7rem; padding: 5px 6px; }
+    .ph-calendar .fc-col-header-cell-cushion { font-size: 0.62rem; letter-spacing: 0.02em; }
+    .ph-calendar .fc-daygrid-day-number { font-size: 0.7rem; padding: 5px 6px; }
 
     /* Compact event cards */
-    .fc-dark .fc-daygrid-event-harness { margin: 1px 2px; }
+    .ph-calendar .fc-daygrid-event-harness { margin: 1px 2px; }
   }
 `;
 
@@ -391,8 +324,8 @@ export function CalendarView({ jobs, onReschedule, onEdit, readOnly = false }: P
   }, [setupDragNav]);
 
   return (
-    <div className="fc-dark">
-      <style>{DARK_CSS}</style>
+    <div className="ph-calendar">
+      <style>{CALENDAR_CSS}</style>
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, luxonPlugin]}
@@ -436,10 +369,7 @@ export function CalendarView({ jobs, onReschedule, onEdit, readOnly = false }: P
         }}
       />
       {isTouchDevice && !readOnly && (
-        <p style={{
-          textAlign: "center", fontSize: 12, color: "#555",
-          marginTop: 12, marginBottom: 0,
-        }}>
+        <p className="mt-3 text-center type-body-r-xs text-neutral-500">
           Tap any post to edit or reschedule
         </p>
       )}
