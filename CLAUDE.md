@@ -220,6 +220,9 @@ Scales: `brand-*` (yellow), `neutral-*` (olive), `red-*`, `blue-*`, `green-*`. S
 - `btn-primary` (yellow), `btn-secondary` (surface + border), `btn-danger` (red)
 - `field` — input / select / textarea
 - `card` — `rounded-2xl border border-border bg-surface`
+- `chip` + `chip-active` — toggle / segmented option: `cn("chip", selected && "chip-active")`
+- `section-label` — small uppercase heading above a field group
+- `dropzone` — dashed empty / upload area (`bg-surface`; add `bg-bg` when inside a `card`)
 - Existing: `job-card`, `job-action-btn`, `modal-backdrop`, `modal-panel`, `masonry-accounts`
 
 Conditional classes: `cn()` from `apps/web/src/lib/cn.ts`.
