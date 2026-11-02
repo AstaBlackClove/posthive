@@ -18,6 +18,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useWorkspace } from "../../context/WorkspaceContext";
 import { canEditContent, canReview as roleCanReview } from "../../lib/permissions";
 import type { Account, PerAccountOverride } from "../../components/PlatformPreview";
+import { cn } from "../../lib/cn";
 
 interface Target {
   id: string;
@@ -48,15 +49,15 @@ export interface Job {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string }> = {
-  draft:          { label: "Draft",        dot: "bg-gray-400",   badge: "bg-stone-100 text-stone-500 border-stone-200" },
-  pending:        { label: "Scheduled",    dot: "bg-amber-400",  badge: "bg-amber-50 text-amber-700 border-amber-200" },
-  running:        { label: "Posting…",     dot: "bg-blue-400 animate-pulse", badge: "bg-blue-50 text-blue-700 border-blue-200" },
-  done:           { label: "Published",    dot: "bg-green-400",  badge: "bg-green-50 text-green-700 border-green-200" },
-  failed:         { label: "Failed",       dot: "bg-red-400",    badge: "bg-red-50 text-red-700 border-red-200" },
-  post_done:      { label: "Posted",       dot: "bg-blue-300",   badge: "bg-blue-50 text-blue-600 border-blue-200" },
-  comment_done:   { label: "Done",         dot: "bg-green-400",  badge: "bg-green-50 text-green-700 border-green-200" },
-  post_failed:    { label: "Post failed",  dot: "bg-red-400",    badge: "bg-red-50 text-red-700 border-red-200" },
-  comment_failed: { label: "Reply failed", dot: "bg-orange-400", badge: "bg-orange-50 text-orange-700 border-orange-200" },
+  draft:          { label: "Draft",        dot: "bg-neutral-500", badge: "bg-surface text-muted border-border" },
+  pending:        { label: "Scheduled",    dot: "bg-accent",      badge: "bg-brand-100 text-brand-800 border-brand-400" },
+  running:        { label: "Posting…",     dot: "bg-blue-500 animate-pulse", badge: "bg-blue-50 text-blue-700 border-blue-200" },
+  done:           { label: "Published",    dot: "bg-green-500",   badge: "bg-green-50 text-green-700 border-green-200" },
+  failed:         { label: "Failed",       dot: "bg-red-500",     badge: "bg-red-50 text-red-600 border-red-200" },
+  post_done:      { label: "Posted",       dot: "bg-blue-400",    badge: "bg-blue-50 text-blue-700 border-blue-200" },
+  comment_done:   { label: "Done",         dot: "bg-green-500",   badge: "bg-green-50 text-green-700 border-green-200" },
+  post_failed:    { label: "Post failed",  dot: "bg-red-500",     badge: "bg-red-50 text-red-600 border-red-200" },
+  comment_failed: { label: "Reply failed", dot: "bg-red-400",     badge: "bg-brand-100 text-brand-800 border-brand-400" },
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -66,9 +67,9 @@ function contentDisplayTitle(content: { text?: string; title?: string }): string
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, dot: "bg-gray-400", badge: "bg-stone-100 text-stone-600 border-stone-200" };
+  const cfg = STATUS_CONFIG[status] ?? { label: status, dot: "bg-neutral-500", badge: "bg-surface text-muted border-border" };
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border ${cfg.badge}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full type-body-sb-xs border ${cfg.badge}`}>
       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
       {cfg.label}
     </span>
@@ -78,17 +79,16 @@ function StatusBadge({ status }: { status: string }) {
 // Design-approval state chip — shown on draft cards under the approval flow
 function ApprovalChip({ approvalStatus, reviewedBy }: { approvalStatus: string; reviewedBy?: { name: string } | null }) {
   const label = approvalStatus === "pending" ? "In review" : approvalStatus === "rejected" ? "Rejected" : "Approved";
-  const style =
+  const tone =
     approvalStatus === "pending"
-      ? { backgroundColor: "#1f1f2e", color: "#818cf8", border: "1px solid #3730a3" }
+      ? "bg-brand-100 text-brand-800 border-brand-300"
       : approvalStatus === "rejected"
-      ? { backgroundColor: "#1f0a0a", color: "#f87171", border: "1px solid #7f1d1d" }
-      : { backgroundColor: "#0a1f12", color: "#4ade80", border: "1px solid #14532d" };
+      ? "bg-red-50 text-red-600 border-red-200"
+      : "bg-green-50 text-green-700 border-green-200";
   return (
     <span
       title={reviewedBy ? `${label} by ${reviewedBy.name}` : label}
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-      style={style}>
+      className={cn("inline-flex items-center px-2 py-0.5 rounded-full type-body-sb-xs border", tone)}>
       {label}
     </span>
   );
@@ -127,28 +127,23 @@ function RepeatModal({ job, onClose, onConfirm }: {
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
+    <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/60"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "#111111", border: "1px solid #2a2a2a", borderRadius: 16, padding: 24, width: 380, maxWidth: "calc(100vw - 32px)" }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, color: "#ededed", marginBottom: 4 }}>Repeat this post</h3>
-        <p style={{ fontSize: 13, color: "#666", marginBottom: 20 }} className="line-clamp-2">{displayTitle}</p>
+      <div className="card p-6 w-95 max-w-[calc(100vw-32px)]">
+        <h3 className="type-body-sb-m text-fg mb-1">Repeat this post</h3>
+        <p className="type-body-r-s text-neutral-500 mb-5 line-clamp-2">{displayTitle}</p>
 
-        <label style={{ fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em" }}>Frequency</label>
-        <div style={{ display: "flex", gap: 8, marginTop: 8, marginBottom: 20 }}>
+        <label className="section-label">Frequency</label>
+        <div className="flex gap-2 mt-2 mb-5">
           {REPEAT_OPTIONS.map(opt => (
             <button key={opt.value} type="button" onClick={() => { setInterval(opt.value); setEndsAt(""); }}
-              style={{
-                flex: 1, padding: "8px 0", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                border: `1px solid ${interval === opt.value ? "#5b63d3" : "#2a2a2a"}`,
-                background: interval === opt.value ? "rgba(91,99,211,0.15)" : "#0a0a0a",
-                color: interval === opt.value ? "#7c85e8" : "#888",
-              }}>
+              className={cn("chip flex-1 justify-center py-2 rounded-xl type-body-sb-s", interval === opt.value ? "chip-active" : "bg-bg")}>
               {opt.label}
             </button>
           ))}
         </div>
 
-        <div style={{ marginBottom: 24 }}>
+        <div className="mb-6">
           <DatePicker
             value={endsAt}
             onChange={setEndsAt}
@@ -157,10 +152,10 @@ function RepeatModal({ job, onClose, onConfirm }: {
           />
         </div>
 
-        <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "1px solid #2a2a2a", background: "transparent", color: "#888", fontSize: 14, cursor: "pointer" }}>Cancel</button>
+        <div className="flex gap-2.5">
+          <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
           <button onClick={submit} disabled={saving}
-            style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "none", background: "#ffffff", color: "#0a0a0a", fontSize: 14, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+            className="btn-primary flex-1">
             {saving ? "Starting…" : "Start repeating"}
           </button>
         </div>
@@ -205,13 +200,9 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
 
   return (
     <div
-      className="job-card group rounded-2xl overflow-hidden"
-      style={{
-        backgroundColor: selected ? "#12121f" : "#111111",
-        border: selected ? "1px solid #3730a340" : "1px solid transparent",
-        outline: selected ? "1px solid #3730a3" : undefined,
-        cursor: reviewable ? "pointer" : undefined,
-      }}
+      className={cn("job-card group rounded-2xl overflow-hidden",
+        selected ? "bg-brand-100 outline outline-brand-400" : "bg-surface",
+        reviewable && "cursor-pointer")}
       // In-review cards open the full review; inner controls keep their own behaviour
       onClick={reviewable ? (e) => {
         if ((e.target as HTMLElement).closest("button, input, a, video")) return;
@@ -224,13 +215,13 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
         <div className="flex items-start gap-3">
           {/* Checkbox */}
           {onToggleSelect && (
-            <div className="shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" style={selected ? { opacity: 1 } : {}}>
+            <div className={cn("shrink-0 mt-1 transition-opacity", selected ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
               <input
                 type="checkbox"
                 checked={!!selected}
                 onChange={(e) => { e.stopPropagation(); onToggleSelect(); }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-3.5 h-3.5 rounded-sm cursor-pointer accent-indigo-500"
+                className="w-3.5 h-3.5 rounded-sm cursor-pointer accent-brand-600"
               />
             </div>
           )}
@@ -241,15 +232,13 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
                 {t.account?.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={t.account.avatarUrl} alt={t.account.displayName}
-                    className="w-7 h-7 rounded-full object-cover" style={{ border: "1px solid #2a2a2a" }} />
+                    className="w-7 h-7 rounded-full object-cover border border-border" />
                 ) : (
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888" }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center type-body-sb-xs bg-bg border border-border text-muted">
                     {t.account?.displayName?.[0]?.toUpperCase() ?? "?"}
                   </div>
                 )}
-                <span className="absolute -bottom-0.5 -right-0.5 rounded-full flex items-center justify-center"
-                  style={{ width: 13, height: 13 }}>
+                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center">
                   <PlatformIcon platform={t.account?.platform ?? "unknown"} size={11} />
                 </span>
               </span>
@@ -257,15 +246,15 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium leading-snug line-clamp-2" style={{ color: "#ededed" }}>{displayTitle}</p>
+            <p className="type-body-m-s line-clamp-2 text-fg">{displayTitle}</p>
             {job.commentText && (
-              <p className="mt-1 text-xs flex items-start gap-1" style={{ color: "#666" }}>
+              <p className="mt-1 type-body-r-xs flex items-start gap-1 text-muted">
                 <span>↳</span><span className="italic line-clamp-1">{job.commentText}</span>
               </p>
             )}
             {isDraft && job.approvalStatus === "rejected" && job.reviewNote && (
-              <p className="mt-1.5 text-xs rounded-lg px-2 py-1.5" style={{ backgroundColor: "#1f0a0a", color: "#fca5a5", border: "1px solid #7f1d1d" }}>
-                <span className="font-semibold">Design review:</span> {job.reviewNote}
+              <p className="mt-1.5 type-body-r-xs rounded-lg px-2 py-1.5 bg-red-50 text-red-600 border border-red-200">
+                <span className="type-body-sb-xs">Design review:</span> {job.reviewNote}
               </p>
             )}
           </div>
@@ -279,7 +268,7 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
               )}
               {job.repeatInterval && (
                 <span title={`Repeats ${job.repeatInterval}${job.repeatParentId ? " (chain)" : ""}`}
-                  style={{ fontSize: 11, padding: "1px 7px", borderRadius: 20, background: "#5b63d322", color: "#7c85e8", border: "1px solid #5b63d344", fontWeight: 600 }}>
+                  className="type-body-sb-xs px-2 py-px rounded-full bg-brand-100 text-brand-800 border border-brand-300">
                   🔁 {job.repeatInterval}
                 </span>
               )}
@@ -287,8 +276,7 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
                 <button
                   onClick={async () => { setRetrying(true); try { await onRetry(); } finally { setRetrying(false); } }}
                   disabled={retrying}
-                  className="job-action-btn" title="Retry failed platforms"
-                  style={{ color: "#f87171" }}>
+                  className="job-action-btn text-red-600" title="Retry failed platforms">
                   <svg className={`w-3.5 h-3.5${retrying ? " animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -305,14 +293,12 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
               )}
               {reviewable && (
                 <button onClick={onReview} title="Open the full post to approve or reject"
-                  className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors hover:bg-gray-100"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  className="btn-primary px-2.5 py-1 rounded-lg type-body-sb-xs">
                   Review
                 </button>
               )}
               {canSubmitOwn && isOwn && isDraft && (job.approvalStatus === null || job.approvalStatus === undefined || job.approvalStatus === "rejected") && (
-                <button onClick={onSubmitOwn} className="job-action-btn" title="Send for design approval"
-                  style={{ color: "#818cf8" }}>
+                <button onClick={onSubmitOwn} className="job-action-btn text-brand-800" title="Send for design approval">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -345,8 +331,7 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
               )}
             </div>
             {job.dryRun && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
-                style={{ backgroundColor: "#1e1a2e", color: "#a78bfa", border: "1px solid #4c1d95" }}>dry run</span>
+              <span className="type-body-sb-xxs px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">dry run</span>
             )}
           </div>
         </div>
@@ -358,20 +343,18 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
               const src = url.startsWith("http") ? url : `${API_BASE}${url}`;
               const isVideo = /\.(mp4|mov|webm|quicktime)(\?|$)/i.test(url);
               return isVideo ? (
-                <video key={i} src={src} className="w-14 h-14 rounded-xl object-cover"
-                  style={{ border: "1px solid #2a2a2a" }} muted playsInline preload="metadata" />
+                <video key={i} src={src} className="w-14 h-14 rounded-xl object-cover border border-border"
+                  muted playsInline preload="metadata" />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={i} src={src} alt="" className="w-14 h-14 rounded-xl object-cover"
-                  style={{ border: "1px solid #2a2a2a" }} />
+                <img key={i} src={src} alt="" className="w-14 h-14 rounded-xl object-cover border border-border" />
               );
             })}
           </div>
         )}
         {content.mediaUrls && content.mediaUrls.length > 0 && job.status === "done" && (
           <div className="flex gap-1.5 mt-3">
-            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-lg"
-              style={{ backgroundColor: "#1a1a1a", color: "#555", border: "1px solid #2a2a2a" }}>
+            <span className="inline-flex items-center gap-1 type-body-r-xs px-2 py-0.5 rounded-lg bg-bg text-muted border border-border">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -383,17 +366,17 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
 
         {/* Time row */}
         <div className="mt-3 flex items-center gap-1.5">
-          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "#555" }}>
+          <svg className="w-3.5 h-3.5 shrink-0 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span className="text-xs" style={{ color: isPast ? "#555" : "#888" }}>{formatScheduled()}</span>
+          <span className={cn("type-body-r-xs", isPast ? "text-neutral-500" : "text-muted")}>{formatScheduled()}</span>
         </div>
       </div>
 
       {/* Target breakdown — smooth expand on hover */}
       {job.targets.length > 0 && (
         <div className={`job-card-targets ${job.targets.some((t) => t.error) ? "force-open" : ""}`}>
-          <div className="job-card-targets-inner" style={{ borderTop: "1px solid #1f1f1f" }}>
+          <div className="job-card-targets-inner border-t border-border">
             <div className="px-5 py-3 space-y-1.5">
               {job.targets.map((t) => {
                 const platform = t.account?.platform ?? "";
@@ -413,28 +396,27 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
 
                 return (
                   <div key={t.id} className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 type-body-r-xs">
                       <PlatformIcon platform={platform || "unknown"} size={13} />
-                      <span className="font-medium" style={{ color: "#666" }}>{t.account?.displayName ?? t.accountId.slice(0, 8)}</span>
+                      <span className="type-body-m-xs text-muted">{t.account?.displayName ?? t.accountId.slice(0, 8)}</span>
                       <StatusBadge status={t.status} />
-                      {t.attempts > 1 && <span style={{ color: "#555" }}>{t.attempts} attempts</span>}
-                      {t.error && <span className="text-red-500 truncate flex-1">{t.error}</span>}
+                      {t.attempts > 1 && <span className="text-neutral-500">{t.attempts} attempts</span>}
+                      {t.error && <span className="text-red-600 truncate flex-1">{t.error}</span>}
                       {canFetchAnalytics && !analytic && (
-                        <button onClick={fetchAnalytics} className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors"
-                          style={{ color: "#888", border: "1px solid #2a2a2a", backgroundColor: "#111" }}>
+                        <button onClick={fetchAnalytics} className="ml-auto type-body-sb-xxs px-2 py-0.5 rounded-md transition-colors text-muted border border-border bg-bg hover:text-fg">
                           Stats
                         </button>
                       )}
-                      {analytic === "loading" && <span className="ml-auto text-[10px]" style={{ color: "#555" }}>Loading…</span>}
-                      {analytic === "error" && <span className="ml-auto text-[10px] text-red-500">Failed</span>}
+                      {analytic === "loading" && <span className="ml-auto type-body-r-xxs text-neutral-500">Loading…</span>}
+                      {analytic === "error" && <span className="ml-auto type-body-r-xxs text-red-600">Failed</span>}
                     </div>
                     {analytic && analytic !== "loading" && analytic !== "error" && (
-                      <div className="flex items-center gap-3 pl-5 text-[10px]" style={{ color: "#666" }}>
+                      <div className="flex items-center gap-3 pl-5 type-body-r-xxs text-muted">
                         {analytic.likes !== undefined && <span>❤ {analytic.likes}</span>}
                         {analytic.reposts !== undefined && <span>🔁 {analytic.reposts}</span>}
                         {analytic.replies !== undefined && <span>💬 {analytic.replies}</span>}
                         {analytic.views !== undefined && <span>👁 {analytic.views}</span>}
-                        <button onClick={fetchAnalytics} title="Refresh" className="ml-auto" style={{ color: "#444" }}>↻</button>
+                        <button onClick={fetchAnalytics} title="Refresh" className="ml-auto text-neutral-500 hover:text-fg">↻</button>
                       </div>
                     )}
                   </div>
@@ -863,7 +845,7 @@ export default function JobsPage() {
 
 
   return (
-    <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+    <div className="flex flex-col h-full overflow-hidden bg-bg">
       <TrialUrgentBanner />
 
       {/* Edit dialog */}
@@ -919,21 +901,19 @@ export default function JobsPage() {
         const ids = getBulkDeleteIds();
         const label = bulkDeleteType === "selected" ? `${ids.length} selected` : `all ${bulkDeleteType} posts (${ids.length})`;
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
-            <div className="w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-              <h3 className="text-base font-bold mb-2" style={{ color: "#ededed" }}>Delete {label}?</h3>
-              <p className="text-sm mb-5" style={{ color: "#888" }}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+            <div className="card w-full max-w-sm p-6 shadow-2xl">
+              <h3 className="type-body-sb-m mb-2 text-fg">Delete {label}?</h3>
+              <p className="type-body-r-s mb-5 text-muted">
                 This will permanently delete {ids.length} post{ids.length !== 1 ? "s" : ""}. This cannot be undone.
               </p>
               <div className="flex gap-3">
                 <button onClick={() => setShowBulkDeleteConfirm(false)} disabled={bulkDeleting}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-80 disabled:opacity-40"
-                  style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+                  className="btn-secondary flex-1 py-2.5">
                   Cancel
                 </button>
                 <button onClick={() => bulkDelete(ids)} disabled={bulkDeleting || ids.length === 0}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-80 disabled:opacity-40"
-                  style={{ backgroundColor: "#7f1d1d", color: "#fca5a5", border: "1px solid #991b1b" }}>
+                  className="btn-danger flex-1 py-2.5">
                   {bulkDeleting ? "Deleting…" : `Delete ${ids.length}`}
                 </button>
               </div>
@@ -944,12 +924,11 @@ export default function JobsPage() {
 
 
       {/* Top bar */}
-      <div className="flex items-center justify-between pl-16 pr-4 md:px-8 shrink-0"
-        style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#111111" }}>
+      <div className="page-header">
         <div className="min-w-0">
-          <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Posts</h1>
-          <p className="text-xs mt-0.5 flex items-center gap-1.5 truncate" style={{ color: "#888888" }}>
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block shrink-0" />
+          <h1 className="type-body-sb-l text-fg">Posts</h1>
+          <p className="type-body-r-xs mt-0.5 flex items-center gap-1.5 truncate text-muted">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block shrink-0" />
             {lastRefresh ? `Live · updated ${formatTime(lastRefresh, { seconds: true })}` : "Connecting…"}
           </p>
         </div>
@@ -957,16 +936,14 @@ export default function JobsPage() {
           {canEditContentAccess && (
             <>
               <button onClick={() => router.push("/jobs/import")}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl transition-colors hover:opacity-80"
-                style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+                className="btn-secondary gap-1.5 px-3">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
                 <span className="hidden sm:inline">Import Plan</span>
               </button>
               <a href="/compose"
-                className="inline-flex items-center gap-1.5 px-3 md:px-4 py-2 text-sm font-semibold rounded-xl transition-colors hover:bg-gray-100"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                className="btn-primary gap-1.5 px-3 md:px-4">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -978,19 +955,15 @@ export default function JobsPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-4 md:px-8 py-3 shrink-0 flex-wrap"
-        style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
+      <div className="flex items-center gap-3 px-4 md:px-8 py-3 shrink-0 flex-wrap border-b border-border bg-bg">
 
-        <div className="flex gap-0.5 p-1 rounded-xl" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+        <div className="flex gap-0.5 p-1 rounded-xl bg-surface border border-border">
           {([
             { id: "list",     icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>, label: "List" },
             { id: "calendar", icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>, label: "Calendar" },
           ] as { id: ViewTab; icon: React.ReactNode; label: string }[]).map((t) => (
             <button key={t.id} onClick={() => setViewTab(t.id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-              style={viewTab === t.id
-                ? { backgroundColor: "#1f1f2e", color: "#818cf8", boxShadow: "0 0 0 1px #3730a3" }
-                : { color: "" }}>
+              className={cn("chip px-3 py-1.5", viewTab === t.id ? "chip-active" : "border-transparent")}>
               {t.icon}{t.label}
             </button>
           ))}
@@ -998,24 +971,21 @@ export default function JobsPage() {
 
         {viewTab === "list" && (
           <>
-            <div className="h-4 w-px hidden sm:block" style={{ backgroundColor: "#2a2a2a" }} />
+            <div className="h-4 w-px hidden sm:block bg-border" />
             <div className="flex gap-1.5 flex-wrap">
           {([
-            { id: "all",     label: "All",       dot: null,       activeColor: "#ededed", activeBg: "#2a2a2a" },
-            ...(showDraftTab ? ([{ id: "draft", label: "Drafts",   dot: "#6b7280",  activeColor: "#9ca3af", activeBg: "#1a1a1a" }] as const) : []),
-            ...(canReview ? ([{ id: "review", label: "In review", dot: "#818cf8", activeColor: "#a5b4fc", activeBg: "#1c1a24" }] as const) : []),
-            { id: "pending", label: "Scheduled",  dot: "#f59e0b", activeColor: "#fbbf24", activeBg: "#1c1a10" },
-            { id: "done",    label: "Published",  dot: "#22c55e", activeColor: "#4ade80", activeBg: "#0a1f12" },
-            { id: "failed",  label: "Failed",     dot: "#ef4444", activeColor: "#f87171", activeBg: "#1f0a0a" },
-          ] as { id: FilterTab; label: string; dot: string | null; activeColor: string; activeBg: string }[]).map((f) => (
+            { id: "all",     label: "All",       dot: null },
+            ...(showDraftTab ? ([{ id: "draft", label: "Drafts",   dot: "bg-neutral-500" }] as const) : []),
+            ...(canReview ? ([{ id: "review", label: "In review", dot: "bg-brand-800" }] as const) : []),
+            { id: "pending", label: "Scheduled",  dot: "bg-accent" },
+            { id: "done",    label: "Published",  dot: "bg-green-500" },
+            { id: "failed",  label: "Failed",     dot: "bg-red-500" },
+          ] as { id: FilterTab; label: string; dot: string | null }[]).map((f) => (
                 <button key={f.id} onClick={() => { setFilter(f.id); clearSelection(); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
-                  style={filter === f.id
-                    ? { backgroundColor: f.activeBg, color: f.activeColor, border: `1px solid ${f.dot ?? "#3a3a3a"}40` }
-                    : { backgroundColor: "transparent", border: "1px solid #2a2a2a" }}>
-                  {f.dot && <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: filter === f.id ? f.dot : "#333" }} />}
+                  className={cn("chip px-3 py-1.5 rounded-xl", filter === f.id && "chip-active")}>
+                  {f.dot && <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", filter === f.id ? f.dot : "bg-neutral-300")} />}
                   {f.label}
-                  <span className="ml-0.5 tabular-nums" style={{ opacity: 0.6, fontSize: "0.65rem" }}>{counts[f.id]}</span>
+                  <span className="ml-0.5 tabular-nums opacity-60 type-body-sb-xxs">{counts[f.id]}</span>
                 </button>
               ))}
             </div>
@@ -1025,14 +995,11 @@ export default function JobsPage() {
         {/* Platform filter */}
         {allPlatforms.length > 1 && (
           <>
-            <div className="h-4 w-px hidden sm:block" style={{ backgroundColor: "#2a2a2a" }} />
+            <div className="h-4 w-px hidden sm:block bg-border" />
             <div className="flex gap-1.5 flex-wrap">
               {(["all", ...allPlatforms] as string[]).map((p) => (
                 <button key={p} onClick={() => setPlatformFilter(p)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all capitalize"
-                  style={platformFilter === p
-                    ? { backgroundColor: "#1f1f2e", color: "#818cf8", border: "1px solid #3730a340" }
-                    : { backgroundColor: "transparent", border: "1px solid #2a2a2a" }}>
+                  className={cn("chip px-3 py-1.5 rounded-xl capitalize", platformFilter === p && "chip-active")}>
                   {p !== "all" && <PlatformIcon platform={p} size={12} />}
                   {p === "all" ? "All platforms" : p}
                 </button>
@@ -1044,31 +1011,30 @@ export default function JobsPage() {
 
       {/* Bulk action bar — content creation roles only */}
       {viewTab === "list" && canEditContentAccess && (
-        <div className="flex items-center gap-3 px-4 md:px-8 py-2.5 shrink-0 flex-wrap" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
+        <div className="flex items-center gap-3 px-4 md:px-8 py-2.5 shrink-0 flex-wrap border-b border-border bg-bg">
           {/* Select all / deselect */}
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={filteredJobs.length > 0 && filteredJobs.every(j => selectedIds.has(j.id))}
               onChange={(e) => e.target.checked ? selectAll(filteredJobs.map(j => j.id)) : clearSelection()}
-              className="w-3.5 h-3.5 rounded-sm accent-indigo-500 cursor-pointer"
+              className="w-3.5 h-3.5 rounded-sm accent-brand-600 cursor-pointer"
             />
-            <span className="text-xs" style={{ color: "#555" }}>
+            <span className="type-body-r-xs text-muted">
               {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
             </span>
           </label>
 
           {selectedIds.size > 0 && (
             <>
-              <div className="h-4 w-px" style={{ backgroundColor: "#2a2a2a" }} />
-              <button onClick={clearSelection} className="text-xs hover:opacity-70 transition-opacity" style={{ color: "#555" }}>
+              <div className="h-4 w-px bg-border" />
+              <button onClick={clearSelection} className="type-body-r-xs text-muted hover:opacity-70 transition-opacity">
                 Clear
               </button>
-              <div className="h-4 w-px" style={{ backgroundColor: "#2a2a2a" }} />
+              <div className="h-4 w-px bg-border" />
               <button
                 onClick={() => { setBulkDeleteType("selected"); setShowBulkDeleteConfirm(true); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors hover:opacity-80"
-                style={{ backgroundColor: "#2a0a0a", color: "#f87171", border: "1px solid #3a1515" }}>
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-body-sb-xs transition-colors hover:opacity-80 bg-red-50 text-red-600 border border-red-200">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
@@ -1078,13 +1044,13 @@ export default function JobsPage() {
           )}
 
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs" style={{ color: "#444" }}>Delete by type:</span>
+            <span className="type-body-r-xs text-muted">Delete by type:</span>
             {([
-              { type: "draft" as const, label: "Drafts", color: "#6b7280" },
-              { type: "pending" as const, label: "Scheduled", color: "#f59e0b" },
-              { type: "done" as const, label: "Published", color: "#22c55e" },
-              { type: "failed" as const, label: "Failed", color: "#ef4444" },
-            ]).map(({ type, label, color }) => {
+              { type: "draft" as const, label: "Drafts", tone: "bg-surface text-muted border-border", dot: "bg-neutral-500" },
+              { type: "pending" as const, label: "Scheduled", tone: "bg-brand-100 text-brand-800 border-brand-400", dot: "bg-accent" },
+              { type: "done" as const, label: "Published", tone: "bg-green-50 text-green-700 border-green-200", dot: "bg-green-500" },
+              { type: "failed" as const, label: "Failed", tone: "bg-red-50 text-red-600 border-red-200", dot: "bg-red-500" },
+            ]).map(({ type, label, tone, dot }) => {
               const statusMap: Record<string, string[]> = {
                 draft: ["draft"], pending: ["pending", "running"],
                 done: ["done", "comment_done", "post_done"],
@@ -1096,10 +1062,9 @@ export default function JobsPage() {
                 <button
                   key={type}
                   onClick={() => { setBulkDeleteType(type); setShowBulkDeleteConfirm(true); }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors hover:opacity-80"
-                  style={{ backgroundColor: "#1a0a0a", color, border: `1px solid ${color}30` }}
+                  className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-lg type-body-sb-xs border transition-colors hover:opacity-80", tone)}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                  <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dot)} />
                   {label} ({count})
                 </button>
               );
@@ -1112,13 +1077,13 @@ export default function JobsPage() {
       <div className="flex-1 overflow-y-auto px-8 py-6">
 
         {error && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5">{error}</div>
+          <div className="type-body-r-s text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5">{error}</div>
         )}
 
         {viewTab === "calendar" && (
-          <div className="rounded-2xl shadow-xs p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+          <div className="card shadow-xs p-6">
             {loading
-              ? <div className="text-center py-20 text-sm" style={{ color: "#888888" }}>Loading…</div>
+              ? <div className="text-center py-20 type-body-r-s text-muted">Loading…</div>
               : <CalendarView jobs={filteredJobs} onReschedule={reschedule} onEdit={setEditingJob} readOnly={!canEditContentAccess} />
             }
           </div>
@@ -1129,7 +1094,7 @@ export default function JobsPage() {
             {loading && (
               <div className="space-y-3">
                 {[1,2,3].map((i) => (
-                  <div key={i} className="rounded-2xl h-28 animate-pulse" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }} />
+                  <div key={i} className="rounded-2xl h-28 animate-pulse bg-surface border border-border" />
                 ))}
               </div>
             )}
@@ -1138,20 +1103,19 @@ export default function JobsPage() {
               <div className="flex flex-col items-center justify-center py-24 text-center px-4">
                 {filter === "all" ? (
                   <>
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ backgroundColor: "#5b63d315", border: "1px solid #5b63d330" }}>
-                      <svg className="w-7 h-7" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 bg-brand-100 border border-brand-300">
+                      <svg className="w-7 h-7 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <p className="text-base font-semibold mb-2" style={{ color: "#ededed" }}>No posts scheduled yet</p>
-                    <p className="text-sm mb-6 max-w-xs" style={{ color: "#555" }}>Schedule your first post and it will appear here. Write once, publish to multiple platforms.</p>
-                    <a href="/compose" className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-gray-100"
-                      style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                    <p className="type-body-sb-m mb-2 text-fg">No posts scheduled yet</p>
+                    <p className="type-body-r-s mb-6 max-w-xs text-muted">Schedule your first post and it will appear here. Write once, publish to multiple platforms.</p>
+                    <a href="/compose" className="btn-primary px-5 py-2.5">
                       Write your first post →
                     </a>
                   </>
                 ) : (
-                  <p className="text-sm" style={{ color: "#555" }}>{filter === "review" ? "Nothing waiting for review" : `No ${filter} posts`}</p>
+                  <p className="type-body-r-s text-muted">{filter === "review" ? "Nothing waiting for review" : `No ${filter} posts`}</p>
                 )}
               </div>
             )}
@@ -1159,8 +1123,8 @@ export default function JobsPage() {
             {drafts.length > 0 && (
               <section className="mb-6">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="w-2 h-2 rounded-full bg-gray-500" />
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-neutral-500" />
+                  <p className="section-label">
                     {filter === "review" || !showDraftTab ? "In review" : "Drafts"} · {drafts.length}
                   </p>
                 </div>
@@ -1188,8 +1152,8 @@ export default function JobsPage() {
             {upcoming.length > 0 && (
               <section className="mb-6">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="w-2 h-2 rounded-full bg-amber-400" />
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-accent" />
+                  <p className="section-label">
                     Upcoming · {upcoming.length}
                   </p>
                 </div>
@@ -1212,8 +1176,8 @@ export default function JobsPage() {
             {past.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="w-2 h-2 rounded-full bg-gray-300" />
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-neutral-300" />
+                  <p className="section-label">
                     Past · {past.length}
                   </p>
                 </div>
@@ -1236,13 +1200,13 @@ export default function JobsPage() {
             {/* Infinite scroll sentinel */}
             <div ref={sentinelRef} className="py-4 text-center">
               {loadingMore && (
-                <div className="flex items-center justify-center gap-2 text-xs" style={{ color: "#555" }}>
-                  <div className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#555", borderTopColor: "transparent" }} />
+                <div className="flex items-center justify-center gap-2 type-body-r-xs text-muted">
+                  <div className="w-3 h-3 rounded-full border-2 border-neutral-500 border-t-transparent animate-spin" />
                   Loading more…
                 </div>
               )}
               {!hasMore && jobs.length > 0 && !loading && (
-                <p className="text-xs" style={{ color: "#333" }}>— {jobs.length} posts loaded —</p>
+                <p className="type-body-r-xs text-neutral-500">— {jobs.length} posts loaded —</p>
               )}
             </div>
           </>

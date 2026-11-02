@@ -12,11 +12,10 @@ import { fileHref, isIncomplete, templatesByCategory, type DesignTemplate } from
 import { TemplateEditor } from "../../components/TemplateEditor";
 import { DesignReferenceCard } from "../../components/DesignReferenceCard";
 import { contentTypeLabel } from "../../components/ContentTypeSelects";
+import { cn } from "../../lib/cn";
 
-const BG = "#0a0a0a";
-const BORDER = "#2a2a2a";
-const TEXT = "#ededed";
-const MUTED = "#888888";
+// Keyboard focus ring for template tiles (yellow accent is unreadable on cream, so brand-800)
+const TILE_FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand-800";
 
 type Group = Pillar | "No pillar";
 
@@ -90,11 +89,11 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: BG, color: TEXT }}>
-      <div className="pl-16 pr-4 md:px-8 shrink-0 flex items-center justify-between gap-4" style={{ height: 65, borderBottom: `1px solid ${BORDER}` }}>
+    <div className="flex flex-col h-full overflow-hidden bg-bg text-fg">
+      <div className="page-header">
         <div className="min-w-0">
-          <h1 className="text-lg font-bold">Templates</h1>
-          <p className="text-xs mt-0.5 hidden sm:block truncate" style={{ color: MUTED }}>
+          <h1 className="type-body-sb-l">Templates</h1>
+          <p className="type-body-r-xs mt-0.5 hidden sm:block truncate text-muted">
             {canManage
               ? "One design per content category. Marketing opens it as a reference when making a post."
               : "The design team's reference design for each content category."}
@@ -102,8 +101,7 @@ export default function TemplatesPage() {
         </div>
         {canManage && (
           <button type="button" onClick={() => setEditing({ template: null })}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 shrink-0"
-            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+            className="btn-primary gap-1.5 shrink-0">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
@@ -113,26 +111,21 @@ export default function TemplatesPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
-        <style>{`.template-tile:focus-visible { outline: 2px solid #5b63d3; outline-offset: 3px; border-radius: 14px; }
-          .template-tile:hover .template-cover { border-color: #444; }`}</style>
-
         <div role="tablist" aria-label="Content pillar" className="flex flex-wrap gap-1 mb-8">
           {(["all", ...GROUPS] as const).map((g) => (
             <button key={g} type="button" role="tab" aria-selected={group === g} onClick={() => setGroup(g)}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium"
-              style={{ color: group === g ? TEXT : MUTED, background: group === g ? "#1a1a1a" : "transparent", border: `1px solid ${group === g ? BORDER : "transparent"}` }}>
+              className={cn("chip px-3 py-1.5 type-body-m-s", group === g ? "chip-active" : "border-transparent bg-transparent")}>
               {g === "all" ? "All pillars" : g}
             </button>
           ))}
         </div>
 
-        {loading && <p className="text-sm" style={{ color: MUTED }}>Loading templates…</p>}
+        {loading && <p className="type-body-r-s text-muted">Loading templates…</p>}
 
         {!loading && loadError && (
           <div className="text-center py-16">
-            <p className="text-sm mb-4" style={{ color: MUTED }}>Templates didn&apos;t load. Check your connection and try again.</p>
-            <button type="button" onClick={load} className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100"
-              style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>Try again</button>
+            <p className="type-body-r-s mb-4 text-muted">Templates didn&apos;t load. Check your connection and try again.</p>
+            <button type="button" onClick={load} className="btn-primary">Try again</button>
           </div>
         )}
 
@@ -143,11 +136,11 @@ export default function TemplatesPage() {
               const filled = categories.filter((c) => byCategory.has(c)).length;
               return (
                 <section key={g} aria-labelledby={`pillar-${g}`}>
-                  <div className="mb-4" style={{ maxWidth: "68ch" }}>
-                    <h2 id={`pillar-${g}`} className="text-base font-bold">
-                      {g} <span className="text-sm font-normal" style={{ color: MUTED }}>{filled} of {categories.length}</span>
+                  <div className="mb-4 max-w-[68ch]">
+                    <h2 id={`pillar-${g}`} className="type-body-sb-m">
+                      {g} <span className="type-body-r-s text-muted">{filled} of {categories.length}</span>
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: MUTED }}>{GROUP_SUMMARY[g]}</p>
+                    <p className="type-body-r-s mt-0.5 text-muted">{GROUP_SUMMARY[g]}</p>
                   </div>
                   <ul className="grid gap-x-5 gap-y-7 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
                     {categories.map((c) => {
@@ -180,20 +173,20 @@ export default function TemplatesPage() {
           onClose={() => setEditing(null)} onSaved={saved} />
       )}
       {deleting && (
-        <div className="fixed inset-0 z-1000 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}
+        <div className="fixed inset-0 z-1000 flex items-center justify-center p-4 bg-black/70"
           onMouseDown={(e) => { if (e.target === e.currentTarget && !removing) setDeleting(null); }}>
           <div role="alertdialog" aria-modal="true" aria-labelledby="delete-template-title"
-            className="w-full max-w-sm rounded-2xl p-5" style={{ background: "#111111", border: `1px solid ${BORDER}` }}>
-            <h2 id="delete-template-title" className="text-sm font-bold">Delete template</h2>
-            <p className="text-sm mt-2 leading-relaxed" style={{ color: MUTED }}>
-              Delete the template for <span style={{ color: TEXT }}>{deleting.category}</span>? Its design file is removed and
+            className="card w-full max-w-sm p-5">
+            <h2 id="delete-template-title" className="type-body-sb-s">Delete template</h2>
+            <p className="type-body-r-s mt-2 text-muted">
+              Delete the template for <span className="text-fg">{deleting.category}</span>? Its design file is removed and
               Marketing no longer sees a design reference for this category. Existing posts are not changed.
             </p>
             <div className="flex gap-2 mt-5">
               <button type="button" onClick={() => setDeleting(null)} disabled={removing} autoFocus
-                className="flex-1 py-2 rounded-xl text-sm" style={{ border: `1px solid ${BORDER}`, color: MUTED }}>Cancel</button>
+                className="btn-secondary flex-1">Cancel</button>
               <button type="button" onClick={remove} disabled={removing}
-                className="flex-1 py-2 rounded-xl text-sm font-semibold disabled:opacity-60" style={{ background: "#7f1d1d", color: "#fca5a5" }}>
+                className="btn-danger flex-1">
                 {removing ? "Deleting…" : "Delete template"}
               </button>
             </div>
@@ -211,10 +204,10 @@ function TemplateCover({ template }: { template: DesignTemplate }) {
   }
   return (
     <span className="flex flex-col items-center gap-2 px-4 text-center">
-      <span className="text-xs font-bold px-2 py-1 rounded-sm" style={{ background: "#1f1f1f", color: TEXT }}>
+      <span className="type-body-sb-xs px-2 py-1 rounded-sm bg-neutral-100 text-fg">
         {template.fileUrl ? "FIG" : "LINK"}
       </span>
-      <span className="text-xs" style={{ color: MUTED }}>No preview</span>
+      <span className="type-body-r-xs text-muted">No preview</span>
     </span>
   );
 }
@@ -224,18 +217,17 @@ function TemplateTile({ template, onOpen }: { template: DesignTemplate; onOpen: 
   const parts = [template.fileUrl && "Figma file", template.linkUrl && "link"].filter(Boolean).join(" + ");
   return (
     <li>
-      <button type="button" onClick={onOpen} className="template-tile w-full text-left">
-        <div className="template-cover relative rounded-xl overflow-hidden flex items-center justify-center transition-colors"
-          style={{ aspectRatio: "4 / 5", border: `1px solid ${BORDER}`, background: "#111111" }}>
+      <button type="button" onClick={onOpen} className={cn("group w-full text-left rounded-2xl", TILE_FOCUS)}>
+        <div className="card rounded-xl relative overflow-hidden flex items-center justify-center transition-colors aspect-4/5 group-hover:border-neutral-300">
           <TemplateCover template={template} />
           {incomplete && (
-            <span className="absolute top-2 left-2 text-[11px] font-semibold px-1.5 py-0.5 rounded-sm" style={{ background: "#422006", color: "#fbbf24" }}>
+            <span className="absolute top-2 left-2 type-body-sb-xs px-1.5 py-0.5 rounded-sm bg-brand-100 text-brand-800 border border-brand-400">
               Incomplete
             </span>
           )}
         </div>
-        <p className="text-sm font-semibold mt-2.5 leading-snug line-clamp-2">{template.category}</p>
-        <p className="text-xs mt-0.5" style={{ color: MUTED }}>
+        <p className="type-body-sb-s mt-2.5 line-clamp-2">{template.category}</p>
+        <p className="type-body-r-xs mt-0.5 text-muted">
           {incomplete ? "Needs a design file or link" : parts.charAt(0).toUpperCase() + parts.slice(1)}
         </p>
       </button>
@@ -245,24 +237,23 @@ function TemplateTile({ template, onOpen }: { template: DesignTemplate; onOpen: 
 
 function EmptySlot({ category, canManage, onUpload }: { category: Category; canManage: boolean; onUpload: () => void }) {
   const box = (
-    <div className="rounded-xl flex flex-col items-center justify-center gap-1 px-3 text-center"
-      style={{ aspectRatio: "4 / 5", border: `1px dashed ${BORDER}` }}>
+    <div className="dropzone bg-bg flex flex-col items-center justify-center gap-1 px-3 text-center aspect-4/5">
       {canManage
-        ? <span className="text-sm font-medium" style={{ color: TEXT }}>+ Upload</span>
-        : <span className="text-xs" style={{ color: MUTED }}>No template yet</span>}
+        ? <span className="type-body-m-s text-fg">+ Upload</span>
+        : <span className="type-body-r-xs text-muted">No template yet</span>}
     </div>
   );
   return (
     <li>
       {canManage ? (
-        <button type="button" onClick={onUpload} className="template-tile w-full text-left" aria-label={`Upload the template for ${category}`}>
+        <button type="button" onClick={onUpload} className={cn("w-full text-left rounded-2xl", TILE_FOCUS)} aria-label={`Upload the template for ${category}`}>
           {box}
-          <p className="text-sm font-semibold mt-2.5 leading-snug line-clamp-2" style={{ color: MUTED }}>{category}</p>
+          <p className="type-body-sb-s mt-2.5 line-clamp-2 text-muted">{category}</p>
         </button>
       ) : (
         <>
           {box}
-          <p className="text-sm font-semibold mt-2.5 leading-snug line-clamp-2" style={{ color: MUTED }}>{category}</p>
+          <p className="type-body-sb-s mt-2.5 line-clamp-2 text-muted">{category}</p>
         </>
       )}
     </li>
@@ -287,58 +278,53 @@ function TemplateDetail({ template, canManage, canUse, onClose, onUse, onEdit, o
   const updated = template.updatedAt ? new Date(template.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" }) : null;
 
   return (
-    <div className="fixed inset-0 z-900 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.75)" }}
+    <div className="fixed inset-0 z-900 flex items-center justify-center p-4 bg-black/75"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <style>{`.template-detail :focus-visible { outline: 2px solid #5b63d3; outline-offset: 2px; }`}</style>
+      <style>{`.template-detail :focus-visible { outline: 2px solid var(--color-brand-800); outline-offset: 2px; }`}</style>
       <div role="dialog" aria-modal="true" aria-label={`Template for ${template.category}`}
-        className="template-detail flex flex-col sm:flex-row overflow-hidden w-full"
-        style={{ background: "#111111", border: `1px solid ${BORDER}`, borderRadius: 16, maxWidth: 760, maxHeight: "90vh" }}>
-        <div className="sm:w-[42%] shrink-0 flex items-center justify-center p-4" style={{ background: BG, borderRight: `1px solid ${BORDER}` }}>
-          <div className="w-full rounded-xl overflow-hidden flex items-center justify-center" style={{ aspectRatio: "4 / 5", border: `1px solid ${BORDER}`, maxHeight: "40vh" }}>
+        className="template-detail card flex flex-col sm:flex-row overflow-hidden w-full max-w-190 max-h-[90vh]">
+        <div className="sm:w-[42%] shrink-0 flex items-center justify-center p-4 bg-bg border-r border-border">
+          <div className="w-full rounded-xl overflow-hidden flex items-center justify-center aspect-4/5 border border-border max-h-[40vh]">
             <TemplateCover template={template} />
           </div>
         </div>
 
-        <div className="flex flex-col min-h-0 flex-1" style={{ minWidth: 0 }}>
-          <div className="flex items-start gap-3 px-5 pt-5 pb-4 shrink-0" style={{ borderBottom: `1px solid ${BORDER}` }}>
+        <div className="flex flex-col min-h-0 flex-1 min-w-0">
+          <div className="flex items-start gap-3 px-5 pt-5 pb-4 shrink-0 border-b border-border">
             <div className="flex-1 min-w-0">
-              <h2 className="text-base font-bold leading-snug" style={{ color: TEXT }}>{template.category}</h2>
-              <p className="text-xs mt-1" style={{ color: MUTED }}>
+              <h2 className="type-body-sb-m text-fg">{template.category}</h2>
+              <p className="type-body-r-xs mt-1 text-muted">
                 {contentTypeLabel(template.category, template.pillar)}{updated ? `. Updated ${updated}` : ""}
               </p>
             </div>
             <button type="button" onClick={onClose} aria-label="Close"
-              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-              style={{ color: MUTED, border: `1px solid ${BORDER}` }}>✕</button>
+              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-border text-muted">✕</button>
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-3">
             <DesignReferenceCard template={template} category={template.category} />
             {isIncomplete(template) && canManage && (
-              <p className="text-xs" style={{ color: "#fbbf24" }}>Add the .fig file or a link so Marketing can open the design.</p>
+              <p className="type-body-r-xs text-brand-800">Add the .fig file or a link so Marketing can open the design.</p>
             )}
           </div>
 
           {(canManage || canUse) && (
-            <div className="flex gap-2 px-5 py-4 shrink-0" style={{ borderTop: `1px solid ${BORDER}` }}>
+            <div className="flex gap-2 px-5 py-4 shrink-0 border-t border-border">
               {canManage && (
                 <>
                   <button type="button" onClick={onDelete}
-                    className="px-4 py-2 rounded-xl text-sm font-semibold" style={{ border: "1px solid #7f1d1d", color: "#fca5a5" }}>
+                    className="px-4 py-2 rounded-xl type-body-sb-s border border-red-200 text-red-600 transition-colors hover:bg-red-50">
                     Delete
                   </button>
                   <button type="button" onClick={onEdit}
-                    className="flex-1 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100"
-                    style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                    className="btn-primary flex-1">
                     Edit template
                   </button>
                 </>
               )}
               {canUse && (
                 <button type="button" onClick={onUse}
-                  className="flex-1 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  className="btn-primary flex-1">
                   Use template
                 </button>
               )}
