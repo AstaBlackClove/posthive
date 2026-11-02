@@ -4,6 +4,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import { PlatformIcon } from "../../../components/PlatformIcon";
+import { cn } from "../../../lib/cn";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -172,7 +173,7 @@ function validateImportFile(file: File): string | null {
 function PlatformLabel({ platform }: { platform: string }) {
   if (platform === "website") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-[11px]" style={{ color: "#aaa" }}>
+      <span className="inline-flex items-center gap-1.5 type-body-r-xs text-muted">
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.5-2.2 4-5.2 4-9s-1.5-6.8-4-9m0 18c-2.5-2.2-4-5.2-4-9s1.5-6.8 4-9M3.6 9h16.8M3.6 15h16.8" />
         </svg>
@@ -182,28 +183,28 @@ function PlatformLabel({ platform }: { platform: string }) {
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 text-[11px]" style={{ color: "#aaa" }}>
+    <span className="inline-flex items-center gap-1.5 type-body-r-xs text-muted">
       <PlatformIcon platform={platform} size={14} />
       {PLATFORM_LABEL[platform] ?? platform}
     </span>
   );
 }
 
-function StatusBadge({ color, label }: { color: string; label: string }) {
+function StatusBadge({ tone, label }: { tone: string; label: string }) {
   return (
-    <span className="text-[11px] font-medium whitespace-nowrap" style={{ color }}>
+    <span className={cn("type-body-m-xs whitespace-nowrap", tone)}>
       {label}
     </span>
   );
 }
 
-function Stat({ label, value, color }: { label: string; value: number; color?: string }) {
+function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
     <div className="flex items-baseline gap-2">
-      <span className="text-lg font-bold tabular-nums" style={{ color: color ?? "#ededed" }}>
+      <span className={cn("type-body-sb-l tabular-nums", tone ?? "text-fg")}>
         {value}
       </span>
-      <span className="text-xs" style={{ color: "#444" }}>{label}</span>
+      <span className="type-body-r-xs text-muted">{label}</span>
     </div>
   );
 }
@@ -211,8 +212,8 @@ function Stat({ label, value, color }: { label: string; value: number; color?: s
 function Detail({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-wide" style={{ color: "#555" }}>{label}</p>
-      <p className="text-xs mt-0.5" style={{ color: value ? "#ccc" : "#444" }}>{value || "—"}</p>
+      <p className="type-body-r-xxs uppercase tracking-wide text-muted">{label}</p>
+      <p className={cn("type-body-r-xs mt-0.5", value ? "text-fg" : "text-neutral-500")}>{value || "—"}</p>
     </div>
   );
 }
@@ -399,19 +400,19 @@ export default function ImportContentPlanPage() {
     setSelected(allSelected ? new Set() : new Set(validRows.map((row) => row.sourceRow)));
   }
 
-  function statusFor(entry: TableRow): { color: string; label: string } {
-    if (entry.kind === "invalid") return { color: "#f87171", label: "✕ Invalid" };
-    if (entry.kind === "duplicate") return { color: "#fbbf24", label: "Duplicate" };
+  function statusFor(entry: TableRow): { tone: string; label: string } {
+    if (entry.kind === "invalid") return { tone: "text-red-600", label: "✕ Invalid" };
+    if (entry.kind === "duplicate") return { tone: "text-brand-800", label: "Duplicate" };
 
     if (phase === "done") {
-      if (createdRows.has(entry.row.sourceRow)) return { color: "#4ade80", label: "✓ Created" };
-      if (skippedByRow.has(entry.row.sourceRow)) return { color: "#f87171", label: "✕ Skipped" };
-      return { color: "#666", label: "Not selected" };
+      if (createdRows.has(entry.row.sourceRow)) return { tone: "text-green-700", label: "✓ Created" };
+      if (skippedByRow.has(entry.row.sourceRow)) return { tone: "text-red-600", label: "✕ Skipped" };
+      return { tone: "text-muted", label: "Not selected" };
     }
 
     return selected.has(entry.row.sourceRow)
-      ? { color: "#4ade80", label: "✓ Ready" }
-      : { color: "#666", label: "Not selected" };
+      ? { tone: "text-green-700", label: "✓ Ready" }
+      : { tone: "text-muted", label: "Not selected" };
   }
 
   const canImport = phase === "ready" && selectedCount > 0 && !!file;
@@ -420,32 +421,31 @@ export default function ImportContentPlanPage() {
   const duplicateCount = preview?.summary.duplicateRows ?? 0;
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: "#0a0a0a", color: "#ededed" }}>
+    <div className="flex flex-col h-full bg-bg text-fg">
 
       {/* Top bar — pl-14 on mobile to clear the sidebar hamburger */}
-      <div className="shrink-0 pl-14 pr-4 py-3 md:px-4" style={{ borderBottom: "1px solid #1e1e1e" }}>
+      <div className="shrink-0 pl-14 pr-4 py-3 md:px-4 border-b border-border">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/jobs")}
             disabled={isBusy}
-            className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70 disabled:opacity-30 shrink-0"
-            style={{ color: "#888" }}
+            className="flex items-center gap-1.5 type-body-r-s text-muted transition-opacity hover:opacity-70 disabled:opacity-30 shrink-0"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </button>
-          <div className="w-px h-4 shrink-0" style={{ backgroundColor: "#2a2a2a" }} />
-          <h1 className="text-sm font-bold truncate" style={{ color: "#ededed" }}>Import Content Plan</h1>
+          <div className="w-px h-4 shrink-0 bg-border" />
+          <h1 className="type-body-sb-s truncate text-fg">Import Content Plan</h1>
         </div>
 
         {(preview || phase === "done") && (
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <span className="text-xs flex-1" style={{ color: validRows.length > 0 ? "#4ade80" : "#555" }}>
+            <span className={cn("type-body-r-xs flex-1", validRows.length > 0 ? "text-green-700" : "text-muted")}>
               {validRows.length} valid
-              {invalidCount > 0 && <span style={{ color: "#f87171" }}> · {invalidCount} invalid</span>}
-              {duplicateCount > 0 && <span style={{ color: "#fbbf24" }}> · {duplicateCount} duplicate</span>}
+              {invalidCount > 0 && <span className="text-red-600"> · {invalidCount} invalid</span>}
+              {duplicateCount > 0 && <span className="text-brand-800"> · {duplicateCount} duplicate</span>}
             </span>
 
             {phase !== "done" && (
@@ -453,16 +453,14 @@ export default function ImportContentPlanPage() {
                 <button
                   onClick={clearAll}
                   disabled={isBusy}
-                  className="px-3 py-1.5 rounded-xl text-sm font-medium transition-colors hover:opacity-80 disabled:opacity-40 shrink-0"
-                  style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}
+                  className="btn-secondary px-3 py-1.5 type-body-m-s text-muted disabled:opacity-40 shrink-0"
                 >
                   Clear
                 </button>
                 <button
                   onClick={handleCommit}
                   disabled={!canImport}
-                  className="px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 disabled:opacity-40 shrink-0"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+                  className="btn-primary px-3 py-1.5 disabled:opacity-40 shrink-0"
                 >
                   {phase === "committing" ? "Importing…" : `Import ${selectedCount}`}
                 </button>
@@ -473,15 +471,13 @@ export default function ImportContentPlanPage() {
               <>
                 <button
                   onClick={clearAll}
-                  className="px-3 py-1.5 rounded-xl text-sm font-medium transition-colors hover:opacity-80 shrink-0"
-                  style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}
+                  className="btn-secondary px-3 py-1.5 type-body-m-s text-muted shrink-0"
                 >
                   Import another
                 </button>
                 <button
                   onClick={() => router.push("/jobs")}
-                  className="px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 shrink-0"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+                  className="btn-primary px-3 py-1.5 shrink-0"
                 >
                   View drafts →
                 </button>
@@ -495,17 +491,14 @@ export default function ImportContentPlanPage() {
       <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
 
         {/* LEFT — input panel */}
-        <div className="flex flex-col w-full lg:w-96 lg:shrink-0 lg:overflow-y-auto border-b lg:border-b-0 lg:border-r" style={{ borderColor: "#1e1e1e" }}>
-          <div className="flex" style={{ borderBottom: "1px solid #1e1e1e" }}>
+        <div className="flex flex-col w-full lg:w-96 lg:shrink-0 lg:overflow-y-auto border-b lg:border-b-0 lg:border-r border-border">
+          <div className="flex border-b border-border">
             {(["input", "format"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className="flex-1 py-3 text-xs font-semibold transition-colors"
-                style={{
-                  color: activeTab === tab ? "#ededed" : "#555",
-                  borderBottom: activeTab === tab ? "2px solid #5b63d3" : "2px solid transparent",
-                }}
+                className={cn("flex-1 py-3 type-body-sb-xs border-b-2 transition-colors",
+                  activeTab === tab ? "border-accent text-fg" : "border-transparent text-muted")}
               >
                 {tab === "input" ? "CSV / XLSX" : "Format Guide"}
               </button>
@@ -521,15 +514,14 @@ export default function ImportContentPlanPage() {
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={handleDrop}
                   disabled={isBusy}
-                  className="w-full flex flex-col items-center justify-center gap-3 py-8 rounded-xl border-2 border-dashed transition-colors hover:opacity-80 disabled:opacity-40"
-                  style={{ borderColor: "#2a2a2a", color: "#555" }}
+                  className="dropzone w-full flex flex-col items-center justify-center gap-3 py-8 text-neutral-500 cursor-pointer hover:border-neutral-300 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
                   <div className="text-center">
-                    <p className="text-sm font-medium" style={{ color: "#888" }}>Drop CSV or XLSX file here</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#444" }}>or click to browse</p>
+                    <p className="type-body-m-s text-fg">Drop CSV or XLSX file here</p>
+                    <p className="type-body-r-xs mt-0.5 text-muted">or click to browse</p>
                   </div>
                 </button>
                 <input
@@ -541,19 +533,18 @@ export default function ImportContentPlanPage() {
                 />
 
                 {file && (
-                  <div className="rounded-xl px-3 py-2.5 flex items-center gap-2" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
-                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "#818cf8" }}>
+                  <div className="card rounded-xl px-3 py-2.5 flex items-center gap-2">
+                    <svg className="w-4 h-4 shrink-0 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium truncate" style={{ color: "#ccc" }}>{file.name}</p>
-                      <p className="text-[10px]" style={{ color: "#555" }}>{formatBytes(file.size)}</p>
+                      <p className="type-body-m-xs truncate text-fg">{file.name}</p>
+                      <p className="type-body-r-xxs text-muted">{formatBytes(file.size)}</p>
                     </div>
                     <button
                       onClick={clearAll}
                       disabled={isBusy}
-                      className="text-[10px] underline disabled:opacity-40"
-                      style={{ color: "#666" }}
+                      className="type-body-r-xxs underline text-muted disabled:opacity-40"
                     >
                       remove
                     </button>
@@ -561,9 +552,9 @@ export default function ImportContentPlanPage() {
                 )}
 
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px" style={{ backgroundColor: "#1e1e1e" }} />
-                  <span className="text-xs" style={{ color: "#444" }}>or paste CSV</span>
-                  <div className="flex-1 h-px" style={{ backgroundColor: "#1e1e1e" }} />
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="type-body-r-xs text-muted">or paste CSV</span>
+                  <div className="flex-1 h-px bg-border" />
                 </div>
 
                 <textarea
@@ -581,43 +572,40 @@ export default function ImportContentPlanPage() {
                   placeholder={"Content Title,Post Date,Platform\nSlope Stability Before the Rain Peaks,22-10-2026,Mirroring (LI&Ig)"}
                   rows={10}
                   disabled={isBusy}
-                  className="w-full resize-none rounded-xl border px-4 py-3 text-xs focus:outline-hidden font-mono disabled:opacity-40"
-                  style={{ backgroundColor: "#111", borderColor: "#2a2a2a", color: "#ededed", lineHeight: "1.6" }}
+                  className="field resize-none px-4 py-3 type-mono-r-xs disabled:opacity-40"
                 />
 
                 <div className="flex gap-2">
                   <button
                     onClick={handlePastePreview}
                     disabled={isBusy || !csvText.trim()}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90 disabled:opacity-40"
-                    style={{ backgroundColor: "#1f1f2e", color: "#818cf8", border: "1px solid #3730a3" }}
+                    className="flex-1 py-2.5 rounded-xl border border-brand-300 bg-brand-100 type-body-sb-s text-brand-800 cursor-pointer transition-colors hover:bg-brand-200 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {phase === "previewing" ? "Checking…" : "Preview CSV"}
                   </button>
                   <button
                     onClick={clearAll}
                     disabled={isBusy || (!csvText && !file)}
-                    className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-80 disabled:opacity-40"
-                    style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}
+                    className="btn-secondary py-2.5 text-muted disabled:opacity-40"
                   >
                     Clear
                   </button>
                 </div>
 
-                <p className="text-[11px] leading-relaxed" style={{ color: "#555" }}>
+                <p className="type-body-r-xs text-muted">
                   CSV UTF-8 atau XLSX, maksimum 5 MB dan 1.000 baris data. Sheet XLSX dideteksi otomatis dari baris header.
                 </p>
               </>
             ) : (
               <>
                 <div>
-                  <p className="text-xs font-semibold mb-3" style={{ color: "#ededed" }}>Required columns</p>
+                  <p className="type-body-sb-xs mb-3 text-fg">Required columns</p>
                   <div className="space-y-3">
                     {REQUIRED_COLUMNS.map((column) => (
-                      <div key={column.name} className="rounded-xl p-3 space-y-1" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
-                        <code className="text-xs font-bold" style={{ color: "#818cf8" }}>{column.name}</code>
-                        <p className="text-xs mt-1" style={{ color: "#888" }}>{column.description}</p>
-                        <p className="font-mono text-[11px]" style={{ color: "#555" }}>e.g. {column.example}</p>
+                      <div key={column.name} className="card rounded-xl p-3 space-y-1">
+                        <code className="type-body-sb-xs text-brand-800">{column.name}</code>
+                        <p className="type-body-r-xs mt-1 text-muted">{column.description}</p>
+                        <p className="type-mono-r-xs text-muted">e.g. {column.example}</p>
                       </div>
                     ))}
                   </div>
@@ -625,8 +613,7 @@ export default function ImportContentPlanPage() {
                   <a
                     href="/import-plan-template.xlsx"
                     download="Content Plan Template.xlsx"
-                    className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
-                    style={{ backgroundColor: "#1a1a1a", color: "#818cf8", border: "1px solid #2a2a2a" }}
+                    className="btn-secondary mt-3 flex justify-start py-2.5 text-brand-800"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -636,39 +623,39 @@ export default function ImportContentPlanPage() {
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold mb-3" style={{ color: "#ededed" }}>Optional columns</p>
+                  <p className="type-body-sb-xs mb-3 text-fg">Optional columns</p>
                   <div className="space-y-2">
                     {OPTIONAL_COLUMNS.map((column) => (
-                      <div key={column.name} className="rounded-xl p-3" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
-                        <code className="text-xs font-bold" style={{ color: "#818cf8" }}>{column.name}</code>
-                        <p className="text-xs mt-1" style={{ color: "#666" }}>{column.description}</p>
+                      <div key={column.name} className="card rounded-xl p-3">
+                        <code className="type-body-sb-xs text-brand-800">{column.name}</code>
+                        <p className="type-body-r-xs mt-1 text-muted">{column.description}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold mb-3" style={{ color: "#ededed" }}>Platform values</p>
-                  <div className="space-y-2 rounded-xl p-3" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
+                  <p className="type-body-sb-xs mb-3 text-fg">Platform values</p>
+                  <div className="card space-y-2 rounded-xl p-3">
                     {PLATFORM_GUIDE.map((item) => (
-                      <div key={item.value} className="flex gap-3 text-[11px]">
-                        <code className="shrink-0 font-mono" style={{ color: "#818cf8", minWidth: "132px" }}>{item.value}</code>
-                        <span style={{ color: "#666" }}>{item.result}</span>
+                      <div key={item.value} className="flex gap-3 type-body-r-xs">
+                        <code className="shrink-0 min-w-33 type-mono-r-xs text-brand-800">{item.value}</code>
+                        <span className="text-muted">{item.result}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="rounded-xl p-3" style={{ backgroundColor: "#1a1200", border: "1px solid #3a2800" }}>
-                  <p className="text-[11px] font-semibold mb-1" style={{ color: "#c9a227" }}>Link Copywrite = design copy, Caption = caption final</p>
-                  <p className="text-[11px] leading-relaxed" style={{ color: "#8a6e1a" }}>
+                <div className="rounded-xl p-3 border border-brand-400 bg-brand-100">
+                  <p className="type-body-sb-xs mb-1 text-brand-800">Link Copywrite = design copy, Caption = caption final</p>
+                  <p className="type-body-r-xs text-brand-800">
                     Isi Link Copywrite disimpan mentah sebagai content.designCopy. Isi Caption disimpan sebagai content.text. Media tetap diisi manual di Posthive sebelum scheduling.
                   </p>
                 </div>
 
-                <div className="rounded-xl p-3" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
-                  <p className="text-[11px] font-semibold mb-1" style={{ color: "#aaa" }}>Tanggal</p>
-                  <p className="text-[11px]" style={{ color: "#666" }}>Prefer DD-MM-YYYY. YYYY-MM-DD, DD/MM/YYYY, and YYYY/MM/DD are also accepted. Excel date cells are supported. Defaults to 09:00 WIB.</p>
+                <div className="card rounded-xl p-3">
+                  <p className="type-body-sb-xs mb-1 text-fg">Tanggal</p>
+                  <p className="type-body-r-xs text-muted">Prefer DD-MM-YYYY. YYYY-MM-DD, DD/MM/YYYY, and YYYY/MM/DD are also accepted. Excel date cells are supported. Defaults to 09:00 WIB.</p>
                 </div>
               </>
             )}
@@ -679,49 +666,49 @@ export default function ImportContentPlanPage() {
         <div className="flex flex-col lg:flex-1 lg:overflow-hidden">
 
           {phase === "previewing" && (
-            <div className="shrink-0 px-6 py-4" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d1a" }}>
+            <div className="shrink-0 px-6 py-4 border-b border-border bg-brand-100">
               <div className="flex items-center gap-3">
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin shrink-0" style={{ borderColor: "#5b63d3", borderTopColor: "transparent" }} />
-                <span className="text-sm font-medium" style={{ color: "#818cf8" }}>Checking file…</span>
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-brand-800 border-t-transparent animate-spin shrink-0" />
+                <span className="type-body-m-s text-brand-800">Checking file…</span>
               </div>
-              <p className="text-xs mt-2" style={{ color: "#444" }}>Validasi kolom, tanggal, platform, dan duplikat.</p>
+              <p className="type-body-r-xs mt-2 text-muted">Validasi kolom, tanggal, platform, dan duplikat.</p>
             </div>
           )}
 
           {phase === "committing" && (
-            <div className="shrink-0 px-6 py-4" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d1a" }}>
+            <div className="shrink-0 px-6 py-4 border-b border-border bg-brand-100">
               <div className="flex items-center gap-3">
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin shrink-0" style={{ borderColor: "#5b63d3", borderTopColor: "transparent" }} />
-                <span className="text-sm font-medium" style={{ color: "#818cf8" }}>Creating drafts…</span>
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-brand-800 border-t-transparent animate-spin shrink-0" />
+                <span className="type-body-m-s text-brand-800">Creating drafts…</span>
               </div>
-              <p className="text-xs mt-2" style={{ color: "#444" }}>Jangan tutup halaman ini.</p>
+              <p className="type-body-r-xs mt-2 text-muted">Jangan tutup halaman ini.</p>
             </div>
           )}
 
           {error && (
-            <div className="shrink-0 mx-6 mt-4 rounded-xl p-3 flex gap-3" style={{ backgroundColor: "#1a0a0a", border: "1px solid #7f1d1d" }}>
-              <span className="text-base shrink-0" style={{ color: "#f87171" }}>!</span>
+            <div className="shrink-0 mx-6 mt-4 rounded-xl p-3 flex gap-3 border border-red-200 bg-red-50">
+              <span className="type-body-r-m shrink-0 text-red-600">!</span>
               <div className="flex-1">
-                <p className="text-xs font-semibold" style={{ color: "#f87171" }}>Import gagal</p>
-                <p className="text-xs mt-1 leading-relaxed" style={{ color: "#fca5a5" }}>{error}</p>
+                <p className="type-body-sb-xs text-red-600">Import gagal</p>
+                <p className="type-body-r-xs mt-1 text-red-600">{error}</p>
               </div>
-              <button onClick={() => setError(null)} className="text-xs underline self-start" style={{ color: "#fca5a5" }}>
+              <button onClick={() => setError(null)} className="type-body-r-xs underline self-start text-red-600">
                 close
               </button>
             </div>
           )}
 
           {phase === "done" && commitResult && (
-            <div className="shrink-0 px-6 py-4" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0a1a0a" }}>
+            <div className="shrink-0 px-6 py-4 border-b border-border bg-green-50">
               <div className="flex items-center gap-3">
-                <span className="text-xl" style={{ color: "#4ade80" }}>✓</span>
+                <span className="type-body-r-xl text-green-700">✓</span>
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>
+                  <p className="type-body-sb-s text-green-700">
                     {commitResult.summary.created > 0
                       ? `${commitResult.summary.created} draft${commitResult.summary.created === 1 ? "" : "s"} created`
                       : "No new drafts created"}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: "#888" }}>
+                  <p className="type-body-r-xs mt-0.5 text-muted">
                     {commitResult.summary.skipped} baris dilewati · {commitResult.summary.duplicateRows} duplikat · {commitResult.summary.invalidRows} invalid
                   </p>
                 </div>
@@ -730,47 +717,47 @@ export default function ImportContentPlanPage() {
           )}
 
           {!preview && phase !== "previewing" && (
-            <div className="flex flex-col items-center justify-center gap-4 py-16 lg:flex-1" style={{ color: "#333" }}>
+            <div className="flex flex-col items-center justify-center gap-4 py-16 lg:flex-1 text-neutral-300">
               <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <div className="text-center">
-                <p className="text-sm font-medium" style={{ color: "#444" }}>No file loaded yet</p>
-                <p className="text-xs mt-1" style={{ color: "#333" }}>Upload CSV/XLSX or paste CSV on the left</p>
+                <p className="type-body-m-s text-neutral-500">No file loaded yet</p>
+                <p className="type-body-r-xs mt-1 text-neutral-500">Upload CSV/XLSX or paste CSV on the left</p>
               </div>
             </div>
           )}
 
           {preview && (
             <>
-              <div className="shrink-0 flex flex-wrap items-center gap-4 lg:gap-6 px-4 py-3" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
+              <div className="shrink-0 flex flex-wrap items-center gap-4 lg:gap-6 px-4 py-3 border-b border-border bg-surface">
                 <Stat label="Total rows" value={totalRows} />
-                <Stat label="Valid" value={validRows.length} color="#4ade80" />
-                <Stat label="Invalid" value={invalidCount} color={invalidCount > 0 ? "#f87171" : undefined} />
-                <Stat label="Duplicates" value={duplicateCount} color={duplicateCount > 0 ? "#fbbf24" : undefined} />
-                <Stat label="Selected" value={selectedCount} color="#818cf8" />
+                <Stat label="Valid" value={validRows.length} tone="text-green-700" />
+                <Stat label="Invalid" value={invalidCount} tone={invalidCount > 0 ? "text-red-600" : undefined} />
+                <Stat label="Duplicates" value={duplicateCount} tone={duplicateCount > 0 ? "text-brand-800" : undefined} />
+                <Stat label="Selected" value={selectedCount} tone="text-brand-800" />
               </div>
 
               {preview.file.format === "xlsx" ? (
-                <div className="shrink-0 mx-6 mt-4 rounded-xl p-3 text-xs" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e", color: "#888" }}>
-                  Sheet terpilih: <code style={{ color: "#818cf8" }}>{preview.file.sheetName}</code>. Header di baris {preview.file.headerRow}
+                <div className="card rounded-xl shrink-0 mx-6 mt-4 p-3 type-body-r-xs text-muted">
+                  Sheet terpilih: <code className="text-brand-800">{preview.file.sheetName}</code>. Header di baris {preview.file.headerRow}
                   {preview.file.subHeaderRow ? ` dan ${preview.file.subHeaderRow}` : ""}.
                   {preview.file.candidateSheets.length > 1 && (
                     <> Sheet kandidat: {preview.file.candidateSheets.join(", ")}.</>
                   )}
                 </div>
               ) : preview.file.subHeaderRow ? (
-                <div className="shrink-0 mx-6 mt-4 rounded-xl p-3 text-xs" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e", color: "#888" }}>
+                <div className="card rounded-xl shrink-0 mx-6 mt-4 p-3 type-body-r-xs text-muted">
                   Header terdeteksi di baris {preview.file.headerRow} dan {preview.file.subHeaderRow}.
-                  {preview.file.delimiter && <> Delimiter: <code style={{ color: "#818cf8" }}>{preview.file.delimiter}</code>.</>}
+                  {preview.file.delimiter && <> Delimiter: <code className="text-brand-800">{preview.file.delimiter}</code>.</>}
                 </div>
               ) : null}
 
               <div className="overflow-x-auto lg:flex-1 lg:overflow-y-auto mt-4">
-                <table className="w-full text-xs" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
-                  <thead className="sticky top-0 z-10" style={{ backgroundColor: "#0d0d0d" }}>
-                    <tr style={{ borderBottom: "1px solid #1e1e1e" }}>
-                      <th className="text-left px-4 py-3 w-10" style={{ color: "#444" }}>
+                <table className="w-full type-body-r-xs border-separate border-spacing-0">
+                  <thead className="sticky top-0 z-10 bg-surface text-muted">
+                    <tr className="*:border-b *:border-border">
+                      <th className="text-left px-4 py-3 w-10">
                         <input
                           type="checkbox"
                           checked={allSelected}
@@ -779,13 +766,13 @@ export default function ImportContentPlanPage() {
                           aria-label="Select all valid rows"
                         />
                       </th>
-                      <th className="text-left px-4 py-3 font-semibold w-10" style={{ color: "#444" }}>#</th>
-                      <th className="text-left px-4 py-3 font-semibold" style={{ color: "#444" }}>Content Title</th>
-                      <th className="text-left px-4 py-3 font-semibold whitespace-nowrap" style={{ color: "#444" }}>Post Date</th>
-                      <th className="text-left px-4 py-3 font-semibold" style={{ color: "#444" }}>Platform</th>
-                      <th className="text-left px-4 py-3 font-semibold" style={{ color: "#444" }}>Link Copywrite</th>
-                      <th className="text-left px-4 py-3 font-semibold" style={{ color: "#444" }}>Caption</th>
-                      <th className="text-left px-4 py-3 font-semibold" style={{ color: "#444" }}>Status</th>
+                      <th className="text-left px-4 py-3 type-body-sb-xs w-10">#</th>
+                      <th className="text-left px-4 py-3 type-body-sb-xs">Content Title</th>
+                      <th className="text-left px-4 py-3 type-body-sb-xs whitespace-nowrap">Post Date</th>
+                      <th className="text-left px-4 py-3 type-body-sb-xs">Platform</th>
+                      <th className="text-left px-4 py-3 type-body-sb-xs">Link Copywrite</th>
+                      <th className="text-left px-4 py-3 type-body-sb-xs">Caption</th>
+                      <th className="text-left px-4 py-3 type-body-sb-xs">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -800,11 +787,8 @@ export default function ImportContentPlanPage() {
                         <Fragment key={`${entry.kind}-${sourceRow}`}>
                           <tr
                             onClick={() => setExpandedRow(isExpanded ? null : sourceRow)}
-                            className="cursor-pointer transition-colors hover:bg-[#131313]"
-                            style={{
-                              borderBottom: "1px solid #141414",
-                              backgroundColor: rowError ? "#0f0808" : isExpanded ? "#151515" : undefined,
-                            }}
+                            className={cn("cursor-pointer transition-colors *:border-b *:border-border",
+                              rowError ? "bg-red-50" : isExpanded ? "bg-surface" : "hover:bg-surface")}
                           >
                             <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                               <input
@@ -815,24 +799,24 @@ export default function ImportContentPlanPage() {
                                 aria-label={`Select row ${sourceRow}`}
                               />
                             </td>
-                            <td className="px-4 py-3 font-mono" style={{ color: "#333" }}>{sourceRow}</td>
-                            <td className="px-4 py-3" style={{ maxWidth: "280px" }}>
-                              <span className={isExpanded ? "" : "block truncate"} style={{ color: "#ededed", whiteSpace: isExpanded ? "pre-wrap" : undefined, wordBreak: "break-word" }}>
+                            <td className="px-4 py-3 type-mono-r-xs text-neutral-500">{sourceRow}</td>
+                            <td className="px-4 py-3 max-w-70">
+                              <span className={cn("text-fg wrap-anywhere", isExpanded ? "whitespace-pre-wrap" : "block truncate")}>
                                 {entry.row.title || "—"}
                               </span>
                               {entry.kind === "valid" && entry.row.warnings.length > 0 && (
-                                <span className="inline-flex items-center gap-1 mt-1 text-[10px]" style={{ color: "#c9a227" }}>
+                                <span className="inline-flex items-center gap-1 mt-1 type-body-r-xxs text-brand-800">
                                   <span>▲</span>
                                   {entry.row.warnings.length} warning{entry.row.warnings.length === 1 ? "" : "s"}
                                 </span>
                               )}
                               {entry.kind !== "valid" && (
-                                <p className="text-[11px] mt-1" style={{ color: entry.kind === "invalid" ? "#f87171" : "#fbbf24" }}>
+                                <p className={cn("type-body-r-xs mt-1", entry.kind === "invalid" ? "text-red-600" : "text-brand-800")}>
                                   {entry.row.reason}
                                 </p>
                               )}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap" style={{ color: "#aaa" }}>
+                            <td className="px-4 py-3 whitespace-nowrap text-muted">
                               {entry.kind === "valid" ? `${entry.row.postDate} · 09:00 WIB` : "—"}
                             </td>
                             <td className="px-4 py-3">
@@ -844,53 +828,51 @@ export default function ImportContentPlanPage() {
                                 </div>
                               ) : "—"}
                             </td>
-                            <td className="px-4 py-3" style={{ maxWidth: "260px" }}>
+                            <td className="px-4 py-3 max-w-65">
                               {entry.kind === "valid" ? (
                                 entry.row.designCopyPreview ? (
                                   <span
-                                    className={isExpanded ? "" : "block truncate"}
-                                    style={{ color: "#666", whiteSpace: isExpanded ? "pre-wrap" : undefined, wordBreak: "break-word" }}
+                                    className={cn("text-muted wrap-anywhere", isExpanded ? "whitespace-pre-wrap" : "block truncate")}
                                   >
                                     {entry.row.designCopyPreview}
                                   </span>
-                                ) : <span style={{ color: "#333" }}>—</span>
-                              ) : <span style={{ color: "#444" }}>—</span>}
+                                ) : <span className="text-neutral-500">—</span>
+                              ) : <span className="text-neutral-500">—</span>}
                             </td>
-                            <td className="px-4 py-3" style={{ maxWidth: "260px" }}>
+                            <td className="px-4 py-3 max-w-65">
                               {entry.kind === "valid" ? (
                                 entry.row.captionPreview ? (
                                   <span
-                                    className={isExpanded ? "" : "block truncate"}
-                                    style={{ color: "#888", whiteSpace: isExpanded ? "pre-wrap" : undefined, wordBreak: "break-word" }}
+                                    className={cn("text-muted wrap-anywhere", isExpanded ? "whitespace-pre-wrap" : "block truncate")}
                                   >
                                     {entry.row.captionPreview}
                                   </span>
-                                ) : <span style={{ color: "#333" }}>—</span>
-                              ) : <span style={{ color: "#444" }}>—</span>}
+                                ) : <span className="text-neutral-500">—</span>
+                              ) : <span className="text-neutral-500">—</span>}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              <StatusBadge color={status.color} label={status.label} />
+                              <StatusBadge tone={status.tone} label={status.label} />
                             </td>
                           </tr>
 
                           {isExpanded && (
-                            <tr style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#111" }}>
+                            <tr className="bg-surface *:border-b *:border-border">
                               <td colSpan={8} className="px-6 py-4">
                                 {entry.kind === "valid" ? (
                                   <div className="space-y-4">
                                     {entry.row.warnings.length > 0 && (
-                                      <div className="rounded-xl p-3" style={{ backgroundColor: "#1a1200", border: "1px solid #3a2800" }}>
-                                        <p className="text-[11px] font-semibold mb-1" style={{ color: "#c9a227" }}>Warnings</p>
+                                      <div className="rounded-xl p-3 border border-brand-400 bg-brand-100">
+                                        <p className="type-body-sb-xs mb-1 text-brand-800">Warnings</p>
                                         <ul className="space-y-1">
                                           {entry.row.warnings.map((warning) => (
-                                            <li key={warning} className="text-[11px]" style={{ color: "#8a6e1a" }}>• {warning}</li>
+                                            <li key={warning} className="type-body-r-xs text-brand-800">• {warning}</li>
                                           ))}
                                         </ul>
                                       </div>
                                     )}
 
                                     {skippedByRow.has(sourceRow) && (
-                                      <p className="text-[11px]" style={{ color: "#f87171" }}>
+                                      <p className="type-body-r-xs text-red-600">
                                         Skipped: {skippedByRow.get(sourceRow)}
                                       </p>
                                     )}
@@ -908,45 +890,45 @@ export default function ImportContentPlanPage() {
                                     </div>
 
                                     <div>
-                                      <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "#555" }}>Targets</p>
+                                      <p className="type-body-r-xxs uppercase tracking-wide mb-1 text-muted">Targets</p>
                                       {entry.row.targets.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
                                           {entry.row.targets.map((target) => (
-                                            <span key={target.accountId} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px]" style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a", color: "#aaa" }}>
+                                            <span key={target.accountId} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 border border-border bg-bg type-body-r-xs text-muted">
                                               <PlatformIcon platform={target.platform} size={13} />
                                               {target.displayName}
                                             </span>
                                           ))}
                                         </div>
                                       ) : (
-                                        <p className="text-[11px]" style={{ color: "#666" }}>Belum ada target akun. Pilih akun manual sebelum scheduling.</p>
+                                        <p className="type-body-r-xs text-muted">Belum ada target akun. Pilih akun manual sebelum scheduling.</p>
                                       )}
                                     </div>
 
                                     <div>
-                                      <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "#555" }}>Link Copywrite / Design Copy (preview)</p>
+                                      <p className="type-body-r-xxs uppercase tracking-wide mb-1 text-muted">Link Copywrite / Design Copy (preview)</p>
                                       {entry.row.designCopyPreview ? (
-                                        <pre className="text-[11px] whitespace-pre-wrap wrap-break-word rounded-xl p-3 max-h-56 overflow-y-auto" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e", color: "#aaa", fontFamily: "monospace" }}>
+                                        <pre className="type-mono-r-xs whitespace-pre-wrap wrap-break-word rounded-xl p-3 max-h-56 overflow-y-auto border border-border bg-bg text-fg">
                                           {entry.row.designCopyPreview}
                                         </pre>
                                       ) : (
-                                        <p className="text-[11px]" style={{ color: "#444" }}>Kosong.</p>
+                                        <p className="type-body-r-xs text-neutral-500">Kosong.</p>
                                       )}
                                     </div>
 
                                     <div>
-                                      <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "#555" }}>Caption / content.text (preview)</p>
+                                      <p className="type-body-r-xxs uppercase tracking-wide mb-1 text-muted">Caption / content.text (preview)</p>
                                       {entry.row.captionPreview ? (
-                                        <pre className="text-[11px] whitespace-pre-wrap wrap-break-word rounded-xl p-3 max-h-56 overflow-y-auto" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e", color: "#aaa", fontFamily: "monospace" }}>
+                                        <pre className="type-mono-r-xs whitespace-pre-wrap wrap-break-word rounded-xl p-3 max-h-56 overflow-y-auto border border-border bg-bg text-fg">
                                           {entry.row.captionPreview}
                                         </pre>
                                       ) : (
-                                        <p className="text-[11px]" style={{ color: "#444" }}>Kosong. Draft akan dibuat tanpa caption.</p>
+                                        <p className="type-body-r-xs text-neutral-500">Kosong. Draft akan dibuat tanpa caption.</p>
                                       )}
                                     </div>
                                   </div>
                                 ) : (
-                                  <p className="text-xs" style={{ color: entry.kind === "invalid" ? "#f87171" : "#fbbf24" }}>
+                                  <p className={cn("type-body-r-xs", entry.kind === "invalid" ? "text-red-600" : "text-brand-800")}>
                                     Baris {sourceRow}: {entry.row.reason}
                                   </p>
                                 )}
