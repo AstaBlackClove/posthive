@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DatePicker } from "./DatePicker";
 import { minKeyForInterval } from "../lib/datetime";
+import { cn } from "../lib/cn";
 
 const INTERVALS = [
   { value: "daily", label: "Every Day" },
@@ -35,26 +36,23 @@ export function RepeatPicker({ value, endsAt, onChangeInterval, onChangeEndsAt }
   const label = value ? INTERVALS.find(i => i.value === value)?.label : "Repeat Post…";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <div className="flex items-center gap-2">
       {/* Trigger */}
-      <div ref={ref} style={{ position: "relative" }}>
+      <div ref={ref} className="relative">
         <button
           type="button"
           onClick={() => setOpen(o => !o)}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            backgroundColor: "#111111",
-            color: value ? "#ededed" : "#aaa",
-            border: `1px solid ${open ? "#5b63d3" : "#2a2a2a"}`,
-            borderRadius: 12, padding: "6px 12px",
-            fontSize: 14, cursor: "pointer", outline: "none",
-            transition: "border-color 0.15s",
-          }}
+          className={cn(
+            "field flex w-auto cursor-pointer items-center gap-1.5 py-1.5",
+            value ? "text-fg" : "text-muted",
+            open && "border-accent",
+          )}
         >
           {/* repeat icon */}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke={value ? "#7c85e8" : "#666"} strokeWidth="2"
-            strokeLinecap="round" strokeLinejoin="round">
+            stroke="currentColor" strokeWidth="2"
+            strokeLinecap="round" strokeLinejoin="round"
+            className={value ? "text-brand-800" : "text-neutral-500"}>
             <path d="M17 1l4 4-4 4" />
             <path d="M3 11V9a4 4 0 0 1 4-4h14" />
             <path d="M7 23l-4-4 4-4" />
@@ -64,8 +62,8 @@ export function RepeatPicker({ value, endsAt, onChangeInterval, onChangeEndsAt }
           {/* chevron */}
           <svg
             width="12" height="12" viewBox="0 0 24 24" fill="none"
-            stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            className={cn("text-neutral-500 transition-transform", open && "rotate-180")}
           >
             <path d="M6 9l6 6 6-6" />
           </svg>
@@ -73,30 +71,15 @@ export function RepeatPicker({ value, endsAt, onChangeInterval, onChangeEndsAt }
 
         {/* Dropdown — opens upward */}
         {open && (
-          <div style={{
-            position: "absolute",
-            bottom: "calc(100% + 8px)",
-            left: 0,
-            minWidth: 180,
-            backgroundColor: "#111111",
-            border: "1px solid #2a2a2a",
-            borderRadius: 10,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-            zIndex: 300,
-            overflow: "hidden",
-          }}>
+          <div className="card absolute bottom-full left-0 z-300 mb-2 min-w-45 overflow-hidden rounded-xl shadow-lg">
             {/* No repeat option */}
             <button
               type="button"
               onClick={() => { onChangeInterval(""); onChangeEndsAt(""); setOpen(false); }}
-              style={{
-                display: "block", width: "100%", textAlign: "left",
-                padding: "10px 16px", fontSize: 14,
-                color: !value ? "#ededed" : "#888",
-                backgroundColor: !value ? "#1a1a2e" : "transparent",
-                border: "none", cursor: "pointer",
-                borderBottom: "1px solid #1e1e1e",
-              }}
+              className={cn(
+                "block w-full cursor-pointer border-b border-border px-4 py-2.5 text-left type-body-r-s",
+                !value ? "bg-brand-100 text-brand-800" : "text-muted hover:bg-neutral-100",
+              )}
             >
               Do Not Repeat
             </button>
@@ -105,20 +88,16 @@ export function RepeatPicker({ value, endsAt, onChangeInterval, onChangeEndsAt }
                 key={opt.value}
                 type="button"
                 onClick={() => { onChangeInterval(opt.value); onChangeEndsAt(""); setOpen(false); }}
-                style={{
-                  display: "block", width: "100%", textAlign: "left",
-                  padding: "10px 16px", fontSize: 14,
-                  color: value === opt.value ? "#ededed" : "#aaa",
-                  backgroundColor: value === opt.value ? "#1a1a2e" : "transparent",
-                  border: "none", cursor: "pointer",
-                  borderBottom: "1px solid #1e1e1e",
-                }}
+                className={cn(
+                  "block w-full cursor-pointer border-b border-border px-4 py-2.5 text-left type-body-r-s",
+                  value === opt.value ? "bg-brand-100 text-brand-800" : "text-muted hover:bg-neutral-100",
+                )}
               >
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span className="flex items-center justify-between">
                   {opt.label}
                   {value === opt.value && (
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                      stroke="#5b63d3" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   )}
@@ -131,8 +110,8 @@ export function RepeatPicker({ value, endsAt, onChangeInterval, onChangeEndsAt }
 
       {/* End date — only when interval selected */}
       {value && (
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 13, color: "#aaa", fontWeight: 500 }}>until</span>
+        <div className="flex items-center gap-1.5">
+          <span className="type-body-m-s text-muted">until</span>
           <DatePicker
             value={endsAt}
             onChange={onChangeEndsAt}

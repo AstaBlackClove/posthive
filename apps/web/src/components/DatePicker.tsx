@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { wibDateKey } from "../lib/datetime";
+import { cn } from "../lib/cn";
 
 interface Props {
   value: string; // "YYYY-MM-DD" or ""
@@ -58,12 +59,10 @@ export function DatePicker({ value, onChange, min, placeholder = "End date (opti
       if (!triggerRef.current) return;
       const rect = triggerRef.current.getBoundingClientRect();
       setDropdownStyle({
-        position: "fixed",
-        bottom: window.innerHeight - rect.top + 6,
-        left: rect.left,
-        width: Math.max(rect.width, 300),
-        zIndex: 9999,
-      });
+        "--dd-bottom": `${window.innerHeight - rect.top + 6}px`,
+        "--dd-left": `${rect.left}px`,
+        "--dd-w": `${Math.max(rect.width, 300)}px`,
+      } as React.CSSProperties);
     }
     recalc();
     window.addEventListener("scroll", recalc, true);
@@ -102,41 +101,32 @@ export function DatePicker({ value, onChange, min, placeholder = "End date (opti
   const dropdownEl = open && typeof document !== "undefined" ? createPortal(
     <div
       ref={ref}
-      style={{
-        ...dropdownStyle,
-        backgroundColor: "#111111",
-        border: "1px solid #2a2a2a",
-        borderRadius: 16,
-        boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-        overflow: "hidden",
-      }}
+      className="card fixed bottom-(--dd-bottom) left-(--dd-left) z-9999 w-(--dd-w) overflow-hidden shadow-lg"
+      style={dropdownStyle}
     >
       {/* Month nav */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "10px 16px", borderBottom: "1px solid #2a2a2a",
-      }}>
+      <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
         <button type="button"
           onClick={() => setCursor(new Date(year, month - 1, 1))}
-          style={{ width: 28, height: 28, borderRadius: 8, border: "none", background: "transparent", color: "#888", cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          className="flex size-7 cursor-pointer items-center justify-center rounded-lg type-body-r-l text-muted transition-colors hover:bg-neutral-100">
           ‹
         </button>
-        <span style={{ fontSize: 15, fontWeight: 600, color: "#ededed" }}>{MONTHS[month]} {year}</span>
+        <span className="type-body-sb-m text-fg">{MONTHS[month]} {year}</span>
         <button type="button"
           onClick={() => setCursor(new Date(year, month + 1, 1))}
-          style={{ width: 28, height: 28, borderRadius: 8, border: "none", background: "transparent", color: "#888", cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          className="flex size-7 cursor-pointer items-center justify-center rounded-lg type-body-r-l text-muted transition-colors hover:bg-neutral-100">
           ›
         </button>
       </div>
 
       {/* Calendar grid */}
-      <div style={{ padding: "12px 16px 14px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", marginBottom: 6 }}>
+      <div className="px-4 pt-3 pb-3.5">
+        <div className="mb-1.5 grid grid-cols-7">
           {DAYS.map(d => (
-            <div key={d} style={{ textAlign: "center", fontSize: 11, fontWeight: 600, color: "#555", padding: "3px 0" }}>{d}</div>
+            <div key={d} className="py-1 text-center type-body-sb-xs text-neutral-500">{d}</div>
           ))}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3 }}>
+        <div className="grid grid-cols-7 gap-0.5">
           {cells.map((day, i) => {
             if (!day) return <div key={i} />;
             const disabled = isDayDisabled(day);
@@ -148,23 +138,17 @@ export function DatePicker({ value, onChange, min, placeholder = "End date (opti
                 type="button"
                 disabled={disabled}
                 onClick={() => selectDay(day)}
-                style={{
-                  aspectRatio: "1",
-                  borderRadius: 10,
-                  border: "none",
-                  fontSize: 13,
-                  fontWeight: isSelected ? 700 : isToday ? 700 : 400,
-                  cursor: disabled ? "not-allowed" : "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  ...(disabled
-                    ? { backgroundColor: "transparent", color: "#333" }
+                className={cn(
+                  "flex aspect-square items-center justify-center rounded-lg transition-colors",
+                  isSelected || isToday ? "type-body-sb-s" : "type-body-r-s",
+                  disabled
+                    ? "cursor-not-allowed text-neutral-500 opacity-40"
                     : isSelected
-                    ? { backgroundColor: "#5b63d3", color: "#fff" }
+                    ? "cursor-pointer bg-accent text-accent-fg"
                     : isToday
-                    ? { backgroundColor: "#1a1a2e", color: "#5b63d3" }
-                    : { backgroundColor: "transparent", color: "#ccc" }),
-                  transition: "background-color 0.1s",
-                }}
+                    ? "cursor-pointer bg-brand-100 text-brand-800"
+                    : "cursor-pointer text-fg hover:bg-neutral-100",
+                )}
               >
                 {day}
               </button>
@@ -175,14 +159,11 @@ export function DatePicker({ value, onChange, min, placeholder = "End date (opti
 
       {/* Clear */}
       {value && (
-        <div style={{ borderTop: "1px solid #1e1e1e", padding: "8px 12px" }}>
+        <div className="border-t border-border px-3 py-2">
           <button
             type="button"
             onClick={() => { onChange(""); setOpen(false); }}
-            style={{
-              width: "100%", padding: "6px", borderRadius: 8, border: "none",
-              backgroundColor: "#1a1a1a", color: "#888", fontSize: 12, cursor: "pointer",
-            }}
+            className="w-full cursor-pointer rounded-lg bg-bg p-1.5 type-body-r-xs text-muted transition-colors hover:bg-neutral-100"
           >
             Clear
           </button>
@@ -193,24 +174,20 @@ export function DatePicker({ value, onChange, min, placeholder = "End date (opti
   ) : null;
 
   return (
-    <div style={{ position: "relative", display: "block" }}>
+    <div className="relative block">
       <button
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(v => !v)}
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, width: "100%",
-          backgroundColor: "#111111",
-          color: selected ? "#ededed" : "#aaa",
-          border: `1px solid ${open ? "#5b63d3" : "#2a2a2a"}`,
-          borderRadius: 12, padding: "6px 12px",
-          fontSize: 14, cursor: "pointer", outline: "none",
-          transition: "border-color 0.15s",
-        }}
+        className={cn(
+          "field flex cursor-pointer items-center justify-between gap-1.5 py-1.5",
+          selected ? "text-fg" : "text-muted",
+          open && "border-accent",
+        )}
       >
         {/* calendar icon */}
         <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          style={{ color: selected ? "#7c85e8" : "#666" }}
+          className={selected ? "text-brand-800" : "text-neutral-500"}
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
           <line x1="16" y1="2" x2="16" y2="6" />
@@ -218,9 +195,9 @@ export function DatePicker({ value, onChange, min, placeholder = "End date (opti
           <line x1="3" y1="10" x2="21" y2="10" />
         </svg>
         <span>{label}</span>
-        <svg width="11" height="11" fill="none" stroke="#666" viewBox="0 0 24 24"
+        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>
+          className={cn("text-neutral-500 transition-transform", open && "rotate-180")}>
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
