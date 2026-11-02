@@ -172,7 +172,7 @@ export default function ForDevelopersPage() {
                   ["POST /api/v1/posts", "Create a scheduled post"],
                   ["PATCH /api/v1/posts/:id", "Update a scheduled post"],
                   ["POST /api/v1/posts/:id/duplicate", "Duplicate a post"],
-                  ["GET /api/v1/templates", "List post templates"],
+                  ["GET /api/v1/templates", "List design templates"],
                   ["POST /api/v1/upload", "Upload media for a post"],
                 ].map(([endpoint, desc]) => (
                   <div key={endpoint as string} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
@@ -232,7 +232,7 @@ export default function ForDevelopersPage() {
                   "create_post — schedule content across platforms",
                   "approve_draft — promote a draft to scheduled",
                   "update_post — edit content or reschedule",
-                  "list_templates — browse saved post templates",
+                  "list_templates — browse design templates (one per content category)",
                   "delete_post — remove from the queue",
                 ].map((tool) => (
                   <div key={tool} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>

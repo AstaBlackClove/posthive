@@ -90,7 +90,7 @@ const NAV = [
       { label: "AI caption assist", id: "ai-caption" },
       { label: "Scheduling posts", id: "scheduling-posts" },
       { label: "Repeat posts", id: "repeat-posts" },
-      { label: "Post templates", id: "post-templates" },
+      { label: "Design templates", id: "post-templates" },
       { label: "Import Plan", id: "import-plan" },
       { label: "Calendar view", id: "calendar-view" },
       { label: "First comment", id: "first-comment" },
@@ -1065,28 +1065,25 @@ TIKTOK_REDIRECT_URI="https://your-domain.com/auth/tiktok/callback"`}</pre>
                 Pass <span className="doc-inline-code">repeat_interval</span> (<span className="doc-inline-code">"daily"</span> | <span className="doc-inline-code">"weekly"</span> | <span className="doc-inline-code">"monthly"</span>) and optionally <span className="doc-inline-code">repeat_ends_at</span> (ISO 8601) to <span className="doc-inline-code">create_post</span>.
               </p>
 
-              {/* ── Post templates ── */}
-              <h3 className="doc-h2" id="post-templates">Post templates</h3>
+              {/* ── Design templates (anchor kept for old links) ── */}
+              <h3 className="doc-h2" id="post-templates">Design templates</h3>
               <p className="doc-p">
-                Templates let you save and reuse post content from the Compose page. Useful for recurring formats like weekly updates, product announcements, or thread starters.
+                A template is the design team&apos;s reference design for one content type: a <strong>content pillar</strong> plus a <strong>content category</strong> (for example Promotional, Case Study). There is one template per category. It holds an editable Figma file (<span className="doc-inline-code">.fig</span>, up to 50 MB) and/or a link to the design, plus an optional preview image.
               </p>
-              <h4 className="doc-h3">Saving a template</h4>
+              <h4 className="doc-h3">Managing templates (design team)</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
-                <li className="doc-li">Write your post in the Compose page.</li>
-                <li className="doc-li">Click <strong>+ Save</strong> in the POST section header.</li>
-                <li className="doc-li">Enter a name and press Enter or click Save. Template names must be unique.</li>
+                <li className="doc-li">Open <strong>Templates</strong>. Each pillar lists its categories; empty ones show <strong>+ Upload</strong>.</li>
+                <li className="doc-li">Pick the pillar and category, then upload the <span className="doc-inline-code">.fig</span> file (in Figma: File → Save local copy) and/or paste the Figma link.</li>
+                <li className="doc-li">Optionally add a preview image so others recognise the layout. Replacing or deleting a template removes its old design file.</li>
               </ol>
-              <h4 className="doc-h3">Loading a template</h4>
+              <h4 className="doc-h3">Using a template in Compose</h4>
               <ol className="doc-ul" style={{ listStyle: "decimal" }}>
-                <li className="doc-li">Click <strong>Templates</strong> in the POST section header to open the dropdown.</li>
-                <li className="doc-li">Click any template name — the text and first comment are instantly populated.</li>
+                <li className="doc-li">In the <strong>Content type</strong> section, choose the pillar and category, or click <strong>Pick from templates</strong>. <strong>Use template</strong> in the library does the same.</li>
+                <li className="doc-li">Only the pillar and category are filled in. Your media, caption and schedule are not touched.</li>
+                <li className="doc-li">The design reference card shows <strong>Open in Figma</strong> and <strong>Download file</strong>. Build the final design from it, then upload the finished images to the post.</li>
               </ol>
               <p className="doc-p">
-                Templates save: post text, first comment, and YouTube title/description (if YouTube fields were filled). Templates are not shown when only YouTube is selected.
-              </p>
-              <h4 className="doc-h3">Deleting a template</h4>
-              <p className="doc-p">
-                Hover over a template in the dropdown and click the <strong>✕</strong> that appears on the right. A confirmation dialog will ask you to confirm before deleting.
+                Template files are never attached to a post. Only the design team can upload, replace or delete templates; Admin and Marketing view and use them.
               </p>
 
               {/* ── Import Plan ── */}
@@ -1698,8 +1695,8 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
                       ["Delete Post", "Action", "Permanently delete a pending or draft post"],
                       ["Approve Draft", "Action", "Approve a draft and schedule it for publishing"],
                       ["Duplicate Post", "Action", "Clone an existing post as a new draft"],
-                      ["List Templates", "Search", "Returns all saved post templates"],
-                      ["Create Post from Template", "Action", "Create a new post using a saved template"],
+                      ["List Templates", "Search", "Returns the design templates (pillar, category, Figma file/link)"],
+                      ["Create Post from Template", "Action", "Create a draft for a template's pillar + category; returns the design reference"],
                     ].map(([mod, type, desc]) => (
                       <tr key={mod}><td>{mod}</td><td>{type}</td><td>{desc}</td></tr>
                     ))}
@@ -1713,7 +1710,7 @@ return [{ json: { text: $json.text, platforms: $json.platforms } }];`}</CopyCode
                   { title: "Content calendar", desc: "Trigger from Google Sheets or Notion and use Create Post to publish each row on a schedule." },
                   { title: "Repurpose content", desc: "Use Duplicate Post to clone top-performing content and reschedule it for a new audience." },
                   { title: "Draft approval workflow", desc: "Create Post as a draft, send a Slack notification, then Approve Draft after team review." },
-                  { title: "Template publishing", desc: "Run Create Post from Template on a cron schedule to publish recurring content automatically." },
+                  { title: "Content-type drafts", desc: "Run Create Post from Template with a caption to open a draft per content category, then attach the finished design in Posthive." },
                 ].map(s => (
                   <div key={s.title} style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 10, padding: "14px 16px" }}>
                     <p style={{ fontWeight: 600, fontSize: 13, color: "#ededed", marginBottom: 4 }}>{s.title}</p>
@@ -1932,8 +1929,8 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
                       ["update_post", "Update content, time, or per-account overrides on pending/draft posts", "post_id, content, scheduled_time, first_comment, per_account"],
                       ["duplicate_post", "Clone any post as a new draft", "post_id"],
                       ["delete_post", "Delete a pending or draft post", "post_id"],
-                      ["list_templates", "List saved post templates", "—"],
-                      ["create_from_template", "Draft or schedule a post from a saved template (with optional overrides)", "template_id, account_ids, content_override, first_comment_override, schedule_directly, scheduled_time"],
+                      ["list_templates", "List design templates (one reference design per content category)", "—"],
+                      ["create_from_template", "Draft a post for a template's pillar + category; returns the design file/link as a reference (scheduling needs content_override)", "template_id, account_ids, content_override, first_comment_override, schedule_directly, scheduled_time"],
                     ].map(([tool, desc, params]) => (
                       <tr key={tool} style={{ borderBottom: "1px solid #111" }}>
                         <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }}><span className="doc-inline-code">{tool}</span></td>
@@ -1998,7 +1995,7 @@ npx posthive-cli posts:list --status draft`}</CopyCode>
                   },
                   {
                     label: "Template workflow",
-                    prompt: `Load my "Product launch" template, customise the copy for today's announcement, and save a draft to all my accounts. Add the product URL in the first comment.`,
+                    prompt: `Find the Case Study design template, draft a post for it to all my accounts with a caption for today's client story, and send me the Figma link so I can finish the design.`,
                   },
                   {
                     label: "Full queue management",

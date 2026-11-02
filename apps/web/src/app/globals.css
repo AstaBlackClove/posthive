@@ -1,78 +1,280 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=KoHo:wght@400;500;600&display=swap');
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-* {
-  box-sizing: border-box;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --color-bg:      #0a0a0a;
-  --color-surface: #111111;
-  --color-border:  #2a2a2a;
-  --color-text:    #ededed;
-  --color-muted:   #aaaaaa;
-  --color-accent:  #5b63d3;
+  --ff-koho: 'KoHo', ui-sans-serif, system-ui, sans-serif;
+  --ff-inter: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
-html, body {
-  background-color: var(--color-bg);
-  color: var(--color-text);
+/* theme tokens */
+@theme {
+  /* Brand (sama di light & dark) */
+  --color-brand-50:  #FFFCF1;
+  --color-brand-100: #FFF6D1;
+  --color-brand-200: #FEEEB3;
+  --color-brand-300: #FEE692;
+  --color-brand-400: #FEDD6D;
+  --color-brand-500: #FFD43B;
+  --color-brand-600: #E6B800;
+  --color-brand-700: #B78B10;
+  --color-brand-800: #876114;
+  --color-brand-900: #503606;
+  --color-brand-950: #362202;
+
+  /* Neutral (sama di light & dark) */
+  --color-neutral-50:  #EDEBE2;
+  --color-neutral-100: #D6D2C0;
+  --color-neutral-200: #BFBAA2;
+  --color-neutral-300: #A8A284;
+  --color-neutral-400: #9A9476;
+  --color-neutral-500: #8C8668;
+  --color-neutral-600: #6B633B;
+  --color-neutral-700: #4C4207;
+  --color-neutral-800: #383004;
+  --color-neutral-900: #282202;
+  --color-neutral-950: #181401;
+
+  /* Red (light) */
+  --color-red-50:  #FEF4F0;
+  --color-red-100: #F9D5C9;
+  --color-red-200: #F5B6A2;
+  --color-red-300: #EF957C;
+  --color-red-400: #E97456;
+  --color-red-500: #E35131;
+  --color-red-600: #C4432C;
+  --color-red-700: #A63626;
+  --color-red-800: #882B20;
+  --color-red-900: #6B201A;
+  --color-red-950: #4D1613;
+
+  /* Blue (light) */
+  --color-blue-50:  #F2FCFC;
+  --color-blue-100: #CDF1F7;
+  --color-blue-200: #A6E2F5;
+  --color-blue-300: #7CCEF6;
+  --color-blue-400: #4FB5F9;
+  --color-blue-500: #1F93FF;
+  --color-blue-600: #1B7EDF;
+  --color-blue-700: #176ABF;
+  --color-blue-800: #13569F;
+  --color-blue-900: #0F437F;
+  --color-blue-950: #0B315E;
+
+  /* Green (sama di light & dark) */
+  --color-green-50:  #F7F5E8;
+  --color-green-100: #E2EBC2;
+  --color-green-200: #BCE09B;
+  --color-green-300: #84D573;
+  --color-green-400: #4ACC5C;
+  --color-green-500: #20C469;
+  --color-green-600: #1FA862;
+  --color-green-700: #1E8D58;
+  --color-green-800: #1B734D;
+  --color-green-900: #175A40;
+  --color-green-950: #134231;
 }
 
-/* Fix Tailwind gray text classes for dark theme */
-.text-gray-900 { color: #ededed; }
-.text-gray-800 { color: #d4d4d4; }
-.text-gray-700 { color: #c0c0c0; }
-.text-gray-600 { color: #a0a0a0; }
-.text-gray-500 { color: #888888; }
-.text-gray-400 { color: #666666; }
-.text-gray-300 { color: #555555; }
+/* Dark mode: skala red & blue dibalik */
+.dark {
+  --color-red-50:  #4D1613;
+  --color-red-100: #6B201A;
+  --color-red-200: #882B20;
+  --color-red-300: #A63626;
+  --color-red-400: #C4432C;
+  --color-red-500: #E35131;
+  --color-red-600: #E97456;
+  --color-red-700: #EF957C;
+  --color-red-800: #F5B6A2;
+  --color-red-900: #F9D5C9;
+  --color-red-950: #FEF4F0;
 
-/* Fix dark backgrounds that become invisible */
-.bg-gray-100 { background-color: #222222; }
-.bg-gray-200 { background-color: #2a2a2a; }
-.border-gray-100 { border-color: #2a2a2a; }
-.border-gray-200 { border-color: #333333; }
-
-input, textarea, select {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  border-color: var(--color-border);
+  --color-blue-50:  #0B315E;
+  --color-blue-100: #0F437F;
+  --color-blue-200: #13569F;
+  --color-blue-300: #176ABF;
+  --color-blue-400: #1B7EDF;
+  --color-blue-500: #1F93FF;
+  --color-blue-600: #4FB5F9;
+  --color-blue-700: #7CCEF6;
+  --color-blue-800: #A6E2F5;
+  --color-blue-900: #CDF1F7;
+  --color-blue-950: #F2FCFC;
 }
 
-input::placeholder, textarea::placeholder {
-  color: #555;
+/* semantic tokens */
+:root {
+  --c-bg:         var(--color-brand-50);
+  --c-surface:    var(--color-neutral-50);
+  --c-border:     var(--color-neutral-100);
+  --c-fg:         var(--color-neutral-950);
+  --c-muted:      var(--color-neutral-600);
+  --c-accent:     var(--color-brand-600);
+  --c-accent-fg:  var(--color-neutral-950);
+}
+.dark {
+  --c-bg:         var(--color-neutral-950);
+  --c-surface:    var(--color-neutral-900);
+  --c-border:     var(--color-neutral-700);
+  --c-fg:         var(--color-neutral-50);
+  --c-muted:      var(--color-neutral-300);
+  --c-accent:     var(--color-brand-500);
+  --c-accent-fg:  var(--color-neutral-950);
 }
 
-/* ── Footer responsive ── */
+@theme inline {
+  --color-bg:        var(--c-bg);
+  --color-surface:   var(--c-surface);
+  --color-border:    var(--c-border);
+  --color-fg:        var(--c-fg);
+  --color-muted:     var(--c-muted);
+  --color-accent:    var(--c-accent);
+  --color-accent-fg: var(--c-accent-fg);
+
+  --font-heading: var(--ff-koho);
+  --font-sans:    var(--ff-inter);
+}
+
+/* typogrphy */
+
+/* Display · Medium (500) */
+@utility type-display-m-1 { font: 500 5rem/5.5rem var(--ff-koho); }
+@utility type-display-m-2 { font: 500 4.5rem/5rem var(--ff-koho); }
+@utility type-display-m-3 { font: 500 4rem/4.5rem var(--ff-koho); }
+@utility type-display-m-4 { font: 500 3.5rem/4rem var(--ff-koho); }
+@utility type-display-m-5 { font: 500 3rem/3.5rem var(--ff-koho); }
+@utility type-display-m-6 { font: 500 2.25rem/2.75rem var(--ff-koho); }
+
+/* Heading · Semibold (600) */
+@utility type-head-sb-1 { font: 600 3rem/3.625rem var(--ff-koho); }
+@utility type-head-sb-2 { font: 600 2.25rem/2.875rem var(--ff-koho); }
+@utility type-head-sb-3 { font: 600 2rem/2.625rem var(--ff-koho); }
+@utility type-head-sb-4 { font: 600 1.75rem/2.375rem var(--ff-koho); }
+@utility type-head-sb-5 { font: 600 1.5rem/2.125rem var(--ff-koho); }
+@utility type-head-sb-6 { font: 600 1.375rem/2rem var(--ff-koho); }
+
+/* Heading · Medium (500) */
+@utility type-head-m-1 { font: 500 3rem/3.625rem var(--ff-koho); }
+@utility type-head-m-2 { font: 500 2.25rem/2.875rem var(--ff-koho); }
+@utility type-head-m-3 { font: 500 2rem/2.625rem var(--ff-koho); }
+@utility type-head-m-4 { font: 500 1.75rem/2.375rem var(--ff-koho); }
+@utility type-head-m-5 { font: 500 1.5rem/2.125rem var(--ff-koho); }
+@utility type-head-m-6 { font: 500 1.375rem/2rem var(--ff-koho); }
+
+/* Heading · Regular (400) */
+@utility type-head-r-1 { font: 400 3rem/3.625rem var(--ff-koho); }
+@utility type-head-r-2 { font: 400 2.25rem/2.875rem var(--ff-koho); }
+@utility type-head-r-3 { font: 400 2rem/2.625rem var(--ff-koho); }
+@utility type-head-r-4 { font: 400 1.75rem/2.375rem var(--ff-koho); }
+@utility type-head-r-5 { font: 400 1.5rem/2.125rem var(--ff-koho); }
+@utility type-head-r-6 { font: 400 1.375rem/2rem var(--ff-koho); }
+
+/* Body · Semibold (600) */
+@utility type-body-sb-xl  { font: 600 1.25rem/1.75rem var(--ff-inter); }
+@utility type-body-sb-l   { font: 600 1.125rem/1.625rem var(--ff-inter); }
+@utility type-body-sb-m   { font: 600 1rem/1.5rem var(--ff-inter); }
+@utility type-body-sb-s   { font: 600 0.875rem/1.25rem var(--ff-inter); }
+@utility type-body-sb-xs  { font: 600 0.75rem/1.125rem var(--ff-inter); }
+@utility type-body-sb-xxs { font: 600 0.625rem/1rem var(--ff-inter); }
+
+/* Body · Medium (500) */
+@utility type-body-m-xl  { font: 500 1.25rem/1.75rem var(--ff-inter); }
+@utility type-body-m-l   { font: 500 1.125rem/1.625rem var(--ff-inter); }
+@utility type-body-m-m   { font: 500 1rem/1.5rem var(--ff-inter); }
+@utility type-body-m-s   { font: 500 0.875rem/1.25rem var(--ff-inter); }
+@utility type-body-m-xs  { font: 500 0.75rem/1.125rem var(--ff-inter); }
+@utility type-body-m-xxs { font: 500 0.625rem/1rem var(--ff-inter); }
+
+/* Body · Regular (400) */
+@utility type-body-r-xl  { font: 400 1.25rem/1.75rem var(--ff-inter); }
+@utility type-body-r-l   { font: 400 1.125rem/1.625rem var(--ff-inter); }
+@utility type-body-r-m   { font: 400 1rem/1.375rem var(--ff-inter); }
+@utility type-body-r-s   { font: 400 0.875rem/1.25rem var(--ff-inter); }
+@utility type-body-r-xs  { font: 400 0.75rem/1.125rem var(--ff-inter); }
+@utility type-body-r-xxs { font: 400 0.625rem/1rem var(--ff-inter); }
+
+/* Mono · Semibold (600) */
+@utility type-mono-sb-l { font: 600 1.125rem/1.75rem var(--ff-inter); }
+@utility type-mono-sb-m { font: 600 1rem/1.5rem var(--ff-inter); }
+@utility type-mono-sb-s { font: 600 0.875rem/1.375rem var(--ff-inter); }
+
+/* Mono · Medium (500) */
+@utility type-mono-m-l { font: 500 1.125rem/1.75rem var(--ff-inter); }
+@utility type-mono-m-m { font: 500 1rem/1.5rem var(--ff-inter); }
+@utility type-mono-m-s { font: 500 0.875rem/1.375rem var(--ff-inter); }
+
+/* Mono · Regular (400) */
+@utility type-mono-r-l  { font: 400 1.125rem/1.75rem var(--ff-inter); }
+@utility type-mono-r-m  { font: 400 1rem/1.5rem var(--ff-inter); }
+@utility type-mono-r-s  { font: 400 0.875rem/1.375rem var(--ff-inter); }
+@utility type-mono-r-xs { font: 400 0.75rem/1.125rem var(--ff-inter); }
+
+/* ─────────────────────────────────────────────
+   BASE
+   ───────────────────────────────────────────── */
+@layer base {
+  /* v4: default border color jadi currentColor, kembalikan ke token */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--c-border);
+  }
+
+  html,
+  body {
+    background-color: var(--c-bg);
+    color: var(--c-fg);
+    font-family: var(--ff-inter);
+  }
+
+  input,
+  textarea,
+  select {
+    background-color: var(--c-bg);
+    color: var(--c-fg);
+    border-color: var(--c-border);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--c-muted);
+    opacity: 0.6;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   COMPONENTS
+   ───────────────────────────────────────────── */
+
+/* Footer responsive (bisa dihapus setelah inline style di footer
+   diganti class Tailwind: grid-cols-1 md:grid-cols-... ) */
 @media (max-width: 768px) {
   .ph-footer-inner { grid-template-columns: 1fr !important; gap: 40px !important; }
-  .ph-foot-cols { grid-template-columns: repeat(2, 1fr) !important; gap: 28px !important; }
+  .ph-foot-cols    { grid-template-columns: repeat(2, 1fr) !important; gap: 28px !important; }
 }
 @media (max-width: 480px) {
   .ph-foot-cols { grid-template-columns: 1fr !important; }
 }
 
-/* ── Job card smooth hover ── */
+/* Job card */
 .job-card {
-  border: 1px solid #2a2a2a;
+  border: 1px solid var(--c-border);
   transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
   transition:
-    transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1),
-    box-shadow 280ms ease,
-    border-color 200ms ease;
+          transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1),
+          box-shadow 280ms ease,
+          border-color 200ms ease;
 }
 .job-card:hover {
-  border-color: #404040;
+  border-color: var(--color-neutral-500);
   transform: translateY(-3px);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.5);
 }
 
-/* Smooth expand for target breakdown on hover */
 .job-card-targets {
   display: grid;
   grid-template-rows: 0fr;
@@ -88,9 +290,9 @@ input::placeholder, textarea::placeholder {
   min-height: 0;
 }
 
-/* Modal animations */
+/* Modal */
 .modal-backdrop {
-  background-color: rgba(0, 0, 0, 0.82);
+  background-color: rgb(0 0 0 / 0.82);
   backdrop-filter: blur(6px);
   animation: modalFadeIn 160ms ease both;
 }
@@ -106,7 +308,7 @@ input::placeholder, textarea::placeholder {
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* Job card action icon buttons (edit / delete) */
+/* Job card action buttons (edit / delete) */
 .job-action-btn {
   display: inline-flex;
   align-items: center;
@@ -114,41 +316,38 @@ input::placeholder, textarea::placeholder {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  border: 1px solid #2a2a2a;
-  background-color: #1a1a1a;
-  color: #666;
+  border: 1px solid var(--c-border);
+  background-color: var(--c-surface);
+  color: var(--c-muted);
   transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 .job-action-btn:hover {
-  background-color: #222;
-  border-color: #3a3a3a;
-  color: #aaa;
+  background-color: var(--c-bg);
+  border-color: var(--color-neutral-500);
+  color: var(--c-fg);
 }
 .job-action-btn--danger:hover {
-  background-color: #2a1010;
-  border-color: #5a1a1a;
-  color: #f87171;
+  background-color: var(--color-red-50);
+  border-color: var(--color-red-300);
+  color: var(--color-red-500);
 }
 
-/* Job card inline edit panel */
+/* Inline edit panel */
 .job-card-edit {
   animation: editSlideDown 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
-
 @keyframes editSlideDown {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Accounts page masonry layout ── */
+/* Accounts masonry */
 .masonry-accounts {
   columns: 1;
   column-gap: 1rem;
 }
 @media (min-width: 640px) {
-  .masonry-accounts {
-    columns: 2;
-  }
+  .masonry-accounts { columns: 2; }
 }
 .masonry-accounts > * {
   break-inside: avoid;
@@ -157,19 +356,16 @@ input::placeholder, textarea::placeholder {
   width: 100%;
 }
 
-/* ── Marketing page typography ── */
-.mkt h1, .mkt h2 {
-  font-family: var(--font-caprasimo), system-ui, sans-serif;
-}
-
-/* ── FullCalendar dark theme overrides ── */
+/* ─────────────────────────────────────────────
+   FullCalendar (pakai token, otomatis light/dark)
+   ───────────────────────────────────────────── */
 .fc {
-  color: var(--color-text) !important;
+  color: var(--c-fg) !important;
 }
 .fc-theme-standard td,
 .fc-theme-standard th,
 .fc-theme-standard .fc-scrollgrid {
-  border-color: #1f1f1f !important;
+  border-color: var(--c-border) !important;
 }
 .fc .fc-col-header-cell,
 .fc .fc-col-header,
@@ -182,83 +378,83 @@ input::placeholder, textarea::placeholder {
 .fc .fc-scroller-harness,
 .fc .fc-scroller-liquid-absolute,
 .fc .fc-scroller {
-  background-color: #111111 !important;
+  background-color: var(--c-surface) !important;
+}
+.fc .fc-col-header-cell,
+.fc .fc-col-header-cell a {
+  color: var(--c-muted) !important;
 }
 .fc .fc-col-header-cell {
-  color: #888 !important;
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.fc .fc-col-header-cell a {
-  color: #888 !important;
-}
 .fc .fc-daygrid-day {
-  background-color: #0a0a0a !important;
+  background-color: var(--c-bg) !important;
 }
 .fc .fc-daygrid-day:hover {
-  background-color: #111111 !important;
+  background-color: var(--c-surface) !important;
 }
 .fc .fc-daygrid-day.fc-day-today {
-  background-color: #111827 !important;
+  background-color: color-mix(in oklab, var(--c-accent) 12%, var(--c-bg)) !important;
 }
 .fc .fc-daygrid-day-number {
-  color: #888 !important;
+  color: var(--c-muted) !important;
   font-size: 0.75rem;
 }
 .fc .fc-day-today .fc-daygrid-day-number {
-  color: #5b63d3 !important;
+  color: var(--c-accent) !important;
   font-weight: 700;
 }
 .fc .fc-daygrid-more-link {
-  color: #888 !important;
+  color: var(--c-muted) !important;
 }
 .fc .fc-toolbar-title {
-  color: var(--color-text) !important;
+  color: var(--c-fg) !important;
   font-size: 1rem !important;
 }
 .fc .fc-button {
-  background-color: #111111 !important;
-  border-color: #1f1f1f !important;
-  color: var(--color-text) !important;
+  background-color: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  color: var(--c-fg) !important;
   font-size: 0.75rem !important;
 }
 .fc .fc-button:hover {
-  background-color: #1f1f1f !important;
+  background-color: var(--c-border) !important;
 }
 .fc .fc-button-active,
 .fc .fc-button-primary:not(:disabled).fc-button-active {
-  background-color: #5b63d3 !important;
-  border-color: #5b63d3 !important;
+  background-color: var(--c-accent) !important;
+  border-color: var(--c-accent) !important;
+  color: var(--c-accent-fg) !important;
 }
 .fc .fc-event {
-  background-color: #1a1a2e !important;
-  border-color: #5b63d3 !important;
-  color: #ededed !important;
+  background-color: color-mix(in oklab, var(--c-accent) 18%, var(--c-bg)) !important;
+  border-color: var(--c-accent) !important;
+  color: var(--c-fg) !important;
   font-size: 0.7rem !important;
 }
 .fc .fc-event-title,
 .fc .fc-event-time {
-  color: #ededed !important;
+  color: var(--c-fg) !important;
 }
 .fc .fc-popover {
-  background-color: #111111 !important;
-  border-color: #1f1f1f !important;
+  background-color: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
 }
 .fc .fc-popover-header {
-  background-color: #1a1a1a !important;
-  color: var(--color-text) !important;
+  background-color: var(--c-border) !important;
+  color: var(--c-fg) !important;
 }
 .fc-scrollgrid-sync-inner {
-  background-color: #0a0a0a !important;
+  background-color: var(--c-bg) !important;
 }
-/* hide white scrollgrid inner on week/day views */
 .fc .fc-timegrid-slot {
-  background-color: #0a0a0a !important;
-  border-color: #1a1a1a !important;
+  background-color: var(--c-bg) !important;
+  border-color: var(--c-border) !important;
 }
 .fc .fc-timegrid-axis {
-  background-color: #0a0a0a !important;
-  color: #555 !important;
+  background-color: var(--c-bg) !important;
+  color: var(--c-muted) !important;
 }
