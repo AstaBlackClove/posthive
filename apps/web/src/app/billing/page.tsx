@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
+import { cn } from "../../lib/cn";
 import { useToast } from "../../components/Toast";
 import { trackEvent } from "../../lib/track";
 import { useAuth } from "../../context/AuthContext";
@@ -32,7 +33,6 @@ const PLANS = [
     priceUsd: "$9",
     period: "/mo",
     description: "For solo creators building their audience",
-    color: "#5b63d3",
     maxAccounts: 5,
     maxPostsPerMonth: 400,
     features: [
@@ -59,7 +59,6 @@ const PLANS = [
     priceUsd: "$29",
     period: "/mo",
     description: "For power users who post without limits",
-    color: "#7c3aed",
     maxAccounts: 15,
     maxPostsPerMonth: null,
     popular: true,
@@ -87,7 +86,6 @@ const PLANS = [
     priceUsd: "$49",
     period: "/mo",
     description: "For agencies & small teams",
-    color: "#0891b2",
     maxAccounts: 50,
     maxPostsPerMonth: null,
     features: [
@@ -112,9 +110,8 @@ const PLANS = [
 function StatusBadge({ status, trialDaysLeft, trialEndsAt }: { status: string; trialDaysLeft: number; trialEndsAt?: string | null }) {
   if (status === "active") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-        style={{ backgroundColor: "#052e16", color: "#4ade80", border: "1px solid #14532d" }}>
-        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+      <span className="inline-flex items-center gap-1.5 type-body-sb-xs px-2.5 py-1 rounded-full border border-green-200 bg-green-50 text-green-700">
+        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
         Active
       </span>
     );
@@ -123,48 +120,42 @@ function StatusBadge({ status, trialDaysLeft, trialEndsAt }: { status: string; t
     const expired = trialEndsAt ? new Date(trialEndsAt) < new Date() : false;
     if (expired) {
       return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-          style={{ backgroundColor: "#1f0a0a", color: "#f87171", border: "1px solid #7f1d1d" }}>
-          <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+        <span className="inline-flex items-center gap-1.5 type-body-sb-xs px-2.5 py-1 rounded-full border border-red-200 bg-red-50 text-red-600">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
           Trial ended
         </span>
       );
     }
     const urgent = trialDaysLeft <= 3;
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-        style={{
-          backgroundColor: urgent ? "#1c1209" : "#1c1a10",
-          color: urgent ? "#fb923c" : "#fbbf24",
-          border: `1px solid ${urgent ? "#7c2d12" : "#78560a"}`,
-        }}>
-        <span className={`w-1.5 h-1.5 rounded-full ${urgent ? "bg-orange-400 animate-pulse" : "bg-amber-400"}`} />
+      <span className={cn(
+        "inline-flex items-center gap-1.5 type-body-sb-xs px-2.5 py-1 rounded-full border",
+        urgent ? "border-brand-400 bg-brand-100 text-brand-800" : "border-border bg-bg text-fg",
+      )}>
+        <span className={cn("w-1.5 h-1.5 rounded-full", urgent ? "bg-brand-700 animate-pulse" : "bg-accent")} />
         {trialDaysLeft === 0 ? "Trial ends today" : `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left`}
       </span>
     );
   }
   if (status === "on_hold") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-        style={{ backgroundColor: "#1f0a0a", color: "#f87171", border: "1px solid #7f1d1d" }}>
-        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+      <span className="inline-flex items-center gap-1.5 type-body-sb-xs px-2.5 py-1 rounded-full border border-red-200 bg-red-50 text-red-600">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
         Payment failed
       </span>
     );
   }
   if (status === "cancelling") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-        style={{ backgroundColor: "#1c1209", color: "#fb923c", border: "1px solid #7c2d12" }}>
-        <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+      <span className="inline-flex items-center gap-1.5 type-body-sb-xs px-2.5 py-1 rounded-full border border-brand-400 bg-brand-100 text-brand-800">
+        <span className="w-1.5 h-1.5 rounded-full bg-brand-700" />
         Cancels at period end
       </span>
     );
   }
   if (status === "cancelled") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-        style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
+      <span className="inline-flex items-center gap-1.5 type-body-sb-xs px-2.5 py-1 rounded-full border border-border bg-surface text-muted">
         Cancelled
       </span>
     );
@@ -173,15 +164,15 @@ function StatusBadge({ status, trialDaysLeft, trialEndsAt }: { status: string; t
 }
 
 function UsageBar({
-  label, used, max, color, warningAt = 80,
+  label, used, max, warningAt = 80,
 }: {
-  label: string; used: number; max: number | null; color: string; warningAt?: number;
+  label: string; used: number; max: number | null; warningAt?: number;
 }) {
   if (max === null) {
     return (
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium" style={{ color: "#aaaaaa" }}>{label}</span>
-        <span className="text-xs font-semibold" style={{ color: "#ededed" }}>{used} <span style={{ color: "#444" }}>/ ∞</span></span>
+        <span className="type-body-m-xs text-muted">{label}</span>
+        <span className="type-body-sb-xs text-fg">{used} <span className="text-neutral-500">/ ∞</span></span>
       </div>
     );
   }
@@ -191,18 +182,17 @@ function UsageBar({
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-medium" style={{ color: "#aaaaaa" }}>{label}</span>
-        <span className="text-xs font-semibold tabular-nums"
-          style={{ color: isFull ? "#ef4444" : isHigh ? "#fb923c" : "#ededed" }}>
-          {used} <span style={{ color: "#666" }}>/ {max}</span>
+        <span className="type-body-m-xs text-muted">{label}</span>
+        <span className={cn("type-body-sb-xs tabular-nums", isFull ? "text-red-600" : isHigh ? "text-brand-800" : "text-fg")}>
+          {used} <span className="text-neutral-500">/ {max}</span>
         </span>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#1f1f1f" }}>
-        <div className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, backgroundColor: isFull ? "#ef4444" : isHigh ? "#fb923c" : color }} />
+      <div className="h-1.5 rounded-full overflow-hidden bg-neutral-100">
+        <div className={cn("h-full w-(--w) rounded-full transition-all duration-700", isFull ? "bg-red-500" : isHigh ? "bg-brand-700" : "bg-accent")}
+          style={{ "--w": `${pct}%` } as React.CSSProperties} />
       </div>
       {isFull && (
-        <p className="mt-1.5 text-xs" style={{ color: "#fb923c" }}>
+        <p className="mt-1.5 type-body-r-xs text-brand-800">
           Limit reached - upgrade to continue.
         </p>
       )}
@@ -228,26 +218,27 @@ function CancelModal({ onConfirm, onClose, loading }: {
   const [feedback, setFeedback] = useState("");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: "rgba(0,0,0,0.75)" }}>
-      <div className="w-full max-w-md rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-        <h2 className="text-base font-bold mb-1" style={{ color: "#ededed" }}>Cancel subscription</h2>
-        <p className="text-xs mb-5" style={{ color: "#777" }}>
+    <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="card w-full max-w-md p-6">
+        <h2 className="type-body-sb-m mb-1 text-fg">Cancel subscription</h2>
+        <p className="type-body-r-xs mb-5 text-muted">
           You&apos;ll keep access until the end of the current billing period.
         </p>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold mb-2">
-              Why are you cancelling? <span style={{ color: "#999" }}>(optional)</span>
+            <label className="block type-body-sb-xs mb-2">
+              Why are you cancelling? <span className="text-muted">(optional)</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
               {CANCEL_REASONS.map((r) => (
                 <button key={r} onClick={() => setReason(reason === r ? "" : r)}
-                  className="text-left text-xs px-3 py-2 rounded-xl transition-all"
-                  style={reason === r
-                    ? { backgroundColor: "#1a1a3a", color: "#ededed", border: "1px solid #5b63d350" }
-                    : { backgroundColor: "#0a0a0a", color: "#999", border: "1px solid #4d4d4d" }}>
+                  className={cn(
+                    "text-left type-body-r-xs px-3 py-2 rounded-xl border transition-all",
+                    reason === r
+                      ? "border-brand-300 bg-brand-100 text-brand-800"
+                      : "border-border bg-bg text-muted hover:text-fg",
+                  )}>
                   {r}
                 </button>
               ))}
@@ -255,29 +246,26 @@ function CancelModal({ onConfirm, onClose, loading }: {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold mb-2">
-              Anything else we should know? <span style={{ color: "#999" }}>(optional)</span>
+            <label className="block type-body-sb-xs mb-2">
+              Anything else we should know? <span className="text-muted">(optional)</span>
             </label>
             <textarea
               value={feedback}
               onChange={e => setFeedback(e.target.value)}
               rows={3}
               placeholder="Help us improve Posthive…"
-              className="w-full rounded-xl px-4 py-3 text-sm resize-none focus:outline-hidden focus:ring-1 focus:ring-white/10"
-              style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+              className="field px-4 py-3 resize-none"
             />
           </div>
         </div>
 
         <div className="flex gap-3 mt-5">
           <button onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100"
-            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+            className="btn-primary flex-1 py-2.5">
             Keep subscription
           </button>
           <button onClick={() => onConfirm(reason, feedback)} disabled={loading}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-opacity disabled:opacity-40"
-            style={{ backgroundColor: "#1a0a0a", color: "#f87171", border: "1px solid #3a1a1a" }}>
+            className="btn-secondary flex-1 py-2.5 border-red-200 text-red-600 hover:bg-red-50">
             {loading ? "Cancelling…" : "Confirm cancel"}
           </button>
         </div>
@@ -362,7 +350,6 @@ function BillingContent() {
     }
   }
 
-  const currentPlanDef = PLANS.find((p) => p.id === status?.plan);
   const isTrialing = status?.planStatus === "trialing";
   const isCancelled = status?.planStatus === "cancelled";
   const isCancelling = status?.planStatus === "cancelling";
@@ -378,25 +365,23 @@ function BillingContent() {
 
   if (!billingEnabled) {
     return (
-      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
-        <div className="flex items-center pl-16 pr-4 md:px-8 shrink-0"
-          style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#111111" }}>
+      <div className="flex flex-col h-full overflow-hidden bg-bg">
+        <div className="page-header">
           <div>
-            <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Billing</h1>
-            <p className="text-xs mt-0.5" style={{ color: "#888888" }}>Self-hosted instance</p>
+            <h1 className="type-body-sb-l text-fg">Billing</h1>
+            <p className="type-body-r-xs mt-0.5 text-muted">Self-hosted instance</p>
           </div>
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-sm">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-              style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-              <svg className="w-7 h-7" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
+            <div className="card w-14 h-14 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold mb-2" style={{ color: "#ededed" }}>Self-hosted mode</h2>
-            <p className="text-sm leading-relaxed" style={{ color: "#888888" }}>
+            <h2 className="type-body-sb-l mb-2 text-fg">Self-hosted mode</h2>
+            <p className="type-body-r-s text-muted">
               Billing is disabled on this instance. All features are unlocked with no limits.
             </p>
           </div>
@@ -406,7 +391,7 @@ function BillingContent() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+    <div className="flex flex-col h-full overflow-hidden bg-bg">
       {showCancelModal && (
         <CancelModal
           onConfirm={cancelSubscription}
@@ -416,10 +401,10 @@ function BillingContent() {
       )}
 
       {/* Header */}
-      <div className="pl-16 pr-4 md:px-8 shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
+      <div className="page-header">
         <div className="min-w-0">
-          <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Billing & Plans</h1>
-          <p className="text-xs mt-0.5 truncate hidden sm:block" style={{ color: "#aaaaaa" }}>
+          <h1 className="type-body-sb-l text-fg">Billing & Plans</h1>
+          <p className="type-body-r-xs mt-0.5 truncate hidden sm:block text-muted">
             {status?.workspaceName ?? "Manage your subscription and usage"}
           </p>
         </div>
@@ -429,25 +414,24 @@ function BillingContent() {
 
         {/* Success banner */}
         {success && (
-          <div className="flex items-center gap-3 px-5 py-4 rounded-2xl"
-            style={{ backgroundColor: "#052e16", border: "1px solid #14532d" }}>
-            <svg className="w-5 h-5 shrink-0" fill="none" stroke="#4ade80" viewBox="0 0 24 24">
+          <div className="flex items-center gap-3 px-5 py-4 rounded-2xl border border-green-200 bg-green-50">
+            <svg className="w-5 h-5 shrink-0 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             <div>
               {isActive ? (
                 <>
-                  <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>
+                  <p className="type-body-sb-s text-green-700">
                     {`${status?.planName} plan activated `} you&apos;re all set!
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: "#86efac" }}>
+                  <p className="type-body-r-xs mt-0.5 text-muted">
                     Your subscription is now active. Start scheduling posts across all your accounts.
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>Trial started — you&apos;re all set!</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#86efac" }}>Your 14-day free trial is now active. No charge until it ends.</p>
+                  <p className="type-body-sb-s text-green-700">Trial started — you&apos;re all set!</p>
+                  <p className="type-body-r-xs mt-0.5 text-muted">Your 14-day free trial is now active. No charge until it ends.</p>
                 </>
               )}
             </div>
@@ -456,15 +440,14 @@ function BillingContent() {
 
         {/* Status banners */}
         {isOnHold && (
-          <div className="flex items-start gap-3 px-5 py-4 rounded-2xl"
-            style={{ backgroundColor: "#1f0a0a", border: "1px solid #7f1d1d" }}>
-            <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="#f87171" viewBox="0 0 24 24">
+          <div className="flex items-start gap-3 px-5 py-4 rounded-2xl border border-red-200 bg-red-50">
+            <svg className="w-5 h-5 shrink-0 mt-0.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <div>
-              <p className="text-sm font-semibold" style={{ color: "#f87171" }}>Payment failed</p>
-              <p className="text-xs mt-1" style={{ color: "#888" }}>
+              <p className="type-body-sb-s text-red-600">Payment failed</p>
+              <p className="type-body-r-xs mt-1 text-muted">
                 We couldn&apos;t process your last payment. Update your payment method via the Dodo customer portal to restore full access.
               </p>
             </div>
@@ -472,15 +455,14 @@ function BillingContent() {
         )}
 
         {isCancelled && (
-          <div className="flex items-start gap-3 px-5 py-4 rounded-2xl"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-            <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="#555" viewBox="0 0 24 24">
+          <div className="flex items-start gap-3 px-5 py-4 rounded-2xl border border-border bg-surface">
+            <svg className="w-5 h-5 shrink-0 mt-0.5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <p className="text-sm font-semibold" style={{ color: "#888" }}>Subscription cancelled</p>
-              <p className="text-xs mt-1" style={{ color: "#555" }}>
+              <p className="type-body-sb-s text-muted">Subscription cancelled</p>
+              <p className="type-body-r-xs mt-1 text-muted">
                 Your access has ended. Subscribe to a plan below to continue scheduling posts.
               </p>
             </div>
@@ -489,30 +471,30 @@ function BillingContent() {
 
         {/* Current plan card */}
         {!loading && status && !isCancelled && (
-          <div className="rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+          <div className="card p-6">
             <div className="flex items-start justify-between gap-4 mb-5">
               <div className="flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-widest mb-3">
+                <p className="section-label tracking-widest mb-3">
                   Current plan
                 </p>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h2 className="text-2xl font-bold" style={{ color: "#ededed" }}>{status.planName}</h2>
+                  <h2 className="type-head-sb-5 text-fg">{status.planName}</h2>
                   <StatusBadge status={status.planStatus} trialDaysLeft={status.trialDaysLeft} trialEndsAt={status.trialEndsAt} />
                 </div>
                 {isTrialing && status.trialEndsAt && (() => {
                   const trialExpired = new Date(status.trialEndsAt) < new Date();
                   return (
-                    <p className="text-xs mt-2" style={{ color: trialExpired ? "#f87171" : undefined }}>
+                    <p className={cn("type-body-r-xs mt-2", trialExpired && "text-red-600")}>
                       {trialExpired ? (
                         <>Trial ended on{" "}
-                          <span style={{ color: "#f87171", fontWeight: 600 }}>
+                          <span className="font-semibold text-red-600">
                             {new Date(status.trialEndsAt).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}
                           </span>
                           {" "}— subscribe to restore access.
                         </>
                       ) : (
                         <>Trial expires{" "}
-                          <span style={{ color: "#888" }}>
+                          <span className="text-muted">
                             {new Date(status.trialEndsAt).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}
                           </span>
                           {status.trialDaysLeft <= 3 ? " subscribe now to avoid losing access." : "."}
@@ -522,15 +504,14 @@ function BillingContent() {
                   );
                 })()}
                 {(isActive || isCancelling) && (
-                  <p className="text-xs mt-1.5" style={{ color: "#555" }}>
+                  <p className="type-body-r-xs mt-1.5 text-muted">
                     {status.maxAccounts} accounts · {status.maxPostsPerMonth === null ? "unlimited posts" : `${status.maxPostsPerMonth} posts/month`}
                   </p>
                 )}
               </div>
               {isActive && hasDodoSub && !isCancelling && isOwner && (
                 <a href="https://app.dodopayments.com" target="_blank" rel="noreferrer"
-                  className="shrink-0 text-xs font-medium px-4 py-2 rounded-xl transition-opacity hover:opacity-70"
-                  style={{ backgroundColor: "#161616", color: "#999", border: "1px solid #555" }}>
+                  className="btn-secondary shrink-0 type-body-m-xs text-muted hover:text-fg">
                   Manage ↗
                 </a>
               )}
@@ -538,41 +519,37 @@ function BillingContent() {
 
             {/* Cancelling notice */}
             {(isCancelling || cancelDone) && (
-              <div className="flex items-start gap-3 px-4 py-3 rounded-xl mb-4"
-                style={{ backgroundColor: "#1c1209", border: "1px solid #7c2d1230" }}>
-                <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="#fb923c" viewBox="0 0 24 24">
+              <div className="flex items-start gap-3 px-4 py-3 rounded-xl mb-4 border border-brand-400 bg-brand-100">
+                <svg className="w-4 h-4 shrink-0 mt-0.5 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-xs" style={{ color: "#888" }}>
+                <p className="type-body-r-xs text-muted">
                   Your subscription will be cancelled at the end of the current billing period. You keep full access until then.
                 </p>
               </div>
             )}
 
             {/* Usage bars */}
-            <div className="pt-5 space-y-4" style={{ borderTop: "1px solid #2a2a2a" }}>
+            <div className="pt-5 space-y-4 border-t border-border">
               <UsageBar
                 label="Connected accounts"
                 used={status.accountsUsed}
                 max={status.maxAccounts}
-                color={currentPlanDef?.color ?? "#5b63d3"}
               />
               <UsageBar
                 label={`Scheduled posts - ${monthName}`}
                 used={status.postsThisMonth}
                 max={status.maxPostsPerMonth}
-                color={currentPlanDef?.color ?? "#5b63d3"}
                 warningAt={85}
               />
             </div>
 
             {/* Cancel link */}
             {isActive && hasDodoSub && !isCancelling && !cancelDone && isOwner && (
-              <div className="mt-5 pt-4 flex justify-end" style={{ borderTop: "1px solid #2a2a2a" }}>
+              <div className="mt-5 pt-4 flex justify-end border-t border-border">
                 <button onClick={() => setShowCancelModal(true)}
-                  className="text-xs underline transition-opacity hover:opacity-70"
-                  style={{ color: "#ef4444" }}>
+                  className="type-body-r-xs underline transition-opacity hover:opacity-70 text-red-600">
                   Cancel subscription
                 </button>
               </div>
@@ -582,12 +559,12 @@ function BillingContent() {
 
         {/* Skeleton */}
         {loading && (
-          <div className="rounded-2xl p-6 animate-pulse" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-            <div className="h-3 w-20 rounded-sm mb-3" style={{ backgroundColor: "#2a2a2a" }} />
-            <div className="h-7 w-36 rounded-sm mb-2" style={{ backgroundColor: "#2a2a2a" }} />
-            <div className="mt-5 pt-5 space-y-3" style={{ borderTop: "1px solid #2a2a2a" }}>
-              <div className="h-2 w-full rounded-sm" style={{ backgroundColor: "#2a2a2a" }} />
-              <div className="h-2 w-full rounded-sm" style={{ backgroundColor: "#2a2a2a" }} />
+          <div className="card p-6 animate-pulse">
+            <div className="h-3 w-20 rounded-sm mb-3 bg-neutral-100" />
+            <div className="h-7 w-36 rounded-sm mb-2 bg-neutral-100" />
+            <div className="mt-5 pt-5 space-y-3 border-t border-border">
+              <div className="h-2 w-full rounded-sm bg-neutral-100" />
+              <div className="h-2 w-full rounded-sm bg-neutral-100" />
             </div>
           </div>
         )}
@@ -596,10 +573,10 @@ function BillingContent() {
         <div>
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-sm font-semibold" style={{ color: "#ededed" }}>
+              <h3 className="type-body-sb-s text-fg">
                 {isActive ? "Switch plan" : isTrialing ? "Upgrade your plan" : isCancelling ? "Resubscribe" : "Choose a plan"}
               </h3>
-              <p className="text-xs mt-1" style={{ color: "#444" }}>
+              <p className="type-body-r-xs mt-1 text-muted">
                 {isActive
                   ? "Switch plans changes take effect immediately"
                   : isCancelling
@@ -608,22 +585,15 @@ function BillingContent() {
               </p>
             </div>
             {/* Currency toggle */}
-            <div className="flex shrink-0 p-0.5 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <div className="flex shrink-0 p-0.5 rounded-lg border border-border bg-surface">
               {([{ label: "INR ₹", india: true }, { label: "USD $", india: false }] as const).map(({ label, india }) => (
                 <button
                   key={label}
                   onClick={() => setIsIndia(india)}
-                  style={{
-                    padding: "4px 12px",
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: 500,
-                    border: "none",
-                    cursor: "pointer",
-                    backgroundColor: isIndia === india ? "#ffffff" : "transparent",
-                    color: isIndia === india ? "#0a0a0a" : "#666",
-                    transition: "all 0.15s",
-                  }}
+                  className={cn(
+                    "px-3 py-1 rounded-md type-body-m-xs cursor-pointer transition-all duration-150",
+                    isIndia === india ? "bg-accent text-accent-fg" : "text-muted hover:text-fg",
+                  )}
                 >
                   {label}
                 </button>
@@ -641,50 +611,42 @@ function BillingContent() {
               const changeLabel = isUpgrade ? `Upgrade to ${plan.name}` : `Downgrade to ${plan.name}`;
 
               return (
-                <div key={plan.id} className="relative rounded-2xl flex flex-col overflow-hidden"
-                  style={{
-                    backgroundColor: "#111111",
-                    border: isCurrent
-                      ? `1px solid ${plan.color}60`
-                      : plan.popular
-                      ? `1px solid ${plan.color}35`
-                      : "1px solid #2a2a2a",
-                  }}>
+                <div key={plan.id}
+                  className={cn(
+                    "card relative flex flex-col overflow-hidden",
+                    isCurrent ? "border-brand-300 bg-brand-100" : plan.popular && "border-brand-300",
+                  )}>
 
-                  {plan.popular && <div className="h-px w-full" style={{ backgroundColor: plan.color }} />}
+                  {plan.popular && <div className="h-px w-full bg-accent" />}
 
                   <div className="p-6 flex-1 flex flex-col">
                     <div className="mb-4 h-5 flex items-center gap-2">
                       {plan.popular && (
-                        <span className="text-[10px] font-bold tracking-wide px-2 py-0.5 rounded-full"
-                          style={{ backgroundColor: `${plan.color}18`, color: plan.color, border: `1px solid ${plan.color}35` }}>
+                        <span className="type-body-sb-xxs tracking-wide px-2 py-0.5 rounded-full bg-accent text-accent-fg">
                           MOST POPULAR
                         </span>
                       )}
                       {isCurrent && (
-                        <span className="text-[10px] font-bold tracking-wide px-2 py-0.5 rounded-full"
-                          style={{ backgroundColor: "#1a1a1a", color: "#555", border: "1px solid #2a2a2a" }}>
+                        <span className="type-body-sb-xxs tracking-wide px-2 py-0.5 rounded-full border border-border bg-bg text-muted">
                           CURRENT PLAN
                         </span>
                       )}
                     </div>
 
-                    <p className="font-bold text-base" style={{ color: "#ededed" }}>{plan.name}</p>
-                    <p className="text-xs mt-1 mb-4" style={{ color: "#555" }}>{plan.description}</p>
+                    <p className="type-body-sb-m text-fg">{plan.name}</p>
+                    <p className="type-body-r-xs mt-1 mb-4 text-muted">{plan.description}</p>
 
                     <div className="flex items-baseline gap-1 mb-1">
-                      <span className="text-3xl font-bold tracking-tight" style={{ color: "#ededed" }}>{planPrice(plan)}</span>
-                      <span className="text-sm">{plan.period}</span>
+                      <span className="type-head-sb-4 tracking-tight text-fg">{planPrice(plan)}</span>
+                      <span className="type-body-r-s text-muted">{plan.period}</span>
                     </div>
-                    <p className="text-[11px] mb-4">{isIndia ? "billed in INR" : "billed in USD"}</p>
+                    <p className="type-body-r-xs mb-4 text-muted">{isIndia ? "billed in INR" : "billed in USD"}</p>
 
                     <div className="flex gap-2 mb-5 flex-wrap">
-                      <span className="text-[11px] font-semibold px-2 py-1 rounded-lg"
-                        style={{ backgroundColor: plan.color + "15", color: plan.color, border: `1px solid ${plan.color}30` }}>
+                      <span className="type-body-sb-xs px-2 py-1 rounded-lg border border-brand-300 bg-brand-100 text-brand-800">
                         {plan.maxAccounts} accounts
                       </span>
-                      <span className="text-[11px] font-semibold px-2 py-1 rounded-lg"
-                        style={{ backgroundColor: plan.color + "15", color: plan.color, border: `1px solid ${plan.color}30` }}>
+                      <span className="type-body-sb-xs px-2 py-1 rounded-lg border border-brand-300 bg-brand-100 text-brand-800">
                         {plan.maxPostsPerMonth === null ? "∞ posts/mo" : `${plan.maxPostsPerMonth} posts/mo`}
                       </span>
                     </div>
@@ -693,24 +655,21 @@ function BillingContent() {
                       {plan.features.map((f) => (
                         <li key={f.text} className="flex items-start gap-2.5">
                           {f.included ? (
-                            <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                              style={{ color: plan.color }}>
+                            <svg className="w-4 h-4 shrink-0 mt-0.5 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                             </svg>
                           ) : (
-                            <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                              style={{ color: "#3a3a3a" }}>
+                            <svg className="w-4 h-4 shrink-0 mt-0.5 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                           )}
-                          <span className="text-sm leading-snug" style={{ color: f.included ? "#ccc" : "#444" }}>{f.text}</span>
+                          <span className={cn("type-body-r-s", f.included ? "text-fg" : "text-neutral-500")}>{f.text}</span>
                         </li>
                       ))}
                     </ul>
 
                     {isCurrent ? (
-                      <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold"
-                        style={{ backgroundColor: "#161616", color: "#555", border: "1px solid #222" }}>
+                      <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl type-body-sb-s border border-border bg-bg text-muted">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
@@ -727,8 +686,10 @@ function BillingContent() {
                       return (
                         <button onClick={() => !btnDisabled && checkout(plan.id)} disabled={btnDisabled}
                           title={btnTitle}
-                          className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 active:scale-[0.98]"
-                          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                          className={cn(
+                            "w-full py-2.5 transition-all active:scale-[0.98]",
+                            (isTrialing || isActive) && !isUpgrade ? "btn-secondary" : "btn-primary",
+                          )}>
                           {checkingOut === plan.id
                             ? ((isTrialing || isActive || isCancelling) ? "Switching plan…" : "Opening checkout…")
                             : (isTrialing || isActive)
@@ -747,7 +708,7 @@ function BillingContent() {
             })}
           </div>
 
-          <p className="mt-4 text-center text-xs">
+          <p className="mt-4 text-center type-body-r-xs text-muted">
             {isIndia ? "Prices in Indian Rupees (INR)" : "Prices in US Dollars (USD)"} · billed monthly
           </p>
         </div>
@@ -758,7 +719,7 @@ function BillingContent() {
             { path: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z", text: "Secure checkout via Dodo" },
             { path: "M6 18L18 6M6 6l12 12", text: "Cancel anytime" },
           ].map(({ path, text }) => (
-            <div key={text} className="flex items-center gap-2 text-xs">
+            <div key={text} className="flex items-center gap-2 type-body-r-xs text-muted">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={path} />
               </svg>

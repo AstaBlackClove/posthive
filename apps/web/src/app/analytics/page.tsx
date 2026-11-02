@@ -7,6 +7,7 @@ import {
   Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
 import { apiFetch } from "../../lib/api";
+import { cn } from "../../lib/cn";
 import { PlatformIcon } from "../../components/PlatformIcon";
 
 /* ---------- types ---------- */
@@ -55,9 +56,9 @@ const PLATFORM_LABEL: Record<string, string> = {
 };
 
 const SERIES = [
-  { key: "Likes",   color: "#5b63d3" },
-  { key: "Reposts", color: "#22d3ee" },
-  { key: "Replies", color: "#a78bfa" },
+  { key: "Likes",   color: "var(--color-brand-600)" },
+  { key: "Reposts", color: "var(--color-blue-500)" },
+  { key: "Replies", color: "var(--color-green-600)" },
 ] as const;
 
 /* ---------- helpers ---------- */
@@ -110,25 +111,25 @@ function toWeekBuckets(groups: PostGroup[]): ChartPoint[] {
 
 function Tile({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="rounded-2xl p-5 flex flex-col gap-1" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-      <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "#888" }}>{label}</p>
-      <p className="text-3xl font-bold" style={{ color: "#ededed" }}>{value}</p>
-      {sub && <p className="text-xs" style={{ color: "#555" }}>{sub}</p>}
+    <div className="card p-5 flex flex-col gap-1">
+      <p className="type-body-m-xs uppercase tracking-wide text-muted">{label}</p>
+      <p className="type-head-sb-4 text-fg">{value}</p>
+      {sub && <p className="type-body-r-xs text-muted">{sub}</p>}
     </div>
   );
 }
 
 function StatCell({ targets, statKey }: { targets: TargetStats[]; statKey: "likes" | "reposts" | "replies" | "views" }) {
-  const fmt = (v: number | null) => v == null ? <span style={{ color: "#444" }}>—</span> : numFmt(v);
+  const fmt = (v: number | null) => v == null ? <span className="text-neutral-500">—</span> : numFmt(v);
   if (targets.length === 1) {
-    return <span className="text-sm font-medium text-right block" style={{ color: "#ccc" }}>{fmt(targets[0][statKey] as number | null)}</span>;
+    return <span className="type-body-m-s text-right block text-fg">{fmt(targets[0][statKey] as number | null)}</span>;
   }
   return (
     <div className="flex flex-col items-end gap-0.5">
       {targets.map((t) => (
         <div key={t.targetId} className="flex items-center gap-1">
           <PlatformIcon platform={t.platform} size={11} />
-          <span className="text-xs font-medium" style={{ color: "#ccc" }}>{fmt(t[statKey] as number | null)}</span>
+          <span className="type-body-m-xs text-fg">{fmt(t[statKey] as number | null)}</span>
         </div>
       ))}
     </div>
@@ -141,10 +142,7 @@ function ChartTypeBtn({ active, label, onClick }: { active: boolean; label: stri
   return (
     <button
       onClick={onClick}
-      className="px-3 py-1 rounded-md text-xs font-medium transition-colors"
-      style={active
-        ? { backgroundColor: "#5b63d3", color: "#fff" }
-        : { backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#666" }}
+      className={cn("chip px-3 rounded-md", active && "chip-active")}
     >
       {label}
     </button>
@@ -221,7 +219,7 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center" style={{ color: "#888" }}>
+      <div className="flex-1 flex items-center justify-center text-muted">
         <div className="flex items-center gap-3">
           <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -242,16 +240,15 @@ export default function AnalyticsPage() {
         {/* Header — pt-12 on mobile pushes below fixed hamburger */}
         <div className="flex items-center justify-between pt-10 md:pt-0">
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: "#ededed" }}>Analytics</h1>
-            <p className="text-sm mt-0.5" style={{ color: "#555" }}>
+            <h1 className="type-head-sb-5 text-fg">Analytics</h1>
+            <p className="type-body-r-s mt-0.5 text-muted">
               Engagement stats · last 90 days{synced && ` · synced ${synced}`}
             </p>
           </div>
           <button
             onClick={() => loadAll(true)}
             disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: refreshing ? "#555" : "#ededed" }}
+            className="btn-secondary rounded-lg type-body-m-s"
           >
             <svg className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -262,19 +259,19 @@ export default function AnalyticsPage() {
         </div>
 
         {error && (
-          <div className="rounded-xl px-4 py-3 text-sm" style={{ backgroundColor: "#1a0e0e", border: "1px solid #5a2020", color: "#f87171" }}>
+          <div className="rounded-xl px-4 py-3 type-body-r-s border border-red-200 bg-red-50 text-red-600">
             {error}
           </div>
         )}
 
         {(!data || data.posts.length === 0) && !error ? (
-          <div className="rounded-2xl p-12 flex flex-col items-center gap-3 text-center" style={{ border: "1px dashed #2a2a2a" }}>
-            <svg className="w-10 h-10" style={{ color: "#333" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="rounded-2xl p-12 flex flex-col items-center gap-3 text-center border border-dashed border-border">
+            <svg className="w-10 h-10 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-            <p className="font-semibold" style={{ color: "#555" }}>No stats yet</p>
-            <p className="text-sm" style={{ color: "#444" }}>
+            <p className="type-body-sb-m text-muted">No stats yet</p>
+            <p className="type-body-r-s text-neutral-500">
               Stats sync every 6h for posts on Bluesky, Mastodon, or Pixelfed.<br />
               First sync runs at startup check back shortly.
             </p>
@@ -297,10 +294,7 @@ export default function AnalyticsPage() {
                   <button
                     key={p}
                     onClick={() => setPlatform(p)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
-                    style={platform === p
-                      ? { backgroundColor: "#5b63d3", color: "#fff" }
-                      : { backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888" }}
+                    className={cn("chip px-3 py-1.5 rounded-full type-body-m-s", platform === p && "chip-active")}
                   >
                     {p !== "all" && <PlatformIcon platform={p} size={14} />}
                     {p === "all" ? "All platforms" : PLATFORM_LABEL[p] ?? p}
@@ -311,9 +305,9 @@ export default function AnalyticsPage() {
 
             {/* Chart */}
             {chartData.length > 0 && (
-              <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+              <div className="card p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Engagement over time</p>
+                  <p className="type-body-sb-s text-fg">Engagement over time</p>
                   <div className="flex gap-1">
                     <ChartTypeBtn active={chartType === "bar"} label="Bar" onClick={() => setChartType("bar")} />
                     <ChartTypeBtn active={chartType === "line"} label="Line" onClick={() => setChartType("line")} />
@@ -323,25 +317,25 @@ export default function AnalyticsPage() {
                 <ResponsiveContainer width="100%" height={220}>
                   {chartType === "bar" ? (
                     <BarChart data={chartData} barGap={2}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" vertical={false} />
-                      <XAxis dataKey="week" tick={{ fill: "#555", fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: "#555", fontSize: 11 }} axisLine={false} tickLine={false} width={28} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--c-border)" vertical={false} />
+                      <XAxis dataKey="week" tick={{ fill: "var(--c-muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: "var(--c-muted)", fontSize: 11 }} axisLine={false} tickLine={false} width={28} />
                       <Tooltip
-                        contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, color: "#ededed", fontSize: 12 }}
-                        cursor={{ fill: "#ffffff08" }}
+                        contentStyle={{ backgroundColor: "var(--c-surface)", border: "1px solid var(--c-border)", borderRadius: 10, color: "var(--c-fg)", fontSize: 12 }}
+                        cursor={{ fill: "var(--c-border)", fillOpacity: 0.4 }}
                       />
-                      <Legend wrapperStyle={{ fontSize: 12, color: "#888" }} />
+                      <Legend wrapperStyle={{ fontSize: 12, color: "var(--c-muted)" }} />
                       {SERIES.map((s) => <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[3, 3, 0, 0]} maxBarSize={32} />)}
                     </BarChart>
                   ) : (
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" vertical={false} />
-                      <XAxis dataKey="week" tick={{ fill: "#555", fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: "#555", fontSize: 11 }} axisLine={false} tickLine={false} width={28} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--c-border)" vertical={false} />
+                      <XAxis dataKey="week" tick={{ fill: "var(--c-muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: "var(--c-muted)", fontSize: 11 }} axisLine={false} tickLine={false} width={28} />
                       <Tooltip
-                        contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, color: "#ededed", fontSize: 12 }}
+                        contentStyle={{ backgroundColor: "var(--c-surface)", border: "1px solid var(--c-border)", borderRadius: 10, color: "var(--c-fg)", fontSize: 12 }}
                       />
-                      <Legend wrapperStyle={{ fontSize: 12, color: "#888" }} />
+                      <Legend wrapperStyle={{ fontSize: 12, color: "var(--c-muted)" }} />
                       {SERIES.map((s) => (
                         <Line key={s.key} dataKey={s.key} stroke={s.color} strokeWidth={2}
                           dot={{ r: 3, fill: s.color }} activeDot={{ r: 5 }} />
@@ -353,21 +347,15 @@ export default function AnalyticsPage() {
             )}
 
             {/* Posts table */}
-            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
+            <div className="rounded-2xl overflow-hidden border border-border">
               <div className="overflow-x-auto">
-              <div style={{ minWidth: 580 }}>
+              <div className="min-w-145">
               {(() => {
-                const cols = hasViews ? "1fr 100px 70px 70px 70px 70px 80px" : "1fr 100px 70px 70px 70px 80px";
+                const cols = hasViews ? "grid-cols-[1fr_100px_70px_70px_70px_70px_80px]" : "grid-cols-[1fr_100px_70px_70px_70px_80px]";
                 return (
                   <>
                   <div
-                    className="grid text-xs font-semibold uppercase tracking-wide px-5 py-3"
-                    style={{
-                      gridTemplateColumns: cols,
-                      backgroundColor: "#0e0e0e",
-                      borderBottom: "1px solid #2a2a2a",
-                      color: "#555",
-                    }}
+                    className={cn("grid type-body-sb-xs uppercase tracking-wide px-5 py-3 border-b border-border bg-surface text-muted", cols)}
                   >
                     <span>Top Posts · by engagement</span>
                     <span>Platforms</span>
@@ -379,22 +367,22 @@ export default function AnalyticsPage() {
                   </div>
 
                   {topGroups.length === 0 ? (
-                    <div className="px-5 py-10 text-center text-sm" style={{ color: "#555" }}>No posts yet.</div>
+                    <div className="px-5 py-10 text-center type-body-r-s text-muted">No posts yet.</div>
                   ) : (
                     topGroups.map((group, i) => {
                       const multi = group.targets.length > 1;
                       return (
                         <div
                           key={group.jobId}
-                          className="grid px-5 py-4"
-                          style={{
-                            gridTemplateColumns: cols,
-                            borderBottom: i < topGroups.length - 1 ? "1px solid #1e1e1e" : "none",
-                            alignItems: multi ? "start" : "center",
-                          }}
+                          className={cn(
+                            "grid px-5 py-4",
+                            cols,
+                            i < topGroups.length - 1 && "border-b border-border",
+                            multi ? "items-start" : "items-center",
+                          )}
                         >
                           <div className="min-w-0 pr-4 pt-0.5 overflow-hidden">
-                            <span className="text-sm block truncate" title={group.text} style={{ color: group.text ? "#ccc" : "#444" }}>
+                            <span className={cn("type-body-r-s block truncate", group.text ? "text-fg" : "text-neutral-500")} title={group.text}>
                               {group.text ? excerpt(group.text) : "(no text)"}
                             </span>
                           </div>
@@ -405,7 +393,7 @@ export default function AnalyticsPage() {
                           <StatCell targets={group.targets} statKey="reposts" />
                           <StatCell targets={group.targets} statKey="replies" />
                           {hasViews && <StatCell targets={group.targets} statKey="views" />}
-                          <span className="text-xs text-right pt-0.5" style={{ color: "#555" }}>{relDate(group.scheduledFor)}</span>
+                          <span className="type-body-r-xs text-right pt-0.5 text-muted">{relDate(group.scheduledFor)}</span>
                         </div>
                       );
                     })
@@ -420,13 +408,13 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Coming soon */}
-            <div className="rounded-xl px-4 py-3 flex items-start gap-3" style={{ backgroundColor: "#0f0f1a", border: "1px solid #2a2a40" }}>
-              <svg className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#5b63d3" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="rounded-xl px-4 py-3 flex items-start gap-3 border border-brand-300 bg-brand-100">
+              <svg className="w-4 h-4 mt-0.5 shrink-0 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
-                <p className="text-sm font-medium" style={{ color: "#8b8fde" }}>More platforms coming soon</p>
-                <p className="text-xs mt-0.5" style={{ color: "#555" }}>
+                <p className="type-body-m-s text-brand-800">More platforms coming soon</p>
+                <p className="type-body-r-xs mt-0.5 text-muted">
                   LinkedIn, YouTube, X/Twitter, and Pinterest analytics pending platform API approvals.
                 </p>
               </div>
