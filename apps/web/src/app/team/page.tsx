@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
 import { useWorkspace } from "../../context/WorkspaceContext";
 import { useToast } from "../../components/Toast";
+import { cn } from "../../lib/cn";
 
 interface Member {
   id: string;
@@ -154,15 +155,15 @@ export default function TeamPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="pl-16 pr-4 md:px-8 shrink-0 flex items-center justify-between" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
+      <div className="page-header">
         <div className="min-w-0">
-          <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Team</h1>
-          <p className="text-xs mt-0.5 hidden sm:block" style={{ color: "#aaaaaa" }}>Manage members and invitations for {activeWorkspace?.name}</p>
+          <h1 className="type-body-sb-l text-fg">Team</h1>
+          <p className="type-body-r-xs mt-0.5 hidden sm:block text-muted">Manage members and invitations for {activeWorkspace?.name}</p>
         </div>
         {(activeWorkspace?.role === "owner" || activeWorkspace?.role === "admin") && (
           <button
             onClick={() => setShowInviteModal(true)}
-            style={{ backgroundColor: "#ffffff", color: "#0a0a0a", border: "none", borderRadius: 9, padding: "7px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+            className="btn-primary rounded-lg"
           >
             Invite member
           </button>
@@ -173,30 +174,30 @@ export default function TeamPage() {
       <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-5">
 
         {/* Members */}
-        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+        <div className="card overflow-hidden">
           {/* Section header */}
-          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#5b63d315", border: "1px solid #5b63d330" }}>
-                <svg className="w-4 h-4" fill="none" stroke="#5b63d3" viewBox="0 0 24 24">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center border border-brand-300 bg-brand-100">
+                <svg className="w-4 h-4 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Members</p>
-                <p className="text-xs" style={{ color: "#555" }}>{activeWorkspace?.name}</p>
+                <p className="type-body-sb-s text-fg">Members</p>
+                <p className="type-body-r-xs text-muted">{activeWorkspace?.name}</p>
               </div>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: "#5b63d318", color: "#a5aaff", border: "1px solid #5b63d330" }}>
+            <span className="type-body-sb-xs px-2.5 py-1 rounded-full border border-brand-300 bg-brand-100 text-brand-800">
               {activeWorkspace?.memberCount ?? members.length} member{(activeWorkspace?.memberCount ?? members.length) !== 1 ? "s" : ""}
             </span>
           </div>
 
           <div className="p-4">
             {teamLoading ? (
-              <p className="text-xs px-2" style={{ color: "#555" }}>Loading…</p>
+              <p className="type-body-r-xs px-2 text-muted">Loading…</p>
             ) : members.length === 0 ? (
-              <p className="text-xs px-2" style={{ color: "#555" }}>No members visible. Only owners and admins can see the member list.</p>
+              <p className="type-body-r-xs px-2 text-muted">No members visible. Only owners and admins can see the member list.</p>
             ) : (
               <div className="space-y-2">
                 {members.map((m) => {
@@ -204,48 +205,49 @@ export default function TeamPage() {
                   const canManage = activeWorkspace?.role === "owner" || activeWorkspace?.role === "admin";
                   const canChangeRole = activeWorkspace?.role === "owner" && m.role !== "owner";
                   return (
-                    <div key={m.id} className="flex items-center gap-3 rounded-xl px-4 py-3 transition-colors" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e" }}>
+                    <div key={m.id} className="flex items-center gap-3 rounded-xl px-4 py-3 transition-colors border border-border bg-bg">
                       {/* Avatar */}
                       <div className="relative shrink-0">
                         {m.avatarUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={m.avatarUrl} alt={m.name} className="w-9 h-9 rounded-full object-cover" />
                         ) : (
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ backgroundColor: "#5b63d3" }}>
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center type-body-sb-s bg-accent text-accent-fg">
                             {initial}
                           </div>
                         )}
                         {m.isCurrentUser && (
-                          <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ backgroundColor: "#22c55e", border: "2px solid #0a0a0a" }} />
+                          <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center border-2 border-bg bg-green-500" />
                         )}
                       </div>
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-medium truncate" style={{ color: "#ededed" }}>{m.name}</p>
-                          {m.isCurrentUser && <span className="text-xs shrink-0" style={{ color: "#555" }}>you</span>}
+                          <p className="type-body-m-s truncate text-fg">{m.name}</p>
+                          {m.isCurrentUser && <span className="type-body-r-xs shrink-0 text-neutral-500">you</span>}
                         </div>
-                        <p className="text-xs truncate" style={{ color: "#555" }}>{m.email}</p>
+                        <p className="type-body-r-xs truncate text-muted">{m.email}</p>
                       </div>
                       {/* Role */}
                       {canChangeRole ? (
                         <select
                           value={m.role}
                           onChange={(e) => changeRole(m.id, e.target.value as RoleChoice)}
-                          style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 99, border: "1px solid #3a3a3a", backgroundColor: "#1a1a1a", color: "#aaa", cursor: "pointer", outline: "none" }}
+                          className="cursor-pointer rounded-full border border-border bg-surface px-2.5 py-1 type-body-sb-xs text-muted outline-none"
                         >
                           <option value="admin">Admin</option>
                           <option value="designer">Designer</option>
                           <option value="member">Member</option>
                         </select>
                       ) : (
-                        <span style={{
-                          fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 99, flexShrink: 0,
-                          backgroundColor: m.role === "owner" ? "rgba(91,99,211,0.2)" : m.role === "admin" ? "rgba(91,99,211,0.12)" : m.role === "designer" ? "rgba(52,211,153,0.12)" : "rgba(136,136,136,0.1)",
-                          color: m.role === "owner" ? "#a5aaff" : m.role === "admin" ? "#8a8fff" : m.role === "designer" ? "#34d399" : "#666",
-                          textTransform: "capitalize",
-                          border: m.role === "owner" ? "1px solid rgba(91,99,211,0.3)" : m.role === "admin" ? "1px solid rgba(91,99,211,0.15)" : m.role === "designer" ? "1px solid rgba(52,211,153,0.25)" : "1px solid transparent",
-                        }}>
+                        <span className={cn(
+                          "shrink-0 rounded-full border px-2.5 py-1 type-body-sb-xs capitalize",
+                          m.role === "owner" || m.role === "admin"
+                            ? "border-brand-300 bg-brand-100 text-brand-800"
+                            : m.role === "designer"
+                              ? "border-green-200 bg-green-50 text-green-700"
+                              : "border-border bg-surface text-muted",
+                        )}>
                           {m.role}
                         </span>
                       )}
@@ -253,8 +255,7 @@ export default function TeamPage() {
                         <button
                           onClick={() => removeMember(m.id)}
                           disabled={removingId === m.id}
-                          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg shrink-0 transition-opacity"
-                          style={{ backgroundColor: "#2a101010", color: "#f87171", border: "1px solid #f8717130", opacity: removingId === m.id ? 0.5 : 1, cursor: removingId === m.id ? "wait" : "pointer" }}
+                          className="flex items-center gap-1 type-body-sb-xs px-2.5 py-1.5 rounded-lg shrink-0 transition-colors cursor-pointer border border-red-200 text-red-600 hover:bg-red-50 disabled:cursor-wait disabled:opacity-50"
                         >
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"/>
@@ -272,22 +273,22 @@ export default function TeamPage() {
 
         {/* Design review toggle */}
         {(activeWorkspace?.role === "owner" || activeWorkspace?.role === "admin") && (
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#818cf815", border: "1px solid #818cf830" }}>
-                <svg className="w-4 h-4" fill="none" stroke="#818cf8" viewBox="0 0 24 24">
+          <div className="card overflow-hidden">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center border border-brand-300 bg-brand-100">
+                <svg className="w-4 h-4 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Design review</p>
-                <p className="text-xs" style={{ color: "#555" }}>Require approval before members can schedule posts</p>
+                <p className="type-body-sb-s text-fg">Design review</p>
+                <p className="type-body-r-xs text-muted">Require approval before members can schedule posts</p>
               </div>
             </div>
             <div className="flex items-center justify-between gap-4 px-5 py-4">
               <div className="flex-1 min-w-0">
-                <p className="text-xs" style={{ color: "#aaa" }}>
-                  Member posts stay as drafts until a <strong style={{ color: "#34d399" }}>Designer</strong>, Admin, or Owner approves them.
+                <p className="type-body-r-xs text-muted">
+                  Member posts stay as drafts until a <strong className="text-green-700">Designer</strong>, Admin, or Owner approves them.
                   {approvalRequired && members.some((m) => m.role === "designer") ? "" : " Invite a design team member with the Designer role first."}
                 </p>
               </div>
@@ -295,22 +296,16 @@ export default function TeamPage() {
                 onClick={toggleApproval}
                 disabled={approvalLoading}
                 aria-label={approvalRequired ? "Disable design review" : "Enable design review"}
-                className="relative shrink-0 rounded-full transition-colors"
-                style={{
-                  width: 44, height: 24,
-                  backgroundColor: approvalRequired ? "#5b63d3" : "#2a2a2a",
-                  border: "1px solid " + (approvalRequired ? "#5b63d3" : "#3a3a3a"),
-                  cursor: approvalLoading ? "wait" : "pointer",
-                }}
+                className={cn(
+                  "relative shrink-0 rounded-full transition-colors w-11 h-6 border cursor-pointer disabled:cursor-wait",
+                  approvalRequired ? "bg-accent border-accent" : "bg-neutral-100 border-neutral-300",
+                )}
               >
                 <span
-                  className="absolute top-1/2 rounded-full transition-all"
-                  style={{
-                    width: 16, height: 16,
-                    left: approvalRequired ? 24 : 3,
-                    transform: "translateY(-50%)",
-                    backgroundColor: "#ffffff",
-                  }}
+                  className={cn(
+                    "absolute top-1/2 rounded-full transition-all size-4 -translate-y-1/2 bg-bg shadow-sm",
+                    approvalRequired ? "left-6" : "left-0.5",
+                  )}
                 />
               </button>
             </div>
@@ -319,22 +314,22 @@ export default function TeamPage() {
 
         {/* Pending invites */}
         {(activeWorkspace?.role === "owner" || activeWorkspace?.role === "admin") && (
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+          <div className="card overflow-hidden">
             {/* Section header */}
-            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#f59e0b15", border: "1px solid #f59e0b30" }}>
-                  <svg className="w-4 h-4" fill="none" stroke="#f59e0b" viewBox="0 0 24 24">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center border border-brand-400 bg-brand-100">
+                  <svg className="w-4 h-4 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Pending invites</p>
-                  <p className="text-xs" style={{ color: "#555" }}>Expire after 7 days</p>
+                  <p className="type-body-sb-s text-fg">Pending invites</p>
+                  <p className="type-body-r-xs text-muted">Expire after 7 days</p>
                 </div>
               </div>
               {invites.length > 0 && (
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: "#f59e0b18", color: "#fbbf24", border: "1px solid #f59e0b30" }}>
+                <span className="type-body-sb-xs px-2.5 py-1 rounded-full border border-brand-400 bg-brand-100 text-brand-800">
                   {invites.length} pending
                 </span>
               )}
@@ -343,35 +338,34 @@ export default function TeamPage() {
             <div className="p-4">
               {invites.length === 0 ? (
                 <div className="flex items-center gap-2 px-2 py-1">
-                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="#555" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 shrink-0 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                   </svg>
-                  <p className="text-xs" style={{ color: "#555" }}>No pending invites. Use "Invite member" to add someone.</p>
+                  <p className="type-body-r-xs text-muted">No pending invites. Use "Invite member" to add someone.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {invites.map((inv) => {
                     const daysLeft = Math.max(0, Math.ceil((new Date(inv.expiresAt).getTime() - Date.now()) / 86400000));
                     return (
-                      <div key={inv.id} className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e" }}>
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: "#f59e0b15", border: "1px solid #f59e0b20" }}>
-                          <svg className="w-4 h-4" fill="none" stroke="#f59e0b" viewBox="0 0 24 24">
+                      <div key={inv.id} className="flex items-center gap-3 rounded-xl px-4 py-3 border border-border bg-bg">
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 border border-brand-300 bg-brand-100">
+                          <svg className="w-4 h-4 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                           </svg>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate" style={{ color: "#ededed" }}>{inv.email}</p>
-                          <p className="text-xs" style={{ color: "#555" }}>
-                            <span style={{ textTransform: "capitalize" }}>{inv.role}</span>
+                          <p className="type-body-m-s truncate text-fg">{inv.email}</p>
+                          <p className="type-body-r-xs text-muted">
+                            <span className="capitalize">{inv.role}</span>
                             {" · "}
-                            <span style={{ color: daysLeft <= 1 ? "#f87171" : "#555" }}>{daysLeft}d left</span>
+                            <span className={cn(daysLeft <= 1 && "text-red-600")}>{daysLeft}d left</span>
                           </p>
                         </div>
                         <button
                           onClick={() => cancelInvite(inv.id)}
                           disabled={cancellingInviteId === inv.id}
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg shrink-0"
-                          style={{ backgroundColor: "transparent", color: "#f87171", border: "1px solid #f8717130", opacity: cancellingInviteId === inv.id ? 0.5 : 1, cursor: cancellingInviteId === inv.id ? "wait" : "pointer" }}
+                          className="type-body-sb-xs px-2.5 py-1.5 rounded-lg shrink-0 transition-colors cursor-pointer border border-red-200 text-red-600 hover:bg-red-50 disabled:cursor-wait disabled:opacity-50"
                         >
                           {cancellingInviteId === inv.id ? "…" : "Revoke"}
                         </button>
@@ -388,12 +382,12 @@ export default function TeamPage() {
       {/* Invite modal */}
       {showInviteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
-          <div className="w-full max-w-sm rounded-2xl p-6 modal-panel" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-            <h2 className="text-base font-bold mb-1" style={{ color: "#ededed" }}>Invite member</h2>
-            <p className="text-xs mb-5" style={{ color: "#aaa" }}>They&apos;ll receive an email with a link to join {activeWorkspace?.name}.</p>
+          <div className="card w-full max-w-sm p-6 modal-panel">
+            <h2 className="type-body-sb-m mb-1 text-fg">Invite member</h2>
+            <p className="type-body-r-xs mb-5 text-muted">They&apos;ll receive an email with a link to join {activeWorkspace?.name}.</p>
             <form onSubmit={sendInvite} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Email address</label>
+                <label className="block type-body-m-xs mb-1.5 text-muted">Email address</label>
                 <input
                   type="email"
                   autoFocus
@@ -401,15 +395,15 @@ export default function TeamPage() {
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="teammate@company.com"
                   required
-                  style={{ width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "8px 12px", fontSize: 13, color: "#ededed", outline: "none" }}
+                  className="field"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Role</label>
+                <label className="block type-body-m-xs mb-1.5 text-muted">Role</label>
                   <select
                    value={inviteRole}
                    onChange={(e) => setInviteRole(e.target.value as RoleChoice)}
-                   style={{ width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "8px 12px", fontSize: 13, color: "#ededed", outline: "none" }}
+                   className="field"
                  >
                    <option value="member">Member — can compose and view posts</option>
                    <option value="designer">Designer — reviews and approves member posts</option>
@@ -420,14 +414,14 @@ export default function TeamPage() {
                 <button
                   type="button"
                   onClick={() => { setShowInviteModal(false); setInviteEmail(""); setInviteRole("member"); }}
-                  style={{ flex: 1, padding: "8px", borderRadius: 10, fontSize: 13, fontWeight: 600, backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a", cursor: "pointer" }}
+                  className="btn-secondary flex-1"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={inviteLoading || !inviteEmail.trim()}
-                  style={{ flex: 1, padding: "8px", borderRadius: 10, fontSize: 13, fontWeight: 600, backgroundColor: "#ffffff", color: "#0a0a0a", border: "none", cursor: (inviteLoading || !inviteEmail.trim()) ? "not-allowed" : "pointer", opacity: (inviteLoading || !inviteEmail.trim()) ? 0.5 : 1 }}
+                  className="btn-primary flex-1"
                 >
                   {inviteLoading ? "Sending…" : "Send invite"}
                 </button>

@@ -3,40 +3,7 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  backgroundColor: "#0a0a0a",
-  border: "1px solid #2a2a2a",
-  borderRadius: 8,
-  padding: "9px 12px",
-  fontSize: 13,
-  color: "#ededed",
-  outline: "none",
-};
-
-const btnPrimary: React.CSSProperties = {
-  backgroundColor: "#ffffff",
-  color: "#0a0a0a",
-  border: "none",
-  borderRadius: 8,
-  padding: "9px 18px",
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-};
-
-const btnDanger: React.CSSProperties = {
-  backgroundColor: "#2a1010",
-  color: "#f87171",
-  border: "1px solid #5a2020",
-  borderRadius: 8,
-  padding: "7px 14px",
-  fontSize: 12,
-  fontWeight: 600,
-  cursor: "pointer",
-};
+import { cn } from "../../lib/cn";
 
 const PAYLOAD_EXAMPLE = `{
   "event": "post.published",
@@ -75,13 +42,8 @@ function CopyIcon() {
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{
-      backgroundColor: "#111111",
-      border: "1px solid #2a2a2a",
-      borderRadius: 14,
-      overflow: "hidden",
-    }}>
-      <div style={{ padding: 24 }}>
+    <div className="card overflow-hidden">
+      <div className="p-6">
         {children}
       </div>
     </div>
@@ -91,10 +53,10 @@ function SectionCard({ children }: { children: React.ReactNode }) {
 function SectionHeader({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="flex items-start gap-3 mb-5">
-      <div style={{ color: "#5b63d3", marginTop: 2, flexShrink: 0 }}>{icon}</div>
+      <div className="mt-0.5 shrink-0 text-brand-800">{icon}</div>
       <div>
-        <h2 style={{ fontSize: 14, fontWeight: 600, color: "#ededed", margin: 0 }}>{title}</h2>
-        <p style={{ fontSize: 12, color: "#888", marginTop: 3 }}>{description}</p>
+        <h2 className="type-body-sb-s text-fg">{title}</h2>
+        <p className="mt-0.5 type-body-r-xs text-muted">{description}</p>
       </div>
     </div>
   );
@@ -102,10 +64,10 @@ function SectionHeader({ icon, title, description }: { icon: React.ReactNode; ti
 
 function UpgradeGate({ description }: { description: string }) {
   return (
-    <div style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "16px 18px" }}>
-      <p style={{ fontSize: 13, fontWeight: 600, color: "#ededed", marginBottom: 4 }}>Pro &amp; Team feature</p>
-      <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>{description}</p>
-      <a href="/billing" style={{ display: "inline-block", fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 7, backgroundColor: "#5b63d3", color: "#fff", textDecoration: "none" }}>
+    <div className="rounded-xl border border-border bg-bg px-4.5 py-4">
+      <p className="mb-1 type-body-sb-s text-fg">Pro &amp; Team feature</p>
+      <p className="mb-3 type-body-r-xs text-muted">{description}</p>
+      <a href="/billing" className="btn-primary rounded-md px-3.5 py-1.5 type-body-sb-xs">
         Upgrade plan
       </a>
     </div>
@@ -203,10 +165,10 @@ export default function IntegrationsPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="pl-16 pr-4 md:px-8 shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
+      <div className="page-header">
         <div className="min-w-0">
-          <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Integrations</h1>
-          <p className="text-xs mt-0.5 hidden sm:block" style={{ color: "#888" }}>Connect Posthive to your tools and workflows</p>
+          <h1 className="type-body-sb-l text-fg">Integrations</h1>
+          <p className="type-body-r-xs mt-0.5 hidden sm:block text-muted">Connect Posthive to your tools and workflows</p>
         </div>
       </div>
 
@@ -226,33 +188,32 @@ export default function IntegrationsPage() {
           ) : (
             <>
               <form onSubmit={createApiKey} className="space-y-2 mb-5">
-                <label style={{ fontSize: 12, color: "#888", display: "block", marginBottom: 6 }}>Key name</label>
+                <label className="mb-1.5 block type-body-r-xs text-muted">Key name</label>
                 <div className="flex gap-2">
                   <input
                     value={newKeyName}
                     onChange={(e) => setNewKeyName(e.target.value)}
                     placeholder="e.g. My Claude agent"
-                    style={{ ...inputStyle, flex: 1 }}
+                    className="field flex-1 rounded-lg"
                   />
                   <button type="submit" disabled={creatingKey || !newKeyName.trim()}
-                    style={{ ...btnPrimary, opacity: (creatingKey || !newKeyName.trim()) ? 0.45 : 1 }}>
+                    className="btn-primary whitespace-nowrap rounded-lg px-4.5">
                     {creatingKey ? "Creating…" : "Create key"}
                   </button>
                 </div>
               </form>
 
               {newKeyRaw && (
-                <div className="mb-5 rounded-xl p-4" style={{ backgroundColor: "#0a1a0a", border: "1px solid #1a3a1a" }}>
+                <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <p style={{ fontSize: 12, fontWeight: 600, color: "#4ade80" }}>Copy your key — it won&apos;t be shown again</p>
-                    <button onClick={() => setNewKeyRaw(null)} style={{ fontSize: 11, color: "#555", background: "none", border: "none", cursor: "pointer" }}>Dismiss</button>
+                    <p className="type-body-sb-xs text-green-700">Copy your key — it won&apos;t be shown again</p>
+                    <button onClick={() => setNewKeyRaw(null)} className="cursor-pointer type-body-r-xs text-muted hover:text-fg">Dismiss</button>
                   </div>
-                  <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1a3a1a" }}>
-                    <code style={{ fontSize: 12, color: "#a7f3d0", fontFamily: "monospace", flex: 1, wordBreak: "break-all" }}>{newKeyRaw}</code>
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-2">
+                    <code className="flex-1 break-all type-mono-r-xs text-fg">{newKeyRaw}</code>
                     <button
                       onClick={() => { navigator.clipboard.writeText(newKeyRaw); toast("Copied!", "success"); }}
-                      className="flex items-center gap-1.5 shrink-0"
-                      style={{ ...btnPrimary, padding: "5px 10px", fontSize: 12 }}>
+                      className="btn-secondary shrink-0 gap-1.5 rounded-lg px-2.5 py-1 type-body-sb-xs">
                       <CopyIcon /> Copy
                     </button>
                   </div>
@@ -260,22 +221,21 @@ export default function IntegrationsPage() {
               )}
 
               {apiKeys.length === 0 ? (
-                <div style={{ padding: "20px 0 4px", textAlign: "center" }}>
-                  <p style={{ fontSize: 13, color: "#444", marginBottom: 4 }}>No API keys yet</p>
-                  <p style={{ fontSize: 12, color: "#333" }}>Create a key to start scheduling posts via the REST API or MCP.</p>
+                <div className="pt-5 pb-1 text-center">
+                  <p className="mb-1 type-body-r-s text-muted">No API keys yet</p>
+                  <p className="type-body-r-xs text-neutral-500">Create a key to start scheduling posts via the REST API or MCP.</p>
                 </div>
               ) : (
-                <div style={{ borderTop: "1px solid #1e1e1e", paddingTop: 16 }}>
-                  <p style={{ fontSize: 11, color: "#555", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Active keys</p>
+                <div className="border-t border-border pt-4">
+                  <p className="section-label mb-2.5">Active keys</p>
                   <div className="space-y-2">
                     {apiKeys.map((k) => (
-                      <div key={k.id} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3"
-                        style={{ backgroundColor: "#0a0a0a", border: "1px solid #222" }}>
+                      <div key={k.id} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 border border-border bg-bg">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: "#22c55e", flexShrink: 0 }} />
+                          <div className="size-2 shrink-0 rounded-full bg-green-500" />
                           <div className="min-w-0">
-                            <p style={{ fontSize: 13, fontWeight: 500, color: "#ededed", margin: 0 }}>{k.name}</p>
-                            <p style={{ fontSize: 11, color: "#555", fontFamily: "monospace", margin: 0 }}>
+                            <p className="type-body-m-s text-fg">{k.name}</p>
+                            <p className="type-mono-r-xs text-muted">
                               {k.prefix}… · {k.lastUsedAt ? `last used ${new Date(k.lastUsedAt).toLocaleDateString()}` : "never used"}
                             </p>
                           </div>
@@ -283,7 +243,7 @@ export default function IntegrationsPage() {
                         <button
                           onClick={() => setConfirmRevokeId(k.id)}
                           disabled={revokingId === k.id}
-                          style={{ ...btnDanger, opacity: revokingId === k.id ? 0.5 : 1, flexShrink: 0 }}>
+                          className="btn-secondary shrink-0 rounded-lg border-red-200 bg-red-50 px-3.5 py-1.5 type-body-sb-xs text-red-600 hover:bg-red-100">
                           {revokingId === k.id ? "Revoking…" : "Revoke"}
                         </button>
                       </div>
@@ -299,16 +259,16 @@ export default function IntegrationsPage() {
         <SectionCard>
           <div className="flex items-start justify-between mb-5">
             <div className="flex items-start gap-3">
-              <div style={{ color: "#5b63d3", marginTop: 2, flexShrink: 0 }}><WebhookIcon /></div>
+              <div className="mt-0.5 shrink-0 text-brand-800"><WebhookIcon /></div>
               <div>
-                <h2 style={{ fontSize: 14, fontWeight: 600, color: "#ededed", margin: 0 }}>Webhook</h2>
-                <p style={{ fontSize: 12, color: "#888", marginTop: 3 }}>Receive a POST request every time a post publishes.</p>
+                <h2 className="type-body-sb-s text-fg">Webhook</h2>
+                <p className="mt-0.5 type-body-r-xs text-muted">Receive a POST request every time a post publishes.</p>
               </div>
             </div>
             {!webhookLocked && (
-              <div className="flex items-center gap-1.5 shrink-0 ml-4" style={{ marginTop: 2 }}>
-                <div style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: webhookConnected ? "#22c55e" : "#333" }} />
-                <span style={{ fontSize: 11, color: webhookConnected ? "#4ade80" : "#555" }}>
+              <div className="flex items-center gap-1.5 shrink-0 ml-4 mt-0.5">
+                <div className={cn("size-2 rounded-full", webhookConnected ? "bg-green-500" : "bg-neutral-300")} />
+                <span className={cn("type-body-r-xs", webhookConnected ? "text-green-700" : "text-muted")}>
                   {webhookConnected ? "Connected" : "Not connected"}
                 </span>
               </div>
@@ -320,43 +280,39 @@ export default function IntegrationsPage() {
           ) : (
             <form onSubmit={saveWebhook} className="space-y-4">
               <div>
-                <label style={{ fontSize: 12, color: "#888", display: "block", marginBottom: 6 }}>Webhook URL</label>
+                <label className="mb-1.5 block type-body-r-xs text-muted">Webhook URL</label>
                 <input
                   type="url"
                   value={webhookUrl}
                   onChange={(e) => setWebhookUrl(e.target.value)}
                   placeholder="https://hooks.zapier.com/hooks/catch/…"
-                  style={{
-                    ...inputStyle,
-                    borderColor: webhookUrl.trim() && !validWebhookUrl ? "#ef4444" : "#2a2a2a",
-                  }}
+                  className={cn("field rounded-lg", webhookUrl.trim() && !validWebhookUrl && "border-red-300")}
                 />
                 {webhookUrl.trim() && !validWebhookUrl && (
-                  <p style={{ fontSize: 12, color: "#ef4444", marginTop: 6 }}>URL must start with http:// or https://</p>
+                  <p className="mt-1.5 type-body-r-xs text-red-600">URL must start with http:// or https://</p>
                 )}
               </div>
 
               {/* Works with */}
               <div className="flex items-center gap-2 flex-wrap">
-                <span style={{ fontSize: 11, color: "#555" }}>Works with</span>
+                <span className="type-body-r-xs text-muted">Works with</span>
                 {["Zapier", "n8n", "Make"].map((name) => (
-                  <span key={name} style={{ fontSize: 11, color: "#888", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 5, padding: "2px 8px" }}>{name}</span>
+                  <span key={name} className="rounded-md border border-border bg-bg px-2 py-0.5 type-body-r-xs text-muted">{name}</span>
                 ))}
               </div>
 
               {/* Payload example */}
-              <div style={{ backgroundColor: "#0a0a0a", border: "1px solid #222", borderRadius: 10, overflow: "hidden" }}>
-                <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: "1px solid #1e1e1e" }}>
-                  <span style={{ fontSize: 11, color: "#555" }}>Payload example</span>
+              <div className="overflow-hidden rounded-xl border border-border bg-bg">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+                  <span className="type-body-r-xs text-muted">Payload example</span>
                   <button
                     type="button"
                     onClick={() => { navigator.clipboard.writeText(PAYLOAD_EXAMPLE); toast("Copied!", "success"); }}
-                    className="flex items-center gap-1"
-                    style={{ fontSize: 11, color: "#555", background: "none", border: "none", cursor: "pointer" }}>
+                    className="flex items-center gap-1 cursor-pointer type-body-r-xs text-muted hover:text-fg">
                     <CopyIcon /> Copy
                   </button>
                 </div>
-                <pre style={{ fontFamily: "monospace", fontSize: 12, color: "#666", margin: 0, padding: "12px 16px", overflowX: "auto", lineHeight: 1.6 }}>
+                <pre className="overflow-x-auto px-4 py-3 type-mono-r-xs text-fg">
                   {PAYLOAD_EXAMPLE}
                 </pre>
               </div>
@@ -366,12 +322,12 @@ export default function IntegrationsPage() {
                   <button
                     type="button"
                     onClick={() => setConfirmDeleteWebhook(true)}
-                    style={btnDanger}>
+                    className="btn-secondary rounded-lg border-red-200 bg-red-50 px-3.5 py-1.5 type-body-sb-xs text-red-600 hover:bg-red-100">
                     Remove webhook
                   </button>
                 ) : <span />}
                 <button type="submit" disabled={webhookLoading || !webhookUrl.trim() || !validWebhookUrl}
-                  style={{ ...btnPrimary, opacity: (webhookLoading || !webhookUrl.trim() || !validWebhookUrl) ? 0.45 : 1 }}>
+                  className="btn-primary whitespace-nowrap rounded-lg px-4.5">
                   {webhookLoading ? "Saving…" : "Save webhook"}
                 </button>
               </div>
@@ -383,20 +339,18 @@ export default function IntegrationsPage() {
       {/* Remove webhook confirm */}
       {confirmDeleteWebhook && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
-          <div className="w-full max-w-sm rounded-2xl p-6 modal-panel" style={{ backgroundColor: "#111111", border: "1px solid #3a1a1a" }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: "#f87171", marginBottom: 6 }}>Remove webhook?</h2>
-            <p style={{ fontSize: 13, color: "#aaaaaa", marginBottom: 20 }}>
+          <div className="card w-full max-w-sm border-red-200 p-6 modal-panel">
+            <h2 className="mb-1.5 type-body-sb-m text-red-600">Remove webhook?</h2>
+            <p className="mb-5 type-body-r-s text-muted">
               Posthive will stop sending publish events. You can re-add it at any time.
             </p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmDeleteWebhook(false)}
-                className="flex-1 text-sm font-semibold py-2 rounded-xl"
-                style={{ backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a" }}>
+                className="btn-secondary flex-1">
                 Cancel
               </button>
               <button onClick={deleteWebhook} disabled={webhookLoading}
-                className="flex-1 text-sm font-semibold py-2 rounded-xl"
-                style={{ backgroundColor: "#7f1d1d", color: "#fca5a5", opacity: webhookLoading ? 0.5 : 1 }}>
+                className="btn-danger flex-1">
                 {webhookLoading ? "Removing…" : "Remove"}
               </button>
             </div>
@@ -409,20 +363,18 @@ export default function IntegrationsPage() {
         const key = apiKeys.find((k) => k.id === confirmRevokeId);
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
-            <div className="w-full max-w-sm rounded-2xl p-6 modal-panel" style={{ backgroundColor: "#111111", border: "1px solid #3a1a1a" }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, color: "#f87171", marginBottom: 6 }}>Revoke API key?</h2>
-              <p style={{ fontSize: 13, color: "#aaaaaa", marginBottom: 20 }}>
-                <strong style={{ color: "#ededed" }}>{key?.name}</strong> (<span style={{ fontFamily: "monospace" }}>{key?.prefix}…</span>) will stop working immediately.
+            <div className="card w-full max-w-sm border-red-200 p-6 modal-panel">
+              <h2 className="mb-1.5 type-body-sb-m text-red-600">Revoke API key?</h2>
+              <p className="mb-5 type-body-r-s text-muted">
+                <strong className="text-fg">{key?.name}</strong> (<span className="type-mono-r-s">{key?.prefix}…</span>) will stop working immediately.
               </p>
               <div className="flex gap-3">
                 <button onClick={() => setConfirmRevokeId(null)}
-                  className="flex-1 text-sm font-semibold py-2 rounded-xl"
-                  style={{ backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a" }}>
+                  className="btn-secondary flex-1">
                   Cancel
                 </button>
                 <button onClick={() => revokeApiKey(confirmRevokeId)}
-                  className="flex-1 text-sm font-semibold py-2 rounded-xl"
-                  style={{ backgroundColor: "#7f1d1d", color: "#fca5a5" }}>
+                  className="btn-danger flex-1">
                   Revoke key
                 </button>
               </div>
