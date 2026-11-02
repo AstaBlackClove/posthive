@@ -12,15 +12,13 @@ interface Props {
   value: string; // "HH:MM"
   onChange: (v: string) => void;
   className?: string;
-  /** @deprecated Pass `className` (e.g. "flex-1") instead. */
-  style?: React.CSSProperties;
 }
 
-export function TimeInput24({ value, onChange, className, style }: Props) {
+export function TimeInput24({ value, onChange, className }: Props) {
   const [h = "09", m = "00"] = value.split(":");
 
   return (
-    <div className={cn("flex items-center gap-1", className)} style={style}>
+    <div className={cn("flex items-center gap-1", className)}>
       <select value={h} onChange={(e) => onChange(`${e.target.value}:${m}`)} className="field w-auto flex-1 px-2 py-1.5 scheme-light" aria-label="Hour">
         {HOURS.map((x) => <option key={x} value={x}>{x}</option>)}
       </select>

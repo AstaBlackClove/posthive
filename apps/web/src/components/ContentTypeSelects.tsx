@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { CATEGORY_INFO, PILLARS, categoriesFor, normalizeCategory, pillarFor, type Category, type Pillar } from "../lib/contentTypes";
 
 export type ContentType = { pillar: Pillar | null; category: Category | null };
@@ -23,8 +22,6 @@ export function ContentTypeSelects({ pillar, category, onChange, takenCategories
   /** Categories that already have a template — disabled (template editor). */
   takenCategories?: Set<Category>;
   idPrefix?: string;
-  /** @deprecated Ignored: the selects use the `field` class. Drop it from callers. */
-  selectStyle?: CSSProperties;
   disabled?: boolean;
 }) {
   const knownCategory = normalizeCategory(category);
