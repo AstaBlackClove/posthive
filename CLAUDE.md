@@ -39,7 +39,7 @@ pnpm db:migrate   # Run pending migrations
 
 ## API — `apps/api`
 
-**Stack:** Fastify v4 · Prisma 5 · SQLite (dev) / Postgres (prod) · BullMQ · Redis (Upstash) · TypeScript ESM
+**Stack:** Fastify v4 · Prisma 5 · Postgres · BullMQ · Redis (Upstash) · TypeScript ESM
 
 **Entry:** `src/index.ts` — registers CORS, routes, starts worker
 
@@ -56,7 +56,7 @@ pnpm db:migrate   # Run pending migrations
 | `routes/publicApi.ts` | `/api/v1` | Public REST API — accounts, posts, upload, templates |
 | `routes/mcp.ts` | `/mcp` | MCP Streamable HTTP server (Bearer + key-in-URL) |
 | `routes/oauth.ts` | `/oauth`, `/.well-known` | OAuth 2.0 + PKCE server for Claude.ai MCP connector |
-| `routes/templates.ts` | `/templates` | Template kit CRUD (designs + per-slide copy guide + caption draft); write = designer only |
+| `routes/templates.ts` | `/templates` | Design templates: one per content category (`.fig` file and/or link + optional preview), `POST /templates/file` uploads the `.fig`; write = designer only. Never copied into posts |
 
 ### Platform Adapters — `src/adapters/`
 Each adapter implements `PlatformAdapter` from `types.ts`:
@@ -119,7 +119,7 @@ All 10 tools mirror the HTTP MCP server: `list_accounts`, `create_post`, `get_po
 | `/` | `app/page.tsx` | Landing page (public) |
 | `/compose` | `app/compose/page.tsx` | Compose — write post, pick accounts, schedule |
 | `/jobs` | `app/jobs/page.tsx` | Posts — list + calendar view |
-| `/templates` | `app/templates/page.tsx` | Template Library — design kits per content category (Design manages, Marketing uses) |
+| `/templates` | `app/templates/page.tsx` | Template Library — one design reference per content category (Design manages, Marketing opens it from Compose) |
 | `/accounts` | `app/accounts/page.tsx` | Connect/disconnect social accounts |
 | `/billing` | `app/billing/page.tsx` | Plan status + upgrade |
 | `/docs` | `app/docs/page.tsx` | Documentation (includes full MCP section) |
@@ -186,6 +186,8 @@ Full OAuth 2.0 Authorization Code + PKCE (RFC 7636) + Dynamic Client Registratio
 | `create_from_template` | `POST /api/v1/templates/:id/use` |
 
 All MCP-created posts default to `draft: true`.
+
+Templates are design references (docs/content-types.md): `create_from_template` only sets the post's `pillar` + `category` and returns the template's file/link as `designReference` — it never copies media or a caption.
 
 ---
 
@@ -262,9 +264,9 @@ DODO_PRODUCT_TEAM="pdt_..."
 
 ---
 
-## Database — Prisma + SQLite
+## Database — Prisma + Postgres
 
-Schema at `apps/api/prisma/schema.prisma`. Compatible with Postgres — just change provider.
+Schema at `apps/api/prisma/schema.prisma`. Migrations use Postgres SQL.
 
 | Model | Purpose |
 |-------|---------|
@@ -273,6 +275,8 @@ Schema at `apps/api/prisma/schema.prisma`. Compatible with Postgres — just cha
 | `Account` | Connected social account. Credentials AES-256-GCM encrypted. |
 | `PostJob` | A scheduled post. Has `content` (JSON string), status, scheduledFor. |
 | `PostJobTarget` | One per platform per PostJob. Tracks per-platform status + errors. Cascades on PostJob delete. |
+| `Template` | Design template: one per workspace + category (`.fig` file / link / preview). Legacy `content` JSON is deprecated. |
+| `LegacyTemplateMedia` | Files of old template kits that posts still share — never deleted by post cleanup (`withoutTemplateMedia`). |
 
 ---
 

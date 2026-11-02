@@ -10,7 +10,7 @@ Posthive lets individuals and teams write once and publish everywhere. Key capab
 - First comment scheduling (auto-reply immediately after the post goes live)
 - Per-platform content overrides (custom text per account, Pro+)
 - Bulk CSV scheduling (hundreds of posts from a spreadsheet)
-- Post templates (save and reuse drafts)
+- Design templates (one reference design per content category: Figma file and/or link)
 - FullCalendar drag-to-reschedule view
 - Instagram Reels, Stories, carousels; YouTube Shorts + long-form video
 - Pinterest Pins, Telegram channels
@@ -59,8 +59,8 @@ Settings → Connectors → Add custom connector → enter `https://api.posthive
 - `update_post` — update content or reschedule a pending post
 - `duplicate_post` — clone a post as a new draft
 - `delete_post` — delete a post
-- `list_templates` — list saved post templates
-- `create_from_template` — create a post from a saved template
+- `list_templates` — list design templates (pillar, category, Figma file/link)
+- `create_from_template` — create a draft for a template's pillar + category; the design is returned as a reference, never attached
 
 All MCP-created posts default to draft. Binary media upload is not possible via MCP — upload via `POST /api/v1/upload` first and pass the returned URL to `create_post`.
 
