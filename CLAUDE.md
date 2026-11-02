@@ -223,6 +223,7 @@ Scales: `brand-*` (yellow), `neutral-*` (olive), `red-*`, `blue-*`, `green-*`. S
 - `chip` + `chip-active` — toggle / segmented option: `cn("chip", selected && "chip-active")`
 - `section-label` — small uppercase heading above a field group
 - `dropzone` — dashed empty / upload area (`bg-surface`; add `bg-bg` when inside a `card`)
+- `page-header` — top bar of a dashboard page (`h-16`, lines up with the sidebar header)
 - Existing: `job-card`, `job-action-btn`, `modal-backdrop`, `modal-panel`, `masonry-accounts`
 
 Conditional classes: `cn()` from `apps/web/src/lib/cn.ts`.

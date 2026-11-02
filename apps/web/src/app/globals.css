@@ -293,6 +293,12 @@
     @apply type-body-sb-xs uppercase tracking-wide text-muted;
   }
 
+  /* Top bar of a dashboard page. h-16 lines up with the sidebar header;
+     pl-16 leaves room for the mobile menu button */
+  .page-header {
+    @apply flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border pl-16 pr-4 md:px-8;
+  }
+
   /* Dashed empty / upload area. On a bg-surface container add `bg-bg` */
   .dropzone {
     @apply rounded-xl border-2 border-dashed border-border bg-surface transition-colors;
@@ -308,6 +314,9 @@
 @media (max-width: 480px) {
   .ph-foot-cols { grid-template-columns: 1fr !important; }
 }
+
+/* Layered so utilities can override them (e.g. `job-action-btn text-red-600`) */
+@layer components {
 
 /* Job card */
 .job-card {
@@ -405,6 +414,8 @@
   display: inline-block;
   width: 100%;
 }
+
+} /* @layer components */
 
 /* ─────────────────────────────────────────────
    FullCalendar (pakai token, otomatis light/dark)
