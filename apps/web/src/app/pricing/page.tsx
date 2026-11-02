@@ -10,6 +10,7 @@ interface BillingStatus {
   plan: string;
   planStatus: string;
   planName: string;
+  billingInterval: string;
 }
 
 const PLANS = [
@@ -249,7 +250,10 @@ export default function PricingPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 80 }}
           className="pricing-grid">
           {PLANS.map((plan) => {
-            const isCurrent = billingStatus?.planStatus === "active" && billingStatus?.plan === plan.id;
+            const isCurrent =
+              billingStatus?.planStatus === "active" &&
+              billingStatus?.plan === plan.id &&
+              billingStatus?.billingInterval === billingInterval;
             return (
             <div
               key={plan.id}
