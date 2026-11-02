@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../lib/api";
+import { cn } from "../../lib/cn";
 
 interface InviteInfo {
   id: string;
@@ -68,104 +69,68 @@ function InviteContent() {
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#0a0a0a",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "24px",
-    }}>
-      <div style={{
-        background: "#111111",
-        border: "1px solid #2a2a2a",
-        borderRadius: "16px",
-        padding: "40px",
-        maxWidth: "440px",
-        width: "100%",
-        textAlign: "center",
-      }}>
+    <div className="flex min-h-screen items-center justify-center bg-bg p-6">
+      <div className="card w-full max-w-110 p-8 text-center">
         {/* Logo */}
-        <div style={{ marginBottom: "32px" }}>
+        <div className="mb-8">
           <img
             src="/posthivemain.png"
             alt="Posthive"
-            style={{ width: "48px", height: "48px", borderRadius: "12px", objectFit: "cover", margin: "0 auto 12px", display: "block" }}
+            className="mx-auto mb-3 block size-12 rounded-xl object-cover"
           />
-          <span style={{ color: "#ededed", fontWeight: 700, fontSize: "18px" }}>Posthive</span>
+          <span className="type-body-sb-l text-fg">Posthive</span>
         </div>
 
         {authLoading ? (
-          <p style={{ color: "#888", fontSize: "14px" }}>Loading…</p>
+          <p className="type-body-r-s text-muted">Loading…</p>
         ) : fetchError ? (
           <>
-            <h1 style={{ color: "#ededed", fontSize: "20px", fontWeight: 600, margin: "0 0 12px" }}>
+            <h1 className="mb-3 type-head-sb-5 text-fg">
               Invalid invite
             </h1>
-            <p style={{ color: "#888", fontSize: "14px", margin: "0 0 24px" }}>{fetchError}</p>
+            <p className="mb-6 type-body-r-s text-muted">{fetchError}</p>
             <button
               onClick={() => router.push("/")}
-              style={{
-                background: "#ffffff",
-                color: "#0a0a0a",
-                border: "none",
-                borderRadius: "8px",
-                padding: "10px 24px",
-                fontWeight: 600,
-                fontSize: "14px",
-                cursor: "pointer",
-              }}
+              className="btn-primary px-6 py-2.5"
             >
               Go to Posthive
             </button>
           </>
         ) : !invite ? (
-          <p style={{ color: "#888", fontSize: "14px" }}>Loading invite…</p>
+          <p className="type-body-r-s text-muted">Loading invite…</p>
         ) : accepted ? (
           <>
-            <div style={{ fontSize: "40px", marginBottom: "16px" }}>🎉</div>
-            <h1 style={{ color: "#ededed", fontSize: "20px", fontWeight: 600, margin: "0 0 8px" }}>
+            <div className="mb-4 text-4xl">🎉</div>
+            <h1 className="mb-2 type-head-sb-5 text-fg">
               Welcome to {invite.workspaceName}!
             </h1>
-            <p style={{ color: "#888", fontSize: "14px" }}>Redirecting you to the app…</p>
+            <p className="type-body-r-s text-muted">Redirecting you to the app…</p>
           </>
         ) : (
           <>
-            <h1 style={{ color: "#ededed", fontSize: "22px", fontWeight: 600, margin: "0 0 8px" }}>
+            <h1 className="mb-2 type-head-sb-5 text-fg">
               You&apos;re invited
             </h1>
-            <p style={{ color: "#888", fontSize: "14px", margin: "0 0 24px", lineHeight: "1.5" }}>
-              Join <strong style={{ color: "#ededed" }}>{invite.workspaceName}</strong> on Posthive as a{" "}
-              <strong style={{ color: "#ededed" }}>{invite.role}</strong>.
+            <p className="mb-6 type-body-r-s text-muted">
+              Join <strong className="text-fg">{invite.workspaceName}</strong> on Posthive as a{" "}
+              <strong className="text-fg">{invite.role}</strong>.
             </p>
 
-            <div style={{
-              background: "#1a1a1a",
-              border: "1px solid #2a2a2a",
-              borderRadius: "10px",
-              padding: "16px",
-              marginBottom: "24px",
-              textAlign: "left",
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                <span style={{ color: "#888", fontSize: "12px" }}>Workspace</span>
-                <span style={{ color: "#ededed", fontSize: "12px", fontWeight: 500 }}>{invite.workspaceName}</span>
+            <div className="mb-6 rounded-xl border border-border bg-bg p-4 text-left">
+              <div className="mb-2 flex justify-between">
+                <span className="type-body-r-xs text-muted">Workspace</span>
+                <span className="type-body-m-xs text-fg">{invite.workspaceName}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                <span style={{ color: "#888", fontSize: "12px" }}>Invited email</span>
-                <span style={{ color: "#ededed", fontSize: "12px", fontWeight: 500 }}>{invite.email}</span>
+              <div className="mb-2 flex justify-between">
+                <span className="type-body-r-xs text-muted">Invited email</span>
+                <span className="type-body-m-xs text-fg">{invite.email}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#888", fontSize: "12px" }}>Role</span>
-                <span style={{
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  padding: "2px 8px",
-                  borderRadius: "99px",
-                  background: invite.role === "admin" ? "rgba(91,99,211,0.2)" : "rgba(136,136,136,0.15)",
-                  color: invite.role === "admin" ? "#a5aaff" : "#888",
-                  textTransform: "capitalize",
-                }}>
+              <div className="flex justify-between">
+                <span className="type-body-r-xs text-muted">Role</span>
+                <span className={cn(
+                  "rounded-full px-2 py-0.5 type-body-sb-xs capitalize",
+                  invite.role === "admin" ? "bg-brand-100 text-brand-800" : "bg-neutral-100 text-muted",
+                )}>
                   {invite.role}
                 </span>
               </div>
@@ -173,30 +138,20 @@ function InviteContent() {
 
             {!user ? (
               <>
-                <p style={{ color: "#888", fontSize: "13px", marginBottom: "16px" }}>
+                <p className="mb-4 type-body-r-s text-muted">
                   Sign in to your Posthive account to accept this invite.
                 </p>
                 <button
                   onClick={handleLoginRedirect}
-                  style={{
-                    width: "100%",
-                    background: "#ffffff",
-                    color: "#0a0a0a",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "12px 24px",
-                    fontWeight: 600,
-                    fontSize: "14px",
-                    cursor: "pointer",
-                  }}
+                  className="btn-primary w-full py-2.5"
                 >
                   Sign in to accept
                 </button>
-                <p style={{ color: "#555", fontSize: "12px", marginTop: "12px" }}>
+                <p className="mt-3 type-body-r-xs text-muted">
                   Don&apos;t have an account?{" "}
                   <a
                     href={`/register?returnTo=${encodeURIComponent(`/invite?token=${token}`)}`}
-                    style={{ color: "#5b63d3", textDecoration: "none" }}
+                    className="type-body-sb-xs text-brand-800 hover:underline"
                   >
                     Create one
                   </a>
@@ -204,31 +159,15 @@ function InviteContent() {
               </>
             ) : user.email !== invite.email ? (
               <>
-                <div style={{
-                  background: "rgba(239,68,68,0.1)",
-                  border: "1px solid rgba(239,68,68,0.3)",
-                  borderRadius: "8px",
-                  padding: "12px 16px",
-                  marginBottom: "16px",
-                }}>
-                  <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                  <p className="type-body-r-s text-red-600">
                     This invite was sent to <strong>{invite.email}</strong>, but you&apos;re signed in as{" "}
                     <strong>{user.email}</strong>.
                   </p>
                 </div>
                 <button
                   onClick={() => router.push(`/login?returnTo=${encodeURIComponent(`/invite?token=${token}`)}`)}
-                  style={{
-                    width: "100%",
-                    background: "#ffffff",
-                    color: "#0a0a0a",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "12px 24px",
-                    fontWeight: 600,
-                    fontSize: "14px",
-                    cursor: "pointer",
-                  }}
+                  className="btn-primary w-full py-2.5"
                 >
                   Sign in with a different account
                 </button>
@@ -236,30 +175,14 @@ function InviteContent() {
             ) : (
               <>
                 {acceptError && (
-                  <div style={{
-                    background: "rgba(239,68,68,0.1)",
-                    border: "1px solid rgba(239,68,68,0.3)",
-                    borderRadius: "8px",
-                    padding: "10px 14px",
-                    marginBottom: "16px",
-                  }}>
-                    <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>{acceptError}</p>
+                  <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5">
+                    <p className="type-body-r-s text-red-600">{acceptError}</p>
                   </div>
                 )}
                 <button
                   onClick={handleAccept}
                   disabled={accepting}
-                  style={{
-                    width: "100%",
-                    background: accepting ? "#555" : "#ffffff",
-                    color: "#0a0a0a",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "12px 24px",
-                    fontWeight: 600,
-                    fontSize: "14px",
-                    cursor: accepting ? "not-allowed" : "pointer",
-                  }}
+                  className="btn-primary w-full py-2.5"
                 >
                   {accepting ? "Joining…" : `Join ${invite.workspaceName}`}
                 </button>

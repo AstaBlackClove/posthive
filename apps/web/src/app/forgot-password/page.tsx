@@ -28,10 +28,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: "#0a0a0a" }}
-    >
+    <div className="min-h-screen flex items-center justify-center bg-bg px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
@@ -40,28 +37,19 @@ export default function ForgotPasswordPage() {
             alt="Posthive"
             className="w-9 h-9 rounded-xl object-cover"
           />
-          <span className="font-bold text-sm" style={{ color: "#ededed" }}>
+          <span className="type-body-sb-s text-fg">
             Posthive
           </span>
         </div>
 
-        <div
-          className="rounded-2xl p-8"
-          style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
-        >
+        <div className="card p-8">
           {sent ? (
             <div className="text-center">
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{
-                  backgroundColor: "#052e16",
-                  border: "1px solid #14532d",
-                }}
-              >
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full border border-green-200 bg-green-50">
                 <svg
-                  className="w-6 h-6"
+                  className="size-6 text-green-700"
                   fill="none"
-                  stroke="#4ade80"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path
@@ -72,42 +60,32 @@ export default function ForgotPasswordPage() {
                   />
                 </svg>
               </div>
-              <h1
-                className="text-lg font-bold mb-2"
-                style={{ color: "#ededed" }}
-              >
+              <h1 className="mb-2 type-head-sb-5 text-fg">
                 Check your email
               </h1>
-              <p className="text-sm mb-6" style={{ color: "#888" }}>
-                If <strong style={{ color: "#ededed" }}>{email}</strong> has an
+              <p className="mb-6 type-body-r-s text-muted">
+                If <strong className="text-fg">{email}</strong> has an
                 account, we&apos;ve sent a reset link. It expires in 1 hour.
               </p>
               <Link
                 href="/login"
-                className="text-sm font-semibold hover:opacity-80"
-                style={{ color: "#5b63d3" }}
+                className="type-body-sb-s text-brand-800 hover:underline"
               >
                 ← Back to login
               </Link>
             </div>
           ) : (
             <>
-              <h1
-                className="text-lg font-bold mb-1"
-                style={{ color: "#ededed" }}
-              >
+              <h1 className="mb-1 type-head-sb-5 text-fg">
                 Forgot password?
               </h1>
-              <p className="text-sm mb-6" style={{ color: "#888" }}>
+              <p className="mb-6 type-body-r-s text-muted">
                 Enter your email and we&apos;ll send you a reset link.
               </p>
 
               <form onSubmit={submit} className="space-y-4">
                 <div>
-                  <label
-                    className="block text-xs font-medium mb-1.5"
-                    style={{ color: "#aaa" }}
-                  >
+                  <label className="mb-1.5 block type-body-sb-xs text-muted">
                     Email
                   </label>
                   <input
@@ -117,24 +95,12 @@ export default function ForgotPasswordPage() {
                     required
                     autoFocus
                     placeholder="you@example.com"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-white/10"
-                    style={{
-                      backgroundColor: "#0a0a0a",
-                      border: "1px solid #2a2a2a",
-                      color: "#ededed",
-                    }}
+                    className="field px-4 py-2.5"
                   />
                 </div>
 
                 {error && (
-                  <p
-                    className="text-xs px-3 py-2 rounded-lg"
-                    style={{
-                      backgroundColor: "#1a0a0a",
-                      border: "1px solid #3a1a1a",
-                      color: "#f87171",
-                    }}
-                  >
+                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 type-body-r-xs text-red-600">
                     {error}
                   </p>
                 )}
@@ -142,19 +108,17 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading || !email}
-                  className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-40 hover:bg-gray-100"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+                  className="btn-primary w-full py-2.5"
                 >
                   {loading ? "Sending…" : "Send reset link"}
                 </button>
               </form>
 
-              <p className="text-center text-xs mt-5" style={{ color: "#555" }}>
+              <p className="mt-5 text-center type-body-r-xs text-muted">
                 Remembered it?{" "}
                 <Link
                   href="/login"
-                  className="font-semibold hover:opacity-80"
-                  style={{ color: "#5b63d3" }}
+                  className="type-body-sb-xs text-brand-800 hover:underline"
                 >
                   Log in
                 </Link>

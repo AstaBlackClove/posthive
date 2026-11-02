@@ -52,45 +52,44 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#0a0a0a" }}>
+    <div className="min-h-screen flex items-center justify-center bg-bg px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#5b63d3" }}>
-            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <div className="flex size-8 items-center justify-center rounded-xl bg-accent">
+            <svg className="size-4 text-accent-fg" fill="currentColor" viewBox="0 0 24 24">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
             </svg>
           </div>
-          <span className="font-bold text-sm" style={{ color: "#ededed" }}>Posthive</span>
+          <span className="type-body-sb-s text-fg">Posthive</span>
         </div>
 
-        <div className="rounded-2xl p-8" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+        <div className="card p-8">
           {!token ? (
             <div className="text-center">
-              <p className="text-sm mb-4" style={{ color: "#f87171" }}>Invalid or missing reset token.</p>
-              <Link href="/forgot-password" className="text-sm font-semibold" style={{ color: "#5b63d3" }}>
+              <p className="mb-4 type-body-r-s text-red-600">Invalid or missing reset token.</p>
+              <Link href="/forgot-password" className="type-body-sb-s text-brand-800 hover:underline">
                 Request a new link
               </Link>
             </div>
           ) : done ? (
             <div className="text-center">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ backgroundColor: "#052e16", border: "1px solid #14532d" }}>
-                <svg className="w-6 h-6" fill="none" stroke="#4ade80" viewBox="0 0 24 24">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full border border-green-200 bg-green-50">
+                <svg className="size-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h1 className="text-lg font-bold mb-2" style={{ color: "#ededed" }}>Password updated!</h1>
-              <p className="text-sm" style={{ color: "#888" }}>Redirecting you to login…</p>
+              <h1 className="mb-2 type-head-sb-5 text-fg">Password updated!</h1>
+              <p className="type-body-r-s text-muted">Redirecting you to login…</p>
             </div>
           ) : (
             <>
-              <h1 className="text-lg font-bold mb-1" style={{ color: "#ededed" }}>Set new password</h1>
-              <p className="text-sm mb-6" style={{ color: "#888" }}>Choose a strong password at least 8 characters.</p>
+              <h1 className="mb-1 type-head-sb-5 text-fg">Set new password</h1>
+              <p className="mb-6 type-body-r-s text-muted">Choose a strong password at least 8 characters.</p>
 
               <form onSubmit={submit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>New password</label>
+                  <label className="mb-1.5 block type-body-sb-xs text-muted">New password</label>
                   <input
                     type="password"
                     value={password}
@@ -98,32 +97,29 @@ function ResetPasswordForm() {
                     required
                     autoFocus
                     placeholder="••••••••"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-white/10"
-                    style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+                    className="field px-4 py-2.5"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#aaa" }}>Confirm password</label>
+                  <label className="mb-1.5 block type-body-sb-xs text-muted">Confirm password</label>
                   <input
                     type="password"
                     value={confirm}
                     onChange={e => setConfirm(e.target.value)}
                     required
                     placeholder="••••••••"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-white/10"
-                    style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+                    className="field px-4 py-2.5"
                   />
                 </div>
 
                 {error && (
-                  <p className="text-xs px-3 py-2 rounded-lg" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1a1a", color: "#f87171" }}>
+                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 type-body-r-xs text-red-600">
                     {error}
                   </p>
                 )}
 
                 <button type="submit" disabled={loading || !password || !confirm}
-                  className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-40 hover:bg-gray-100"
-                  style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                  className="btn-primary w-full py-2.5">
                   {loading ? "Updating…" : "Update password"}
                 </button>
               </form>

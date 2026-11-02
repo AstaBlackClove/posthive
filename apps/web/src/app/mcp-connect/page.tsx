@@ -64,106 +64,104 @@ export default function McpConnectPage() {
 
   if (loading || !user) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
-        <div style={{ width: 24, height: 24, border: "2px solid #2a2a2a", borderTopColor: "#5b63d3", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div className="flex min-h-screen items-center justify-center bg-bg">
+        <div className="size-6 animate-spin rounded-full border-2 border-border border-t-accent" />
       </div>
     );
   }
 
   if (!paramsValid) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a", padding: 24 }}>
-        <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 16, padding: 32, maxWidth: 400, textAlign: "center" }}>
-          <p style={{ color: "#ef4444", fontSize: 14 }}>Invalid authorization request — missing required parameters.</p>
+      <div className="flex min-h-screen items-center justify-center bg-bg p-6">
+        <div className="card max-w-100 p-8 text-center">
+          <p className="type-body-r-s text-red-600">Invalid authorization request — missing required parameters.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a", padding: 24 }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-
-      <div style={{ background: "#111111", border: "1px solid #2a2a2a", borderRadius: 20, padding: "40px 36px", maxWidth: 420, width: "100%" }}>
+    <div className="flex min-h-screen items-center justify-center bg-bg p-6">
+      <div className="card w-full max-w-105 p-8">
 
         {/* Logos */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginBottom: 32 }}>
-          <div style={{ width: 52, height: 52, borderRadius: 13, background: "#17172a", border: "1px solid #26264a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Image src="/posthivemain.png" alt="Posthive" width={32} height={32} style={{ borderRadius: 6 }} />
+        <div className="mb-8 flex items-center justify-center gap-5">
+          <div className="flex size-13 items-center justify-center rounded-xl border border-brand-300 bg-brand-100">
+            <Image src="/posthivemain.png" alt="Posthive" width={32} height={32} className="rounded-md" />
           </div>
-          <div style={{ display: "flex", gap: 4 }}>
-            {[0,1,2].map(i => <div key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: "#333" }} />)}
+          <div className="flex gap-1">
+            {[0,1,2].map(i => <div key={i} className="size-1 rounded-full bg-neutral-300" />)}
           </div>
           {/* Claude.ai / MCP client icon */}
-          <div style={{ width: 52, height: 52, borderRadius: 13, background: "#1a1a2e", border: "1px solid #2a2a4a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="#8b91e8" strokeWidth="1.5"/>
-              <path d="M8 12h8M12 8v8" stroke="#8b91e8" strokeWidth="1.5" strokeLinecap="round"/>
+          <div className="flex size-13 items-center justify-center rounded-xl border border-brand-300 bg-brand-100">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-brand-800">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
         </div>
 
         {/* Title */}
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#ededed", textAlign: "center", margin: "0 0 8px" }}>
+        <h1 className="mb-2 text-center type-head-sb-5 text-fg">
           Authorize MCP access
         </h1>
-        <p style={{ fontSize: 14, color: "#666", textAlign: "center", margin: "0 0 28px", lineHeight: 1.6 }}>
-          <strong style={{ color: "#9ba2ee" }}>{clientId}</strong> wants to access your Posthive workspace as <strong style={{ color: "#ededed" }}>{user.email}</strong>
+        <p className="mb-7 text-center type-body-r-s text-muted">
+          <strong className="text-brand-800">{clientId}</strong> wants to access your Posthive workspace as <strong className="text-fg">{user.email}</strong>
         </p>
 
         {/* Permissions */}
-        <div style={{ background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 12, padding: "16px 20px", marginBottom: 24 }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: "#555", letterSpacing: ".06em", margin: "0 0 12px", fontFamily: "monospace" }}>THIS CONNECTOR CAN</p>
+        <div className="mb-6 rounded-xl border border-border bg-bg px-5 py-4">
+          <p className="section-label mb-3">THIS CONNECTOR CAN</p>
           {[
             "List your connected social accounts",
             "Create posts as drafts (require your approval)",
             "View and manage your scheduled queue",
             "Schedule posts when you explicitly allow it",
           ].map(item => (
-            <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ marginTop: 1, flexShrink: 0 }}>
-                <circle cx="8" cy="8" r="7" stroke="#5b63d3" strokeWidth="1.2"/>
-                <path d="M5 8l2.5 2.5 4-4" stroke="#5b63d3" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            <div key={item} className="mb-2 flex items-start gap-2.5">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="mt-0.5 shrink-0 text-green-700">
+                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2"/>
+                <path d="M5 8l2.5 2.5 4-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span style={{ fontSize: 13, color: "#bbb", lineHeight: 1.5 }}>{item}</span>
+              <span className="type-body-r-s text-fg">{item}</span>
             </div>
           ))}
-          <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 12, paddingTop: 12, display: "flex", alignItems: "flex-start", gap: 10 }}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ marginTop: 1, flexShrink: 0 }}>
-              <circle cx="8" cy="8" r="7" stroke="#ef4444" strokeWidth="1.2"/>
-              <path d="M5 8h6" stroke="#ef4444" strokeWidth="1.3" strokeLinecap="round"/>
+          <div className="mt-3 flex items-start gap-2.5 border-t border-border pt-3">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="mt-0.5 shrink-0 text-red-600">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2"/>
+              <path d="M5 8h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
             </svg>
-            <span style={{ fontSize: 13, color: "#777", lineHeight: 1.5 }}>Cannot publish anything without your review</span>
+            <span className="type-body-r-s text-muted">Cannot publish anything without your review</span>
           </div>
         </div>
 
         {error && (
-          <div style={{ background: "rgba(239,68,68,.08)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#ef4444" }}>
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 type-body-r-s text-red-600">
             {error}
           </div>
         )}
 
         {/* Actions */}
-        <div style={{ display: "flex", gap: 10 }}>
+        <div className="flex gap-2.5">
           <button
             onClick={handleDeny}
             disabled={approving}
-            style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "1px solid #2a2a2a", background: "transparent", color: "#888", fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+            className="btn-secondary flex-1 py-2.5 text-muted"
           >
             Deny
           </button>
           <button
             onClick={handleAllow}
             disabled={approving}
-            style={{ flex: 2, padding: "11px 0", borderRadius: 10, border: "none", background: "#5b63d3", color: "#fff", fontSize: 14, fontWeight: 600, cursor: approving ? "not-allowed" : "pointer", opacity: approving ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+            className="btn-primary flex-2 py-2.5"
           >
-            {approving && <div style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />}
+            {approving && <div className="size-3.5 animate-spin rounded-full border-2 border-accent-fg/30 border-t-accent-fg" />}
             {approving ? "Authorizing…" : "Allow access"}
           </button>
         </div>
 
-        <p style={{ fontSize: 12, color: "#444", textAlign: "center", margin: "16px 0 0", lineHeight: 1.6 }}>
-          You can revoke this access anytime from <strong style={{ color: "#666" }}>Settings → API Keys</strong>
+        <p className="mt-4 text-center type-body-r-xs text-muted">
+          You can revoke this access anytime from <strong className="text-fg">Settings → API Keys</strong>
         </p>
       </div>
     </div>
