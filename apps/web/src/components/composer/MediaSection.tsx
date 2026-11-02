@@ -110,7 +110,7 @@ export function MediaSection({
             value={youtubeVideoUrl}
             onChange={(e) => onYoutubeVideoUrlChange(e.target.value)}
             placeholder="https://your-cdn.com/video.mp4"
-            className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+            className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 transition"
             style={{ borderColor: isUrlInvalid ? "#ef4444" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
           />
           {isUrlInvalid ? (
@@ -125,7 +125,7 @@ export function MediaSection({
       {video && (
         <div className="mb-3 relative group w-28 rounded-xl overflow-hidden" style={{ border: "1px solid #2a2a2a", backgroundColor: "#1a1a1a" }}>
           <video src={video.previewUrl} className="w-full h-20 object-cover" muted />
-          <div className="absolute bottom-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded"
+          <div className="absolute bottom-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded-sm"
             style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#fff" }}>
             {igMediaType === "reel" ? "REEL" : "VID"}
           </div>
@@ -139,7 +139,7 @@ export function MediaSection({
       {images.length > 0 && igMediaType !== "reel" && (
         <div className="flex gap-2 mb-3 flex-wrap">
           {images.map((img, i) => (
-            <div key={img.url + i} className="relative group w-20 h-20 rounded-xl overflow-hidden flex-shrink-0"
+            <div key={img.url + i} className="relative group w-20 h-20 rounded-xl overflow-hidden shrink-0"
               style={{ border: "1px solid #2a2a2a", backgroundColor: "#1a1a1a" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img.previewUrl} alt={img.name} className="w-full h-full object-cover" />
@@ -164,13 +164,13 @@ export function MediaSection({
         <div className="space-y-1.5 mb-3">
           {images.map((img, i) => (
             <div key={img.url} className="flex items-center gap-2">
-              <span className="text-[10px] font-semibold w-5 text-center flex-shrink-0" style={{ color: "#444" }}>{i + 1}</span>
+              <span className="text-[10px] font-semibold w-5 text-center shrink-0" style={{ color: "#444" }}>{i + 1}</span>
               <input
                 type="text"
                 value={altTexts[i] ?? ""}
                 onChange={(e) => onAltTextChange(i, e.target.value)}
                 placeholder={`Alt text for image ${i + 1} (optional)`}
-                className="flex-1 rounded-lg px-3 py-1.5 text-xs focus:outline-none"
+                className="flex-1 rounded-lg px-3 py-1.5 text-xs focus:outline-hidden"
                 style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}
               />
             </div>

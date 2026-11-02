@@ -8,8 +8,6 @@ export type ContentType = { pillar: Pillar | null; category: Category | null };
 const NO_PILLAR = "__none";
 const UNKNOWN = "__unknown";
 
-const defaultSelectStyle = { background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "#ededed" } as const;
-
 function normalizePillar(raw: string | null | undefined): Pillar | null {
   const key = raw?.trim().toLowerCase();
   return PILLARS.find((p) => p.toLowerCase() === key) ?? null;
@@ -18,13 +16,14 @@ function normalizePillar(raw: string | null | undefined): Pillar | null {
 // Content pillar → category (docs/content-types.md). Picking a pillar narrows the
 // categories; "No pillar" is Ask Me Anything. Stored values may be free text from an
 // import — those show as "(unknown)" until the user picks a real one.
-export function ContentTypeSelects({ pillar, category, onChange, takenCategories, idPrefix = "content-type", selectStyle = defaultSelectStyle, disabled }: {
+export function ContentTypeSelects({ pillar, category, onChange, takenCategories, idPrefix = "content-type", disabled }: {
   pillar: string | null | undefined;
   category: string | null | undefined;
   onChange: (next: ContentType) => void;
   /** Categories that already have a template — disabled (template editor). */
   takenCategories?: Set<Category>;
   idPrefix?: string;
+  /** @deprecated Ignored: the selects use the `field` class. Drop it from callers. */
   selectStyle?: CSSProperties;
   disabled?: boolean;
 }) {
@@ -59,9 +58,9 @@ export function ContentTypeSelects({ pillar, category, onChange, takenCategories
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <label className="block" htmlFor={`${idPrefix}-pillar`}>
-        <span className="text-xs font-semibold" style={{ color: "#888" }}>Content pillar</span>
+        <span className="type-body-sb-xs text-muted">Content pillar</span>
         <select id={`${idPrefix}-pillar`} value={pillarValue} disabled={disabled}
-          onChange={(e) => pickPillar(e.target.value)} className="w-full mt-1.5" style={selectStyle}>
+          onChange={(e) => pickPillar(e.target.value)} className="field mt-1.5">
           <option value="">Choose a pillar</option>
           {PILLARS.map((p) => <option key={p} value={p}>{p}</option>)}
           <option value={NO_PILLAR}>No pillar (Ask Me Anything)</option>
@@ -69,9 +68,9 @@ export function ContentTypeSelects({ pillar, category, onChange, takenCategories
         </select>
       </label>
       <label className="block" htmlFor={`${idPrefix}-category`}>
-        <span className="text-xs font-semibold" style={{ color: "#888" }}>Content category</span>
+        <span className="type-body-sb-xs text-muted">Content category</span>
         <select id={`${idPrefix}-category`} value={categoryValue} disabled={disabled}
-          onChange={(e) => pickCategory(e.target.value)} className="w-full mt-1.5" style={selectStyle}>
+          onChange={(e) => pickCategory(e.target.value)} className="field mt-1.5">
           <option value="">Choose a category</option>
           {groups.length === 1
             ? categoriesFor(groups[0]).map((c) => (

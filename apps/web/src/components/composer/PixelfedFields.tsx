@@ -47,10 +47,10 @@ export function PixelfedFields({ sensitive, onSensitiveChange, visibility, onVis
           role="switch"
           aria-checked={sensitive}
           onClick={() => onSensitiveChange(!sensitive)}
-          className="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none"
+          className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-hidden"
           style={{ backgroundColor: sensitive ? "#ff8c00" : "#2a2a2a" }}>
           <span
-            className="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200"
+            className="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition duration-200"
             style={{ transform: sensitive ? "translateX(16px)" : "translateX(0)" }}
           />
         </button>

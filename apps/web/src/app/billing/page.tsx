@@ -263,7 +263,7 @@ function CancelModal({ onConfirm, onClose, loading }: {
               onChange={e => setFeedback(e.target.value)}
               rows={3}
               placeholder="Help us improve Posthive…"
-              className="w-full rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-white/10"
+              className="w-full rounded-xl px-4 py-3 text-sm resize-none focus:outline-hidden focus:ring-1 focus:ring-white/10"
               style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
             />
           </div>
@@ -379,7 +379,7 @@ function BillingContent() {
   if (!billingEnabled) {
     return (
       <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
-        <div className="flex items-center pl-16 pr-4 md:px-8 flex-shrink-0"
+        <div className="flex items-center pl-16 pr-4 md:px-8 shrink-0"
           style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#111111" }}>
           <div>
             <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Billing</h1>
@@ -416,7 +416,7 @@ function BillingContent() {
       )}
 
       {/* Header */}
-      <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
+      <div className="pl-16 pr-4 md:px-8 shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
         <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Billing & Plans</h1>
           <p className="text-xs mt-0.5 truncate hidden sm:block" style={{ color: "#aaaaaa" }}>
@@ -431,7 +431,7 @@ function BillingContent() {
         {success && (
           <div className="flex items-center gap-3 px-5 py-4 rounded-2xl"
             style={{ backgroundColor: "#052e16", border: "1px solid #14532d" }}>
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="#4ade80" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 shrink-0" fill="none" stroke="#4ade80" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             <div>
@@ -458,7 +458,7 @@ function BillingContent() {
         {isOnHold && (
           <div className="flex items-start gap-3 px-5 py-4 rounded-2xl"
             style={{ backgroundColor: "#1f0a0a", border: "1px solid #7f1d1d" }}>
-            <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="#f87171" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="#f87171" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
@@ -474,7 +474,7 @@ function BillingContent() {
         {isCancelled && (
           <div className="flex items-start gap-3 px-5 py-4 rounded-2xl"
             style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-            <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="#555" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="#555" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -529,7 +529,7 @@ function BillingContent() {
               </div>
               {isActive && hasDodoSub && !isCancelling && isOwner && (
                 <a href="https://app.dodopayments.com" target="_blank" rel="noreferrer"
-                  className="flex-shrink-0 text-xs font-medium px-4 py-2 rounded-xl transition-opacity hover:opacity-70"
+                  className="shrink-0 text-xs font-medium px-4 py-2 rounded-xl transition-opacity hover:opacity-70"
                   style={{ backgroundColor: "#161616", color: "#999", border: "1px solid #555" }}>
                   Manage ↗
                 </a>
@@ -540,7 +540,7 @@ function BillingContent() {
             {(isCancelling || cancelDone) && (
               <div className="flex items-start gap-3 px-4 py-3 rounded-xl mb-4"
                 style={{ backgroundColor: "#1c1209", border: "1px solid #7c2d1230" }}>
-                <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="#fb923c" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="#fb923c" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -583,11 +583,11 @@ function BillingContent() {
         {/* Skeleton */}
         {loading && (
           <div className="rounded-2xl p-6 animate-pulse" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-            <div className="h-3 w-20 rounded mb-3" style={{ backgroundColor: "#2a2a2a" }} />
-            <div className="h-7 w-36 rounded mb-2" style={{ backgroundColor: "#2a2a2a" }} />
+            <div className="h-3 w-20 rounded-sm mb-3" style={{ backgroundColor: "#2a2a2a" }} />
+            <div className="h-7 w-36 rounded-sm mb-2" style={{ backgroundColor: "#2a2a2a" }} />
             <div className="mt-5 pt-5 space-y-3" style={{ borderTop: "1px solid #2a2a2a" }}>
-              <div className="h-2 w-full rounded" style={{ backgroundColor: "#2a2a2a" }} />
-              <div className="h-2 w-full rounded" style={{ backgroundColor: "#2a2a2a" }} />
+              <div className="h-2 w-full rounded-sm" style={{ backgroundColor: "#2a2a2a" }} />
+              <div className="h-2 w-full rounded-sm" style={{ backgroundColor: "#2a2a2a" }} />
             </div>
           </div>
         )}
@@ -693,12 +693,12 @@ function BillingContent() {
                       {plan.features.map((f) => (
                         <li key={f.text} className="flex items-start gap-2.5">
                           {f.included ? (
-                            <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                               style={{ color: plan.color }}>
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                             </svg>
                           ) : (
-                            <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                               style={{ color: "#3a3a3a" }}>
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                             </svg>

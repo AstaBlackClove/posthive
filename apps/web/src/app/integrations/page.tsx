@@ -203,7 +203,7 @@ export default function IntegrationsPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
+      <div className="pl-16 pr-4 md:px-8 shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
         <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Integrations</h1>
           <p className="text-xs mt-0.5 hidden sm:block" style={{ color: "#888" }}>Connect Posthive to your tools and workflows</p>
@@ -251,7 +251,7 @@ export default function IntegrationsPage() {
                     <code style={{ fontSize: 12, color: "#a7f3d0", fontFamily: "monospace", flex: 1, wordBreak: "break-all" }}>{newKeyRaw}</code>
                     <button
                       onClick={() => { navigator.clipboard.writeText(newKeyRaw); toast("Copied!", "success"); }}
-                      className="flex items-center gap-1.5 flex-shrink-0"
+                      className="flex items-center gap-1.5 shrink-0"
                       style={{ ...btnPrimary, padding: "5px 10px", fontSize: 12 }}>
                       <CopyIcon /> Copy
                     </button>
@@ -306,7 +306,7 @@ export default function IntegrationsPage() {
               </div>
             </div>
             {!webhookLocked && (
-              <div className="flex items-center gap-1.5 flex-shrink-0 ml-4" style={{ marginTop: 2 }}>
+              <div className="flex items-center gap-1.5 shrink-0 ml-4" style={{ marginTop: 2 }}>
                 <div style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: webhookConnected ? "#22c55e" : "#333" }} />
                 <span style={{ fontSize: 11, color: webhookConnected ? "#4ade80" : "#555" }}>
                   {webhookConnected ? "Connected" : "Not connected"}

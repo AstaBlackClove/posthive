@@ -27,19 +27,13 @@ export function Modal({ open, onClose, children, maxWidth = 1100, onPaste }: Mod
 
   return createPortal(
     <div
-      className="modal-backdrop fixed inset-0 z-[1000] flex items-center justify-center p-4"
+      className="modal-backdrop fixed inset-0 z-1000 flex items-center justify-center p-4"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="modal-panel relative w-full flex flex-col rounded-2xl overflow-hidden"
+        className="modal-panel relative flex w-full max-w-(--modal-w) max-h-[90vh] flex-col overflow-hidden rounded-2xl border border-border bg-bg shadow-2xl"
         onPaste={onPaste}
-        style={{
-          maxWidth,
-          maxHeight: "90vh",
-          backgroundColor: "#0a0a0a",
-          border: "1px solid #2a2a2a",
-          boxShadow: "0 25px 80px rgba(0,0,0,0.8)",
-        }}
+        style={{ "--modal-w": `${maxWidth}px` } as React.CSSProperties}
       >
         {children}
       </div>

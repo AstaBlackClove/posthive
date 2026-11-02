@@ -69,7 +69,7 @@ function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] ?? { label: status, dot: "bg-gray-400", badge: "bg-stone-100 text-stone-600 border-stone-200" };
   return (
     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border ${cfg.badge}`}>
-      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
       {cfg.label}
     </span>
   );
@@ -224,20 +224,20 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
         <div className="flex items-start gap-3">
           {/* Checkbox */}
           {onToggleSelect && (
-            <div className="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" style={selected ? { opacity: 1 } : {}}>
+            <div className="shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" style={selected ? { opacity: 1 } : {}}>
               <input
                 type="checkbox"
                 checked={!!selected}
                 onChange={(e) => { e.stopPropagation(); onToggleSelect(); }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-3.5 h-3.5 rounded cursor-pointer accent-indigo-500"
+                className="w-3.5 h-3.5 rounded-sm cursor-pointer accent-indigo-500"
               />
             </div>
           )}
-          <div className="flex items-center gap-1.5 mt-0.5 flex-shrink-0">
+          <div className="flex items-center gap-1.5 mt-0.5 shrink-0">
             {job.targets.map((t) => (
               <span key={t.id} title={`${t.account?.displayName ?? t.accountId} (${t.account?.platform ?? "unknown"})`}
-                className="relative flex-shrink-0">
+                className="relative shrink-0">
                 {t.account?.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={t.account.avatarUrl} alt={t.account.displayName}
@@ -271,7 +271,7 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
           </div>
 
           {/* Action buttons */}
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <div className="flex flex-col items-end gap-2 shrink-0">
             <div className="flex items-center gap-1.5">
               <StatusBadge status={job.status} />
               {isDraft && job.approvalStatus && (
@@ -383,7 +383,7 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
 
         {/* Time row */}
         <div className="mt-3 flex items-center gap-1.5">
-          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "#555" }}>
+          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: "#555" }}>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span className="text-xs" style={{ color: isPast ? "#555" : "#888" }}>{formatScheduled()}</span>
@@ -944,16 +944,16 @@ export default function JobsPage() {
 
 
       {/* Top bar */}
-      <div className="flex items-center justify-between pl-16 pr-4 md:px-8 flex-shrink-0"
+      <div className="flex items-center justify-between pl-16 pr-4 md:px-8 shrink-0"
         style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#111111" }}>
         <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Posts</h1>
           <p className="text-xs mt-0.5 flex items-center gap-1.5 truncate" style={{ color: "#888888" }}>
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block flex-shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block shrink-0" />
             {lastRefresh ? `Live · updated ${formatTime(lastRefresh, { seconds: true })}` : "Connecting…"}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {canEditContentAccess && (
             <>
               <button onClick={() => router.push("/jobs/import")}
@@ -978,7 +978,7 @@ export default function JobsPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-4 md:px-8 py-3 flex-shrink-0 flex-wrap"
+      <div className="flex items-center gap-3 px-4 md:px-8 py-3 shrink-0 flex-wrap"
         style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
 
         <div className="flex gap-0.5 p-1 rounded-xl" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
@@ -1013,7 +1013,7 @@ export default function JobsPage() {
                   style={filter === f.id
                     ? { backgroundColor: f.activeBg, color: f.activeColor, border: `1px solid ${f.dot ?? "#3a3a3a"}40` }
                     : { backgroundColor: "transparent", border: "1px solid #2a2a2a" }}>
-                  {f.dot && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: filter === f.id ? f.dot : "#333" }} />}
+                  {f.dot && <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: filter === f.id ? f.dot : "#333" }} />}
                   {f.label}
                   <span className="ml-0.5 tabular-nums" style={{ opacity: 0.6, fontSize: "0.65rem" }}>{counts[f.id]}</span>
                 </button>
@@ -1044,14 +1044,14 @@ export default function JobsPage() {
 
       {/* Bulk action bar — content creation roles only */}
       {viewTab === "list" && canEditContentAccess && (
-        <div className="flex items-center gap-3 px-4 md:px-8 py-2.5 flex-shrink-0 flex-wrap" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
+        <div className="flex items-center gap-3 px-4 md:px-8 py-2.5 shrink-0 flex-wrap" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
           {/* Select all / deselect */}
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={filteredJobs.length > 0 && filteredJobs.every(j => selectedIds.has(j.id))}
               onChange={(e) => e.target.checked ? selectAll(filteredJobs.map(j => j.id)) : clearSelection()}
-              className="w-3.5 h-3.5 rounded accent-indigo-500 cursor-pointer"
+              className="w-3.5 h-3.5 rounded-sm accent-indigo-500 cursor-pointer"
             />
             <span className="text-xs" style={{ color: "#555" }}>
               {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
@@ -1099,7 +1099,7 @@ export default function JobsPage() {
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors hover:opacity-80"
                   style={{ backgroundColor: "#1a0a0a", color, border: `1px solid ${color}30` }}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
                   {label} ({count})
                 </button>
               );
@@ -1116,7 +1116,7 @@ export default function JobsPage() {
         )}
 
         {viewTab === "calendar" && (
-          <div className="rounded-2xl shadow-sm p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+          <div className="rounded-2xl shadow-xs p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
             {loading
               ? <div className="text-center py-20 text-sm" style={{ color: "#888888" }}>Loading…</div>
               : <CalendarView jobs={filteredJobs} onReschedule={reschedule} onEdit={setEditingJob} readOnly={!canEditContentAccess} />

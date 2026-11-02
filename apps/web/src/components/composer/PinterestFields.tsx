@@ -33,7 +33,7 @@ export function PinterestFields({
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder="Short, catchy pin title"
           maxLength={100}
-          className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+          className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 transition"
           style={{ borderColor: pinterestTitle.length > 100 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
         />
       </div>
@@ -49,7 +49,7 @@ export function PinterestFields({
           placeholder="What is this Pin about?"
           rows={3}
           maxLength={500}
-          className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+          className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 transition"
           style={{ borderColor: pinterestDescription.length > 500 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
         />
       </div>

@@ -57,14 +57,14 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0) scale(1)" : "translateY(8px) scale(0.97)",
       }}>
-      <div className="w-5 h-5 flex-shrink-0 mt-0.5 rounded-full flex items-center justify-center"
+      <div className="w-5 h-5 shrink-0 mt-0.5 rounded-full flex items-center justify-center"
         style={{ backgroundColor: s.icon + "20" }}>
         <svg className="w-3 h-3" fill="none" stroke={s.icon} viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}>
           <path d={ICONS[toast.type]} />
         </svg>
       </div>
       <p className="text-sm flex-1 leading-snug" style={{ color: s.text }}>{toast.message}</p>
-      <button onClick={() => onDismiss(toast.id)} className="flex-shrink-0 mt-0.5 hover:opacity-60 transition-opacity"
+      <button onClick={() => onDismiss(toast.id)} className="shrink-0 mt-0.5 hover:opacity-60 transition-opacity"
         style={{ color: s.icon }}>
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -95,7 +95,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast, success, error, warning }}>
       {children}
       {/* Toast stack — bottom right */}
-      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 items-end pointer-events-none">
+      <div className="fixed bottom-6 right-6 z-100 flex flex-col gap-2 items-end pointer-events-none">
         {toasts.map((t) => (
           <div key={t.id} className="pointer-events-auto">
             <ToastItem toast={t} onDismiss={dismiss} />

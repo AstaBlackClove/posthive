@@ -15,7 +15,7 @@ function Section({ title, description, icon, children }: { title: string; descri
   return (
     <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
       <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
           style={{ backgroundColor: "#5b63d315", border: "1px solid #5b63d330" }}>
           {icon}
         </div>
@@ -156,7 +156,7 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="pl-16 pr-4 md:px-8 flex-shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
+      <div className="pl-16 pr-4 md:px-8 shrink-0 flex items-center" style={{ height: 65, borderBottom: "1px solid #2a2a2a" }}>
         <div className="min-w-0">
           <h1 className="text-lg font-bold" style={{ color: "#ededed" }}>Settings</h1>
           <p className="text-xs mt-0.5 hidden sm:block" style={{ color: "#aaaaaa" }}>Manage your account and preferences</p>
@@ -234,7 +234,7 @@ export default function SettingsPage() {
         <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
           {/* Section header */}
           <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
               style={{ backgroundColor: "#f8717115", border: "1px solid #f8717130" }}>
               <svg className="w-4 h-4" fill="none" stroke="#f87171" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -258,7 +258,7 @@ export default function SettingsPage() {
                     </p>
                     {isLastWorkspace && (
                       <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: "#f87171" }}>
-                        <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>
+                        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>
                         Cannot delete your only workspace
                       </p>
                     )}
@@ -266,7 +266,7 @@ export default function SettingsPage() {
                   <button
                     onClick={() => setShowDeleteWorkspace(true)}
                     disabled={isLastWorkspace}
-                    className="text-xs font-semibold px-4 py-2 rounded-xl flex-shrink-0 self-start transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="text-xs font-semibold px-4 py-2 rounded-xl shrink-0 self-start transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
                     style={{ backgroundColor: "#f8717112", color: "#f87171", border: "1px solid #f8717130" }}>
                     Delete workspace
                   </button>
@@ -291,7 +291,7 @@ export default function SettingsPage() {
                       toast(err instanceof Error ? err.message : "Failed to leave workspace", "error");
                     }
                   }}
-                  className="text-xs font-semibold px-4 py-2 rounded-xl flex-shrink-0 self-start"
+                  className="text-xs font-semibold px-4 py-2 rounded-xl shrink-0 self-start"
                   style={{ backgroundColor: "#f8717112", color: "#f87171", border: "1px solid #f8717130" }}>
                   Leave workspace
                 </button>
@@ -306,7 +306,7 @@ export default function SettingsPage() {
                 </p>
               </div>
               <button onClick={() => setShowDelete(true)}
-                className="text-xs font-semibold px-4 py-2 rounded-xl flex-shrink-0 self-start"
+                className="text-xs font-semibold px-4 py-2 rounded-xl shrink-0 self-start"
                 style={{ backgroundColor: "#7f1d1d", color: "#fca5a5", border: "1px solid #991b1b" }}>
                 Delete account
               </button>

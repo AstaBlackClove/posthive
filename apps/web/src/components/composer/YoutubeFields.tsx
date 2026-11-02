@@ -76,7 +76,7 @@ export function YoutubeFields({
 
       {youtubeShortsWarning && (
         <p className="text-xs font-medium mb-2.5 flex items-start gap-1.5" style={{ color: "#f59e0b" }}>
-          <span className="flex-shrink-0">⚠️</span>
+          <span className="shrink-0">⚠️</span>
           <span>{youtubeShortsWarning} YouTube classifies Shorts by the video itself (vertical, ≤60s) — #Shorts alone won't override that.</span>
         </p>
       )}
@@ -90,7 +90,7 @@ export function YoutubeFields({
           value={youtubeTitle}
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder="Video title"
-          className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+          className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 transition"
           style={{ borderColor: youtubeTitle.length > 100 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
         />
       </div>
@@ -105,7 +105,7 @@ export function YoutubeFields({
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder="Video description…"
           rows={3}
-          className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+          className="w-full resize-none rounded-xl border px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 transition"
           style={{ borderColor: youtubeDescription.length > 5000 ? "#fca5a5" : "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
         />
       </div>
@@ -144,7 +144,7 @@ export function YoutubeFields({
           value={youtubeTags}
           onChange={(e) => onTagsChange(e.target.value)}
           placeholder="e.g. tutorial, coding, javascript"
-          className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+          className="w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 transition"
           style={{ borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }}
         />
         <p className="text-[10px] mt-1" style={{ color: "#777" }}>Helps with YouTube search discovery.</p>
@@ -159,10 +159,10 @@ export function YoutubeFields({
         <button
           type="button"
           onClick={() => onMadeForKidsChange(!youtubeMadeForKids)}
-          className="relative inline-flex h-5 w-9 flex-shrink-0 rounded-full transition-colors"
+          className="relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors"
           style={{ backgroundColor: youtubeMadeForKids ? "#ff0000" : "#2a2a2a" }}>
           <span
-            className="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform mt-0.5"
+            className="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform mt-0.5"
             style={{ transform: youtubeMadeForKids ? "translateX(18px)" : "translateX(2px)" }}
           />
         </button>
@@ -179,7 +179,7 @@ export function YoutubeFields({
         </div>
         <div className="flex items-center gap-3">
           {(youtubeThumbnailPreview ?? youtubeThumbnailUrl) ? (
-            <div className="relative group flex-shrink-0 w-28 h-16 rounded-lg overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
+            <div className="relative group shrink-0 w-28 h-16 rounded-lg overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={youtubeThumbnailPreview ?? youtubeThumbnailUrl!}

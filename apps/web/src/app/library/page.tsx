@@ -1136,7 +1136,7 @@ function SettingsPanel({ library, accounts, onClose, onSaved, onError, onSuccess
               {accounts.map(a => {
                 const checked = form.accountIds.includes(a.id);
                 return (
-                  <label key={a.id} className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/5 transition-colors">
+                  <label key={a.id} className="flex items-center gap-2 cursor-pointer rounded-sm px-2 py-1.5 hover:bg-white/5 transition-colors">
                     <input
                       type="checkbox" checked={checked}
                       onChange={() => setForm(f => ({
@@ -1299,7 +1299,7 @@ function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClos
                         }}
                       >
                         {/* Avatar with platform badge */}
-                        <div className="relative flex-shrink-0">
+                        <div className="relative shrink-0">
                           {a.avatarUrl
                             // eslint-disable-next-line @next/next/no-img-element
                             ? <img src={a.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
@@ -1321,7 +1321,7 @@ function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClos
                         </div>
                         {/* Checkmark */}
                         {checked && (
-                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke={color} viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 shrink-0" fill="none" stroke={color} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                           </svg>
                         )}

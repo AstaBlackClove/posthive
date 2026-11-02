@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Caprasimo, Figtree } from "next/font/google";
+import { Inter, KoHo } from "next/font/google";
 import "./globals.css";
 
-const caprasimo = Caprasimo({
-  weight: "400",
+// Font families are consumed in globals.css via --ff-koho / --ff-inter
+const koho = KoHo({
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
-  variable: "--font-caprasimo",
+  variable: "--font-koho",
   display: "swap",
 });
 
-const figtree = Figtree({
-  weight: ["400", "500", "600", "700", "800"],
+const inter = Inter({
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
-  variable: "--font-figtree",
+  variable: "--font-inter",
   display: "swap",
 });
 import { Analytics } from "@vercel/analytics/next";
@@ -108,7 +109,7 @@ const organizationSchema = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`h-full ${caprasimo.variable} ${figtree.variable}`} style={{ backgroundColor: "var(--color-bg)" }}>
+    <html lang="en" className={`h-full ${koho.variable} ${inter.variable}`}>
       <head suppressHydrationWarning>
         <script
           type="application/ld+json"
