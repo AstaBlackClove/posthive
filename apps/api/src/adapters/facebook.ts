@@ -20,6 +20,8 @@ const GRAPH = "https://graph.facebook.com/v21.0";
 
 // Facebook only accepts JPEG and PNG for photo posts
 const FB_SUPPORTED = new Set(["image/jpeg", "image/png"]);
+// Above this, Graph API rejects large photo uploads with "reduce the amount of data" — stay well under its ~10MB cap
+const MAX_FB_PHOTO_BYTES = 8_000_000;
 
 let storageAdapter: StorageAdapter | null = null;
 export function setFacebookStorage(s: StorageAdapter): void { storageAdapter = s; }
@@ -87,6 +89,16 @@ async function uploadPhotoBuffer(
   if (!FB_SUPPORTED.has(mimeType)) {
     const sharp = (await import("sharp")).default;
     buffer = await sharp(buffer).jpeg({ quality: 92 }).toBuffer();
+    mimeType = "image/jpeg";
+  }
+
+  // Oversized images get "reduce the amount of data" from Graph API — downscale to fit
+  if (buffer.length > MAX_FB_PHOTO_BYTES) {
+    const sharp = (await import("sharp")).default;
+    buffer = await sharp(buffer)
+      .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 85 })
+      .toBuffer();
     mimeType = "image/jpeg";
   }
 
