@@ -691,7 +691,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
                       <button type="button" onClick={() => toggleOverride(a.id, text, commentText)}
                         className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 text-left", hasOverride && "bg-brand-100")}>
                         <PlatformIcon platform={a.platform} size={14} />
-                        <span className={cn("type-body-m-xs flex-1", hasOverride ? "text-brand-800" : "text-neutral-500")}>{a.displayName}</span>
+                        <span className={cn("type-body-m-xs flex-1", hasOverride ? "text-brand-800" : "text-muted")}>{a.displayName}</span>
                         {hasOverride ? (
                           <span className="type-body-sb-xxs px-1.5 py-0.5 rounded-full bg-brand-200 text-brand-800">Custom ✓</span>
                         ) : (
