@@ -21,9 +21,6 @@ interface DesignFile extends UploadedFile {
   fileSize: number | null;
 }
 
-const inputStyle = { background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "9px 12px", fontSize: 14, color: "#ededed" } as const;
-const secondaryButton = { border: "1px solid #2a2a2a", color: "#ededed" } as const;
-
 function discardUpload(url: string) {
   fetch(`${API_BASE}/upload`, { method: "DELETE", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) }).catch(() => {});
 }
@@ -151,92 +148,87 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
   const otherTaken = new Set([...takenCategories].filter((c) => c !== template?.category));
 
   return (
-    <div className="fixed inset-0 z-1000 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.75)" }}
+    <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/75 p-4"
       onMouseDown={(e) => { if (e.target === e.currentTarget && !saving) close(); }}>
-      <style>{`.template-editor :focus-visible { outline: 2px solid #5b63d3; outline-offset: 2px; }`}</style>
+      <style>{`.template-editor :focus-visible { outline: 2px solid var(--color-brand-800); outline-offset: 2px; }`}</style>
       <div role="dialog" aria-modal="true" aria-label={template ? "Edit template" : "New template"}
-        className="template-editor w-full flex flex-col overflow-hidden"
-        style={{ maxWidth: 640, maxHeight: "92vh", background: "#111111", border: "1px solid #2a2a2a", borderRadius: 16 }}>
+        className="template-editor card w-full max-w-160 max-h-[92vh] flex flex-col overflow-hidden">
 
-        <div className="flex items-start gap-3 px-6 pt-5 pb-4 shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+        <div className="flex items-start gap-3 px-6 pt-5 pb-4 shrink-0 border-b border-border">
           <div className="flex-1">
-            <h2 className="text-base font-bold" style={{ color: "#ededed" }}>{template ? "Edit template" : "New template"}</h2>
-            <p className="text-xs mt-1" style={{ color: "#888" }}>
+            <h2 className="type-body-sb-m text-fg">{template ? "Edit template" : "New template"}</h2>
+            <p className="type-body-r-xs mt-1 text-muted">
               The design for one content type. Marketing opens it as a reference when making a post; it is never attached to posts.
             </p>
           </div>
           <button type="button" onClick={close} disabled={saving} aria-label="Close"
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-            style={{ color: "#888", border: "1px solid #2a2a2a" }}>✕</button>
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-border text-muted">✕</button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
           <section>
             <ContentTypeSelects idPrefix="template" pillar={type.pillar} category={type.category}
-              onChange={setType} takenCategories={otherTaken} selectStyle={inputStyle} />
-            <p className="text-xs mt-1.5" style={{ color: "#888" }}>One template per category.</p>
+              onChange={setType} takenCategories={otherTaken} />
+            <p className="type-body-r-xs mt-1.5 text-muted">One template per category.</p>
           </section>
 
           <section>
-            <h3 className="text-sm font-semibold" style={{ color: "#ededed" }}>Design file</h3>
-            <p className="text-xs mt-0.5" style={{ color: "#888" }}>
+            <h3 className="type-body-sb-s text-fg">Design file</h3>
+            <p className="type-body-r-xs mt-0.5 text-muted">
               Figma file (.fig), up to 50 MB. In Figma use File → Save local copy.
             </p>
             {file ? (
-              <div className="flex items-center gap-3 mt-2 p-3 rounded-xl" style={{ border: "1px solid #2a2a2a", background: "#0a0a0a" }}>
-                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-sm shrink-0" style={{ background: "#1f1f1f", color: "#ededed" }}>FIG</span>
-                <a href={fileHref(file.url)} download={file.fileName} className="flex-1 min-w-0 text-sm truncate underline-offset-2 hover:underline" style={{ color: "#ededed" }}>
+              <div className="flex items-center gap-3 mt-2 p-3 rounded-xl border border-border bg-bg">
+                <span className="type-body-sb-xs px-1.5 py-0.5 rounded-sm shrink-0 bg-neutral-100 text-fg">FIG</span>
+                <a href={fileHref(file.url)} download={file.fileName} className="flex-1 min-w-0 type-body-r-s text-fg truncate underline-offset-2 hover:underline">
                   {file.fileName}
                 </a>
-                {file.fileSize ? <span className="text-xs shrink-0" style={{ color: "#888" }}>{formatBytes(file.fileSize)}</span> : null}
+                {file.fileSize ? <span className="type-body-r-xs shrink-0 text-muted">{formatBytes(file.fileSize)}</span> : null}
                 <button type="button" onClick={() => fileRef.current?.click()} disabled={busy}
-                  className="px-2.5 py-1 rounded-lg text-xs disabled:opacity-50" style={secondaryButton}>Replace</button>
+                  className="btn-secondary px-2.5 py-1 rounded-lg type-body-r-xs">Replace</button>
                 <button type="button" onClick={removeFile} disabled={busy} aria-label="Remove the design file"
-                  className="w-7 h-7 rounded-lg text-xs hover:text-red-400 disabled:opacity-50" style={{ border: "1px solid #2a2a2a", color: "#888" }}>✕</button>
+                  className="w-7 h-7 rounded-lg border border-border type-body-r-xs text-muted hover:text-red-600 disabled:opacity-50">✕</button>
               </div>
             ) : (
               <button type="button" onClick={() => fileRef.current?.click()} disabled={busy}
-                className="w-full mt-2 py-3 rounded-xl text-sm font-medium disabled:opacity-60"
-                style={{ border: "1px dashed #2a2a2a", color: "#ededed" }}>
+                className="w-full mt-2 py-3 dropzone bg-bg type-body-m-s text-fg hover:border-neutral-300 disabled:opacity-60">
                 {uploadingFile ? "Uploading…" : "Upload .fig file"}
               </button>
             )}
-            {file && uploadingFile && <p className="text-xs mt-1.5" style={{ color: "#888" }}>Uploading…</p>}
+            {file && uploadingFile && <p className="type-body-r-xs mt-1.5 text-muted">Uploading…</p>}
             <input ref={fileRef} type="file" accept=".fig" hidden onChange={(e) => uploadFile(e.target.files?.[0])} />
           </section>
 
           <label className="block">
-            <span className="text-sm font-semibold" style={{ color: "#ededed" }}>Link</span>
-            <span className="block text-xs mt-0.5" style={{ color: "#888" }}>
+            <span className="type-body-sb-s text-fg">Link</span>
+            <span className="block type-body-r-xs mt-0.5 text-muted">
               Link to the design, e.g. the Figma file. Optional when you upload the file.
             </span>
             <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value.slice(0, 2048))} type="url" inputMode="url"
-              placeholder="https://www.figma.com/design/…" className="w-full mt-1.5" style={inputStyle} />
+              placeholder="https://www.figma.com/design/…" className="field mt-1.5" />
           </label>
 
           <section>
-            <h3 className="text-sm font-semibold" style={{ color: "#ededed" }}>
-              Preview image <span className="text-xs font-normal" style={{ color: "#888" }}>Optional</span>
+            <h3 className="type-body-sb-s text-fg">
+              Preview image <span className="type-body-r-xs text-muted">Optional</span>
             </h3>
-            <p className="text-xs mt-0.5" style={{ color: "#888" }}>
+            <p className="type-body-r-xs mt-0.5 text-muted">
               Shown in the library and in Compose so Marketing recognises the layout. Never attached to posts.
             </p>
             {preview ? (
               <div className="flex items-end gap-3 mt-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={fileHref(preview.url)} alt="Template preview" className="rounded-lg object-cover"
-                  style={{ width: 96, height: 120, border: "1px solid #2a2a2a" }} />
+                <img src={fileHref(preview.url)} alt="Template preview" className="w-24 h-30 rounded-lg border border-border object-cover" />
                 <button type="button" onClick={() => previewRef.current?.click()} disabled={busy}
-                  className="px-2.5 py-1 rounded-lg text-xs disabled:opacity-50" style={secondaryButton}>
+                  className="btn-secondary px-2.5 py-1 rounded-lg type-body-r-xs">
                   {uploadingPreview ? "Uploading…" : "Replace"}
                 </button>
                 <button type="button" onClick={removePreview} disabled={busy}
-                  className="px-2.5 py-1 rounded-lg text-xs hover:text-red-400 disabled:opacity-50" style={{ border: "1px solid #2a2a2a", color: "#888" }}>Remove</button>
+                  className="px-2.5 py-1 rounded-lg border border-border type-body-r-xs text-muted hover:text-red-600 disabled:opacity-50">Remove</button>
               </div>
             ) : (
               <button type="button" onClick={() => previewRef.current?.click()} disabled={busy}
-                className="mt-2 px-3 py-2 rounded-xl text-sm disabled:opacity-60" style={{ border: "1px dashed #2a2a2a", color: "#ededed" }}>
+                className="mt-2 px-3 py-2 dropzone bg-bg type-body-r-s text-fg hover:border-neutral-300 disabled:opacity-60">
                 {uploadingPreview ? "Uploading…" : "Upload preview"}
               </button>
             )}
@@ -244,13 +236,10 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
           </section>
         </div>
 
-        <div className="flex items-center gap-3 px-6 py-4 shrink-0" style={{ borderTop: "1px solid #2a2a2a" }}>
-          <p role="alert" className="flex-1 text-xs" style={{ color: "#f87171" }}>{error}</p>
-          <button type="button" onClick={close} disabled={saving}
-            className="px-4 py-2 rounded-xl text-sm" style={{ border: "1px solid #2a2a2a", color: "#888" }}>Cancel</button>
-          <button type="button" onClick={save} disabled={saving || busy}
-            className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-gray-100 disabled:opacity-60"
-            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+        <div className="flex items-center gap-3 px-6 py-4 shrink-0 border-t border-border">
+          <p role="alert" className="flex-1 type-body-r-xs text-red-600">{error}</p>
+          <button type="button" onClick={close} disabled={saving} className="btn-secondary">Cancel</button>
+          <button type="button" onClick={save} disabled={saving || busy} className="btn-primary">
             {saving ? "Saving…" : template ? "Save changes" : "Save template"}
           </button>
         </div>
