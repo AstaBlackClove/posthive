@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "../lib/api";
+import { cn } from "../lib/cn";
 
 interface BillingStatus {
   planStatus: string;
@@ -32,20 +33,17 @@ export function TrialUrgentBanner() {
     ? "Your trial ends today."
     : `${days} day${days === 1 ? "" : "s"} left in your trial.`;
 
-  const bg = expired ? "#1f0a0a" : "#1c1500";
-  const border = expired ? "#7f1d1d" : "#78560a";
-  const textColor = expired ? "#f87171" : "#fbbf24";
-
   return (
     <div
-      className="flex items-center justify-between gap-4 px-4 py-2.5 text-xs font-medium"
-      style={{ backgroundColor: bg, borderBottom: `1px solid ${border}` }}
+      className={cn(
+        "flex items-center justify-between gap-4 border-b px-4 py-2.5 type-body-m-xs",
+        expired ? "border-red-200 bg-red-50 text-red-600" : "border-brand-400 bg-brand-100 text-brand-800",
+      )}
     >
-      <span style={{ color: textColor }}>{label}</span>
+      <span>{label}</span>
       <Link
         href="/billing"
-        className="shrink-0 px-3 py-1.5 rounded-lg font-semibold text-xs transition-opacity hover:opacity-80"
-        style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+        className="btn-primary shrink-0 rounded-lg px-3 py-1.5 type-body-sb-xs"
       >
         {expired ? "Upgrade now" : "Upgrade"}
       </Link>

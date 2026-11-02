@@ -30,9 +30,8 @@ export function PlanGuard({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return (
-      <div className="flex h-full items-center justify-center" style={{ backgroundColor: "#0a0a0a" }}>
-        <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
-          style={{ borderColor: "#5b63d3", borderTopColor: "transparent" }} />
+      <div className="flex h-full items-center justify-center bg-bg">
+        <div className="w-5 h-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     );
   }

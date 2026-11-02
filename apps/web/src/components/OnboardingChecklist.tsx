@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import { cn } from "@/lib/cn";
 
 const DISMISS_KEY = "ph_ob_done";
 const COLLAPSE_KEY = "ph_ob_collapsed";
-const accent = "#5b63d3";
 
 const STEPS = [
   {
@@ -98,44 +98,28 @@ export function OnboardingChecklist() {
     return (
       <button
         onClick={() => toggleCollapse(false)}
-        style={{
-          position: "fixed",
-          bottom: 85,
-          right: 24,
-          zIndex: 50,
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "10px 16px",
-          borderRadius: 14,
-          background: "#161616",
-          border: `1px solid ${accent}55`,
-          boxShadow: `0 4px 20px rgba(91,99,211,0.25)`,
-          cursor: "pointer",
-          animation: animating ? "ph-slide-up 0.28s cubic-bezier(.32,1.2,.42,1) both" : "none",
-        }}
+        className={cn(
+          "fixed bottom-21 right-6 z-50 flex cursor-pointer items-center gap-2.5 rounded-2xl border border-brand-300 bg-surface px-4 py-2.5 shadow-lg",
+          animating && "animate-[ph-slide-up_0.28s_cubic-bezier(.32,1.2,.42,1)_both]",
+        )}
       >
-        <div style={{
-          width: 20, height: 20, borderRadius: "50%",
-          background: allDone ? "#10B981" : accent,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0,
-        }}>
+        <div className={cn(
+          "flex size-5 shrink-0 items-center justify-center rounded-full",
+          allDone ? "bg-green-500 text-white" : "bg-accent text-accent-fg",
+        )}>
           <svg width="10" height="10" fill="none" viewBox="0 0 10 10">
-            <path d="M2 5l2.5 2.5L8 3" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#ededed" }}>Getting started</span>
-        <span style={{
-          fontSize: 12, fontWeight: 700,
-          padding: "2px 8px", borderRadius: 20,
-          background: allDone ? "rgba(16,185,129,0.15)" : `${accent}22`,
-          color: allDone ? "#10B981" : accent,
-        }}>
+        <span className="type-body-sb-s text-fg">Getting started</span>
+        <span className={cn(
+          "rounded-full px-2 py-0.5 type-body-sb-xs",
+          allDone ? "bg-green-50 text-green-700" : "bg-brand-100 text-brand-800",
+        )}>
           {completedCount}/{total}
         </span>
         {/* Expand chevron */}
-        <svg width="12" height="12" fill="none" viewBox="0 0 12 12" style={{ color: "#555", marginLeft: 2 }}>
+        <svg width="12" height="12" fill="none" viewBox="0 0 12 12" className="ml-0.5 text-neutral-500">
           <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <style>{`
@@ -154,19 +138,10 @@ export function OnboardingChecklist() {
 
   /* Expanded panel */
   return (
-    <div style={{
-      position: "fixed",
-      bottom: 85,
-      right: 24,
-      zIndex: 50,
-      width: 300,
-      borderRadius: 18,
-      overflow: "hidden",
-      background: "#141414",
-      border: `1px solid #2a2a2a`,
-      boxShadow: "0 12px 40px rgba(0,0,0,0.6)",
-      animation: animating ? "ph-slide-down 0.3s cubic-bezier(.32,1.2,.42,1) both" : "none",
-    }}>
+    <div className={cn(
+      "card fixed bottom-21 right-6 z-50 w-75 overflow-hidden shadow-xl",
+      animating && "animate-[ph-slide-down_0.3s_cubic-bezier(.32,1.2,.42,1)_both]",
+    )}>
       <style>{`
         @keyframes ph-slide-up {
           from { opacity: 0; transform: translateY(16px) scale(0.94); }
@@ -179,25 +154,19 @@ export function OnboardingChecklist() {
       `}</style>
 
       {/* Header */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "14px 18px", borderBottom: "1px solid #222",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#ededed" }}>Getting started</span>
-          <span style={{
-            fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
-            background: allDone ? "rgba(16,185,129,0.15)" : `${accent}22`,
-            color: allDone ? "#10B981" : accent,
-          }}>
+      <div className="flex items-center justify-between border-b border-border px-4.5 py-3.5">
+        <div className="flex items-center gap-2.5">
+          <span className="type-body-sb-s text-fg">Getting started</span>
+          <span className={cn(
+            "rounded-full px-2 py-0.5 type-body-sb-xs",
+            allDone ? "bg-green-50 text-green-700" : "bg-brand-100 text-brand-800",
+          )}>
             {completedCount}/{total}
           </span>
         </div>
         <button
           onClick={() => toggleCollapse(true)}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: 6, color: "#444", borderRadius: 6 }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#888")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#444")}
+          className="cursor-pointer rounded-md p-1.5 text-neutral-500 hover:text-muted"
         >
           <svg width="14" height="14" fill="none" viewBox="0 0 12 12">
             <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -206,77 +175,61 @@ export function OnboardingChecklist() {
       </div>
 
       {/* Progress bar */}
-      <div style={{ height: 3, background: "#222" }}>
-        <div style={{
-          height: "100%",
-          background: allDone ? "#10B981" : accent,
-          width: `${(completedCount / total) * 100}%`,
-          transition: "width 0.5s ease",
-          borderRadius: "0 2px 2px 0",
-        }} />
+      <div className="h-1 bg-neutral-100">
+        <div
+          className={cn(
+            "h-full w-(--w) rounded-r-xs transition-[width] duration-500",
+            allDone ? "bg-green-500" : "bg-accent",
+          )}
+          style={{ "--w": `${(completedCount / total) * 100}%` } as React.CSSProperties}
+        />
       </div>
 
       {/* Steps */}
-      <div ref={bodyRef} style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 6 }}>
+      <div ref={bodyRef} className="flex flex-col gap-1.5 px-4.5 py-4">
         {STEPS.map((step) => {
           const isDone = done[step.id];
           const isActive = step.id === activeStepId;
           return (
-            <div key={step.id} style={{
-              display: "flex", alignItems: "flex-start", gap: 12,
-              padding: "10px 12px",
-              borderRadius: 12,
-              border: isActive ? `1.5px solid ${accent}88` : "1.5px solid transparent",
-              background: isActive ? `${accent}18` : isDone ? "transparent" : "#1a1a1a",
-              transition: "all 0.2s ease",
-            }}>
+            <div key={step.id} className={cn(
+              "flex items-start gap-3 rounded-xl border-2 px-3 py-2.5 transition-all duration-200",
+              isActive ? "border-brand-300 bg-brand-100" : isDone ? "border-transparent" : "border-transparent bg-bg",
+            )}>
               {/* Circle */}
-              <div style={{
-                flexShrink: 0,
-                width: 22, height: 22, borderRadius: "50%",
-                marginTop: 1,
-                background: isDone ? "#10B981" : isActive ? `${accent}33` : "transparent",
-                border: isDone ? "none" : isActive ? `2px solid ${accent}` : "2px solid #383838",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.2s",
-                boxShadow: isActive ? `0 0 0 3px ${accent}22` : "none",
-              }}>
+              <div className={cn(
+                "mt-px flex size-5.5 shrink-0 items-center justify-center rounded-full transition-all duration-200",
+                isDone ? "bg-green-500 text-white" : isActive ? "border-2 border-accent bg-brand-200 ring-3 ring-brand-200" : "border-2 border-neutral-300",
+              )}>
                 {isDone && (
                   <svg width="11" height="11" fill="none" viewBox="0 0 10 10">
-                    <path d="M2 5l2.5 2.5L8 3" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
                 {isActive && !isDone && (
-                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: accent }} />
+                  <div className="size-1.5 rounded-full bg-accent" />
                 )}
               </div>
 
               {/* Text */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{
-                  fontSize: 13, fontWeight: isActive ? 600 : 500, lineHeight: 1.35,
-                  color: isDone ? "#444" : isActive ? "#fff" : "#aaa",
-                  textDecoration: isDone ? "line-through" : "none",
-                  margin: 0,
-                }}>
+              <div className="min-w-0 flex-1">
+                <p className={cn(
+                  isActive ? "type-body-sb-s" : "type-body-m-s",
+                  isDone ? "text-neutral-500 line-through" : isActive ? "text-fg" : "text-muted",
+                )}>
                   {step.title}
                 </p>
                 {!isDone && (
-                  <p style={{ fontSize: 12, color: isActive ? "#888" : "#555", margin: "3px 0 0", lineHeight: 1.4 }}>
+                  <p className={cn("mt-0.5 type-body-r-xs", isActive ? "text-muted" : "text-neutral-500")}>
                     {step.hint}
                   </p>
                 )}
                 {!isDone && step.action && (
                   <button
                     onClick={() => router.push(step.action!)}
-                    style={{
-                      marginTop: 6, fontSize: 12, fontWeight: 600,
-                      color: isActive ? accent : "#555",
-                      background: "none", border: "none",
-                      cursor: "pointer", padding: 0,
-                      textDecoration: "underline",
-                      textUnderlineOffset: 2,
-                    }}
+                    className={cn(
+                      "mt-1.5 cursor-pointer type-body-sb-xs underline underline-offset-2",
+                      isActive ? "text-brand-800" : "text-neutral-500",
+                    )}
                   >
                     {step.cta}
                   </button>
@@ -288,25 +241,16 @@ export function OnboardingChecklist() {
       </div>
 
       {/* Footer */}
-      <div style={{ padding: "4px 18px 14px", borderTop: "1px solid #1e1e1e" }}>
+      <div className="border-t border-border px-4.5 pt-1 pb-3.5">
         {allDone && (
-          <div style={{
-            borderRadius: 10, padding: "10px 14px", textAlign: "center",
-            background: "rgba(16,185,129,0.1)", marginBottom: 10, marginTop: 8,
-          }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#10B981", margin: 0 }}>You&apos;re all set! 🎉</p>
-            <p style={{ fontSize: 12, color: "#6ee7b7", margin: "3px 0 0" }}>Posthive is ready to post.</p>
+          <div className="mt-2 mb-2.5 rounded-xl bg-green-50 px-3.5 py-2.5 text-center">
+            <p className="type-body-sb-s text-green-700">You&apos;re all set! 🎉</p>
+            <p className="mt-0.5 type-body-r-xs text-green-700">Posthive is ready to post.</p>
           </div>
         )}
         <button
           onClick={dismiss}
-          style={{
-            width: "100%", fontSize: 12, textAlign: "center", cursor: "pointer",
-            background: "none", border: "none", color: "#383838", padding: "6px 0",
-            marginTop: 4,
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#666")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#383838")}
+          className="mt-1 w-full cursor-pointer py-1.5 text-center type-body-r-xs text-neutral-500 hover:text-muted"
         >
           Dismiss guide
         </button>
