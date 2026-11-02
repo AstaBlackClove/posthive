@@ -4,8 +4,6 @@ import type { Category } from "../lib/contentTypes";
 import { fileHref, formatBytes, isFigmaLink, isIncomplete, type DesignTemplate } from "../lib/templates";
 import { contentTypeLabel } from "./ContentTypeSelects";
 
-const linkStyle = { border: "1px solid #2a2a2a", color: "#ededed" } as const;
-
 // The design template for a post's content type, shown next to the post as a reference.
 // Its file and link are never attached to the post.
 export function DesignReferenceCard({ template, category, showPreview = false }: {
@@ -18,7 +16,7 @@ export function DesignReferenceCard({ template, category, showPreview = false }:
 
   if (!template) {
     return (
-      <p className="text-xs rounded-xl px-3 py-2.5" style={{ color: "#888", border: "1px dashed #2a2a2a" }}>
+      <p className="type-body-r-xs rounded-xl border border-dashed border-border px-3 py-2.5 text-muted">
         No design template for {category} yet. The design team adds them in Templates.
       </p>
     );
@@ -27,33 +25,33 @@ export function DesignReferenceCard({ template, category, showPreview = false }:
   const preview = showPreview && template.previewUrl ? fileHref(template.previewUrl) : null;
 
   return (
-    <div className="flex gap-3 rounded-xl p-3" style={{ border: "1px solid #2a2a2a", background: "#0a0a0a" }}>
+    <div className="flex gap-3 rounded-xl border border-border bg-bg p-3">
       {preview && (
         <a href={preview} target="_blank" rel="noopener noreferrer" className="shrink-0" aria-label="Open the template preview">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={preview} alt="" className="rounded-lg object-cover" style={{ width: 56, height: 70, border: "1px solid #2a2a2a" }} />
+          <img src={preview} alt="" className="h-17.5 w-14 rounded-lg border border-border object-cover" />
         </a>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold" style={{ color: "#ededed" }}>Design reference</p>
-        <p className="text-xs mt-0.5" style={{ color: "#888" }}>
+        <p className="type-body-sb-xs text-fg">Design reference</p>
+        <p className="type-body-r-xs mt-0.5 text-muted">
           {contentTypeLabel(template.category, template.pillar)}. For reference only; it is not attached to the post.
         </p>
         {isIncomplete(template) ? (
-          <p className="text-xs mt-2" style={{ color: "#888" }}>Design file not available yet.</p>
+          <p className="type-body-r-xs mt-2 text-muted">Design file not available yet.</p>
         ) : (
           <div className="flex flex-wrap gap-2 mt-2">
             {template.linkUrl && (
               <a href={template.linkUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium hover:bg-white/5" style={linkStyle}>
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border type-body-m-xs text-fg hover:bg-surface">
                 {isFigmaLink(template.linkUrl) ? "Open in Figma" : "Open link"} <span aria-hidden>↗</span>
               </a>
             )}
             {template.fileUrl && (
               <a href={fileHref(template.fileUrl)} download={template.fileName ?? undefined}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium hover:bg-white/5" style={linkStyle}>
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border type-body-m-xs text-fg hover:bg-surface">
                 Download file
-                {template.fileSize ? <span style={{ color: "#888" }}>{formatBytes(template.fileSize)}</span> : null}
+                {template.fileSize ? <span className="text-muted">{formatBytes(template.fileSize)}</span> : null}
               </a>
             )}
           </div>
