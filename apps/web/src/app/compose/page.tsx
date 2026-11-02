@@ -29,6 +29,7 @@ import { useWorkspace } from "../../context/WorkspaceContext";
 import { fileHref, templatesByCategory, type DesignTemplate } from "../../lib/templates";
 import { ContentTypeSelects, toContentType, type ContentType } from "../../components/ContentTypeSelects";
 import { DesignReferenceCard } from "../../components/DesignReferenceCard";
+import { cn } from "../../lib/cn";
 import Link from "next/link";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -709,9 +710,12 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pinterestTitle, pinterestDescription, selectedIds.join(",")]);
 
+  // Non-YouTube/Pinterest accounts with a custom caption — drives the "Customize per platform" button state
+  const customizedCount = Object.keys(perAccountOverrides).filter(id => { const acc = selectedAccounts.find(a => a.id === id); return acc && acc.platform !== "youtube" && acc.platform !== "pinterest"; }).length;
+
   const previewContent = selectedAccounts.length === 0 ? (
-    <div className="rounded-2xl border-2 border-dashed p-10 text-center" style={{ borderColor: "#2a2a2a" }}>
-      <p className="text-sm" style={{ color: "#888888" }}>Select an account above to see a preview</p>
+    <div className="dropzone rounded-2xl p-10 text-center">
+      <p className="type-body-r-s text-neutral-500">Select an account above to see a preview</p>
     </div>
   ) : (
     selectedAccounts.map((a) => {
@@ -735,13 +739,13 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
       <TrialUrgentBanner />
 
       {/* Top bar */}
-      <div className="flex items-center justify-between pl-16 pr-4 md:px-8" style={{ height: 65, borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
+      <div className="page-header">
         <div>
-          <h1 className="text-lg font-bold text-gray-900">New Post</h1>
-          <p className="text-xs text-gray-400 mt-0.5 hidden sm:block">Write once · schedule across platforms</p>
+          <h1 className="type-body-sb-l text-fg">New Post</h1>
+          <p className="type-body-r-xs text-muted mt-0.5 hidden sm:block">Write once · schedule across platforms</p>
         </div>
         {!loadingAccounts && accounts.length === 0 && (
-          <a href="/accounts" className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg font-medium shrink-0">
+          <a href="/accounts" className="type-body-m-xs text-brand-800 bg-brand-100 border border-brand-400 px-3 py-1.5 rounded-lg shrink-0">
             ⚠️ Connect an account first
           </a>
         )}
@@ -751,16 +755,16 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
       <form onSubmit={handleSubmit} onPaste={handlePaste} className="flex flex-col md:flex-row flex-1 min-h-0 overflow-y-auto md:overflow-hidden">
 
         {/* Left "" editor */}
-        <div className="flex flex-col md:flex-1 md:overflow-y-auto md:min-h-0" style={{ borderRight: "1px solid #2a2a2a", backgroundColor: "#0a0a0a" }}>
+        <div className="flex flex-col md:flex-1 md:overflow-y-auto md:min-h-0 border-r border-border bg-bg">
 
           {/* Platform selector */}
-          <div className="px-6 pt-4 pb-3" style={{ borderBottom: "1px solid #2a2a2a" }}>
+          <div className="px-6 pt-4 pb-3 border-b border-border">
             <div className="flex items-center justify-between mb-2.5">
-              <p className="text-xs font-semibold uppercase tracking-widest">Post to</p>
-              {loadingAccounts && <div className="h-3 w-24 rounded-sm animate-pulse" style={{ backgroundColor: "#1a1a1a" }} />}
+              <p className="section-label">Post to</p>
+              {loadingAccounts && <div className="h-3 w-24 rounded-sm animate-pulse bg-surface" />}
               {!loadingAccounts && accounts.length > 1 && (
                 <div className="flex items-center gap-3">
-                  <span className="text-xs">
+                  <span className="type-body-r-xs text-muted">
                     {selectedIds.length}/{accounts.length} selected
                   </span>
                   <button type="button"
@@ -768,13 +772,11 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                       if (selectedIds.length === accounts.length) setSelectedIds([]);
                       else setSelectedIds(accounts.map((a) => a.id));
                     }}
-                    className="text-xs font-semibold transition-colors hover:opacity-80"
-                    style={{ color: "#5b63d3" }}>
+                    className="type-body-sb-xs text-brand-800 transition-colors hover:opacity-80">
                     {selectedIds.length === accounts.length ? "Deselect all" : "Select all"}
                   </button>
                   <button type="button" onClick={() => setShowReorder(true)}
-                    className="text-xs font-semibold transition-colors hover:opacity-80"
-                    style={{ color: "#888" }}>
+                    className="type-body-sb-xs text-muted transition-colors hover:opacity-80">
                     ⇅ Reorder
                   </button>
                 </div>
@@ -798,21 +800,12 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                           setSelectedIds((prev) => Array.from(new Set([...prev, ...groupAccounts])));
                         }
                       }}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all"
-                      style={allSelected ? {
-                        background: "#5b63d318",
-                        border: "1px solid #5b63d350",
-                        color: "#5b63d3",
-                      } : {
-                        background: "#111111",
-                        border: "1px solid #2a2a2a",
-                        color: "#888",
-                      }}>
+                      className={cn("chip", allSelected && "chip-active")}>
                       <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                       {g.name}
-                      <span className="opacity-50 text-[10px]">{groupAccounts.length}</span>
+                      <span className="opacity-50 type-body-sb-xxs">{groupAccounts.length}</span>
                     </button>
                   );
                 })}
@@ -821,11 +814,11 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
 
             {loadingAccounts ? (
               <div className="flex gap-2">
-                {[1,2].map(i => <div key={i} className="h-8 w-32 rounded-xl animate-pulse" style={{ backgroundColor: "#1a1a1a" }} />)}
+                {[1,2].map(i => <div key={i} className="h-8 w-32 rounded-xl animate-pulse bg-surface" />)}
               </div>
             ) : (
               /* Scrollable when many accounts */
-              <div className="flex flex-wrap gap-1.5" style={{ maxHeight: 120, overflowY: "auto" }}>
+              <div className="flex flex-wrap gap-1.5 max-h-30 overflow-y-auto">
                 {/* Group by platform, respecting custom order */}
                 {Object.entries(
                   sortedAccounts.reduce<Record<string, typeof accounts>>((acc, a) => {
@@ -834,33 +827,20 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                 ).map(([platform, platformAccounts]) => (
                   <div key={platform} className="flex items-center gap-1.5 flex-wrap">
                     {/* Platform label chip */}
-                    <span className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold"
-                      style={{ backgroundColor: "#111111", color: "#555", border: "1px solid #2a2a2a" }}>
+                    <span className="flex items-center px-2 py-1 rounded-lg bg-surface border border-border">
                       <PlatformIcon platform={platform} size={11} />
                     </span>
 
                     {platformAccounts.map((a) => {
                       const selected = selectedIds.includes(a.id);
-                      const rawColor = PLATFORM_COLOR[a.platform] ?? "#6b7280";
-                      // Dark brand colors (e.g. TikTok #010101) are invisible on dark UI — use accent instead
-                      const color = rawColor === "#010101" || rawColor === "#000000" || rawColor === "#000" ? "#ff004f" : rawColor;
                       return (
                         <button key={a.id} type="button" onClick={() => toggleAccount(a.id)}
-                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
-                          style={selected ? {
-                            background: color + "18",
-                            border: `1px solid ${color}50`,
-                            color: color,
-                          } : {
-                            background: "#111111",
-                            border: "1px solid #2a2a2a",
-                            color: "#888",
-                          }}>
+                          className={cn("chip type-body-m-xs", selected && "chip-active")}>
                           {a.avatarUrl
                             // eslint-disable-next-line @next/next/no-img-element
                             ? <img src={a.avatarUrl} alt="" className="w-4 h-4 rounded-full object-cover shrink-0" />
                             : null}
-                          <span className="truncate max-w-[96px]">{a.displayName}</span>
+                          <span className="truncate max-w-24">{a.displayName}</span>
                           {selected && (
                             <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -871,7 +851,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                     })}
 
                     {/* Divider between platform groups */}
-                    <div className="w-px h-5 self-center" style={{ backgroundColor: "#2a2a2a" }} />
+                    <div className="w-px h-5 self-center bg-border" />
                   </div>
                 ))}
               </div>
@@ -881,71 +861,68 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           {/* Skeleton — shown while accounts load */}
           {loadingAccounts && (
             <div className="px-6 py-5 flex flex-col gap-4 animate-pulse">
-              <div className="h-3 w-20 rounded-sm" style={{ backgroundColor: "#1a1a1a" }} />
-              <div className="rounded-xl" style={{ height: 160, backgroundColor: "#1a1a1a" }} />
+              <div className="h-3 w-20 rounded-sm bg-surface" />
+              <div className="rounded-xl h-40 bg-surface" />
               <div className="flex gap-2">
-                <div className="h-8 w-28 rounded-lg" style={{ backgroundColor: "#1a1a1a" }} />
-                <div className="h-8 w-20 rounded-lg" style={{ backgroundColor: "#1a1a1a" }} />
+                <div className="h-8 w-28 rounded-lg bg-surface" />
+                <div className="h-8 w-20 rounded-lg bg-surface" />
               </div>
-              <div className="h-px" style={{ backgroundColor: "#1e1e1e" }} />
-              <div className="h-3 w-24 rounded-sm" style={{ backgroundColor: "#1a1a1a" }} />
-              <div className="h-8 w-44 rounded-lg" style={{ backgroundColor: "#1a1a1a" }} />
-              <div className="h-px" style={{ backgroundColor: "#1e1e1e" }} />
-              <div className="h-3 w-16 rounded-sm" style={{ backgroundColor: "#1a1a1a" }} />
-              <div className="h-9 w-full rounded-xl" style={{ backgroundColor: "#1a1a1a" }} />
-              <div className="mt-2 h-10 w-36 rounded-xl self-end" style={{ backgroundColor: "#1a1a1a" }} />
+              <div className="h-px bg-border" />
+              <div className="h-3 w-24 rounded-sm bg-surface" />
+              <div className="h-8 w-44 rounded-lg bg-surface" />
+              <div className="h-px bg-border" />
+              <div className="h-3 w-16 rounded-sm bg-surface" />
+              <div className="h-9 w-full rounded-xl bg-surface" />
+              <div className="mt-2 h-10 w-36 rounded-xl self-end bg-surface" />
             </div>
           )}
 
           {/* Content type — a template only fills this in; its design stays a reference */}
           {!loadingAccounts && (
-            <div className="px-6 py-5" style={{ borderBottom: "1px solid #1e1e1e" }}>
+            <div className="px-6 py-5 border-b border-border">
               <div className="flex items-center justify-between gap-3 mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wide">Content type</span>
-                <div ref={templatesRef} style={{ position: "relative" }}>
+                <span className="section-label">Content type</span>
+                <div ref={templatesRef} className="relative">
                   <button type="button" onClick={() => setShowTemplates(v => !v)} aria-expanded={showTemplates}
-                    className="flex items-center gap-1 text-[11px] font-medium transition-opacity hover:opacity-80"
-                    style={{ color: "#888" }}>
+                    className="flex items-center gap-1 type-body-m-xs text-muted transition-opacity hover:opacity-80">
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                     Pick from templates
                   </button>
                   {showTemplates && (
-                    <div className="absolute top-6 right-0 z-30 w-72 rounded-xl overflow-hidden shadow-xl"
-                      style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a" }}>
+                    <div className="absolute top-6 right-0 z-30 w-72 rounded-xl overflow-hidden shadow-xl bg-surface border border-border">
                       {templates.length === 0 ? (
-                        <p className="px-3 py-4 text-xs text-center" style={{ color: "#888" }}>No templates yet. The design team adds them in Templates.</p>
+                        <p className="px-3 py-4 type-body-r-xs text-center text-muted">No templates yet. The design team adds them in Templates.</p>
                       ) : (
                         <ul className="max-h-72 overflow-y-auto">
                           {[...templateMap.values()].map(t => (
                             <li key={t.id}>
                               <button type="button" onClick={() => applyTemplate(t)}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-white/5 transition-colors">
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-neutral-100 transition-colors">
                                 {t.previewUrl ? (
                                   // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={fileHref(t.previewUrl)} alt="" className="w-8 h-10 rounded-sm object-cover shrink-0" style={{ border: "1px solid #2a2a2a" }} />
+                                  <img src={fileHref(t.previewUrl)} alt="" className="w-8 h-10 rounded-sm object-cover shrink-0 border border-border" />
                                 ) : (
-                                  <span className="w-8 h-10 rounded-sm shrink-0 flex items-center justify-center text-[9px] font-bold" style={{ border: "1px solid #2a2a2a", color: "#888" }}>FIG</span>
+                                  <span className="w-8 h-10 rounded-sm shrink-0 flex items-center justify-center type-body-sb-xxs border border-border text-muted">FIG</span>
                                 )}
                                 <span className="min-w-0">
-                                  <span className="block text-xs font-medium truncate" style={{ color: "#ededed" }}>{t.category}</span>
-                                  <span className="block text-[11px] truncate" style={{ color: "#888" }}>{t.pillar ?? "No pillar"}</span>
+                                  <span className="block type-body-m-xs truncate text-fg">{t.category}</span>
+                                  <span className="block type-body-r-xs truncate text-muted">{t.pillar ?? "No pillar"}</span>
                                 </span>
                               </button>
                             </li>
                           ))}
                         </ul>
                       )}
-                      <Link href="/templates" className="block px-3 py-2 text-xs font-medium hover:bg-white/5" style={{ color: "#ededed", borderTop: "1px solid #2a2a2a" }}>
+                      <Link href="/templates" className="block px-3 py-2 type-body-m-xs text-fg hover:bg-neutral-100 border-t border-border">
                         Browse all templates
                       </Link>
                     </div>
                   )}
                 </div>
               </div>
-              <ContentTypeSelects idPrefix="compose" pillar={contentType.pillar} category={contentType.category} onChange={setContentType}
-                selectStyle={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", borderRadius: 12, padding: "8px 12px", fontSize: 14, color: "#ededed" }} />
+              <ContentTypeSelects idPrefix="compose" pillar={contentType.pillar} category={contentType.category} onChange={setContentType} />
               {contentType.category && (
                 <div className="mt-3">
                   <DesignReferenceCard template={templateMap.get(contentType.category)} category={contentType.category} showPreview />
@@ -955,21 +932,16 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           )}
 
           {/* Text editor */}
-          <div className="px-6 py-5" style={{ display: (loadingAccounts || noPostTextNeeded) ? "none" : undefined }}>
+          <div className={cn("px-6 py-5", (loadingAccounts || noPostTextNeeded) && "hidden")}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold uppercase tracking-wide">Post</span>
+                <span className="section-label">Post</span>
                 {selectedAccounts.filter(a => a.platform !== "youtube" && a.platform !== "pinterest").length > 1 && (
                   <button type="button" onClick={() => {
                     if (!allowOverrides) { toastWarning("Per-platform customization is a Pro feature. Upgrade to unlock."); return; }
                     setShowCustomize(true);
                   }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                    style={{
-                      border: `1px solid ${(() => { const c = Object.keys(perAccountOverrides).filter(id => { const acc = selectedAccounts.find(a => a.id === id); return acc && acc.platform !== "youtube" && acc.platform !== "pinterest"; }).length; return c > 0 ? "#5b63d350" : "#2a2a2a"; })()}`,
-                      backgroundColor: (() => { const c = Object.keys(perAccountOverrides).filter(id => { const acc = selectedAccounts.find(a => a.id === id); return acc && acc.platform !== "youtube" && acc.platform !== "pinterest"; }).length; return c > 0 ? "#5b63d310" : "#111111"; })(),
-                      color: (() => { const c = Object.keys(perAccountOverrides).filter(id => { const acc = selectedAccounts.find(a => a.id === id); return acc && acc.platform !== "youtube" && acc.platform !== "pinterest"; }).length; return c > 0 ? "#5b63d3" : "#888"; })(),
-                    }}>
+                    className={cn("chip type-body-m-xs px-3 py-1.5", customizedCount > 0 && "chip-active")}>
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -977,7 +949,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                     {!allowOverrides && (
                       <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><rect x="2" y="5" width="8" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M4 5V3.5a2 2 0 014 0V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     )}
-                    {(() => { const c = Object.keys(perAccountOverrides).filter(id => { const acc = selectedAccounts.find(a => a.id === id); return acc && acc.platform !== "youtube" && acc.platform !== "pinterest"; }).length; return c > 0 ? <span className="text-[10px] font-bold px-1 py-0.5 rounded-sm" style={{ backgroundColor: "#5b63d320", color: "#5b63d3" }}>{c}</span> : null; })()}
+                    {customizedCount > 0 ? <span className="type-body-sb-xxs px-1 py-0.5 rounded-sm bg-brand-200 text-brand-800">{customizedCount}</span> : null}
                   </button>
                 )}
               </div>
@@ -986,10 +958,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                 {instagramSelected && (
                 <div className="flex items-center gap-1.5">
                   <div className="relative group/iginfo">
-                    <Info size={13} style={{ color: "#999", opacity: 0.7 }} className="cursor-default" />
-                    <div className="absolute right-0 top-5 z-20 w-48 rounded-lg px-3 py-2 text-[11px] leading-relaxed pointer-events-none opacity-0 group-hover/iginfo:opacity-100 transition-opacity"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa" }}>
-                      <span style={{ color: "#E1306C", fontWeight: 600 }}>Instagram</span> format only.
+                    <Info size={13} className="cursor-default text-muted opacity-70" />
+                    <div className="absolute right-0 top-5 z-20 w-48 rounded-lg px-3 py-2 type-body-r-xs pointer-events-none opacity-0 group-hover/iginfo:opacity-100 transition-opacity bg-surface border border-border text-muted">
+                      <span className="type-body-sb-xs text-[#E1306C]">Instagram</span> format only.
                       <ul className="mt-1 space-y-0.5 list-none">
                         <li>· Post - image or carousel</li>
                         <li>· Reel - single video</li>
@@ -1021,10 +992,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                         setAltTexts([]);
                       }
                     }}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all inline-flex items-center gap-1"
-                      style={igMediaType === t
-                        ? { backgroundColor: "#E1306C20", color: "#E1306C", border: "1px solid #E1306C50" }
-                        : { backgroundColor: "#111111", color: "#666", border: "1px solid #1f1f1f" }}>
+                      className={cn("chip capitalize gap-1", igMediaType === t && "chip-active")}>
                       {t}
                       {(t === "reel" || t === "story") && !allowReels && (
                         <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><rect x="2" y="5" width="8" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M4 5V3.5a2 2 0 014 0V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -1043,25 +1011,21 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                 ref={(el) => { (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el; if (el) { el.style.height = el.value ? `${el.scrollHeight}px` : "160px"; } }}
                 placeholder="What do you want to share?"
                 required={!noPostTextNeeded}
-                className="w-full resize-none rounded-xl border px-4 py-3 text-sm focus:outline-hidden focus:ring-2 transition"
-                style={overAnyLimit
-                  ? { minHeight: "160px", overflow: "hidden", borderColor: "#fca5a5", backgroundColor: "#111111", color: "#ededed" }
-                  : { minHeight: "160px", overflow: "hidden", borderColor: "#2a2a2a", backgroundColor: "#111111", color: "#ededed" }
-                }
+                className={cn("field resize-none px-4 py-3 min-h-40 overflow-hidden", overAnyLimit && "border-red-300")}
               />
             )}
             {/* Char counters + AI button below textarea */}
             {!onlyInstagramStory && !noPostTextNeeded && <div className="flex items-center gap-3 mt-1.5">
               {overAnyLimit && (
-                <p className="text-xs text-red-500 flex-1">
+                <p className="type-body-r-xs text-red-600 flex-1">
                   {Math.abs(mostRestrictiveLimit - graphemeCount)} chars over limit
                 </p>
               )}
               {/* AI caption button */}
               <div ref={aiMenuRef} className="relative ml-auto flex items-center gap-3">
                 <button type="button" onClick={() => setShowAiMenu(v => !v)} disabled={aiLoading || !text.trim()}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all disabled:opacity-40"
-                  style={{ backgroundColor: aiLoading ? "#2e2458" : "#1e1e2e", color: aiLoading ? "#ede9fe" : "#a5b4fc", border: `1px solid ${aiLoading ? "#6d28d9" : "#3d3d6b"}` }}>
+                  className={cn("flex items-center gap-1.5 px-3 py-1 rounded-lg border type-body-sb-xs transition-all disabled:opacity-40",
+                    aiLoading ? "bg-brand-200 border-brand-400 text-brand-900" : "bg-brand-100 border-brand-300 text-brand-800")}>
                   {aiLoading ? (
                     <>
                       <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
@@ -1075,29 +1039,28 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                   )}
                 </button>
                 {showAiMenu && (
-                  <div className="absolute bottom-full right-0 mb-1 rounded-xl overflow-hidden z-50 min-w-[180px]"
-                    style={{ backgroundColor: "#111", border: "1px solid #2a2a2a", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+                  <div className="absolute bottom-full right-0 mb-1 rounded-xl overflow-hidden z-50 min-w-45 bg-surface border border-border shadow-xl">
                     {[
-                      { action: "fix_grammar",       label: "Fix Grammar",         color: "#a78bfa", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg> },
-                      { action: "concise",            label: "Make it Concise",     color: "#60a5fa", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 9l7-7 7 7M5 15l7 7 7-7"/></svg> },
-                      { action: "expand",             label: "Expand",              color: "#34d399", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg> },
-                      { action: "rephrase",           label: "Rephrase",            color: "#fb923c", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg> },
-                      { action: "improve_structure",  label: "Improve Structure",   color: "#f472b6", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 10h10M4 14h12M4 18h8"/></svg> },
-                      { action: "simplify",           label: "Simplify Language",   color: "#38bdf8", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg> },
-                      { action: "polish",             label: "Polish my Caption",   color: "#fbbf24", icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2zM4.5 14L5.5 17 8.5 18l-3 1-1 3-1-3-3-1 3-1 1-3z"/></svg> },
-                    ].map(({ action, label, color, icon }) => (
+                      { action: "fix_grammar",       label: "Fix Grammar",         icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg> },
+                      { action: "concise",            label: "Make it Concise",     icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 9l7-7 7 7M5 15l7 7 7-7"/></svg> },
+                      { action: "expand",             label: "Expand",              icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg> },
+                      { action: "rephrase",           label: "Rephrase",            icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg> },
+                      { action: "improve_structure",  label: "Improve Structure",   icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 10h10M4 14h12M4 18h8"/></svg> },
+                      { action: "simplify",           label: "Simplify Language",   icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg> },
+                      { action: "polish",             label: "Polish my Caption",   icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2zM4.5 14L5.5 17 8.5 18l-3 1-1 3-1-3-3-1 3-1 1-3z"/></svg> },
+                    ].map(({ action, label, icon }) => (
                       <button key={action} type="button" onClick={() => runAiAction(action)}
-                        className="w-full text-left px-3 py-2 text-xs transition-colors hover:bg-white/5 flex items-center gap-2.5"
-                        style={{ color: "#ededed" }}>
-                        <span style={{ color }}>{icon}</span>
+                        className="w-full text-left px-3 py-2 type-body-r-xs text-fg transition-colors hover:bg-neutral-100 flex items-center gap-2.5">
+                        <span className="text-brand-800">{icon}</span>
                         {label}
                       </button>
                     ))}
                   </div>
                 )}
                 {platformLimits.map((p) => (
-                  <span key={p.platform} className="text-xs font-medium flex items-center gap-1"
-                    style={{ color: p.over ? "#ef4444" : p.effectiveCount > p.limit * 0.8 ? "#f59e0b" : "#444" }}>
+                  <span key={p.platform}
+                    className={cn("type-body-m-xs flex items-center gap-1",
+                      p.over ? "text-red-600" : p.effectiveCount > p.limit * 0.8 ? "text-brand-800" : "text-neutral-500")}>
                     <PlatformIcon platform={p.icon} size={11} /> {p.effectiveCount}/{p.limit}
                   </span>
                 ))}
@@ -1199,9 +1162,9 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         </div>
 
         {/* Right "" per-platform previews — desktop only, fixed 480px. Mobile uses the drawer instead */}
-        <div className="hidden md:flex md:w-[480px] shrink-0 flex-col md:overflow-y-auto" style={{ backgroundColor: "#0a0a0a" }}>
+        <div className="hidden md:flex md:w-120 shrink-0 flex-col md:overflow-y-auto bg-bg">
           <div className="px-5 pt-5 pb-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Preview</p>
+            <p className="section-label">Preview</p>
           </div>
           <div className="px-5 pb-5 space-y-4 flex-1">
             {previewContent}
@@ -1212,18 +1175,17 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
       {/* Mobile-only: preview drawer */}
       {previewOpen && (
         <div className="md:hidden fixed inset-0 z-40" onClick={() => setPreviewOpen(false)}>
-          <div className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,.6)" }} />
+          <div className="absolute inset-0 bg-black/60" />
           <div
-            className="absolute inset-x-0 bottom-0 rounded-t-2xl flex flex-col"
-            style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", borderBottom: "none", maxHeight: "80vh" }}
+            className="absolute inset-x-0 bottom-0 rounded-t-2xl flex flex-col bg-bg border border-border border-b-0 max-h-[80vh]"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-center pt-2.5 pb-1 shrink-0">
-              <div className="w-9 h-1 rounded-full" style={{ backgroundColor: "#2a2a2a" }} />
+              <div className="w-9 h-1 rounded-full bg-border" />
             </div>
-            <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Preview</p>
-              <button type="button" onClick={() => setPreviewOpen(false)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: "#666" }}>
+            <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0 border-b border-border">
+              <p className="section-label">Preview</p>
+              <button type="button" onClick={() => setPreviewOpen(false)} className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-500 hover:bg-surface">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
               </button>
             </div>
@@ -1236,12 +1198,12 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
 
       {/* Customize per platform dialog */}
       {showCustomize && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
           onClick={e => { if (e.target === e.currentTarget) setShowCustomize(false); }}>
-          <div data-customize-scroll className="w-full max-w-lg rounded-2xl p-6" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", maxHeight: "80vh", overflowY: "auto" }}>
+          <div data-customize-scroll className="card w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-sm font-bold" style={{ color: "#ededed" }}>Customize per platform</h2>
-              <button type="button" onClick={() => setShowCustomize(false)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: "#666" }}>
+              <h2 className="type-body-sb-s text-fg">Customize per platform</h2>
+              <button type="button" onClick={() => setShowCustomize(false)} className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-500 hover:bg-neutral-100">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
               </button>
             </div>
@@ -1249,20 +1211,18 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               {selectedAccounts.filter(a => a.platform !== "youtube" && a.platform !== "pinterest").map(a => {
                 const hasOverride = a.id in perAccountOverrides;
                 const override = perAccountOverrides[a.id];
-                const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
                 const limit = PLATFORM_LIMIT[a.platform] ?? 500;
                 const overrideCount = countGraphemes(override?.text ?? "");
                 return (
-                  <div key={a.id} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${hasOverride ? color + "40" : "#1f1f1f"}`, backgroundColor: "#0d0d0d" }}>
+                  <div key={a.id} className={cn("rounded-xl overflow-hidden border bg-bg", hasOverride ? "border-brand-300" : "border-border")}>
                     <button type="button" onClick={() => toggleOverride(a.id, text, commentText)}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left"
-                      style={{ backgroundColor: hasOverride ? color + "10" : "transparent" }}>
+                      className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 text-left", hasOverride && "bg-brand-100")}>
                       <PlatformIcon platform={a.platform} size={14} />
-                      <span className="text-xs font-medium flex-1" style={{ color: hasOverride ? color : "#999" }}>{a.displayName}</span>
+                      <span className={cn("type-body-m-xs flex-1", hasOverride ? "text-brand-800" : "text-muted")}>{a.displayName}</span>
                       {hasOverride ? (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: color + "20", color }}>Custom ✓</span>
+                        <span className="type-body-sb-xxs px-1.5 py-0.5 rounded-full bg-brand-200 text-brand-800">Custom ✓</span>
                       ) : (
-                        <span className="text-[10px]" style={{ color: "#555" }}>✎ Customize</span>
+                        <span className="type-body-r-xxs text-neutral-500">✎ Customize</span>
                       )}
                     </button>
                     {hasOverride && (() => {
@@ -1270,30 +1230,28 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                       return (
                         <div className="px-3 pb-3 space-y-2">
                           {isIgStory ? (
-                            <p className="text-[10px] py-1" style={{ color: "#555" }}>Instagram Stories don't support captions or comments.</p>
+                            <p className="type-body-r-xxs py-1 text-neutral-500">Instagram Stories don't support captions or comments.</p>
                           ) : (
                             <>
                               <div>
                                 <div className="flex items-center justify-between mb-1">
-                                  <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#555" }}>Caption</span>
-                                  <span className="text-[10px]" style={{ color: overrideCount > limit ? "#ef4444" : "#444" }}>{overrideCount}/{limit}</span>
+                                  <span className="type-body-sb-xxs uppercase tracking-wide text-muted">Caption</span>
+                                  <span className={cn("type-body-r-xxs", overrideCount > limit ? "text-red-600" : "text-neutral-500")}>{overrideCount}/{limit}</span>
                                 </div>
                                 <textarea value={override?.text ?? ""}
                                   onChange={e => { setOverrideField(a.id, "text", e.target.value); const sc = e.target.closest("[data-customize-scroll]") as HTMLElement | null; const sv = sc?.scrollTop ?? 0; e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; if (sc) sc.scrollTop = sv; }}
                                   ref={el => { if (el) { el.style.height = `${el.scrollHeight}px`; } }}
                                   placeholder={`Custom caption for ${a.displayName}…`}
-                                  className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-hidden"
-                                  style={{ minHeight: 100, overflow: "hidden", backgroundColor: "#111111", border: `1px solid ${overrideCount > limit ? "#ef444480" : "#2a2a2a"}`, color: "#ededed" }} />
+                                  className={cn("field resize-none rounded-lg type-body-r-xs min-h-25 overflow-hidden", overrideCount > limit && "border-red-300")} />
                               </div>
                               {!NO_COMMENT_PLATFORMS.has(a.platform) && (
                               <div>
-                                <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1">First Comment</span>
+                                <span className="type-body-sb-xxs uppercase tracking-wide block mb-1 text-muted">First Comment</span>
                                 <textarea value={override?.commentText ?? ""}
                                   onChange={e => { setOverrideField(a.id, "commentText", e.target.value); const sc = e.target.closest("[data-customize-scroll]") as HTMLElement | null; const sv = sc?.scrollTop ?? 0; e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; if (sc) sc.scrollTop = sv; }}
                                   ref={el => { if (el) { el.style.height = `${el.scrollHeight}px`; } }}
                                   placeholder={`Custom first comment for ${a.displayName}…`}
-                                  className="w-full resize-none rounded-lg px-3 py-2 text-xs focus:outline-hidden"
-                                  style={{ minHeight: 60, overflow: "hidden", backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }} />
+                                  className="field resize-none rounded-lg type-body-r-xs min-h-15 overflow-hidden" />
                               </div>
                               )}
                             </>
@@ -1307,8 +1265,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             </div>
             <div className="flex justify-end pt-4">
               <button type="button" onClick={() => setShowCustomize(false)}
-                className="px-4 py-2 rounded-xl text-sm font-semibold"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>Done</button>
+                className="btn-primary">Done</button>
             </div>
           </div>
         </div>
@@ -1332,13 +1289,12 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
       )}
 
       {/* Bottom footer bar — full width */}
-      <div className="px-4 md:px-8 py-3 md:py-4 flex flex-wrap items-center gap-3 md:gap-4" style={{ borderTop: "1px solid #2a2a2a", backgroundColor: "#0a0a0a", display: loadingAccounts ? "none" : undefined }}>
+      <div className={cn("px-4 md:px-8 py-3 md:py-4 flex flex-wrap items-center gap-3 md:gap-4 border-t border-border bg-bg", loadingAccounts && "hidden")}>
 
 
         {/* Preview drawer trigger — mobile only */}
         <button type="button" onClick={() => setPreviewOpen(true)}
-          className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
-          style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", color: "#ededed" }}>
+          className="btn-secondary md:hidden gap-1.5 px-3 py-1.5 type-body-sb-xs">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           Preview
         </button>
@@ -1363,8 +1319,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           <button
             type="button"
             onClick={() => router.push("/jobs/import")}
-            className="flex-1 md:flex-none px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80"
-            style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
+            className="btn-secondary flex-1 md:flex-none px-4 py-2.5"
             title="Import content plan from CSV or XLSX"
           >
             Import Plan
@@ -1372,8 +1327,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           <button
             type="button"
             onClick={resetForm}
-            className="flex-1 md:flex-none px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80"
-            style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
+            className="btn-secondary flex-1 md:flex-none px-4 py-2.5"
             title="Clear all inputs"
           >
             Clear
@@ -1382,8 +1336,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             type="button"
             disabled={submitting || selectedIds.length === 0 || (!text.trim() && !noPostTextNeeded) || overAnyLimit || twitterHasLink}
             onClick={handleSaveDraft}
-            className="flex-1 md:flex-none px-4 py-2.5 font-semibold rounded-xl text-sm transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
+            className="btn-secondary flex-1 md:flex-none px-4 py-2.5"
             title="Save as draft schedule later from Posts page"
           >
             Save Draft
@@ -1393,8 +1346,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             form=""
             disabled={submitting || overAnyLimit || accounts.length === 0 || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || pixelfedSelectedWithNoImage || twitterHasLink || blueskyFirstCommentTooLong}
             onClick={handleSubmit}
-            className="flex-1 md:flex-none px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-colors hover:bg-gray-100"
-            style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+            className="btn-primary flex-1 md:flex-none px-6 py-2.5"
           >
             {submitting
               ? (needsApprovalFlow ? "Submitting…" : "Scheduling…")
@@ -1413,16 +1365,16 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         localStorage.setItem("posthive_account_order", JSON.stringify(ids));
       }];
       return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
           onClick={() => setShowReorder(false)}>
-          <div className="rounded-2xl w-full max-w-sm overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+          <div className="card w-full max-w-sm overflow-hidden"
             onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #2a2a2a" }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div>
-                <p className="font-semibold text-sm" style={{ color: "#ededed" }}>Reorder Accounts</p>
-                <p className="text-xs mt-0.5" style={{ color: "#888" }}>Drag to set the order they appear in compose</p>
+                <p className="type-body-sb-s text-fg">Reorder Accounts</p>
+                <p className="type-body-r-xs mt-0.5 text-muted">Drag to set the order they appear in compose</p>
               </div>
-              <button onClick={() => setShowReorder(false)} style={{ color: "#888", fontSize: 18, lineHeight: 1 }}>×</button>
+              <button onClick={() => setShowReorder(false)} className="type-body-r-l text-muted">×</button>
             </div>
             <div className="p-4 space-y-1.5 max-h-96 overflow-y-auto">
               {sortedAccounts.map((a, idx) => (
@@ -1445,31 +1397,26 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
                     setAccountOrder(next);
                     localStorage.setItem("posthive_account_order", JSON.stringify(next));
                   }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-grab select-none"
-                  style={{
-                    backgroundColor: dragOverId === a.id ? "#1e1e1e" : "#1a1a1a",
-                    border: `1px solid ${dragOverId === a.id ? "#5b63d3" : "#2a2a2a"}`,
-                  }}>
-                  <span style={{ color: "#555", fontSize: 14 }}>⠿</span>
+                  className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-grab select-none",
+                    dragOverId === a.id ? "bg-neutral-100 border-accent" : "bg-bg border-border")}>
+                  <span className="type-body-r-s text-neutral-500">⠿</span>
                   <PlatformIcon platform={a.platform} size={16} />
                   {a.avatarUrl
                     // eslint-disable-next-line @next/next/no-img-element
                     ? <img src={a.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
                     : null}
-                  <span className="text-sm flex-1 truncate" style={{ color: "#ededed" }}>{a.displayName}</span>
-                  <span className="text-xs" style={{ color: "#555" }}>{idx + 1}</span>
+                  <span className="type-body-r-s flex-1 truncate text-fg">{a.displayName}</span>
+                  <span className="type-body-r-xs text-neutral-500">{idx + 1}</span>
                 </div>
               ))}
             </div>
             <div className="px-4 pb-4 pt-2 flex gap-2">
               <button onClick={() => { setAccountOrder([]); localStorage.removeItem("posthive_account_order"); }}
-                className="flex-1 py-2 rounded-xl text-sm font-semibold"
-                style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
+                className="btn-secondary flex-1">
                 Reset order
               </button>
               <button onClick={() => setShowReorder(false)}
-                className="flex-1 py-2 rounded-xl text-sm font-semibold"
-                style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}>
+                className="btn-primary flex-1">
                 Done
               </button>
             </div>
