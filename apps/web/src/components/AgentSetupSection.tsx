@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { cn } from "../lib/cn";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -13,17 +14,7 @@ function CopyButton({ text }: { text: string }) {
         setTimeout(() => setCopied(false), 1500);
       }}
       title="Copy"
-      style={{
-        flexShrink: 0,
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        padding: "2px 4px",
-        color: copied ? "#5b63d3" : "rgba(237,237,237,0.35)",
-        display: "flex",
-        alignItems: "center",
-        transition: "color 0.15s",
-      }}
+      className={cn("flex shrink-0 cursor-pointer items-center px-1 py-0.5 transition-colors", copied ? "text-brand-800" : "text-muted hover:text-fg")}
     >
       {copied ? (
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -38,18 +29,6 @@ function CopyButton({ text }: { text: string }) {
     </button>
   );
 }
-
-const T = {
-  bg: "#0a0a0a",
-  surface: "#111111",
-  text: "#ededed",
-  muted: "rgba(237,237,237,0.45)",
-  muted72: "rgba(237,237,237,0.65)",
-  accent: "#5b63d3",
-  a300: "#9ba2ee",
-  divider: "rgba(237,237,237,0.1)",
-  shadow: "0 0 0 1px #595d6c, 0 6px 18px rgba(0,0,0,0.55)",
-} as const;
 
 interface AppStep {
   n: string;
@@ -288,56 +267,34 @@ export function AgentSetupSection() {
   const app = APPS[selected];
 
   return (
-    <div className="agent-setup-grid">
+    <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2 lg:gap-16">
       {/* Left: connector picker + authorize dialog */}
       <div>
-        <div
-          style={{
-            fontSize: 11,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: T.muted,
-            marginBottom: 16,
-          }}
-        >
+        <div className="section-label mb-4">
           Hosted apps
         </div>
-        <div className="agent-connector-grid" style={{ marginBottom: 24 }}>
+        <div className="mb-6 grid grid-cols-4 gap-2.5">
           {APPS.map((a, i) => (
             <button
               key={a.label}
               onClick={() => setSelected(i)}
-              style={{
-                aspectRatio: "1",
-                borderRadius: 10,
-                position: "relative",
-                display: "grid",
-                placeItems: "center",
-                cursor: "pointer",
-                border:
-                  selected === i
-                    ? `1px solid ${T.accent}`
-                    : `1px solid ${T.divider}`,
-                background:
-                  selected === i ? "rgba(91,99,211,0.1)" : "transparent",
-                padding: 0,
-              }}
+              className={cn(
+                "relative grid aspect-square cursor-pointer place-items-center rounded-xl border transition-colors",
+                selected === i ? "border-brand-300 bg-brand-100" : "border-border hover:bg-surface",
+              )}
             >
               <Image
                 src={`/mcpfavicon/${a.file}`}
                 alt={a.label}
                 width={30}
                 height={30}
-                style={{ borderRadius: 6 }}
+                className="rounded-md"
               />
               <span
-                style={{
-                  position: "absolute",
-                  bottom: 6,
-                  fontSize: 10,
-                  color: selected === i ? T.accent : T.muted,
-                  letterSpacing: "0.06em",
-                }}
+                className={cn(
+                  "absolute bottom-1.5 type-body-r-xxs tracking-wide",
+                  selected === i ? "text-brand-800" : "text-muted",
+                )}
               >
                 {a.label}
               </span>
@@ -346,40 +303,20 @@ export function AgentSetupSection() {
         </div>
 
         {/* Authorize dialog — preview illustration */}
-        <div
-          style={{
-            borderRadius: 12,
-            background: T.surface,
-            padding: "18px 18px 20px",
-            boxShadow: T.shadow,
-            position: "relative",
-          }}
-        >
-          <div style={{
-            position: "absolute", top: 10, right: 12,
-            fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
-            color: T.muted, padding: "2px 7px", borderRadius: 4,
-            border: `1px solid ${T.divider}`,
-          }}>Preview</div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-              marginBottom: 16,
-            }}
-          >
+        <div className="relative rounded-xl border border-border bg-surface px-4.5 pt-4.5 pb-5 shadow-sm">
+          <div className="absolute top-2.5 right-3 rounded-sm border border-border px-2 py-0.5 type-body-r-xxs uppercase tracking-widest text-muted">Preview</div>
+          <div className="mb-4 flex items-center gap-3.5">
             <Image
               src={`/posthivemain.png`}
               alt={app.label}
               width={36}
               height={36}
-              style={{ borderRadius: 8 }}
+              className="rounded-lg"
             />
-            <svg width="20" height="12" viewBox="0 0 20 12">
+            <svg width="20" height="12" viewBox="0 0 20 12" className="text-muted">
               <path
                 d="M0 6h18M14 2l4 4-4 4"
-                stroke={T.muted}
+                stroke="currentColor"
                 strokeWidth="1.2"
                 fill="none"
               />
@@ -389,37 +326,19 @@ export function AgentSetupSection() {
               alt={app.label}
               width={36}
               height={36}
-              style={{ borderRadius: 8 }}
+              className="rounded-lg"
             />
           </div>
-          <div
-            style={{
-              fontSize: 15,
-              fontWeight: 500,
-              marginBottom: 6,
-              color: T.text,
-            }}
-          >
+          <div className="mb-1.5 type-body-m-m text-fg">
             Connect Posthive to {app.label}
           </div>
-          <div style={{ fontSize: 12, color: T.muted, marginBottom: 16 }}>
+          <div className="mb-4 type-body-r-xs text-muted">
             Grants read + write access to your Posthive posts, accounts, and
             templates. Revoke anytime.
           </div>
           <button
             disabled
-            style={{
-              width: "100%",
-              padding: 10,
-              borderRadius: 8,
-              cursor: "default",
-              border: "none",
-              color: "rgba(255,255,255,0.5)",
-              background: "rgba(91,99,211,0.4)",
-              fontSize: 14,
-              fontFamily: "inherit",
-              fontWeight: 700,
-            }}
+            className="btn-primary w-full rounded-lg py-2.5 disabled:cursor-default"
           >
             Approve &amp; connect
           </button>
@@ -427,70 +346,22 @@ export function AgentSetupSection() {
       </div>
 
       {/* Right: per-platform steps */}
-      <ol
-        style={{
-          listStyle: "none",
-          padding: 0,
-          margin: 0,
-          display: "flex",
-          flexDirection: "column",
-          gap: 36,
-        }}
-      >
+      <ol className="flex flex-col gap-9">
         {app.steps.map((step) => (
-          <li
-            key={step.n}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "56px 1fr",
-              gap: 20,
-              alignItems: "start",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 32,
-                fontWeight: 500,
-                color: T.accent,
-                letterSpacing: "-0.02em",
-                lineHeight: 1,
-              }}
-            >
+          <li key={step.n} className="flex items-start gap-5">
+            <div className="w-14 shrink-0 type-head-m-3 tracking-tight text-brand-800">
               {step.n}
             </div>
-            <div>
-              <div
-                style={{
-                  fontSize: 18,
-                  fontWeight: 500,
-                  marginBottom: 6,
-                  color: T.text,
-                }}
-              >
+            <div className="min-w-0 flex-1">
+              <div className="mb-1.5 type-body-m-l text-fg">
                 {step.title}
               </div>
-              <div style={{ fontSize: 14, lineHeight: 1.55, color: T.muted72 }}>
+              <div className="type-body-r-s text-muted">
                 {step.desc}
               </div>
               {step.code && (
-                <div
-                  style={{
-                    marginTop: 12,
-                    padding: "10px 14px",
-                    border: `1px solid ${T.divider}`,
-                    borderRadius: 8,
-                    fontFamily: "ui-monospace,monospace",
-                    fontSize: 12,
-                    color: T.a300,
-                    background: "rgba(0,0,0,0.4)",
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-all",
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 8,
-                  }}
-                >
-                  <span style={{ flex: 1 }}>{step.code}</span>
+                <div className="mt-3 flex items-start gap-2 whitespace-pre-wrap break-all rounded-xl border border-border bg-surface p-4 type-mono-r-s text-fg">
+                  <span className="min-w-0 flex-1">{step.code}</span>
                   <CopyButton text={step.code} />
                 </div>
               )}
