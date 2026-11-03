@@ -6,7 +6,8 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.21",
@@ -34,6 +35,7 @@
     "@types/react-dom": "^18.3.0",
     "postcss": "^8.5.15",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^5.1.0"
   }
 }

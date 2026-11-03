@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node --max-old-space-size=640 dist/index.js",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio"
@@ -55,6 +56,7 @@
     "@types/node-cron": "^3.0.11",
     "prisma": "^5.16.2",
     "tsx": "^4.16.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^5.1.0"
   }
 }
