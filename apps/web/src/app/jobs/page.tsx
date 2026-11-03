@@ -19,6 +19,10 @@ import { useWorkspace } from "../../context/WorkspaceContext";
 import { canEditContent, canReview as roleCanReview } from "../../lib/permissions";
 import type { Account, PerAccountOverride } from "../../components/PlatformPreview";
 import { cn } from "../../lib/cn";
+import {
+  DEFAULT_SORT, JOB_SORTS, countJobs, matchesFilter, sectionOf, sortJobs,
+  type FilterTab, type JobCounts, type JobSort,
+} from "../../lib/postList";
 
 interface Target {
   id: string;
@@ -431,7 +435,9 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
 }
 
 type ViewTab = "list" | "calendar";
-type FilterTab = "all" | "draft" | "review" | "pending" | "done" | "failed";
+
+// Sorting a non-default order needs every post loaded; stop auto-loading here
+const SORT_LOAD_CAP = 1000;
 
 export default function JobsPage() {
   const router = useRouter();
@@ -455,6 +461,11 @@ export default function JobsPage() {
   const [repeatingJob, setRepeatingJob] = useState<Job | null>(null);
   const [reviewingJob, setReviewingJob] = useState<Job | null>(null);
   const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [sort, setSort] = useState<JobSort>(DEFAULT_SORT);
+  // Chip counts from the server (full data); null until the first response
+  const [serverCounts, setServerCounts] = useState<JobCounts | null>(null);
+  // Platforms ever seen — the platform chips must not shrink when the list is filtered by platform
+  const [knownPlatforms, setKnownPlatforms] = useState<string[]>([]);
 
   // Design-approval flow — owner/admin/designer review; members submit for review
   const role = activeWorkspace?.role ?? user?.role;
@@ -706,13 +717,13 @@ export default function JobsPage() {
   }
 
   // Initial load + filter change
-  const loadJobs = useCallback(async (statusFilter: FilterTab, cursor?: string) => {
+  const loadJobs = useCallback(async (statusFilter: FilterTab, platform: string, cursor?: string) => {
     const isFirstPage = !cursor;
     if (isFirstPage) setLoading(true); else setLoadingMore(true);
     try {
       const params = new URLSearchParams({ limit: "50" });
-      if (statusFilter === "review") params.set("review", "pending");
-      else if (statusFilter !== "all") params.set("status", statusFilter);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (platform !== "all") params.set("platform", platform);
       if (cursor) params.set("cursor", cursor);
       const data = await apiFetch<{ items: Job[]; nextCursor: string | null; hasMore: boolean }>(`/jobs?${params}`);
       if (isFirstPage) {
@@ -734,20 +745,51 @@ export default function JobsPage() {
   useEffect(() => {
     setNextCursor(null);
     setHasMore(false);
-    loadJobs(filter);
-  }, [filter, loadJobs]);
+    loadJobs(filter, platformFilter);
+  }, [filter, platformFilter, loadJobs]);
 
   // Infinite scroll sentinel
   useEffect(() => {
     if (!sentinelRef.current || !hasMore) return;
     const obs = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting && hasMore && !loadingMore && nextCursor) {
-        loadJobs(filter, nextCursor);
+        loadJobs(filter, platformFilter, nextCursor);
       }
     }, { threshold: 0.1 });
     obs.observe(sentinelRef.current);
     return () => obs.disconnect();
-  }, [hasMore, loadingMore, nextCursor, filter, loadJobs]);
+  }, [hasMore, loadingMore, nextCursor, filter, platformFilter, loadJobs]);
+
+  // A non-default sort is only correct over the whole list, so keep paging until
+  // everything is loaded (capped). The default order matches the server order and scrolls lazily.
+  useEffect(() => {
+    if (sort === DEFAULT_SORT || loading || loadingMore || !hasMore || !nextCursor) return;
+    if (jobs.length >= SORT_LOAD_CAP) return;
+    loadJobs(filter, platformFilter, nextCursor);
+  }, [sort, loading, loadingMore, hasMore, nextCursor, jobs.length, filter, platformFilter, loadJobs]);
+
+  // Chip counts come from the server over ALL visible posts (platform filter only),
+  // never from the loaded/filtered list. Refetch when a post's bucket may have changed.
+  const bucketSignature = jobs.map((j) => `${j.id}:${j.status}:${j.approvalStatus ?? ""}`).join("|");
+  useEffect(() => {
+    let cancelled = false;
+    const t = setTimeout(() => {
+      const qs = platformFilter !== "all" ? `?platform=${encodeURIComponent(platformFilter)}` : "";
+      apiFetch<JobCounts>(`/jobs/counts${qs}`)
+        .then((c) => { if (!cancelled) setServerCounts(c); })
+        .catch(() => {});
+    }, 250);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [platformFilter, bucketSignature]);
+
+  // Remember every platform seen so the platform chips stay put while filtering
+  useEffect(() => {
+    const seen = jobs.flatMap((j) => j.targets.map((t) => t.account?.platform).filter(Boolean) as string[]);
+    setKnownPlatforms((prev) => {
+      const next = Array.from(new Set([...prev, ...seen]));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [jobs]);
 
   // SSE for live status updates on visible jobs — merges status changes only
   useEffect(() => {
@@ -792,16 +834,10 @@ export default function JobsPage() {
     return () => es?.close();
   }, []);
 
-  const counts = {
-    all: jobs.length,
-    draft: jobs.filter((j) => j.status === "draft").length,
-    review: jobs.filter((j) => j.status === "draft" && j.approvalStatus === "pending").length,
-    pending: jobs.filter((j) => j.status === "pending" || j.status === "running").length,
-    done: jobs.filter((j) => j.status === "done").length,
-    failed: jobs.filter((j) => j.status === "failed").length,
-  };
+  // Server counts cover every post; until they arrive, count whatever is loaded
+  const counts: JobCounts = serverCounts ?? countJobs(jobs, platformFilter);
 
-  const allPlatforms = Array.from(new Set(jobs.flatMap((j) => j.targets.map((t) => t.account?.platform).filter(Boolean) as string[])));
+  const allPlatforms = knownPlatforms;
 
   // Bulk select helpers
   const toggleSelect = (id: string) => setSelectedIds(prev => {
@@ -825,23 +861,12 @@ export default function JobsPage() {
     return jobs.filter(j => statuses.includes(j.status)).map(j => j.id);
   };
 
-  const filteredJobs = jobs.filter((j) => {
-    if (filter !== "all") {
-      if (filter === "review") {
-        if (j.status !== "draft" || j.approvalStatus !== "pending") return false;
-      } else if (filter === "pending" && j.status !== "pending" && j.status !== "running") {
-        return false;
-      } else if (filter !== "pending" && j.status !== filter) {
-        return false;
-      }
-    }
-    if (platformFilter !== "all" && !j.targets.some((t) => t.account?.platform === platformFilter)) return false;
-    return true;
-  });
+  const filteredJobs = jobs.filter((j) => matchesFilter(j, filter, platformFilter));
 
-  const drafts = filteredJobs.filter((j) => j.status === "draft");
-  const upcoming = filteredJobs.filter((j) => j.status === "pending" || j.status === "running");
-  const past = filteredJobs.filter((j) => j.status === "done" || j.status === "failed");
+  // Sorting only reorders inside each section; it never changes which posts are shown or counted
+  const drafts = sortJobs(filteredJobs.filter((j) => sectionOf(j) === "draft"), sort, "draft");
+  const upcoming = sortJobs(filteredJobs.filter((j) => sectionOf(j) === "upcoming"), sort, "upcoming");
+  const past = sortJobs(filteredJobs.filter((j) => sectionOf(j) === "past"), sort, "past");
 
 
   return (
@@ -976,7 +1001,8 @@ export default function JobsPage() {
           {([
             { id: "all",     label: "All",       dot: null },
             ...(showDraftTab ? ([{ id: "draft", label: "Drafts",   dot: "bg-neutral-500" }] as const) : []),
-            ...(canReview ? ([{ id: "review", label: "In review", dot: "bg-brand-800" }] as const) : []),
+            ...(canReview || canSubmitOwn ? ([{ id: "review", label: "In review", dot: "bg-brand-800" }] as const) : []),
+            ...(canSubmitOwn ? ([{ id: "rejected", label: "Rejected", dot: "bg-red-500" }] as const) : []),
             { id: "pending", label: "Scheduled",  dot: "bg-accent" },
             { id: "done",    label: "Published",  dot: "bg-green-500" },
             { id: "failed",  label: "Failed",     dot: "bg-red-500" },
@@ -1006,6 +1032,25 @@ export default function JobsPage() {
               ))}
             </div>
           </>
+        )}
+        {/* Sort — right end of the toolbar, own row on mobile. Reorders only; counts never change. */}
+        {viewTab === "list" && (
+          <label className={cn("chip w-full justify-between rounded-xl px-3 py-1.5 sm:ml-auto sm:w-auto",
+            sort !== DEFAULT_SORT && "chip-active")}>
+            <span className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h13M3 12h9M3 17h5m8 0V9m0 8l-3-3m3 3l3-3" />
+              </svg>
+              Sort
+            </span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as JobSort)}
+              aria-label="Sort posts"
+              className="cursor-pointer rounded-md bg-transparent py-0.5 pr-1 type-body-sb-xs text-fg outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
+              {JOB_SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+          </label>
         )}
       </div>
 
@@ -1115,7 +1160,7 @@ export default function JobsPage() {
                     </a>
                   </>
                 ) : (
-                  <p className="type-body-r-s text-muted">{filter === "review" ? "Nothing waiting for review" : `No ${filter} posts`}</p>
+                  <p className="type-body-r-s text-muted">{filter === "review" ? "Nothing waiting for review" : filter === "rejected" ? "No rejected posts" : `No ${filter} posts`}</p>
                 )}
               </div>
             )}
@@ -1125,7 +1170,7 @@ export default function JobsPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <span className="w-2 h-2 rounded-full bg-neutral-500" />
                   <p className="section-label">
-                    {filter === "review" || !showDraftTab ? "In review" : "Drafts"} · {drafts.length}
+                    {filter === "rejected" ? "Rejected" : filter === "review" || !showDraftTab ? "In review" : "Drafts"} · {drafts.length}
                   </p>
                 </div>
                 <div className="space-y-3">
