@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { CsvParseError, parseCsvWithDelimiters, type CsvDelimiter } from "./csv.js";
+import type { PlanningDraft } from "./reviewRows.js";
 
 export const MAX_IMPORT_ROWS = 1000;
 export const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
@@ -104,6 +105,8 @@ export interface PlanningDuplicateRow {
 }
 
 export interface PlanningParseResult {
+  /** Every non-blank row as read from the file, valid or not. The review step edits these. */
+  drafts: PlanningDraft[];
   rows: PlanningRow[];
   invalidRows: PlanningInvalidRow[];
   duplicates: PlanningDuplicateRow[];
@@ -400,6 +403,7 @@ export function parsePlanningRows(
   const validRows: PlanningRow[] = [];
   const invalidRows: PlanningInvalidRow[] = [];
   const duplicates: PlanningDuplicateRow[] = [];
+  const drafts: PlanningDraft[] = [];
   const seenKeys = new Map<string, number>();
 
   for (let index = 0; index < dataRows.length; index += 1) {
@@ -424,6 +428,42 @@ export function parsePlanningRows(
     if (parsedPlatforms.error) errors.push(parsedPlatforms.error);
 
     const extraWarnings = options.rowWarnings?.(sourceRow, row) ?? [];
+
+    const draftContentReview = nullable(cleanCell(getCell(row, header.columns, "contentReview")));
+    const draftApprovedBy = nullable(cleanCell(getCell(row, header.columns, "approvedBy")));
+    drafts.push({
+      sourceRow,
+      fields: {
+        title,
+        postDate: parsedDate?.date ?? "",
+        platforms: parsedPlatforms.platforms,
+        category: nullable(cleanCell(getCell(row, header.columns, "category"))),
+        caption: cleanCell(getCell(row, header.columns, "caption")),
+      },
+      extras: {
+        designCopy: getCell(row, header.columns, "designCopy"),
+        assetNotes: cleanCell(getCell(row, header.columns, "assetNotes")),
+        pillar: nullable(cleanCell(getCell(row, header.columns, "pillar"))),
+        picContent: nullable(cleanCell(getCell(row, header.columns, "picContent"))),
+        contentReview: draftContentReview,
+        approvedBy: draftApprovedBy,
+        reviewer: draftApprovedBy ?? draftContentReview ?? nullable(cleanCell(getCell(row, header.columns, "reviewer"))),
+        picDesign: nullable(cleanCell(getCell(row, header.columns, "picDesign"))),
+        progress: nullable(cleanCell(getCell(row, header.columns, "progress"))),
+        outputUrl: nullable(cleanCell(getCell(row, header.columns, "outputUrl"))),
+        sourceStatus: nullable(cleanCell(getCell(row, header.columns, "sourceStatus"))),
+      },
+      warnings: [
+        ...(parsedDate?.warning ? [parsedDate.warning] : []),
+        ...(/^published$/i.test(cleanCell(getCell(row, header.columns, "sourceStatus")))
+          ? ["Status sumber Published; di Posthive tetap disimpan sebagai draft."]
+          : []),
+        ...extraWarnings,
+      ],
+      ...(postDateRaw && !parsedDate ? { rawPostDate: postDateRaw } : {}),
+      platformLabel: parsedPlatforms.label,
+      ...(parsedPlatforms.error ? { platformError: parsedPlatforms.error } : {}),
+    });
 
     if (errors.length > 0 || !parsedDate) {
       invalidRows.push({
@@ -494,6 +534,7 @@ export function parsePlanningRows(
   }
 
   return {
+    drafts,
     rows: validRows,
     invalidRows,
     duplicates,

@@ -121,34 +121,20 @@ Response:
   },
   "rows": [
     {
-      "sourceRow": 73,
-      "importKey": "...",
-      "title": "Slope Stability Before the Rain Peaks",
-      "postDate": "2026-10-22",
-      "scheduledFor": "2026-10-22T02:00:00.000Z",
-      "platforms": ["linkedin", "instagram"],
-      "designCopyPreview": "Slide 1...",
-      "designCopyLength": 2450,
-      "designCopyHasLineBreaks": true,
-      "captionPreview": "Most organizations today...",
-      "captionLength": 780,
-      "captionHasLineBreaks": true,
-      "targets": [],
-      "warnings": ["Akun linkedin belum terhubung; draft dibuat tanpa target."]
-    }
-  ],
-  "invalidRows": [
-    {
       "sourceRow": 84,
-      "title": "Row without platform",
-      "reason": "Platform wajib diisi."
+      "status": "invalid",
+      "fields": { "title": "Row without platform", "postDate": "2026-10-22", "platforms": [], "category": "Case Study", "caption": "" },
+      "errors": [{ "field": "platforms", "message": "Platform wajib diisi." }],
+      "warnings": [],
+      "duplicateReason": null,
+      "details": { "platformLabel": "", "designCopyPreview": "", "designCopyLength": 0 }
     }
   ],
-  "duplicates": []
+  "accountCount": { "linkedin": 1 }
 }
 ```
 
-`designCopyPreview` and `captionPreview` are truncated to 500 characters. The full values are only stored during commit, from the original file.
+Every non-blank row comes back, not only the valid ones. `status` is `valid`, `invalid` or `duplicate` (already imported into the workspace, or a copy of an earlier row in the file). `fields` are the five values the review table can edit; `errors` say what is wrong per field (`title`, `postDate`, `platforms`). `details` carries read-only columns for context; `designCopyPreview` is cut to 500 characters. `accountCount` is the number of connected accounts per platform.
 
 ### Commit
 
@@ -159,23 +145,31 @@ Content-Type: multipart/form-data
 
 Fields:
 
-- `file`: the same CSV or XLSX file used for preview
-- `sourceRows` (optional): JSON array or comma-separated row numbers, e.g. `[73,74]` or `73,74`
+- `file`: the same CSV or XLSX file used for preview. It stays unchanged; fixes are sent separately.
+- `include` (required): JSON array of the file row numbers to import, e.g. `[73,74]`. Rows left out are not saved.
+- `edits` (optional): JSON object of fixes by row number, e.g. `{"73":{"title":"New title","postDate":"2026-10-22","platforms":["linkedin","instagram"],"category":"Case Study","caption":"..."}}`. Only these five fields can be edited; any other key is rejected.
 
-The server re-parses and re-validates the file. It does not trust the preview payload. If `sourceRows` is omitted, all valid non-duplicate rows are imported.
+The server re-parses the file, applies `edits`, and validates every included row again with the same rules as the preview (title, real calendar date, platform, duplicates in the batch and in the workspace). It does not trust the browser.
 
-Response:
+The import is all-or-nothing: the rows are saved in one transaction. If any included row is invalid or a duplicate, nothing is saved and the response lists the rows:
 
 ```json
 {
-  "summary": {
-    "totalRows": 85,
-    "selectedRows": 85,
-    "created": 70,
-    "skipped": 15,
-    "invalidRows": 10,
-    "duplicateRows": 5
-  },
+  "error": "Beberapa baris belum valid. Tidak ada yang disimpan.",
+  "code": "IMPORT_INVALID",
+  "rows": [
+    { "sourceRow": 84, "errors": [{ "field": "platforms", "message": "Platform wajib diisi." }] }
+  ]
+}
+```
+
+Status is `422`, or `409` when another import saved the same post a moment earlier. An unknown category is not an error; it is saved as written and `Send for Design Approval` asks for a valid one later.
+
+Success response (`201`):
+
+```json
+{
+  "summary": { "totalRows": 85, "created": 80 },
   "jobs": [
     {
       "id": "c...",
@@ -183,9 +177,6 @@ Response:
       "title": "Slope Stability Before the Rain Peaks",
       "scheduledFor": "2026-10-22T02:00:00.000Z"
     }
-  ],
-  "skipped": [
-    { "sourceRow": 84, "reason": "Platform wajib diisi." }
   ]
 }
 ```
@@ -256,7 +247,8 @@ const preview = await fetch(`${API_BASE}/jobs/import/preview`, {
 
 const commitBody = new FormData();
 commitBody.append("file", file);
-commitBody.append("sourceRows", JSON.stringify(selectedRows)); // optional
+commitBody.append("include", JSON.stringify(includedRows));
+commitBody.append("edits", JSON.stringify(edits)); // optional
 
 await fetch(`${API_BASE}/jobs/import/commit`, {
   method: "POST",

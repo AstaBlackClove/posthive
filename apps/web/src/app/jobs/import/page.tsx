@@ -1,59 +1,22 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
-import { PlatformIcon } from "../../../components/PlatformIcon";
+import { ImportReviewTable } from "../../../components/ImportReviewTable";
 import { cn } from "../../../lib/cn";
+import {
+  buildCommitPayload,
+  buildReviewRows,
+  canImport,
+  reviewSummary,
+  type FieldIssue,
+  type ReviewFields,
+  type ReviewRow,
+  type ServerRow,
+} from "../../../lib/importReview";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
-
-interface PreviewTarget {
-  accountId: string;
-  platform: string;
-  displayName: string;
-}
-
-interface PreviewRow {
-  sourceRow: number;
-  importKey: string;
-  title: string;
-  postDate: string;
-  scheduledFor: string;
-  platforms: string[];
-  platformLabel: string;
-  sourceStatus: string | null;
-  pillar: string | null;
-  category: string | null;
-  picContent: string | null;
-  reviewer: string | null;
-  picDesign: string | null;
-  progress: string | null;
-  outputUrl: string | null;
-  assetNotes: string;
-  designCopyPreview: string;
-  designCopyLength: number;
-  designCopyHasLineBreaks: boolean;
-  captionPreview: string;
-  captionLength: number;
-  captionHasLineBreaks: boolean;
-  targets: PreviewTarget[];
-  warnings: string[];
-}
-
-interface InvalidRow {
-  sourceRow: number;
-  title: string;
-  reason: string;
-}
-
-interface DuplicateRow {
-  sourceRow: number;
-  importKey: string;
-  title: string;
-  reason: string;
-}
 
 interface PreviewResponse {
   file: {
@@ -71,33 +34,18 @@ interface PreviewResponse {
     invalidRows: number;
     duplicateRows: number;
   };
-  rows: PreviewRow[];
-  invalidRows: InvalidRow[];
-  duplicates: DuplicateRow[];
+  rows: ServerRow[];
+  accountCount: Record<string, number>;
 }
 
 interface CommitResponse {
-  summary: {
-    totalRows: number;
-    selectedRows: number;
-    created: number;
-    skipped: number;
-    invalidRows: number;
-    duplicateRows: number;
-  };
-  jobs: Array<{
-    id: string;
-    sourceRow: number;
-    title: string;
-    scheduledFor: string;
-  }>;
-  skipped: Array<{ sourceRow: number; reason: string }>;
+  summary: { totalRows: number; created: number };
+  jobs: Array<{ id: string; sourceRow: number; title: string; scheduledFor: string }>;
 }
 
-type TableRow =
-  | { kind: "valid"; row: PreviewRow }
-  | { kind: "invalid"; row: InvalidRow }
-  | { kind: "duplicate"; row: DuplicateRow };
+interface CommitRefusal {
+  rows?: Array<{ sourceRow: number; errors: FieldIssue[] }>;
+}
 
 type Phase = "idle" | "previewing" | "ready" | "committing" | "done" | "error";
 
@@ -140,12 +88,6 @@ const PLATFORM_GUIDE = [
   { value: "Website", result: "website (draft, tanpa target sosial)" },
 ];
 
-const PLATFORM_LABEL: Record<string, string> = {
-  linkedin: "LinkedIn",
-  instagram: "Instagram",
-  website: "Website",
-};
-
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Terjadi kesalahan. Coba lagi.";
 }
@@ -170,26 +112,6 @@ function validateImportFile(file: File): string | null {
   return null;
 }
 
-function PlatformLabel({ platform }: { platform: string }) {
-  if (platform === "website") {
-    return (
-      <span className="inline-flex items-center gap-1.5 type-body-r-xs text-muted">
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.5-2.2 4-5.2 4-9s-1.5-6.8-4-9m0 18c-2.5-2.2-4-5.2-4-9s1.5-6.8 4-9M3.6 9h16.8M3.6 15h16.8" />
-        </svg>
-        Website
-      </span>
-    );
-  }
-
-  return (
-    <span className="inline-flex items-center gap-1.5 type-body-r-xs text-muted">
-      <PlatformIcon platform={platform} size={14} />
-      {PLATFORM_LABEL[platform] ?? platform}
-    </span>
-  );
-}
-
 function StatusBadge({ tone, label }: { tone: string; label: string }) {
   return (
     <span className={cn("type-body-m-xs whitespace-nowrap", tone)}>
@@ -209,15 +131,6 @@ function Stat({ label, value, tone }: { label: string; value: number; tone?: str
   );
 }
 
-function Detail({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div>
-      <p className="type-body-r-xxs uppercase tracking-wide text-muted">{label}</p>
-      <p className={cn("type-body-r-xs mt-0.5", value ? "text-fg" : "text-neutral-500")}>{value || "—"}</p>
-    </div>
-  );
-}
-
 export default function ImportContentPlanPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -226,35 +139,18 @@ export default function ImportContentPlanPage() {
   const [csvText, setCsvText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
-  const [preview, setPreview] = useState<PreviewResponse | null>(null);
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [fileInfo, setFileInfo] = useState<PreviewResponse["file"] | null>(null);
+  const [rows, setRows] = useState<ReviewRow[]>([]);
+  const [accountCount, setAccountCount] = useState<Record<string, number>>({});
+  const [serverErrors, setServerErrors] = useState<Map<number, FieldIssue[]>>(new Map());
   const [commitResult, setCommitResult] = useState<CommitResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
   const isBusy = phase === "previewing" || phase === "committing";
-  const validRows = preview?.rows ?? [];
-  const selectedCount = selected.size;
-  const allSelected = validRows.length > 0 && selectedCount === validRows.length;
-
-  const tableRows = useMemo<TableRow[]>(() => {
-    if (!preview) return [];
-    const rows: TableRow[] = [
-      ...preview.rows.map((row) => ({ kind: "valid" as const, row })),
-      ...preview.invalidRows.map((row) => ({ kind: "invalid" as const, row })),
-      ...preview.duplicates.map((row) => ({ kind: "duplicate" as const, row })),
-    ];
-    return rows.sort((a, b) => a.row.sourceRow - b.row.sourceRow);
-  }, [preview]);
-
-  const createdRows = useMemo(
-    () => new Set(commitResult?.jobs.map((job) => job.sourceRow) ?? []),
-    [commitResult],
-  );
-  const skippedByRow = useMemo(
-    () => new Map(commitResult?.skipped.map((item) => [item.sourceRow, item.reason]) ?? []),
-    [commitResult],
-  );
+  const locked = phase === "committing" || phase === "done";
+  const summary = useMemo(() => reviewSummary(rows, serverErrors), [rows, serverErrors]);
+  const ready = useMemo(() => canImport(rows, serverErrors), [rows, serverErrors]);
+  const keptCount = summary.total - summary.removed;
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -267,14 +163,18 @@ export default function ImportContentPlanPage() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [phase]);
 
+  function resetReview() {
+    setFileInfo(null);
+    setRows([]);
+    setServerErrors(new Map());
+    setCommitResult(null);
+  }
+
   async function runPreview(importFile: File) {
     const requestId = ++previewRequestRef.current;
     setPhase("previewing");
     setError(null);
-    setPreview(null);
-    setCommitResult(null);
-    setSelected(new Set());
-    setExpandedRow(null);
+    resetReview();
 
     const body = new FormData();
     body.append("file", importFile, importFile.name);
@@ -285,8 +185,9 @@ export default function ImportContentPlanPage() {
         body,
       });
       if (previewRequestRef.current !== requestId) return;
-      setPreview(data);
-      setSelected(new Set(data.rows.map((row) => row.sourceRow)));
+      setFileInfo(data.file);
+      setRows(buildReviewRows(data.rows));
+      setAccountCount(data.accountCount);
       setPhase("ready");
     } catch (err) {
       if (previewRequestRef.current !== requestId) return;
@@ -299,9 +200,7 @@ export default function ImportContentPlanPage() {
     const validation = validateImportFile(importFile);
     if (validation) {
       setFile(null);
-      setPreview(null);
-      setCommitResult(null);
-      setSelected(new Set());
+      resetReview();
       setError(validation);
       setPhase("error");
       return;
@@ -309,7 +208,6 @@ export default function ImportContentPlanPage() {
 
     setFile(importFile);
     setCommitResult(null);
-    setSelected(new Set());
     setError(null);
 
     if (importFile.name.toLowerCase().endsWith(".csv")) {
@@ -351,14 +249,17 @@ export default function ImportContentPlanPage() {
   }
 
   async function handleCommit() {
-    if (!file || !preview || selectedCount === 0 || isBusy) return;
+    if (!file || !ready || isBusy) return;
 
     setPhase("committing");
     setError(null);
+    setServerErrors(new Map());
 
+    const payload = buildCommitPayload(rows);
     const body = new FormData();
     body.append("file", file, file.name);
-    body.append("sourceRows", JSON.stringify([...selected].sort((a, b) => a - b)));
+    body.append("include", JSON.stringify(payload.include));
+    body.append("edits", JSON.stringify(payload.edits));
 
     try {
       const data = await apiFetch<CommitResponse>("/jobs/import/commit", {
@@ -368,7 +269,14 @@ export default function ImportContentPlanPage() {
       setCommitResult(data);
       setPhase("done");
     } catch (err) {
-      setError(errorMessage(err));
+      // Nothing was saved. Mark the rows the server refused so they can be fixed.
+      const refused = (err as { data?: CommitRefusal }).data?.rows;
+      if (refused?.length) {
+        setServerErrors(new Map(refused.map((r) => [r.sourceRow, r.errors])));
+        setError(`${errorMessage(err)} Periksa ${refused.length} baris yang ditandai.`);
+      } else {
+        setError(errorMessage(err));
+      }
       setPhase("ready");
     }
   }
@@ -377,48 +285,26 @@ export default function ImportContentPlanPage() {
     previewRequestRef.current += 1;
     setCsvText("");
     setFile(null);
-    setPreview(null);
-    setSelected(new Set());
-    setCommitResult(null);
+    resetReview();
     setError(null);
-    setExpandedRow(null);
     setPhase("idle");
   }
 
-  function toggleRow(sourceRow: number) {
-    if (phase === "done" || phase === "committing") return;
-    setSelected((current) => {
-      const next = new Set(current);
-      if (next.has(sourceRow)) next.delete(sourceRow);
-      else next.add(sourceRow);
-      return next;
-    });
+  function editRow(sourceRow: number, patch: Partial<ReviewFields>) {
+    setRows((current) => current.map((r) => (r.sourceRow === sourceRow ? { ...r, fields: { ...r.fields, ...patch } } : r)));
   }
 
-  function toggleAll() {
-    if (phase === "done" || phase === "committing") return;
-    setSelected(allSelected ? new Set() : new Set(validRows.map((row) => row.sourceRow)));
+  function setRemoved(sourceRow: number, removed: boolean) {
+    setRows((current) => current.map((r) => (r.sourceRow === sourceRow ? { ...r, removed } : r)));
   }
 
-  function statusFor(entry: TableRow): { tone: string; label: string } {
-    if (entry.kind === "invalid") return { tone: "text-red-600", label: "✕ Invalid" };
-    if (entry.kind === "duplicate") return { tone: "text-brand-800", label: "Duplicate" };
-
-    if (phase === "done") {
-      if (createdRows.has(entry.row.sourceRow)) return { tone: "text-green-700", label: "✓ Created" };
-      if (skippedByRow.has(entry.row.sourceRow)) return { tone: "text-red-600", label: "✕ Skipped" };
-      return { tone: "text-muted", label: "Not selected" };
-    }
-
-    return selected.has(entry.row.sourceRow)
-      ? { tone: "text-green-700", label: "✓ Ready" }
-      : { tone: "text-muted", label: "Not selected" };
-  }
-
-  const canImport = phase === "ready" && selectedCount > 0 && !!file;
-  const totalRows = preview?.summary.totalRows ?? 0;
-  const invalidCount = preview?.summary.invalidRows ?? 0;
-  const duplicateCount = preview?.summary.duplicateRows ?? 0;
+  const importHint = phase !== "ready"
+    ? null
+    : keptCount === 0
+      ? "Tidak ada baris untuk diimpor"
+      : summary.needsFix > 0
+        ? `Perbaiki ${summary.needsFix} baris dulu`
+        : null;
 
   return (
     <div className="flex flex-col h-full bg-bg text-fg">
@@ -440,12 +326,16 @@ export default function ImportContentPlanPage() {
           <h1 className="type-body-sb-s truncate text-fg">Import Content Plan</h1>
         </div>
 
-        {(preview || phase === "done") && (
+        {(fileInfo || phase === "done") && (
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <span className={cn("type-body-r-xs flex-1", validRows.length > 0 ? "text-green-700" : "text-muted")}>
-              {validRows.length} valid
-              {invalidCount > 0 && <span className="text-red-600"> · {invalidCount} invalid</span>}
-              {duplicateCount > 0 && <span className="text-brand-800"> · {duplicateCount} duplicate</span>}
+            <span className="type-body-r-xs flex-1 min-w-40" aria-live="polite">
+              {phase === "done" && commitResult ? (
+                <span className="text-green-700">{commitResult.summary.created} draft dibuat</span>
+              ) : importHint ? (
+                <span className="text-red-600">{importHint}</span>
+              ) : (
+                <span className="text-green-700">Semua baris valid</span>
+              )}
             </span>
 
             {phase !== "done" && (
@@ -453,16 +343,16 @@ export default function ImportContentPlanPage() {
                 <button
                   onClick={clearAll}
                   disabled={isBusy}
-                  className="btn-secondary px-3 py-1.5 type-body-m-s text-muted disabled:opacity-40 shrink-0"
+                  className="btn-secondary min-h-11 px-3 py-1.5 type-body-m-s text-muted disabled:opacity-40 shrink-0"
                 >
                   Clear
                 </button>
                 <button
                   onClick={handleCommit}
-                  disabled={!canImport}
-                  className="btn-primary px-3 py-1.5 disabled:opacity-40 shrink-0"
+                  disabled={!ready || isBusy || !file}
+                  className="btn-primary min-h-11 px-3 py-1.5 disabled:opacity-40 shrink-0"
                 >
-                  {phase === "committing" ? "Importing…" : `Import ${selectedCount}`}
+                  {phase === "committing" ? "Mengimpor…" : `Import ${keptCount} post`}
                 </button>
               </>
             )}
@@ -471,13 +361,13 @@ export default function ImportContentPlanPage() {
               <>
                 <button
                   onClick={clearAll}
-                  className="btn-secondary px-3 py-1.5 type-body-m-s text-muted shrink-0"
+                  className="btn-secondary min-h-11 px-3 py-1.5 type-body-m-s text-muted shrink-0"
                 >
                   Import another
                 </button>
                 <button
                   onClick={() => router.push("/jobs")}
-                  className="btn-primary px-3 py-1.5 shrink-0"
+                  className="btn-primary min-h-11 px-3 py-1.5 shrink-0"
                 >
                   View drafts →
                 </button>
@@ -562,11 +452,8 @@ export default function ImportContentPlanPage() {
                   onChange={(event) => {
                     setCsvText(event.target.value);
                     setFile(null);
-                    setPreview(null);
-                    setSelected(new Set());
-                    setCommitResult(null);
+                    resetReview();
                     setError(null);
-                    setExpandedRow(null);
                     setPhase("idle");
                   }}
                   placeholder={"Content Title,Post Date,Platform\nSlope Stability Before the Rain Peaks,22-10-2026,Mirroring (LI&Ig)"}
@@ -704,19 +591,17 @@ export default function ImportContentPlanPage() {
                 <span className="type-body-r-xl text-green-700">✓</span>
                 <div>
                   <p className="type-body-sb-s text-green-700">
-                    {commitResult.summary.created > 0
-                      ? `${commitResult.summary.created} draft${commitResult.summary.created === 1 ? "" : "s"} created`
-                      : "No new drafts created"}
+                    {commitResult.summary.created} draft{commitResult.summary.created === 1 ? "" : "s"} dibuat
                   </p>
                   <p className="type-body-r-xs mt-0.5 text-muted">
-                    {commitResult.summary.skipped} baris dilewati · {commitResult.summary.duplicateRows} duplikat · {commitResult.summary.invalidRows} invalid
+                    Draft belum punya media. Lengkapi media dan akun tujuan sebelum mengirim untuk Design Approval.
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {!preview && phase !== "previewing" && (
+          {!fileInfo && phase !== "previewing" && (
             <div className="flex flex-col items-center justify-center gap-4 py-16 lg:flex-1 text-neutral-300">
               <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -728,220 +613,44 @@ export default function ImportContentPlanPage() {
             </div>
           )}
 
-          {preview && (
-            <>
-              <div className="shrink-0 flex flex-wrap items-center gap-4 lg:gap-6 px-4 py-3 border-b border-border bg-surface">
-                <Stat label="Total rows" value={totalRows} />
-                <Stat label="Valid" value={validRows.length} tone="text-green-700" />
-                <Stat label="Invalid" value={invalidCount} tone={invalidCount > 0 ? "text-red-600" : undefined} />
-                <Stat label="Duplicates" value={duplicateCount} tone={duplicateCount > 0 ? "text-brand-800" : undefined} />
-                <Stat label="Selected" value={selectedCount} tone="text-brand-800" />
+          {fileInfo && (
+            <div className="lg:flex-1 lg:overflow-y-auto">
+              <div className="flex flex-wrap items-center gap-4 lg:gap-6 px-4 py-3 border-b border-border bg-surface">
+                <Stat label="Total" value={summary.total} />
+                <Stat label="Valid" value={summary.valid} tone="text-green-700" />
+                <Stat label="Perlu diperbaiki" value={summary.needsFix} tone={summary.needsFix > 0 ? "text-red-600" : undefined} />
+                <Stat label="Dihapus" value={summary.removed} tone={summary.removed > 0 ? "text-brand-800" : undefined} />
               </div>
 
-              {preview.file.format === "xlsx" ? (
-                <div className="card rounded-xl shrink-0 mx-6 mt-4 p-3 type-body-r-xs text-muted">
-                  Sheet terpilih: <code className="text-brand-800">{preview.file.sheetName}</code>. Header di baris {preview.file.headerRow}
-                  {preview.file.subHeaderRow ? ` dan ${preview.file.subHeaderRow}` : ""}.
-                  {preview.file.candidateSheets.length > 1 && (
-                    <> Sheet kandidat: {preview.file.candidateSheets.join(", ")}.</>
+              {fileInfo.format === "xlsx" ? (
+                <div className="card rounded-xl mx-4 mt-4 p-3 type-body-r-xs text-muted">
+                  Sheet terpilih: <code className="text-brand-800">{fileInfo.sheetName}</code>. Header di baris {fileInfo.headerRow}
+                  {fileInfo.subHeaderRow ? ` dan ${fileInfo.subHeaderRow}` : ""}.
+                  {fileInfo.candidateSheets.length > 1 && (
+                    <> Sheet kandidat: {fileInfo.candidateSheets.join(", ")}.</>
                   )}
                 </div>
-              ) : preview.file.subHeaderRow ? (
-                <div className="card rounded-xl shrink-0 mx-6 mt-4 p-3 type-body-r-xs text-muted">
-                  Header terdeteksi di baris {preview.file.headerRow} dan {preview.file.subHeaderRow}.
-                  {preview.file.delimiter && <> Delimiter: <code className="text-brand-800">{preview.file.delimiter}</code>.</>}
+              ) : fileInfo.subHeaderRow ? (
+                <div className="card rounded-xl mx-4 mt-4 p-3 type-body-r-xs text-muted">
+                  Header terdeteksi di baris {fileInfo.headerRow} dan {fileInfo.subHeaderRow}.
+                  {fileInfo.delimiter && <> Delimiter: <code className="text-brand-800">{fileInfo.delimiter}</code>.</>}
                 </div>
               ) : null}
 
-              <div className="overflow-x-auto lg:flex-1 lg:overflow-y-auto mt-4">
-                <table className="w-full type-body-r-xs border-separate border-spacing-0">
-                  <thead className="sticky top-0 z-10 bg-surface text-muted">
-                    <tr className="*:border-b *:border-border">
-                      <th className="text-left px-4 py-3 w-10">
-                        <input
-                          type="checkbox"
-                          checked={allSelected}
-                          onChange={toggleAll}
-                          disabled={validRows.length === 0 || phase === "done" || phase === "committing"}
-                          aria-label="Select all valid rows"
-                        />
-                      </th>
-                      <th className="text-left px-4 py-3 type-body-sb-xs w-10">#</th>
-                      <th className="text-left px-4 py-3 type-body-sb-xs">Content Title</th>
-                      <th className="text-left px-4 py-3 type-body-sb-xs whitespace-nowrap">Post Date</th>
-                      <th className="text-left px-4 py-3 type-body-sb-xs">Platform</th>
-                      <th className="text-left px-4 py-3 type-body-sb-xs">Link Copywrite</th>
-                      <th className="text-left px-4 py-3 type-body-sb-xs">Caption</th>
-                      <th className="text-left px-4 py-3 type-body-sb-xs">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tableRows.map((entry) => {
-                      const sourceRow = entry.row.sourceRow;
-                      const isExpanded = expandedRow === sourceRow;
-                      const status = statusFor(entry);
-                      const rowError = entry.kind !== "valid";
-                      const selectable = entry.kind === "valid" && phase !== "done" && phase !== "committing";
+              <p className="px-4 pt-4 type-body-r-xs text-muted">
+                Perbaikan di sini hanya mengubah data import, bukan file aslinya. Draft yang dibuat belum punya media, jadi lengkapi media dan akun tujuan sebelum dikirim untuk Design Approval.
+              </p>
 
-                      return (
-                        <Fragment key={`${entry.kind}-${sourceRow}`}>
-                          <tr
-                            onClick={() => setExpandedRow(isExpanded ? null : sourceRow)}
-                            className={cn("cursor-pointer transition-colors *:border-b *:border-border",
-                              rowError ? "bg-red-50" : isExpanded ? "bg-surface" : "hover:bg-surface")}
-                          >
-                            <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
-                              <input
-                                type="checkbox"
-                                checked={entry.kind === "valid" && selected.has(sourceRow)}
-                                onChange={() => toggleRow(sourceRow)}
-                                disabled={!selectable}
-                                aria-label={`Select row ${sourceRow}`}
-                              />
-                            </td>
-                            <td className="px-4 py-3 type-mono-r-xs text-neutral-500">{sourceRow}</td>
-                            <td className="px-4 py-3 max-w-70">
-                              <span className={cn("text-fg wrap-anywhere", isExpanded ? "whitespace-pre-wrap" : "block truncate")}>
-                                {entry.row.title || "—"}
-                              </span>
-                              {entry.kind === "valid" && entry.row.warnings.length > 0 && (
-                                <span className="inline-flex items-center gap-1 mt-1 type-body-r-xxs text-brand-800">
-                                  <span>▲</span>
-                                  {entry.row.warnings.length} warning{entry.row.warnings.length === 1 ? "" : "s"}
-                                </span>
-                              )}
-                              {entry.kind !== "valid" && (
-                                <p className={cn("type-body-r-xs mt-1", entry.kind === "invalid" ? "text-red-600" : "text-brand-800")}>
-                                  {entry.row.reason}
-                                </p>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-muted">
-                              {entry.kind === "valid" ? `${entry.row.postDate} · 09:00 WIB` : "—"}
-                            </td>
-                            <td className="px-4 py-3">
-                              {entry.kind === "valid" ? (
-                                <div className="flex flex-wrap gap-2">
-                                  {entry.row.platforms.map((platform) => (
-                                    <PlatformLabel key={platform} platform={platform} />
-                                  ))}
-                                </div>
-                              ) : "—"}
-                            </td>
-                            <td className="px-4 py-3 max-w-65">
-                              {entry.kind === "valid" ? (
-                                entry.row.designCopyPreview ? (
-                                  <span
-                                    className={cn("text-muted wrap-anywhere", isExpanded ? "whitespace-pre-wrap" : "block truncate")}
-                                  >
-                                    {entry.row.designCopyPreview}
-                                  </span>
-                                ) : <span className="text-neutral-500">—</span>
-                              ) : <span className="text-neutral-500">—</span>}
-                            </td>
-                            <td className="px-4 py-3 max-w-65">
-                              {entry.kind === "valid" ? (
-                                entry.row.captionPreview ? (
-                                  <span
-                                    className={cn("text-muted wrap-anywhere", isExpanded ? "whitespace-pre-wrap" : "block truncate")}
-                                  >
-                                    {entry.row.captionPreview}
-                                  </span>
-                                ) : <span className="text-neutral-500">—</span>
-                              ) : <span className="text-neutral-500">—</span>}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <StatusBadge tone={status.tone} label={status.label} />
-                            </td>
-                          </tr>
-
-                          {isExpanded && (
-                            <tr className="bg-surface *:border-b *:border-border">
-                              <td colSpan={8} className="px-6 py-4">
-                                {entry.kind === "valid" ? (
-                                  <div className="space-y-4">
-                                    {entry.row.warnings.length > 0 && (
-                                      <div className="rounded-xl p-3 border border-brand-400 bg-brand-100">
-                                        <p className="type-body-sb-xs mb-1 text-brand-800">Warnings</p>
-                                        <ul className="space-y-1">
-                                          {entry.row.warnings.map((warning) => (
-                                            <li key={warning} className="type-body-r-xs text-brand-800">• {warning}</li>
-                                          ))}
-                                        </ul>
-                                      </div>
-                                    )}
-
-                                    {skippedByRow.has(sourceRow) && (
-                                      <p className="type-body-r-xs text-red-600">
-                                        Skipped: {skippedByRow.get(sourceRow)}
-                                      </p>
-                                    )}
-
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                      <Detail label="Pillar" value={entry.row.pillar} />
-                                      <Detail label="Category" value={entry.row.category} />
-                                      <Detail label="PIC Content" value={entry.row.picContent} />
-                                      <Detail label="Reviewer" value={entry.row.reviewer} />
-                                      <Detail label="PIC Design" value={entry.row.picDesign} />
-                                      <Detail label="Progress" value={entry.row.progress} />
-                                      <Detail label="Source Status" value={entry.row.sourceStatus} />
-                                      <Detail label="Design Copy Length" value={`${entry.row.designCopyLength} chars`} />
-                                      <Detail label="Caption Length" value={`${entry.row.captionLength} chars`} />
-                                    </div>
-
-                                    <div>
-                                      <p className="type-body-r-xxs uppercase tracking-wide mb-1 text-muted">Targets</p>
-                                      {entry.row.targets.length > 0 ? (
-                                        <div className="flex flex-wrap gap-2">
-                                          {entry.row.targets.map((target) => (
-                                            <span key={target.accountId} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 border border-border bg-bg type-body-r-xs text-muted">
-                                              <PlatformIcon platform={target.platform} size={13} />
-                                              {target.displayName}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      ) : (
-                                        <p className="type-body-r-xs text-muted">Belum ada target akun. Pilih akun manual sebelum scheduling.</p>
-                                      )}
-                                    </div>
-
-                                    <div>
-                                      <p className="type-body-r-xxs uppercase tracking-wide mb-1 text-muted">Link Copywrite / Design Copy (preview)</p>
-                                      {entry.row.designCopyPreview ? (
-                                        <pre className="type-mono-r-xs whitespace-pre-wrap wrap-break-word rounded-xl p-3 max-h-56 overflow-y-auto border border-border bg-bg text-fg">
-                                          {entry.row.designCopyPreview}
-                                        </pre>
-                                      ) : (
-                                        <p className="type-body-r-xs text-neutral-500">Kosong.</p>
-                                      )}
-                                    </div>
-
-                                    <div>
-                                      <p className="type-body-r-xxs uppercase tracking-wide mb-1 text-muted">Caption / content.text (preview)</p>
-                                      {entry.row.captionPreview ? (
-                                        <pre className="type-mono-r-xs whitespace-pre-wrap wrap-break-word rounded-xl p-3 max-h-56 overflow-y-auto border border-border bg-bg text-fg">
-                                          {entry.row.captionPreview}
-                                        </pre>
-                                      ) : (
-                                        <p className="type-body-r-xs text-neutral-500">Kosong. Draft akan dibuat tanpa caption.</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <p className={cn("type-body-r-xs", entry.kind === "invalid" ? "text-red-600" : "text-brand-800")}>
-                                    Baris {sourceRow}: {entry.row.reason}
-                                  </p>
-                                )}
-                              </td>
-                            </tr>
-                          )}
-                        </Fragment>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </>
+              <ImportReviewTable
+                rows={rows}
+                serverErrors={serverErrors}
+                accountCount={accountCount}
+                locked={locked}
+                onEdit={editRow}
+                onRemove={(sourceRow) => setRemoved(sourceRow, true)}
+                onRestore={(sourceRow) => setRemoved(sourceRow, false)}
+              />
+            </div>
           )}
         </div>
       </div>

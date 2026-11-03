@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { getWorkspaceId, getUser, withAuth, requireContentEditorRole } from "../lib/auth/withAuth.js";
 import {
@@ -9,10 +10,19 @@ import {
   CsvHeaderError,
   MAX_IMPORT_BYTES,
   parsePlanningCsv,
-  type PlanningDuplicateRow,
   type PlanningImportFormat,
-  type PlanningRow,
 } from "../lib/import/planningImport.js";
+import {
+  IMPORT_PLATFORMS,
+  MAX_CAPTION,
+  MAX_CATEGORY,
+  MAX_TITLE,
+  commitFromDrafts,
+  reviewDrafts,
+  type PlanningDraft,
+  type PlanningEdits,
+  type RowErrors,
+} from "../lib/import/reviewRows.js";
 import { XlsxParseError, parsePlanningXlsx } from "../lib/import/planningXlsx.js";
 
 class ImportUploadError extends Error {
@@ -32,7 +42,10 @@ interface ImportUpload {
   filename: string;
   mimetype: string;
   format: PlanningImportFormat;
-  sourceRows?: number[];
+  /** Rows kept in the batch (the others were removed in the review). */
+  include?: number[];
+  /** Fixes made in the review table, by file row number. */
+  edits?: PlanningEdits;
 }
 
 interface ImportAccount {
@@ -47,31 +60,41 @@ interface ResolvedTarget {
   displayName: string;
 }
 
-function parseSourceRows(raw: string): number[] {
-  const value = raw.trim();
-  if (!value) return [];
-
+function parseInclude(raw: string): number[] {
   let parsed: unknown;
-  if (value.startsWith("[")) {
-    try {
-      parsed = JSON.parse(value);
-    } catch {
-      throw new ImportUploadError("Field sourceRows harus berupa array angka.");
-    }
-  } else {
-    parsed = value.split(",").map((part) => part.trim()).filter(Boolean);
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new ImportUploadError("Field include harus berupa array nomor baris.");
   }
+  const rows = z.array(z.number().int().min(1)).max(1000).safeParse(parsed);
+  if (!rows.success) throw new ImportUploadError("Field include harus berisi nomor baris positif.");
+  return [...new Set(rows.data)];
+}
 
-  if (!Array.isArray(parsed)) {
-    throw new ImportUploadError("Field sourceRows harus berupa array angka.");
+// The browser may send anything here, so it is checked, not trusted.
+const editSchema = z.object({
+  title: z.string().max(MAX_TITLE * 2).optional(),
+  postDate: z.string().max(10).optional(),
+  platforms: z.array(z.enum(IMPORT_PLATFORMS)).max(IMPORT_PLATFORMS.length).optional(),
+  category: z.string().max(MAX_CATEGORY).nullable().optional(),
+  caption: z.string().max(MAX_CAPTION).optional(),
+}).strict();
+
+function parseEdits(raw: string): PlanningEdits {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new ImportUploadError("Field edits harus berupa objek JSON.");
   }
-
-  const rows = parsed.map((item) => Number(item));
-  if (rows.some((row) => !Number.isInteger(row) || row < 1)) {
-    throw new ImportUploadError("Field sourceRows harus berisi nomor baris positif.");
+  const result = z.record(z.string().regex(/^\d+$/), editSchema).safeParse(parsed);
+  if (!result.success) {
+    throw new ImportUploadError("Field edits tidak valid.", 422, "IMPORT_INVALID");
   }
-
-  return [...new Set(rows)];
+  return Object.fromEntries(
+    Object.entries(result.data).map(([row, edit]) => [Number(row), edit]),
+  ) as PlanningEdits;
 }
 
 async function readUpload(req: FastifyRequest): Promise<ImportUpload> {
@@ -80,7 +103,8 @@ async function readUpload(req: FastifyRequest): Promise<ImportUpload> {
   }
 
   let file: { buffer: Buffer; filename: string; mimetype: string } | null = null;
-  let sourceRows: number[] | undefined;
+  let include: number[] | undefined;
+  let edits: PlanningEdits | undefined;
 
   for await (const part of req.parts()) {
     if (part.type === "file") {
@@ -115,9 +139,8 @@ async function readUpload(req: FastifyRequest): Promise<ImportUpload> {
       continue;
     }
 
-    if (part.fieldname === "sourceRows") {
-      sourceRows = parseSourceRows(String(part.value));
-    }
+    if (part.fieldname === "include") include = parseInclude(String(part.value));
+    if (part.fieldname === "edits") edits = parseEdits(String(part.value));
   }
 
   if (!file) {
@@ -145,7 +168,7 @@ async function readUpload(req: FastifyRequest): Promise<ImportUpload> {
     );
   }
 
-  return { ...file, format, sourceRows };
+  return { ...file, format, include, edits };
 }
 
 function resolveTargets(platforms: string[], accounts: ImportAccount[]): {
@@ -178,35 +201,6 @@ function resolveTargets(platforms: string[], accounts: ImportAccount[]): {
   return { targets, warnings };
 }
 
-function previewRow(row: PlanningRow, targets: ResolvedTarget[], targetWarnings: string[]) {
-  return {
-    sourceRow: row.sourceRow,
-    importKey: row.importKey,
-    title: row.title,
-    postDate: row.postDate,
-    scheduledFor: row.scheduledFor.toISOString(),
-    platforms: row.platforms,
-    platformLabel: row.platformLabel,
-    sourceStatus: row.sourceStatus,
-    pillar: row.pillar,
-    category: row.category,
-    picContent: row.picContent,
-    reviewer: row.reviewer,
-    picDesign: row.picDesign,
-    progress: row.progress,
-    outputUrl: row.outputUrl,
-    assetNotes: row.assetNotes,
-    designCopyPreview: row.designCopy.slice(0, 500),
-    designCopyLength: row.designCopy.length,
-    designCopyHasLineBreaks: row.designCopy.includes("\n") || row.designCopy.includes("\r"),
-    captionPreview: row.caption.slice(0, 500),
-    captionLength: row.caption.length,
-    captionHasLineBreaks: row.caption.includes("\n") || row.caption.includes("\r"),
-    targets,
-    warnings: [...row.warnings, ...targetWarnings],
-  };
-}
-
 async function prepareImport(workspaceId: string, req: FastifyRequest) {
   const upload = await readUpload(req);
   const parsed =
@@ -214,34 +208,24 @@ async function prepareImport(workspaceId: string, req: FastifyRequest) {
       ? await parsePlanningXlsx(upload.buffer)
       : parsePlanningCsv(decodeUtf8(upload.buffer));
 
-  const importKeys = parsed.rows.map((row) => row.importKey);
-  const existing = importKeys.length > 0
-    ? await prisma.postJob.findMany({
-        where: { workspaceId, importKey: { in: importKeys } },
-        select: { importKey: true },
-      })
-    : [];
-  const existingKeys = new Set(existing.map((row) => row.importKey));
-
-  const databaseDuplicates: PlanningDuplicateRow[] = parsed.rows
-    .filter((row) => existingKeys.has(row.importKey))
-    .map((row) => ({
-      sourceRow: row.sourceRow,
-      importKey: row.importKey,
-      title: row.title,
-      reason: "Sudah pernah diimpor ke workspace ini.",
-    }));
-
-  const rows = parsed.rows.filter((row) => !existingKeys.has(row.importKey));
-  const duplicates = [...parsed.duplicates, ...databaseDuplicates];
-
   const accounts = await prisma.account.findMany({
     where: { workspaceId },
     select: { id: true, platform: true, displayName: true },
     orderBy: { createdAt: "asc" },
   });
 
-  return { upload, parsed, rows, duplicates, accounts };
+  return { upload, parsed, accounts };
+}
+
+/** Import keys of these rows (after edits) that the workspace already has. */
+async function existingImportKeys(workspaceId: string, drafts: PlanningDraft[], edits: PlanningEdits | undefined) {
+  const keys = reviewDrafts(drafts, { edits }).flatMap((row) => (row.importKey ? [row.importKey] : []));
+  if (keys.length === 0) return new Set<string>();
+  const found = await prisma.postJob.findMany({
+    where: { workspaceId, importKey: { in: keys } },
+    select: { importKey: true },
+  });
+  return new Set(found.flatMap((row) => (row.importKey ? [row.importKey] : [])));
 }
 
 function importError(reply: { status: (code: number) => { send: (body: unknown) => unknown } }, error: unknown) {
@@ -257,6 +241,9 @@ function importError(reply: { status: (code: number) => { send: (body: unknown) 
   throw error;
 }
 
+const isUniqueViolation = (err: unknown) =>
+  typeof err === "object" && err !== null && (err as { code?: unknown }).code === "P2002";
+
 export async function importRoutes(app: FastifyInstance): Promise<void> {
   app.post(
     "/jobs/import/preview",
@@ -270,12 +257,40 @@ export async function importRoutes(app: FastifyInstance): Promise<void> {
       if (roleBlocked) return reply.status(403).send(roleBlocked);
 
       try {
-        const { upload, parsed, rows, duplicates, accounts } = await prepareImport(workspaceId, req);
+        const { upload, parsed, accounts } = await prepareImport(workspaceId, req);
+        const existing = await existingImportKeys(workspaceId, parsed.drafts, undefined);
+        const reviewed = reviewDrafts(parsed.drafts, { existingKeys: existing });
+        const draftByRow = new Map(parsed.drafts.map((draft) => [draft.sourceRow, draft]));
 
-        const previewRows = rows.map((row) => {
-          const resolved = resolveTargets(row.platforms, accounts);
-          return previewRow(row, resolved.targets, resolved.warnings);
+        const rows = reviewed.map((row) => {
+          const draft = draftByRow.get(row.sourceRow) as PlanningDraft;
+          return {
+            sourceRow: row.sourceRow,
+            status: row.status,
+            fields: row.fields,
+            errors: row.errors,
+            warnings: row.warnings,
+            duplicateReason: row.duplicateReason ?? null,
+            // Columns the review does not edit, shown for context
+            details: {
+              platformLabel: draft.platformLabel ?? "",
+              pillar: draft.extras.pillar,
+              picContent: draft.extras.picContent,
+              reviewer: draft.extras.reviewer,
+              picDesign: draft.extras.picDesign,
+              progress: draft.extras.progress,
+              outputUrl: draft.extras.outputUrl,
+              sourceStatus: draft.extras.sourceStatus,
+              assetNotes: draft.extras.assetNotes,
+              designCopyPreview: draft.extras.designCopy.slice(0, 500),
+              designCopyLength: draft.extras.designCopy.length,
+            },
+          };
         });
+
+        // Lets the table warn about a platform with no (or several) connected accounts after an edit
+        const accountCount: Record<string, number> = {};
+        for (const account of accounts) accountCount[account.platform] = (accountCount[account.platform] ?? 0) + 1;
 
         return reply.send({
           file: {
@@ -289,13 +304,12 @@ export async function importRoutes(app: FastifyInstance): Promise<void> {
           },
           summary: {
             totalRows: parsed.totalDataRows,
-            validRows: previewRows.length,
-            invalidRows: parsed.invalidRows.length,
-            duplicateRows: duplicates.length,
+            validRows: rows.filter((r) => r.status === "valid").length,
+            invalidRows: rows.filter((r) => r.status === "invalid").length,
+            duplicateRows: rows.filter((r) => r.status === "duplicate").length,
           },
-          rows: previewRows,
-          invalidRows: parsed.invalidRows,
-          duplicates,
+          rows,
+          accountCount,
         });
       } catch (error) {
         return importError(reply, error);
@@ -314,129 +328,101 @@ export async function importRoutes(app: FastifyInstance): Promise<void> {
       const roleBlocked = await requireContentEditorRole(userId, workspaceId);
       if (roleBlocked) return reply.status(403).send(roleBlocked);
 
+      const refuse = (rows: RowErrors[], status: number) =>
+        reply.status(status).send({
+          error: "Beberapa baris belum valid. Tidak ada yang disimpan.",
+          code: "IMPORT_INVALID",
+          rows,
+        });
+
       try {
-        const { upload, parsed, rows, duplicates, accounts } = await prepareImport(workspaceId, req);
-        const selectedRows = upload.sourceRows;
+        const { upload, parsed, accounts } = await prepareImport(workspaceId, req);
+        if (!upload.include) throw new ImportUploadError("Field include wajib diisi.");
 
-        if (selectedRows && selectedRows.length === 0) {
-          throw new ImportUploadError("sourceRows tidak boleh kosong.");
-        }
-        const selected = selectedRows ? new Set(selectedRows) : null;
+        // Same rules as the preview, run again on what the browser sent
+        const existingKeys = await existingImportKeys(workspaceId, parsed.drafts, upload.edits);
+        const plan = commitFromDrafts(parsed.drafts, { include: upload.include, edits: upload.edits, existingKeys });
+        if (!plan.ok) return refuse(plan.rowErrors, 422);
 
-        const skipped: Array<{ sourceRow: number; reason: string }> = [];
-        for (const invalid of parsed.invalidRows) {
-          skipped.push({ sourceRow: invalid.sourceRow, reason: invalid.reason });
-        }
-        for (const duplicate of duplicates) {
-          skipped.push({ sourceRow: duplicate.sourceRow, reason: duplicate.reason });
-        }
-
-        if (selected) {
-          const knownRows = new Set<number>([
-            ...parsed.rows.map((row) => row.sourceRow),
-            ...parsed.invalidRows.map((row) => row.sourceRow),
-            ...duplicates.map((row) => row.sourceRow),
-          ]);
-          for (const sourceRow of selected) {
-            if (!knownRows.has(sourceRow)) {
-              skipped.push({ sourceRow, reason: "Baris tidak ditemukan di file." });
-            }
-          }
-        }
-
-        const candidates = selected
-          ? rows.filter((row) => selected.has(row.sourceRow))
-          : rows;
-
-        const created: Array<{
-          id: string;
-          sourceRow: number;
-          title: string;
-          scheduledFor: string;
-        }> = [];
-
-        for (const row of candidates) {
-          const resolved = resolveTargets(row.platforms, accounts);
-          const importedAt = new Date().toISOString();
-          const content = {
-            text: row.caption,
-            mediaUrls: [],
-            title: row.title,
-            designCopy: row.designCopy,
-            designCopySource: "Link Copywrite",
-            captionSource: "Caption",
-            assetNotes: row.assetNotes,
-            pillar: row.pillar,
-            category: row.category,
-            platforms: row.platforms,
-            platformLabel: row.platformLabel,
-            picContent: row.picContent,
-            contentReview: row.contentReview,
-            approvedBy: row.approvedBy,
-            reviewer: row.reviewer,
-            picDesign: row.picDesign,
-            progress: row.progress,
-            outputUrl: row.outputUrl,
-            sourceStatus: row.sourceStatus,
-            sourceRow: row.sourceRow,
-            importSource: {
-              fileName: upload.filename,
-              importedAt,
-              format: parsed.format,
-              delimiter: parsed.delimiter,
-              sheetName: parsed.sheetName,
+        const importedAt = new Date().toISOString();
+        type Created = { id: string; sourceRow: number; title: string; scheduledFor: string };
+        let created: Created[];
+        try {
+          // All or nothing: one failed row saves none of them
+          created = await prisma.$transaction(
+            async (tx) => {
+              const out: Created[] = [];
+              for (const row of plan.rows) {
+                const resolved = resolveTargets(row.platforms, accounts);
+                const content = {
+                  text: row.caption,
+                  mediaUrls: [],
+                  title: row.title,
+                  designCopy: row.extras.designCopy,
+                  designCopySource: "Link Copywrite",
+                  captionSource: "Caption",
+                  assetNotes: row.extras.assetNotes,
+                  pillar: row.pillar,
+                  category: row.category,
+                  platforms: row.platforms,
+                  platformLabel: row.platformLabel,
+                  picContent: row.extras.picContent,
+                  contentReview: row.extras.contentReview,
+                  approvedBy: row.extras.approvedBy,
+                  reviewer: row.extras.reviewer,
+                  picDesign: row.extras.picDesign,
+                  progress: row.extras.progress,
+                  outputUrl: row.extras.outputUrl,
+                  sourceStatus: row.extras.sourceStatus,
+                  sourceRow: row.sourceRow,
+                  importSource: {
+                    fileName: upload.filename,
+                    importedAt,
+                    format: parsed.format,
+                    delimiter: parsed.delimiter,
+                    sheetName: parsed.sheetName,
+                  },
+                };
+                const job = await tx.postJob.create({
+                  data: {
+                    scheduledFor: row.scheduledFor,
+                    status: "draft",
+                    content: JSON.stringify(content),
+                    commentText: null,
+                    dryRun: false,
+                    approvalStatus: null,
+                    userId,
+                    workspaceId,
+                    importKey: row.importKey,
+                    ...(resolved.targets.length > 0
+                      ? { targets: { create: resolved.targets.map((target) => ({ accountId: target.accountId })) } }
+                      : {}),
+                  },
+                  select: { id: true },
+                });
+                out.push({ id: job.id, sourceRow: row.sourceRow, title: row.title, scheduledFor: row.scheduledFor.toISOString() });
+              }
+              return out;
             },
-          };
-
-          try {
-            const job = await prisma.postJob.create({
-              data: {
-                scheduledFor: row.scheduledFor,
-                status: "draft",
-                content: JSON.stringify(content),
-                commentText: null,
-                dryRun: false,
-                approvalStatus: null,
-                userId,
-                workspaceId,
-                importKey: row.importKey,
-                ...(resolved.targets.length > 0
-                  ? { targets: { create: resolved.targets.map((target) => ({ accountId: target.accountId })) } }
-                  : {}),
-              },
-              select: { id: true },
-            });
-
-            created.push({
-              id: job.id,
+            { timeout: 60_000 },
+          );
+        } catch (error) {
+          if (!isUniqueViolation(error)) throw error;
+          // Another import saved the same post a moment ago. Nothing was saved here.
+          const taken = await existingImportKeys(workspaceId, parsed.drafts, upload.edits);
+          const clashes = plan.rows
+            .filter((row) => taken.has(row.importKey))
+            .map((row) => ({
               sourceRow: row.sourceRow,
-              title: row.title,
-              scheduledFor: row.scheduledFor.toISOString(),
-            });
-          } catch (error) {
-            if (
-              typeof error === "object" &&
-              error !== null &&
-              (error as { code?: unknown }).code === "P2002"
-            ) {
-              skipped.push({ sourceRow: row.sourceRow, reason: "Sudah pernah diimpor ke workspace ini." });
-              continue;
-            }
-            throw error;
-          }
+              errors: [{ field: "title" as const, message: "Sudah pernah diimpor ke workspace ini." }],
+            }));
+          if (clashes.length === 0) throw error;
+          return refuse(clashes, 409);
         }
 
-        return reply.status(created.length > 0 ? 201 : 200).send({
-          summary: {
-            totalRows: parsed.totalDataRows,
-            selectedRows: selected ? selected.size : parsed.totalDataRows,
-            created: created.length,
-            skipped: skipped.length,
-            invalidRows: parsed.invalidRows.length,
-            duplicateRows: duplicates.length,
-          },
+        return reply.status(201).send({
+          summary: { totalRows: parsed.totalDataRows, created: created.length },
           jobs: created,
-          skipped,
         });
       } catch (error) {
         return importError(reply, error);

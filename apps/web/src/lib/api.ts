@@ -46,8 +46,10 @@ export async function apiFetch<T>(
   if (!res.ok) {
     const body = await res.text();
     let message = `${res.status} error`;
-    try { const j = JSON.parse(body); message = j.error ?? j.message ?? message; } catch {}
-    throw new Error(message);
+    let data: unknown;
+    try { const j = JSON.parse(body); data = j; message = j.error ?? j.message ?? message; } catch {}
+    // The parsed body rides along for callers that need more than the message (e.g. per-row import errors)
+    throw Object.assign(new Error(message), { status: res.status, data });
   }
 
   if (res.status === 204) return undefined as T;
