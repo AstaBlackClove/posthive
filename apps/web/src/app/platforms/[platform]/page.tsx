@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MarketingNavBar } from "../../../components/MarketingNavBar";
 import { LandingFooter } from "../../../components/LandingFooter";
 import { PlatformIcon } from "../../../components/PlatformIcon";
+import { cn } from "../../../lib/cn";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -48,24 +49,23 @@ function buildSchemas(platform: string, data: PlatformData) {
 type IconKey = "text" | "image" | "link" | "comment" | "alt" | "override" | "video" | "reel" | "story" | "carousel" | "lock" | "calendar" | "globe" | "tag" | "clock" | "page";
 
 function Icon({ name }: { name: IconKey }) {
-  const s: React.CSSProperties = { display: "block", flexShrink: 0 };
   switch (name) {
-    case "text":     return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 10h10M4 14h12M4 18h8"/></svg>;
-    case "image":    return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>;
-    case "link":     return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>;
-    case "comment":  return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
-    case "alt":      return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>;
-    case "override": return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h7M15 18h5"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="13" cy="18" r="2"/></svg>;
-    case "video":    return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="2" y="4" width="15" height="16" rx="2"/><path d="M17 9l5-3v12l-5-3"/></svg>;
-    case "reel":     return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>;
-    case "story":    return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="9"/></svg>;
-    case "carousel": return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="2" y="5" width="14" height="14" rx="2"/><path d="M18 7h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2"/></svg>;
-    case "lock":     return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
-    case "calendar": return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>;
-    case "globe":    return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
-    case "tag":      return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>;
-    case "clock":    return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>;
-    case "page":     return <svg style={s} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>;
+    case "text":     return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 10h10M4 14h12M4 18h8"/></svg>;
+    case "image":    return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>;
+    case "link":     return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>;
+    case "comment":  return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
+    case "alt":      return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>;
+    case "override": return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h7M15 18h5"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="13" cy="18" r="2"/></svg>;
+    case "video":    return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="2" y="4" width="15" height="16" rx="2"/><path d="M17 9l5-3v12l-5-3"/></svg>;
+    case "reel":     return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>;
+    case "story":    return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="9"/></svg>;
+    case "carousel": return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="2" y="5" width="14" height="14" rx="2"/><path d="M18 7h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2"/></svg>;
+    case "lock":     return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+    case "calendar": return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>;
+    case "globe":    return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
+    case "tag":      return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>;
+    case "clock":    return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>;
+    case "page":     return <svg className="block shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>;
     default:         return null;
   }
 }
@@ -124,7 +124,7 @@ const PLATFORMS: Record<string, PlatformData> = {
   threads: {
     name: "Threads",
     domain: "threads.net",
-    color: "#ededed",
+    color: "#000000",
     headline: "Post to Threads on schedule, not on impulse",
     subheadline: "Build a consistent presence on Threads without being glued to your phone. Write ahead, schedule smart, and let Posthive handle the publishing.",
     supports: [
@@ -563,7 +563,7 @@ const PLATFORMS: Record<string, PlatformData> = {
   twitter: {
     name: "X (Twitter)",
     domain: "x.com",
-    color: "#e7e7e7",
+    color: "#0f1419",
     headline: "Schedule tweets without watching the clock",
     subheadline: "Stop posting in real time. Write your tweets ahead of time, schedule them for peak hours, and let Posthive publish while you focus on everything else.",
     supports: [
@@ -632,9 +632,9 @@ const PLATFORMS: Record<string, PlatformData> = {
 
 function PageImage({ src, alt }: { src: string; alt: string; aspectRatio?: string }) {
   return (
-    <div style={{ width: "100%", borderRadius: 16, overflow: "hidden", border: "1px solid #2a2a2a", background: "#111" }}>
+    <div className="w-full overflow-hidden rounded-2xl border border-border bg-surface">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
+      <img src={src} alt={alt} className="block h-auto w-full" />
     </div>
   );
 }
@@ -662,58 +662,57 @@ const PLATFORM_SAMPLES: Record<string, { text: string; count: number; limit: num
 
 function PlatformMockup({ platform, name, color }: { platform: string; name: string; color: string }) {
   const s = PLATFORM_SAMPLES[platform] ?? PLATFORM_SAMPLES.bluesky;
-  const accentClr = "#5b63d3";
-  const divClr = "rgba(237,237,237,0.1)";
 
   return (
-    <div style={{ width: "100%", borderRadius: 16, overflow: "hidden", border: `1px solid ${divClr}`, background: "#0e0e14", boxShadow: "0 24px 80px rgba(0,0,0,0.5)" }}>
+    // --pc = platform brand color (data-driven), read by text-(--pc)
+    <div style={{ "--pc": color } as React.CSSProperties} className="w-full overflow-hidden rounded-2xl border border-border bg-surface shadow-xl">
       {/* header bar */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: `1px solid ${divClr}`, background: "rgba(255,255,255,0.03)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div className="flex items-center justify-between border-b border-border px-4.5 py-3.5">
+        <div className="flex items-center gap-2.5">
           <PlatformIcon platform={platform} size={16} />
-          <span style={{ fontSize: 13, fontWeight: 500, color: "#ededed" }}>Posthive · {name}</span>
+          <span className="type-body-m-s text-fg">Posthive · {name}</span>
         </div>
-        <div style={{ fontSize: 10, letterSpacing: "0.1em", color: accentClr, border: `1px solid ${accentClr}`, borderRadius: 4, padding: "2px 7px", fontWeight: 600 }}>DRAFT</div>
+        <div className="rounded-sm border border-brand-400 bg-brand-100 px-2 py-0.5 type-body-sb-xxs tracking-widest text-brand-800">DRAFT</div>
       </div>
 
       {/* post card */}
-      <div style={{ margin: 14, borderRadius: 12, border: `1px solid ${divClr}`, background: "#111", overflow: "hidden" }}>
+      <div className="m-3.5 overflow-hidden rounded-xl border border-border bg-bg">
         {/* post header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px" }}>
-          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#2a2a2a", display: "grid", placeItems: "center", flexShrink: 0, fontSize: 13, fontWeight: 600, color: "rgba(237,237,237,0.6)" }}>@</div>
+        <div className="flex items-center gap-3 px-4 py-3.5">
+          <div className="grid size-9 shrink-0 place-items-center rounded-full bg-neutral-100 type-body-sb-s text-muted">@</div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: "#ededed" }}>@yourhandle</div>
-            <div style={{ fontSize: 11, color: "rgba(237,237,237,0.4)", marginTop: 1 }}>Scheduled · Tomorrow 9:00 AM</div>
+            <div className="type-body-m-s text-fg">@yourhandle</div>
+            <div className="type-body-r-xs text-muted">Scheduled · Tomorrow 9:00 AM</div>
           </div>
         </div>
 
         {/* post text */}
-        <div style={{ padding: "0 16px 14px", fontSize: 14, lineHeight: 1.55, color: "rgba(237,237,237,0.85)" }}>{s.text}</div>
+        <div className="px-4 pb-3.5 type-body-r-s text-fg">{s.text}</div>
 
         {/* image placeholders */}
         {s.showImages && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, margin: "0 16px 14px" }}>
+          <div className="mx-4 mb-3.5 grid grid-cols-2 gap-0.5">
             {[1, 2].map(n => (
-              <div key={n} style={{ borderRadius: 8, background: "rgba(91,99,211,0.12)", border: `1px solid ${divClr}`, aspectRatio: "16/10", display: "grid", placeItems: "center" }}>
-                <span style={{ fontSize: 11, color: "rgba(237,237,237,0.25)", letterSpacing: "0.06em" }}>image 0{n}</span>
+              <div key={n} className="grid aspect-16/10 place-items-center rounded-lg border border-border bg-brand-100">
+                <span className="type-body-r-xs tracking-wider text-neutral-500">image 0{n}</span>
               </div>
             ))}
           </div>
         )}
 
         {/* stats row */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderTop: `1px solid ${divClr}` }}>
-          <div style={{ display: "flex", gap: 16, fontSize: 12, color: "rgba(237,237,237,0.35)" }}>
+        <div className="flex items-center justify-between border-t border-border px-4 py-2.5">
+          <div className="flex gap-4 type-body-r-xs text-muted">
             <span>♥ 24</span><span>↩ 6</span><span>↕ 3</span>
           </div>
-          <span style={{ fontSize: 12, color: "rgba(237,237,237,0.35)", fontFeatureSettings: "'tnum' 1" }}>{s.count} / {s.limit}</span>
+          <span className="type-body-r-xs text-muted">{s.count} / {s.limit}</span>
         </div>
       </div>
 
       {/* first comment section */}
-      <div style={{ margin: "0 14px 14px", borderRadius: 10, border: `1px solid ${divClr}`, background: "rgba(91,99,211,0.06)", padding: "12px 14px" }}>
-        <div style={{ fontSize: 10, letterSpacing: "0.12em", color: color, fontWeight: 600, marginBottom: 6 }}>FIRST COMMENT · AUTO-POSTED</div>
-        <div style={{ fontSize: 13, color: "rgba(237,237,237,0.6)" }}>Full changelog and screenshots → posthive.co/blog</div>
+      <div className="mx-3.5 mb-3.5 rounded-xl border border-border bg-brand-100 px-3.5 py-3">
+        <div className="mb-1.5 type-body-sb-xxs tracking-widest text-(--pc)">FIRST COMMENT · AUTO-POSTED</div>
+        <div className="type-body-r-s text-muted">Full changelog and screenshots → posthive.co/blog</div>
       </div>
     </div>
   );
@@ -754,6 +753,19 @@ export async function generateMetadata({ params }: { params: Promise<{ platform:
   };
 }
 
+const WRAP = "mx-auto max-w-6xl px-5 md:px-12";
+const SECTION = "mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24";
+const KICKER = "mb-5 inline-flex items-center gap-3 type-body-sb-xs uppercase tracking-wider text-brand-800 before:h-px before:w-8 before:bg-current";
+const H2 = "type-head-sb-4 tracking-tight md:type-head-sb-2";
+
+function Rule() {
+  return (
+    <div className={WRAP}>
+      <hr className="h-px border-0 bg-linear-to-r from-transparent via-border to-transparent" />
+    </div>
+  );
+}
+
 export default async function PlatformPage({ params }: { params: Promise<{ platform: string }> }) {
   const { platform } = await params;
   const data = PLATFORMS[platform];
@@ -763,100 +775,63 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
 
   const { softwareApp, breadcrumb, faqPage } = buildSchemas(platform, data);
 
-  const W = "1200px";
-  const div = "rgba(237,237,237,0.1)";
-  const muted75 = "rgba(237,237,237,0.75)";
-  const muted55 = "rgba(237,237,237,0.55)";
-  const accent = "#5b63d3";
-
   const sample = PLATFORM_SAMPLES[platform] ?? PLATFORM_SAMPLES.bluesky;
 
   return (
-    <div className="mkt" style={{
-      minHeight: "100vh", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif",
-      background: `radial-gradient(1100px 640px at 88% -180px, rgba(30,33,64,0.7), transparent 60%), radial-gradient(900px 700px at -8% 110%, rgba(0,0,0,0.3), transparent 55%), #0a0a0a`,
-    }}>
+    // --pc = platform brand color (data-driven), read by text-(--pc)
+    <div style={{ "--pc": data.color } as React.CSSProperties} className="min-h-screen bg-bg text-fg">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApp) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       {faqPage && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPage) }} />}
-      <style>{`
-        .plat-wrap { max-width: ${W}; margin: 0 auto; padding: 0 clamp(20px,5vw,72px); }
-        .plat-rule { height: 1px; border: 0; margin: 0; background: linear-gradient(to right, transparent, ${div} 48px calc(100% - 48px), transparent); }
-        .plat-kicker { display: inline-flex; align-items: center; gap: 12px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: ${accent}; margin: 0 0 20px; }
-        .plat-kicker::before { content: ""; width: 32px; height: 1px; background: ${accent}; }
-        @media (max-width: 900px) {
-          .plat-hero-grid, .plat-supports-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
-          .plat-sticky { position: static !important; }
-        }
-        @media (max-width: 700px) {
-          .plat-steps-grid { grid-template-columns: 1fr !important; }
-          .plat-why-grid { grid-template-columns: 1fr !important; }
-          .plat-checklist { grid-template-columns: 1fr !important; }
-          .plat-hero-grid, .plat-supports-grid { gap: 28px !important; }
-          .plat-spec-strip { grid-template-columns: 1fr 1fr !important; gap: 24px !important; }
-        }
-        @media (max-width: 400px) {
-          .plat-spec-strip { grid-template-columns: 1fr !important; }
-        }
-        .plat-faq { }
-        .plat-faq details { padding: 22px 0; border-top: 1px solid ${div}; }
-        .plat-faq details summary { cursor: pointer; font-size: 17px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-        .plat-faq details summary::-webkit-details-marker { display: none; }
-        .plat-faq-last { border-bottom: 1px solid ${div}; }
-        .plat-faq summary .faq-plus { color: ${accent}; font-size: 20px; font-weight: 400; flex: none; transition: transform 0.15s; }
-        .plat-faq details[open] summary .faq-plus { transform: rotate(45deg); }
-        .plat-chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border: 1px solid ${div}; border-radius: 20px; text-decoration: none; color: rgba(237,237,237,0.7); font-size: 13px; transition: border-color 0.12s; }
-        .plat-chip:hover { border-color: ${accent}; }
-      `}</style>
 
       <MarketingNavBar />
-      <div style={{ height: 68 }} />
+      <div className="h-16" />
 
       {/* breadcrumb */}
-      <div className="plat-wrap" style={{ paddingTop: 24, fontSize: 12, letterSpacing: "0.06em", color: muted55 }}>
-        <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>Home</Link>
-        <span style={{ margin: "0 8px", opacity: 0.5 }}>/</span>
-        <Link href="/platforms/bluesky" style={{ color: "inherit", textDecoration: "none" }}>Platforms</Link>
-        <span style={{ margin: "0 8px", opacity: 0.5 }}>/</span>
-        <span style={{ color: "#ededed" }}>{data.name}</span>
+      <div className={cn(WRAP, "pt-6 type-body-r-xs tracking-wider text-muted")}>
+        <Link href="/" className="transition-colors hover:text-fg">Home</Link>
+        <span className="mx-2 opacity-50">/</span>
+        <Link href="/platforms/bluesky" className="transition-colors hover:text-fg">Platforms</Link>
+        <span className="mx-2 opacity-50">/</span>
+        <span className="text-fg">{data.name}</span>
       </div>
 
       {/* ── Hero ── */}
-      <section className="plat-wrap" style={{ padding: "calc(2.5*28px) clamp(20px,5vw,72px) calc(3*28px)" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: 80, alignItems: "center" }} className="plat-hero-grid">
+      <section className={cn(WRAP, "pt-10 pb-16 md:pt-18 md:pb-20")}>
+        <div className="grid grid-cols-1 items-center gap-7 md:gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
           {/* Left: text + spec strip */}
           <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
+            <div className="mb-6 inline-flex items-center gap-2">
               <PlatformIcon platform={platform} size={16} />
-              <span style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: data.color, fontWeight: 500 }}>{data.name} Scheduler</span>
+              <span className="type-body-m-xs uppercase tracking-widest text-(--pc)">{data.name} Scheduler</span>
             </div>
-            <h1 style={{ fontSize: "clamp(36px,4.8vw,60px)", fontWeight: 500, letterSpacing: "-.02em", lineHeight: 1.05, margin: "0 0 24px" }}>
+            <h1 className="mb-6 type-display-m-6 tracking-tight md:type-display-m-5 xl:type-display-m-4">
               {data.headline}
             </h1>
-            <p style={{ fontSize: 18, lineHeight: 1.55, color: muted75, margin: "0 0 32px", maxWidth: "54ch" }}>
+            <p className="mb-8 max-w-xl type-body-r-l text-muted">
               {data.subheadline}
             </p>
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <Link href={registerUrl} style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "12px 20px", borderRadius: 8, background: accent, color: "#fff", textDecoration: "none", border: `1px solid ${accent}` }}>
+            <div className="flex flex-wrap gap-3">
+              <Link href={registerUrl} className="btn-primary px-5 py-3">
                 Try free for 14 days
               </Link>
-              <Link href="/docs" style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "12px 20px", borderRadius: 8, background: "transparent", color: muted75, textDecoration: "none", border: `1px solid ${div}` }}>
+              <Link href="/docs" className="btn-secondary px-5 py-3">
                 View docs
               </Link>
             </div>
             {/* Spec strip */}
-            <div className="plat-spec-strip" style={{ display: "grid", gridTemplateColumns: "repeat(3,auto)", gap: 48, marginTop: 48, paddingTop: 24, borderTop: `1px solid ${div}`, width: "fit-content" }}>
+            <div className="mt-12 grid grid-cols-1 gap-x-8 gap-y-6 border-t border-border pt-6 min-[401px]:grid-cols-2 sm:grid-cols-3">
               <div>
-                <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: muted55, marginBottom: 6 }}>Character limit</div>
-                <div style={{ fontSize: 20, fontWeight: 500 }}>{sample.limit.toLocaleString()}</div>
+                <div className="mb-1.5 type-body-r-xs uppercase tracking-wider text-muted">Character limit</div>
+                <div className="type-body-m-xl">{sample.limit.toLocaleString()}</div>
               </div>
               <div>
-                <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: muted55, marginBottom: 6 }}>Media</div>
-                <div style={{ fontSize: 20, fontWeight: 500 }}>{sample.mediaLabel}</div>
+                <div className="mb-1.5 type-body-r-xs uppercase tracking-wider text-muted">Media</div>
+                <div className="type-body-m-xl">{sample.mediaLabel}</div>
               </div>
               <div>
-                <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: muted55, marginBottom: 6 }}>Auth</div>
-                <div style={{ fontSize: 20, fontWeight: 500 }}>{sample.authLabel}</div>
+                <div className="mb-1.5 type-body-r-xs uppercase tracking-wider text-muted">Auth</div>
+                <div className="type-body-m-xl">{sample.authLabel}</div>
               </div>
             </div>
           </div>
@@ -867,105 +842,100 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
         </div>
       </section>
 
-      <div className="plat-wrap"><hr className="plat-rule" /></div>
+      <Rule />
 
       {/* ── What's supported ── */}
-      <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 80, alignItems: "start" }} className="plat-supports-grid">
-          <div className="plat-sticky" style={{ position: "sticky", top: 100 }}>
-            <span className="plat-kicker">What Posthive supports</span>
-            <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 20px", fontWeight: 500 }}>
+      <section className={SECTION}>
+        <div className="grid grid-cols-1 items-start gap-7 md:gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-20">
+          <div className="lg:sticky lg:top-25">
+            <span className={KICKER}>What Posthive supports</span>
+            <h2 className={cn(H2, "mb-5")}>
               Native, not glued on.
             </h2>
-            <p style={{ fontSize: 15, lineHeight: 1.6, color: muted75, margin: 0 }}>
+            <p className="type-body-r-m text-muted">
               Every {data.name} feature Posthive supports is implemented against the native {data.name} API — not workarounds, not browser automation.
             </p>
           </div>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }} className="plat-checklist">
+          <ul className="grid grid-cols-1 md:grid-cols-2">
             {data.supports.map((s, i) => (
-              <li key={s.label} style={{ display: "flex", gap: 14, padding: "20px 0", borderBottom: `1px solid ${div}`, alignItems: "baseline", borderRight: i % 2 === 0 ? `1px solid ${div}` : "none", paddingRight: i % 2 === 0 ? 24 : 0, paddingLeft: i % 2 === 1 ? 24 : 0 }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
-                  <path d="M2 7l3.5 3.5L12 3" stroke={accent} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              <li key={s.label} className={cn("flex items-baseline gap-3.5 border-b border-border py-5", i % 2 === 0 ? "md:border-r md:pr-6" : "md:pl-6")}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-0.5 shrink-0 text-green-700">
+                  <path d="M2 7l3.5 3.5L12 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span style={{ fontSize: 15, lineHeight: 1.5 }}>{s.label}</span>
+                <span className="type-body-r-m">{s.label}</span>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      <div className="plat-wrap"><hr className="plat-rule" /></div>
+      <Rule />
 
       {/* ── Screenshot section ── */}
-      <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
+      <section className={SECTION}>
+        <div className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
           <div>
-            <span className="plat-kicker">In Posthive</span>
-            <h2 style={{ fontSize: "clamp(24px,3vw,34px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: 0, fontWeight: 500 }}>Schedule {data.name} from one composer.</h2>
+            <span className={KICKER}>In Posthive</span>
+            <h2 className="type-head-sb-5 tracking-tight md:type-head-sb-3">Schedule {data.name} from one composer.</h2>
           </div>
-          <Link href={registerUrl} style={{ fontSize: 14, color: accent, textDecoration: "none" }}>Try it yourself</Link>
+          <Link href={registerUrl} className="type-body-r-s text-brand-800 transition-colors hover:text-brand-900">Try it yourself</Link>
         </div>
-        <div style={{ width: "100%", borderRadius: 14, overflow: "hidden", background: "#111", border: `1px solid ${div}` }}>
+        <div className="w-full overflow-hidden rounded-2xl">
           <PageImage src={data.image} alt={data.imageAlt} />
         </div>
-        <p style={{ fontSize: 12, color: muted55, marginTop: 12, letterSpacing: "0.02em" }}>Fig. 01 — Posthive composer showing {data.name} post preview</p>
+        <p className="mt-3 type-body-r-xs text-muted">Fig. 01 — Posthive composer showing {data.name} post preview</p>
       </section>
 
-      <div className="plat-wrap"><hr className="plat-rule" /></div>
+      <Rule />
 
       {/* ── How it works ── */}
-      <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
-        <span className="plat-kicker">How it works</span>
-        <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 56px", fontWeight: 500, maxWidth: "22ch" }}>
+      <section className={SECTION}>
+        <span className={KICKER}>How it works</span>
+        <h2 className={cn(H2, "mb-14 max-w-md")}>
           Connect once. Schedule forever.
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 48 }} className="plat-steps-grid">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
           {data.steps.map((s) => (
             <div key={s.n}>
-              <div style={{ fontSize: 48, lineHeight: 1, fontWeight: 500, color: accent, letterSpacing: "-0.03em", marginBottom: 24, fontFeatureSettings: "'tnum' 1" }}>{s.n}</div>
-              <h3 style={{ fontSize: 20, fontWeight: 500, margin: "0 0 12px" }}>{s.title}</h3>
-              <p style={{ fontSize: 14, lineHeight: 1.65, color: muted75, margin: 0 }}>{s.desc}</p>
+              <div className="mb-6 type-display-m-5 tracking-tight text-brand-800">{s.n}</div>
+              <h3 className="mb-3 type-body-m-xl">{s.title}</h3>
+              <p className="type-body-r-s text-muted">{s.desc}</p>
             </div>
           ))}
         </div>
         {data.note && (
-          <div style={{ marginTop: 40, padding: "14px 18px", border: `1px solid ${div}`, borderRadius: 10, fontSize: 13, color: muted55, lineHeight: 1.6 }}>
+          <div className="mt-10 rounded-xl border border-border px-4.5 py-3.5 type-body-r-s text-muted">
             {data.note}
           </div>
         )}
       </section>
 
       {platform === "instagram" && (
-        <div className="plat-wrap" style={{ padding: "0 clamp(20px,5vw,72px) 48px" }}>
+        <div className={cn(WRAP, "pb-12")}>
           <Link
             href="/blog/how-to-schedule-instagram-reels"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              fontSize: 14, color: accent, textDecoration: "none",
-              border: `1px solid rgba(91,99,211,0.3)`, borderRadius: 8,
-              padding: "10px 18px", background: "rgba(91,99,211,0.05)",
-            }}
+            className="inline-flex items-center gap-2 rounded-lg border border-brand-300 bg-brand-100 px-4.5 py-2.5 type-body-r-s text-brand-800 transition-colors hover:bg-brand-200"
           >
             📖 Read the full guide: How to Schedule Instagram Reels in 2026 →
           </Link>
         </div>
       )}
 
-      <div className="plat-wrap"><hr className="plat-rule" /></div>
+      <Rule />
 
       {/* ── Why section ── */}
       {data.why && data.why.length > 0 && (
-        <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
-          <span className="plat-kicker">Why use Posthive for {data.name}</span>
-          <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 40px", fontWeight: 500, maxWidth: "28ch" }}>
+        <section className={SECTION}>
+          <span className={KICKER}>Why use Posthive for {data.name}</span>
+          <h2 className={cn(H2, "mb-10 max-w-lg")}>
             Built for {data.name} from day one.
           </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }} className="plat-why-grid">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {data.why.map((w, i) => (
-              <div key={w.title} style={{ padding: 28, border: `1px solid ${div}`, borderRadius: 12, background: "rgba(17,17,17,0.55)", display: "flex", flexDirection: "column", gap: 12 }}>
-                <div style={{ fontSize: 11, letterSpacing: "0.14em", color: accent }}>0{i + 1}</div>
-                <h3 style={{ fontSize: 18, fontWeight: 500, margin: 0 }}>{w.title}</h3>
-                <p style={{ fontSize: 14, lineHeight: 1.6, color: muted75, margin: 0 }}>{w.desc}</p>
+              <div key={w.title} className="card flex flex-col gap-3 p-6">
+                <div className="type-body-r-xs tracking-widest text-brand-800">0{i + 1}</div>
+                <h3 className="type-body-m-l">{w.title}</h3>
+                <p className="type-body-r-s text-muted">{w.desc}</p>
               </div>
             ))}
           </div>
@@ -975,18 +945,18 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
       {/* ── FAQ ── */}
       {data.faq && data.faq.length > 0 && (
         <>
-          <div className="plat-wrap"><hr className="plat-rule" /></div>
-          <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
-            <span className="plat-kicker">FAQ</span>
-            <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 48px", fontWeight: 500 }}>Frequently asked questions</h2>
-            <div className="plat-faq" style={{ maxWidth: 860 }}>
+          <Rule />
+          <section className={SECTION}>
+            <span className={KICKER}>FAQ</span>
+            <h2 className={cn(H2, "mb-12")}>Frequently asked questions</h2>
+            <div className="max-w-4xl">
               {data.faq.map((item, i) => (
-                <details key={item.q} className={i === data.faq!.length - 1 ? "plat-faq-last" : ""} open={i === 0}>
-                  <summary>
+                <details key={item.q} className="group border-t border-border py-5.5 last:border-b" open={i === 0}>
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 type-body-m-l [&::-webkit-details-marker]:hidden">
                     {item.q}
-                    <span className="faq-plus">+</span>
+                    <span className="flex-none type-body-r-xl text-brand-800 transition-transform duration-150 group-open:rotate-45">+</span>
                   </summary>
-                  <p style={{ margin: "14px 0 0", fontSize: 14, lineHeight: 1.65, color: muted75, maxWidth: "72ch" }}>{item.a}</p>
+                  <p className="mt-3.5 max-w-2xl type-body-r-s text-muted">{item.a}</p>
                 </details>
               ))}
             </div>
@@ -994,43 +964,43 @@ export default async function PlatformPage({ params }: { params: Promise<{ platf
         </>
       )}
 
-      <div className="plat-wrap"><hr className="plat-rule" /></div>
+      <Rule />
 
       {/* ── Part of a bigger picture ── OPEN text layout, no boxed card */}
-      <section className="plat-wrap" style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}>
-        <span className="plat-kicker">Part of a bigger picture</span>
-        <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 16px", fontWeight: 500 }}>
+      <section className={SECTION}>
+        <span className={KICKER}>Part of a bigger picture</span>
+        <h2 className={cn(H2, "mb-4")}>
           {data.name} is one of thirteen platforms.
         </h2>
-        <p style={{ fontSize: 16, color: muted75, lineHeight: 1.6, margin: "0 0 32px", maxWidth: "60ch" }}>
+        <p className="mb-8 max-w-xl type-body-r-m text-muted">
           Posthive also posts to Bluesky, Threads, Instagram, LinkedIn, Mastodon, Pixelfed, YouTube, Facebook Pages, Pinterest, Telegram, Nostr, Discord, and Tumblr — all from the same composer.
         </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 32 }}>
+        <div className="mb-8 flex flex-wrap gap-2">
           {(["bluesky", "threads", "instagram", "linkedin", "mastodon", "pixelfed", "youtube", "facebook", "pinterest", "telegram", "twitter", "nostr", "discord", "tumblr"] as const)
             .filter(p => p !== platform)
             .map(p => (
-              <Link key={p} href={`/platforms/${p}`} className="plat-chip">
+              <Link key={p} href={`/platforms/${p}`} className="inline-flex items-center gap-2 rounded-full border border-border px-3.5 py-2 type-body-r-s text-muted transition-colors hover:border-brand-400 hover:text-fg">
                 <PlatformIcon platform={p} size={14} />
                 {PLATFORMS[p]?.name ?? p}
               </Link>
             ))}
         </div>
-        <Link href={registerUrl} style={{ fontSize: 14, color: accent, textDecoration: "none" }}>Connect all your platforms</Link>
+        <Link href={registerUrl} className="type-body-r-s text-brand-800 transition-colors hover:text-brand-900">Connect all your platforms</Link>
       </section>
 
       {/* ── CTA ── */}
-      <section style={{ background: "linear-gradient(180deg, transparent 0%, rgba(30,33,64,0.32) 100%)", padding: "calc(4*28px) 0" }}>
-        <div className="plat-wrap" style={{ maxWidth: 900 }}>
-          <span className="plat-kicker">Get started today</span>
-          <h2 style={{ fontSize: "clamp(32px,4vw,56px)", letterSpacing: "-0.025em", lineHeight: 1.05, margin: "0 0 20px", fontWeight: 500 }}>Start scheduling for free.</h2>
-          <p style={{ fontSize: 17, lineHeight: 1.55, color: "rgba(237,237,237,0.78)", marginBottom: 32, maxWidth: "56ch" }}>
+      <section className="bg-linear-to-b from-transparent to-brand-100/60 py-20 md:py-28">
+        <div className="mx-auto max-w-4xl px-5 md:px-12">
+          <span className={KICKER}>Get started today</span>
+          <h2 className="mb-5 type-head-sb-3 tracking-tight md:type-display-m-4">Start scheduling for free.</h2>
+          <p className="mb-8 max-w-xl type-body-r-l text-muted">
             14-day free trial. No credit card required. Connect your {data.name} account in under a minute and schedule your first post today.
           </p>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <Link href={registerUrl} style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "14px 24px", borderRadius: 8, background: accent, color: "#fff", textDecoration: "none", border: `1px solid ${accent}` }}>
+          <div className="flex flex-wrap gap-3">
+            <Link href={registerUrl} className="btn-primary px-6 py-3.5">
               Get started free
             </Link>
-            <Link href="/pricing" style={{ display: "inline-flex", alignItems: "center", fontSize: 14, fontWeight: 600, padding: "14px 24px", borderRadius: 8, background: "transparent", color: muted75, textDecoration: "none", border: `1px solid ${div}` }}>
+            <Link href="/pricing" className="btn-secondary px-6 py-3.5">
               Pricing
             </Link>
           </div>
