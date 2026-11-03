@@ -625,6 +625,7 @@ export default function JobsPage() {
   function duplicateJob(job: Job) {
     const content = JSON.parse(job.content) as {
       text: string;
+      title?: string;
       mediaType?: "post" | "reel" | "story";
       youtubeType?: "short" | "video";
       youtubeVideoMode?: "upload" | "url";
@@ -658,6 +659,7 @@ export default function JobsPage() {
 
     sessionStorage.setItem("posthive_duplicate_draft", JSON.stringify({
       text: content.text,
+      ...(content.title ? { title: content.title } : {}),
       commentText: job.commentText ?? "",
       accountIds: job.targets.map(t => t.accountId),
       mediaType: content.mediaType,

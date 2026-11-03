@@ -533,7 +533,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, reviewMode, t
           {/* Title — shown on the calendar and list; editable on imported drafts too */}
           <div className="px-6 py-5 border-b border-border">
             <label htmlFor="edit-post-title" className="section-label">Title</label>
-            <input id="edit-post-title" value={title} maxLength={300}
+            <input id="edit-post-title" value={title} maxLength={200}
               onChange={e => setTitle(e.target.value)}
               placeholder="Content title"
               aria-invalid={flag("title")}

@@ -95,6 +95,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   const [showTemplates, setShowTemplates] = useState(false);
   // Content type (docs/content-types.md). Picking a template only sets this — the
   // template's design stays a reference and is never attached to the post.
+  const [title, setTitle] = useState("");
   const [contentType, setContentType] = useState<ContentType>({ pillar: null, category: null });
   const [showReorder, setShowReorder] = useState(false);
   const [accountOrder, setAccountOrder] = useState<string[]>(() => {
@@ -138,6 +139,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     try {
       const draft = JSON.parse(raw) as {
         text: string;
+        title?: string;
         commentText: string;
         accountIds: string[];
         mediaType?: "post" | "reel" | "story";
@@ -153,6 +155,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
         category?: string | null;
       };
       setText(draft.text);
+      if (draft.title) setTitle(draft.title);
       setCommentText(draft.commentText);
       setSelectedIds(draft.accountIds);
       if (draft.mediaType) setIgMediaType(draft.mediaType);
@@ -464,7 +467,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   }
 
   function resetForm() {
-    setText(""); setCommentText(""); setScheduledFor(defaultScheduledFor());
+    setText(""); setTitle(""); setCommentText(""); setScheduledFor(defaultScheduledFor());
     if (textareaRef.current) textareaRef.current.style.height = "160px";
     setIgMediaType("post");
     setYoutubeTitle(""); setYoutubeDescription(""); setYoutubeType("short");
@@ -499,6 +502,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           draft: true,
           content: {
             text,
+            ...(title.trim() ? { title: title.trim() } : {}),
             mediaUrls,
             ...(altTexts.some(Boolean) ? { altTexts } : {}),
             ...(hasInstagram && igMediaType !== "post" ? { mediaType: igMediaType } : {}),
@@ -546,6 +550,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
           scheduledFor: fromWibInput(scheduledFor).toISOString(),
           content: {
             text,
+            ...(title.trim() ? { title: title.trim() } : {}),
             mediaUrls,
             ...(altTexts.some(Boolean) ? { altTexts } : {}),
             ...(hasInstagram && igMediaType !== "post" ? { mediaType: igMediaType } : {}),
@@ -874,6 +879,17 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               <div className="h-3 w-16 rounded-sm bg-surface" />
               <div className="h-9 w-full rounded-xl bg-surface" />
               <div className="mt-2 h-10 w-36 rounded-xl self-end bg-surface" />
+            </div>
+          )}
+
+          {/* Title — shown in Posts and the calendar; optional here, needed before design approval */}
+          {!loadingAccounts && (
+            <div className="px-6 py-5 border-b border-border">
+              <label htmlFor="compose-title" className="section-label">Title</label>
+              <input id="compose-title" value={title} maxLength={200}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Content title"
+                className="field mt-2" />
             </div>
           )}
 

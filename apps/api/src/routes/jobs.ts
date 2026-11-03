@@ -382,7 +382,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const { id } = req.params as { id: string };
     const body = z.object({
       scheduledFor: z.string().datetime().optional(),
-      title: z.string().max(300).optional(),
+      title: z.string().max(200).optional(),
       text: z.string().optional(),
       commentText: z.string().optional(),
       mediaUrls: z.array(z.string()).optional(),
