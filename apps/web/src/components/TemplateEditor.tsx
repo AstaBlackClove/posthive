@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../lib/api";
+import { cn } from "../lib/cn";
 import type { Category } from "../lib/contentTypes";
+import { figmaLinkError } from "../lib/figmaLink";
 import { fileHref, formatBytes, type DesignTemplate } from "../lib/templates";
 import { ContentTypeSelects, type ContentType } from "./ContentTypeSelects";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-const MAX_FILE_BYTES = 50 * 1024 * 1024; // matches TEMPLATE_FILE_MAX_BYTES in the API
 const IMAGE_TYPES = "image/jpeg,image/png,image/webp,image/gif";
 
 interface UploadedFile {
@@ -16,17 +17,12 @@ interface UploadedFile {
   fresh: boolean;
 }
 
-interface DesignFile extends UploadedFile {
-  fileName: string;
-  fileSize: number | null;
-}
-
 function discardUpload(url: string) {
   fetch(`${API_BASE}/upload`, { method: "DELETE", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) }).catch(() => {});
 }
 
 // Design team only: the reference design for one content type (Pillar + Category) —
-// an editable .fig file and/or a link, plus an optional preview image. Marketing sees it
+// a Figma link, plus an optional preview image. Marketing sees it
 // as a reference in Compose; nothing here is ever copied into a post.
 export function TemplateEditor({ template, presetCategory, takenCategories, onClose, onSaved }: {
   template: DesignTemplate | null; // null = new template
@@ -38,20 +34,17 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
 }) {
   const initialCategory = template?.category ?? presetCategory ?? null;
   const [type, setType] = useState<ContentType>({ pillar: template?.pillar ?? null, category: initialCategory });
-  const [file, setFile] = useState<DesignFile | null>(() =>
-    template?.fileUrl ? { url: template.fileUrl, fileName: template.fileName ?? "design.fig", fileSize: template.fileSize, fresh: false } : null);
   const [linkUrl, setLinkUrl] = useState(template?.linkUrl ?? "");
   const [preview, setPreview] = useState<UploadedFile | null>(() =>
     template?.previewUrl ? { url: template.previewUrl, fresh: false } : null);
-  const [uploadingFile, setUploadingFile] = useState(false);
+  const [linkTouched, setLinkTouched] = useState(false);
   const [uploadingPreview, setUploadingPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLInputElement>(null);
   // Fresh uploads at close time, so cancel can remove them from storage
   const freshRef = useRef<string[]>([]);
-  freshRef.current = [file, preview].filter((f): f is UploadedFile => !!f?.fresh).map((f) => f.url);
+  freshRef.current = preview?.fresh ? [preview.url] : [];
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape" && !saving) close(); }
@@ -63,27 +56,6 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
     // Drop files uploaded in this session that never made it into a saved template
     freshRef.current.forEach(discardUpload);
     onClose();
-  }
-
-  async function uploadFile(picked: File | undefined) {
-    if (fileRef.current) fileRef.current.value = "";
-    if (!picked) return;
-    setError(null);
-    if (!/\.fig$/i.test(picked.name)) return setError("Upload a Figma design file (.fig). In Figma use File → Save local copy.");
-    if (picked.size > MAX_FILE_BYTES) return setError(`The file is ${formatBytes(picked.size)}. The maximum is 50 MB.`);
-    setUploadingFile(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", picked);
-      const res = await apiFetch<{ url: string; fileName: string; fileSize: number }>("/templates/file", { method: "POST", body: formData });
-      // A replaced upload from this session is no longer needed; a saved one is removed by the API on save
-      if (file?.fresh) discardUpload(file.url);
-      setFile({ url: res.url, fileName: res.fileName, fileSize: res.fileSize, fresh: true });
-    } catch (e) {
-      setError(e instanceof Error && e.message ? e.message : "Upload failed — is the API running?");
-    } finally {
-      setUploadingFile(false);
-    }
   }
 
   async function uploadPreview(picked: File | undefined) {
@@ -104,11 +76,6 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
     }
   }
 
-  function removeFile() {
-    if (file?.fresh) discardUpload(file.url);
-    setFile(null);
-  }
-
   function removePreview() {
     if (preview?.fresh) discardUpload(preview.url);
     setPreview(null);
@@ -118,17 +85,14 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
     setError(null);
     const link = linkUrl.trim();
     if (!type.category) return setError("Pick the content pillar and category.");
-    if (!file && !link) return setError("Upload the design file (.fig) or add a link to it.");
-    if (link && !/^https:\/\/\S+$/i.test(link)) return setError("The link must start with https://");
+    setLinkTouched(true);
+    if (linkError) return;
     setSaving(true);
     try {
       const body = {
         pillar: type.pillar,
         category: type.category,
-        fileUrl: file?.url ?? null,
-        fileName: file?.fileName ?? null,
-        fileSize: file?.fileSize ?? null,
-        linkUrl: link || null,
+        linkUrl: link,
         previewUrl: preview?.url ?? null,
       };
       const res = await apiFetch<{ template: DesignTemplate }>(template ? `/templates/${template.id}` : "/templates", {
@@ -144,7 +108,10 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
     }
   }
 
-  const busy = uploadingFile || uploadingPreview;
+  const busy = uploadingPreview;
+  const linkError = figmaLinkError(linkUrl);
+  const showLinkError = linkTouched && !!linkError;
+  const legacyFile = template?.fileUrl ? { url: template.fileUrl, name: template.fileName ?? "design.fig", size: template.fileSize } : null;
   const otherTaken = new Set([...takenCategories].filter((c) => c !== template?.category));
 
   return (
@@ -172,41 +139,32 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
             <p className="type-body-r-xs mt-1.5 text-muted">One template per category.</p>
           </section>
 
-          <section>
-            <h3 className="type-body-sb-s text-fg">Design file</h3>
-            <p className="type-body-r-xs mt-0.5 text-muted">
-              Figma file (.fig), up to 50 MB. In Figma use File → Save local copy.
+          <div>
+            <label htmlFor="template-link" className="type-body-sb-s text-fg">Figma link</label>
+            <p id="template-link-hint" className="type-body-r-xs mt-0.5 text-muted">
+              Link to the design in Figma, like figma.com/design/…. It opens in a new tab.
             </p>
-            {file ? (
-              <div className="flex items-center gap-3 mt-2 p-3 rounded-xl border border-border bg-bg">
-                <span className="type-body-sb-xs px-1.5 py-0.5 rounded-sm shrink-0 bg-neutral-100 text-fg">FIG</span>
-                <a href={fileHref(file.url)} download={file.fileName} className="flex-1 min-w-0 type-body-r-s text-fg truncate underline-offset-2 hover:underline">
-                  {file.fileName}
-                </a>
-                {file.fileSize ? <span className="type-body-r-xs shrink-0 text-muted">{formatBytes(file.fileSize)}</span> : null}
-                <button type="button" onClick={() => fileRef.current?.click()} disabled={busy}
-                  className="btn-secondary px-2.5 py-1 rounded-lg type-body-r-xs">Replace</button>
-                <button type="button" onClick={removeFile} disabled={busy} aria-label="Remove the design file"
-                  className="w-7 h-7 rounded-lg border border-border type-body-r-xs text-muted hover:text-red-600 disabled:opacity-50">✕</button>
-              </div>
-            ) : (
-              <button type="button" onClick={() => fileRef.current?.click()} disabled={busy}
-                className="w-full mt-2 py-3 dropzone bg-bg type-body-m-s text-fg hover:border-neutral-300 disabled:opacity-60">
-                {uploadingFile ? "Uploading…" : "Upload .fig file"}
-              </button>
-            )}
-            {file && uploadingFile && <p className="type-body-r-xs mt-1.5 text-muted">Uploading…</p>}
-            <input ref={fileRef} type="file" accept=".fig" hidden onChange={(e) => uploadFile(e.target.files?.[0])} />
-          </section>
+            <input id="template-link" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value.slice(0, 2048))}
+              onBlur={() => setLinkTouched(true)} type="url" inputMode="url" autoComplete="off"
+              placeholder="https://www.figma.com/design/…" aria-invalid={showLinkError}
+              aria-describedby={showLinkError ? "template-link-error" : "template-link-hint"}
+              className={cn("field mt-1.5", showLinkError && "border-red-200 bg-red-50")} />
+            {showLinkError && <p id="template-link-error" className="type-body-r-xs mt-1.5 text-red-600">{linkError}</p>}
+          </div>
 
-          <label className="block">
-            <span className="type-body-sb-s text-fg">Link</span>
-            <span className="block type-body-r-xs mt-0.5 text-muted">
-              Link to the design, e.g. the Figma file. Optional when you upload the file.
-            </span>
-            <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value.slice(0, 2048))} type="url" inputMode="url"
-              placeholder="https://www.figma.com/design/…" className="field mt-1.5" />
-          </label>
+          {legacyFile && (
+            <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-bg">
+              <span className="type-body-sb-xs px-1.5 py-0.5 rounded-sm shrink-0 bg-neutral-100 text-fg">FIG</span>
+              <div className="flex-1 min-w-0">
+                <p className="type-body-sb-xs text-fg">Legacy .fig file</p>
+                <a href={fileHref(legacyFile.url)} download={legacyFile.name} className="block type-body-r-s text-fg truncate underline-offset-2 hover:underline">
+                  {legacyFile.name}
+                </a>
+                <p className="type-body-r-xs text-muted">Kept as it is. Add a Figma link to save changes.</p>
+              </div>
+              {legacyFile.size ? <span className="type-body-r-xs shrink-0 text-muted">{formatBytes(legacyFile.size)}</span> : null}
+            </div>
+          )}
 
           <section>
             <h3 className="type-body-sb-s text-fg">

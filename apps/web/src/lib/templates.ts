@@ -36,9 +36,9 @@ export function formatBytes(bytes: number): string {
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
-/** Migrated templates have only a preview until the design team adds a file or link. */
+/** Templates without a Figma link (migrated or old .fig-only ones) need one from the design team. */
 export function isIncomplete(t: DesignTemplate): boolean {
-  return !t.fileUrl && !t.linkUrl;
+  return !t.linkUrl;
 }
 
 /** Category → template. The API lists newest first, so the newest wins if a category has more than one. */

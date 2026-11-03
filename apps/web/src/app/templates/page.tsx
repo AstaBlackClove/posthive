@@ -203,10 +203,12 @@ function TemplateCover({ template }: { template: DesignTemplate }) {
     return <img src={fileHref(template.previewUrl)} alt="" className="w-full h-full object-cover" loading="lazy" />;
   }
   return (
-    <span className="flex flex-col items-center gap-2 px-4 text-center">
-      <span className="type-body-sb-xs px-2 py-1 rounded-sm bg-neutral-100 text-fg">
-        {template.fileUrl ? "FIG" : "LINK"}
-      </span>
+    <span className="flex h-full w-full flex-col items-center justify-center gap-2 bg-bg px-4 text-center">
+      <svg aria-hidden viewBox="0 0 24 24" className="h-8 w-8 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="4" y="3" width="16" height="18" rx="3" />
+        <path d="M9 8h6M9 12h6M9 16h3" strokeLinecap="round" />
+      </svg>
+      <span className="type-body-sb-xs text-fg line-clamp-2">{template.category}</span>
       <span className="type-body-r-xs text-muted">No preview</span>
     </span>
   );
@@ -214,7 +216,6 @@ function TemplateCover({ template }: { template: DesignTemplate }) {
 
 function TemplateTile({ template, onOpen }: { template: DesignTemplate; onOpen: () => void }) {
   const incomplete = isIncomplete(template);
-  const parts = [template.fileUrl && "Figma file", template.linkUrl && "link"].filter(Boolean).join(" + ");
   return (
     <li>
       <button type="button" onClick={onOpen} className={cn("group w-full text-left rounded-2xl", TILE_FOCUS)}>
@@ -228,7 +229,7 @@ function TemplateTile({ template, onOpen }: { template: DesignTemplate; onOpen: 
         </div>
         <p className="type-body-sb-s mt-2.5 line-clamp-2">{template.category}</p>
         <p className="type-body-r-xs mt-0.5 text-muted">
-          {incomplete ? "Needs a design file or link" : parts.charAt(0).toUpperCase() + parts.slice(1)}
+          {incomplete ? "Needs a Figma link" : "Figma link"}
         </p>
       </button>
     </li>
@@ -239,14 +240,14 @@ function EmptySlot({ category, canManage, onUpload }: { category: Category; canM
   const box = (
     <div className="dropzone bg-bg flex flex-col items-center justify-center gap-1 px-3 text-center aspect-4/5">
       {canManage
-        ? <span className="type-body-m-s text-fg">+ Upload</span>
+        ? <span className="type-body-m-s text-fg">+ Add template</span>
         : <span className="type-body-r-xs text-muted">No template yet</span>}
     </div>
   );
   return (
     <li>
       {canManage ? (
-        <button type="button" onClick={onUpload} className={cn("w-full text-left rounded-2xl", TILE_FOCUS)} aria-label={`Upload the template for ${category}`}>
+        <button type="button" onClick={onUpload} className={cn("w-full text-left rounded-2xl", TILE_FOCUS)} aria-label={`Add the template for ${category}`}>
           {box}
           <p className="type-body-sb-s mt-2.5 line-clamp-2 text-muted">{category}</p>
         </button>
@@ -304,7 +305,7 @@ function TemplateDetail({ template, canManage, canUse, onClose, onUse, onEdit, o
           <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-3">
             <DesignReferenceCard template={template} category={template.category} />
             {isIncomplete(template) && canManage && (
-              <p className="type-body-r-xs text-brand-800">Add the .fig file or a link so Marketing can open the design.</p>
+              <p className="type-body-r-xs text-brand-800">Add a Figma link so Marketing can open the design.</p>
             )}
           </div>
 

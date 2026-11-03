@@ -37,8 +37,8 @@ export function DesignReferenceCard({ template, category, showPreview = false }:
         <p className="type-body-r-xs mt-0.5 text-muted">
           {contentTypeLabel(template.category, template.pillar)}. For reference only; it is not attached to the post.
         </p>
-        {isIncomplete(template) ? (
-          <p className="type-body-r-xs mt-2 text-muted">Design file not available yet.</p>
+        {isIncomplete(template) && !template.fileUrl ? (
+          <p className="type-body-r-xs mt-2 text-muted">Figma link not added yet.</p>
         ) : (
           <div className="flex flex-wrap gap-2 mt-2">
             {template.linkUrl && (
@@ -50,7 +50,7 @@ export function DesignReferenceCard({ template, category, showPreview = false }:
             {template.fileUrl && (
               <a href={fileHref(template.fileUrl)} download={template.fileName ?? undefined}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border type-body-m-xs text-fg hover:bg-surface">
-                Download file
+                Legacy .fig file
                 {template.fileSize ? <span className="text-muted">{formatBytes(template.fileSize)}</span> : null}
               </a>
             )}

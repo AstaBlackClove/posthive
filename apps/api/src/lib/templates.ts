@@ -3,9 +3,6 @@ import { prisma } from "./prisma.js";
 // Design templates (docs/content-types.md): the reference design for one content type
 // (Pillar + Category). Posts never copy template files; they only carry pillar/category.
 
-/** Max size of a template design file (.fig). */
-export const TEMPLATE_FILE_MAX_BYTES = 50 * 1024 * 1024;
-
 export const TEMPLATE_SELECT = {
   id: true,
   name: true,
@@ -66,49 +63,4 @@ export function designReference(t: TemplateFiles) {
     linkUrl: t.linkUrl,
     previewUrl: t.previewUrl ? absoluteUrl(t.previewUrl) : null,
   };
-}
-
-const FIG_MAGIC = Buffer.from("fig-kiwi");
-const ZIP_LOCAL = 0x04034b50;
-const ZIP_CENTRAL = 0x02014b50;
-const ZIP_END = 0x06054b50;
-
-/** Compression method and data offset of a ZIP entry, read from the central directory. */
-function zipEntry(buf: Buffer, name: string): { method: number; dataOffset: number } | null {
-  // The end-of-central-directory record sits in the last 22 bytes plus an optional comment
-  const stop = Math.max(0, buf.length - 22 - 0xffff);
-  for (let end = buf.length - 22; end >= stop; end--) {
-    if (buf.readUInt32LE(end) !== ZIP_END) continue;
-    const count = buf.readUInt16LE(end + 10);
-    let p = buf.readUInt32LE(end + 16);
-    for (let n = 0; n < count && p + 46 <= buf.length; n++) {
-      if (buf.readUInt32LE(p) !== ZIP_CENTRAL) return null;
-      const method = buf.readUInt16LE(p + 10);
-      const nameLen = buf.readUInt16LE(p + 28);
-      const skip = 46 + nameLen + buf.readUInt16LE(p + 30) + buf.readUInt16LE(p + 32);
-      if (buf.toString("utf8", p + 46, p + 46 + nameLen) === name) {
-        const local = buf.readUInt32LE(p + 42);
-        if (local + 30 > buf.length || buf.readUInt32LE(local) !== ZIP_LOCAL) return null;
-        return { method, dataOffset: local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28) };
-      }
-      p += skip;
-    }
-    return null;
-  }
-  return null;
-}
-
-/**
- * True for a Figma design file: a .fig name and either the raw "fig-kiwi" format or a
- * ZIP archive holding canvas.fig (the current "Save local copy" format). Browsers send
- * no useful MIME type for .fig, so the bytes decide. FigJam/Slides canvases carry a
- * different magic and are rejected when the entry is stored uncompressed.
- */
-export function isFigFile(fileName: string, buf: Buffer): boolean {
-  if (!/\.fig$/i.test(fileName)) return false;
-  if (buf.subarray(0, 8).equals(FIG_MAGIC)) return true;
-  if (buf.length < 22 || buf.readUInt32LE(0) !== ZIP_LOCAL) return false;
-  const canvas = zipEntry(buf, "canvas.fig");
-  if (!canvas) return false;
-  return canvas.method !== 0 || buf.subarray(canvas.dataOffset, canvas.dataOffset + 8).equals(FIG_MAGIC);
 }

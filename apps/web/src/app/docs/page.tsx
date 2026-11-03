@@ -978,12 +978,12 @@ TIKTOK_REDIRECT_URI="https://your-domain.com/auth/tiktok/callback"`}</pre>
               {/* ── Design templates (anchor kept for old links) ── */}
               <h3 className="mt-6 mb-2.5 type-head-sb-5 text-fg" id="post-templates">Design templates</h3>
               <p className="mb-4 type-body-r-m text-muted">
-                A template is the design team&apos;s reference design for one content type: a <strong>content pillar</strong> plus a <strong>content category</strong> (for example Promotional, Case Study). There is one template per category. It holds an editable Figma file (<span className="rounded-md border border-border bg-surface px-1 type-mono-r-s text-fg">.fig</span>, up to 50 MB) and/or a link to the design, plus an optional preview image.
+                A template is the design team&apos;s reference design for one content type: a <strong>content pillar</strong> plus a <strong>content category</strong> (for example Promotional, Case Study). There is one template per category. It holds a Figma link (figma.com/design, file, proto or board), plus an optional preview image. Older templates may still show a read-only legacy .fig file.
               </p>
               <h4 className="mt-7 mb-2.5 type-body-sb-m text-fg">Managing templates (design team)</h4>
               <ol className="mb-4 list-decimal space-y-1.5 pl-5 type-body-r-m text-muted">
                 <li>Open <strong>Templates</strong>. Each pillar lists its categories; empty ones show <strong>+ Upload</strong>.</li>
-                <li>Pick the pillar and category, then upload the <span className="rounded-md border border-border bg-surface px-1 type-mono-r-s text-fg">.fig</span> file (in Figma: File → Save local copy) and/or paste the Figma link.</li>
+                <li>Pick the pillar and category, then paste the Figma link. The preview image is optional.</li>
                 <li>Optionally add a preview image so others recognise the layout. Replacing or deleting a template removes its old design file.</li>
               </ol>
               <h4 className="mt-7 mb-2.5 type-body-sb-m text-fg">Using a template in Compose</h4>
