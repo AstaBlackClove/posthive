@@ -4,26 +4,7 @@ import type { Metadata } from "next";
 import { AgentSetupSection } from "../../components/AgentSetupSection";
 import { MarketingNavBar } from "../../components/MarketingNavBar";
 import { LandingFooter } from "../../components/LandingFooter";
-
-// ── Design tokens (Nocturne) ─────────────────────────────────────────────────
-const T = {
-  bg:        "#0a0a0a",
-  surface:   "#111111",
-  text:      "#ededed",
-  muted:     "rgba(237,237,237,0.45)",
-  muted72:   "rgba(237,237,237,0.65)",
-  muted82:   "rgba(237,237,237,0.78)",
-  accent:    "#5b63d3",
-  accent2:   "#9ba2ee",
-  a300:      "#9ba2ee",
-  a900:      "#1e2140",
-  n800:      "#2a2a2a",
-  n900:      "#111111",
-  n200:      "#cccccc",
-  divider:   "rgba(237,237,237,0.1)",
-  section:   "#0d0f1f",
-  shadow:    "0 0 0 1px #595d6c, 0 6px 18px rgba(0,0,0,0.55)",
-} as const;
+import { cn } from "../../lib/cn";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -109,43 +90,36 @@ OpenClaw, and any agent that runs shell commands.`;
 // ── Reusable primitives ───────────────────────────────────────────────────────
 
 function Rule() {
-  return (
-    <hr style={{
-      height: 1, border: 0, margin: 0,
-      background: `linear-gradient(to right, transparent, ${T.divider} 48px, ${T.divider} calc(100% - 48px), transparent)`,
-    }} />
-  );
+  return <hr className="h-px border-0 bg-linear-to-r from-transparent via-border to-transparent" />;
 }
 
 function Kicker({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{
-      display: "inline-flex", alignItems: "center", gap: 12,
-      fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase",
-      color: T.accent, marginBottom: 20,
-    }}>
-      <span style={{ width: 32, height: 1, background: T.accent, display: "block", flexShrink: 0 }} />
+    <div className="mb-5 inline-flex items-center gap-3 type-body-sb-xs uppercase tracking-wider text-brand-800">
+      <span className="block h-px w-8 shrink-0 bg-brand-800" />
       {children}
     </div>
   );
 }
 
+function WindowDots() {
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className="block size-2.5 rounded-full bg-neutral-200" />
+      ))}
+    </>
+  );
+}
+
 function CodePanel({ filename, children, copyable }: { filename: string; children: React.ReactNode; copyable?: boolean }) {
   return (
-    <div style={{ borderRadius: 12, background: T.n900, overflow: "hidden", boxShadow: T.shadow }}>
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "12px 16px", borderBottom: `1px solid ${T.divider}`,
-        fontFamily: "ui-monospace,monospace", fontSize: 12,
-      }}>
-        <span style={{ color: T.muted }}>{filename}</span>
-        {copyable && <span style={{ color: T.accent, fontSize: 11, letterSpacing: "0.08em", cursor: "pointer" }}>COPY</span>}
+    <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3 type-mono-r-xs">
+        <span className="text-muted">{filename}</span>
+        {copyable && <span className="cursor-pointer tracking-wider text-brand-800">COPY</span>}
       </div>
-      <pre style={{
-        margin: 0, padding: 20,
-        fontFamily: "ui-monospace,monospace", fontSize: 13, lineHeight: 1.65,
-        color: T.n200, overflowX: "auto",
-      }}>
+      <pre className="overflow-x-auto p-5 type-mono-r-s text-fg">
         {children}
       </pre>
     </div>
@@ -154,182 +128,102 @@ function CodePanel({ filename, children, copyable }: { filename: string; childre
 
 function TerminalPanel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ borderRadius: 12, background: T.n900, overflow: "hidden", boxShadow: T.shadow }}>
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8,
-        padding: "12px 16px", borderBottom: `1px solid ${T.divider}`,
-      }}>
-        {["#3f424d","#3f424d","#3f424d"].map((c,i) => (
-          <span key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: c, display: "block" }} />
-        ))}
-        <span style={{ marginLeft: 10, fontSize: 12, color: T.muted, fontFamily: "ui-monospace,monospace" }}>terminal</span>
+    <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+        <WindowDots />
+        <span className="ml-2.5 type-mono-r-xs text-muted">terminal</span>
       </div>
-      <pre style={{
-        margin: 0, padding: 20,
-        fontFamily: "ui-monospace,monospace", fontSize: 13, lineHeight: 1.7,
-        color: T.n200, overflowX: "auto",
-      }}>
+      <pre className="overflow-x-auto p-5 type-mono-r-s text-fg">
         {children}
       </pre>
     </div>
   );
 }
 
-const WRAP: React.CSSProperties = { maxWidth: 1200, margin: "0 auto", padding: "0 clamp(20px,5vw,72px)" };
-const LEADING = 28;
-const py = (n: number) => `${n * LEADING}px`;
-
 export default function AgentPage() {
   return (
-    <div className="mkt" style={{
-      background: `
-        radial-gradient(1100px 640px at 88% -180px, color-mix(in srgb, ${T.a900} 70%, transparent), transparent 60%),
-        radial-gradient(900px 700px at -8% 110%, color-mix(in srgb, black 30%, transparent), transparent 55%),
-        ${T.bg}
-      `,
-      minHeight: "100vh", color: T.text,
-      fontFamily: "var(--font-figtree), system-ui, sans-serif",
-    }}>
+    <div className="min-h-screen bg-bg text-fg">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-        .agent-hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 80px; align-items: center; }
-        .agent-setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
-        .agent-split-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 80px; align-items: start; }
-        .agent-split-grid-r { display: grid; grid-template-columns: 1.15fr 1fr; gap: 80px; align-items: start; }
-        .agent-skill-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 80px; align-items: center; }
-        .agent-safety-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
-        .agent-stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 32px; }
-        .agent-connector-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 32px; }
-        @media (max-width: 900px) {
-          .agent-hero-grid, .agent-setup-grid, .agent-split-grid, .agent-split-grid-r, .agent-skill-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
-          .agent-safety-grid { grid-template-columns: 1fr !important; }
-          .agent-stat-grid { grid-template-columns: repeat(2,1fr) !important; }
-          .agent-connector-grid { grid-template-columns: repeat(4,1fr) !important; }
-        }
-        @media (max-width: 480px) {
-          .agent-connector-grid { grid-template-columns: repeat(4,1fr) !important; }
-          .agent-stat-grid { grid-template-columns: repeat(2,1fr) !important; }
-        }
-        details summary::-webkit-details-marker { display: none; }
-      `}</style>
 
       <MarketingNavBar />
 
       {/* ── Hero ── */}
-      <section style={{ ...WRAP, padding: `${py(3.5)} clamp(20px,5vw,72px) ${py(3)}` }}>
-        <div className="agent-hero-grid">
+      <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-20">
           <div>
             <Kicker>Posthive Agent · MCP + CLI</Kicker>
-            <h1 style={{
-              fontSize: "clamp(40px,5.6vw,72px)", lineHeight: 1.05,
-              letterSpacing: "-0.02em", margin: 0, fontWeight: 500,
-            }}>
+            <h1 className="type-display-m-6 tracking-tight md:type-display-m-4 xl:type-display-m-3">
               Let your AI&nbsp;agent<br />run your&nbsp;socials.
             </h1>
-            <p style={{ fontSize: 18, lineHeight: 1.55, maxWidth: "58ch", color: T.muted82, marginTop: 28 }}>
+            <p className="mt-7 max-w-xl type-body-r-l text-muted">
               Claude, Cursor, OpenClaw, or any agent that can call a tool or run a shell command can now schedule posts across multi platforms with you approving everything before it goes live.
             </p>
-            <div style={{ display: "flex", gap: 12, marginTop: 32, flexWrap: "wrap" }}>
-              <Link href="#setup" style={{
-                display: "inline-flex", alignItems: "center",
-                padding: "12px 20px", fontSize: 14, fontWeight: 700,
-                borderRadius: 10, background: "#5b63d3", color: "#fff",
-                textDecoration: "none", boxShadow: "0 8px 24px -8px rgba(91,99,211,.7)",
-              }}>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="#setup" className="btn-primary px-5 py-3">
                 Set up Posthive MCP
               </Link>
-              <Link href="/docs#api-authentication" style={{
-                display: "inline-flex", alignItems: "center",
-                padding: "12px 20px", fontSize: 14, fontWeight: 700,
-                borderRadius: 10, background: "#111", color: "#888",
-                textDecoration: "none", border: "1px solid #2a2a2a",
-              }}>
+              <Link href="/docs#api-authentication" className="btn-secondary px-5 py-3">
                 Use the API
               </Link>
             </div>
           </div>
 
           {/* Claude Code preview */}
-          <div style={{ position: "relative" }}>
-            <div style={{ borderRadius: 14, background: T.surface, overflow: "hidden", boxShadow: T.shadow }}>
+          <div className="relative">
+            <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
               {/* title bar */}
-              <div style={{
-                display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
-                borderBottom: `1px solid ${T.divider}`, fontSize: 12, color: T.muted,
-              }}>
-                {["#3f424d","#3f424d","#3f424d"].map((c,i) => (
-                  <span key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: c, display: "block" }} />
-                ))}
-                <span style={{ marginLeft: 10, letterSpacing: "0.06em" }}>Claude Code</span>
+              <div className="flex items-center gap-2 border-b border-border px-3.5 py-2.5 type-body-r-xs text-muted">
+                <WindowDots />
+                <span className="ml-2.5 tracking-wide">Claude Code</span>
               </div>
               {/* chat */}
-              <div style={{ padding: "20px 20px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
+              <div className="flex flex-col gap-4 p-5">
                 {/* user turn */}
-                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                  <div style={{
-                    width: 24, height: 24, borderRadius: 6, background: T.n800,
-                    display: "grid", placeItems: "center", fontSize: 11,
-                    color: "rgba(233,233,237,0.6)", flexShrink: 0,
-                  }}>G</div>
-                  <div style={{ fontSize: 14, lineHeight: 1.5, paddingTop: 2 }}>
+                <div className="flex items-start gap-3">
+                  <div className="grid size-6 shrink-0 place-items-center rounded-md bg-neutral-100 type-body-r-xs text-muted">G</div>
+                  <div className="pt-0.5 type-body-r-s">
                     Schedule a post about our launch for tomorrow at 9am.
                   </div>
                 </div>
                 {/* assistant */}
-                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                  <div style={{
-                    width: 24, height: 24, borderRadius: 6,
-                    background: `color-mix(in srgb, ${T.accent} 20%, ${T.surface})`,
-                    display: "grid", placeItems: "center", flexShrink: 0,
-                  }}>
+                <div className="flex items-start gap-3">
+                  <div className="grid size-6 shrink-0 place-items-center rounded-md bg-brand-100 text-brand-800">
                     <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
-                      <path d="M10 1.5l7.5 4.25v8.5L10 18.5 2.5 14.25v-8.5L10 1.5z" stroke={T.accent} strokeWidth="1.4"/>
+                      <path d="M10 1.5l7.5 4.25v8.5L10 18.5 2.5 14.25v-8.5L10 1.5z" stroke="currentColor" strokeWidth="1.4"/>
                     </svg>
                   </div>
-                  <div style={{ fontSize: 14, lineHeight: 1.5 }}>
+                  <div className="type-body-r-s">
                     Draft created for tomorrow, 9:00 AM. Review before it goes live.
                   </div>
                 </div>
                 {/* draft card */}
-                <div style={{
-                  border: `1px solid ${T.divider}`, borderRadius: 10, padding: 14,
-                  marginLeft: 36, background: `color-mix(in srgb, ${T.bg} 60%, transparent)`,
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                    <span style={{ fontSize: 11, letterSpacing: "0.12em", color: T.muted }}>SCHEDULED · JUN 14 · 09:00</span>
-                    <span style={{ fontSize: 11, padding: "3px 10px", border: `1px solid ${T.accent}`, color: T.accent, borderRadius: 6 }}>DRAFT</span>
+                <div className="ml-9 rounded-xl border border-border bg-bg p-3.5">
+                  <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+                    <span className="type-body-r-xs tracking-widest text-muted">SCHEDULED · JUN 14 · 09:00</span>
+                    <span className="rounded-md border border-brand-400 bg-brand-100 px-2.5 py-0.5 type-body-r-xs text-brand-800">DRAFT</span>
                   </div>
-                  <p style={{ fontSize: 13, lineHeight: 1.55, color: T.muted82, marginBottom: 12 }}>
+                  <p className="mb-3 type-body-r-s text-muted">
                     Shipped v2.0 today drag-to-reschedule calendar, per-platform overrides, and first-comment on every platform. Try it free →
                   </p>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div className="flex items-center gap-1.5">
                     {["bsky.app","threads.net","linkedin.com","mastodon.social"].map(d => (
-                      <img key={d} src={`https://www.google.com/s2/favicons?domain=${d}&sz=32`} width={16} height={16} alt={d} style={{ borderRadius: 3 }} />
+                      <img key={d} src={`https://www.google.com/s2/favicons?domain=${d}&sz=32`} width={16} height={16} alt={d} className="rounded-sm" />
                     ))}
-                    <span style={{ fontSize: 11, color: T.muted, marginLeft: 6 }}>4 accounts</span>
-                    <span style={{ marginLeft: "auto", fontSize: 11, color: T.accent }}>approve →</span>
+                    <span className="ml-1.5 type-body-r-xs text-muted">4 accounts</span>
+                    <span className="ml-auto type-body-r-xs text-brand-800">approve →</span>
                   </div>
                 </div>
                 {/* tool call */}
-                <div style={{
-                  display: "flex", alignItems: "center", gap: 8, marginLeft: 36,
-                  fontSize: 11, color: T.muted, fontFamily: "ui-monospace,monospace",
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.accent, display: "block" }} />
+                <div className="ml-9 flex items-center gap-2 type-mono-r-xs text-muted">
+                  <span className="block size-1.5 rounded-full bg-accent" />
                   posthive.create_post · 128 tokens
                 </div>
               </div>
             </div>
             {/* floating chip */}
-            <div style={{
-              position: "absolute", bottom: -18, left: -24,
-              background: T.bg, padding: "10px 14px", borderRadius: 10,
-              display: "flex", alignItems: "center", gap: 10, fontSize: 12,
-              boxShadow: "0 0 0 1px #3f424d",
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", display: "block" }} />
+            <div className="absolute -bottom-4.5 left-0 flex items-center gap-2.5 rounded-xl border border-border bg-bg px-3.5 py-2.5 type-body-r-xs shadow-sm md:-left-6">
+              <span className="block size-1.5 rounded-full bg-green-500" />
               Draft-first · nothing publishes without you
             </div>
           </div>
@@ -339,12 +233,9 @@ export default function AgentPage() {
       <Rule />
 
       {/* ── Stat band ── */}
-      <section style={{
-        background: `linear-gradient(180deg, ${T.section} 0%, color-mix(in srgb, ${T.section} 82%, black) 100%)`,
-        padding: `${py(2)} 0`,
-      }}>
-        <div style={WRAP}>
-          <div className="agent-stat-grid">
+      <section className="bg-brand-100/60 py-14">
+        <div className="mx-auto max-w-6xl px-5 md:px-12">
+          <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
             {[
               { n: "Multi", label: "Platforms" },
               { n: "10", label: "Tools · commands" },
@@ -352,8 +243,8 @@ export default function AgentPage() {
               { n: "100%", label: "Draft-first" },
             ].map(s => (
               <div key={s.label}>
-                <div style={{ fontSize: 48, lineHeight: 1, fontWeight: 500, letterSpacing: "-0.03em" }}>{s.n}</div>
-                <div style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(231,229,254,0.75)", marginTop: 10 }}>{s.label}</div>
+                <div className="type-display-m-6 tracking-tight md:type-display-m-5">{s.n}</div>
+                <div className="mt-2.5 type-body-r-xs uppercase tracking-widest text-muted">{s.label}</div>
               </div>
             ))}
           </div>
@@ -361,12 +252,12 @@ export default function AgentPage() {
       </section>
 
       {/* ── Setup ── */}
-      <section id="setup" style={{ ...WRAP, padding: `${py(3.5)} clamp(20px,5vw,72px) ${py(2.5)}` }}>
+      <section id="setup" className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
         <Kicker>Setup</Kicker>
-        <h2 style={{ fontSize: "clamp(30px,3.6vw,44px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 20px", maxWidth: "24ch", fontWeight: 500 }}>
+        <h2 className="mb-5 type-head-sb-3 tracking-tight md:type-head-sb-1">
           Connect in three steps.
         </h2>
-        <p style={{ fontSize: 18, lineHeight: 1.55, maxWidth: "58ch", color: T.muted82, marginBottom: 56 }}>
+        <p className="mb-14 max-w-xl type-body-r-l text-muted">
           One-click for the hosted apps that ship an MCP UI Claude, ChatGPT, Cursor, Windsurf, Codex, VS Code. Config-file or shell for everything else.
         </p>
 
@@ -376,17 +267,17 @@ export default function AgentPage() {
       <Rule />
 
       {/* ── MCP config ── */}
-      <section style={{ ...WRAP, padding: `${py(3)} clamp(20px,5vw,72px)` }}>
-        <div className="agent-split-grid">
+      <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2 lg:gap-20">
           <div>
             <Kicker>For Claude Desktop, Cursor &amp; Windsurf</Kicker>
-            <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 20px", fontWeight: 500 }}>
+            <h2 className="mb-5 type-head-sb-4 tracking-tight md:type-head-sb-2">
               One config block,<br />full MCP access.
             </h2>
-            <p style={{ fontSize: 15, lineHeight: 1.6, color: T.muted72, marginBottom: 28, maxWidth: "44ch" }}>
-              Drop <code style={{ color: T.a300, background: `color-mix(in srgb, ${T.accent} 10%, transparent)`, padding: "2px 6px", borderRadius: 4, fontSize: 13 }}>posthive-mcp</code> into any MCP client config and your agent instantly has tools to list accounts, create posts, approve drafts, and manage the queue no server to run or maintain, npx handles it.
+            <p className="mb-7 max-w-md type-body-r-m text-muted">
+              Drop <code className="rounded-md border border-border bg-surface px-1 type-mono-r-s text-fg">posthive-mcp</code> into any MCP client config and your agent instantly has tools to list accounts, create posts, approve drafts, and manage the queue no server to run or maintain, npx handles it.
             </p>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+            <ul className="flex flex-col gap-2.5">
               {[
                 ["list_accounts", "- connected accounts and IDs"],
                 ["create_post", "- draft or schedule directly"],
@@ -394,27 +285,27 @@ export default function AgentPage() {
                 ["update_post / duplicate_post / delete_post", ""],
                 ["list_templates / create_from_template", ""],
               ].map(([cmd, desc]) => (
-                <li key={cmd} style={{ display: "flex", gap: 12, alignItems: "baseline", fontSize: 13 }}>
-                  <span style={{ color: T.accent }}>✓</span>
-                  <code style={{ fontSize: 13 }}>{cmd}</code>
-                  {desc && <span style={{ color: T.muted }}>{desc}</span>}
+                <li key={cmd} className="flex items-baseline gap-3 type-body-r-s">
+                  <span className="text-brand-800">✓</span>
+                  <code className="type-mono-r-s">{cmd}</code>
+                  {desc && <span className="text-muted">{desc}</span>}
                 </li>
               ))}
             </ul>
           </div>
           <CodePanel filename="claude_desktop_config.json" copyable>
-            <span style={{ color: T.muted }}>{"{"}</span>{"\n"}
-            {"  "}<span style={{ color: T.a300 }}>&quot;mcpServers&quot;</span>{": {"}{"\n"}
-            {"    "}<span style={{ color: T.a300 }}>&quot;posthive&quot;</span>{": {"}{"\n"}
-            {"      "}<span style={{ color: T.a300 }}>&quot;command&quot;</span>{": "}<span style={{ color: "#c8e6c9" }}>&quot;npx&quot;</span>{","}{"\n"}
-            {"      "}<span style={{ color: T.a300 }}>&quot;args&quot;</span>{": ["}<span style={{ color: "#c8e6c9" }}>&quot;posthive-mcp&quot;</span>{"],"}{"\n"}
-            {"      "}<span style={{ color: T.a300 }}>&quot;env&quot;</span>{": {"}{"\n"}
-            {"        "}<span style={{ color: T.a300 }}>&quot;POSTHIVE_API_KEY&quot;</span>{": "}<span style={{ color: "#c8e6c9" }}>&quot;ph_yourkey&quot;</span>{","}{"\n"}
-            {"        "}<span style={{ color: T.a300 }}>&quot;POSTHIVE_API_URL&quot;</span>{": "}<span style={{ color: "#c8e6c9" }}>&quot;https://api.posthive.co&quot;</span>{"\n"}
+            <span className="text-muted">{"{"}</span>{"\n"}
+            {"  "}<span className="text-brand-800">&quot;mcpServers&quot;</span>{": {"}{"\n"}
+            {"    "}<span className="text-brand-800">&quot;posthive&quot;</span>{": {"}{"\n"}
+            {"      "}<span className="text-brand-800">&quot;command&quot;</span>{": "}<span className="text-green-700">&quot;npx&quot;</span>{","}{"\n"}
+            {"      "}<span className="text-brand-800">&quot;args&quot;</span>{": ["}<span className="text-green-700">&quot;posthive-mcp&quot;</span>{"],"}{"\n"}
+            {"      "}<span className="text-brand-800">&quot;env&quot;</span>{": {"}{"\n"}
+            {"        "}<span className="text-brand-800">&quot;POSTHIVE_API_KEY&quot;</span>{": "}<span className="text-green-700">&quot;ph_yourkey&quot;</span>{","}{"\n"}
+            {"        "}<span className="text-brand-800">&quot;POSTHIVE_API_URL&quot;</span>{": "}<span className="text-green-700">&quot;https://api.posthive.co&quot;</span>{"\n"}
             {"      }"}{"\n"}
             {"    }"}{"\n"}
             {"  }"}{"\n"}
-            <span style={{ color: T.muted }}>{"}"}</span>
+            <span className="text-muted">{"}"}</span>
           </CodePanel>
         </div>
       </section>
@@ -422,16 +313,16 @@ export default function AgentPage() {
       <Rule />
 
       {/* ── CLI ── */}
-      <section style={{ ...WRAP, padding: `${py(3)} clamp(20px,5vw,72px)` }}>
-        <div className="agent-split-grid-r">
+      <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2 lg:gap-20">
           <TerminalPanel>
             {CLI_EXAMPLE.split("\n").map((line, i) => {
               const isComment = line.startsWith("#");
               const isPrompt = line.startsWith("$");
               return (
-                <span key={i} style={{ display: "block", color: isComment ? T.muted : isPrompt ? T.muted : T.n200 }}>
+                <span key={i} className={cn("block", isComment || isPrompt ? "text-muted" : "text-fg")}>
                   {isPrompt ? (
-                    <><span style={{ color: T.muted }}>$</span>{line.slice(1)}</>
+                    <><span className="text-muted">$</span>{line.slice(1)}</>
                   ) : line}
                 </span>
               );
@@ -439,24 +330,20 @@ export default function AgentPage() {
           </TerminalPanel>
           <div>
             <Kicker>For OpenClaw, Claude Code &amp; shell agents</Kicker>
-            <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 20px", fontWeight: 500 }}>
+            <h2 className="mb-5 type-head-sb-4 tracking-tight md:type-head-sb-2">
               A CLI that any agent can run.
             </h2>
-            <p style={{ fontSize: 15, lineHeight: 1.6, color: T.muted72, marginBottom: 20, maxWidth: "48ch" }}>
-              <code style={{ color: T.a300, background: `color-mix(in srgb, ${T.accent} 10%, transparent)`, padding: "2px 6px", borderRadius: 4, fontSize: 13 }}>posthive-cli</code> mirrors the same API as a plain shell command. Every output is structured JSON perfect for agents that call shell tools rather than speak MCP directly, like OpenClaw or custom pipelines.
+            <p className="mb-5 max-w-md type-body-r-m text-muted">
+              <code className="rounded-md border border-border bg-surface px-1 type-mono-r-s text-fg">posthive-cli</code> mirrors the same API as a plain shell command. Every output is structured JSON perfect for agents that call shell tools rather than speak MCP directly, like OpenClaw or custom pipelines.
             </p>
-            <p style={{ fontSize: 15, lineHeight: 1.6, color: T.muted72, marginBottom: 24, maxWidth: "48ch" }}>
+            <p className="mb-6 max-w-md type-body-r-m text-muted">
               It ships with a bundled skill file so agents that support Claude Code-style skills discover the full command set, platform character limits, and best practices automatically.
             </p>
-            <div style={{
-              padding: "14px 16px", border: `1px solid ${T.divider}`, borderRadius: 8,
-              fontFamily: "ui-monospace,monospace", fontSize: 12, lineHeight: 1.7,
-              background: `color-mix(in srgb, ${T.bg} 55%, transparent)`,
-            }}>
-              <div style={{ color: T.muted, marginBottom: 6 }}>Install</div>
-              <div style={{ color: T.a300 }}>npx posthive-cli</div>
-              <div style={{ color: T.a300 }}>npm i -g posthive-cli</div>
-              <div style={{ color: T.a300 }}>npx skills add AstaBlackClove/posthive</div>
+            <div className="rounded-lg border border-border bg-surface px-4 py-3.5 type-mono-r-xs">
+              <div className="mb-1.5 text-muted">Install</div>
+              <div className="text-brand-800">npx posthive-cli</div>
+              <div className="text-brand-800">npm i -g posthive-cli</div>
+              <div className="text-brand-800">npx skills add AstaBlackClove/posthive</div>
             </div>
           </div>
         </div>
@@ -465,30 +352,30 @@ export default function AgentPage() {
       <Rule />
 
       {/* ── SKILL.md ── */}
-      <section style={{ ...WRAP, padding: `${py(3)} clamp(20px,5vw,72px)` }}>
-        <div className="agent-skill-grid">
+      <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-20">
           <div>
             <Kicker>Self-documenting</Kicker>
-            <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 20px", fontWeight: 500 }}>
+            <h2 className="mb-5 type-head-sb-4 tracking-tight md:type-head-sb-2">
               Agents learn the tool<br />by reading it.
             </h2>
-            <p style={{ fontSize: 15, lineHeight: 1.6, color: T.muted72, marginBottom: 20, maxWidth: "46ch" }}>
-              No prompt engineering required. The bundled <code style={{ color: T.a300, background: `color-mix(in srgb, ${T.accent} 10%, transparent)`, padding: "2px 6px", borderRadius: 4, fontSize: 13 }}>SKILL.md</code> describes every command, required flags, platform quirks (Instagram needs media, X has no links, LinkedIn rewards links in the first comment), and the draft-first workflow so any capable agent figures out the right call on its own.
+            <p className="mb-5 max-w-md type-body-r-m text-muted">
+              No prompt engineering required. The bundled <code className="rounded-md border border-border bg-surface px-1 type-mono-r-s text-fg">SKILL.md</code> describes every command, required flags, platform quirks (Instagram needs media, X has no links, LinkedIn rewards links in the first comment), and the draft-first workflow so any capable agent figures out the right call on its own.
             </p>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: T.muted, fontStyle: "italic", maxWidth: "46ch" }}>
-              Try prompts like: <span style={{ color: T.text }}>&ldquo;Schedule a LinkedIn post about our launch for tomorrow 9am with the link in the first comment&rdquo;</span> the agent handles the rest.
+            <p className="max-w-md type-body-r-s italic text-muted">
+              Try prompts like: <span className="text-fg">&ldquo;Schedule a LinkedIn post about our launch for tomorrow 9am with the link in the first comment&rdquo;</span> the agent handles the rest.
             </p>
           </div>
           <CodePanel filename="SKILL.md">
-            <span style={{ color: T.muted }}>---</span>{"\n"}
-            <span style={{ color: T.a300 }}>name</span>{": posthive\n"}
-            <span style={{ color: T.a300 }}>description</span>{": Schedule social posts across multiple platforms\n"}
-            <span style={{ color: T.muted }}>---</span>{"\n\n"}
-            <span style={{ color: T.accent }}># Workflow</span>{"\n"}
+            <span className="text-muted">---</span>{"\n"}
+            <span className="text-brand-800">name</span>{": posthive\n"}
+            <span className="text-brand-800">description</span>{": Schedule social posts across multiple platforms\n"}
+            <span className="text-muted">---</span>{"\n\n"}
+            <span className="text-brand-800"># Workflow</span>{"\n"}
             {"1. accounts:list — get valid account IDs\n"}
             {"2. posts:create — saved as DRAFT by default\n"}
             {"3. posts:approve — promote a draft to scheduled\n\n"}
-            {"Ships inside "}<span style={{ color: "#c8e6c9" }}>posthive-cli</span>{". Works with Claude Code,\nOpenClaw, and any agent that runs shell commands."}
+            {"Ships inside "}<span className="text-green-700">posthive-cli</span>{". Works with Claude Code,\nOpenClaw, and any agent that runs shell commands."}
           </CodePanel>
         </div>
       </section>
@@ -496,37 +383,35 @@ export default function AgentPage() {
       <Rule />
 
       {/* ── Safety ── */}
-      <section style={{ ...WRAP, padding: `${py(3)} clamp(20px,5vw,72px)` }}>
+      <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
         <Kicker>Safety by default</Kicker>
-        <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 48px", maxWidth: "20ch", fontWeight: 500 }}>
+        <h2 className="mb-12 type-head-sb-4 tracking-tight md:type-head-sb-2">
           Nothing goes live<br />without your approval.
         </h2>
-        <div className="agent-safety-grid">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {[
             {
-              icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke={T.accent} strokeWidth="1.4"/><path d="M4 10h16" stroke={T.accent} strokeWidth="1.4"/><circle cx="8" cy="14" r="1" fill={T.accent}/></svg>,
+              icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="currentColor" strokeWidth="1.4"/><path d="M4 10h16" stroke="currentColor" strokeWidth="1.4"/><circle cx="8" cy="14" r="1" fill="currentColor"/></svg>,
               title: "Drafts, not publishes",
               desc: "Every post an agent creates lands as a draft in your review queue. Nothing goes live until you or the agent explicitly approves it.",
             },
             {
-              icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M3 12h18" stroke={T.accent} strokeWidth="1.4"/><circle cx="12" cy="12" r="8" stroke={T.accent} strokeWidth="1.4"/></svg>,
+              icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="1.4"/><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.4"/></svg>,
               title: "Explicit scheduling only",
               desc: "An agent can only skip the draft step by passing a future timestamp and being told to schedule directly never by default.",
             },
             {
-              icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="4" y="9" width="16" height="12" rx="2" stroke={T.accent} strokeWidth="1.4"/><path d="M8 9V6a4 4 0 018 0v3" stroke={T.accent} strokeWidth="1.4"/></svg>,
+              icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="4" y="9" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M8 9V6a4 4 0 018 0v3" stroke="currentColor" strokeWidth="1.4"/></svg>,
               title: "Scoped API keys",
               desc: "Agents authenticate with a revocable ph_ API key, never your login. Rotate or revoke access from Settings anytime.",
             },
           ].map(item => (
-            <div key={item.title} style={{
-              padding: 28, border: `1px solid ${T.divider}`, borderRadius: 12,
-              background: `color-mix(in srgb, ${T.surface} 60%, transparent)`,
-              display: "flex", flexDirection: "column", gap: 14,
-            }}>
-              {item.icon}
-              <h3 style={{ fontSize: 18, fontWeight: 500, margin: 0 }}>{item.title}</h3>
-              <p style={{ fontSize: 14, lineHeight: 1.55, color: T.muted72, margin: 0 }}>{item.desc}</p>
+            <div key={item.title} className="card flex flex-col gap-3.5 p-6">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-brand-100 text-brand-800">
+                {item.icon}
+              </div>
+              <h3 className="type-body-m-l">{item.title}</h3>
+              <p className="type-body-r-s text-muted">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -535,22 +420,19 @@ export default function AgentPage() {
       <Rule />
 
       {/* ── FAQ ── */}
-      <section style={{ ...WRAP, padding: `${py(3)} clamp(20px,5vw,72px)` }}>
+      <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
         <Kicker>FAQ</Kicker>
-        <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 48px", fontWeight: 500 }}>
+        <h2 className="mb-12 type-head-sb-4 tracking-tight md:type-head-sb-2">
           Frequently asked questions
         </h2>
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div className="flex flex-col">
           {faqSchema.mainEntity.map((item, i) => (
-            <details key={item.name} style={{ padding: "22px 0", borderTop: `1px solid ${T.divider}`, ...(i === faqSchema.mainEntity.length - 1 ? { borderBottom: `1px solid ${T.divider}` } : {}) }} {...(i === 0 ? { open: true } : {})}>
-              <summary style={{
-                cursor: "pointer", fontSize: 17, fontWeight: 500,
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-              }}>
+            <details key={item.name} className={cn("border-t border-border py-5.5", i === faqSchema.mainEntity.length - 1 && "border-b")} {...(i === 0 ? { open: true } : {})}>
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 type-body-m-l [&::-webkit-details-marker]:hidden">
                 {item.name}
-                <span style={{ color: T.accent, fontSize: 20, fontWeight: 400 }}>+</span>
+                <span className="shrink-0 type-body-r-xl text-brand-800">+</span>
               </summary>
-              <p style={{ margin: "14px 0 0", fontSize: 14, lineHeight: 1.65, color: T.muted72, maxWidth: "70ch" }}>
+              <p className="mt-3.5 max-w-prose type-body-r-s text-muted">
                 {item.acceptedAnswer.text}
               </p>
             </details>
@@ -559,32 +441,19 @@ export default function AgentPage() {
       </section>
 
       {/* ── CTA ── */}
-      <section style={{
-        background: `linear-gradient(180deg, transparent 0%, color-mix(in srgb, ${T.a900} 32%, transparent) 100%)`,
-        padding: `${py(4)} 0`,
-      }}>
-        <div style={{ ...WRAP, maxWidth: 900 }}>
-          <h2 style={{ fontSize: "clamp(32px,4vw,56px)", letterSpacing: "-0.025em", lineHeight: 1.05, margin: "0 0 20px", fontWeight: 500 }}>
+      <section className="bg-linear-to-b from-transparent to-brand-100/60 py-20 md:py-28">
+        <div className="mx-auto max-w-4xl px-5 md:px-12">
+          <h2 className="mb-5 type-head-sb-3 tracking-tight md:type-head-sb-1">
             Wire up your agent<br />in minutes.
           </h2>
-          <p style={{ fontSize: 17, lineHeight: 1.55, color: T.muted72, marginBottom: 32, maxWidth: "56ch" }}>
+          <p className="mb-8 max-w-xl type-body-r-l text-muted">
             Generate an API key, drop it into your MCP config or export it for the CLI, and your agent is ready to draft posts across multi platforms.
           </p>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <Link href="/docs#mcp-overview" style={{
-              display: "inline-flex", alignItems: "center",
-              padding: "14px 24px", fontSize: 15, fontWeight: 700,
-              borderRadius: 10, background: "#5b63d3", color: "#fff",
-              textDecoration: "none", boxShadow: "0 12px 32px -8px rgba(91,99,211,.6)",
-            }}>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/docs#mcp-overview" className="btn-primary px-6 py-3.5 type-body-sb-m">
               Read the docs
             </Link>
-            <Link href="/register" style={{
-              display: "inline-flex", alignItems: "center",
-              padding: "14px 24px", fontSize: 15, fontWeight: 700,
-              borderRadius: 10, background: "#111", color: "#888",
-              textDecoration: "none", border: "1px solid #2a2a2a",
-            }}>
+            <Link href="/register" className="btn-secondary px-6 py-3.5 type-body-sb-m">
               Start free trial
             </Link>
           </div>
