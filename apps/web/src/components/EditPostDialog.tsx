@@ -16,6 +16,7 @@ import { WarningsBar } from "./composer/WarningsBar";
 import { MediaSection } from "./composer/MediaSection";
 import { fromWibInput, toWibInput, wibDateKey } from "../lib/datetime";
 import { normalizeCategory } from "../lib/contentTypes";
+import { missingForReview, missingMessage, type MissingField } from "../lib/submitReadiness";
 import { templatesByCategory, type DesignTemplate } from "../lib/templates";
 import { ContentTypeSelects, type ContentType } from "./ContentTypeSelects";
 import { DesignReferenceCard } from "./DesignReferenceCard";
@@ -36,16 +37,19 @@ interface Props {
   job: EditableJob;
   accounts: Account[];
   submitLabel?: string;
+  /** Marketing editing a draft under the approval flow: "Save draft" and "Send for Design Approval" are separate. */
+  reviewMode?: boolean;
   /** Design templates, to show the reference for the post's category. */
   templates?: DesignTemplate[];
-  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string, contentType?: ContentType) => Promise<void>;
+  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string, contentType?: ContentType, title?: string, send?: boolean) => Promise<void>;
   onClose: () => void;
 }
 
-export function EditPostDialog({ open, job, accounts, submitLabel, templates, onSave, onClose }: Props) {
-  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; youtubeVideoMode?: "upload" | "url"; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; perAccount?: Record<string, PerAccountOverride>; pixelfedSensitive?: boolean; pixelfedVisibility?: "public" | "unlisted" | "private"; linkedinVisibility?: "PUBLIC" | "CONNECTIONS"; blueskyContentWarning?: string; pillar?: string | null; category?: string | null };
+export function EditPostDialog({ open, job, accounts, submitLabel, reviewMode, templates, onSave, onClose }: Props) {
+  const parsedContent = JSON.parse(job.content) as { text: string; title?: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; youtubeVideoMode?: "upload" | "url"; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; perAccount?: Record<string, PerAccountOverride>; pixelfedSensitive?: boolean; pixelfedVisibility?: "public" | "unlisted" | "private"; linkedinVisibility?: "PUBLIC" | "CONNECTIONS"; blueskyContentWarning?: string; pillar?: string | null; category?: string | null };
 
   const [text, setText] = useState(parsedContent.text);
+  const [title, setTitle] = useState(parsedContent.title ?? "");
   const [commentText, setCommentText] = useState(job.commentText ?? "");
   // Content type is only sent when edited, so imported free-text values survive other edits
   const [contentType, setContentType] = useState<ContentType | null>(null);
@@ -290,12 +294,13 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
     });
   }
 
-  async function handleSave() {
+  async function handleSave(send = false) {
+    if (send && missing.length > 0) return;
     const _noPostTextNeeded = selectedIds.length > 0 && selectedIds.every(id => {
       const p = accounts.find(a => a.id === id)?.platform;
       return p === "youtube" || p === "pinterest";
     });
-    if ((!text.trim() && !_noPostTextNeeded) || selectedIds.length === 0) return;
+    if (!reviewMode && ((!text.trim() && !_noPostTextNeeded) || selectedIds.length === 0)) return;
     const date = fromWibInput(scheduledFor);
     if (isNaN(date.getTime())) return;
     const cleanOverrides = Object.fromEntries(
@@ -309,7 +314,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
     try {
       const hasLinkedin = selectedAccounts.some(a => a.platform === "linkedin");
       const hasBluesky = selectedAccounts.some(a => a.platform === "bluesky");
-      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined, hasYoutube ? youtubeVideoMode : undefined, hasYoutube ? (youtubeVideoMode === "url" ? youtubeVideoUrl.trim() : "") : undefined, hasYoutube && youtubeThumbnailUrl ? youtubeThumbnailUrl : undefined, pixelfedSelected ? pixelfedSensitive : undefined, pixelfedSelected ? pixelfedVisibility : undefined, hasYoutube ? youtubeVisibility : undefined, hasYoutube && youtubeTags.trim() ? youtubeTags.split(",").map(t => t.trim()).filter(Boolean) : undefined, hasYoutube ? youtubeMadeForKids : undefined, hasLinkedin ? linkedinVisibility : undefined, hasBluesky ? (blueskyContentWarning || undefined) : undefined, contentType ?? undefined);
+      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined, hasYoutube ? youtubeVideoMode : undefined, hasYoutube ? (youtubeVideoMode === "url" ? youtubeVideoUrl.trim() : "") : undefined, hasYoutube && youtubeThumbnailUrl ? youtubeThumbnailUrl : undefined, pixelfedSelected ? pixelfedSensitive : undefined, pixelfedSelected ? pixelfedVisibility : undefined, hasYoutube ? youtubeVisibility : undefined, hasYoutube && youtubeTags.trim() ? youtubeTags.split(",").map(t => t.trim()).filter(Boolean) : undefined, hasYoutube ? youtubeMadeForKids : undefined, hasLinkedin ? linkedinVisibility : undefined, hasBluesky ? (blueskyContentWarning || undefined) : undefined, contentType ?? undefined, title.trim(), send);
       onClose();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message.replace(/^API PATCH.*→ \d+: /, "") : "Save failed");
@@ -372,6 +377,23 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
   });
   const overAnyLimit = platformLimits.some(p => p.over);
 
+  // Required fields for "Send for Design Approval" — same rule the API enforces
+  const missing: MissingField[] = reviewMode
+    ? missingForReview({
+        scheduledFor: isNaN(fromWibInput(scheduledFor).getTime()) ? null : scheduledFor,
+        content: JSON.stringify({
+          title,
+          text,
+          mediaUrls: video ? [video.url] : images.map(i => i.url),
+          youtubeVideoUrl: youtubeVideoMode === "url" ? youtubeVideoUrl : "",
+          category: contentType ? contentType.category : parsedContent.category,
+        }),
+        targetPlatforms: selectedAccounts.map(a => a.platform),
+      })
+    : [];
+  const missingNote = missingMessage(missing);
+  const flag = (field: MissingField) => reviewMode && missing.includes(field);
+
   // Twitter link block
   const urlPattern = /https?:\/\/[^\s]+|(?<![a-zA-Z0-9])(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+(?:com|co|io|ai|app|dev|net|org|xyz|me|gg|tv|fm|so|sh|ly|link|pro|studio|online|site|shop|store|tech|club|news|live|blog|media|social|chat|run|tools|uk|us|ca|au|de|fr|jp|br|in|nl|se|no|fi|dk|it|es|pl|ru|id|mx|ar|za|ph|sg|my|th|vn|eg|ng|ke|gh|tz|rw)[/a-zA-Z0-9._~:/?#[\]@!$&'()*+,;=%]*/i;
   const twitterAccounts = selectedAccounts.filter(a => a.platform === "twitter");
@@ -392,6 +414,9 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
   // Footer warning logic
   const pinterestSelected = selectedAccounts.some(a => a.platform === "pinterest");
   const pinterestSelectedWithNoImage = pinterestSelected && images.length === 0;
+
+  // Save draft needs only a valid form: a half-filled imported draft (no caption, no account yet) must stay saveable
+  const saveBlocked = saving || (!reviewMode && selectedIds.length === 0) || overAnyLimit || uploading || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink;
 
   let mediaWarning: string | null = null;
   if (instagramSelected) {
@@ -501,12 +526,23 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
               ))}
             </div>
             {selectedIds.length === 0 && (
-              <p className="mt-2 type-body-r-xs text-red-600">Select at least one account</p>
+              <p className="mt-2 type-body-r-xs text-red-600">{reviewMode ? "Required to send for approval" : "Select at least one account"}</p>
             )}
           </div>
 
-          {/* Content type — the design template for it is a reference, never attached */}
+          {/* Title — shown on the calendar and list; editable on imported drafts too */}
           <div className="px-6 py-5 border-b border-border">
+            <label htmlFor="edit-post-title" className="section-label">Title</label>
+            <input id="edit-post-title" value={title} maxLength={300}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Content title"
+              aria-invalid={flag("title")}
+              className={cn("field mt-2", flag("title") && "border-red-300")} />
+            {flag("title") && <p className="mt-1 type-body-r-xs text-red-600">Required to send for approval</p>}
+          </div>
+
+          {/* Content type — the design template for it is a reference, never attached */}
+          <div className={cn("px-6 py-5 border-b border-border", flag("category") && "bg-red-50")}>
             <span className="section-label">Content type</span>
             <div className="mt-2">
               <ContentTypeSelects idPrefix="edit-post"
@@ -514,6 +550,7 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
                 category={contentType ? contentType.category : parsedContent.category}
                 onChange={setContentType} />
             </div>
+            {flag("category") && <p className="mt-2 type-body-r-xs text-red-600">Choose a category to send for approval</p>}
             {(() => {
               const category = normalizeCategory(contentType ? contentType.category : parsedContent.category);
               return category && templates ? (
@@ -543,8 +580,9 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
               onChange={e => { setText(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
               ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
               placeholder="What do you want to share?"
-              className={cn("field resize-none px-4 py-3 min-h-35 overflow-hidden", overAnyLimit && "border-red-300")}
+              className={cn("field resize-none px-4 py-3 min-h-35 overflow-hidden", (overAnyLimit || flag("caption")) && "border-red-300")}
             />
+            {flag("caption") && <p className="mt-1 type-body-r-xs text-red-600">Required to send for approval</p>}
             {overAnyLimit && (
               <p className="mt-1 type-body-r-xs text-red-600">
                 Over the character limit for one of your selected platforms
@@ -783,20 +821,36 @@ export function EditPostDialog({ open, job, accounts, submitLabel, templates, on
             {saveError && <p className="type-body-r-xs text-red-600">{saveError}</p>}
           </div>
         )}
+        {reviewMode && missingNote && (
+          <p role="status" className="type-body-m-xs rounded-lg border border-brand-400 bg-brand-100 px-3 py-2 text-brand-800">
+            {missingNote}
+          </p>
+        )}
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <DateTimePicker value={scheduledFor} onChange={setScheduledFor} min={wibDateKey(new Date())} />
           <div className="flex-1" />
-          <div className="flex items-center gap-2 justify-end">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-2 sm:justify-end">
             <button onClick={onClose} disabled={saving} className="btn-secondary">
               Cancel
             </button>
-            <button onClick={handleSave}
-              disabled={saving || (!text.trim() && !noPostTextNeeded) || selectedIds.length === 0 || overAnyLimit || uploading || youtubeSelectedWithNoVideo || pinterestSelectedWithNoImage || twitterHasLink}
-              className="btn-primary px-5">
-              {saving
-                ? (submitLabel?.includes("Review") ? "Submitting…" : "Saving…")
-                : (submitLabel ?? (isDraft ? "Schedule Post" : "Save changes"))}
-            </button>
+            {reviewMode ? (
+              <>
+                <button onClick={() => handleSave(false)} disabled={saveBlocked} className="btn-secondary">
+                  {saving ? "Saving…" : "Save draft"}
+                </button>
+                <button onClick={() => handleSave(true)} disabled={saveBlocked || missing.length > 0}
+                  title={missingNote ?? undefined} className="btn-primary px-5">
+                  {saving ? "Submitting…" : "Send for Design Approval"}
+                </button>
+              </>
+            ) : (
+              <button onClick={() => handleSave(false)} disabled={saveBlocked || (!text.trim() && !noPostTextNeeded)}
+                className="btn-primary px-5">
+                {saving
+                  ? (submitLabel?.includes("Review") ? "Submitting…" : "Saving…")
+                  : (submitLabel ?? (isDraft ? "Schedule Post" : "Save changes"))}
+              </button>
+            )}
           </div>
         </div>
       </div>

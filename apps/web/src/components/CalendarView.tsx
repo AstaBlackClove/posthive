@@ -29,6 +29,8 @@ interface Props {
   onEdit?: (job: Job) => void;
   /** True when the viewer cannot reschedule/edit content (e.g. Tim Desain read-only). */
   readOnly?: boolean;
+  /** Which events can be dragged to a new date. Default: scheduled (pending) posts only. */
+  canReschedule?: (job: Job) => boolean;
 }
 
 function jobDisplayTitle(content: { text?: string; title?: string }): string {
@@ -82,7 +84,7 @@ function EventCard({ info }: { info: EventContentArg }) {
     <div className={cn(
       "w-full overflow-hidden rounded-xl border px-2 py-1",
       tone.card,
-      job.status === "pending" ? "cursor-grab" : "cursor-default",
+      info.event.startEditable ? "cursor-grab" : "cursor-default",
     )}>
       <div className="mb-0.5 flex items-center gap-1">
         <span className={cn("size-1.5 shrink-0 rounded-full", tone.dot)} />
@@ -260,7 +262,7 @@ const CALENDAR_CSS = `
   }
 `;
 
-export function CalendarView({ jobs, onReschedule, onEdit, readOnly = false }: Props) {
+export function CalendarView({ jobs, onReschedule, onEdit, readOnly = false, canReschedule = (job) => job.status === "pending" }: Props) {
   const calendarRef = useRef<FullCalendar>(null);
   const dragNavTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDragging = useRef(false);
@@ -278,7 +280,7 @@ export function CalendarView({ jobs, onReschedule, onEdit, readOnly = false }: P
       start: job.scheduledFor!,
       backgroundColor: "transparent",
       borderColor: "transparent",
-      editable: readOnly ? false : job.status === "pending",
+      editable: readOnly ? false : canReschedule(job),
       extendedProps: { job },
     };
   });

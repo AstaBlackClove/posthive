@@ -19,6 +19,7 @@ import { useWorkspace } from "../../context/WorkspaceContext";
 import { canEditContent, canReview as roleCanReview } from "../../lib/permissions";
 import type { Account, PerAccountOverride } from "../../components/PlatformPreview";
 import { cn } from "../../lib/cn";
+import { missingForReview, MISSING_LABEL, type MissingField } from "../../lib/submitReadiness";
 import {
   DEFAULT_SORT, JOB_SORTS, countJobs, matchesFilter, sectionOf, sortJobs,
   type FilterTab, type JobCounts, type JobSort,
@@ -192,7 +193,15 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
   const scheduled = job.scheduledFor ? new Date(job.scheduledFor) : null;
   const isPast = scheduled ? scheduled < new Date() : false;
   const isToday = scheduled ? wibDateKey(scheduled) === wibDateKey(new Date()) : false;
-  const canEdit = job.status === "pending" || isDraft;
+  // Marketing (canSubmitOwn) loses edit once the post is approved and scheduled
+  const canEdit = isDraft || (job.status === "pending" && !canSubmitOwn);
+  const missing = isDraft && canSubmitOwn
+    ? missingForReview({
+        scheduledFor: job.scheduledFor,
+        content: job.content,
+        targetPlatforms: job.targets.map((t) => t.account?.platform).filter((p): p is string => !!p),
+      })
+    : [];
   const hasFailedTargets = job.targets.some((t) => t.status === "post_failed");
   const reviewable = !!canReview && !!onReview && isDraft && job.approvalStatus === "pending";
 
@@ -256,6 +265,11 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
                 <span>↳</span><span className="italic line-clamp-1">{job.commentText}</span>
               </p>
             )}
+            {missing.length > 0 && job.approvalStatus !== "pending" && (
+              <p className="mt-1.5 inline-flex rounded-lg border border-brand-400 bg-brand-100 px-2 py-1 type-body-m-xs text-brand-800">
+                Missing: {missing.map((m) => MISSING_LABEL[m]).join(", ")}
+              </p>
+            )}
             {isDraft && job.approvalStatus === "rejected" && job.reviewNote && (
               <p className="mt-1.5 type-body-r-xs rounded-lg px-2 py-1.5 bg-red-50 text-red-600 border border-red-200">
                 <span className="type-body-sb-xs">Design review:</span> {job.reviewNote}
@@ -302,7 +316,9 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
                 </button>
               )}
               {canSubmitOwn && isOwn && isDraft && (job.approvalStatus === null || job.approvalStatus === undefined || job.approvalStatus === "rejected") && (
-                <button onClick={onSubmitOwn} className="job-action-btn text-brand-800" title="Send for design approval">
+                <button onClick={onSubmitOwn} disabled={missing.length > 0}
+                  className="job-action-btn text-brand-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={missing.length > 0 ? `Missing: ${missing.map((m) => MISSING_LABEL[m]).join(", ")}` : "Send for Design Approval"}>
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -474,6 +490,13 @@ export default function JobsPage() {
   const canEditContentAccess = canEditContent(role);
   // Review-only roles never create drafts, so they get no Drafts tab
   const showDraftTab = canEditContentAccess;
+  // Admin/owner move any draft or scheduled post. Marketing moves its own posts until
+  // they are approved (draft / in review / rejected); approved posts are locked.
+  const canRescheduleJob = (j: Job) => {
+    if (!canEditContentAccess) return false;
+    if (canSubmitOwn) return j.status === "draft" && !!user && j.userId === user.id;
+    return j.status === "pending" || j.status === "draft";
+  };
 
   // Bulk select state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -581,6 +604,24 @@ export default function JobsPage() {
     } catch (err) { toastError(String(err)); }
   }
 
+  async function submitSelectedForReview() {
+    const ids = [...selectedIds];
+    try {
+      const res = await apiFetch<{ submitted: string[]; skipped: { id: string; title: string; reason: string; missing?: MissingField[] }[] }>(
+        "/jobs/submit-bulk", { method: "POST", body: JSON.stringify({ ids }) });
+      if (res.submitted.length > 0) {
+        setJobs(prev => prev.map(j => res.submitted.includes(j.id) ? { ...j, approvalStatus: "pending", reviewNote: null } : j));
+        success(`Sent ${res.submitted.length} for design review.`);
+      }
+      if (res.skipped.length > 0) {
+        const first = res.skipped[0];
+        const why = first.missing ? `missing ${first.missing.map(m => MISSING_LABEL[m]).join(", ")}` : first.reason.toLowerCase();
+        toastError(`Skipped ${res.skipped.length}: "${first.title}" ${why}${res.skipped.length > 1 ? " and more" : ""}.`);
+      }
+      clearSelection();
+    } catch (err) { toastError(String(err)); }
+  }
+
   function duplicateJob(job: Job) {
     const content = JSON.parse(job.content) as {
       text: string;
@@ -671,18 +712,21 @@ export default function JobsPage() {
     }).catch(() => {});
   }
 
-  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, isDraft?: boolean, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string, contentType?: ContentType) {
+  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, isDraft?: boolean, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string, contentType?: ContentType, title?: string, send?: boolean) {
     try {
       // Always patch content/accounts first
       await apiFetch(`/jobs/${jobId}`, {
         method: "PATCH",
         body: JSON.stringify({
           text,
+          ...(title !== undefined ? { title } : {}),
           commentText,
-          ...(!isDraft ? { scheduledFor: scheduledFor.toISOString() } : {}),
+          // Drafts keep their date too — it is the requested post date
+          scheduledFor: scheduledFor.toISOString(),
           mediaUrls,
           mediaType,
-          accountIds,
+          // An imported draft can still have no account; the API requires at least one when sent
+          ...(accountIds.length > 0 ? { accountIds } : {}),
           ...(youtubeType ? { youtubeType } : {}),
           ...(youtubeVideoMode ? { youtubeVideoMode } : {}),
           ...(youtubeVideoUrl !== undefined ? { youtubeVideoUrl } : {}),
@@ -698,11 +742,11 @@ export default function JobsPage() {
           ...(Object.keys(perAccount).length > 0 ? { perAccount } : { perAccount: {} }),
         }),
       });
-      // If it was a draft, members submit it for design approval while
-      // owner/admin/designer promote it straight to the schedule.
+      // Drafts: Marketing saves, or saves and sends for design approval (the API checks
+      // the required fields); owner/admin/designer promote straight to the schedule.
       if (isDraft) {
         if (canSubmitOwn) {
-          await apiFetch(`/jobs/${jobId}/submit`, { method: "POST" });
+          if (send) await apiFetch(`/jobs/${jobId}/submit`, { method: "POST" });
         } else {
           await apiFetch(`/jobs/${jobId}/schedule`, {
             method: "POST",
@@ -712,7 +756,7 @@ export default function JobsPage() {
       }
       const updated = await apiFetch<Job>(`/jobs/${jobId}`);
       setJobs((prev) => prev.map((j) => j.id === jobId ? updated : j));
-      success(isDraft ? (canSubmitOwn ? "Draft saved — sent for design review." : "Draft scheduled!") : "Post updated.");
+      success(isDraft ? (canSubmitOwn ? (send ? "Sent for design review." : "Draft saved.") : "Draft scheduled!") : "Post updated.");
     } catch (err) { toastError(String(err)); throw err; }
   }
 
@@ -880,9 +924,9 @@ export default function JobsPage() {
           job={editingJob}
           accounts={accounts}
           templates={templates}
-          submitLabel={editingJob.status === "draft" && canSubmitOwn ? "Kirim untuk Review" : undefined}
-          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, contentType) => {
-            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, editingJob.status === "draft", youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, contentType);
+          reviewMode={editingJob.status === "draft" && canSubmitOwn}
+          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, contentType, title, send) => {
+            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, editingJob.status === "draft", youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, contentType, title, send);
           }}
           onClose={() => setEditingJob(null)}
         />
@@ -1076,6 +1120,15 @@ export default function JobsPage() {
               <button onClick={clearSelection} className="type-body-r-xs text-muted hover:opacity-70 transition-opacity">
                 Clear
               </button>
+              {canSubmitOwn && (
+                <>
+                  <div className="h-4 w-px bg-border" />
+                  <button onClick={submitSelectedForReview}
+                    className="btn-secondary px-3 py-1.5 rounded-lg type-body-sb-xs">
+                    Send {selectedIds.size} for review
+                  </button>
+                </>
+              )}
               <div className="h-4 w-px bg-border" />
               <button
                 onClick={() => { setBulkDeleteType("selected"); setShowBulkDeleteConfirm(true); }}
@@ -1129,7 +1182,8 @@ export default function JobsPage() {
           <div className="card shadow-xs p-6">
             {loading
               ? <div className="text-center py-20 type-body-r-s text-muted">Loading…</div>
-              : <CalendarView jobs={filteredJobs} onReschedule={reschedule} onEdit={setEditingJob} readOnly={!canEditContentAccess} />
+              : <CalendarView jobs={filteredJobs} onReschedule={reschedule} onEdit={setEditingJob} readOnly={!canEditContentAccess}
+                  canReschedule={canRescheduleJob} />
             }
           </div>
         )}
@@ -1212,6 +1266,7 @@ export default function JobsPage() {
                       onRepeat={() => setRepeatingJob(job)}
                       selected={selectedIds.has(job.id)}
                       onToggleSelect={() => toggleSelect(job.id)}
+                      canSubmitOwn={canSubmitOwn}
                       canEditContentAccess={canEditContentAccess} />
                   ))}
                 </div>
@@ -1236,6 +1291,7 @@ export default function JobsPage() {
                       onRepeat={() => setRepeatingJob(job)}
                       selected={selectedIds.has(job.id)}
                       onToggleSelect={() => toggleSelect(job.id)}
+                      canSubmitOwn={canSubmitOwn}
                       canEditContentAccess={canEditContentAccess} />
                   ))}
                 </div>
