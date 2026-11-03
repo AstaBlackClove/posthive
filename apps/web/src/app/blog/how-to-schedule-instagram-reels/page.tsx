@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cn } from "../../../lib/cn";
 import { BlogCtaBanner } from "../../../components/BlogCtaBanner";
+import { BlogPostHeader } from "../../../components/BlogPostHeader";
+import { SiteNav } from "../../../components/SiteNav";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -111,29 +114,15 @@ export const metadata: Metadata = {
   },
 };
 
-function BlogNav() {
-  return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-      height: 64, background: "#0a0a0a", borderBottom: "1px solid #1a1a1a",
-      display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px",
-    }}>
-      <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-        <img src="/posthivemain.png" alt="Posthive" style={{ height: 28 }} />
-      </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-        <Link href="/blog" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Blog</Link>
-        <Link href="/pricing" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Pricing</Link>
-        <Link href="/docs" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Docs</Link>
-        <Link href="/register" style={{ fontSize: 14, fontWeight: 600, padding: "8px 16px", borderRadius: 8, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>Get started</Link>
-      </div>
-    </nav>
-  );
-}
+const CALLOUT_TONE = {
+  brand: "border-brand-300 bg-brand-100",
+  danger: "border-red-200 bg-red-50",
+  neutral: "border-border bg-surface",
+};
 
-function Callout({ children, color = "#5b63d3" }: { children: React.ReactNode; color?: string }) {
+function Callout({ children, tone = "brand" }: { children: React.ReactNode; tone?: keyof typeof CALLOUT_TONE }) {
   return (
-    <div style={{ background: `${color}11`, border: `1px solid ${color}33`, borderLeft: `3px solid ${color}`, borderRadius: 8, padding: "14px 18px", margin: "28px 0" }}>
+    <div className={cn("my-8 rounded-xl border px-5 py-4", CALLOUT_TONE[tone])}>
       {children}
     </div>
   );
@@ -141,13 +130,13 @@ function Callout({ children, color = "#5b63d3" }: { children: React.ReactNode; c
 
 function StepCard({ n, title, desc }: { n: number; title: string; desc: string }) {
   return (
-    <div style={{ display: "flex", gap: 18, marginBottom: 24 }}>
-      <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(91,99,211,.15)", border: "1px solid rgba(91,99,211,.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <span style={{ fontSize: 13, fontWeight: 900, color: "#9ba2ee" }}>0{n}</span>
+    <div className="card flex gap-4 p-5">
+      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent type-body-sb-xs text-accent-fg">
+        0{n}
       </div>
       <div>
-        <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 6px" }}>{title}</p>
-        <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{desc}</p>
+        <p className="mb-2 type-body-sb-m text-fg">{title}</p>
+        <p className="type-body-r-s text-muted">{desc}</p>
       </div>
     </div>
   );
@@ -155,145 +144,132 @@ function StepCard({ n, title, desc }: { n: number; title: string; desc: string }
 
 export default function HowToScheduleInstagramReelsPage() {
   return (
-    <div className="mkt" style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
+    <div className="min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }} />
-      <BlogNav />
+      <SiteNav />
 
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "120px 24px 100px" }}>
+      <div className="mx-auto max-w-170 px-6 pt-14 pb-24">
 
-        <Link href="/blog" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#555", textDecoration: "none", marginBottom: 40 }}>
-          All posts
-        </Link>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#e86b6b", background: "rgba(232,107,107,.1)", borderRadius: 6, padding: "3px 9px", letterSpacing: ".04em" }}>Guide</span>
-          <span style={{ fontSize: 12, color: "#444" }}>July 7, 2026</span>
-          <span style={{ fontSize: 12, color: "#444" }}>· 8 min read</span>
-        </div>
-
-        <h1 style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15, margin: "0 0 24px", color: "#ededed" }}>
-          How to Schedule Instagram Reels in 2026 (Step-by-Step Guide)
-        </h1>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0", borderTop: "1px solid #1e1e1e", borderBottom: "1px solid #1e1e1e", marginBottom: 40 }}>
-          <img src="/founder.jpg" alt="Founder" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#ededed" }}>Guna</div>
-            <div style={{ fontSize: 12, color: "#555" }}>Founder, Posthive</div>
-          </div>
-        </div>
+        <BlogPostHeader
+          category="Guide"
+          date="July 7, 2026"
+          readTime="8 min read"
+          title="How to Schedule Instagram Reels in 2026 (Step-by-Step Guide)"
+        />
 
         <BlogCtaBanner />
 
-        <div style={{ fontSize: 16, lineHeight: 1.85, color: "#888" }}>
+        <div className="article-body">
 
           {/* Quick answer box — featured snippet target */}
-          <div style={{ background: "#111", border: "1px solid #2a2a2a", borderLeft: "3px solid #5b63d3", borderRadius: 8, padding: "18px 20px", marginBottom: 32 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#5b63d3", letterSpacing: ".06em", textTransform: "uppercase", margin: "0 0 10px" }}>Quick answer</p>
-            <p style={{ fontSize: 15, color: "#ccc", lineHeight: 1.7, margin: 0 }}>
-              <strong style={{ color: "#ededed" }}>Yes, you can schedule Instagram Reels.</strong> Use a third-party tool like Posthive or Meta Business Suite. You need an Instagram Business or Creator account (personal accounts are not supported). Upload your MP4, write your caption, pick a time — the tool publishes automatically.
+          <div className="my-8 rounded-xl border border-brand-300 bg-brand-100 px-5 py-4">
+            <p className="section-label mb-2 text-brand-800">Quick answer</p>
+            <p className="type-body-r-m text-fg">
+              <strong>Yes, you can schedule Instagram Reels.</strong> Use a third-party tool like Posthive or Meta Business Suite. You need an Instagram Business or Creator account (personal accounts are not supported). Upload your MP4, write your caption, pick a time — the tool publishes automatically.
             </p>
           </div>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Scheduling Instagram Reels is one of the highest-leverage habits a creator can build. Reels are the single fastest way to grow on Instagram right now, but they only work consistently if you post at the right times and maintain a regular cadence. Most creators miss both because they rely on posting manually.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             This guide covers everything you need to know: whether scheduling Reels is possible, which tools support it, the exact steps to do it in Posthive, and the best times to post for maximum reach.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Can you schedule Instagram Reels?
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Yes. Instagram supports Reel scheduling through its official Content Publishing API. Third-party tools like Posthive use this API to schedule Reels on your behalf. You upload your video, write your caption, pick a time, and the tool publishes it automatically at that exact moment.
           </p>
 
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: "#ededed", margin: "32px 0 12px", letterSpacing: "-0.01em" }}>
+          <h3>
             Can you schedule reels on Instagram in advance?
           </h3>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Yes — you can schedule Instagram Reels days or weeks in advance. There is no limit on how far ahead you can schedule. Most creators batch-record a week of content and schedule all of it in one session, then let the tool publish automatically each day.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             There is one requirement: your Instagram account must be set to Business or Creator mode. Personal accounts are not supported by the API. Switching is free and takes under a minute in your Instagram settings.
           </p>
 
-          <Callout color="#e86b6b">
-            <p style={{ fontSize: 14, color: "#e86b6b", fontWeight: 700, margin: "0 0 6px" }}>Account requirement</p>
-            <p style={{ fontSize: 14, color: "#aaa", margin: 0 }}>
+          <Callout tone="danger">
+            <p className="mb-1.5 type-body-sb-s text-red-600">Account requirement</p>
+            <p className="type-body-r-s text-fg">
               Only Instagram Business and Creator accounts can schedule Reels via the API. Go to Instagram Settings, tap Account, then Switch to Professional Account to upgrade for free.
             </p>
           </Callout>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Why scheduling Reels matters
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
+          <p>
             The Instagram algorithm distributes Reels based on early engagement signals. If you post when your audience is not online, your Reel gets poor early engagement, and the algorithm limits its reach. Scheduling lets you consistently hit peak times without having to be at your phone.
           </p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "28px 0" }}>
+          <div className="my-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
               { title: "Post at peak hours", desc: "Schedule during 9am-11am and 6pm-9pm when your audience is most active, without being online yourself." },
               { title: "Batch your content", desc: "Film and edit a week of Reels in one session, then schedule them to publish daily. One hour of work, seven days of content." },
               { title: "Stay consistent", desc: "The algorithm rewards creators who post regularly. Scheduling makes consistency automatic instead of a daily decision." },
               { title: "Cross-post alongside", desc: "Posthive lets you schedule your Reel on Instagram while simultaneously posting to Bluesky, LinkedIn, and Threads." },
             ].map((item) => (
-              <div key={item.title} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "16px 18px" }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 8px" }}>{item.title}</p>
-                <p style={{ fontSize: 13, color: "#666", lineHeight: 1.65, margin: 0 }}>{item.desc}</p>
+              <div key={item.title} className="card p-5">
+                <p className="mb-2 type-body-sb-m text-fg">{item.title}</p>
+                <p className="type-body-r-s text-muted">{item.desc}</p>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             How to schedule Instagram Reels with Posthive
           </h2>
 
-          <p style={{ marginBottom: 28 }}>
+          <p>
             Posthive supports Instagram Reels, Stories, carousels, and feed posts all from the same composer. Here is the exact process:
           </p>
 
-          <StepCard n={1} title="Create your Posthive account" desc="Sign up at posthive.co. The 14-day free trial includes full Instagram scheduling support. No credit card required." />
-          <StepCard n={2} title="Connect your Instagram account" desc="Go to Accounts in the sidebar. Click Connect Instagram and follow the Meta OAuth flow. Posthive will ask for publishing permissions. This takes about 60 seconds." />
-          <StepCard n={3} title="Open the Compose page" desc="Click Compose in the sidebar. Select your Instagram account from the platform picker at the top of the composer." />
-          <StepCard n={4} title="Select Reel as the content type" desc="Below the platform selector, you will see content type options: Feed Post, Reel, Story, Carousel. Select Reel. An upload area will appear for your video file." />
-          <StepCard n={5} title="Upload your Reel video" desc="Drag and drop your MP4 file or click to browse. Instagram requires MP4 format, between 3 seconds and 15 minutes, with 9:16 aspect ratio recommended for best presentation." />
-          <StepCard n={6} title="Write your caption" desc="Write your caption in the text area. If you want to use hashtags without cluttering your caption, add them in the First Comment field below. Posthive posts the comment automatically right after the Reel goes live." />
-          <StepCard n={7} title="Set your publish time" desc="Click the date and time picker and choose when you want the Reel to go live. Posthive handles the rest." />
-          <StepCard n={8} title="Schedule" desc="Click Schedule. Your Reel appears on the content calendar. At the exact time you chose, Posthive publishes it through the Instagram API automatically." />
+          <div className="mb-8 flex flex-col gap-3">
+            <StepCard n={1} title="Create your Posthive account" desc="Sign up at posthive.co. The 14-day free trial includes full Instagram scheduling support. No credit card required." />
+            <StepCard n={2} title="Connect your Instagram account" desc="Go to Accounts in the sidebar. Click Connect Instagram and follow the Meta OAuth flow. Posthive will ask for publishing permissions. This takes about 60 seconds." />
+            <StepCard n={3} title="Open the Compose page" desc="Click Compose in the sidebar. Select your Instagram account from the platform picker at the top of the composer." />
+            <StepCard n={4} title="Select Reel as the content type" desc="Below the platform selector, you will see content type options: Feed Post, Reel, Story, Carousel. Select Reel. An upload area will appear for your video file." />
+            <StepCard n={5} title="Upload your Reel video" desc="Drag and drop your MP4 file or click to browse. Instagram requires MP4 format, between 3 seconds and 15 minutes, with 9:16 aspect ratio recommended for best presentation." />
+            <StepCard n={6} title="Write your caption" desc="Write your caption in the text area. If you want to use hashtags without cluttering your caption, add them in the First Comment field below. Posthive posts the comment automatically right after the Reel goes live." />
+            <StepCard n={7} title="Set your publish time" desc="Click the date and time picker and choose when you want the Reel to go live. Posthive handles the rest." />
+            <StepCard n={8} title="Schedule" desc="Click Schedule. Your Reel appears on the content calendar. At the exact time you chose, Posthive publishes it through the Instagram API automatically." />
+          </div>
 
-          <Callout color="#5b63d3">
-            <p style={{ fontSize: 14, color: "#9ba2ee", fontWeight: 700, margin: "0 0 6px" }}>Pro tip: First comment for hashtags</p>
-            <p style={{ fontSize: 14, color: "#aaa", margin: 0 }}>
+          <Callout tone="brand">
+            <p className="mb-1.5 type-body-sb-s text-brand-800">Pro tip: First comment for hashtags</p>
+            <p className="type-body-r-s text-fg">
               Putting hashtags in the first comment instead of the caption keeps your caption clean and readable. Research suggests this can improve save rates because the caption looks less cluttered. Posthive posts the first comment automatically within seconds of the Reel going live.
             </p>
           </Callout>
 
-          <Callout color="#2a2a2a">
-            <p style={{ fontSize: 14, color: "#888", fontWeight: 700, margin: "0 0 6px" }}>Scheduling carousels too?</p>
-            <p style={{ fontSize: 14, color: "#666", margin: 0 }}>
-              If you're also scheduling Instagram carousels, you'll need to design your <a href="https://carouselpost.io/" style={{ color: "#5b63d3", textDecoration: "none" }}>multi-slide posts</a> before uploading them to Posthive. CarouselPost has a free browser-based generator that turns a prompt into a finished set of slides — useful if you don't have a design tool in your workflow.
+          <Callout tone="neutral">
+            <p className="mb-1.5 type-body-sb-s text-fg">Scheduling carousels too?</p>
+            <p className="type-body-r-s text-muted">
+              If you're also scheduling Instagram carousels, you'll need to design your <a href="https://carouselpost.io/">multi-slide posts</a> before uploading them to Posthive. CarouselPost has a free browser-based generator that turns a prompt into a finished set of slides — useful if you don't have a design tool in your workflow.
             </p>
           </Callout>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             How to schedule Instagram Reels with Meta Business Suite
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Meta Business Suite has a built-in scheduling tool for Reels. It is free and does not require a third-party account. Here is how it works:
           </p>
 
-          <ol style={{ paddingLeft: 20, marginBottom: 28 }}>
+          <ol>
             {[
               "Go to business.facebook.com and connect your Instagram account.",
               "Click Create Post in the left sidebar.",
@@ -303,51 +279,51 @@ export default function HowToScheduleInstagramReelsPage() {
               "Click the arrow next to Publish and select Schedule.",
               "Pick your date and time, then confirm.",
             ].map((step, i) => (
-              <li key={i} style={{ fontSize: 14, color: "#777", lineHeight: 1.85, marginBottom: 6 }}>{step}</li>
+              <li key={i}>{step}</li>
             ))}
           </ol>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             The limitation with Meta Business Suite is that it only covers Instagram and Facebook. If you post on Bluesky, LinkedIn, Threads, or any other platform, you will need a separate workflow for those. Posthive covers multiple platforms from one composer.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             How to schedule Instagram Reels for free
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
+          <p>
             There are two ways to schedule Instagram Reels without paying anything:
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 28 }}>
-            <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "20px 22px" }}>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 8px" }}>Option 1 — Posthive free trial</p>
-              <p style={{ fontSize: 14, color: "#777", lineHeight: 1.75, margin: 0 }}>
+          <div className="mb-8 flex flex-col gap-3">
+            <div className="card p-5">
+              <p className="mb-2 type-body-sb-m text-fg">Option 1 — Posthive free trial</p>
+              <p className="type-body-r-s text-muted">
                 Posthive includes a 14-day free trial with full Instagram Reels scheduling support, no credit card required. You get access to Reels, Stories, carousels, and feed posts, plus cross-posting to Bluesky, Threads, and LinkedIn from the same composer.
               </p>
             </div>
-            <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "20px 22px" }}>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 8px" }}>Option 2 — Meta Business Suite (permanently free)</p>
-              <p style={{ fontSize: 14, color: "#777", lineHeight: 1.75, margin: 0 }}>
+            <div className="card p-5">
+              <p className="mb-2 type-body-sb-m text-fg">Option 2 — Meta Business Suite (permanently free)</p>
+              <p className="type-body-r-s text-muted">
                 Meta Business Suite is free and lets you schedule Reels natively without a third-party account. The trade-off is that it only works for Instagram and Facebook — no other platforms, no bulk scheduling, and no content calendar across accounts.
               </p>
             </div>
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Instagram Reels scheduler comparison
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
+          <p>
             Not all schedulers handle Instagram Reels the same way. Here is how the main options compare:
           </p>
 
-          <div style={{ overflowX: "auto", marginBottom: 28 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <div className="mb-8 overflow-x-auto">
+            <table>
               <thead>
-                <tr style={{ background: "#111" }}>
+                <tr>
                   {["Feature", "Posthive", "Meta Business Suite", "Buffer", "Later"].map((h) => (
-                    <th key={h} style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #2a2a2a", color: h === "Posthive" ? "#9ba2ee" : "#555", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>{h}</th>
+                    <th key={h} className={cn("whitespace-nowrap", h === "Posthive" && "text-brand-800")}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -363,10 +339,10 @@ export default function HowToScheduleInstagramReelsPage() {
                   ["Free tier", "14-day trial", "Free forever", "Free (3 channels)", "Free (1 channel)"],
                   ["Paid plans from", "$7/mo", "Free", "$6/mo", "$18/mo"],
                 ].map(([feature, ...vals]) => (
-                  <tr key={feature as string} style={{ borderBottom: "1px solid #111" }}>
-                    <td style={{ padding: "10px 14px", color: "#aaa", fontSize: 13, fontWeight: 600 }}>{feature as string}</td>
+                  <tr key={feature as string}>
+                    <td className="text-fg">{feature as string}</td>
                     {vals.map((v, i) => (
-                      <td key={i} style={{ padding: "10px 14px", color: i === 0 ? "#9ba2ee" : v === "✗" ? "#444" : "#666", fontSize: 13 }}>{v as string}</td>
+                      <td key={i} className={cn(v === "✗" ? "text-neutral-400" : v === "✓" ? "text-green-700" : i === 0 ? "text-brand-800" : "text-muted")}>{v as string}</td>
                     ))}
                   </tr>
                 ))}
@@ -374,21 +350,21 @@ export default function HowToScheduleInstagramReelsPage() {
             </table>
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Best times to post Instagram Reels
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
+          <p>
             Timing matters because Instagram uses early engagement (views, likes, shares in the first 30-60 minutes) to decide how widely to distribute a Reel. Posting when your audience is not active means fewer early signals, which means less distribution.
           </p>
 
-          <div style={{ overflowX: "auto", marginBottom: 28 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <div className="mb-8 overflow-x-auto">
+            <table>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Day</th>
-                  <th style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Best times</th>
-                  <th style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Notes</th>
+                  <th>Day</th>
+                  <th>Best times</th>
+                  <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
@@ -401,25 +377,25 @@ export default function HowToScheduleInstagramReelsPage() {
                   ["Saturday", "10am, 1pm", "Leisure browsing, lower overall volume"],
                   ["Sunday", "11am, 2pm", "Lowest day on average, use for evergreen"],
                 ].map(([day, times, note]) => (
-                  <tr key={day as string} style={{ borderBottom: "1px solid #111" }}>
-                    <td style={{ padding: "10px 14px", color: "#ededed", fontWeight: 600, fontSize: 14 }}>{day as string}</td>
-                    <td style={{ padding: "10px 14px", color: "#9ba2ee", fontSize: 13, fontFamily: "monospace" }}>{times as string}</td>
-                    <td style={{ padding: "10px 14px", color: "#555", fontSize: 13 }}>{note as string}</td>
+                  <tr key={day as string}>
+                    <td className="text-fg">{day as string}</td>
+                    <td className="text-brand-800 tabular-nums">{times as string}</td>
+                    <td className="text-muted">{note as string}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             These are general benchmarks. Your specific audience may differ. Check your Instagram Insights after 4-6 weeks of consistent posting to see when your followers are most active, then adjust your schedule accordingly.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Instagram Reels specifications for scheduling
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 28 }}>
+          <div className="mb-8 flex flex-col">
             {[
               { label: "Format", value: "MP4 or MOV" },
               { label: "Aspect ratio", value: "9:16 recommended (vertical). 4:5 and 1:1 also supported" },
@@ -429,101 +405,101 @@ export default function HowToScheduleInstagramReelsPage() {
               { label: "Frame rate", value: "23-60fps" },
               { label: "Audio", value: "AAC, max 128kbps" },
             ].map((row) => (
-              <div key={row.label} style={{ display: "flex", gap: 16, padding: "10px 0", borderBottom: "1px solid #111" }}>
-                <span style={{ fontSize: 13, color: "#555", fontWeight: 700, minWidth: 120 }}>{row.label}</span>
-                <span style={{ fontSize: 13, color: "#aaa" }}>{row.value}</span>
+              <div key={row.label} className="flex gap-4 border-b border-border py-2.5">
+                <span className="w-30 shrink-0 type-body-sb-s text-muted">{row.label}</span>
+                <span className="type-body-r-s text-fg">{row.value}</span>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Does scheduling Instagram Reels affect views?
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             No. Scheduling a Reel through a Meta-approved tool does not hurt your reach or views. The Reel is published via the official Instagram Content Publishing API — Instagram cannot distinguish between a scheduled post and one posted manually.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             The myth that scheduling reduces reach comes from the early days of third-party tools that used unofficial workarounds. Modern schedulers like Posthive use the official API, which Meta explicitly supports for business accounts.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             How many Reels can you schedule on Instagram?
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             There is no hard limit on how many Reels you can schedule. The Instagram Content Publishing API allows up to 50 publish calls per 24 hours per account. Posting 1–3 Reels per day is well within limits and considered normal usage. Scheduling dozens per day is technically possible but not recommended — Instagram may flag unusually high posting frequency as spam.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Can I schedule Instagram Reels using Creator Studio?
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
-            Instagram Creator Studio was Meta&apos;s original desktop publishing tool. As of 2024, Meta has retired Creator Studio and migrated its features into <strong style={{ color: "#ededed" }}>Meta Business Suite</strong> (business.facebook.com). If you are searching for Creator Studio Reels scheduling, Meta Business Suite is now the equivalent native option.
+          <p>
+            Instagram Creator Studio was Meta&apos;s original desktop publishing tool. As of 2024, Meta has retired Creator Studio and migrated its features into <strong>Meta Business Suite</strong> (business.facebook.com). If you are searching for Creator Studio Reels scheduling, Meta Business Suite is now the equivalent native option.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Meta Business Suite lets you schedule Reels natively for free. The trade-off: it only covers Instagram and Facebook. For scheduling Reels alongside posts on Bluesky, LinkedIn, Threads, or other platforms, you need a third-party tool like Posthive.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Where to find your scheduled Reels on Instagram
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
+          <p>
             Instagram does not show scheduled Reels inside the app itself. There is no &ldquo;Scheduled&rdquo; tab in the Instagram mobile app. To see your scheduled Reels, check the tool you used to schedule them:
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {([
               { tool: "Posthive", where: "Go to Posts in the sidebar, or switch the Jobs page to calendar view. All scheduled Reels appear with their publish time. Drag them to reschedule." },
               { tool: "Meta Business Suite", where: "Go to business.facebook.com → Planner tab. Scheduled Reels appear on the content calendar under your Instagram account." },
               { tool: "Buffer", where: "Open the Queue tab for your Instagram channel. Scheduled Reels appear in chronological order." },
               { tool: "Later", where: "Go to the Calendar view in Later. Scheduled Reels appear as tiles on the publish date." },
             ] as { tool: string; where: string }[]).map((row) => (
-              <div key={row.tool} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "14px 18px" }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 6px" }}>{row.tool}</p>
-                <p style={{ fontSize: 13, color: "#666", lineHeight: 1.65, margin: 0 }}>{row.where}</p>
+              <div key={row.tool} className="card p-5">
+                <p className="mb-2 type-body-sb-m text-fg">{row.tool}</p>
+                <p className="type-body-r-s text-muted">{row.where}</p>
               </div>
             ))}
           </div>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Once a scheduled Reel is published, it appears on your Instagram profile like any other Reel — no indicator that it was scheduled.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Frequently asked questions
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {faqSchema.mainEntity.map((item) => (
-              <div key={item.name} style={{ borderBottom: "1px solid #1a1a1a", padding: "22px 0" }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>{item.name}</p>
-                <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{item.acceptedAnswer.text}</p>
+              <div key={item.name} className="card p-5">
+                <p className="mb-2 type-body-sb-m text-fg">{item.name}</p>
+                <p className="type-body-r-s text-muted">{item.acceptedAnswer.text}</p>
               </div>
             ))}
           </div>
 
-          <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px", textAlign: "center", marginTop: 48 }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>Start scheduling Instagram Reels today</p>
-            <p style={{ fontSize: 14, color: "#666", margin: "0 0 24px" }}>14-day free trial. No credit card required. Connect your Instagram account in under a minute.</p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href="/register" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>
+          <div className="card mt-12 p-8 text-center">
+            <p className="mb-2 type-head-sb-5 text-fg">Start scheduling Instagram Reels today</p>
+            <p className="mb-6 type-body-r-s text-muted">14-day free trial. No credit card required. Connect your Instagram account in under a minute.</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/register" className="btn-primary px-6 py-3">
                 Get started free
               </Link>
-              <Link href="/features/instagram-reels-scheduler" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
+              <Link href="/features/instagram-reels-scheduler" className="btn-secondary px-6 py-3">
                 See Instagram features
               </Link>
             </div>
           </div>
 
           {/* Related reading */}
-          <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 48, paddingTop: 36 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 16 }}>Related reading</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="mt-12 border-t border-border pt-9">
+            <p className="section-label mb-4">Related reading</p>
+            <div className="flex flex-col gap-3">
               {[
                 { href: "/platforms/instagram", label: "Instagram scheduler: Reels, Stories, carousels, and feed posts" },
                 { href: "/blog/best-social-media-scheduler", label: "The best social media schedulers in 2026 compared" },
@@ -531,8 +507,8 @@ export default function HowToScheduleInstagramReelsPage() {
                 { href: "/platforms/facebook", label: "Keep your Facebook Page active on autopilot" },
                 { href: "/platforms/youtube", label: "Schedule YouTube Shorts without opening YouTube Studio" },
               ].map(({ href, label }) => (
-                <Link key={href} href={href} style={{ fontSize: 14, color: "#5b63d3", textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#333" }}>→</span> {label}
+                <Link key={href} href={href} className="flex items-center gap-2 type-body-r-s text-brand-800 transition-colors hover:text-brand-900">
+                  <span className="text-neutral-400">→</span> {label}
                 </Link>
               ))}
             </div>
@@ -541,13 +517,13 @@ export default function HowToScheduleInstagramReelsPage() {
         </div>
       </div>
 
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "40px 24px", textAlign: "center" }}>
-        <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+      <footer className="border-t border-border px-6 py-10 text-center">
+        <div className="mb-4 flex flex-wrap justify-center gap-6">
           {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Pricing", "/pricing"], ["Blog", "/blog"]] as [string, string][]).map(([label, href]) => (
-            <Link key={label} href={href} style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>{label}</Link>
+            <Link key={label} href={href} className="type-body-r-s text-muted transition-colors hover:text-fg">{label}</Link>
           ))}
         </div>
-        <p style={{ fontSize: 12, color: "#444" }}>© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
+        <p className="type-body-r-xs text-muted">© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
       </footer>
     </div>
   );

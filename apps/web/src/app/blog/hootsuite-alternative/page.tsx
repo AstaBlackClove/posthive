@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cn } from "../../../lib/cn";
 import { BlogCtaBanner } from "../../../components/BlogCtaBanner";
+import { BlogPostHeader } from "../../../components/BlogPostHeader";
+import { SiteNav } from "../../../components/SiteNav";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -72,111 +75,85 @@ export const metadata: Metadata = {
   },
 };
 
-function BlogNav() {
-  return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-      height: 64, background: "#0a0a0a", borderBottom: "1px solid #1a1a1a",
-      display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px",
-    }}>
-      <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-        <img src="/posthivemain.png" alt="Posthive" style={{ height: 28 }} />
-      </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-        <Link href="/blog" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Blog</Link>
-        <Link href="/pricing" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Pricing</Link>
-        <Link href="/docs" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Docs</Link>
-        <Link href="/register" style={{
-          fontSize: 14, fontWeight: 600, padding: "8px 16px", borderRadius: 8,
-          background: "#5b63d3", color: "#fff", textDecoration: "none",
-        }}>Get started</Link>
-      </div>
-    </nav>
-  );
-}
+// Price card and "best for" tag colors, keyed by item.
+const PRICE_TONE: Record<string, { card: string; price: string }> = {
+  "Hootsuite Professional": { card: "border-red-200", price: "text-red-600" },
+  "Posthive Creator": { card: "border-green-200", price: "text-green-700" },
+};
+
+const TAG_TONE: Record<string, string> = {
+  Posthive: "bg-green-50 text-green-700",
+  Buffer: "bg-blue-50 text-blue-700",
+  Later: "bg-red-50 text-red-600",
+  Metricool: "bg-brand-100 text-brand-800",
+  Publer: "bg-neutral-100 text-neutral-700",
+};
 
 export default function HootsuiteAlternativePage() {
   return (
-    <div className="mkt" style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
+    <div className="min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <BlogNav />
+      <SiteNav />
 
-      <div style={{ maxWidth: 680, margin: "0 auto", padding: "120px 24px 100px" }}>
+      <div className="mx-auto max-w-170 px-6 pt-14 pb-24">
 
-        <Link href="/blog" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#555", textDecoration: "none", marginBottom: 40 }}>
-          ← All posts
-        </Link>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#5cb88a", background: "rgba(80,180,120,.1)", borderRadius: 6, padding: "3px 9px", letterSpacing: ".04em" }}>
-            Comparison
-          </span>
-          <span style={{ fontSize: 12, color: "#444" }}>July 7, 2026</span>
-          <span style={{ fontSize: 12, color: "#444" }}>· 6 min read</span>
-        </div>
-
-        <h1 style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15, margin: "0 0 24px", color: "#ededed" }}>
-          5 Best Hootsuite Alternatives in 2026 — Cheaper, Open Source, More Platforms
-        </h1>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0", borderTop: "1px solid #1e1e1e", borderBottom: "1px solid #1e1e1e", marginBottom: 40 }}>
-          <img src="/founder.jpg" alt="Founder" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#ededed" }}>Guna</div>
-            <div style={{ fontSize: 12, color: "#555" }}>Founder, Posthive</div>
-          </div>
-        </div>
+        <BlogPostHeader
+          category="Comparison"
+          date="July 7, 2026"
+          readTime="6 min read"
+          title="5 Best Hootsuite Alternatives in 2026 — Cheaper, Open Source, More Platforms"
+        />
 
         <BlogCtaBanner />
 
-        <div style={{ fontSize: 16, lineHeight: 1.85, color: "#888" }}>
+        <div className="article-body">
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Hootsuite used to be the default answer for social media scheduling. But at $99/month minimum for a single user, it&apos;s priced for enterprise teams — not indie hackers, solo creators, or small businesses who just need to stay consistent across a few platforms.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             If you&apos;re paying $99/month to schedule posts and you&apos;re not a 50-person marketing team, you&apos;re almost certainly overpaying. Here&apos;s how Posthive compares — and when it might be the right switch.
           </p>
 
           {/* Price callout */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "32px 0" }}>
+          <div className="my-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
-              { label: "Hootsuite Professional", price: "$99/mo", sub: "1 user · 10 accounts", color: "#e86b6b" },
-              { label: "Posthive Creator", price: "$9/mo", sub: "All platforms · no per-account fee", color: "#5cb88a" },
+              { label: "Hootsuite Professional", price: "$99/mo", sub: "1 user · 10 accounts" },
+              { label: "Posthive Creator", price: "$9/mo", sub: "All platforms · no per-account fee" },
             ].map((p) => (
-              <div key={p.label} style={{ background: "#111", border: `1px solid ${p.color}33`, borderRadius: 14, padding: "20px 18px", textAlign: "center" }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#555", marginBottom: 8 }}>{p.label}</div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: p.color, letterSpacing: "-0.03em" }}>{p.price}</div>
-                <div style={{ fontSize: 12, color: "#444", marginTop: 6 }}>{p.sub}</div>
+              <div key={p.label} className={cn("card px-4 py-5 text-center", PRICE_TONE[p.label].card)}>
+                <div className="mb-2 type-body-sb-xs text-muted">{p.label}</div>
+                <div className={cn("type-head-sb-4 tracking-tight", PRICE_TONE[p.label].price)}>{p.price}</div>
+                <div className="mt-1.5 type-body-r-xs text-muted">{p.sub}</div>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             What you get with Hootsuite — and what you don&apos;t
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Hootsuite has been around since 2008. It has deep analytics, a robust team management system, and integrations with almost every social platform. For a 20-person social media team managing 30 brand accounts, it&apos;s defensible.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             But for everyone else: the interface is cluttered, the pricing is aggressive, and the feature set is bloated with things most users never touch. More importantly, Hootsuite doesn&apos;t support Bluesky, Mastodon, Threads, or Telegram — the platforms where organic growth is still very much possible.
           </p>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             Hootsuite vs Posthive: head-to-head
           </h2>
 
-          <div style={{ overflowX: "auto", marginBottom: 32 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <div className="mb-8 overflow-x-auto">
+            <table>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Feature</th>
-                  <th style={{ textAlign: "center", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Hootsuite</th>
-                  <th style={{ textAlign: "center", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#9ba2ee", fontWeight: 700, fontSize: 12 }}>Posthive</th>
+                  <th>Feature</th>
+                  <th className="text-center">Hootsuite</th>
+                  <th className="text-center text-brand-800">Posthive</th>
                 </tr>
               </thead>
               <tbody>
@@ -194,31 +171,30 @@ export default function HootsuiteAlternativePage() {
                   ["Drag-to-reschedule calendar", "✓", "✓"],
                   ["Instagram Reels & Stories", "✓", "✓"],
                 ].map(([feature, hootsuite, posthive]) => (
-                  <tr key={feature as string} style={{ borderBottom: "1px solid #111" }}>
-                    <td style={{ padding: "10px 14px", color: "#aaa", fontSize: 14 }}>{feature as string}</td>
-                    <td style={{ textAlign: "center", padding: "10px 14px", color: hootsuite === "✕" ? "#3a3a3a" : "#888", fontSize: 13 }}>{hootsuite as string}</td>
-                    <td style={{ textAlign: "center", padding: "10px 14px", color: posthive === "✕" ? "#3a3a3a" : "#9ba2ee", fontSize: 13 }}>{posthive as string}</td>
+                  <tr key={feature as string}>
+                    <td className="text-fg">{feature as string}</td>
+                    <td className={cn("text-center", hootsuite === "✕" ? "text-neutral-400" : hootsuite === "✓" ? "text-green-700" : "text-muted")}>{hootsuite as string}</td>
+                    <td className={cn("text-center", posthive === "✕" ? "text-neutral-400" : posthive === "✓" ? "text-green-700" : "text-brand-800")}>{posthive as string}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             The 5 best Hootsuite alternatives in 2026
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Hootsuite is not the only option. Here are the top alternatives — and when each makes sense.
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-4">
             {[
               {
                 rank: "01",
                 name: "Posthive",
                 tag: "Best overall",
-                tagColor: "#5cb88a",
                 price: "From $9/mo · Free to self-host",
                 desc: "Covers 14 platforms including Bluesky, Mastodon, Pixelfed, Threads, Telegram, and Nostr — platforms Hootsuite ignores entirely. Open source (AGPL-3.0), self-hostable, per-platform overrides, bulk CSV scheduling, and first comment scheduling. Best pick if you post to the fediverse or want to own your data.",
               },
@@ -226,7 +202,6 @@ export default function HootsuiteAlternativePage() {
                 rank: "02",
                 name: "Buffer",
                 tag: "Best for simplicity",
-                tagColor: "#5b63d3",
                 price: "From $6/mo",
                 desc: "Clean, minimal interface. Supports Instagram, Facebook, Twitter, LinkedIn, Pinterest, and TikTok. Good free tier (3 channels). Lacks Bluesky and Mastodon support. No bulk CSV. Better UX than Hootsuite at a fraction of the price.",
               },
@@ -234,7 +209,6 @@ export default function HootsuiteAlternativePage() {
                 rank: "03",
                 name: "Later",
                 tag: "Best for Instagram-first creators",
-                tagColor: "#e86b6b",
                 price: "From $16.67/mo",
                 desc: "Strongest Instagram feature set — visual calendar, link-in-bio, Stories scheduling. If Instagram is your primary channel, Later is purpose-built for it. Weaker for multi-platform posting.",
               },
@@ -242,7 +216,6 @@ export default function HootsuiteAlternativePage() {
                 rank: "04",
                 name: "Metricool",
                 tag: "Best free tier",
-                tagColor: "#f0a05a",
                 price: "Free plan available",
                 desc: "Generous free tier covering 1 brand across multiple platforms. Includes analytics, competitor analysis, and basic scheduling. Good starting point before committing to a paid plan.",
               },
@@ -250,78 +223,77 @@ export default function HootsuiteAlternativePage() {
                 rank: "05",
                 name: "Publer",
                 tag: "Best for small teams",
-                tagColor: "#888",
                 price: "From $12/mo",
                 desc: "Solid team collaboration features at a price point well below Hootsuite. Supports most major platforms, includes a link shortener, and has a good mobile app.",
               },
             ].map((tool) => (
-              <div key={tool.name} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 14, padding: "20px 22px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-                  <span style={{ fontSize: 11, fontWeight: 900, color: "#333", fontFamily: "monospace" }}>{tool.rank}</span>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: "#ededed" }}>{tool.name}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: tool.tagColor, background: `${tool.tagColor}18`, borderRadius: 6, padding: "2px 8px" }}>{tool.tag}</span>
-                  <span style={{ fontSize: 12, color: "#555", marginLeft: "auto" }}>{tool.price}</span>
+              <div key={tool.name} className="card p-5">
+                <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="type-body-sb-xs text-neutral-400 tabular-nums">{tool.rank}</span>
+                  <span className="type-body-sb-m text-fg">{tool.name}</span>
+                  <span className={cn("rounded-md px-2 py-0.5 type-body-sb-xs", TAG_TONE[tool.name])}>{tool.tag}</span>
+                  <span className="ml-auto type-body-r-xs text-muted">{tool.price}</span>
                 </div>
-                <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{tool.desc}</p>
+                <p className="type-body-r-s text-muted">{tool.desc}</p>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             Open source means you own your data
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             With Hootsuite, your social account credentials live on their servers. You&apos;re trusting a third party with your Instagram, LinkedIn, and Facebook OAuth tokens indefinitely. If they get breached, or if they decide to change their pricing model, you have no fallback.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
-            Posthive is <strong style={{ color: "#ededed" }}>AGPL-3.0</strong> — the full source code is public, auditable, and forkable. OAuth credentials are AES-256-GCM encrypted at rest. Self-hosted users keep everything on their own infrastructure. There is no vendor lock-in.
+          <p>
+            Posthive is <strong>AGPL-3.0</strong> — the full source code is public, auditable, and forkable. OAuth credentials are AES-256-GCM encrypted at rest. Self-hosted users keep everything on their own infrastructure. There is no vendor lock-in.
           </p>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             Who should still use Hootsuite
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             If you need deep social listening, enterprise-grade team permissions with approval workflows, TikTok support, or a robust mobile app for on-the-go publishing, Hootsuite is still the stronger choice. It&apos;s built for teams where social media is a full-time job.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             But if you&apos;re a solo creator, a founder, or a small team who just wants a reliable scheduler that covers all the platforms you actually use — Posthive will do more, cost less, and give you back control.
           </p>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             Frequently asked questions
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {faqSchema.mainEntity.map((item) => (
-              <div key={item.name} style={{ borderBottom: "1px solid #1a1a1a", padding: "20px 0" }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 8px" }}>{item.name}</p>
-                <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{item.acceptedAnswer.text}</p>
+              <div key={item.name} className="card p-5">
+                <p className="mb-2 type-body-sb-m text-fg">{item.name}</p>
+                <p className="type-body-r-s text-muted">{item.acceptedAnswer.text}</p>
               </div>
             ))}
           </div>
 
           {/* CTA */}
-          <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px", textAlign: "center", marginTop: 48 }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>Switch from Hootsuite — free for 14 days</p>
-            <p style={{ fontSize: 14, color: "#666", margin: "0 0 24px" }}>No credit card required. Connect your first account in under a minute.</p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href="/register" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>
+          <div className="card mt-12 p-8 text-center">
+            <p className="mb-2 type-head-sb-5 text-fg">Switch from Hootsuite — free for 14 days</p>
+            <p className="mb-6 type-body-r-s text-muted">No credit card required. Connect your first account in under a minute.</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/register" className="btn-primary px-6 py-3">
                 Get started free
               </Link>
-              <Link href="/pricing" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
+              <Link href="/pricing" className="btn-secondary px-6 py-3">
                 View pricing
               </Link>
             </div>
           </div>
 
           {/* Related reading */}
-          <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 48, paddingTop: 36 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 16 }}>Related reading</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="mt-12 border-t border-border pt-9">
+            <p className="section-label mb-4">Related reading</p>
+            <div className="flex flex-col gap-3">
               {[
                 { href: "/blog/how-to-schedule-first-comment-instagram", label: "How to schedule your first comment on Instagram (and why it matters)" },
                 { href: "/blog/how-to-schedule-instagram-reels", label: "How to schedule Instagram Reels in 2026 (step-by-step)" },
@@ -331,8 +303,8 @@ export default function HootsuiteAlternativePage() {
                 { href: "/platforms/mastodon", label: "Schedule to any Mastodon instance with Posthive" },
                 { href: "/platforms/linkedin", label: "Stay consistent on LinkedIn without logging in every day" },
               ].map(({ href, label }) => (
-                <Link key={href} href={href} style={{ fontSize: 14, color: "#5b63d3", textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#333" }}>→</span> {label}
+                <Link key={href} href={href} className="flex items-center gap-2 type-body-r-s text-brand-800 transition-colors hover:text-brand-900">
+                  <span className="text-neutral-400">→</span> {label}
                 </Link>
               ))}
             </div>
@@ -341,13 +313,13 @@ export default function HootsuiteAlternativePage() {
         </div>
       </div>
 
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "40px 24px", textAlign: "center" }}>
-        <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+      <footer className="border-t border-border px-6 py-10 text-center">
+        <div className="mb-4 flex flex-wrap justify-center gap-6">
           {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Pricing", "/pricing"], ["Blog", "/blog"]] as [string, string][]).map(([label, href]) => (
-            <Link key={label} href={href} style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>{label}</Link>
+            <Link key={label} href={href} className="type-body-r-s text-muted transition-colors hover:text-fg">{label}</Link>
           ))}
         </div>
-        <p style={{ fontSize: 12, color: "#444" }}>© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
+        <p className="type-body-r-xs text-muted">© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
       </footer>
     </div>
   );

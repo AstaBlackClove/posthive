@@ -18,56 +18,27 @@ export function BlogStickyCtaBanner() {
 
   if (dismissed || !visible) return null;
 
+  // Centered with inset-x-4 + mx-auto + max-w-140 (= min(560px, 100vw - 32px)),
+  // so the slide-up keyframes only animate translateY.
   return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: 24,
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 9999,
-        width: "min(560px, calc(100vw - 32px))",
-        background: "#111111",
-        border: "1px solid #2a2a2a",
-        borderRadius: 14,
-        boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
-        padding: "14px 16px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        animation: "slideUp 0.25s ease",
-      }}
-    >
-      <style>{`@keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`}</style>
-      <div style={{ minWidth: 0 }}>
-        <p style={{ fontSize: 14, fontWeight: 600, color: "#ededed", margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+    <div className="card fixed inset-x-4 bottom-6 z-9999 mx-auto flex max-w-140 animate-[slideUp_0.25s_ease] items-center justify-between gap-3 px-4 py-3.5 shadow-lg">
+      <style>{`@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+      <div className="min-w-0">
+        <p className="mb-0.5 truncate type-body-sb-s text-fg">
           Schedule posts across 15 platforms
         </p>
-        <p style={{ fontSize: 12, color: "#666", margin: 0 }}>
+        <p className="type-body-r-xs text-muted">
           14-day free trial · no credit card
         </p>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-        <Link
-          href="/register"
-          style={{
-            fontSize: 13, fontWeight: 600,
-            padding: "8px 16px", borderRadius: 8,
-            background: "#5b63d3", color: "#fff",
-            textDecoration: "none", whiteSpace: "nowrap",
-          }}
-        >
+      <div className="flex shrink-0 items-center gap-2">
+        <Link href="/register" className="btn-primary whitespace-nowrap">
           Start free →
         </Link>
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          style={{
-            background: "transparent", border: "none",
-            color: "#444", cursor: "pointer",
-            fontSize: 18, lineHeight: 1, padding: "4px 6px",
-          }}
+          className="cursor-pointer px-1.5 py-1 type-body-r-l text-muted transition-colors hover:text-fg"
           aria-label="Dismiss"
         >
           ×

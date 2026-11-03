@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cn } from "../../../lib/cn";
 import { BlogCtaBanner } from "../../../components/BlogCtaBanner";
+import { BlogPostHeader } from "../../../components/BlogPostHeader";
+import { SiteNav } from "../../../components/SiteNav";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -82,123 +85,88 @@ export const metadata: Metadata = {
   },
 };
 
-function BlogNav() {
-  return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-      height: 64, background: "#0a0a0a", borderBottom: "1px solid #1a1a1a",
-      display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px",
-    }}>
-      <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-        <img src="/posthivemain.png" alt="Posthive" style={{ height: 28 }} />
-      </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-        <Link href="/blog" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Blog</Link>
-        <Link href="/pricing" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Pricing</Link>
-        <Link href="/docs" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Docs</Link>
-        <Link href="/register" style={{ fontSize: 14, fontWeight: 600, padding: "8px 16px", borderRadius: 8, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>Get started</Link>
-      </div>
-    </nav>
-  );
-}
-
 export default function StorritorAlternativePage() {
   return (
-    <div className="mkt" style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
+    <div className="min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <BlogNav />
+      <SiteNav />
 
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "120px 24px 100px" }}>
+      <div className="mx-auto max-w-170 px-6 pt-14 pb-24">
 
-        <Link href="/blog" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#555", textDecoration: "none", marginBottom: 40 }}>
-          ← All posts
-        </Link>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#5cb88a", background: "rgba(80,180,120,.1)", borderRadius: 6, padding: "3px 9px", letterSpacing: ".04em" }}>Comparison</span>
-          <span style={{ fontSize: 12, color: "#444" }}>July 17, 2026</span>
-          <span style={{ fontSize: 12, color: "#444" }}>· 5 min read</span>
-        </div>
-
-        <h1 style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15, margin: "0 0 24px", color: "#ededed" }}>
-          The Best Storrito Alternative in 2026 — More Platforms, Lower Price
-        </h1>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0", borderTop: "1px solid #1e1e1e", borderBottom: "1px solid #1e1e1e", marginBottom: 40 }}>
-          <img src="/founder.jpg" alt="Founder" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#ededed" }}>Guna</div>
-            <div style={{ fontSize: 12, color: "#555" }}>Founder, Posthive</div>
-          </div>
-        </div>
+        <BlogPostHeader
+          category="Comparison"
+          date="July 17, 2026"
+          readTime="5 min read"
+          title="The Best Storrito Alternative in 2026 — More Platforms, Lower Price"
+        />
 
         <BlogCtaBanner />
 
-        <div style={{ fontSize: 16, lineHeight: 1.85, color: "#888" }}>
+        <div className="article-body">
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Storrito built its niche around Instagram Stories and Reels scheduling from desktop — useful when Instagram made that unnecessarily hard. But if you post to more than just Instagram, or you want a tool that costs less and gives you full control over your data, Storrito starts to feel limiting.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Here are the best Storrito alternatives in 2026, what each is good at, and when to pick which.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             What is Storrito and why do people look for alternatives?
           </h2>
 
-          <p style={{ marginBottom: 20 }}>Storrito (sometimes misspelled as <em>Storitto</em>) is an Instagram-focused scheduler. It does a few things well:</p>
+          <p>Storrito (sometimes misspelled as <em>Storitto</em>) is an Instagram-focused scheduler. It does a few things well:</p>
 
-          <ul style={{ paddingLeft: 20, marginBottom: 24 }}>
+          <ul>
             {["Desktop editor for Instagram Stories", "Auto-publish Reels and feed posts", "Story templates and basic design tools"].map((item) => (
-              <li key={item} style={{ fontSize: 15, color: "#777", lineHeight: 1.85, marginBottom: 4 }}>{item}</li>
+              <li key={item}>{item}</li>
             ))}
           </ul>
 
-          <p style={{ marginBottom: 24 }}>The limitations that push people to look for alternatives:</p>
+          <p>The limitations that push people to look for alternatives:</p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {[
               { issue: "Instagram-only", detail: "No support for LinkedIn, Bluesky, Mastodon, Threads, or any other platform. If you post anywhere else, you need a separate tool." },
               { issue: "Per-slot pricing", detail: "Storrito charges per Story slot rather than a flat monthly rate. At high volumes — more than one Story per day — this adds up fast." },
               { issue: "No open source option", detail: "Proprietary SaaS — your credentials and content history live on their servers with no self-host option." },
               { issue: "First comment gated", detail: "First comment automation is only available on higher-tier plans, not the entry plan." },
             ].map((row) => (
-              <div key={row.issue} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "14px 18px", display: "flex", gap: 14 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#e86b6b", flexShrink: 0, marginTop: 7 }} />
+              <div key={row.issue} className="card flex gap-3 p-5">
+                <div className="mt-1.5 size-2 shrink-0 rounded-full bg-red-500" />
                 <div>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#ededed" }}>{row.issue} — </span>
-                  <span style={{ fontSize: 14, color: "#666" }}>{row.detail}</span>
+                  <span className="type-body-sb-s text-fg">{row.issue} — </span>
+                  <span className="type-body-r-s text-muted">{row.detail}</span>
                 </div>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             How much does Storrito cost?
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
-            Storrito prices by Story slot rather than a flat monthly fee. The entry plan is around <strong style={{ color: "#ededed" }}>€9/month</strong> for 30 Story slots — roughly one Story per day. If you publish more than that, you move to higher tiers quickly.
+          <p>
+            Storrito prices by Story slot rather than a flat monthly fee. The entry plan is around <strong>€9/month</strong> for 30 Story slots — roughly one Story per day. If you publish more than that, you move to higher tiers quickly.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
-            For comparison, Posthive starts at <strong style={{ color: "#ededed" }}>$9/month</strong> with a flat limit of 400 posts across all 14 supported platforms. No per-slot pricing, no platform add-ons.
+          <p>
+            For comparison, Posthive starts at <strong>$9/month</strong> with a flat limit of 400 posts across all 14 supported platforms. No per-slot pricing, no platform add-ons.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Storrito vs Posthive: head-to-head
           </h2>
 
-          <div style={{ overflowX: "auto", marginBottom: 32 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <div className="mb-8 overflow-x-auto">
+            <table>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Feature</th>
-                  <th style={{ textAlign: "center", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Storrito</th>
-                  <th style={{ textAlign: "center", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#9ba2ee", fontWeight: 700, fontSize: 12 }}>Posthive</th>
+                  <th>Feature</th>
+                  <th className="text-center">Storrito</th>
+                  <th className="text-center text-brand-800">Posthive</th>
                 </tr>
               </thead>
               <tbody>
@@ -221,21 +189,21 @@ export default function StorritorAlternativePage() {
                   ["Pricing model", "Per Story slot", "Flat monthly"],
                   ["Starting price", "~€9/mo (30 slots)", "$9/mo (400 posts)"],
                 ].map(([feature, storrito, posthive]) => (
-                  <tr key={feature as string} style={{ borderBottom: "1px solid #111" }}>
-                    <td style={{ padding: "10px 14px", color: "#aaa", fontSize: 14 }}>{feature as string}</td>
-                    <td style={{ textAlign: "center", padding: "10px 14px", color: storrito === "✕" ? "#3a3a3a" : "#888", fontSize: 13 }}>{storrito as string}</td>
-                    <td style={{ textAlign: "center", padding: "10px 14px", color: posthive === "✕" ? "#3a3a3a" : "#9ba2ee", fontSize: 13 }}>{posthive as string}</td>
+                  <tr key={feature as string}>
+                    <td className="text-fg">{feature as string}</td>
+                    <td className={cn("text-center", storrito === "✕" ? "text-neutral-400" : storrito === "✓" ? "text-green-700" : "text-muted")}>{storrito as string}</td>
+                    <td className={cn("text-center", posthive === "✕" ? "text-neutral-400" : posthive === "✓" ? "text-green-700" : "text-brand-800")}>{posthive as string}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Other Storrito alternatives worth considering
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-4">
             {[
               {
                 name: "Later",
@@ -268,34 +236,34 @@ export default function StorritorAlternativePage() {
                 best: "Solo creators on a zero budget",
               },
             ].map((tool) => (
-              <div key={tool.name} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "18px 20px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: "#ededed" }}>{tool.name}</span>
-                  <span style={{ fontSize: 11, color: "#888", background: "#1a1a1a", borderRadius: 6, padding: "2px 8px" }}>{tool.tag}</span>
+              <div key={tool.name} className="card p-5">
+                <div className="mb-1.5 flex flex-wrap items-center gap-2.5">
+                  <span className="type-body-sb-m text-fg">{tool.name}</span>
+                  <span className="rounded-md bg-neutral-100 px-2 py-0.5 type-body-r-xs text-neutral-700">{tool.tag}</span>
                 </div>
-                <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: "0 0 8px" }}>{tool.desc}</p>
-                <p style={{ fontSize: 12, color: "#444", margin: 0 }}>Best for: <span style={{ color: "#555" }}>{tool.best}</span></p>
+                <p className="mb-2 type-body-r-s text-muted">{tool.desc}</p>
+                <p className="type-body-r-xs text-muted">Best for: <span className="text-fg">{tool.best}</span></p>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             When Storrito still makes sense
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             If Instagram is literally your only platform and you want the most polished Stories editing experience on desktop, Storrito is purpose-built for that. It is not a bad tool — it is a narrow tool. The moment you start posting to LinkedIn, Bluesky, or Threads alongside Instagram, a multi-platform scheduler like Posthive will save you more time and cost less per month.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Bottom line
           </h2>
 
-          <p style={{ marginBottom: 16 }}>
+          <p>
             Here is the one-line decision guide:
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-2">
             {[
               { if: "You only post to Instagram and want the best Stories editor", pick: "Storrito or Planoly" },
               { if: "You post to Instagram + LinkedIn + Bluesky/Threads/Mastodon", pick: "Posthive" },
@@ -304,51 +272,53 @@ export default function StorritorAlternativePage() {
               { if: "You want AI captions built in", pick: "Publer" },
               { if: "You are a developer who wants to self-host for free", pick: "Posthive (open source)" },
             ].map((row) => (
-              <div key={row.if} style={{ display: "flex", gap: 12, padding: "12px 16px", background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 8 }}>
-                <span style={{ fontSize: 13, color: "#555", flexShrink: 0 }}>If</span>
-                <span style={{ fontSize: 13, color: "#777", flex: 1 }}>{row.if}</span>
-                <span style={{ fontSize: 13, color: "#9ba2ee", flexShrink: 0, fontWeight: 600 }}>→ {row.pick}</span>
+              <div key={row.if} className="card flex flex-col gap-1 px-4 py-3 type-body-r-s sm:flex-row sm:gap-3">
+                <div className="flex flex-1 gap-3 text-muted">
+                  <span className="shrink-0">If</span>
+                  <span className="flex-1">{row.if}</span>
+                </div>
+                <span className="shrink-0 type-body-sb-s text-brand-800">→ {row.pick}</span>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Frequently asked questions
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {faqSchema.mainEntity.map((item) => (
-              <div key={item.name} style={{ borderBottom: "1px solid #1a1a1a", padding: "22px 0" }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>{item.name}</p>
-                <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{item.acceptedAnswer.text}</p>
+              <div key={item.name} className="card p-5">
+                <p className="mb-2 type-body-sb-m text-fg">{item.name}</p>
+                <p className="type-body-r-s text-muted">{item.acceptedAnswer.text}</p>
               </div>
             ))}
           </div>
 
-          <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px", textAlign: "center", marginTop: 48 }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>Try Posthive free for 14 days</p>
-            <p style={{ fontSize: 14, color: "#666", margin: "0 0 24px" }}>Instagram Stories, Reels, carousels — plus 13 other platforms. No credit card required.</p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href="/register" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>
+          <div className="card mt-12 p-8 text-center">
+            <p className="mb-2 type-head-sb-5 text-fg">Try Posthive free for 14 days</p>
+            <p className="mb-6 type-body-r-s text-muted">Instagram Stories, Reels, carousels — plus 13 other platforms. No credit card required.</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/register" className="btn-primary px-6 py-3">
                 Get started free
               </Link>
-              <Link href="/pricing" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
+              <Link href="/pricing" className="btn-secondary px-6 py-3">
                 View pricing
               </Link>
             </div>
           </div>
 
-          <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 48, paddingTop: 36 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 16 }}>Related reading</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="mt-12 border-t border-border pt-9">
+            <p className="section-label mb-4">Related reading</p>
+            <div className="flex flex-col gap-3">
               {[
                 { href: "/blog/how-to-schedule-instagram-reels", label: "How to schedule Instagram Reels in 2026" },
                 { href: "/blog/how-to-schedule-first-comment-instagram", label: "How to schedule a first comment on Instagram" },
                 { href: "/blog/hootsuite-alternative", label: "5 best Hootsuite alternatives in 2026" },
                 { href: "/platforms/instagram", label: "Instagram scheduler: Reels, Stories, carousels, and feed posts" },
               ].map(({ href, label }) => (
-                <Link key={href} href={href} style={{ fontSize: 14, color: "#5b63d3", textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#333" }}>→</span> {label}
+                <Link key={href} href={href} className="flex items-center gap-2 type-body-r-s text-brand-800 transition-colors hover:text-brand-900">
+                  <span className="text-neutral-400">→</span> {label}
                 </Link>
               ))}
             </div>
@@ -357,13 +327,13 @@ export default function StorritorAlternativePage() {
         </div>
       </div>
 
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "40px 24px", textAlign: "center" }}>
-        <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+      <footer className="border-t border-border px-6 py-10 text-center">
+        <div className="mb-4 flex flex-wrap justify-center gap-6">
           {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Pricing", "/pricing"], ["Blog", "/blog"]] as [string, string][]).map(([label, href]) => (
-            <Link key={label} href={href} style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>{label}</Link>
+            <Link key={label} href={href} className="type-body-r-s text-muted transition-colors hover:text-fg">{label}</Link>
           ))}
         </div>
-        <p style={{ fontSize: 12, color: "#444" }}>© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
+        <p className="type-body-r-xs text-muted">© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
       </footer>
     </div>
   );
