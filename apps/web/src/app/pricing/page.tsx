@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { NavBar } from "../../components/LandingNav";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../lib/api";
+import { cn } from "../../lib/cn";
 
 interface BillingStatus {
   plan: string;
@@ -167,41 +168,34 @@ export default function PricingPage() {
   }, [user]);
 
   return (
-    <div className="mkt" style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
+    <div className="min-h-screen bg-bg text-fg">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <NavBar user={!!user} ctaHref={ctaHref} navCtaLabel={navCtaLabel} />
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "120px 24px 100px" }}>
+      <div className="mx-auto max-w-6xl px-5 pt-30 pb-24 md:px-12">
 
         {/* Hero */}
-        <div style={{ textAlign: "center", marginBottom: 64 }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "rgba(91,99,211,.1)", border: "1px solid rgba(91,99,211,.25)",
-            borderRadius: 20, padding: "6px 16px", fontSize: 12, fontWeight: 700,
-            color: "#9ba2ee", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 24,
-          }}>
+        <div className="mb-16 text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-300 bg-brand-100 px-4 py-1.5 type-body-sb-xs uppercase tracking-wider text-brand-800">
             Pricing
           </div>
-          <h1 style={{ fontSize: 52, fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 16px", lineHeight: 1.1 }}>
+          <h1 className="mb-4 type-display-m-6 tracking-tight md:type-display-m-4">
             Simple, transparent pricing
           </h1>
-          <p style={{ fontSize: 18, color: "#666", margin: "0 0 32px", maxWidth: 520, marginLeft: "auto", marginRight: "auto" }}>
+          <p className="mx-auto mb-8 max-w-130 type-body-r-l text-muted">
             Start free. Upgrade when you&apos;re ready. No hidden fees, no per-seat nonsense.
           </p>
 
           {/* Currency toggle */}
-          <div style={{ display: "inline-flex", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, gap: 2 }}>
+          <div className="inline-flex gap-0.5 rounded-xl border border-border bg-surface p-1">
             {[{ label: "INR ₹", val: true }, { label: "USD $", val: false }].map(({ label, val }) => (
               <button
                 key={label}
                 onClick={() => setIsIndia(val)}
-                style={{
-                  padding: "7px 20px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  border: "none", transition: "all .15s",
-                  background: isIndia === val ? "#fff" : "transparent",
-                  color: isIndia === val ? "#0a0a0a" : "#666",
-                }}
+                className={cn(
+                  "cursor-pointer rounded-md px-5 py-2 type-body-sb-s transition-all duration-150",
+                  isIndia === val ? "bg-accent text-accent-fg" : "text-muted hover:text-fg",
+                )}
               >
                 {label}
               </button>
@@ -210,78 +204,58 @@ export default function PricingPage() {
         </div>
 
         {/* Plan cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 80 }}
-          className="pricing-grid">
+        <div className="mb-20 grid grid-cols-1 gap-5 md:grid-cols-3">
           {PLANS.map((plan) => {
             const isCurrent = billingStatus?.planStatus === "active" && billingStatus?.plan === plan.id;
             return (
             <div
               key={plan.id}
-              style={{
-                background: plan.popular ? "#0e0e1a" : "#111",
-                border: isCurrent ? "1px solid #4ade80" : `1px solid ${plan.popular ? "#3730a3" : "#2a2a2a"}`,
-                borderRadius: 16,
-                padding: "32px 28px",
-                position: "relative",
-                display: "flex",
-                flexDirection: "column",
-              }}
+              className={cn(
+                "card relative flex flex-col px-7 py-8",
+                isCurrent ? "border-brand-300 bg-brand-100" : plan.popular && "border-brand-300",
+              )}
             >
               {isCurrent ? (
-                <div style={{
-                  position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
-                  background: "#4ade80", color: "#0a0a0a", fontSize: 11, fontWeight: 700,
-                  padding: "4px 14px", borderRadius: 20, letterSpacing: ".06em", textTransform: "uppercase",
-                  whiteSpace: "nowrap",
-                }}>
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-border bg-bg px-3.5 py-1 type-body-sb-xs uppercase tracking-wider text-muted">
                   Current plan
                 </div>
               ) : plan.popular && (
-                <div style={{
-                  position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
-                  background: "#5b63d3", color: "#fff", fontSize: 11, fontWeight: 700,
-                  padding: "4px 14px", borderRadius: 20, letterSpacing: ".06em", textTransform: "uppercase",
-                  whiteSpace: "nowrap",
-                }}>
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-3.5 py-1 type-body-sb-xs uppercase tracking-wider text-accent-fg">
                   Most popular
                 </div>
               )}
 
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: "#ededed", marginBottom: 6 }}>{plan.name}</div>
-                <div style={{ fontSize: 13, color: "#666" }}>{plan.desc}</div>
+              <div className="mb-6">
+                <div className="mb-1.5 type-body-sb-l text-fg">{plan.name}</div>
+                <div className="type-body-r-s text-muted">{plan.desc}</div>
               </div>
 
-              <div style={{ marginBottom: 28 }}>
-                <span style={{ fontSize: 44, fontWeight: 800, color: "#ededed", letterSpacing: "-0.03em" }}>
+              <div className="mb-7">
+                <span className="type-head-sb-1 tracking-tight text-fg">
                   {isIndia ? plan.inr : plan.usd}
                 </span>
-                <span style={{ fontSize: 14, color: "#555", marginLeft: 6 }}>
+                <span className="ml-1.5 type-body-r-s text-muted">
                   /mo · {isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}
                 </span>
               </div>
 
               <Link
                 href={isCurrent ? "/billing" : user ? "/billing" : "/register"}
-                style={{
-                  display: "block", textAlign: "center", padding: "11px 0", borderRadius: 10,
-                  fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 28,
-                  background: isCurrent ? "#1a2e22" : plan.popular ? "#5b63d3" : "#fff",
-                  color: isCurrent ? "#4ade80" : plan.popular ? "#fff" : "#0a0a0a",
-                  border: isCurrent ? "1px solid #2d5a3d" : "none",
-                  transition: "opacity .15s",
-                }}
+                className={cn(
+                  "mb-7 w-full py-2.5",
+                  isCurrent ? "btn-secondary bg-bg text-muted" : "btn-primary",
+                )}
               >
                 {isCurrent ? "Current plan" : user ? "Manage plan" : "Get started"}
               </Link>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+              <div className="flex flex-1 flex-col gap-2.5">
                 {plan.features.map((f) => (
-                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 14, color: f.included ? "#4ade80" : "#333", flexShrink: 0 }}>
+                  <div key={f.text} className="flex items-center gap-2.5">
+                    <span className={cn("shrink-0 type-body-r-s", f.included ? "text-green-700" : "text-neutral-400")}>
                       {f.included ? "✓" : "—"}
                     </span>
-                    <span style={{ fontSize: 13.5, color: f.included ? "#b4b4b4" : "#444" }}>{f.text}</span>
+                    <span className={cn("type-body-r-s", f.included ? "text-fg" : "text-muted")}>{f.text}</span>
                   </div>
                 ))}
               </div>
@@ -291,51 +265,44 @@ export default function PricingPage() {
         </div>
 
         {/* Trial callout */}
-        <div style={{
-          background: "rgba(91,99,211,.06)", border: "1px solid rgba(91,99,211,.2)",
-          borderRadius: 14, padding: "24px 32px", textAlign: "center", marginBottom: 80,
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 20, flexWrap: "wrap",
-        }}>
+        <div className="mb-20 flex flex-wrap items-center justify-center gap-5 rounded-2xl border border-brand-300 bg-brand-100 px-6 py-6 text-center md:px-8">
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#ededed", marginBottom: 4 }}>Not sure yet?</div>
-            <div style={{ fontSize: 14, color: "#666" }}>Start with a 14-day free trial. 3 accounts, 30 posts.</div>
+            <div className="mb-1 type-body-sb-m text-fg">Not sure yet?</div>
+            <div className="type-body-r-s text-muted">Start with a 14-day free trial. 3 accounts, 30 posts.</div>
           </div>
-          <Link href="/register" style={{
-            background: "#fff", color: "#0a0a0a", padding: "10px 24px",
-            borderRadius: 9, fontSize: 14, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap",
-          }}>
+          <Link href="/register" className="btn-primary whitespace-nowrap px-6 py-2.5">
             Start free trial
           </Link>
         </div>
 
         {/* Comparison table */}
-        <div style={{ marginBottom: 80 }}>
-          <h2 style={{ fontSize: 28, fontWeight: 700, color: "#ededed", letterSpacing: "-0.02em", marginBottom: 32, textAlign: "center" }}>
+        <div className="mb-20">
+          <h2 className="mb-8 text-center type-head-sb-5 tracking-tight text-fg md:type-head-sb-4">
             Compare plans
           </h2>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", minWidth: 600, borderCollapse: "collapse", fontSize: 14 }}>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-150 border-collapse type-body-r-s">
               <thead>
-                <tr style={{ borderBottom: "1px solid #2a2a2a" }}>
-                  <th style={{ textAlign: "left", padding: "12px 16px", color: "#555", fontWeight: 600 }}>Feature</th>
+                <tr className="border-b border-border">
+                  <th className="px-4 py-3 text-left type-body-sb-s text-muted">Feature</th>
                   {["Trial", "Creator", "Pro", "Team"].map(h => (
-                    <th key={h} style={{
-                      textAlign: "center", padding: "12px 16px", color: h === "Pro" ? "#9ba2ee" : "#555",
-                      fontWeight: 700,
-                    }}>{h}</th>
+                    <th key={h} className={cn(
+                      "px-4 py-3 text-center type-body-sb-s",
+                      h === "Pro" ? "text-brand-800" : "text-muted",
+                    )}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {COMPARISON.map((row, i) => (
-                  <tr key={row.feature} style={{ borderBottom: "1px solid #1a1a1a", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,.01)" }}>
-                    <td style={{ padding: "11px 16px", color: "#888" }}>{row.feature}</td>
+                  <tr key={row.feature} className={cn("border-b border-border", i % 2 !== 0 && "bg-surface/50")}>
+                    <td className="px-4 py-2.5 text-muted">{row.feature}</td>
                     {[row.trial, row.creator, row.pro, row.team].map((val, j) => (
-                      <td key={j} style={{
-                        padding: "11px 16px", textAlign: "center",
-                        color: val === "✓" ? "#4ade80" : val === "—" ? "#333" : j === 2 ? "#c4c9ff" : "#aaa",
-                        fontWeight: val === "✓" || val === "—" ? 700 : 400,
-                      }}>
+                      <td key={j} className={cn(
+                        "px-4 py-2.5 text-center",
+                        val === "✓" || val === "—" ? "type-body-sb-s" : "type-body-r-s",
+                        val === "✓" ? "text-green-700" : val === "—" ? "text-neutral-400" : j === 2 ? "text-brand-800" : "text-muted",
+                      )}>
                         {val}
                       </td>
                     ))}
@@ -347,26 +314,25 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ */}
-        <div style={{ maxWidth: 680, margin: "0 auto 80px" }}>
-          <h2 style={{ fontSize: 28, fontWeight: 700, color: "#ededed", letterSpacing: "-0.02em", marginBottom: 32, textAlign: "center" }}>
+        <div className="mx-auto mb-20 max-w-170">
+          <h2 className="mb-8 text-center type-head-sb-5 tracking-tight text-fg md:type-head-sb-4">
             Frequently asked questions
           </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div className="flex flex-col gap-0.5">
             {FAQ.map((item, i) => (
-              <div key={i} style={{ border: "1px solid #1e1e1e", borderRadius: 10, overflow: "hidden" }}>
+              <div key={i} className="overflow-hidden rounded-xl border border-border">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  style={{
-                    width: "100%", textAlign: "left", background: "none", border: "none",
-                    padding: "16px 20px", cursor: "pointer", display: "flex", justifyContent: "space-between",
-                    alignItems: "center", gap: 12,
-                  }}
+                  className="flex w-full cursor-pointer items-center justify-between gap-3 px-5 py-4 text-left"
                 >
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#ededed" }}>{item.q}</span>
-                  <span style={{ color: "#555", fontSize: 16, flexShrink: 0, transform: openFaq === i ? "rotate(45deg)" : "none", transition: "transform .15s" }}>+</span>
+                  <span className="type-body-sb-s text-fg">{item.q}</span>
+                  <span className={cn(
+                    "shrink-0 type-body-r-m text-muted transition-transform duration-150",
+                    openFaq === i && "rotate-45",
+                  )}>+</span>
                 </button>
                 {openFaq === i && (
-                  <div style={{ padding: "0 20px 16px", fontSize: 14, color: "#666", lineHeight: 1.7 }}>
+                  <div className="px-5 pb-4 type-body-r-s text-muted">
                     {item.a}
                   </div>
                 )}
@@ -376,33 +342,20 @@ export default function PricingPage() {
         </div>
 
         {/* Bottom CTA */}
-        <div style={{ textAlign: "center" }}>
-          <p style={{ fontSize: 14, color: "#444", marginBottom: 16 }}>
+        <div className="text-center">
+          <p className="mb-4 type-body-r-s text-muted">
             Open-source · Self-hostable · AGPL-3.0
           </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/register" style={{
-              background: "#fff", color: "#0a0a0a", padding: "12px 28px",
-              borderRadius: 10, fontSize: 15, fontWeight: 700, textDecoration: "none",
-            }}>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link href="/register" className="btn-primary px-7 py-3 type-body-sb-m">
               Start free trial
             </Link>
-            <Link href="/docs" style={{
-              background: "transparent", color: "#888", padding: "12px 28px",
-              borderRadius: 10, fontSize: 15, fontWeight: 600, textDecoration: "none",
-              border: "1px solid #2a2a2a",
-            }}>
+            <Link href="/docs" className="btn-secondary px-7 py-3 type-body-sb-m">
               Read the docs
             </Link>
           </div>
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .pricing-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </div>
   );
 }

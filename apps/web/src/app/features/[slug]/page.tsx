@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MarketingNavBar } from "../../../components/MarketingNavBar";
 import { LandingFooter } from "../../../components/LandingFooter";
+import { cn } from "../../../lib/cn";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -29,8 +30,8 @@ const FEATURES: Record<string, FeatureData> = {
   "multi-platform-posting": {
     title: "Multi-platform posting",
     badge: "Core feature",
-    badgeColor: "#9ba2ee",
-    badgeBg: "rgba(91,99,211,.15)",
+    badgeColor: "var(--color-brand-800)",
+    badgeBg: "var(--color-brand-100)",
     headline: "Write once. Post everywhere.",
     subheadline:
       "One composer, eleven platforms. Draft your content once and send it to Bluesky, Threads, Instagram, LinkedIn, Mastodon, YouTube, Facebook, Pinterest, Telegram, Nostr, and X in a single click.",
@@ -95,8 +96,8 @@ const FEATURES: Record<string, FeatureData> = {
   "instagram-reels-scheduler": {
     title: "Reels & Stories",
     badge: "Instagram",
-    badgeColor: "#e86b6b",
-    badgeBg: "rgba(225,100,100,.15)",
+    badgeColor: "var(--color-red-600)",
+    badgeBg: "var(--color-red-50)",
     headline:
       "Full Instagram support. Reels, Stories, feed posts all scheduled.",
     subheadline:
@@ -163,8 +164,8 @@ const FEATURES: Record<string, FeatureData> = {
   "drag-to-reschedule": {
     title: "Drag-to-reschedule",
     badge: "Calendar",
-    badgeColor: "#5cb88a",
-    badgeBg: "rgba(80,180,120,.15)",
+    badgeColor: "var(--color-green-700)",
+    badgeBg: "var(--color-green-50)",
     headline: "Your content calendar, actually visual.",
     subheadline:
       "See all your scheduled posts on a calendar. Drag to move them. Click to edit. No spreadsheets, no mental math. Just a clear picture of what's going live and when.",
@@ -230,8 +231,8 @@ const FEATURES: Record<string, FeatureData> = {
   "first-comment": {
     title: "First comment",
     badge: "Engagement",
-    badgeColor: "#d4a83c",
-    badgeBg: "rgba(220,160,60,.15)",
+    badgeColor: "var(--color-brand-800)",
+    badgeBg: "var(--color-brand-100)",
     headline: "The first comment, posted automatically.",
     subheadline:
       "Drop your hashtags, a key link, or a follow-up thought in the first comment - posted automatically the moment your main content goes live.",
@@ -297,8 +298,8 @@ const FEATURES: Record<string, FeatureData> = {
   "per-platform-overrides": {
     title: "Per-platform overrides",
     badge: "Pro & Team",
-    badgeColor: "#a07ee0",
-    badgeBg: "rgba(140,100,220,.15)",
+    badgeColor: "#6d4bc3",
+    badgeBg: "rgba(109,75,195,.1)",
     headline: "Different platform, different message.",
     subheadline:
       "LinkedIn and Bluesky have different audiences, different character limits, and different norms. Per-platform overrides let you tailor your message for each network without creating separate posts.",
@@ -364,8 +365,8 @@ const FEATURES: Record<string, FeatureData> = {
   "bulk-csv-scheduling": {
     title: "Bulk CSV scheduling",
     badge: "Power feature",
-    badgeColor: "#5cb88a",
-    badgeBg: "rgba(80,180,120,.15)",
+    badgeColor: "var(--color-green-700)",
+    badgeBg: "var(--color-green-50)",
     headline: "Schedule hundreds of posts from a spreadsheet.",
     subheadline:
       "Upload a CSV file and Posthive schedules every row automatically across multiple platforms with images, first comments, and per-row platform exclusions.",
@@ -431,8 +432,8 @@ const FEATURES: Record<string, FeatureData> = {
   "ai-caption-assist": {
     title: "AI caption assist",
     badge: "AI-powered",
-    badgeColor: "#a78bfa",
-    badgeBg: "rgba(167,139,250,.15)",
+    badgeColor: "var(--color-brand-800)",
+    badgeBg: "var(--color-brand-100)",
     headline: "Better captions. One click.",
     subheadline:
       "Seven AI actions built right into the composer and edit dialog. Fix grammar, tighten the copy, expand, rephrase, restructure, simplify, or polish all powered by Claude without leaving the compose window.",
@@ -497,8 +498,8 @@ const FEATURES: Record<string, FeatureData> = {
   "self-hostable": {
     title: "Self-hostable",
     badge: "Open source",
-    badgeColor: "#3db8c8",
-    badgeBg: "rgba(60,180,200,.15)",
+    badgeColor: "#0e7490",
+    badgeBg: "rgba(14,116,144,.1)",
     headline: "Run Posthive on your own infrastructure.",
     subheadline:
       "Posthive is open source under AGPL-3.0. Self-host it on Railway, Fly.io, Render, or your own VPS - full control, no vendor lock-in, no per-seat pricing.",
@@ -585,7 +586,7 @@ function PlatformFavicon({ name, size = 14 }: { name: string; size?: number }) {
       alt={name}
       width={size}
       height={size}
-      style={{ borderRadius: 3, display: "block" }}
+      className="block rounded-sm"
     />
   );
 }
@@ -601,89 +602,42 @@ function MultiPlatformMockup() {
     { name: "Facebook", on: false },
   ];
   return (
-    <div
-      style={{
-        background: "#111",
-        border: "1px solid #1e1e1e",
-        borderRadius: 20,
-        padding: 28,
-        width: "100%",
-        maxWidth: 480,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          color: "#444",
-          letterSpacing: ".1em",
-          textTransform: "uppercase",
-          marginBottom: 14,
-        }}
-      >
+    <div className="card w-full max-w-120 rounded-3xl p-7">
+      <div className="mb-3.5 type-body-sb-xxs uppercase tracking-widest text-muted">
         Post to
       </div>
-      <div
-        style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 22 }}
-      >
+      <div className="mb-5.5 flex flex-wrap gap-2">
         {platforms.map((p) => (
           <div
             key={p.name}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "5px 11px",
-              borderRadius: 20,
-              fontSize: 12,
-              fontWeight: 600,
-              background: p.on ? "rgba(91,99,211,.15)" : "#0f0f0f",
-              border: `1px solid ${p.on ? "#5b63d388" : "#1e1e1e"}`,
-              color: p.on ? "#9ba2ee" : "#3a3a3a",
-              opacity: p.on ? 1 : 0.35,
-            }}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full border px-2.5 py-1 type-body-sb-xs",
+              p.on
+                ? "border-brand-300 bg-brand-100 text-brand-800"
+                : "border-border bg-bg text-muted opacity-35",
+            )}
           >
             <PlatformFavicon name={p.name} size={13} />
             {p.name}
           </div>
         ))}
       </div>
-      <div
-        style={{
-          background: "#0d0d0d",
-          borderRadius: 12,
-          padding: "14px 16px",
-          marginBottom: 18,
-        }}
-      >
-        <div style={{ fontSize: 13, color: "#333", marginBottom: 10 }}>
+      <div className="mb-4.5 rounded-xl bg-bg px-4 py-3.5">
+        <div className="mb-2.5 type-body-r-s text-neutral-400">
           What&apos;s on your mind?
         </div>
-        <div style={{ fontSize: 13.5, color: "#bbb", lineHeight: 1.65 }}>
+        <div className="type-body-r-s text-fg">
           Just shipped v2.0 🚀 New drag-to-reschedule calendar is live. Move
           posts around with one drag - no more manual edits.{" "}
-          <span style={{ color: "#5b63d3" }}>posthive.co</span>
+          <span className="text-brand-800">posthive.co</span>
         </div>
-        <div
-          style={{
-            marginTop: 14,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <span style={{ fontSize: 11, color: "#333" }}>142 / 300</span>
-          <div style={{ display: "flex", gap: 6 }}>
+        <div className="mt-3.5 flex items-center justify-between">
+          <span className="type-body-r-xs text-muted">142 / 300</span>
+          <div className="flex gap-1.5">
             {["BSky", "TH", "LI", "MA"].map((t) => (
               <span
                 key={t}
-                style={{
-                  fontSize: 10,
-                  background: "rgba(91,99,211,.1)",
-                  color: "#7b83dd",
-                  borderRadius: 4,
-                  padding: "2px 6px",
-                }}
+                className="rounded-sm bg-brand-100 px-1.5 py-0.5 type-body-r-xxs text-brand-800"
               >
                 {t}
               </span>
@@ -691,34 +645,11 @@ function MultiPlatformMockup() {
           </div>
         </div>
       </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            color: "#444",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <span style={{ fontSize: 14 }}>📅</span> Tomorrow, 9:00 AM
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 type-body-r-xs text-muted">
+          <span className="type-body-r-s">📅</span> Tomorrow, 9:00 AM
         </div>
-        <div
-          style={{
-            background: "#5b63d3",
-            color: "#fff",
-            padding: "8px 18px",
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 700,
-          }}
-        >
+        <div className="btn-primary">
           Schedule
         </div>
       </div>
@@ -728,35 +659,12 @@ function MultiPlatformMockup() {
 
 function ReelsMockup() {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 16,
-        maxWidth: 460,
-      }}
-    >
-      <div
-        style={{
-          background: "#111",
-          border: "1px solid #1e1e1e",
-          borderRadius: 20,
-          padding: 24,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: "#444",
-            letterSpacing: ".1em",
-            textTransform: "uppercase",
-            marginBottom: 14,
-          }}
-        >
+    <div className="flex max-w-115 flex-col gap-4">
+      <div className="card rounded-3xl p-6">
+        <div className="mb-3.5 type-body-sb-xxs uppercase tracking-widest text-muted">
           Instagram content type
         </div>
-        <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+        <div className="mb-5 flex gap-2">
           {[
             {
               label: "Feed Post",
@@ -835,62 +743,26 @@ function ReelsMockup() {
           ].map((t) => (
             <div
               key={t.label}
-              style={{
-                flex: 1,
-                textAlign: "center",
-                padding: "10px 6px",
-                borderRadius: 10,
-                cursor: "pointer",
-                background: t.active ? "rgba(232,107,107,.12)" : "#0d0d0d",
-                border: `1px solid ${t.active ? "#e86b6b66" : "#1e1e1e"}`,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 6,
-              }}
+              className={cn(
+                "flex flex-1 cursor-pointer flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-center",
+                t.active
+                  ? "border-red-200 bg-red-50 text-red-600"
+                  : "border-border bg-bg text-muted",
+              )}
             >
-              <span
-                style={{
-                  color: t.active ? "#e86b6b" : "#444",
-                  display: "flex",
-                }}
-              >
-                {t.icon}
-              </span>
-              <div
-                style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: t.active ? "#e86b6b" : "#444",
-                }}
-              >
-                {t.label}
-              </div>
+              <span className="flex">{t.icon}</span>
+              <div className="type-body-sb-xxs">{t.label}</div>
             </div>
           ))}
         </div>
-        <div
-          style={{
-            background: "#0d0d0d",
-            border: "1px dashed #2a2a2a",
-            borderRadius: 10,
-            padding: "20px 16px",
-            textAlign: "center",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: 8,
-            }}
-          >
+        <div className="dropzone bg-bg px-4 py-5 text-center">
+          <div className="mb-2 flex justify-center text-muted">
             <svg
               width="24"
               height="24"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#444"
+              stroke="currentColor"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -900,43 +772,22 @@ function ReelsMockup() {
               <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
           </div>
-          <div style={{ fontSize: 12, color: "#555" }}>
+          <div className="type-body-r-xs text-muted">
             Drop your Reel video here
           </div>
-          <div style={{ fontSize: 10, color: "#3a3a3a", marginTop: 4 }}>
+          <div className="mt-1 type-body-r-xxs text-muted">
             MP4 · up to 15 min · 9:16 recommended
           </div>
         </div>
       </div>
-      <div
-        style={{
-          background: "#111",
-          border: "1px solid #1e1e1e",
-          borderRadius: 16,
-          padding: "16px 20px",
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-        }}
-      >
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg,#e86b6b,#f5a623)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
+      <div className="card flex items-center gap-3.5 px-5 py-4">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-red-500 to-brand-600 text-white">
           <svg
             width="16"
             height="16"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#fff"
+            stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -946,23 +797,14 @@ function ReelsMockup() {
           </svg>
         </div>
         <div>
-          <div style={{ fontSize: 12, color: "#ededed", fontWeight: 600 }}>
+          <div className="type-body-sb-xs text-fg">
             Schedules at peak engagement time
           </div>
-          <div style={{ fontSize: 11, color: "#555" }}>
+          <div className="type-body-r-xs text-muted">
             Tuesday · 7:00 PM · Your timezone
           </div>
         </div>
-        <div
-          style={{
-            marginLeft: "auto",
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            background: "#4ade80",
-            flexShrink: 0,
-          }}
-        />
+        <div className="ml-auto size-2.5 shrink-0 rounded-full bg-green-500" />
       </div>
     </div>
   );
@@ -970,78 +812,47 @@ function ReelsMockup() {
 
 function CalendarMockup() {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  // `color` feeds the --c CSS var on each event pill
   const posts: Record<
     number,
     { label: string; color: string; platform: string }[]
   > = {
-    0: [{ label: "Product update 🚀", color: "#5b63d3", platform: "BSky" }],
-    1: [{ label: "Behind the scenes", color: "#e86b6b", platform: "IG" }],
+    0: [{ label: "Product update 🚀", color: "var(--color-brand-800)", platform: "BSky" }],
+    1: [{ label: "Behind the scenes", color: "var(--color-red-600)", platform: "IG" }],
     2: [],
     3: [
-      { label: "Weekly tip ✨", color: "#5b63d3", platform: "LI" },
-      { label: "Thread drop", color: "#888", platform: "TH" },
+      { label: "Weekly tip ✨", color: "var(--color-brand-800)", platform: "LI" },
+      { label: "Thread drop", color: "var(--color-neutral-600)", platform: "TH" },
     ],
-    4: [{ label: "Friday recap", color: "#5cb88a", platform: "MA" }],
+    4: [{ label: "Friday recap", color: "var(--color-green-700)", platform: "MA" }],
     5: [],
     6: [],
   };
   return (
-    <div
-      style={{
-        background: "#111",
-        border: "1px solid #1e1e1e",
-        borderRadius: 20,
-        padding: 24,
-        maxWidth: 480,
-        width: "100%",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 18,
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#ededed" }}>
+    <div className="card w-full max-w-120 rounded-3xl p-6">
+      <div className="mb-4.5 flex items-center justify-between">
+        <div className="type-body-sb-s text-fg">
           July 2026
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="flex gap-2">
           {["Month", "Week", "Day"].map((v, i) => (
             <span
               key={v}
-              style={{
-                fontSize: 11,
-                padding: "4px 10px",
-                borderRadius: 6,
-                background: i === 1 ? "#5b63d3" : "#1a1a1a",
-                color: i === 1 ? "#fff" : "#555",
-                fontWeight: 600,
-              }}
+              className={cn(
+                "rounded-md px-2.5 py-1 type-body-sb-xs",
+                i === 1 ? "bg-accent text-accent-fg" : "bg-bg text-muted",
+              )}
             >
               {v}
             </span>
           ))}
         </div>
       </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
-          gap: 4,
-        }}
-      >
+      <div className="grid grid-cols-7 gap-1">
         {days.map((d) => (
           <div
             key={d}
-            style={{
-              fontSize: 10,
-              color: "#444",
-              textAlign: "center",
-              paddingBottom: 8,
-              fontWeight: 700,
-            }}
+            className="pb-2 text-center type-body-sb-xxs text-muted"
           >
             {d}
           </div>
@@ -1049,49 +860,21 @@ function CalendarMockup() {
         {days.map((_, i) => (
           <div
             key={i}
-            style={{
-              minHeight: 72,
-              background: "#0d0d0d",
-              borderRadius: 8,
-              padding: 5,
-              border: "1px solid #1a1a1a",
-            }}
+            className="min-h-18 rounded-lg border border-border bg-bg p-1"
           >
-            <div style={{ fontSize: 10, color: "#444", marginBottom: 4 }}>
+            <div className="mb-1 type-body-r-xxs text-muted">
               {i + 7}
             </div>
             {posts[i]?.map((p) => (
               <div
                 key={p.label}
-                style={{
-                  background: p.color + "22",
-                  border: `1px solid ${p.color}44`,
-                  borderRadius: 4,
-                  padding: "3px 5px",
-                  marginBottom: 3,
-                }}
+                className="mb-0.5 rounded-sm border border-(--c)/25 bg-(--c)/10 px-1 py-0.5"
+                style={{ "--c": p.color } as React.CSSProperties}
               >
-                <div
-                  style={{
-                    fontSize: 9,
-                    color: p.color,
-                    fontWeight: 700,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
+                <div className="truncate type-body-sb-xxs text-(--c)">
                   {p.platform}
                 </div>
-                <div
-                  style={{
-                    fontSize: 9,
-                    color: "#888",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
+                <div className="truncate type-body-r-xxs text-muted">
                   {p.label}
                 </div>
               </div>
@@ -1099,18 +882,7 @@ function CalendarMockup() {
           </div>
         ))}
       </div>
-      <div
-        style={{
-          marginTop: 12,
-          padding: "10px 14px",
-          background: "#0d0d0d",
-          borderRadius: 10,
-          border: "1px dashed #2a2a2a",
-          fontSize: 11,
-          color: "#555",
-          textAlign: "center",
-        }}
-      >
+      <div className="mt-3 rounded-xl border border-dashed border-border bg-bg px-3.5 py-2.5 text-center type-body-r-xs text-muted">
         ↕ Drag any post to reschedule
       </div>
     </div>
@@ -1119,122 +891,61 @@ function CalendarMockup() {
 
 function FirstCommentMockup() {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 0,
-        maxWidth: 460,
-        width: "100%",
-      }}
-    >
+    <div className="flex w-full max-w-115 flex-col">
       {/* Main post */}
-      <div
-        style={{
-          background: "#111",
-          border: "1px solid #1e1e1e",
-          borderRadius: "16px 16px 4px 4px",
-          padding: 22,
-        }}
-      >
-        <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg,#5b63d3,#9ba2ee)",
-              flexShrink: 0,
-            }}
-          />
+      <div className="rounded-t-2xl rounded-b-sm border border-border bg-surface p-5.5">
+        <div className="mb-3.5 flex gap-3">
+          <div className="size-9 shrink-0 rounded-full bg-linear-to-br from-brand-400 to-brand-700" />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#ededed" }}>
+            <div className="type-body-sb-s text-fg">
               @yourhandle
             </div>
-            <div style={{ fontSize: 11, color: "#444" }}>
+            <div className="type-body-r-xs text-muted">
               Just now · via Posthive
             </div>
           </div>
-          <div
-            style={{
-              marginLeft: "auto",
-              fontSize: 10,
-              background: "rgba(74,222,128,.1)",
-              color: "#4ade80",
-              border: "1px solid #4ade8044",
-              borderRadius: 6,
-              padding: "3px 8px",
-              alignSelf: "flex-start",
-            }}
-          >
+          <div className="ml-auto self-start rounded-md border border-green-200 bg-green-50 px-2 py-0.5 type-body-r-xxs text-green-700">
             ✓ Published
           </div>
         </div>
-        <div style={{ fontSize: 14, color: "#ccc", lineHeight: 1.65 }}>
+        <div className="type-body-r-s text-fg">
           Excited to share what we&apos;ve been building 🧵 A thread on why we
           chose open-source for our social scheduling tool and what it means for
           you.
         </div>
-        <div style={{ marginTop: 14, display: "flex", gap: 16 }}>
+        <div className="mt-3.5 flex gap-4">
           {["❤ 24", "💬 7", "🔁 11"].map((a) => (
-            <span key={a} style={{ fontSize: 12, color: "#555" }}>
+            <span key={a} className="type-body-r-xs text-muted">
               {a}
             </span>
           ))}
         </div>
       </div>
       {/* Connector */}
-      <div style={{ display: "flex", paddingLeft: 30 }}>
-        <div style={{ width: 2, height: 16, background: "#1e1e1e" }} />
+      <div className="flex pl-7.5">
+        <div className="h-4 w-0.5 bg-border" />
       </div>
       {/* First comment */}
-      <div
-        style={{
-          background: "#0e0e0e",
-          border: "1px solid #1e1e1e",
-          borderRadius: "4px 4px 16px 16px",
-          padding: 22,
-          borderTop: "none",
-        }}
-      >
-        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-          <div
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg,#5b63d3,#9ba2ee)",
-              flexShrink: 0,
-            }}
-          />
+      <div className="rounded-t-sm rounded-b-2xl border border-t-0 border-border bg-bg p-5.5">
+        <div className="mb-3 flex gap-3">
+          <div className="size-7 shrink-0 rounded-full bg-linear-to-br from-brand-400 to-brand-700" />
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#ededed" }}>
+            <div className="type-body-sb-xs text-fg">
               @yourhandle
             </div>
-            <div style={{ fontSize: 10, color: "#333" }}>
+            <div className="type-body-r-xxs text-muted">
               Auto-comment · 3s after publish
             </div>
           </div>
-          <div
-            style={{
-              marginLeft: "auto",
-              fontSize: 10,
-              background: "rgba(91,99,211,.15)",
-              color: "#9ba2ee",
-              border: "1px solid #5b63d344",
-              borderRadius: 6,
-              padding: "3px 8px",
-              alignSelf: "flex-start",
-            }}
-          >
+          <div className="ml-auto self-start rounded-md border border-brand-300 bg-brand-100 px-2 py-0.5 type-body-r-xxs text-brand-800">
             🤖 First comment
           </div>
         </div>
-        <div style={{ fontSize: 13, color: "#888", lineHeight: 1.65 }}>
+        <div className="type-body-r-s text-muted">
           👇 Links in the thread below.{" "}
-          <span style={{ color: "#5b63d3" }}>posthive.co</span>
+          <span className="text-brand-800">posthive.co</span>
           {"\n"}
-          <span style={{ color: "#555" }}>
+          <span className="text-neutral-500">
             #OpenSource #BuildInPublic #SocialMedia
           </span>
         </div>
@@ -1259,84 +970,36 @@ function OverridesMockup() {
     },
     {
       name: "Threads",
-      color: "#ededed",
+      color: "#000000",
       text: "ok v2.0 dropped. you can now drag posts around on a calendar. yes, finally. also bulk CSV if you're that kind of person 🧵",
       chars: "122 / 500",
     },
   ];
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-        maxWidth: 500,
-        width: "100%",
-      }}
-    >
-      <div
-        style={{
-          background: "#111",
-          border: "1px solid #1e1e1e",
-          borderRadius: 14,
-          padding: "14px 18px",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: "#444",
-            letterSpacing: ".1em",
-            textTransform: "uppercase",
-            marginBottom: 10,
-          }}
-        >
+    <div className="flex w-full max-w-125 flex-col gap-3">
+      <div className="card px-4.5 py-3.5">
+        <div className="mb-2.5 type-body-sb-xxs uppercase tracking-widest text-muted">
           Base post (fallback)
         </div>
-        <div style={{ fontSize: 13, color: "#666", lineHeight: 1.6 }}>
+        <div className="type-body-r-s text-muted">
           v2.0 is live. Drag-to-reschedule and bulk CSV scheduling. posthive.co
         </div>
       </div>
       {platforms.map((p) => (
-        <div
-          key={p.name}
-          style={{
-            background: "#111",
-            border: "1px solid #1e1e1e",
-            borderRadius: 14,
-            padding: "14px 18px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 10,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div key={p.name} className="card px-4.5 py-3.5">
+          <div className="mb-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
               <PlatformFavicon name={p.name} size={14} />
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#ededed" }}>
+              <span className="type-body-sb-xs text-fg">
                 {p.name}
               </span>
-              <span
-                style={{
-                  fontSize: 10,
-                  color: "#4ade80",
-                  background: "rgba(74,222,128,.08)",
-                  border: "1px solid #4ade8033",
-                  borderRadius: 5,
-                  padding: "1px 6px",
-                }}
-              >
+              <span className="rounded-md border border-green-200 bg-green-50 px-1.5 py-px type-body-r-xxs text-green-700">
                 Custom
               </span>
             </div>
-            <span style={{ fontSize: 10, color: "#444" }}>{p.chars}</span>
+            <span className="type-body-r-xxs text-muted">{p.chars}</span>
           </div>
-          <div style={{ fontSize: 12.5, color: "#888", lineHeight: 1.6 }}>
+          <div className="type-body-r-xs text-fg">
             {p.text}
           </div>
         </div>
@@ -1373,121 +1036,47 @@ function CsvMockup() {
     },
   ];
   return (
-    <div
-      style={{
-        background: "#111",
-        border: "1px solid #1e1e1e",
-        borderRadius: 20,
-        padding: 24,
-        width: "100%",
-        maxWidth: 720,
-        overflowX: "auto",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 18,
-        }}
-      >
+    <div className="card w-full max-w-180 overflow-x-auto rounded-3xl p-6">
+      <div className="mb-4.5 flex items-center justify-between">
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#ededed" }}>
+          <div className="type-body-sb-s text-fg">
             preview.csv
           </div>
-          <div style={{ fontSize: 11, color: "#555" }}>4 rows · all valid</div>
+          <div className="type-body-r-xs text-muted">4 rows · all valid</div>
         </div>
-        <div
-          style={{
-            background: "#5b63d3",
-            color: "#fff",
-            padding: "8px 16px",
-            borderRadius: 8,
-            fontSize: 12,
-            fontWeight: 700,
-          }}
-        >
+        <div className="btn-primary type-body-sb-xs">
           Schedule 4 posts
         </div>
       </div>
-      <div style={{ minWidth: 580 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "160px 1fr 140px 80px",
-            gap: 0,
-          }}
-        >
+      <div className="min-w-145">
+        <div className="grid grid-cols-[160px_1fr_140px_80px]">
           {["scheduled_for", "text", "accounts", "status"].map((h) => (
             <div
               key={h}
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: "#444",
-                letterSpacing: ".06em",
-                textTransform: "uppercase",
-                padding: "6px 10px",
-                borderBottom: "1px solid #1e1e1e",
-              }}
+              className="border-b border-border px-2.5 py-1.5 type-body-sb-xxs uppercase tracking-wider text-muted"
             >
               {h}
             </div>
           ))}
           {rows.map((r, i) => (
             <React.Fragment key={i}>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "#666",
-                  padding: "10px 10px",
-                  borderBottom: "1px solid #111",
-                  fontFamily: "monospace",
-                }}
-              >
+              <div className="border-b border-border p-2.5 type-mono-r-xs text-muted">
                 {r.date}
               </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#aaa",
-                  padding: "10px 10px",
-                  borderBottom: "1px solid #111",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <div className="truncate border-b border-border p-2.5 type-body-r-xs text-fg">
                 {r.text}
               </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "#666",
-                  padding: "10px 10px",
-                  borderBottom: "1px solid #111",
-                  fontFamily: "monospace",
-                }}
-              >
+              <div className="border-b border-border p-2.5 type-mono-r-xs text-muted">
                 {r.accounts}
               </div>
-              <div
-                style={{ padding: "10px 10px", borderBottom: "1px solid #111" }}
-              >
+              <div className="border-b border-border p-2.5">
                 <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: r.status === "ready" ? "#4ade80" : "#f59e0b",
-                    background:
-                      r.status === "ready"
-                        ? "rgba(74,222,128,.08)"
-                        : "rgba(245,158,11,.08)",
-                    border: `1px solid ${r.status === "ready" ? "#4ade8033" : "#f59e0b33"}`,
-                    borderRadius: 5,
-                    padding: "2px 6px",
-                  }}
+                  className={cn(
+                    "rounded-md border px-1.5 py-0.5 type-body-sb-xxs",
+                    r.status === "ready"
+                      ? "border-green-200 bg-green-50 text-green-700"
+                      : "border-brand-400 bg-brand-100 text-brand-800",
+                  )}
                 >
                   {r.status === "ready" ? "✓ Ready" : "⚠ Warn"}
                 </span>
@@ -1501,50 +1090,62 @@ function CsvMockup() {
 }
 
 function AiCaptionMockup() {
+  // `color` feeds the --c CSS var on each icon tile
   const actions = [
-    { label: "Fix grammar", color: "#5cb88a", icon: "✓" },
-    { label: "Concise", color: "#3db8c8", icon: "↓" },
-    { label: "Expand", color: "#9ba2ee", icon: "↑" },
-    { label: "Rephrase", color: "#d4a83c", icon: "↺" },
-    { label: "Improve structure", color: "#a07ee0", icon: "≡" },
-    { label: "Simplify", color: "#e86b6b", icon: "◇" },
-    { label: "Polish", color: "#a78bfa", icon: "✦" },
+    { label: "Fix grammar", color: "var(--color-green-700)", icon: "✓" },
+    { label: "Concise", color: "#0e7490", icon: "↓" },
+    { label: "Expand", color: "var(--color-blue-700)", icon: "↑" },
+    { label: "Rephrase", color: "#b45309", icon: "↺" },
+    { label: "Improve structure", color: "#6d4bc3", icon: "≡" },
+    { label: "Simplify", color: "var(--color-red-600)", icon: "◇" },
+    { label: "Polish", color: "var(--color-brand-800)", icon: "✦" },
   ];
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 460, width: "100%" }}>
+    <div className="flex w-full max-w-115 flex-col gap-4">
       {/* Composer */}
-      <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 20 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <span style={{ fontSize: 11, color: "#444", fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase" }}>Caption</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(167,139,250,.15)", border: "1px solid rgba(167,139,250,.4)", borderRadius: 8, padding: "5px 12px", cursor: "pointer" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div className="card p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="type-body-sb-xs uppercase tracking-wider text-muted">Caption</span>
+          <div className="flex cursor-pointer items-center gap-2 rounded-lg border border-brand-300 bg-brand-100 px-3 py-1.5 text-brand-800">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/>
               <path d="M20 3v4M22 5h-4M4 17v2M5 18H3"/>
             </svg>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa" }}>AI assist</span>
+            <span className="type-body-sb-xs">AI assist</span>
           </div>
         </div>
-        <div style={{ fontSize: 13.5, color: "#bbb", lineHeight: 1.65, background: "#0d0d0d", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
+        <div className="mb-2.5 rounded-xl bg-bg px-3.5 py-3 type-body-r-s text-fg">
           just launched posthive v2. drag reschedule is out. csv too. check it out
         </div>
-        <div style={{ fontSize: 11, color: "#444" }}>48 / 300 chars</div>
+        <div className="type-body-r-xs text-muted">48 / 300 chars</div>
       </div>
       {/* Actions menu */}
-      <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, overflow: "hidden" }}>
-        <div style={{ padding: "10px 16px", borderBottom: "1px solid #1a1a1a", fontSize: 11, color: "#555", fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>Choose an action</div>
+      <div className="card overflow-hidden">
+        <div className="border-b border-border px-4 py-2.5 type-body-sb-xs uppercase tracking-wider text-muted">Choose an action</div>
         {actions.map((a, i) => (
-          <div key={a.label} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderBottom: i < actions.length - 1 ? "1px solid #111" : "none", cursor: "pointer", background: i === 6 ? "rgba(167,139,250,.07)" : "transparent" }}>
-            <span style={{ width: 26, height: 26, borderRadius: 7, background: `${a.color}18`, border: `1px solid ${a.color}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: a.color, flexShrink: 0, fontWeight: 700 }}>{a.icon}</span>
-            <span style={{ fontSize: 13, color: i === 6 ? "#ededed" : "#888", fontWeight: i === 6 ? 600 : 400 }}>{a.label}</span>
-            {i === 6 && <span style={{ marginLeft: "auto", fontSize: 10, color: "#a78bfa", background: "rgba(167,139,250,.15)", border: "1px solid rgba(167,139,250,.3)", borderRadius: 5, padding: "2px 7px" }}>Selected</span>}
+          <div
+            key={a.label}
+            className={cn(
+              "flex cursor-pointer items-center gap-3.5 border-b border-border px-4 py-3 last:border-b-0",
+              i === 6 && "bg-brand-100",
+            )}
+          >
+            <span
+              className="flex size-6.5 shrink-0 items-center justify-center rounded-md border border-(--c)/25 bg-(--c)/10 type-body-sb-xs text-(--c)"
+              style={{ "--c": a.color } as React.CSSProperties}
+            >
+              {a.icon}
+            </span>
+            <span className={cn(i === 6 ? "type-body-sb-s text-fg" : "type-body-r-s text-muted")}>{a.label}</span>
+            {i === 6 && <span className="ml-auto rounded-md border border-brand-300 bg-brand-200 px-2 py-0.5 type-body-r-xxs text-brand-800">Selected</span>}
           </div>
         ))}
       </div>
       {/* After */}
-      <div style={{ background: "#0e1a0e", border: "1px solid #1e3a1e", borderRadius: 16, padding: 20 }}>
-        <div style={{ fontSize: 11, color: "#4ade80", fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 10 }}>✦ Polished</div>
-        <div style={{ fontSize: 13.5, color: "#bbb", lineHeight: 1.65 }}>
-          Posthive v2 is live. Drag-to-reschedule and bulk CSV scheduling are now available the two most-requested features since launch. Try it at <span style={{ color: "#5b63d3" }}>posthive.co</span>
+      <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
+        <div className="mb-2.5 type-body-sb-xs uppercase tracking-wider text-green-700">✦ Polished</div>
+        <div className="type-body-r-s text-fg">
+          Posthive v2 is live. Drag-to-reschedule and bulk CSV scheduling are now available the two most-requested features since launch. Try it at <span className="text-brand-800">posthive.co</span>
         </div>
       </div>
     </div>
@@ -1566,79 +1167,30 @@ function SelfHostMockup() {
     { t: "output", v: "▶  Web  ready on http://localhost:3000" },
   ];
   return (
-    <div
-      style={{
-        background: "#0a0a0a",
-        border: "1px solid #2a2a2a",
-        borderRadius: 20,
-        overflow: "hidden",
-        maxWidth: 560,
-        width: "100%",
-      }}
-    >
-      <div
-        style={{
-          background: "#111",
-          padding: "12px 18px",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          borderBottom: "1px solid #1e1e1e",
-        }}
-      >
-        <div
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            background: "#e86b6b",
-          }}
-        />
-        <div
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            background: "#d4a83c",
-          }}
-        />
-        <div
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            background: "#5cb88a",
-          }}
-        />
-        <span
-          style={{
-            fontSize: 11,
-            color: "#444",
-            marginLeft: 8,
-            fontFamily: "monospace",
-          }}
-        >
+    <div className="w-full max-w-140 overflow-hidden rounded-3xl border border-border bg-bg">
+      <div className="flex items-center gap-2 border-b border-border bg-surface px-4.5 py-3">
+        <div className="size-2.5 rounded-full bg-red-500" />
+        <div className="size-2.5 rounded-full bg-brand-500" />
+        <div className="size-2.5 rounded-full bg-green-500" />
+        <span className="ml-2 type-mono-r-xs text-muted">
           Terminal
         </span>
       </div>
-      <div style={{ padding: "20px 22px", fontFamily: "monospace" }}>
+      <div className="px-5.5 py-5 type-mono-r-xs">
         {lines.map((l, i) => (
           <div
             key={i}
-            style={{
-              fontSize: 12.5,
-              lineHeight: 1.8,
-              color:
-                l.t === "comment"
-                  ? "#555"
-                  : l.t === "output"
-                    ? "#4ade80"
-                    : "#bbb",
-            }}
+            className={cn(
+              l.t === "comment"
+                ? "text-muted"
+                : l.t === "output"
+                  ? "text-green-700"
+                  : "text-fg",
+            )}
           >
             {l.t === "cmd" ? (
               <>
-                <span style={{ color: "#5b63d3" }}>$ </span>
+                <span className="text-brand-800">$ </span>
                 {l.v}
               </>
             ) : (
@@ -1646,50 +1198,43 @@ function SelfHostMockup() {
             )}
           </div>
         ))}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginTop: 8,
-          }}
-        >
-          <span style={{ color: "#5b63d3" }}>$ </span>
-          <span
-            style={{
-              display: "inline-block",
-              width: 8,
-              height: 16,
-              background: "#5b63d3",
-              animation: "none",
-              verticalAlign: "middle",
-            }}
-          />
+        <div className="mt-2 flex items-center gap-1.5">
+          <span className="text-brand-800">$ </span>
+          <span className="inline-block h-4 w-2 bg-accent align-middle" />
         </div>
       </div>
-      <div
-        style={{
-          background: "#0d0d0d",
-          borderTop: "1px solid #1a1a1a",
-          padding: "12px 22px",
-          display: "flex",
-          gap: 16,
-        }}
-      >
+      <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-border bg-surface px-5.5 py-3">
         {[
           ["SQLite / Postgres", "🗄"],
           ["Redis / Upstash", "⚡"],
           ["Any cloud", "☁"],
         ].map(([label, icon]) => (
-          <div
-            key={label}
-            style={{ display: "flex", alignItems: "center", gap: 6 }}
-          >
-            <span style={{ fontSize: 13 }}>{icon}</span>
-            <span style={{ fontSize: 11, color: "#555" }}>{label}</span>
+          <div key={label} className="flex items-center gap-1.5">
+            <span className="type-body-r-s">{icon}</span>
+            <span className="type-body-r-xs text-muted">{label}</span>
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ── Page building blocks ───────────────────────────────────────────────────
+
+// Eyebrow above a section title, led by a short rule
+function Kicker({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="mb-5 inline-flex items-center gap-3 type-body-sb-xs uppercase tracking-wider text-brand-800 before:h-px before:w-8 before:bg-current">
+      {children}
+    </span>
+  );
+}
+
+// Hairline between sections, fading out at both ends
+function Rule() {
+  return (
+    <div className="mx-auto max-w-6xl px-5 md:px-12">
+      <hr className="h-px border-0 bg-linear-to-r from-transparent via-border to-transparent" />
     </div>
   );
 }
@@ -1924,12 +1469,6 @@ export default async function FeaturePage({
         }
       : null;
 
-  const W = "1200px";
-  const div = "rgba(237,237,237,0.1)";
-  const muted75 = "rgba(237,237,237,0.75)";
-  const muted55 = "rgba(237,237,237,0.55)";
-  const accent = "#5b63d3";
-
   const ALL_FEATURES = [
     {
       slug: "multi-platform-posting",
@@ -1983,15 +1522,7 @@ export default async function FeaturePage({
   const otherFeatures = ALL_FEATURES.filter((f) => f.slug !== slug);
 
   return (
-    <div
-      className="mkt"
-      style={{
-        minHeight: "100vh",
-        color: "#ededed",
-        fontFamily: "var(--font-figtree), system-ui, sans-serif",
-        background: `radial-gradient(1100px 640px at 88% -180px, rgba(30,33,64,0.7), transparent 60%), radial-gradient(900px 700px at -8% 110%, rgba(0,0,0,0.3), transparent 55%), #0a0a0a`,
-      }}
-    >
+    <div className="min-h-screen bg-bg text-fg">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
@@ -2006,170 +1537,70 @@ export default async function FeaturePage({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
         />
       )}
-      <style>{`
-        .feat-wrap { max-width: ${W}; margin: 0 auto; padding: 0 clamp(20px,5vw,72px); }
-        .feat-rule { height: 1px; border: 0; margin: 0; background: linear-gradient(to right, transparent, ${div} 48px calc(100% - 48px), transparent); }
-        .feat-kicker { display: inline-flex; align-items: center; gap: 12px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: ${accent}; margin: 0 0 20px; }
-        .feat-kicker::before { content: ""; width: 32px; height: 1px; background: ${accent}; }
-        @media (max-width: 900px) {
-          .feat-hero-grid, .feat-how-grid, .feat-who-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
-          .feat-why-grid, .feat-toolkit-grid { grid-template-columns: 1fr 1fr !important; }
-          .feat-hero-sticky { position: static !important; }
-        }
-        @media (max-width: 600px) {
-          .feat-why-grid, .feat-toolkit-grid { grid-template-columns: 1fr !important; }
-          .feat-hero-grid, .feat-how-grid, .feat-who-grid { gap: 28px !important; }
-        }
-        .feat-faq details { padding: 22px 0; border-top: 1px solid ${div}; }
-        .feat-faq details summary { cursor: pointer; font-size: 17px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-        .feat-faq details summary::-webkit-details-marker { display: none; }
-        .feat-faq-last { border-bottom: 1px solid ${div}; }
-        .feat-faq summary .faq-plus { color: ${accent}; font-size: 20px; font-weight: 400; flex: none; transition: transform 0.15s; }
-        .feat-faq details[open] summary .faq-plus { transform: rotate(45deg); }
-        .feat-toolkit-card { text-decoration: none; color: inherit; padding: 22px; border: 1px solid ${div}; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; background: rgba(17,17,17,0.5); transition: border-color 0.15s; }
-        .feat-toolkit-card:hover { border-color: ${accent}; }
-      `}</style>
 
       <MarketingNavBar />
-      <div style={{ height: 68 }} />
+      <div className="h-17" />
 
       {/* breadcrumb */}
-      <div
-        className="feat-wrap"
-        style={{
-          paddingTop: 24,
-          fontSize: 12,
-          letterSpacing: "0.06em",
-          color: muted55,
-        }}
-      >
-        <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>
+      <div className="mx-auto max-w-6xl px-5 pt-6 type-body-r-xs tracking-wider text-muted md:px-12">
+        <Link href="/" className="transition-colors hover:text-fg">
           Home
         </Link>
-        <span style={{ margin: "0 8px", opacity: 0.5 }}>/</span>
+        <span className="mx-2 opacity-50">/</span>
         <Link
           href="/features/multi-platform-posting"
-          style={{ color: "inherit", textDecoration: "none" }}
+          className="transition-colors hover:text-fg"
         >
           Features
         </Link>
-        <span style={{ margin: "0 8px", opacity: 0.5 }}>/</span>
-        <span style={{ color: "#ededed" }}>{data.title}</span>
+        <span className="mx-2 opacity-50">/</span>
+        <span className="text-fg">{data.title}</span>
       </div>
 
       {/* ── Hero ── */}
-      <section
-        className="feat-wrap"
-        style={{ padding: "calc(2.5*28px) clamp(20px,5vw,72px) calc(3*28px)" }}
-      >
+      <section className="mx-auto max-w-6xl px-5 pt-12 pb-16 md:px-12 md:pt-18 md:pb-20">
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: isSplit ? "1fr 1.05fr" : "1fr",
-            gap: isSplit ? 80 : 0,
-            alignItems: "center",
-          }}
-          className="feat-hero-grid"
+          className={cn(
+            "grid grid-cols-1 items-center",
+            isSplit && "gap-7 sm:gap-10 lg:grid-cols-2 lg:gap-20",
+          )}
         >
-          <div style={{ order: layout === "split-left" ? 2 : 1 }}>
-            <span className="feat-kicker">{data.badge}</span>
+          <div className={layout === "split-left" ? "order-2" : "order-1"}>
+            <Kicker>{data.badge}</Kicker>
             <h1
-              style={{
-                fontSize: isSplit
-                  ? "clamp(36px,4.8vw,60px)"
-                  : "clamp(36px,5vw,68px)",
-                fontWeight: 500,
-                letterSpacing: "-.02em",
-                lineHeight: 1.05,
-                margin: "0 0 24px",
-              }}
+              className={cn(
+                "mb-6 tracking-tight",
+                isSplit
+                  ? "type-display-m-6 md:type-display-m-4"
+                  : "type-display-m-6 md:type-display-m-3",
+              )}
             >
               {data.headline}
             </h1>
-            <p
-              style={{
-                fontSize: 18,
-                lineHeight: 1.55,
-                maxWidth: "58ch",
-                color: muted75,
-                margin: "0 0 32px",
-              }}
-            >
+            <p className="mb-8 max-w-xl type-body-r-l text-muted">
               {data.subheadline}
             </p>
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <Link
-                href="/register"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  padding: "12px 20px",
-                  borderRadius: 8,
-                  background: accent,
-                  color: "#fff",
-                  textDecoration: "none",
-                  border: `1px solid ${accent}`,
-                }}
-              >
+            <div className="flex flex-wrap gap-3">
+              <Link href="/register" className="btn-primary px-6 py-3 type-body-sb-m">
                 Try free for 14 days
               </Link>
-              <Link
-                href="/pricing"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  padding: "12px 20px",
-                  borderRadius: 8,
-                  background: "transparent",
-                  color: muted75,
-                  textDecoration: "none",
-                  border: `1px solid ${div}`,
-                }}
-              >
+              <Link href="/pricing" className="btn-secondary px-6 py-3 type-body-sb-m">
                 View pricing
               </Link>
             </div>
             {/* inline stats */}
             {slug === "multi-platform-posting" && (
-              <div
-                style={{
-                  display: "flex",
-                  gap: 40,
-                  marginTop: 56,
-                  paddingTop: 24,
-                  borderTop: `1px solid ${div}`,
-                }}
-              >
+              <div className="mt-14 flex gap-8 border-t border-border pt-6 sm:gap-10">
                 {[
                   { n: "13", label: "Platforms" },
                   { n: "1", label: "Composer" },
                   { n: "∞", label: "Reach" },
                 ].map((s) => (
                   <div key={s.n}>
-                    <div
-                      style={{
-                        fontSize: 32,
-                        fontWeight: 500,
-                        letterSpacing: "-0.02em",
-                        fontFeatureSettings: "'tnum' 1",
-                      }}
-                    >
+                    <div className="type-head-m-3 tracking-tight">
                       {s.n}
                     </div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        color: muted55,
-                        marginTop: 6,
-                      }}
-                    >
+                    <div className="mt-1.5 type-body-r-xs uppercase tracking-widest text-muted">
                       {s.label}
                     </div>
                   </div>
@@ -2177,39 +1608,17 @@ export default async function FeaturePage({
               </div>
             )}
             {slug === "self-hostable" && (
-              <div
-                style={{
-                  display: "flex",
-                  gap: 40,
-                  marginTop: 56,
-                  paddingTop: 24,
-                  borderTop: `1px solid ${div}`,
-                }}
-              >
+              <div className="mt-14 flex gap-8 border-t border-border pt-6 sm:gap-10">
                 {[
                   { n: "AGPL", label: "License" },
                   { n: "0", label: "Per-seat" },
                   { n: "100%", label: "Data ownership" },
                 ].map((s) => (
                   <div key={s.n}>
-                    <div
-                      style={{
-                        fontSize: 28,
-                        fontWeight: 500,
-                        letterSpacing: "-0.02em",
-                      }}
-                    >
+                    <div className="type-head-m-4 tracking-tight">
                       {s.n}
                     </div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        color: muted55,
-                        marginTop: 6,
-                      }}
-                    >
+                    <div className="mt-1.5 type-body-r-xs uppercase tracking-widest text-muted">
                       {s.label}
                     </div>
                   </div>
@@ -2219,11 +1628,10 @@ export default async function FeaturePage({
           </div>
           {isSplit && mockup && (
             <div
-              style={{
-                order: layout === "split-left" ? 1 : 2,
-                display: "flex",
-                justifyContent: "center",
-              }}
+              className={cn(
+                "flex justify-center",
+                layout === "split-left" ? "order-1" : "order-2",
+              )}
             >
               {mockup}
             </div>
@@ -2231,60 +1639,24 @@ export default async function FeaturePage({
         </div>
       </section>
 
-      <div className="feat-wrap">
-        <hr className="feat-rule" />
-      </div>
+      <Rule />
 
       {/* ── Why it matters ── */}
-      <section
-        className="feat-wrap"
-        style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}
-      >
-        <span className="feat-kicker">Why it matters</span>
-        <h2
-          style={{
-            fontSize: "clamp(28px,3.2vw,40px)",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            margin: "0 0 56px",
-            maxWidth: "26ch",
-            fontWeight: 500,
-          }}
-        >
+      <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+        <Kicker>Why it matters</Kicker>
+        <h2 className="mb-14 max-w-lg type-head-sb-4 tracking-tight md:type-head-sb-2">
           The grind of cross-posting, gone.
         </h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3,1fr)",
-            gap: 56,
-          }}
-          className="feat-why-grid"
-        >
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-14">
           {data.why.map((w, i) => (
             <div key={w.title}>
-              <div
-                style={{
-                  fontSize: 11,
-                  letterSpacing: "0.14em",
-                  color: accent,
-                  fontFeatureSettings: "'tnum' 1",
-                  marginBottom: 20,
-                }}
-              >
+              <div className="mb-5 type-body-r-xs tracking-widest text-brand-800">
                 0{i + 1}
               </div>
-              <h3 style={{ fontSize: 20, fontWeight: 500, margin: "0 0 12px" }}>
+              <h3 className="mb-3 type-head-sb-6">
                 {w.title}
               </h3>
-              <p
-                style={{
-                  fontSize: 14,
-                  lineHeight: 1.65,
-                  color: muted75,
-                  margin: 0,
-                }}
-              >
+              <p className="type-body-r-s text-muted">
                 {w.desc}
               </p>
             </div>
@@ -2292,166 +1664,66 @@ export default async function FeaturePage({
         </div>
       </section>
 
-      <div className="feat-wrap">
-        <hr className="feat-rule" />
-      </div>
+      <Rule />
 
       {/* ── Under the hood (screenshot) ── */}
       {data.image && (
-        <section
-          className="feat-wrap"
-          style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              marginBottom: 32,
-              flexWrap: "wrap",
-              gap: 16,
-            }}
-          >
+        <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+          <div className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
             <div>
-              <span className="feat-kicker">Under the hood</span>
-              <h2
-                style={{
-                  fontSize: "clamp(26px,3vw,36px)",
-                  letterSpacing: "-0.02em",
-                  lineHeight: 1.1,
-                  margin: 0,
-                  fontWeight: 500,
-                  maxWidth: "28ch",
-                }}
-              >
+              <Kicker>Under the hood</Kicker>
+              <h2 className="max-w-lg type-head-sb-5 tracking-tight md:type-head-sb-2">
                 The feature, in the app.
               </h2>
             </div>
             <Link
               href="/register"
-              style={{ fontSize: 14, color: accent, textDecoration: "none" }}
+              className="type-body-m-s text-brand-800 transition-colors hover:text-brand-900"
             >
               Try it yourself
             </Link>
           </div>
-          <div
-            style={{
-              width: "100%",
-              borderRadius: 14,
-              overflow: "hidden",
-              background: "#111",
-              border: `1px solid ${div}`,
-            }}
-          >
+          <div className="w-full overflow-hidden rounded-2xl border border-border bg-surface">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={data.image}
               alt={data.imageAlt}
-              style={{ width: "100%", height: "auto", display: "block" }}
+              className="block h-auto w-full"
             />
           </div>
-          <p
-            style={{
-              fontSize: 12,
-              color: muted55,
-              marginTop: 12,
-              letterSpacing: "0.02em",
-            }}
-          >
+          <p className="mt-3 type-body-r-xs tracking-wide text-muted">
             Fig. 01 — {data.imageAlt}
           </p>
         </section>
       )}
 
-      <div className="feat-wrap">
-        <hr className="feat-rule" />
-      </div>
+      <Rule />
 
       {/* ── How it works ── */}
-      <section
-        className="feat-wrap"
-        style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1.4fr",
-            gap: 80,
-            alignItems: "start",
-          }}
-          className="feat-how-grid"
-        >
-          <div
-            className="feat-hero-sticky"
-            style={{ position: "sticky", top: 100 }}
-          >
-            <span className="feat-kicker">How it works</span>
-            <h2
-              style={{
-                fontSize: "clamp(28px,3.2vw,40px)",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                margin: 0,
-                fontWeight: 500,
-              }}
-            >
+      <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+        <div className="grid grid-cols-1 items-start gap-7 sm:gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-20">
+          <div className="lg:sticky lg:top-25">
+            <Kicker>How it works</Kicker>
+            <h2 className="type-head-sb-4 tracking-tight md:type-head-sb-2">
               Three steps.
               <br />
               No manuals.
             </h2>
           </div>
-          <ol
-            style={{
-              listStyle: "none",
-              padding: 0,
-              margin: 0,
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            {data.how.map((s, i) => (
+          <ol className="flex flex-col">
+            {data.how.map((s) => (
               <li
                 key={s.n}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "80px 1fr",
-                  gap: 24,
-                  alignItems: "start",
-                  padding: "32px 0",
-                  borderBottom:
-                    i < data.how.length - 1 ? `1px solid ${div}` : "none",
-                }}
+                className="flex items-start gap-6 border-b border-border py-8 last:border-b-0"
               >
-                <div
-                  style={{
-                    fontSize: 44,
-                    lineHeight: 1,
-                    fontWeight: 500,
-                    color: accent,
-                    fontFeatureSettings: "'tnum' 1",
-                    letterSpacing: "-0.03em",
-                  }}
-                >
+                <div className="w-20 shrink-0 type-head-m-1 tracking-tight text-brand-800">
                   {s.n}
                 </div>
                 <div>
-                  <h3
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 500,
-                      margin: "0 0 10px",
-                    }}
-                  >
+                  <h3 className="mb-2.5 type-head-sb-6">
                     {s.title}
                   </h3>
-                  <p
-                    style={{
-                      fontSize: 14,
-                      lineHeight: 1.6,
-                      color: muted75,
-                      margin: 0,
-                    }}
-                  >
+                  <p className="type-body-r-s text-muted">
                     {s.desc}
                   </p>
                 </div>
@@ -2461,59 +1733,23 @@ export default async function FeaturePage({
         </div>
       </section>
 
-      <div className="feat-wrap">
-        <hr className="feat-rule" />
-      </div>
+      <Rule />
 
       {/* ── Who uses this ── */}
-      <section
-        className="feat-wrap"
-        style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 80,
-            alignItems: "start",
-          }}
-          className="feat-who-grid"
-        >
+      <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+        <div className="grid grid-cols-1 items-start gap-7 sm:gap-10 lg:grid-cols-2 lg:gap-20">
           <div>
-            <span className="feat-kicker">Who uses this</span>
-            <h2
-              style={{
-                fontSize: "clamp(26px,3vw,36px)",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                margin: "0 0 32px",
-                fontWeight: 500,
-              }}
-            >
+            <Kicker>Who uses this</Kicker>
+            <h2 className="mb-8 type-head-sb-5 tracking-tight md:type-head-sb-2">
               Built for people shipping in&nbsp;public.
             </h2>
-            <ul
-              style={{
-                listStyle: "none",
-                padding: 0,
-                margin: 0,
-                display: "flex",
-                flexDirection: "column",
-                gap: 16,
-              }}
-            >
+            <ul className="flex flex-col gap-4">
               {data.usecases.map((u) => (
                 <li
                   key={u}
-                  style={{
-                    display: "flex",
-                    gap: 14,
-                    alignItems: "baseline",
-                    fontSize: 15,
-                    lineHeight: 1.5,
-                  }}
+                  className="flex items-baseline gap-3.5 type-body-r-m"
                 >
-                  <span style={{ color: accent, flex: "none", marginTop: 1 }}>
+                  <span className="flex-none text-brand-800">
                     ◆
                   </span>
                   {u}
@@ -2521,70 +1757,32 @@ export default async function FeaturePage({
               ))}
             </ul>
           </div>
-          <div
-            style={{
-              borderLeft: `1px solid ${accent}`,
-              padding: "8px 0 8px 32px",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                color: accent,
-                marginBottom: 20,
-              }}
-            >
+          <div className="border-l-2 border-accent py-2 pl-8">
+            <div className="mb-5 type-body-sb-xs uppercase tracking-wider text-brand-800">
               From the builder
             </div>
-            <p
-              style={{
-                fontSize: 16,
-                lineHeight: 1.65,
-                color: "#ededed",
-                margin: "0 0 20px",
-              }}
-            >
+            <p className="mb-5 type-body-r-m text-fg">
               &ldquo;I was copy-pasting the same post into five different apps
               every day. Every tool I tried was too expensive, too bloated, or
               didn&apos;t support the platforms I actually used. So I built
               Posthive.&rdquo;
             </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: "50%",
-                  background: "#2a2a2a",
-                  display: "grid",
-                  placeItems: "center",
-                  flexShrink: 0,
-                  fontSize: 15,
-                  fontWeight: 500,
-                  color: muted75,
-                }}
-              >
+            <div className="flex items-center gap-3">
+              <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full bg-neutral-100">
                 {" "}
                 <img
                   src="/founder.jpg"
                   alt="Guna, founder of Posthive"
                   width={72}
                   height={72}
-                  style={{
-                    borderRadius: "50%",
-                    border: "3px solid #2a2a2a",
-                    display: "block",
-                    margin: "0 auto 16px",
-                  }}
+                  className="block size-full rounded-full object-cover"
                 />
               </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 500 }}>
+                <div className="type-body-m-s">
                   Guna Sheelan
                 </div>
-                <div style={{ fontSize: 12, color: muted55 }}>
+                <div className="type-body-r-xs text-muted">
                   Founder · @gunaa_dev
                 </div>
               </div>
@@ -2593,21 +1791,14 @@ export default async function FeaturePage({
         </div>
       </section>
 
-      <div className="feat-wrap">
-        <hr className="feat-rule" />
-      </div>
+      <Rule />
 
       {/* ── FAQ ── */}
       {slug === "instagram-reels-scheduler" && (
-        <div className="feat-wrap" style={{ padding: "0 clamp(20px,5vw,72px) 48px" }}>
+        <div className="mx-auto max-w-6xl px-5 pb-12 md:px-12">
           <a
             href="/blog/how-to-schedule-instagram-reels"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              fontSize: 14, color: accent, textDecoration: "none",
-              border: `1px solid ${accent}33`, borderRadius: 8,
-              padding: "10px 18px", background: `${accent}0d`,
-            }}
+            className="inline-flex items-center gap-2 rounded-lg border border-brand-300 bg-brand-100 px-4.5 py-2.5 type-body-r-s text-brand-800 transition-colors hover:border-brand-400"
           >
             📖 Read the full guide: How to Schedule Instagram Reels in 2026 →
           </a>
@@ -2615,42 +1806,23 @@ export default async function FeaturePage({
       )}
 
       {data.faq && data.faq.length > 0 && (
-        <section
-          className="feat-wrap"
-          style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}
-        >
-          <span className="feat-kicker">FAQ</span>
-          <h2
-            style={{
-              fontSize: "clamp(28px,3.2vw,40px)",
-              letterSpacing: "-0.02em",
-              lineHeight: 1.1,
-              margin: "0 0 48px",
-              fontWeight: 500,
-            }}
-          >
+        <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+          <Kicker>FAQ</Kicker>
+          <h2 className="mb-12 type-head-sb-4 tracking-tight md:type-head-sb-2">
             Frequently asked questions
           </h2>
-          <div className="feat-faq">
+          <div>
             {data.faq.map((item, i) => (
               <details
                 key={item.q}
-                className={i === data.faq!.length - 1 ? "feat-faq-last" : ""}
+                className="group border-t border-border py-5.5 last:border-b"
                 open={i === 0}
               >
-                <summary>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 type-body-m-l [&::-webkit-details-marker]:hidden">
                   {item.q}
-                  <span className="faq-plus">+</span>
+                  <span className="flex-none type-body-r-xl text-brand-800 transition-transform duration-150 group-open:rotate-45">+</span>
                 </summary>
-                <p
-                  style={{
-                    margin: "14px 0 0",
-                    fontSize: 14,
-                    lineHeight: 1.65,
-                    color: muted75,
-                    maxWidth: "72ch",
-                  }}
-                >
+                <p className="mt-3.5 max-w-2xl type-body-r-s text-muted">
                   {item.a}
                 </p>
               </details>
@@ -2659,49 +1831,26 @@ export default async function FeaturePage({
         </section>
       )}
 
-      <div className="feat-wrap">
-        <hr className="feat-rule" />
-      </div>
+      <Rule />
 
       {/* ── Related toolkit ── */}
-      <section
-        className="feat-wrap"
-        style={{ padding: "calc(3*28px) clamp(20px,5vw,72px)" }}
-      >
-        <span className="feat-kicker">Part of a full scheduling toolkit</span>
-        <h2
-          style={{
-            fontSize: "clamp(26px,3vw,36px)",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            margin: "0 0 40px",
-            maxWidth: "32ch",
-            fontWeight: 500,
-          }}
-        >
+      <section className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+        <Kicker>Part of a full scheduling toolkit</Kicker>
+        <h2 className="mb-10 max-w-xl type-head-sb-5 tracking-tight md:type-head-sb-2">
           {data.title} is one of eight features working together.
         </h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3,1fr)",
-            gap: 16,
-          }}
-          className="feat-toolkit-grid"
-        >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {otherFeatures.map((f) => (
             <Link
               key={f.slug}
               href={`/features/${f.slug}`}
-              className="feat-toolkit-card"
+              className="card flex flex-col gap-2 p-6 transition-colors hover:border-accent"
             >
-              <div
-                style={{ fontSize: 11, letterSpacing: "0.12em", color: accent }}
-              >
+              <div className="type-body-sb-xs tracking-wider text-brand-800">
                 {f.label}
               </div>
-              <div style={{ fontSize: 16, fontWeight: 500 }}>{f.title}</div>
-              <div style={{ fontSize: 13, color: muted55, lineHeight: 1.55 }}>
+              <div className="type-body-m-m text-fg">{f.title}</div>
+              <div className="type-body-r-s text-muted">
                 {f.desc}
               </div>
             </Link>
@@ -2709,97 +1858,34 @@ export default async function FeaturePage({
         </div>
         <Link
           href="/docs"
-          style={{
-            fontSize: 14,
-            color: accent,
-            textDecoration: "none",
-            display: "inline-block",
-            marginTop: 28,
-          }}
+          className="mt-7 inline-block type-body-m-s text-brand-800 transition-colors hover:text-brand-900"
         >
           Read the docs
         </Link>
         <Link
           href="/blog/open-source-social-media-scheduler"
-          style={{
-            fontSize: 14,
-            color: muted55,
-            textDecoration: "none",
-            display: "inline-block",
-            marginTop: 12,
-            marginLeft: 20,
-          }}
+          className="mt-3 ml-5 inline-block type-body-r-s text-muted transition-colors hover:text-fg"
         >
           Open-source social media scheduler guide →
         </Link>
       </section>
 
       {/* ── CTA ── */}
-      <section
-        style={{
-          background:
-            "linear-gradient(180deg, transparent 0%, rgba(30,33,64,0.32) 100%)",
-          padding: "calc(4*28px) 0",
-        }}
-      >
-        <div className="feat-wrap" style={{ maxWidth: 900 }}>
-          <span className="feat-kicker">Get started today</span>
-          <h2
-            style={{
-              fontSize: "clamp(32px,4vw,56px)",
-              letterSpacing: "-0.025em",
-              lineHeight: 1.05,
-              margin: "0 0 20px",
-              fontWeight: 500,
-            }}
-          >
+      <section className="bg-linear-to-b from-transparent to-brand-100/60 py-20 md:py-28">
+        <div className="mx-auto max-w-4xl px-5 md:px-12">
+          <Kicker>Get started today</Kicker>
+          <h2 className="mb-5 type-head-sb-3 tracking-tight md:type-head-sb-1">
             Start scheduling for free.
           </h2>
-          <p
-            style={{
-              fontSize: 17,
-              lineHeight: 1.55,
-              color: "rgba(237,237,237,0.78)",
-              marginBottom: 32,
-              maxWidth: "56ch",
-            }}
-          >
+          <p className="mb-8 max-w-lg type-body-r-l text-muted">
             14-day free trial. No credit card required. Connect your first
             account in under a minute and schedule your first post today.
           </p>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <Link
-              href="/register"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                fontSize: 14,
-                fontWeight: 600,
-                padding: "14px 24px",
-                borderRadius: 8,
-                background: accent,
-                color: "#fff",
-                textDecoration: "none",
-                border: `1px solid ${accent}`,
-              }}
-            >
+          <div className="flex flex-wrap gap-3">
+            <Link href="/register" className="btn-primary px-6 py-3 type-body-sb-m">
               Get started free
             </Link>
-            <Link
-              href="/pricing"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                fontSize: 14,
-                fontWeight: 600,
-                padding: "14px 24px",
-                borderRadius: 8,
-                background: "transparent",
-                color: muted75,
-                textDecoration: "none",
-                border: `1px solid ${div}`,
-              }}
-            >
+            <Link href="/pricing" className="btn-secondary px-6 py-3 type-body-sb-m">
               Pricing
             </Link>
           </div>
