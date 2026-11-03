@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { NavBar } from "../components/LandingNav";
 import { PlatformIcon } from "../components/PlatformIcon";
 import { LandingFooter } from "@/components/LandingFooter";
+import { cn } from "../lib/cn";
 
 const GITHUB_URL = "https://github.com/AstaBlackClove/posthive";
 
@@ -22,7 +23,7 @@ const PLATFORMS_GRID = [
     name: "Threads",
     domain: "threads.net",
     meta: "500 chars · Meta OAuth",
-    accent: "#e6e6e6",
+    accent: "#000000",
     platform: "threads",
   },
   {
@@ -57,7 +58,7 @@ const PLATFORMS_GRID = [
     name: "X (Twitter)",
     domain: "x.com",
     meta: "100 tweets/mo · Pro & Team",
-    accent: "#e7e7e7",
+    accent: "#0f1419",
     platform: "twitter",
   },
   {
@@ -133,8 +134,8 @@ const HERO_CARD_SCHEDULED = [
     name: "Bluesky",
     text: "Write once, post to multi platforms. This is the tool I have been waiting for.",
     pill: "Fires in 2h",
-    pillBg: "#fef3c7",
-    pillColor: "#92400e",
+    pillBg: "var(--color-brand-100)",
+    pillColor: "var(--color-brand-800)",
     time: "9:00 AM",
   },
   {
@@ -142,8 +143,8 @@ const HERO_CARD_SCHEDULED = [
     name: "Mastodon",
     text: "Finally a scheduler that supports the fediverse. Set it and forget it.",
     pill: "Fires in 45m",
-    pillBg: "#fef3c7",
-    pillColor: "#92400e",
+    pillBg: "var(--color-brand-100)",
+    pillColor: "var(--color-brand-800)",
     time: "10:15 AM",
   },
   {
@@ -151,8 +152,8 @@ const HERO_CARD_SCHEDULED = [
     name: "X (Twitter)",
     text: "Scheduled 30 tweets for the whole week in under 10 minutes.",
     pill: "Tomorrow 8AM",
-    pillBg: "#ede9fe",
-    pillColor: "#5b21b6",
+    pillBg: "var(--color-blue-50)",
+    pillColor: "var(--color-blue-700)",
     time: "8:00 AM",
   },
   {
@@ -160,8 +161,8 @@ const HERO_CARD_SCHEDULED = [
     name: "Pinterest",
     text: "Pinned my product catalogue to 6 boards on autopilot every morning.",
     pill: "Fires in 1h",
-    pillBg: "#fef3c7",
-    pillColor: "#92400e",
+    pillBg: "var(--color-brand-100)",
+    pillColor: "var(--color-brand-800)",
     time: "7:30 AM",
   },
 ];
@@ -172,8 +173,8 @@ const HERO_CARD_FIRST_COMMENT = [
     name: "Threads",
     text: "First comment fires automatically right after the post goes live.",
     pill: "Sent",
-    pillBg: "#dcfce7",
-    pillColor: "#166534",
+    pillBg: "var(--color-green-100)",
+    pillColor: "var(--color-green-800)",
     time: "Just now",
   },
   {
@@ -181,8 +182,8 @@ const HERO_CARD_FIRST_COMMENT = [
     name: "LinkedIn",
     text: "Added my link in the first comment automatically. Algorithm loves it.",
     pill: "Sent",
-    pillBg: "#dcfce7",
-    pillColor: "#166534",
+    pillBg: "var(--color-green-100)",
+    pillColor: "var(--color-green-800)",
     time: "2m ago",
   },
   {
@@ -190,8 +191,8 @@ const HERO_CARD_FIRST_COMMENT = [
     name: "Instagram",
     text: "Drop hashtags in the first comment without cluttering the caption.",
     pill: "Sent",
-    pillBg: "#dcfce7",
-    pillColor: "#166534",
+    pillBg: "var(--color-green-100)",
+    pillColor: "var(--color-green-800)",
     time: "Just now",
   },
   {
@@ -199,8 +200,8 @@ const HERO_CARD_FIRST_COMMENT = [
     name: "Facebook",
     text: "First comment auto-posted with the full article link seconds after.",
     pill: "Sent",
-    pillBg: "#dcfce7",
-    pillColor: "#166534",
+    pillBg: "var(--color-green-100)",
+    pillColor: "var(--color-green-800)",
     time: "1m ago",
   },
 ];
@@ -211,8 +212,8 @@ const HERO_CARD_POSTED = [
     name: "LinkedIn",
     text: "Bulk scheduled 30 days of content in one afternoon with CSV upload.",
     pill: "Live",
-    pillBg: "#dcfce7",
-    pillColor: "#166534",
+    pillBg: "var(--color-green-100)",
+    pillColor: "var(--color-green-800)",
     time: "8:47 AM",
   },
   {
@@ -220,8 +221,8 @@ const HERO_CARD_POSTED = [
     name: "YouTube Short",
     text: "Short went live at peak hour. Views are already rolling in.",
     pill: "Live",
-    pillBg: "#dcfce7",
-    pillColor: "#166534",
+    pillBg: "var(--color-green-100)",
+    pillColor: "var(--color-green-800)",
     time: "12:00 PM",
   },
   {
@@ -229,8 +230,8 @@ const HERO_CARD_POSTED = [
     name: "Facebook Page",
     text: "Posted to 3 Facebook Pages at once from a single compose window.",
     pill: "Live",
-    pillBg: "#dcfce7",
-    pillColor: "#166534",
+    pillBg: "var(--color-green-100)",
+    pillColor: "var(--color-green-800)",
     time: "9:00 AM",
   },
   {
@@ -238,8 +239,8 @@ const HERO_CARD_POSTED = [
     name: "Nostr",
     text: "Decentralized post published. No algorithm, no gatekeeping.",
     pill: "Live",
-    pillBg: "#dcfce7",
-    pillColor: "#166534",
+    pillBg: "var(--color-green-100)",
+    pillColor: "var(--color-green-800)",
     time: "11:22 AM",
   },
   {
@@ -247,8 +248,8 @@ const HERO_CARD_POSTED = [
     name: "Discord",
     text: "Announcement scheduled to the community server. Done in seconds.",
     pill: "Live",
-    pillBg: "#dcfce7",
-    pillColor: "#166534",
+    pillBg: "var(--color-green-100)",
+    pillColor: "var(--color-green-800)",
     time: "3m ago",
   },
   {
@@ -256,8 +257,8 @@ const HERO_CARD_POSTED = [
     name: "Tumblr",
     text: "Blog post queued and published to Tumblr right on schedule.",
     pill: "Live",
-    pillBg: "#dcfce7",
-    pillColor: "#166534",
+    pillBg: "var(--color-green-100)",
+    pillColor: "var(--color-green-800)",
     time: "1m ago",
   },
 ];
@@ -268,8 +269,8 @@ const HERO_CARD_RESCHEDULED = [
     name: "Instagram Reel",
     text: "Dragged to a better time slot on the calendar. Done in 2 seconds.",
     pill: "Tomorrow 9AM",
-    pillBg: "#ede9fe",
-    pillColor: "#5b21b6",
+    pillBg: "var(--color-blue-50)",
+    pillColor: "var(--color-blue-700)",
     time: "",
   },
   {
@@ -277,8 +278,8 @@ const HERO_CARD_RESCHEDULED = [
     name: "Telegram",
     text: "Moved the channel broadcast to Friday peak hours in one tap.",
     pill: "Fri 6:00 PM",
-    pillBg: "#ede9fe",
-    pillColor: "#5b21b6",
+    pillBg: "var(--color-blue-50)",
+    pillColor: "var(--color-blue-700)",
     time: "",
   },
   {
@@ -286,8 +287,8 @@ const HERO_CARD_RESCHEDULED = [
     name: "Bluesky",
     text: "Rescheduled after spotting a typo. No stress, just drag and drop.",
     pill: "Mon 8:00 AM",
-    pillBg: "#ede9fe",
-    pillColor: "#5b21b6",
+    pillBg: "var(--color-blue-50)",
+    pillColor: "var(--color-blue-700)",
     time: "",
   },
   {
@@ -295,8 +296,8 @@ const HERO_CARD_RESCHEDULED = [
     name: "X (Twitter)",
     text: "Shifted the thread to avoid the weekend lull. Better reach guaranteed.",
     pill: "Next Mon",
-    pillBg: "#ede9fe",
-    pillColor: "#5b21b6",
+    pillBg: "var(--color-blue-50)",
+    pillColor: "var(--color-blue-700)",
     time: "",
   },
 ];
@@ -448,9 +449,12 @@ function useScrollReveal() {
   }, []);
 }
 
-function StatSkeleton({ width, height, style }: { width: number | string; height: number | string; style?: React.CSSProperties }) {
+function StatSkeleton({ width, height }: { width: number; height: number }) {
   return (
-    <span style={{ display: "inline-block", width, height, borderRadius: 6, background: "rgba(255,255,255,0.08)", animation: "skel-pulse 1.4s ease-in-out infinite", verticalAlign: "middle", ...style }} />
+    <span
+      className="inline-block h-(--h) w-(--w) animate-pulse rounded-md bg-black/10 align-middle"
+      style={{ "--w": `${width}px`, "--h": `${height}px` } as React.CSSProperties}
+    />
   );
 }
 
@@ -524,28 +528,8 @@ export default function RootPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        html { scroll-behavior: smooth; }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; overflow-x: hidden; }
-        body {
-          background: #0a0a0a;
-          color: #ededed;
-          font-family: var(--font-figtree), -apple-system, system-ui, sans-serif;
-          -webkit-font-smoothing: antialiased;
-          text-rendering: optimizeLegibility;
-          overflow-x: hidden;
-        }
-        a { color: inherit; text-decoration: none; }
-        ::selection { background: rgba(91,99,211,.35); }
-
-        .hero-card-inner { transition: opacity .35s ease; }
-        .hero-card-inner.fade-out { opacity: 0; }
-
-        @keyframes glowpulse {
-          0%, 100% { opacity: .85; }
-          50% { opacity: 1; }
-        }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
@@ -558,39 +542,12 @@ export default function RootPage() {
           from { transform: translateY(-12px); }
           to   { transform: translateY(0px); }
         }
+        @keyframes ph-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
         .hero-float-a { animation: floatA 3.4s ease-in-out infinite alternate; }
         .hero-float-b { animation: floatB 3.4s ease-in-out infinite alternate; }
-        .hero-card {
-          background: #fff; border-radius: 14px; padding: 16px 18px; width: 220px;
-          border: 2px dashed #555; box-shadow: 0 4px 24px rgba(0,0,0,.35);
-          font-family: var(--font-figtree), system-ui, sans-serif;
-        }
-        .hero-card-platform { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
-        .hero-card-platform span { font-size: 12.5px; font-weight: 700; color: #111; }
-        .hero-card-text { font-size: 12px; color: #444; line-height: 1.5; margin-bottom: 11px; }
-        .hero-card-footer { display: flex; align-items: center; justify-content: space-between; }
-        .hero-status { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
-        .hero-time { font-size: 10.5px; color: #999; }
-        .hero-arrow-label {
-          font-size: 11.5px; font-weight: 600; color: #aaa; display: flex; align-items: center; gap: 4px; margin-bottom: 6px;
-        }
-        /* medium: smaller columns + smaller H1 so text doesn't break */
-        @media (min-width: 1101px) and (max-width: 1440px) {
-          .ph-hero-grid { grid-template-columns: 220px 1fr 220px !important; gap: 24px !important; }
-          .ph-hero-h1 { font-size: 52px !important; font-family: var(--font-caprasimo), system-ui, sans-serif !important; font-weight: 400 !important; }
-          .hero-card { width: 200px !important; }
-        }
-        /* ≤1100px: hide side cards, center takes full width */
-        @media (max-width: 1100px) {
-          .ph-hero-cards { display: none !important; }
-          .ph-hero-grid { display: block !important; }
-        }
-        /* mobile: tighten hero padding */
-        @media (max-width: 640px) {
-          .ph-hero-grid { padding: 0 4px !important; }
-        }
+        .ph-caret { animation: ph-blink .75s step-end infinite; }
 
-        .anim-1 { animation: fadeUp .6s cubic-bezier(.22,1,.36,1) both; }
         .anim-2 { animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .1s both; }
         .anim-3 { animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .2s both; }
         .anim-4 { animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .3s both; }
@@ -603,113 +560,6 @@ export default function RootPage() {
         .scroll-hidden.d3 { transition-delay: .25s; }
         .scroll-hidden.d4 { transition-delay: .35s; }
         .scroll-hidden.d5 { transition-delay: .45s; }
-
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .section-label { font-size: 12px; letter-spacing: .16em; color: #5b63d3; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
-
-        .ph-feature-card {
-          background: #111111; border: 1px solid #1e1e1e; border-radius: 16px; padding: 28px;
-          transition: border-color .2s;
-        }
-        .ph-feature-card:hover { border-color: #2c2c2c; }
-
-        .ph-platform-card {
-          background: #111111; border: 1px solid #1e1e1e; border-radius: 14px; padding: 22px;
-          display: flex; flex-direction: column; gap: 14px; position: relative; overflow: hidden;
-          transition: border-color .2s; text-decoration: none; color: inherit;
-        }
-        .ph-platform-card:hover { border-color: #2c2c2c; }
-
-        .ph-plan-card {
-          background: #111111; border: 1px solid #1e1e1e; border-radius: 16px; padding: 30px;
-          display: flex; flex-direction: column; gap: 18px; position: relative;
-        }
-        .ph-plan-card-pro {
-          background: #0f0f14; border: 1px solid #5b63d3; border-radius: 16px; padding: 30px;
-          display: flex; flex-direction: column; gap: 18px; position: relative;
-          box-shadow: 0 0 0 1px #5b63d3, 0 24px 70px -24px rgba(91,99,211,.55);
-        }
-
-        .ph-btn-primary {
-          display: inline-flex; align-items: center; gap: 8px;
-          background: #5b63d3; color: #fff; font-size: 15px; font-weight: 600;
-          padding: 13px 24px; border-radius: 11px; text-decoration: none;
-          box-shadow: 0 8px 30px -8px rgba(91,99,211,.75); transition: filter .15s;
-        }
-        .ph-btn-primary:hover { filter: brightness(1.12); }
-
-        .ph-btn-secondary {
-          display: inline-flex; align-items: center; gap: 8px;
-          background: #111111; color: #ededed; font-size: 15px; font-weight: 600;
-          padding: 13px 24px; border: 1px solid #2a2a2a; border-radius: 11px; text-decoration: none;
-          transition: border-color .15s, background .15s;
-        }
-        .ph-btn-secondary:hover { border-color: #3a3a3a; background: #151515; }
-
-        .ph-plan-btn-pro {
-          display: block; text-align: center; background: #5b63d3; color: #fff;
-          font-size: 14.5px; font-weight: 600; padding: 11px; border-radius: 10px; text-decoration: none;
-          box-shadow: 0 8px 24px -8px rgba(91,99,211,.8); transition: filter .15s;
-        }
-        .ph-plan-btn-pro:hover { filter: brightness(1.12); }
-
-        .ph-plan-btn {
-          display: block; text-align: center; background: #1a1a1a; color: #ededed;
-          font-size: 14.5px; font-weight: 600; padding: 11px; border-radius: 10px; text-decoration: none;
-          border: 1px solid #2a2a2a; transition: background .15s;
-        }
-        .ph-plan-btn:hover { background: #202020; }
-
-        .ph-gh-btn {
-          display: inline-flex; align-items: center; justify-content: center; gap: 9px;
-          background: #ededed; color: #0a0a0a; font-size: 14.5px; font-weight: 600;
-          padding: 13px 22px; border-radius: 11px; text-decoration: none; white-space: nowrap;
-          transition: filter .15s;
-        }
-        .ph-gh-btn:hover { filter: brightness(.92); }
-
-        .ph-docs-btn {
-          display: inline-flex; align-items: center; justify-content: center; gap: 9px;
-          background: #111111; color: #ededed; font-size: 14.5px; font-weight: 600;
-          padding: 13px 22px; border: 1px solid #2a2a2a; border-radius: 11px; text-decoration: none;
-          white-space: nowrap; transition: border-color .15s;
-        }
-        .ph-docs-btn:hover { border-color: #3a3a3a; }
-
-        .foot-link { font-size: 13.5px; color: #9a9a9a; text-decoration: none; transition: color .15s; }
-        .foot-link:hover { color: #ededed; }
-
-        @media (max-width: 1024px) {
-          .ph-platforms-grid { grid-template-columns: repeat(3, 1fr) !important; }
-        }
-        @media (max-width: 900px) {
-          .ph-features-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .ph-how-grid { grid-template-columns: 1fr !important; }
-          .ph-pricing-grid { grid-template-columns: 1fr !important; }
-          .ph-selfhost-inner { flex-direction: column !important; }
-          .ph-footer-inner { grid-template-columns: 1fr !important; gap: 40px !important; }
-          .ph-foot-cols { grid-template-columns: repeat(2, 1fr) !important; gap: 28px !important; }
-        }
-        @media (max-width: 640px) {
-          .ph-features-grid { grid-template-columns: 1fr !important; }
-          .ph-platforms-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .ph-hero-h1 { font-size: clamp(32px, 9vw, 48px) !important; font-family: var(--font-caprasimo), system-ui, sans-serif !important; font-weight: 400 !important; }
-          .ph-section { padding-left: 20px !important; padding-right: 20px !important; }
-          .ph-hero-cta { flex-direction: column !important; align-items: stretch !important; }
-          .ph-proof-bar { gap: 18px !important; }
-        }
-        .feature-visual { transition: box-shadow .3s; }
-        .feature-visual:hover { box-shadow: 0 0 40px rgba(91,99,211,.08); }
-
-        @media (max-width: 900px) {
-          .ph-feature-detail-row { grid-template-columns: 1fr !important; direction: ltr !important; gap: 40px !important; }
-          .ph-feature-detail-row > * { direction: ltr !important; min-width: 0; max-width: 100%; overflow: hidden; }
-        }
-        @media (max-width: 480px) {
-          .ph-platforms-grid { grid-template-columns: 1fr !important; }
-          .ph-selfhost-btns { flex-direction: row !important; flex-wrap: wrap !important; }
-          .ph-feature-detail-row { gap: 28px !important; }
-        }
       `}</style>
 
       <NavBar
@@ -719,63 +569,14 @@ export default function RootPage() {
         loading={authLoading}
       />
 
-      <div className="mkt" style={{ paddingTop: 64 }}>
+      <div className="overflow-x-clip pt-16 antialiased selection:bg-brand-200">
         {/* ── HERO ── */}
-        <section
-          className="ph-section"
-          style={{
-            position: "relative",
-            overflow: "hidden",
-            padding: "110px 24px 80px",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: -80,
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: 900,
-              height: 620,
-              filter: "blur(30px)",
-              pointerEvents: "none",
-              animation: "glowpulse 6s ease-in-out infinite",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "radial-gradient(circle at 50% 0%, rgba(255,255,255,.03), transparent 40%)",
-              pointerEvents: "none",
-            }}
-          />
-
-          <div
-            className="ph-hero-grid"
-            style={{
-              maxWidth: 1600,
-              margin: "0 auto",
-              display: "grid",
-              gridTemplateColumns: "280px 1fr 280px",
-              alignItems: "center",
-              gap: 40,
-              position: "relative",
-            }}
-          >
+        <section className="relative overflow-hidden px-6 pt-20 pb-16 md:pt-28 md:pb-20">
+          <div className="relative mx-auto flex max-w-400 items-center gap-6 2xl:gap-10">
             {/* Left floating cards */}
-            <div
-              className="ph-hero-cards"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 20,
-                alignItems: "center",
-              }}
-            >
-              <div className="hero-float-a" style={{ alignSelf: "flex-start" }}>
-                <div className="hero-arrow-label">
+            <div className="hidden w-55 shrink-0 flex-col items-center gap-5 xl:flex 2xl:w-70">
+              <div className="hero-float-a self-start">
+                <div className="mb-1.5 flex items-center gap-1 type-body-sb-xs text-muted">
                   <svg
                     width="10"
                     height="12"
@@ -789,35 +590,34 @@ export default function RootPage() {
                   </svg>
                   Scheduled
                 </div>
-                <div
-                  className="hero-card"
-                  style={{ transform: "rotate(-3deg)" }}
-                >
+                <div className="w-50 -rotate-3 rounded-2xl border-2 border-dashed border-neutral-300 bg-surface px-4.5 py-4 shadow-lg 2xl:w-55">
                   <div
-                    className={`hero-card-inner${fade[0] ? "" : " fade-out"}`}
+                    className={cn("transition-opacity duration-350", !fade[0] && "opacity-0")}
                   >
-                    <div className="hero-card-platform">
+                    <div className="mb-2 flex items-center gap-2">
                       <PlatformIcon
                         platform={HERO_CARD_SCHEDULED[cardIdx[0]].platform}
                         size={16}
                       />
-                      <span>{HERO_CARD_SCHEDULED[cardIdx[0]].name}</span>
+                      <span className="type-body-sb-xs text-fg">{HERO_CARD_SCHEDULED[cardIdx[0]].name}</span>
                     </div>
-                    <p className="hero-card-text">
+                    <p className="mb-3 type-body-r-xs text-muted">
                       {HERO_CARD_SCHEDULED[cardIdx[0]].text}
                     </p>
-                    <div className="hero-card-footer">
+                    <div className="flex items-center justify-between">
                       <span
-                        className="hero-status"
-                        style={{
-                          background: HERO_CARD_SCHEDULED[cardIdx[0]].pillBg,
-                          color: HERO_CARD_SCHEDULED[cardIdx[0]].pillColor,
-                        }}
+                        className="rounded-full bg-(--pill-bg) px-2 py-0.5 type-body-sb-xxs text-(--pill-fg)"
+                        style={
+                          {
+                            "--pill-bg": HERO_CARD_SCHEDULED[cardIdx[0]].pillBg,
+                            "--pill-fg": HERO_CARD_SCHEDULED[cardIdx[0]].pillColor,
+                          } as React.CSSProperties
+                        }
                       >
                         {HERO_CARD_SCHEDULED[cardIdx[0]].pill}
                       </span>
                       {HERO_CARD_SCHEDULED[cardIdx[0]].time && (
-                        <span className="hero-time">
+                        <span className="type-body-r-xxs text-muted">
                           {HERO_CARD_SCHEDULED[cardIdx[0]].time}
                         </span>
                       )}
@@ -825,8 +625,8 @@ export default function RootPage() {
                   </div>
                 </div>
               </div>
-              <div className="hero-float-b" style={{ alignSelf: "flex-end" }}>
-                <div className="hero-arrow-label">
+              <div className="hero-float-b self-end">
+                <div className="mb-1.5 flex items-center gap-1 type-body-sb-xs text-muted">
                   <svg
                     width="10"
                     height="12"
@@ -840,36 +640,34 @@ export default function RootPage() {
                   </svg>
                   First comment
                 </div>
-                <div
-                  className="hero-card"
-                  style={{ transform: "rotate(2deg)" }}
-                >
+                <div className="w-50 rotate-2 rounded-2xl border-2 border-dashed border-neutral-300 bg-surface px-4.5 py-4 shadow-lg 2xl:w-55">
                   <div
-                    className={`hero-card-inner${fade[1] ? "" : " fade-out"}`}
+                    className={cn("transition-opacity duration-350", !fade[1] && "opacity-0")}
                   >
-                    <div className="hero-card-platform">
+                    <div className="mb-2 flex items-center gap-2">
                       <PlatformIcon
                         platform={HERO_CARD_FIRST_COMMENT[cardIdx[1]].platform}
                         size={16}
                       />
-                      <span>{HERO_CARD_FIRST_COMMENT[cardIdx[1]].name}</span>
+                      <span className="type-body-sb-xs text-fg">{HERO_CARD_FIRST_COMMENT[cardIdx[1]].name}</span>
                     </div>
-                    <p className="hero-card-text">
+                    <p className="mb-3 type-body-r-xs text-muted">
                       {HERO_CARD_FIRST_COMMENT[cardIdx[1]].text}
                     </p>
-                    <div className="hero-card-footer">
+                    <div className="flex items-center justify-between">
                       <span
-                        className="hero-status"
-                        style={{
-                          background:
-                            HERO_CARD_FIRST_COMMENT[cardIdx[1]].pillBg,
-                          color: HERO_CARD_FIRST_COMMENT[cardIdx[1]].pillColor,
-                        }}
+                        className="rounded-full bg-(--pill-bg) px-2 py-0.5 type-body-sb-xxs text-(--pill-fg)"
+                        style={
+                          {
+                            "--pill-bg": HERO_CARD_FIRST_COMMENT[cardIdx[1]].pillBg,
+                            "--pill-fg": HERO_CARD_FIRST_COMMENT[cardIdx[1]].pillColor,
+                          } as React.CSSProperties
+                        }
                       >
                         {HERO_CARD_FIRST_COMMENT[cardIdx[1]].pill}
                       </span>
                       {HERO_CARD_FIRST_COMMENT[cardIdx[1]].time && (
-                        <span className="hero-time">
+                        <span className="type-body-r-xxs text-muted">
                           {HERO_CARD_FIRST_COMMENT[cardIdx[1]].time}
                         </span>
                       )}
@@ -880,137 +678,59 @@ export default function RootPage() {
             </div>
 
             {/* Center — untouched */}
-            <div style={{ textAlign: "center" }}>
-              <h1
-                className="anim-2 ph-hero-h1"
-                style={{
-                  fontSize: "clamp(40px, 4.8vw, 64px)",
-                  lineHeight: 1.08,
-                  fontWeight: 400,
-                  letterSpacing: "-0.02em",
-                  margin: "0 0 24px",
-                  color: "#f4f4f4",
-                  fontFamily: "var(--font-caprasimo), system-ui, sans-serif",
-                }}
-              >
-                <span style={{ display: "block", marginBottom: 14 }}>
+            <div className="min-w-0 flex-1 text-center">
+              <h1 className="anim-2 mb-6 type-display-m-6 tracking-tight text-fg md:type-display-m-5 2xl:type-display-m-3">
+                <span className="mb-3.5 block">
                   Automate your social media
                 </span>
-                <span style={{ color: "#f4f4f4" }}>
+                <span>
                   with{" "}
-                  <span
-                    style={{
-                      display: "inline-block",
-                      background: "#5b63d3",
-                      color: "#fff",
-                      padding: "2px 16px 4px",
-                      borderRadius: 6,
-                      transform: "rotate(-1.5deg)",
-                      transformOrigin: "center",
-                    }}
-                  >
+                  <span className="inline-block -rotate-2 rounded-md bg-accent px-4 pt-0.5 pb-1 text-accent-fg">
                     AI agents.
                   </span>
                 </span>
               </h1>
 
-              <p
-                className="anim-3"
-                style={{
-                  fontSize: 19,
-                  lineHeight: 1.6,
-                  color: "#8f8f8f",
-                  maxWidth: 640,
-                  margin: "0 auto 38px",
-                  fontWeight: 400,
-                  fontFamily: "var(--font-figtree), system-ui, sans-serif",
-                }}
-              >
+              <p className="anim-3 mx-auto mb-10 max-w-160 type-body-r-l text-muted">
                 Plan, create, review, and schedule posts across every major
                 social network. Connect Claude, Cursor, Codex, ChatGPT or any
                 MCP-compatible AI agent to automate your social media workflow.
               </p>
 
-              <div
-                className="anim-4 ph-hero-cta"
-                style={{
-                  display: "flex",
-                  gap: 14,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  marginBottom: 20,
-                  flexWrap: "wrap",
-                }}
-              >
+              <div className="anim-4 mb-5 flex flex-col items-stretch justify-center gap-3.5 sm:flex-row sm:flex-wrap sm:items-center">
                 {authLoading ? (
-                  <span
-                    className="ph-cta-skeleton"
-                    style={{
-                      display: "inline-block",
-                      width: 168,
-                      height: 47,
-                      borderRadius: 11,
-                      background: "#161822",
-                    }}
-                  />
+                  <span className="inline-block h-12 w-42 animate-pulse self-center rounded-xl bg-neutral-100" />
                 ) : (
-                  <Link href={ctaHref} className="ph-btn-primary">
+                  <Link href={ctaHref} className="btn-primary px-6 py-3 type-body-sb-m">
                     {ctaLabel}
                   </Link>
                 )}
-                <Link href="/docs" className="ph-btn-secondary">
+                <Link href="/docs" className="btn-secondary px-6 py-3 type-body-sb-m">
                   View docs
                 </Link>
               </div>
 
               {!user && (
-                <p
-                  className="anim-5 mono"
-                  style={{ fontSize: 13, color: "#999", margin: "0 0 52px" }}
-                >
+                <p className="anim-5 mb-13 type-body-r-s text-muted">
                   14-day free trial · no credit card · cancel anytime
                 </p>
               )}
 
               <div
-                className="anim-5"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 18,
-                  flexWrap: "wrap",
-                  marginTop: user ? 52 : 0,
-                }}
+                className={cn(
+                  "anim-5 flex flex-wrap items-center justify-center gap-3 sm:gap-4.5",
+                  user && "mt-13",
+                )}
               >
-                <span
-                  className="mono"
-                  style={{
-                    fontSize: 11,
-                    letterSpacing: ".14em",
-                    color: "#5f5f5f",
-                    fontWeight: 600,
-                  }}
-                >
+                <span className="type-body-sb-xs tracking-widest text-muted">
                   PUBLISH TO
                 </span>
                 {PLATFORMS_GRID.map((p) => (
                   <span
                     key={p.platform}
-                    style={{ display: "inline-flex", alignItems: "center" }}
+                    className="inline-flex items-center"
                   >
-                    <span
-                      style={{
-                        width: 30,
-                        height: 30,
-                        borderRadius: 8,
-                        background: "#131313",
-                        border: "1px solid #1e1e1e",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
+                    <span className="flex size-7.5 items-center justify-center rounded-lg border border-border bg-surface">
                       <PlatformIcon platform={p.platform} size={17} />
                     </span>
                   </span>
@@ -1019,17 +739,9 @@ export default function RootPage() {
             </div>
 
             {/* Right floating cards */}
-            <div
-              className="ph-hero-cards"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 20,
-                alignItems: "center",
-              }}
-            >
-              <div className="hero-float-b" style={{ alignSelf: "flex-start" }}>
-                <div className="hero-arrow-label">
+            <div className="hidden w-55 shrink-0 flex-col items-center gap-5 xl:flex 2xl:w-70">
+              <div className="hero-float-b self-start">
+                <div className="mb-1.5 flex items-center gap-1 type-body-sb-xs text-muted">
                   <svg
                     width="10"
                     height="12"
@@ -1043,35 +755,34 @@ export default function RootPage() {
                   </svg>
                   Posted
                 </div>
-                <div
-                  className="hero-card"
-                  style={{ transform: "rotate(3deg)" }}
-                >
+                <div className="w-50 rotate-3 rounded-2xl border-2 border-dashed border-neutral-300 bg-surface px-4.5 py-4 shadow-lg 2xl:w-55">
                   <div
-                    className={`hero-card-inner${fade[2] ? "" : " fade-out"}`}
+                    className={cn("transition-opacity duration-350", !fade[2] && "opacity-0")}
                   >
-                    <div className="hero-card-platform">
+                    <div className="mb-2 flex items-center gap-2">
                       <PlatformIcon
                         platform={HERO_CARD_POSTED[cardIdx[2]].platform}
                         size={16}
                       />
-                      <span>{HERO_CARD_POSTED[cardIdx[2]].name}</span>
+                      <span className="type-body-sb-xs text-fg">{HERO_CARD_POSTED[cardIdx[2]].name}</span>
                     </div>
-                    <p className="hero-card-text">
+                    <p className="mb-3 type-body-r-xs text-muted">
                       {HERO_CARD_POSTED[cardIdx[2]].text}
                     </p>
-                    <div className="hero-card-footer">
+                    <div className="flex items-center justify-between">
                       <span
-                        className="hero-status"
-                        style={{
-                          background: HERO_CARD_POSTED[cardIdx[2]].pillBg,
-                          color: HERO_CARD_POSTED[cardIdx[2]].pillColor,
-                        }}
+                        className="rounded-full bg-(--pill-bg) px-2 py-0.5 type-body-sb-xxs text-(--pill-fg)"
+                        style={
+                          {
+                            "--pill-bg": HERO_CARD_POSTED[cardIdx[2]].pillBg,
+                            "--pill-fg": HERO_CARD_POSTED[cardIdx[2]].pillColor,
+                          } as React.CSSProperties
+                        }
                       >
                         {HERO_CARD_POSTED[cardIdx[2]].pill}
                       </span>
                       {HERO_CARD_POSTED[cardIdx[2]].time && (
-                        <span className="hero-time">
+                        <span className="type-body-r-xxs text-muted">
                           {HERO_CARD_POSTED[cardIdx[2]].time}
                         </span>
                       )}
@@ -1079,8 +790,8 @@ export default function RootPage() {
                   </div>
                 </div>
               </div>
-              <div className="hero-float-a" style={{ alignSelf: "flex-end" }}>
-                <div className="hero-arrow-label">
+              <div className="hero-float-a self-end">
+                <div className="mb-1.5 flex items-center gap-1 type-body-sb-xs text-muted">
                   <svg
                     width="10"
                     height="12"
@@ -1094,35 +805,34 @@ export default function RootPage() {
                   </svg>
                   Rescheduled
                 </div>
-                <div
-                  className="hero-card"
-                  style={{ transform: "rotate(-2deg)" }}
-                >
+                <div className="w-50 -rotate-2 rounded-2xl border-2 border-dashed border-neutral-300 bg-surface px-4.5 py-4 shadow-lg 2xl:w-55">
                   <div
-                    className={`hero-card-inner${fade[3] ? "" : " fade-out"}`}
+                    className={cn("transition-opacity duration-350", !fade[3] && "opacity-0")}
                   >
-                    <div className="hero-card-platform">
+                    <div className="mb-2 flex items-center gap-2">
                       <PlatformIcon
                         platform={HERO_CARD_RESCHEDULED[cardIdx[3]].platform}
                         size={16}
                       />
-                      <span>{HERO_CARD_RESCHEDULED[cardIdx[3]].name}</span>
+                      <span className="type-body-sb-xs text-fg">{HERO_CARD_RESCHEDULED[cardIdx[3]].name}</span>
                     </div>
-                    <p className="hero-card-text">
+                    <p className="mb-3 type-body-r-xs text-muted">
                       {HERO_CARD_RESCHEDULED[cardIdx[3]].text}
                     </p>
-                    <div className="hero-card-footer">
+                    <div className="flex items-center justify-between">
                       <span
-                        className="hero-status"
-                        style={{
-                          background: HERO_CARD_RESCHEDULED[cardIdx[3]].pillBg,
-                          color: HERO_CARD_RESCHEDULED[cardIdx[3]].pillColor,
-                        }}
+                        className="rounded-full bg-(--pill-bg) px-2 py-0.5 type-body-sb-xxs text-(--pill-fg)"
+                        style={
+                          {
+                            "--pill-bg": HERO_CARD_RESCHEDULED[cardIdx[3]].pillBg,
+                            "--pill-fg": HERO_CARD_RESCHEDULED[cardIdx[3]].pillColor,
+                          } as React.CSSProperties
+                        }
                       >
                         {HERO_CARD_RESCHEDULED[cardIdx[3]].pill}
                       </span>
                       {HERO_CARD_RESCHEDULED[cardIdx[3]].time && (
-                        <span className="hero-time">
+                        <span className="type-body-r-xxs text-muted">
                           {HERO_CARD_RESCHEDULED[cardIdx[3]].time}
                         </span>
                       )}
@@ -1134,75 +844,19 @@ export default function RootPage() {
           </div>
 
           {/* product screenshot */}
-          <div
-            style={{
-              maxWidth: 1120,
-              margin: "64px auto 0",
-              position: "relative",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                inset: -1,
-                background:
-                  "linear-gradient(180deg, rgba(91,99,211,.35), transparent 30%)",
-                borderRadius: 18,
-                filter: "blur(2px)",
-                pointerEvents: "none",
-              }}
-            />
-            <div
-              style={{
-                position: "relative",
-                background: "#0d0d0d",
-                border: "1px solid #1e1e1e",
-                borderRadius: 16,
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  height: 38,
-                  borderBottom: "1px solid #1a1a1a",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                  padding: "0 16px",
-                  background: "#0f0f0f",
-                }}
-              >
-                <span
-                  style={{
-                    width: 11,
-                    height: 11,
-                    borderRadius: "50%",
-                    background: "#2a2a2a",
-                  }}
-                />
-                <span
-                  style={{
-                    width: 11,
-                    height: 11,
-                    borderRadius: "50%",
-                    background: "#2a2a2a",
-                  }}
-                />
-                <span
-                  style={{
-                    width: 11,
-                    height: 11,
-                    borderRadius: "50%",
-                    background: "#2a2a2a",
-                  }}
-                />
+          <div className="mx-auto mt-16 max-w-280">
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-surface shadow-xl">
+              <div className="flex h-9.5 items-center gap-2 border-b border-border bg-surface px-4">
+                <span className="size-3 rounded-full bg-neutral-200" />
+                <span className="size-3 rounded-full bg-neutral-200" />
+                <span className="size-3 rounded-full bg-neutral-200" />
               </div>
               <Image
                 src="/app-screenshot.png"
                 alt="Posthive composer — schedule posts across all platforms"
                 width={1120}
                 height={630}
-                style={{ width: "100%", height: "auto", display: "block" }}
+                className="block h-auto w-full"
                 priority
               />
             </div>
@@ -1210,33 +864,30 @@ export default function RootPage() {
         </section>
 
         {/* ── STATS TILES ── */}
-        <section style={{ borderTop: "1px solid #161616", background: "#0a0a0a" }}>
-          <div
-            className="ph-stats-grid ph-section"
-            style={{ maxWidth: 1120, margin: "0 auto", padding: "56px 40px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}
-          >
-            {/* Posts published — dark */}
-            <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px", display: "flex", flexDirection: "column", justifyContent: "flex-end", minHeight: 180 }}>
-              <div style={{ fontSize: 56, fontWeight: 700, letterSpacing: "-0.04em", color: "#f2f2f2", lineHeight: 1 }}>
+        <section className="border-t border-border bg-bg">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-5 py-14 md:grid-cols-3 md:px-12">
+            {/* Posts published — neutral */}
+            <div className="card flex min-h-45 flex-col justify-end px-7 py-8">
+              <div className="type-display-m-4 tracking-tight text-fg">
                 <LiveStat value={publicStats?.published ?? null} label="" skeletonWidth={100} skeletonHeight={52} />
               </div>
-              <p style={{ fontSize: 12, color: "#555", margin: "10px 0 0", letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 600 }}>Posts published</p>
+              <p className="mt-2.5 type-body-sb-xs uppercase tracking-wider text-muted">Posts published</p>
             </div>
 
-            {/* Accounts connected — purple */}
-            <div style={{ background: "#5b63d3", border: "1px solid #6b73e3", borderRadius: 16, padding: "32px 28px", display: "flex", flexDirection: "column", justifyContent: "flex-end", minHeight: 180 }}>
-              <div style={{ fontSize: 56, fontWeight: 700, letterSpacing: "-0.03em", color: "#fff", lineHeight: 1 }}>
+            {/* Accounts connected — accent */}
+            <div className="flex min-h-45 flex-col justify-end rounded-2xl border border-accent bg-accent px-7 py-8 text-accent-fg">
+              <div className="type-display-m-4 tracking-tight">
                 <LiveStat value={publicStats?.accounts ?? null} label="" skeletonWidth={80} skeletonHeight={52} />
               </div>
-              <p style={{ fontSize: 12, color: "#c4c7ff", margin: "10px 0 0", letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 600 }}>Accounts connected</p>
+              <p className="mt-2.5 type-body-sb-xs uppercase tracking-wider text-neutral-800">Accounts connected</p>
             </div>
 
-            {/* Platforms supported — teal */}
-            <div style={{ background: "#0d2d2a", border: "1px solid #1a4a46", borderRadius: 16, padding: "32px 28px", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 180 }}>
+            {/* Platforms supported — green */}
+            <div className="flex min-h-45 flex-col justify-between rounded-2xl border border-green-200 bg-green-100 px-7 py-8">
               <div>
-                <div style={{ fontSize: 56, fontWeight: 700, letterSpacing: "-0.03em", color: "#34d399", lineHeight: 1, marginBottom: 10 }}>14+</div>
-                <p style={{ fontSize: 12, color: "#6b9e98", margin: "0 0 14px", letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 600 }}>Platforms supported</p>
-                <div style={{ display: "flex", gap: 4, flexWrap: "nowrap", overflow: "hidden" }}>
+                <div className="mb-2.5 type-display-m-4 tracking-tight text-green-700">14+</div>
+                <p className="mb-3.5 type-body-sb-xs uppercase tracking-wider text-green-800">Platforms supported</p>
+                <div className="flex flex-nowrap gap-1 overflow-hidden">
                   {["bluesky","threads","instagram","linkedin","twitter","youtube","tiktok","facebook","mastodon","pinterest","telegram","discord","tumblr","nostr"].map(p => (
                     <PlatformIcon key={p} platform={p} size={14} />
                   ))}
@@ -1246,59 +897,31 @@ export default function RootPage() {
                 href="https://github.com/punkpeye/awesome-mcp-servers"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#34d399", textDecoration: "none", background: "#34d39915", border: "1px solid #34d39930", borderRadius: 20, padding: "5px 12px", marginTop: 14, alignSelf: "flex-start" }}
+                className="mt-3.5 inline-flex items-center gap-1.5 self-start rounded-full border border-green-200 bg-green-50 px-3 py-1 type-body-r-xs text-green-800"
               >
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="#f0a500"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="text-brand-700"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
                 Featured in awesome-mcp-servers
               </a>
             </div>
           </div>
-          <style>{`
-            @keyframes skel-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
-            @media(max-width:768px){.ph-stats-grid{grid-template-columns:1fr !important}}
-          `}</style>
         </section>
 
         {/* ── FEATURES ── */}
         <section
           id="features"
-          className="ph-section"
-          style={{ maxWidth: 1120, margin: "0 auto", padding: "104px 40px" }}
+          className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24"
         >
-          <div style={{ textAlign: "center", marginBottom: 60 }}>
-            <span className="section-label">FEATURES</span>
-            <h2
-              style={{
-                fontSize: 44,
-                fontWeight: 700,
-                letterSpacing: "-0.03em",
-                margin: "16px 0 14px",
-                color: "#f2f2f2",
-              }}
-            >
+          <div className="mb-15 text-center">
+            <span className="type-body-sb-xs uppercase tracking-wider text-brand-800">FEATURES</span>
+            <h2 className="mt-4 mb-3.5 type-head-sb-3 tracking-tight text-fg md:type-head-sb-1">
               Everything you need to post consistently
             </h2>
-            <p
-              style={{
-                fontSize: 17,
-                color: "#8a8a8a",
-                maxWidth: 560,
-                margin: "0 auto",
-                lineHeight: 1.6,
-              }}
-            >
+            <p className="mx-auto max-w-140 type-body-r-l text-muted">
               A complete scheduling workflow built for creators and teams,
               without the manual grind.
             </p>
           </div>
-          <div
-            className="ph-features-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 18,
-            }}
-          >
+          <div className="grid grid-cols-1 gap-4.5 sm:grid-cols-2 lg:grid-cols-3">
             {[
               {
                 icon: <ChatIcon />,
@@ -1364,43 +987,15 @@ export default function RootPage() {
               <Link
                 key={title}
                 href={href}
-                className="ph-feature-card"
-                style={{ display: "block" }}
+                className="card block p-6 transition-colors hover:border-neutral-300"
               >
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 11,
-                    background: "#17172a",
-                    border: "1px solid #26264a",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: 20,
-                    color: "#8b91e8",
-                  }}
-                >
+                <div className="mb-5 flex size-10 items-center justify-center rounded-xl bg-brand-100 text-brand-800">
                   {icon}
                 </div>
-                <h3
-                  style={{
-                    fontSize: 17,
-                    fontWeight: 600,
-                    margin: "0 0 8px",
-                    color: "#ededed",
-                  }}
-                >
+                <h3 className="mb-2 type-body-sb-l text-fg">
                   {title}
                 </h3>
-                <p
-                  style={{
-                    fontSize: 14.5,
-                    color: "#888",
-                    lineHeight: 1.55,
-                    margin: 0,
-                  }}
-                >
+                <p className="type-body-r-s text-muted">
                   {body}
                 </p>
               </Link>
@@ -1409,88 +1004,30 @@ export default function RootPage() {
         </section>
 
         {/* ── FEATURE DEEP-DIVE: 1 MULTI-PLATFORM ── */}
-        <section
-          style={{ borderTop: "1px solid #161616", background: "#0c0c0c" }}
-        >
-          <div
-            className="ph-feature-detail-row ph-section"
-            style={{
-              maxWidth: 1100,
-              margin: "0 auto",
-              padding: "88px 40px",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 80,
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "5px 12px",
-                  border: "1px solid #26264a",
-                  background: "#17172a",
-                  borderRadius: 999,
-                  marginBottom: 20,
-                }}
-              >
-                <span
-                  className="mono"
-                  style={{
-                    fontSize: 11.5,
-                    color: "#8b91e8",
-                    fontWeight: 600,
-                    letterSpacing: ".08em",
-                  }}
-                >
+        <section className="border-t border-border bg-surface/40">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-7 px-5 py-16 sm:gap-10 md:px-12 md:py-22 lg:grid-cols-2 lg:gap-20">
+            <div className="min-w-0">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-300 bg-brand-100 px-3 py-1">
+                <span className="type-body-sb-xs tracking-wider text-brand-800">
                   MULTI-PLATFORM
                 </span>
               </div>
-              <h2
-                style={{
-                  fontSize: 34,
-                  fontWeight: 700,
-                  letterSpacing: "-0.025em",
-                  margin: "0 0 16px",
-                  color: "#f2f2f2",
-                  lineHeight: 1.2,
-                }}
-              >
+              <h2 className="mb-4 type-head-sb-4 tracking-tight text-fg md:type-head-sb-2">
                 Write once,
                 <br />
                 post everywhere
               </h2>
-              <p
-                style={{
-                  color: "#888",
-                  lineHeight: 1.75,
-                  fontSize: 16,
-                  marginBottom: 28,
-                }}
-              >
+              <p className="mb-7 type-body-r-m text-muted">
                 Compose your post in a single editor and publish to every
                 connected account simultaneously. Each platform renders its own
                 preview character limits, hashtags, and link handling all
                 accounted for.
               </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <div className="flex flex-wrap gap-2">
                 {PLATFORMS_GRID.map((p) => (
                   <span
                     key={p.domain}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "6px 12px",
-                      borderRadius: 999,
-                      border: "1px solid #1e1e1e",
-                      background: "#111",
-                      fontSize: 13,
-                      color: "#ccc",
-                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 type-body-r-s text-fg"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -1512,73 +1049,24 @@ export default function RootPage() {
         </section>
 
         {/* ── FEATURE DEEP-DIVE: 2 REELS & STORIES ── */}
-        <section style={{ borderTop: "1px solid #161616" }}>
-          <div
-            className="ph-feature-detail-row ph-section"
-            style={{
-              maxWidth: 1100,
-              margin: "0 auto",
-              padding: "88px 40px",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 80,
-              alignItems: "center",
-              direction: "rtl",
-            }}
-          >
-            <div style={{ direction: "ltr" }}>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "5px 12px",
-                  border: "1px solid #26264a",
-                  background: "#17172a",
-                  borderRadius: 999,
-                  marginBottom: 20,
-                }}
-              >
-                <span
-                  className="mono"
-                  style={{
-                    fontSize: 11.5,
-                    color: "#8b91e8",
-                    fontWeight: 600,
-                    letterSpacing: ".08em",
-                  }}
-                >
+        <section className="border-t border-border">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-7 px-5 py-16 sm:gap-10 md:px-12 md:py-22 lg:grid-cols-2 lg:gap-20">
+            <div className="min-w-0 lg:order-2">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-300 bg-brand-100 px-3 py-1">
+                <span className="type-body-sb-xs tracking-wider text-brand-800">
                   INSTAGRAM
                 </span>
               </div>
-              <h2
-                style={{
-                  fontSize: 34,
-                  fontWeight: 700,
-                  letterSpacing: "-0.025em",
-                  margin: "0 0 16px",
-                  color: "#f2f2f2",
-                  lineHeight: 1.2,
-                }}
-              >
+              <h2 className="mb-4 type-head-sb-4 tracking-tight text-fg md:type-head-sb-2">
                 Reels, Stories,
                 <br />
                 and Carousels
               </h2>
-              <p
-                style={{
-                  color: "#888",
-                  lineHeight: 1.75,
-                  fontSize: 16,
-                  marginBottom: 24,
-                }}
-              >
+              <p className="mb-6 type-body-r-m text-muted">
                 Full Instagram media support baked in. Schedule a Reel, a Story,
                 or a carousel with up to 10 slides all from the same composer.
               </p>
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}
-              >
+              <div className="flex flex-col gap-2.5">
                 {[
                   "Reel - short-form video with caption",
                   "Story - image or video, 24-hour expiry",
@@ -1586,13 +1074,7 @@ export default function RootPage() {
                 ].map((item) => (
                   <div
                     key={item}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 10,
-                      fontSize: 14,
-                      color: "#ccc",
-                    }}
+                    className="flex items-start gap-2.5 type-body-r-s text-fg"
                   >
                     <CheckCircleIcon />
                     {item}
@@ -1605,75 +1087,25 @@ export default function RootPage() {
         </section>
 
         {/* ── FEATURE DEEP-DIVE: 3 CALENDAR ── */}
-        <section
-          style={{ borderTop: "1px solid #161616", background: "#0c0c0c" }}
-        >
-          <div
-            className="ph-feature-detail-row ph-section"
-            style={{
-              maxWidth: 1100,
-              margin: "0 auto",
-              padding: "88px 40px",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 80,
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "5px 12px",
-                  border: "1px solid #26264a",
-                  background: "#17172a",
-                  borderRadius: 999,
-                  marginBottom: 20,
-                }}
-              >
-                <span
-                  className="mono"
-                  style={{
-                    fontSize: 11.5,
-                    color: "#8b91e8",
-                    fontWeight: 600,
-                    letterSpacing: ".08em",
-                  }}
-                >
+        <section className="border-t border-border bg-surface/40">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-7 px-5 py-16 sm:gap-10 md:px-12 md:py-22 lg:grid-cols-2 lg:gap-20">
+            <div className="min-w-0">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-300 bg-brand-100 px-3 py-1">
+                <span className="type-body-sb-xs tracking-wider text-brand-800">
                   CALENDAR
                 </span>
               </div>
-              <h2
-                style={{
-                  fontSize: 34,
-                  fontWeight: 700,
-                  letterSpacing: "-0.025em",
-                  margin: "0 0 16px",
-                  color: "#f2f2f2",
-                  lineHeight: 1.2,
-                }}
-              >
+              <h2 className="mb-4 type-head-sb-4 tracking-tight text-fg md:type-head-sb-2">
                 Drag to reschedule.
                 <br />
                 Instantly.
               </h2>
-              <p
-                style={{
-                  color: "#888",
-                  lineHeight: 1.75,
-                  fontSize: 16,
-                  marginBottom: 24,
-                }}
-              >
+              <p className="mb-6 type-body-r-m text-muted">
                 See your entire content pipeline on a month, week, or day
                 calendar. Drag any scheduled post to a new date and time the job
                 is rescheduled server-side in real time.
               </p>
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}
-              >
+              <div className="flex flex-col gap-2.5">
                 {[
                   "Month, week, and day views",
                   "Drag-and-drop rescheduling",
@@ -1681,13 +1113,7 @@ export default function RootPage() {
                 ].map((item) => (
                   <div
                     key={item}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 10,
-                      fontSize: 14,
-                      color: "#ccc",
-                    }}
+                    className="flex items-start gap-2.5 type-body-r-s text-fg"
                   >
                     <CheckCircleIcon />
                     {item}
@@ -1700,76 +1126,27 @@ export default function RootPage() {
         </section>
 
         {/* ── FEATURE DEEP-DIVE: 4 FIRST COMMENT ── */}
-        <section style={{ borderTop: "1px solid #161616" }}>
-          <div
-            className="ph-feature-detail-row ph-section"
-            style={{
-              maxWidth: 1100,
-              margin: "0 auto",
-              padding: "88px 40px",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 80,
-              alignItems: "center",
-              direction: "rtl",
-            }}
-          >
-            <div style={{ direction: "ltr" }}>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "5px 12px",
-                  border: "1px solid #26264a",
-                  background: "#17172a",
-                  borderRadius: 999,
-                  marginBottom: 20,
-                }}
-              >
-                <span
-                  className="mono"
-                  style={{
-                    fontSize: 11.5,
-                    color: "#8b91e8",
-                    fontWeight: 600,
-                    letterSpacing: ".08em",
-                  }}
-                >
+        <section className="border-t border-border">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-7 px-5 py-16 sm:gap-10 md:px-12 md:py-22 lg:grid-cols-2 lg:gap-20">
+            <div className="min-w-0 lg:order-2">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-300 bg-brand-100 px-3 py-1">
+                <span className="type-body-sb-xs tracking-wider text-brand-800">
                   FIRST COMMENT
                 </span>
               </div>
-              <h2
-                style={{
-                  fontSize: 34,
-                  fontWeight: 700,
-                  letterSpacing: "-0.025em",
-                  margin: "0 0 16px",
-                  color: "#f2f2f2",
-                  lineHeight: 1.2,
-                }}
-              >
+              <h2 className="mb-4 type-head-sb-4 tracking-tight text-fg md:type-head-sb-2">
                 First comment.
                 <br />
                 On every platform.
               </h2>
-              <p
-                style={{
-                  color: "#888",
-                  lineHeight: 1.75,
-                  fontSize: 16,
-                  marginBottom: 24,
-                }}
-              >
+              <p className="mb-6 type-body-r-m text-muted">
                 Buffer and Hootsuite do first comments on Instagram. That&apos;s
                 it. Posthive fires a reply the second your post goes live on
                 Bluesky, Threads, Mastodon, and LinkedIn too. Hashtag stacks,
                 affiliate links, thread continuations without cluttering your
                 main copy.
               </p>
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}
-              >
+              <div className="flex flex-col gap-2.5">
                 {[
                   "Works on Bluesky, Threads, Mastodon & LinkedIn",
                   "Fires within seconds of the main post",
@@ -1777,13 +1154,7 @@ export default function RootPage() {
                 ].map((item) => (
                   <div
                     key={item}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 10,
-                      fontSize: 14,
-                      color: "#ccc",
-                    }}
+                    className="flex items-start gap-2.5 type-body-r-s text-fg"
                   >
                     <CheckCircleIcon />
                     {item}
@@ -1796,75 +1167,25 @@ export default function RootPage() {
         </section>
 
         {/* ── FEATURE DEEP-DIVE: 5 PER-PLATFORM OVERRIDES ── */}
-        <section
-          style={{ borderTop: "1px solid #161616", background: "#0c0c0c" }}
-        >
-          <div
-            className="ph-feature-detail-row ph-section"
-            style={{
-              maxWidth: 1100,
-              margin: "0 auto",
-              padding: "88px 40px",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 80,
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "5px 12px",
-                  border: "1px solid #26264a",
-                  background: "#17172a",
-                  borderRadius: 999,
-                  marginBottom: 20,
-                }}
-              >
-                <span
-                  className="mono"
-                  style={{
-                    fontSize: 11.5,
-                    color: "#8b91e8",
-                    fontWeight: 600,
-                    letterSpacing: ".08em",
-                  }}
-                >
+        <section className="border-t border-border bg-surface/40">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-7 px-5 py-16 sm:gap-10 md:px-12 md:py-22 lg:grid-cols-2 lg:gap-20">
+            <div className="min-w-0">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-300 bg-brand-100 px-3 py-1">
+                <span className="type-body-sb-xs tracking-wider text-brand-800">
                   PER-PLATFORM
                 </span>
               </div>
-              <h2
-                style={{
-                  fontSize: 34,
-                  fontWeight: 700,
-                  letterSpacing: "-0.025em",
-                  margin: "0 0 16px",
-                  color: "#f2f2f2",
-                  lineHeight: 1.2,
-                }}
-              >
+              <h2 className="mb-4 type-head-sb-4 tracking-tight text-fg md:type-head-sb-2">
                 Tailor every post
                 <br />
                 per account
               </h2>
-              <p
-                style={{
-                  color: "#888",
-                  lineHeight: 1.75,
-                  fontSize: 16,
-                  marginBottom: 24,
-                }}
-              >
+              <p className="mb-6 type-body-r-m text-muted">
                 One base post, multiple voices. Override the caption and first
                 comment for each connected account. Your Bluesky audience gets
                 the long-form take; your Threads followers get the hook.
               </p>
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}
-              >
+              <div className="flex flex-col gap-2.5">
                 {[
                   "Override text per connected account",
                   "Override first comment per account",
@@ -1872,13 +1193,7 @@ export default function RootPage() {
                 ].map((item) => (
                   <div
                     key={item}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 10,
-                      fontSize: 14,
-                      color: "#ccc",
-                    }}
+                    className="flex items-start gap-2.5 type-body-r-s text-fg"
                   >
                     <CheckCircleIcon />
                     {item}
@@ -1891,74 +1206,25 @@ export default function RootPage() {
         </section>
 
         {/* ── FEATURE DEEP-DIVE: 6 BULK CSV ── */}
-        <section style={{ borderTop: "1px solid #161616" }}>
-          <div
-            className="ph-feature-detail-row ph-section"
-            style={{
-              maxWidth: 1100,
-              margin: "0 auto",
-              padding: "88px 40px",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 80,
-              alignItems: "center",
-              direction: "rtl",
-            }}
-          >
-            <div style={{ direction: "ltr" }}>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "5px 12px",
-                  border: "1px solid #26264a",
-                  background: "#17172a",
-                  borderRadius: 999,
-                  marginBottom: 20,
-                }}
-              >
-                <span
-                  className="mono"
-                  style={{
-                    fontSize: 11.5,
-                    color: "#8b91e8",
-                    fontWeight: 600,
-                    letterSpacing: ".08em",
-                  }}
-                >
+        <section className="border-t border-border">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-7 px-5 py-16 sm:gap-10 md:px-12 md:py-22 lg:grid-cols-2 lg:gap-20">
+            <div className="min-w-0 lg:order-2">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-300 bg-brand-100 px-3 py-1">
+                <span className="type-body-sb-xs tracking-wider text-brand-800">
                   BULK SCHEDULING
                 </span>
               </div>
-              <h2
-                style={{
-                  fontSize: 34,
-                  fontWeight: 700,
-                  letterSpacing: "-0.025em",
-                  margin: "0 0 16px",
-                  color: "#f2f2f2",
-                  lineHeight: 1.2,
-                }}
-              >
+              <h2 className="mb-4 type-head-sb-4 tracking-tight text-fg md:type-head-sb-2">
                 Schedule hundreds
                 <br />
                 of posts from a CSV
               </h2>
-              <p
-                style={{
-                  color: "#888",
-                  lineHeight: 1.75,
-                  fontSize: 16,
-                  marginBottom: 24,
-                }}
-              >
+              <p className="mb-6 type-body-r-m text-muted">
                 Upload a spreadsheet and Posthive schedules every row
                 automatically. Mix platforms per row, attach images, exclude
                 specific networks all from a single file.
               </p>
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}
-              >
+              <div className="flex flex-col gap-2.5">
                 {[
                   "Schedule dozens of posts in seconds with a CSV upload",
                   "Exclude platforms per row !instagram, !linkedin",
@@ -1967,13 +1233,7 @@ export default function RootPage() {
                 ].map((item) => (
                   <div
                     key={item}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 10,
-                      fontSize: 14,
-                      color: "#ccc",
-                    }}
+                    className="flex items-start gap-2.5 type-body-r-s text-fg"
                   >
                     <CheckCircleIcon />
                     {item}
@@ -1986,64 +1246,25 @@ export default function RootPage() {
         </section>
 
         {/* ── MCP / AI AGENTS ── */}
-        <section
-          style={{ borderTop: "1px solid #161616", background: "#0c0c0c" }}
-        >
-          <div
-            className="ph-section"
-            style={{ maxWidth: 1100, margin: "0 auto", padding: "104px 40px" }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 80,
-                alignItems: "center",
-              }}
-              className="ph-feature-detail-row"
-            >
+        <section className="border-t border-border bg-surface/40">
+          <div className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+            <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-20">
               {/* Left — copy */}
-              <div>
-                <span className="section-label scroll-hidden d1">
+              <div className="min-w-0">
+                <span className="scroll-hidden d1 inline-block type-body-sb-xs uppercase tracking-wider text-brand-800">
                   AI-NATIVE
                 </span>
-                <h2
-                  className="scroll-hidden d2"
-                  style={{
-                    fontSize: 44,
-                    fontWeight: 700,
-                    letterSpacing: "-0.03em",
-                    margin: "16px 0 16px",
-                    color: "#f2f2f2",
-                    lineHeight: 1.1,
-                  }}
-                >
+                <h2 className="scroll-hidden d2 my-4 type-head-sb-3 tracking-tight text-fg md:type-head-sb-1">
                   Use with Claude,
                   <br />
                   Cursor, or any AI agent.
                 </h2>
-                <p
-                  className="scroll-hidden d3"
-                  style={{
-                    color: "#888",
-                    fontSize: 17,
-                    lineHeight: 1.7,
-                    margin: "0 0 32px",
-                  }}
-                >
+                <p className="scroll-hidden d3 mb-8 type-body-r-l text-muted">
                   Posthive speaks MCP the Model Context Protocol. Connect your
                   AI agent once and let it draft, schedule, and manage posts
                   across all your accounts without leaving the chat.
                 </p>
-                <div
-                  className="scroll-hidden d4"
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 12,
-                    marginBottom: 36,
-                  }}
-                >
+                <div className="scroll-hidden d4 mb-9 flex flex-col gap-3">
                   {[
                     "Schedule posts from Claude or Cursor",
                     "Approve drafts without opening the app",
@@ -2052,30 +1273,31 @@ export default function RootPage() {
                   ].map((item) => (
                     <div
                       key={item}
-                      style={{ display: "flex", alignItems: "center", gap: 10 }}
+                      className="flex items-center gap-2.5"
                     >
                       <svg
                         width="18"
                         height="18"
                         viewBox="0 0 18 18"
                         fill="none"
+                        className="shrink-0 text-brand-800"
                       >
                         <circle
                           cx="9"
                           cy="9"
                           r="9"
-                          fill="#5b63d3"
+                          fill="currentColor"
                           fillOpacity=".15"
                         />
                         <path
                           d="M5.5 9l2.5 2.5 4.5-5"
-                          stroke="#5b63d3"
+                          stroke="currentColor"
                           strokeWidth="1.6"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
                       </svg>
-                      <span style={{ color: "#ccc", fontSize: 15 }}>
+                      <span className="type-body-r-m text-fg">
                         {item}
                       </span>
                     </div>
@@ -2083,25 +1305,13 @@ export default function RootPage() {
                 </div>
                 <a
                   href="/docs#mcp-overview"
-                  className="scroll-hidden d5"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    background: "#fff",
-                    color: "#0a0a0a",
-                    padding: "11px 22px",
-                    borderRadius: 8,
-                    fontWeight: 600,
-                    fontSize: 14,
-                    textDecoration: "none",
-                  }}
+                  className="scroll-hidden d5 btn-primary px-5 py-2.5"
                 >
                   Read MCP docs
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path
                       d="M2 7h10M7 2l5 5-5 5"
-                      stroke="#0a0a0a"
+                      stroke="currentColor"
                       strokeWidth="1.6"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -2110,82 +1320,40 @@ export default function RootPage() {
                 </a>
               </div>
               {/* Right — code snippet */}
-              <div
-                className="scroll-hidden d3"
-                style={{
-                  background: "#111",
-                  border: "1px solid #1e1e1e",
-                  borderRadius: 16,
-                  padding: "28px 32px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: 13,
-                  lineHeight: 1.7,
-                  color: "#ccc",
-                }}
-              >
-                <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-                  <span
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      background: "#333",
-                      display: "inline-block",
-                    }}
-                  />
-                  <span
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      background: "#333",
-                      display: "inline-block",
-                    }}
-                  />
-                  <span
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      background: "#333",
-                      display: "inline-block",
-                    }}
-                  />
+              <div className="scroll-hidden d3 card min-w-0 overflow-x-auto px-5 py-7 type-mono-r-s text-fg md:px-8">
+                <div className="mb-5 flex gap-1.5">
+                  <span className="inline-block size-2.5 rounded-full bg-neutral-200" />
+                  <span className="inline-block size-2.5 rounded-full bg-neutral-200" />
+                  <span className="inline-block size-2.5 rounded-full bg-neutral-200" />
                 </div>
-                <div style={{ marginBottom: 16 }}>
-                  <span style={{ color: "#5b63d3" }}>
+                <div className="mb-4">
+                  <span className="text-brand-800">
                     # Claude Code — one command
                   </span>
                 </div>
-                <div style={{ marginBottom: 24 }}>
-                  <span style={{ color: "#888" }}>$ </span>
-                  <span style={{ color: "#f2f2f2" }}>
+                <div className="mb-6">
+                  <span className="text-muted">$ </span>
+                  <span className="text-fg">
                     claude mcp add posthive \
                   </span>
                   <br />
-                  <span style={{ color: "#f2f2f2" }}>
+                  <span className="text-fg">
                     &nbsp;&nbsp;--transport http \
                   </span>
                   <br />
-                  <span style={{ color: "#f2f2f2" }}>
+                  <span className="text-fg">
                     &nbsp;&nbsp;--url https://api.posthive.co/mcp/
-                    <span style={{ color: "#5b63d3" }}>ph_your_key</span>
+                    <span className="text-brand-800">ph_your_key</span>
                   </span>
                 </div>
-                <div
-                  style={{
-                    borderTop: "1px solid #1e1e1e",
-                    paddingTop: 16,
-                    color: "#888",
-                  }}
-                >
-                  <span style={{ color: "#5b63d3" }}>
+                <div className="border-t border-border pt-4 text-muted">
+                  <span className="text-brand-800">
                     # Or connect via claude.ai
                   </span>
                   <br />
                   <span>Settings → Connectors → Add custom</span>
                   <br />
-                  <span style={{ color: "#f2f2f2" }}>
+                  <span className="text-fg">
                     https://api.posthive.co/mcp
                   </span>
                 </div>
@@ -2195,92 +1363,37 @@ export default function RootPage() {
         </section>
 
         {/* ── PLATFORMS ── */}
-        <section
-          style={{ borderTop: "1px solid #161616", background: "#0c0c0c" }}
-        >
-          <div
-            className="ph-section"
-            style={{ maxWidth: 1120, margin: "0 auto", padding: "104px 40px" }}
-          >
-            <div style={{ textAlign: "center", marginBottom: 56 }}>
-              <span className="section-label">SUPPORTED PLATFORMS</span>
-              <h2
-                style={{
-                  fontSize: 44,
-                  fontWeight: 700,
-                  letterSpacing: "-0.03em",
-                  margin: "16px 0 14px",
-                  color: "#f2f2f2",
-                }}
-              >
+        <section className="border-t border-border bg-surface/40">
+          <div className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+            <div className="mb-14 text-center">
+              <span className="type-body-sb-xs uppercase tracking-wider text-brand-800">SUPPORTED PLATFORMS</span>
+              <h2 className="mt-4 mb-3.5 type-head-sb-3 tracking-tight text-fg md:type-head-sb-1">
                 Multiple networks. One workflow.
               </h2>
-              <p
-                style={{
-                  fontSize: 17,
-                  color: "#8a8a8a",
-                  maxWidth: 520,
-                  margin: "0 auto",
-                  lineHeight: 1.6,
-                }}
-              >
+              <p className="mx-auto max-w-130 type-body-r-l text-muted">
                 Native support for the platforms creators and indie builders
                 actually use.
               </p>
             </div>
-            <div
-              className="ph-platforms-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: 16,
-              }}
-            >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {PLATFORMS_GRID.map((p) => (
                 <Link
                   key={p.platform}
                   href={`/platforms/${p.platform}`}
-                  className="ph-platform-card"
+                  className="card relative flex flex-col gap-3.5 overflow-hidden p-5.5 transition-colors hover:border-neutral-300"
                 >
                   <span
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 2,
-                      background: p.accent,
-                    }}
+                    className="absolute inset-x-0 top-0 h-0.5 bg-(--c)"
+                    style={{ "--c": p.accent } as React.CSSProperties}
                   />
-                  <span
-                    style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 11,
-                      background: "#181818",
-                      border: "1px solid #232323",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
+                  <span className="flex size-10.5 items-center justify-center rounded-xl border border-border bg-bg">
                     <PlatformIcon platform={p.platform} size={22} />
                   </span>
                   <div>
-                    <h3
-                      style={{
-                        fontSize: 15.5,
-                        fontWeight: 600,
-                        margin: "0 0 4px",
-                        color: "#ededed",
-                      }}
-                    >
+                    <h3 className="mb-1 type-body-sb-m text-fg">
                       {p.name}
                     </h3>
-                    <p
-                      className="mono"
-                      style={{ fontSize: 12.5, color: "#777", margin: 0 }}
-                    >
+                    <p className="type-body-r-xs text-muted">
                       {p.meta}
                     </p>
                   </div>
@@ -2288,55 +1401,15 @@ export default function RootPage() {
               ))}
               <a
                 href="mailto:guna@posthive.co?subject=Platform%20Request"
-                style={{
-                  background: "linear-gradient(140deg,#131320,#0f0f16)",
-                  border: "1px dashed #3d3060",
-                  borderRadius: 14,
-                  padding: 22,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  gap: 8,
-                  textDecoration: "none",
-                  cursor: "pointer",
-                  transition: "border-color 150ms, box-shadow 150ms",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#5b63d3";
-                  e.currentTarget.style.boxShadow =
-                    "0 0 0 1px #5b63d340, 0 4px 24px #5b63d320";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "#3d3060";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
+                className="flex cursor-pointer flex-col justify-center gap-2 rounded-2xl border border-dashed border-brand-300 bg-brand-100/60 p-5.5 transition hover:border-brand-400 hover:shadow-lg"
               >
-                <span
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: "#1a1a2e",
-                    border: "1px solid #2a2a4a",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 20,
-                    color: "#5b63d3",
-                    marginBottom: 2,
-                  }}
-                >
+                <span className="mb-0.5 flex size-9 items-center justify-center rounded-xl border border-brand-300 bg-brand-100 type-body-r-xl text-brand-800">
                   +
                 </span>
-                <span
-                  style={{ fontSize: 15.5, fontWeight: 600, color: "#ededed" }}
-                >
+                <span className="type-body-sb-m text-fg">
                   More coming
                 </span>
-                <span
-                  className="mono"
-                  style={{ fontSize: 12.5, color: "#888" }}
-                >
+                <span className="type-body-r-xs text-muted">
                   Request a platform →
                 </span>
               </a>
@@ -2347,31 +1420,15 @@ export default function RootPage() {
         {/* ── HOW IT WORKS ── */}
         <section
           id="how"
-          className="ph-section"
-          style={{ maxWidth: 1120, margin: "0 auto", padding: "104px 40px" }}
+          className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24"
         >
-          <div style={{ textAlign: "center", marginBottom: 60 }}>
-            <span className="section-label">HOW IT WORKS</span>
-            <h2
-              style={{
-                fontSize: 44,
-                fontWeight: 700,
-                letterSpacing: "-0.03em",
-                margin: "16px 0 0",
-                color: "#f2f2f2",
-              }}
-            >
+          <div className="mb-15 text-center">
+            <span className="type-body-sb-xs uppercase tracking-wider text-brand-800">HOW IT WORKS</span>
+            <h2 className="mt-4 type-head-sb-3 tracking-tight text-fg md:type-head-sb-1">
               From zero to scheduled in minutes
             </h2>
           </div>
-          <div
-            className="ph-how-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 20,
-            }}
-          >
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
             {[
               {
                 n: "01",
@@ -2389,48 +1446,14 @@ export default function RootPage() {
                 desc: "Pick a date and time. Posthive fires on the second. Drag to reschedule from the calendar.",
               },
             ].map(({ n, title, desc }) => (
-              <div
-                key={n}
-                style={{
-                  background: "#111111",
-                  border: "1px solid #1e1e1e",
-                  borderRadius: 16,
-                  padding: 32,
-                }}
-              >
-                <span
-                  className="mono"
-                  style={{
-                    display: "inline-block",
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: "#8b91e8",
-                    border: "1px solid #26264a",
-                    background: "#17172a",
-                    borderRadius: 8,
-                    padding: "5px 10px",
-                  }}
-                >
+              <div key={n} className="card p-8">
+                <span className="inline-block rounded-lg border border-brand-300 bg-brand-100 px-2.5 py-1 type-mono-m-s text-brand-800">
                   {n}
                 </span>
-                <h3
-                  style={{
-                    fontSize: 19,
-                    fontWeight: 600,
-                    margin: "24px 0 10px",
-                    color: "#ededed",
-                  }}
-                >
+                <h3 className="mt-6 mb-2.5 type-body-sb-l text-fg">
                   {title}
                 </h3>
-                <p
-                  style={{
-                    fontSize: 14.5,
-                    color: "#888",
-                    lineHeight: 1.6,
-                    margin: 0,
-                  }}
-                >
+                <p className="type-body-r-s text-muted">
                   {desc}
                 </p>
               </div>
@@ -2439,100 +1462,38 @@ export default function RootPage() {
         </section>
 
         {/* ── FOUNDER ── */}
-        <section
-          className="ph-section"
-          style={{ padding: "0 40px 80px", maxWidth: 680, margin: "0 auto" }}
-        >
-          <div
-            style={{
-              background: "#111111",
-              border: "1px solid #1e1e1e",
-              borderRadius: 20,
-              padding: "40px 36px",
-              textAlign: "center",
-            }}
-          >
+        <section className="mx-auto max-w-170 px-5 pb-20 md:px-10">
+          <div className="card rounded-3xl px-6 py-10 text-center md:px-9">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/founder.jpg"
               alt="Guna, founder of Posthive"
               width={72}
               height={72}
-              style={{
-                borderRadius: "50%",
-                border: "3px solid #2a2a2a",
-                display: "block",
-                margin: "0 auto 16px",
-              }}
+              className="mx-auto mb-4 block rounded-full border-3 border-border"
             />
-            <p
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: "#ededed",
-                margin: "0 0 4px",
-              }}
-            >
+            <p className="mb-1 type-body-sb-l text-fg">
               Hey, I&apos;m Guna
             </p>
-            <p
-              className="mono"
-              style={{ fontSize: 13, color: "#888", margin: "0 0 24px" }}
-            >
+            <p className="mb-6 type-body-r-s text-muted">
               frontend dev by day · indie builder by night
             </p>
-            <div
-              style={{
-                textAlign: "left",
-                display: "flex",
-                flexDirection: "column",
-                gap: 14,
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 14.5,
-                  color: "#888",
-                  lineHeight: 1.7,
-                  margin: 0,
-                }}
-              >
+            <div className="flex flex-col gap-3.5 text-left">
+              <p className="type-body-r-s text-muted">
                 I was building in public sharing updates on Bluesky, Threads,
                 LinkedIn, and Mastodon at the same time. Copy-pasting the same
                 post into five different apps every single day.
               </p>
-              <p
-                style={{
-                  fontSize: 14.5,
-                  color: "#888",
-                  lineHeight: 1.7,
-                  margin: 0,
-                }}
-              >
+              <p className="type-body-r-s text-muted">
                 Every tool I tried was either too expensive, too bloated, or
                 didn&apos;t support the platforms I actually used. None of them
                 felt like they were built for indie builders.
               </p>
-              <p
-                style={{
-                  fontSize: 14.5,
-                  color: "#888",
-                  lineHeight: 1.7,
-                  margin: 0,
-                }}
-              >
+              <p className="type-body-r-s text-muted">
                 So I built Posthive focused on the platforms that matter to
                 creators. Schedule once, post everywhere.
               </p>
-              <p
-                style={{
-                  fontSize: 14.5,
-                  color: "#ededed",
-                  lineHeight: 1.7,
-                  margin: 0,
-                  fontWeight: 500,
-                }}
-              >
+              <p className="type-body-m-s text-fg">
                 if it saves you time too, that&apos;s the whole point.
               </p>
             </div>
@@ -2540,18 +1501,7 @@ export default function RootPage() {
               href="https://x.com/gunaa_dev"
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 7,
-                marginTop: 24,
-                fontSize: 13,
-                fontWeight: 500,
-                color: "#888",
-                padding: "7px 14px",
-                borderRadius: 8,
-                border: "1px solid #2a2a2a",
-              }}
+              className="mt-6 inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2 type-body-m-s text-muted transition-colors hover:text-fg"
             >
               <svg
                 width="14"
@@ -2569,46 +1519,21 @@ export default function RootPage() {
         {/* ── PRICING ── */}
         <section
           id="pricing"
-          style={{ borderTop: "1px solid #161616", background: "#0c0c0c" }}
+          className="border-t border-border bg-surface/40"
         >
-          <div
-            className="ph-section"
-            style={{ maxWidth: 1120, margin: "0 auto", padding: "104px 40px" }}
-          >
-            <div style={{ textAlign: "center", marginBottom: 60 }}>
-              <span className="section-label">PRICING</span>
-              <h2
-                style={{
-                  fontSize: 44,
-                  fontWeight: 700,
-                  letterSpacing: "-0.03em",
-                  margin: "16px 0 14px",
-                  color: "#f2f2f2",
-                }}
-              >
+          <div className="mx-auto max-w-6xl px-5 py-16 md:px-12 md:py-24">
+            <div className="mb-15 text-center">
+              <span className="type-body-sb-xs uppercase tracking-wider text-brand-800">PRICING</span>
+              <h2 className="mt-4 mb-3.5 type-head-sb-3 tracking-tight text-fg md:type-head-sb-1">
                 Simple, transparent pricing
               </h2>
-              <p style={{ fontSize: 17, color: "#8a8a8a", margin: "0 0 20px" }}>
+              <p className="mb-5 type-body-r-l text-muted">
                 Start free. Upgrade when you&apos;re ready. No hidden fees, no
                 per-channel tax.
               </p>
               {/* Currency toggle */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  marginBottom: 28,
-                }}
-              >
-                <div
-                  style={{
-                    display: "inline-flex",
-                    padding: 3,
-                    borderRadius: 10,
-                    backgroundColor: "#111",
-                    border: "1px solid #2a2a2a",
-                  }}
-                >
+              <div className="mb-7 flex justify-center">
+                <div className="inline-flex rounded-xl border border-border bg-surface p-0.5">
                   {(
                     [
                       { label: "INR ₹", val: true },
@@ -2618,186 +1543,91 @@ export default function RootPage() {
                     <button
                       key={label}
                       onClick={() => setIsIndia(val)}
-                      style={{
-                        padding: "5px 16px",
-                        borderRadius: 7,
-                        fontSize: 13,
-                        fontWeight: 500,
-                        border: "none",
-                        cursor: "pointer",
-                        backgroundColor:
-                          isIndia === val ? "#ffffff" : "transparent",
-                        color: isIndia === val ? "#0a0a0a" : "#555",
-                        transition: "all 0.15s",
-                      }}
+                      className={cn(
+                        "cursor-pointer rounded-lg px-4 py-1 type-body-m-s transition-all duration-150",
+                        isIndia === val
+                          ? "bg-accent text-accent-fg"
+                          : "text-muted hover:text-fg",
+                      )}
                     >
                       {label}
                     </button>
                   ))}
                 </div>
               </div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 0,
-                  border: "1px solid #2a2a2a",
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  fontSize: 13.5,
-                }}
-              >
-                <span
-                  style={{
-                    padding: "10px 20px",
-                    background: "#111",
-                    color: "#666",
-                  }}
-                >
+              <div className="inline-flex flex-col overflow-hidden rounded-xl border border-border type-body-r-s sm:flex-row sm:items-center">
+                <span className="bg-surface px-5 py-2.5 text-muted">
                   7 channels on Buffer:{" "}
-                  <span style={{ color: "#ef4444", fontWeight: 600 }}>
+                  <span className="type-body-sb-s text-red-600">
                     $42/mo
                   </span>
                 </span>
-                <span
-                  style={{
-                    padding: "10px 20px",
-                    background: "#17172a",
-                    color: "#9ba2ee",
-                    borderLeft: "1px solid #2a2a2a",
-                    borderRight: "1px solid #2a2a2a",
-                    fontWeight: 600,
-                  }}
-                >
+                <span className="border-y border-border bg-brand-100 px-5 py-2.5 type-body-sb-s text-brand-800 sm:border-x sm:border-y-0">
                   Posthive: $9/mo
                 </span>
-                <span
-                  style={{
-                    padding: "10px 20px",
-                    background: "#111",
-                    color: "#555",
-                  }}
-                >
+                <span className="bg-surface px-5 py-2.5 text-muted">
                   Same channels.
                 </span>
               </div>
             </div>
-            <div
-              className="ph-pricing-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 18,
-                alignItems: "start",
-              }}
-            >
+            <div className="grid grid-cols-1 items-start gap-4.5 lg:grid-cols-3">
               {PLANS.map((plan) => (
                 <div
                   key={plan.id}
-                  className={plan.popular ? "ph-plan-card-pro" : "ph-plan-card"}
+                  className={cn(
+                    "card relative flex flex-col gap-4.5 p-7.5",
+                    plan.popular && "border-brand-400 shadow-lg ring-1 ring-brand-400",
+                  )}
                 >
                   {plan.popular && (
-                    <div
-                      className="mono"
-                      style={{
-                        position: "absolute",
-                        top: -11,
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        background: "#5b63d3",
-                        color: "#fff",
-                        fontSize: 10.5,
-                        fontWeight: 700,
-                        letterSpacing: ".1em",
-                        padding: "4px 12px",
-                        borderRadius: 999,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-3 py-1 type-body-sb-xxs tracking-widest text-accent-fg">
                       MOST POPULAR
                     </div>
                   )}
                   <div>
-                    <h3
-                      style={{
-                        fontSize: 19,
-                        fontWeight: 600,
-                        margin: "0 0 6px",
-                        color: "#ededed",
-                      }}
-                    >
+                    <h3 className="mb-1.5 type-body-sb-l text-fg">
                       {plan.name}
                     </h3>
-                    <p
-                      style={{
-                        fontSize: 13.5,
-                        color: "#888",
-                        margin: 0,
-                        lineHeight: 1.5,
-                      }}
-                    >
+                    <p className="type-body-r-s text-muted">
                       {plan.desc}
                     </p>
                   </div>
-                  <div
-                    style={{ display: "flex", alignItems: "baseline", gap: 8 }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 44,
-                        fontWeight: 800,
-                        color: "#f2f2f2",
-                        letterSpacing: "-0.03em",
-                      }}
-                    >
+                  <div className="flex items-baseline gap-2">
+                    <span className="type-head-sb-1 tracking-tight text-fg">
                       {isIndia ? plan.inr : plan.usd}
                     </span>
-                    <span
-                      style={{ fontSize: 14, color: "#555", marginLeft: 4 }}
-                    >
+                    <span className="ml-1 type-body-r-s text-muted">
                       /mo · {isIndia ? `≈ ${plan.usd}` : `≈ ${plan.inr}`}
                     </span>
                   </div>
                   <Link
                     href={ctaHref}
-                    className={plan.popular ? "ph-plan-btn-pro" : "ph-plan-btn"}
+                    className={cn(
+                      "w-full py-3",
+                      plan.popular ? "btn-primary" : "btn-secondary",
+                    )}
                   >
                     {user ? "Go to scheduler" : "Get started"}
                   </Link>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 10,
-                    }}
-                  >
+                  <div className="flex flex-col gap-2.5">
                     {plan.features.map((f) => (
                       <div
                         key={f.text}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                        }}
+                        className="flex items-center gap-2.5"
                       >
                         <span
-                          style={{
-                            fontSize: 14,
-                            color: f.included ? "#4ade80" : "#333",
-                            flexShrink: 0,
-                          }}
+                          className={cn(
+                            "shrink-0 type-body-r-s",
+                            f.included ? "text-green-700" : "text-neutral-400",
+                          )}
                         >
                           {f.included ? "✓" : "—"}
                         </span>
                         <span
-                          style={{
-                            fontSize: 13.5,
-                            color: f.included
-                              ? plan.popular
-                                ? "#cfcfcf"
-                                : "#b4b4b4"
-                              : "#444",
-                          }}
+                          className={cn(
+                            "type-body-r-s",
+                            f.included ? "text-fg" : "text-neutral-500",
+                          )}
                         >
                           {f.text}
                         </span>
@@ -2807,15 +1637,7 @@ export default function RootPage() {
                 </div>
               ))}
             </div>
-            <p
-              className="mono"
-              style={{
-                textAlign: "center",
-                marginTop: 28,
-                fontSize: 12,
-                color: "#555",
-              }}
-            >
+            <p className="mt-7 text-center type-body-r-xs text-muted">
               * The 100/mo cap and no-link restriction are X API limitations,
               not Posthive limitations.
             </p>
@@ -2823,40 +1645,40 @@ export default function RootPage() {
         </section>
 
         {/* ── TESTIMONIALS ── */}
-        <section style={{ borderTop: "1px solid #161616", background: "#0a0a0a" }}>
-          <div style={{ maxWidth: 760, margin: "0 auto", padding: "80px 24px" }}>
-            <div style={{ textAlign: "center", marginBottom: 40 }}>
-              <p className="section-label" style={{ marginBottom: 12 }}>What people say</p>
-              <h2 style={{ fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 700, color: "#ededed", margin: 0 }}>
+        <section className="border-t border-border bg-bg">
+          <div className="mx-auto max-w-3xl px-5 py-16 md:px-6 md:py-20">
+            <div className="mb-10 text-center">
+              <p className="mb-3 type-body-sb-xs uppercase tracking-wider text-brand-800">What people say</p>
+              <h2 className="type-head-sb-4 text-fg md:type-head-sb-2">
                 Loved by creators & teams
               </h2>
             </div>
-            <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 16, padding: "32px 36px" }}>
+            <div className="card px-6 py-8 md:px-9">
               {/* Stars */}
-              <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
+              <div className="mb-5 flex gap-1">
                 {[...Array(5)].map((_, i) => (
-                  <svg key={i} width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b">
+                  <svg key={i} width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-brand-700">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                 ))}
               </div>
               {/* Quote */}
-              <p style={{ fontSize: 17, color: "#ccc", lineHeight: 1.75, margin: "0 0 28px", fontStyle: "italic" }}>
+              <p className="mb-7 type-body-r-l italic text-fg">
                 &ldquo;Honestly, PostHive has been really helpful for me! ❤️ I usually post on Instagram, YouTube and LinkedIn, and managing everything separately takes time. With PostHive, I can schedule all my videos in one place and it&apos;s so much easier to manage. Makes my work a little less hectic! 😅✨&rdquo;
               </p>
               {/* Author */}
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div className="flex items-center gap-3.5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="https://pub-3d086e1182384cb5a8b0b360696831bc.r2.dev/8e89cb88-a775-45d9-bc93-42f3d3c8ae83-avatar.png"
                   alt="Vibe with Kiki"
                   width={44}
                   height={44}
-                  style={{ borderRadius: "50%", objectFit: "cover" }}
+                  className="rounded-full object-cover"
                 />
                 <div>
-                  <p style={{ margin: 0, fontWeight: 700, color: "#ededed", fontSize: 15 }}>Vibe with Kiki</p>
-                  <p style={{ margin: 0, fontSize: 13, color: "#555" }}>Content Creator · Instagram, YouTube & LinkedIn</p>
+                  <p className="type-body-sb-m text-fg">Vibe with Kiki</p>
+                  <p className="type-body-r-s text-muted">Content Creator · Instagram, YouTube & LinkedIn</p>
                 </div>
               </div>
             </div>
@@ -2864,85 +1686,47 @@ export default function RootPage() {
         </section>
 
         {/* ── FINAL CTA ── */}
-        <section
-          style={{ borderTop: "1px solid #161616", background: "#0c0c0c" }}
-        >
-          <div
-            className="ph-section"
-            style={{
-              maxWidth: 760,
-              margin: "0 auto",
-              padding: "104px 40px",
-              textAlign: "center",
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 48,
-                fontWeight: 800,
-                letterSpacing: "-0.035em",
-                color: "#f4f4f4",
-                margin: "0 0 18px",
-                lineHeight: 1.08,
-              }}
-            >
+        <section className="border-t border-border bg-surface/40">
+          <div className="mx-auto max-w-3xl px-5 py-16 text-center md:px-10 md:py-24">
+            <h2 className="mb-4.5 type-head-sb-3 tracking-tight text-fg md:type-head-sb-1">
               Stop switching tabs.
               <br />
-              <span style={{ color: "#8b8b8b" }}>
+              <span className="text-muted">
                 Start posting consistently.
               </span>
             </h2>
-            <p
-              style={{
-                fontSize: 17,
-                color: "#8a8a8a",
-                lineHeight: 1.65,
-                margin: "0 0 38px",
-              }}
-            >
+            <p className="mb-10 type-body-r-l text-muted">
               One composer for every platform. Schedule your first post in under
               two minutes.
             </p>
-            <div
-              style={{
-                display: "flex",
-                gap: 14,
-                justifyContent: "center",
-                flexWrap: "wrap",
-              }}
-            >
+            <div className="flex flex-wrap justify-center gap-3.5">
               <Link
                 href={ctaHref}
-                className="ph-btn-primary"
-                style={{ fontSize: 16, padding: "15px 28px" }}
+                className="btn-primary px-7 py-3.5 type-body-sb-m"
               >
                 {ctaLabel}
               </Link>
               <Link
                 href="/docs"
-                className="ph-btn-secondary"
-                style={{ fontSize: 16, padding: "15px 28px" }}
+                className="btn-secondary px-7 py-3.5 type-body-sb-m"
               >
                 View docs
               </Link>
             </div>
-            <p
-              className="mono"
-              style={{ fontSize: 12, color: "#444", marginTop: 20 }}
-            >
+            <p className="mt-5 type-body-r-xs text-muted">
               14-day free trial ·{" "}
               <a
                 href={GITHUB_URL}
                 target="_blank"
                 rel="noopener"
-                style={{ color: "#444", textDecoration: "none" }}
+                className="transition-colors hover:text-fg"
               >
                 open source
               </a>{" "}
               ·{" "}
               <Link
                 href="/blog/open-source-social-media-scheduler"
-                style={{ color: "#444", textDecoration: "none" }}
+                className="transition-colors hover:text-fg"
               >
                 open-source social media scheduler
               </Link>
@@ -2959,23 +1743,7 @@ export default function RootPage() {
         href="https://discord.gg/UEdnAtHxgN"
         target="_blank"
         rel="noopener noreferrer"
-        style={{
-          position: "fixed",
-          bottom: 24,
-          right: 24,
-          zIndex: 9999,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "10px 16px",
-          borderRadius: 999,
-          backgroundColor: "#5865F2",
-          color: "#fff",
-          fontSize: 13,
-          fontWeight: 600,
-          textDecoration: "none",
-          boxShadow: "0 4px 16px rgba(88,101,242,0.4)",
-        }}
+        className="fixed right-6 bottom-6 z-9999 flex items-center gap-2 rounded-full bg-[#5865F2] px-4 py-2.5 type-body-sb-s text-white shadow-lg shadow-[#5865F2]/40"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
           <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.055a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
@@ -3035,80 +1803,39 @@ function BulkCsvMockup() {
   const isDone = phase === "done" || phase === "reset";
 
   return (
-    <div
-      className="feature-visual"
-      style={{
-        background: "#111111",
-        border: "1px solid #1e1e1e",
-        borderRadius: 16,
-        padding: 24,
-        direction: "ltr",
-      }}
-    >
-      <div
-        className="mono"
-        style={{
-          fontSize: 11,
-          color: "#555",
-          marginBottom: 10,
-          letterSpacing: ".06em",
-        }}
-      >
+    <div className="card min-w-0 overflow-hidden p-6">
+      <div className="mb-2.5 type-body-r-xs tracking-wider text-muted">
         CSV PREVIEW
       </div>
 
       {ROWS.map((row, i) => (
         <div
           key={i}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "8px 0",
-            borderBottom: i < ROWS.length - 1 ? "1px solid #1a1a1a" : "none",
-            overflow: "hidden",
-            opacity: visibleRows > i ? 1 : 0,
-            transform: visibleRows > i ? "translateY(0)" : "translateY(6px)",
-            transition: "opacity .25s ease, transform .25s ease",
-          }}
+          className={cn(
+            "flex items-center gap-2 overflow-hidden py-2 transition duration-250",
+            i < ROWS.length - 1 && "border-b border-border",
+            visibleRows > i ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0",
+          )}
         >
-          <span
-            className="mono"
-            style={{ fontSize: 11, color: "#555", flexShrink: 0 }}
-          >
+          <span className="shrink-0 type-body-r-xs text-muted">
             {row.date}
           </span>
-          <span
-            style={{
-              flex: 1,
-              fontSize: 12,
-              color: "#bbb",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              minWidth: 0,
-            }}
-          >
+          <span className="min-w-0 flex-1 truncate type-body-r-xs text-fg">
             {row.text}
           </span>
           <span
-            className="mono"
-            style={{
-              fontSize: 10,
-              color: row.accounts.startsWith("!") ? "#f59e0b" : "#666",
-              flexShrink: 0,
-            }}
+            className={cn(
+              "shrink-0 type-body-r-xxs",
+              row.accounts.startsWith("!") ? "text-brand-800" : "text-muted",
+            )}
           >
             {row.accounts}
           </span>
           <span
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              flexShrink: 0,
-              color: isDone ? "#5b63d3" : "#4ade80",
-              transition: "color .4s ease",
-            }}
+            className={cn(
+              "shrink-0 type-body-sb-xs transition-colors duration-400",
+              isDone ? "text-brand-800" : "text-green-700",
+            )}
           >
             {isDone ? "⬆" : "✓"}
           </span>
@@ -3116,44 +1843,28 @@ function BulkCsvMockup() {
       ))}
 
       <div
-        style={{
-          marginTop: 16,
-          padding: "10px 14px",
-          borderRadius: 8,
-          background: "rgba(91,99,211,.08)",
-          border: "1px solid rgba(91,99,211,.2)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          opacity: showFooter ? 1 : 0,
-          transform: showFooter ? "translateY(0)" : "translateY(6px)",
-          transition: "opacity .3s ease, transform .3s ease",
-        }}
+        className={cn(
+          "mt-4 flex items-center justify-between rounded-lg border border-brand-300 bg-brand-100 px-3.5 py-2.5 transition duration-300",
+          showFooter ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0",
+        )}
       >
         <span
-          style={{
-            fontSize: 12,
-            color: isDone ? "#4ade80" : "#9ba2ee",
-            transition: "color .4s ease",
-          }}
+          className={cn(
+            "type-body-r-xs transition-colors duration-400",
+            isDone ? "text-green-700" : "text-brand-800",
+          )}
         >
           {isDone ? "✓ 4 posts scheduled!" : "4 valid · 0 errors"}
         </span>
         <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            padding: "5px 14px",
-            borderRadius: 6,
-            color: "#fff",
-            background: isDone
-              ? "rgba(74,222,128,.15)"
+          className={cn(
+            "rounded-md px-3.5 py-1 type-body-sb-xs transition-colors duration-400",
+            isDone
+              ? "border border-green-200 bg-green-50 text-green-700"
               : isScheduling
-                ? "rgba(91,99,211,.6)"
-                : "#5b63d3",
-            border: isDone ? "1px solid rgba(74,222,128,.3)" : "none",
-            transition: "background .4s ease",
-          }}
+                ? "bg-accent/60 text-accent-fg"
+                : "bg-accent text-accent-fg",
+          )}
         >
           {isDone
             ? "✓ Scheduled!"
@@ -3213,39 +1924,18 @@ function PerPlatformMockup() {
   }, [phase, typed, activeIdx]);
 
   return (
-    <div
-      className="feature-visual"
-      style={{
-        background: "#111111",
-        border: "1px solid #1e1e1e",
-        borderRadius: 16,
-        padding: 28,
-      }}
-    >
+    <div className="card min-w-0 overflow-hidden p-7">
       {PLATFORMS.map((p, i) => {
         const active = i === activeIdx;
         return (
           <div
             key={p.label}
-            style={{
-              marginBottom: 14,
-              borderRadius: 10,
-              padding: 16,
-              border: active
-                ? "1px solid rgba(91,99,211,.35)"
-                : "1px solid #1e1e1e",
-              background: active ? "rgba(91,99,211,.06)" : "transparent",
-              transition: "border-color .35s ease, background .35s ease",
-            }}
+            className={cn(
+              "mb-3.5 rounded-xl border p-4 transition-colors duration-350",
+              active ? "border-brand-300 bg-brand-100/60" : "border-border",
+            )}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 10,
-              }}
-            >
+            <div className="mb-2.5 flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={
@@ -3257,56 +1947,35 @@ function PerPlatformMockup() {
                 height={14}
               />
               <span
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: active ? "#9ba2ee" : "#555",
-                  transition: "color .35s ease",
-                }}
+                className={cn(
+                  "type-body-sb-s transition-colors duration-350",
+                  active ? "text-brand-800" : "text-muted",
+                )}
               >
                 {p.label}
               </span>
               <span
-                className="mono"
-                style={{
-                  marginLeft: "auto",
-                  fontSize: 10,
-                  padding: "2px 8px",
-                  borderRadius: 999,
-                  letterSpacing: ".04em",
-                  color: active ? "#8b91e8" : "#333",
-                  background: active ? "rgba(91,99,211,.12)" : "transparent",
-                  border: active ? "none" : "1px solid #222",
-                  transition: "all .35s ease",
-                }}
+                className={cn(
+                  "ml-auto rounded-full px-2 py-0.5 type-body-r-xxs tracking-wide transition-all duration-350",
+                  active
+                    ? "bg-brand-200 text-brand-800"
+                    : "border border-border text-muted",
+                )}
               >
                 {active ? "OVERRIDE ACTIVE" : "global copy"}
               </span>
             </div>
             <div
-              style={{
-                fontSize: 12,
-                lineHeight: 1.6,
-                color: active ? "#999" : "#444",
-                minHeight: 38,
-                transition: "color .35s ease",
-              }}
+              className={cn(
+                "min-h-9.5 type-body-r-xs transition-colors duration-350",
+                active ? "text-fg" : "text-muted",
+              )}
             >
               {active ? (
                 <>
                   {typed}
                   {phase === "typing" && (
-                    <span
-                      style={{
-                        display: "inline-block",
-                        width: 1.5,
-                        height: 11,
-                        background: "#5b63d3",
-                        verticalAlign: "middle",
-                        marginLeft: 1,
-                        animation: "ph-blink .75s step-end infinite",
-                      }}
-                    />
+                    <span className="ph-caret ml-px inline-block h-3 w-0.5 bg-brand-800 align-middle" />
                   )}
                 </>
               ) : (
@@ -3316,10 +1985,7 @@ function PerPlatformMockup() {
           </div>
         );
       })}
-      <div
-        className="mono"
-        style={{ textAlign: "center", fontSize: 11, color: "#555" }}
-      >
+      <div className="text-center type-body-r-xs text-muted">
         + 2 more accounts using global copy
       </div>
     </div>
@@ -3361,72 +2027,28 @@ function FirstCommentMockup() {
   const isDone = phase === "done" || phase === "reset";
 
   return (
-    <div
-      className="feature-visual"
-      style={{
-        background: "#111111",
-        border: "1px solid #1e1e1e",
-        borderRadius: 16,
-        padding: 28,
-        direction: "ltr",
-      }}
-    >
+    <div className="card min-w-0 overflow-hidden p-7">
       {/* Main post */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg,#5b63d3,#9ba2ee)",
-              flexShrink: 0,
-            }}
-          />
-          <div
-            style={{ width: 2, flex: 1, background: "#1e1e1e", marginTop: 6 }}
-          />
+      <div className="mb-5 flex gap-3">
+        <div className="flex flex-col items-center">
+          <div className="size-9 shrink-0 rounded-full bg-linear-to-br from-brand-300 to-brand-600" />
+          <div className="mt-1.5 w-0.5 flex-1 bg-border" />
         </div>
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              marginBottom: 6,
-              color: "#ededed",
-            }}
-          >
+        <div className="flex-1">
+          <div className="mb-1.5 type-body-sb-s text-fg">
             yourhandle{" "}
-            <span style={{ fontWeight: 400, color: "#666" }}>· just now</span>
+            <span className="type-body-r-s text-muted">· just now</span>
             {isDone && (
-              <span
-                style={{
-                  marginLeft: 8,
-                  fontSize: 10,
-                  color: "#4ade80",
-                  background: "rgba(74,222,128,.1)",
-                  border: "1px solid rgba(74,222,128,.2)",
-                  borderRadius: 4,
-                  padding: "1px 6px",
-                  fontWeight: 500,
-                  verticalAlign: "middle",
-                }}
-              >
+              <span className="ml-2 rounded-sm border border-green-200 bg-green-50 px-1.5 py-px align-middle type-body-m-xxs text-green-700">
                 ✓ posted
               </span>
             )}
           </div>
-          <div style={{ fontSize: 13, color: "#bbb", lineHeight: 1.6 }}>
+          <div className="type-body-r-s text-fg">
             Shipping features faster than ever with Posthive. The async workflow
             is a game-changer.
           </div>
-          <div style={{ marginTop: 10, display: "flex", gap: 16 }}>
+          <div className="mt-2.5 flex gap-4">
             {[
               ["♥", "24"],
               ["↩", "6"],
@@ -3434,13 +2056,7 @@ function FirstCommentMockup() {
             ].map(([icon, count]) => (
               <span
                 key={icon}
-                style={{
-                  fontSize: 12,
-                  color: "#555",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
+                className="flex items-center gap-1 type-body-r-xs text-muted"
               >
                 {icon} {count}
               </span>
@@ -3451,74 +2067,25 @@ function FirstCommentMockup() {
 
       {/* First comment — slides in */}
       <div
-        style={{
-          display: "flex",
-          gap: 12,
-          opacity: showComment ? 1 : 0,
-          transform: showComment ? "translateY(0)" : "translateY(8px)",
-          transition: "opacity .3s ease, transform .3s ease",
-        }}
+        className={cn(
+          "flex gap-3 transition duration-300",
+          showComment ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
+        )}
       >
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg,#5b63d3,#9ba2ee)",
-            flexShrink: 0,
-          }}
-        />
-        <div
-          style={{
-            flex: 1,
-            background: "rgba(91,99,211,.07)",
-            border: "1px solid rgba(91,99,211,.2)",
-            borderRadius: 10,
-            padding: "10px 14px",
-          }}
-        >
-          <div
-            className="mono"
-            style={{
-              fontSize: 11,
-              color: "#8b91e8",
-              fontWeight: 600,
-              marginBottom: 6,
-              letterSpacing: ".04em",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
+        <div className="size-7 shrink-0 rounded-full bg-linear-to-br from-brand-300 to-brand-600" />
+        <div className="flex-1 rounded-xl border border-brand-300 bg-brand-100/60 px-3.5 py-2.5">
+          <div className="mb-1.5 flex flex-wrap items-center gap-2 type-body-sb-xs tracking-wide text-brand-800">
             FIRST COMMENT · AUTO-POSTED
             {isDone && (
-              <span style={{ color: "#4ade80", fontWeight: 400, fontSize: 10 }}>
+              <span className="type-body-r-xxs text-green-700">
                 ⚡ fired instantly
               </span>
             )}
           </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: "#aaa",
-              lineHeight: 1.6,
-              minHeight: 18,
-              wordBreak: "break-word",
-            }}
-          >
+          <div className="min-h-4.5 break-words type-body-r-xs text-muted">
             {typed}
             {phase === "typing" && (
-              <span
-                style={{
-                  display: "inline-block",
-                  width: 1.5,
-                  height: 11,
-                  background: "#5b63d3",
-                  verticalAlign: "middle",
-                  marginLeft: 1,
-                  animation: "ph-blink .75s step-end infinite",
-                }}
-              />
+              <span className="ph-caret ml-px inline-block h-3 w-0.5 bg-brand-800 align-middle" />
             )}
           </div>
         </div>
@@ -3578,55 +2145,30 @@ function InstagramMediaMockup() {
   }, [tab]);
 
   const SLIDE_COLORS = [
-    "rgba(91,99,211,.18)",
-    "rgba(225,48,108,.14)",
-    "rgba(255,184,0,.12)",
+    "var(--color-brand-600)",
+    "#e1306c",
+    "var(--color-blue-500)",
   ];
 
   return (
-    <div
-      className="feature-visual"
-      style={{
-        background: "#111111",
-        border: "1px solid #1e1e1e",
-        borderRadius: 16,
-        padding: 28,
-        direction: "ltr",
-      }}
-    >
+    <div className="card min-w-0 overflow-hidden p-7">
       {/* Tab strip */}
-      <div style={{ marginBottom: 20 }}>
-        <div
-          className="mono"
-          style={{
-            fontSize: 11,
-            color: "#666",
-            marginBottom: 10,
-            letterSpacing: ".08em",
-          }}
-        >
+      <div className="mb-5">
+        <div className="mb-2.5 type-body-r-xs tracking-wider text-muted">
           POST TYPE
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="flex gap-2">
           {TABS.map((t) => {
             const active = t === tab;
             return (
               <div
                 key={t}
-                style={{
-                  flex: 1,
-                  textAlign: "center",
-                  padding: "10px 0",
-                  borderRadius: 8,
-                  fontSize: 13,
-                  border: active
-                    ? "1px solid rgba(91,99,211,.4)"
-                    : "1px solid #1e1e1e",
-                  background: active ? "rgba(91,99,211,.1)" : "transparent",
-                  color: active ? "#9ba2ee" : "#555",
-                  fontWeight: active ? 600 : 400,
-                  transition: "all .3s ease",
-                }}
+                className={cn(
+                  "flex-1 rounded-lg border py-2.5 text-center transition-all duration-300",
+                  active
+                    ? "border-brand-300 bg-brand-100 type-body-sb-s text-brand-800"
+                    : "border-border type-body-r-s text-muted",
+                )}
               >
                 {t}
               </div>
@@ -3637,46 +2179,25 @@ function InstagramMediaMockup() {
 
       {/* Drop zone */}
       <div
-        style={{
-          border:
-            tab === "Reel" && uploadPct > 0 && uploadPct < 100
-              ? "1px dashed rgba(91,99,211,.6)"
-              : "1px dashed #2a2a2a",
-          borderRadius: 10,
-          height: 110,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          marginBottom: 20,
-          position: "relative",
-          overflow: "hidden",
-          transition: "border-color .3s ease",
-          background:
-            tab === "Story" && storyReady
-              ? "rgba(225,48,108,.06)"
-              : "transparent",
-        }}
+        className={cn(
+          "relative mb-5 flex h-27.5 flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-dashed transition-colors duration-300",
+          tab === "Reel" && uploadPct > 0 && uploadPct < 100
+            ? "border-brand-400"
+            : "border-border",
+          tab === "Story" && storyReady && "bg-[#e1306c]/5",
+        )}
       >
         {/* Post tab: placeholder */}
         {tab === "Post" && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <div className="flex flex-col items-center gap-1.5">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-neutral-400">
               <rect
                 x="3"
                 y="3"
                 width="7"
                 height="7"
                 rx="1.5"
-                stroke="#333"
+                stroke="currentColor"
                 strokeWidth="1.4"
               />
               <rect
@@ -3685,7 +2206,7 @@ function InstagramMediaMockup() {
                 width="7"
                 height="7"
                 rx="1.5"
-                stroke="#333"
+                stroke="currentColor"
                 strokeWidth="1.4"
               />
               <rect
@@ -3694,7 +2215,7 @@ function InstagramMediaMockup() {
                 width="7"
                 height="7"
                 rx="1.5"
-                stroke="#333"
+                stroke="currentColor"
                 strokeWidth="1.4"
               />
               <rect
@@ -3703,11 +2224,11 @@ function InstagramMediaMockup() {
                 width="7"
                 height="7"
                 rx="1.5"
-                stroke="#333"
+                stroke="currentColor"
                 strokeWidth="1.4"
               />
             </svg>
-            <span className="mono" style={{ fontSize: 11, color: "#555" }}>
+            <span className="type-body-r-xs text-muted">
               Carousel / single image
             </span>
           </div>
@@ -3717,64 +2238,34 @@ function InstagramMediaMockup() {
         {tab === "Reel" && (
           <>
             {uploadPct < 100 ? (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 10,
-                  width: "100%",
-                  padding: "0 28px",
-                  boxSizing: "border-box",
-                }}
-              >
+              <div className="flex w-full flex-col items-center gap-2.5 px-7">
                 <svg
                   width="22"
                   height="22"
                   viewBox="0 0 24 24"
                   fill="none"
-                  style={{ opacity: 0.7 }}
+                  className="text-brand-800 opacity-70"
                 >
                   <path
                     d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"
-                    stroke="#5b63d3"
+                    stroke="currentColor"
                     strokeWidth="1.6"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                 </svg>
-                <div
-                  style={{
-                    width: "100%",
-                    height: 4,
-                    background: "#1e1e1e",
-                    borderRadius: 2,
-                    overflow: "hidden",
-                  }}
-                >
+                <div className="h-1 w-full overflow-hidden rounded-xs bg-neutral-100">
                   <div
-                    style={{
-                      height: "100%",
-                      width: `${uploadPct}%`,
-                      background: "linear-gradient(90deg,#5b63d3,#9ba2ee)",
-                      borderRadius: 2,
-                      transition: "width .05s linear",
-                    }}
+                    className="h-full w-(--w) rounded-xs bg-accent transition-all duration-50 ease-linear"
+                    style={{ "--w": `${uploadPct}%` } as React.CSSProperties}
                   />
                 </div>
-                <span className="mono" style={{ fontSize: 10, color: "#555" }}>
+                <span className="type-body-r-xxs text-muted">
                   Uploading… {uploadPct}%
                 </span>
               </div>
             ) : (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
+              <div className="flex flex-col items-center gap-1.5">
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
                   <rect
                     x="2"
@@ -3782,21 +2273,18 @@ function InstagramMediaMockup() {
                     width="24"
                     height="24"
                     rx="4"
-                    stroke="#333"
+                    className="stroke-neutral-400"
                     strokeWidth="1.5"
                   />
                   <path
                     d="M9 14l3.5 3.5 6-7"
-                    stroke="#4ade80"
+                    className="stroke-green-700"
                     strokeWidth="1.6"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                 </svg>
-                <span
-                  className="mono"
-                  style={{ fontSize: 11, color: "#4ade80" }}
-                >
+                <span className="type-body-r-xs text-green-700">
                   Upload complete
                 </span>
               </div>
@@ -3806,47 +2294,24 @@ function InstagramMediaMockup() {
 
         {/* Story tab: portrait frame */}
         {tab === "Story" && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
+          <div className="flex flex-col items-center gap-2">
             <div
-              style={{
-                width: 38,
-                height: 60,
-                borderRadius: 5,
-                border: storyReady
-                  ? "1.5px solid rgba(225,48,108,.7)"
-                  : "1.5px dashed #333",
-                background: storyReady ? "rgba(225,48,108,.1)" : "transparent",
-                transition: "all .4s ease",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className={cn(
+                "flex h-15 w-9.5 items-center justify-center rounded-md border-2 transition-all duration-400",
+                storyReady
+                  ? "border-solid border-[#e1306c]/70 bg-[#e1306c]/10"
+                  : "border-dashed border-neutral-400",
+              )}
             >
               {storyReady && (
-                <div
-                  style={{
-                    width: 18,
-                    height: 28,
-                    borderRadius: 3,
-                    background: "rgba(225,48,108,.25)",
-                  }}
-                />
+                <div className="h-7 w-4.5 rounded-sm bg-[#e1306c]/25" />
               )}
             </div>
             <span
-              className="mono"
-              style={{
-                fontSize: 10,
-                color: storyReady ? "#e1306c" : "#555",
-                transition: "color .4s",
-              }}
+              className={cn(
+                "type-body-r-xxs transition-colors duration-400",
+                storyReady ? "text-[#e1306c]" : "text-muted",
+              )}
             >
               9:16 · 15s max
             </span>
@@ -3855,62 +2320,30 @@ function InstagramMediaMockup() {
       </div>
 
       {/* Thumbnail strip */}
-      <div style={{ display: "flex", gap: 8 }}>
+      <div className="flex gap-2">
         {[0, 1, 2].map((n) => (
           <div
             key={n}
-            style={{
-              flex: 1,
-              height: 48,
-              borderRadius: 6,
-              background:
-                tab === "Post" && slideCount > n
-                  ? SLIDE_COLORS[n]
-                  : "rgba(255,255,255,.03)",
-              border: "1px solid #1e1e1e",
-              transition: "background .35s ease",
-            }}
+            className={cn(
+              "h-12 flex-1 rounded-md border border-border transition-colors duration-350",
+              tab === "Post" && slideCount > n ? "bg-(--c)/20" : "bg-bg",
+            )}
+            style={{ "--c": SLIDE_COLORS[n] } as React.CSSProperties}
           >
             {tab === "Post" && slideCount > n && (
-              <div
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <div
-                  style={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: 3,
-                    background: SLIDE_COLORS[n]
-                      .replace(".18", "1")
-                      .replace(".14", "1")
-                      .replace(".12", "1"),
-                    opacity: 0.4,
-                  }}
-                />
+              <div className="flex size-full items-center justify-center">
+                <div className="size-4 rounded-sm bg-(--c) opacity-40" />
               </div>
             )}
           </div>
         ))}
         <div
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 6,
-            border: "1px dashed #2a2a2a",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            opacity: tab === "Post" && slideCount >= 3 ? 1 : 0.3,
-            transition: "opacity .4s ease",
-          }}
+          className={cn(
+            "flex size-12 items-center justify-center rounded-md border border-dashed border-border transition-opacity duration-400",
+            tab === "Post" && slideCount >= 3 ? "opacity-100" : "opacity-30",
+          )}
         >
-          <span style={{ color: "#444", fontSize: 20, lineHeight: 1 }}>+</span>
+          <span className="type-body-r-xl text-muted">+</span>
         </div>
       </div>
     </div>
@@ -3981,80 +2414,26 @@ function ComposeTypingMockup() {
   const isScheduled = phase === "scheduled" || phase === "clearing";
 
   return (
-    <div
-      className="feature-visual"
-      style={{
-        background: "#111111",
-        border: "1px solid #1e1e1e",
-        borderRadius: 16,
-        padding: 28,
-      }}
-    >
-      <style>{`@keyframes ph-blink { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
-
+    <div className="card min-w-0 overflow-hidden p-7">
       {/* Compose box */}
-      <div
-        style={{
-          background: "#0a0a0a",
-          borderRadius: 10,
-          border: "1px solid #1e1e1e",
-          padding: 20,
-          marginBottom: 16,
-          minHeight: 100,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 13,
-            color: "#ededed",
-            lineHeight: 1.65,
-            minHeight: 80,
-            wordBreak: "break-word",
-          }}
-        >
+      <div className="mb-4 min-h-25 rounded-xl border border-border bg-bg p-5">
+        <div className="min-h-20 break-words type-body-r-s text-fg">
           {displayed}
           {phase === "typing" && (
-            <span
-              style={{
-                display: "inline-block",
-                width: 1.5,
-                height: 13,
-                background: "#5b63d3",
-                verticalAlign: "middle",
-                marginLeft: 1,
-                animation: "ph-blink .75s step-end infinite",
-              }}
-            />
+            <span className="ph-caret ml-px inline-block h-3.5 w-0.5 bg-brand-800 align-middle" />
           )}
         </div>
       </div>
 
       {/* Platform pills */}
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          flexWrap: "wrap",
-          marginBottom: 16,
-          minHeight: 30,
-        }}
-      >
+      <div className="mb-4 flex min-h-7.5 flex-wrap gap-2">
         {PLATFORMS.map((p, i) => (
           <div
             key={p.domain}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "4px 10px",
-              borderRadius: 6,
-              fontSize: 12,
-              background: "rgba(91,99,211,.1)",
-              border: "1px solid rgba(91,99,211,.2)",
-              opacity: pillsVisible > i ? 1 : 0,
-              transform: pillsVisible > i ? "translateY(0)" : "translateY(5px)",
-              transition: "opacity .22s ease, transform .22s ease",
-            }}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md border border-brand-300 bg-brand-100 px-2.5 py-1 type-body-r-xs transition duration-200",
+              pillsVisible > i ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+            )}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -4066,45 +2445,30 @@ function ComposeTypingMockup() {
               width={12}
               height={12}
             />
-            <span style={{ color: "#9ba2ee" }}>{p.label}</span>
+            <span className="text-brand-800">{p.label}</span>
           </div>
         ))}
       </div>
 
       {/* Footer */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <div className="flex items-center justify-between">
         <span
-          className="mono"
-          style={{
-            fontSize: 12,
-            color: displayed.length > MAX * 0.9 ? "#e1306c" : "#888",
-          }}
+          className={cn(
+            "type-body-r-xs",
+            displayed.length > MAX * 0.9 ? "text-red-600" : "text-muted",
+          )}
         >
           {displayed.length} / {MAX} chars
         </span>
         <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            padding: "7px 18px",
-            borderRadius: 8,
-            background: isScheduled
-              ? "rgba(74,222,128,.12)"
+          className={cn(
+            "rounded-lg px-4.5 py-2 type-body-sb-xs transition duration-350",
+            isScheduled
+              ? "bg-green-100 text-green-800"
               : isReady
-                ? "#5b63d3"
-                : "#1e1e1e",
-            color: isScheduled ? "#4ade80" : "#fff",
-            boxShadow:
-              isReady && !isScheduled ? "0 0 18px rgba(91,99,211,.45)" : "none",
-            transition:
-              "background .35s ease, color .35s ease, box-shadow .35s ease",
-          }}
+                ? "bg-accent text-accent-fg"
+                : "bg-neutral-100 text-muted",
+          )}
         >
           {isScheduled ? "✓ Scheduled!" : "Schedule"}
         </div>
@@ -4146,24 +2510,29 @@ function DragCalendarMockup() {
 
   const days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
   const dots: Record<number, string> = {
-    5: "#5b63d3",
+    5: "#6364ff",
     8: "#e1306c",
     11: "#0085ff",
-    14: "#5b63d3",
+    14: "#6364ff",
     23: "#e1306c",
     27: "#0085ff",
   };
 
   return (
     <div
-      className="feature-visual"
-      style={{
-        background: "#111111",
-        border: "1px solid #1e1e1e",
-        borderRadius: 16,
-        padding: 24,
-        overflow: "hidden",
-      }}
+      className="card min-w-0 overflow-hidden p-6"
+      style={
+        {
+          "--gap": `${GAP}px`,
+          "--cell-h": `${CELL_H}px`,
+          "--grid-h": `${gridH}px`,
+          "--dot-w": "calc(100% / 7 - 4px)",
+          "--src-left": srcCellLeft,
+          "--src-top": `${srcCellTop}px`,
+          "--src-x": srcX,
+          "--src-y": `${srcY}px`,
+        } as React.CSSProperties
+      }
     >
       <style>{`
         @keyframes ph-card {
@@ -4186,65 +2555,38 @@ function DragCalendarMockup() {
           90%,100% { left:${srcX}; top:${srcY}px; transform:scale(1); }
         }
         @keyframes ph-glow {
-          0%,55%   { box-shadow:none; background:rgba(255,255,255,.015); }
-          60%,70%  { box-shadow:0 0 0 2px #5b63d3; background:rgba(91,99,211,.14); }
-          85%,100% { box-shadow:none; background:rgba(255,255,255,.015); }
+          0%,55%   { box-shadow:none; background:var(--color-bg); }
+          60%,70%  { box-shadow:0 0 0 2px var(--color-brand-600); background:var(--color-brand-100); }
+          85%,100% { box-shadow:none; background:var(--color-bg); }
         }
         @keyframes ph-toast {
           0%,65%   { opacity:0; transform:translateY(5px); }
           72%,78%  { opacity:1; transform:translateY(0); }
           88%,100% { opacity:0; transform:translateY(5px); }
         }
+        .ph-cal-glow   { animation: ph-glow 3.8s ease-in-out infinite; }
+        .ph-cal-ghost  { animation: ph-ghost 3.8s ease-in-out infinite; }
+        .ph-cal-card   { animation: ph-card 3.8s ease-in-out infinite; }
+        .ph-cal-cursor { animation: ph-cursor 3.8s ease-in-out infinite; }
+        .ph-cal-toast  { animation: ph-toast 3.8s ease-in-out infinite; }
       `}</style>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 12,
-        }}
-      >
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#ededed" }}>
-          June 2026
-        </span>
-        <span style={{ fontSize: 11, color: "#555" }}>Month</span>
+      <div className="mb-3 flex items-center justify-between">
+        <span className="type-body-sb-s text-fg">June 2026</span>
+        <span className="type-body-r-xs text-muted">Month</span>
       </div>
 
       {/* Day headers — percentage columns, fills full width */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7,1fr)",
-          gap: GAP,
-          marginBottom: GAP,
-        }}
-      >
+      <div className="mb-(--gap) grid grid-cols-7 gap-(--gap)">
         {days.map((d) => (
-          <div
-            key={d}
-            style={{
-              textAlign: "center",
-              fontSize: 9,
-              color: "#555",
-              padding: "3px 0",
-            }}
-          >
+          <div key={d} className="py-0.5 text-center type-body-r-xxs text-muted">
             {d}
           </div>
         ))}
       </div>
 
       {/* Grid — percentage columns, fixed row heights, position:relative for overlays */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7,1fr)",
-          gap: GAP,
-          position: "relative",
-          height: gridH,
-        }}
-      >
+      <div className="relative grid h-(--grid-h) grid-cols-7 gap-(--gap)">
         {Array.from({ length: 35 }, (_, i) => {
           const col = i % 7;
           const row = Math.floor(i / 7);
@@ -4254,41 +2596,24 @@ function DragCalendarMockup() {
           return (
             <div
               key={i}
-              style={{
-                height: CELL_H,
-                borderRadius: 6,
-                padding: "3px 4px",
-                boxSizing: "border-box",
-                background: isToday
-                  ? "rgba(91,99,211,.18)"
-                  : "rgba(255,255,255,.015)",
-                border: isToday
-                  ? "1px solid rgba(91,99,211,.4)"
-                  : "1px solid transparent",
-                animation: isDst
-                  ? "ph-glow 3.8s ease-in-out infinite"
-                  : undefined,
-              }}
+              className={cn(
+                "h-(--cell-h) rounded-md border px-1 py-0.5",
+                isToday ? "border-brand-300 bg-brand-100" : "border-transparent bg-bg",
+                isDst && "ph-cal-glow",
+              )}
             >
               <span
-                style={{
-                  fontSize: 8,
-                  display: "block",
-                  textAlign: "right",
-                  lineHeight: 1,
-                  color: isToday ? "#9ba2ee" : num > 30 ? "#2a2a2a" : "#555",
-                }}
+                className={cn(
+                  "block text-right text-[8px] leading-none",
+                  isToday ? "text-brand-800" : num > 30 ? "text-neutral-400" : "text-muted",
+                )}
               >
                 {num <= 30 ? num : num - 30}
               </span>
               {dots[i] && !(col === SRC_COL && row === SRC_ROW) && (
                 <div
-                  style={{
-                    height: 3,
-                    marginTop: 3,
-                    borderRadius: 2,
-                    background: dots[i],
-                  }}
+                  className="mt-0.75 h-0.75 rounded-xs bg-(--c)"
+                  style={{ "--c": dots[i] } as React.CSSProperties}
                 />
               )}
             </div>
@@ -4296,57 +2621,17 @@ function DragCalendarMockup() {
         })}
 
         {/* Ghost dot — stays at source */}
-        <div
-          style={{
-            position: "absolute",
-            pointerEvents: "none",
-            left: srcCellLeft,
-            top: srcCellTop,
-            width: "calc(100% / 7 - 4px)",
-            height: 3,
-            borderRadius: 2,
-            background: "#0085ff",
-            opacity: 0,
-            animation: "ph-ghost 3.8s ease-in-out infinite",
-          }}
-        />
+        <div className="ph-cal-ghost pointer-events-none absolute top-(--src-top) left-(--src-left) h-0.75 w-(--dot-w) rounded-xs bg-[#0085ff] opacity-0" />
 
         {/* Dragging card dot */}
-        <div
-          style={{
-            position: "absolute",
-            pointerEvents: "none",
-            zIndex: 10,
-            left: srcCellLeft,
-            top: srcCellTop,
-            width: "calc(100% / 7 - 4px)",
-            height: 3,
-            borderRadius: 2,
-            background: "#0085ff",
-            boxShadow: "0 4px 12px rgba(0,133,255,.55)",
-            animation: "ph-card 3.8s ease-in-out infinite",
-          }}
-        />
+        <div className="ph-cal-card pointer-events-none absolute top-(--src-top) left-(--src-left) z-10 h-0.75 w-(--dot-w) rounded-xs bg-[#0085ff] shadow-md shadow-[#0085ff]/50" />
 
         {/* Cursor — left/top animated directly so percentages work */}
-        <div
-          style={{
-            position: "absolute",
-            pointerEvents: "none",
-            zIndex: 20,
-            left: srcX,
-            top: srcY,
-            transformOrigin: "3px 2px",
-            animation: "ph-cursor 3.8s ease-in-out infinite",
-            marginLeft: -8,
-            marginTop: -6,
-          }}
-        >
+        <div className="ph-cal-cursor pointer-events-none absolute top-(--src-y) left-(--src-x) z-20 -mt-1.5 -ml-2 origin-[3px_2px]">
           <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
             <path
               d="M1 1l4.5 14 2.5-4.5 4.5-2.5L1 1z"
-              fill="white"
-              stroke="#1a1a1a"
+              className="fill-white stroke-fg"
               strokeWidth="1.2"
               strokeLinejoin="round"
             />
@@ -4355,22 +2640,7 @@ function DragCalendarMockup() {
       </div>
 
       {/* Toast */}
-      <div
-        style={{
-          marginTop: 10,
-          padding: "6px 12px",
-          borderRadius: 8,
-          background: "rgba(91,99,211,.12)",
-          border: "1px solid rgba(91,99,211,.25)",
-          fontSize: 11.5,
-          color: "#9ba2ee",
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          opacity: 0,
-          animation: "ph-toast 3.8s ease-in-out infinite",
-        }}
-      >
+      <div className="ph-cal-toast mt-2.5 flex items-center gap-1.5 rounded-lg border border-brand-300 bg-brand-100 px-3 py-1.5 type-body-r-xs text-brand-800 opacity-0">
         <span>✓</span> Post rescheduled to Jun 19 — saved instantly
       </div>
     </div>
@@ -4384,12 +2654,12 @@ function CheckCircleIcon() {
       height="16"
       viewBox="0 0 16 16"
       fill="none"
-      style={{ flexShrink: 0, marginTop: 1 }}
+      className="mt-0.5 shrink-0 text-brand-800"
     >
-      <circle cx="8" cy="8" r="7" stroke="#5b63d3" strokeWidth="1.2" />
+      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" />
       <path
         d="M5 8l2 2 4-4"
-        stroke="#5b63d3"
+        stroke="currentColor"
         strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
