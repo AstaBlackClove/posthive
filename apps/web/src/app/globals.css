@@ -303,16 +303,33 @@
   .dropzone {
     @apply rounded-xl border-2 border-dashed border-border bg-surface transition-colors;
   }
-}
 
-/* Footer responsive (bisa dihapus setelah inline style di footer
-   diganti class Tailwind: grid-cols-1 md:grid-cols-... ) */
-@media (max-width: 768px) {
-  .ph-footer-inner { grid-template-columns: 1fr !important; gap: 40px !important; }
-  .ph-foot-cols    { grid-template-columns: repeat(2, 1fr) !important; gap: 28px !important; }
-}
-@media (max-width: 480px) {
-  .ph-foot-cols { grid-template-columns: 1fr !important; }
+  /* Long-form text (blog posts, privacy, terms): write plain <p>/<h2>/<ul> inside.
+     Block rules hit direct children only, so cards and callouts nested in a <div>
+     keep their own spacing. Links with a className (buttons) are left alone. */
+  .article-body {
+    @apply type-body-r-m text-muted;
+    line-height: 1.75rem; /* looser than type-body-r-m for long reads */
+  }
+  .article-body > p { @apply mb-6; }
+  .article-body > h2 { @apply mt-12 mb-4 type-head-sb-5 text-fg; }
+  .article-body > h3 { @apply mt-8 mb-2 type-body-sb-m text-fg; }
+  .article-body > ul { @apply mb-6 list-disc pl-5; }
+  .article-body > ol { @apply mb-6 list-decimal pl-5; }
+  .article-body li { @apply mb-2 marker:text-neutral-500; }
+  .article-body strong { @apply text-fg; }
+  .article-body a:not([class]) {
+    @apply text-brand-800 underline underline-offset-3 hover:text-brand-900;
+  }
+  .article-body code:not([class]) {
+    @apply rounded-md border border-border bg-surface px-1 type-mono-r-s text-fg;
+  }
+  .article-body table { @apply w-full border-collapse type-body-r-s; }
+  .article-body th {
+    @apply border-b border-border px-3.5 py-2.5 text-left type-body-sb-xs text-muted;
+  }
+  .article-body td { @apply border-b border-border px-3.5 py-2.5; }
+  .article-body > hr { @apply my-10 border-border; }
 }
 
 /* Layered so utilities can override them (e.g. `job-action-btn text-red-600`) */

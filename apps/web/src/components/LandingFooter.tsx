@@ -3,61 +3,31 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FEATURES_NAV } from "./LandingNav";
+import { cn } from "../lib/cn";
+
+const FOOT_LINK = "type-body-r-s text-muted transition-colors hover:text-fg";
 
 export function LandingFooter() {
   return (
-    <footer style={{ borderTop: "1px solid #161616", background: "#0a0a0a" }}>
-      <div
-        style={{
-          maxWidth: 1120,
-          margin: "0 auto",
-          padding: "64px 40px 48px",
-          display: "grid",
-          gridTemplateColumns: "260px 1fr",
-          gap: 64,
-          flexWrap: "wrap",
-        }}
-        className="ph-footer-inner"
-      >
+    <footer className="border-t border-border bg-surface">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-5 pt-16 pb-12 md:px-12 lg:grid-cols-[260px_1fr] lg:gap-16">
         {/* Brand column */}
         <div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 14,
-            }}
-          >
+          <div className="mb-3.5 flex items-center gap-2.5 text-fg">
             <Image
               src="/posthivemain.png"
               alt="Posthive"
               width={28}
               height={28}
-              style={{ objectFit: "contain" }}
+              className="object-contain"
             />
-            <span
-              style={{
-                fontSize: 16,
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Posthive
-            </span>
+            <span className="type-body-sb-m tracking-tight">Posthive</span>
           </div>
-          <p
-            style={{
-              fontSize: 13.5,
-              color: "#888",
-              lineHeight: 1.65,
-              margin: "0 0 24px",
-            }}
-          >
+          <p className="mb-6 type-body-r-s text-muted">
             The social media scheduler built for creators and teams. Write once,
             publish everywhere.
           </p>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div className="flex gap-2.5">
             {[
               {
                 href: "https://github.com/AstaBlackClove/posthive",
@@ -108,139 +78,58 @@ export function LandingFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 title={label}
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 8,
-                  border: "1px solid #222",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#555",
-                  textDecoration: "none",
-                  transition: "all 150ms",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "#ededed";
-                  e.currentTarget.style.borderColor = "#444";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "#555";
-                  e.currentTarget.style.borderColor = "#222";
-                }}
+                className="flex size-9 items-center justify-center rounded-lg border border-border text-muted transition-colors hover:border-neutral-300 hover:text-fg"
               >
                 {icon}
               </a>
             ))}
           </div>
-          <div style={{ marginTop: 20 }}>
+          <div className="mt-5">
             <iframe
-              src="https://posthive.betteruptime.com/badge?theme=dark"
+              src="https://posthive.betteruptime.com/badge?theme=light"
               width="230"
               height="30"
               frameBorder="0"
               scrolling="no"
-              style={{ colorScheme: "normal", display: "block" }}
+              className="block scheme-normal"
             />
           </div>
         </div>
 
         {/* Link columns */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr 1fr",
-            gap: 40,
-          }}
-          className="ph-foot-cols"
-        >
+        <div className="grid grid-cols-1 gap-7 min-[481px]:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr] md:gap-10">
           {/* Features */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <span
-              className="mono"
-              style={{
-                fontSize: 11,
-                letterSpacing: ".1em",
-                color: "#999",
-                fontWeight: 700,
-                marginBottom: 6,
-                textTransform: "uppercase",
-              }}
-            >
-              Features
-            </span>
+          <div className="flex flex-col gap-2.5">
+            <span className="section-label mb-1.5">Features</span>
             {FEATURES_NAV.map((f) => (
               <Link
                 key={f.slug}
                 href={`/features/${f.slug}`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  textDecoration: "none",
-                  color: "#777",
-                  fontSize: 13.5,
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#ededed")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
+                className={cn("flex items-center gap-2", FOOT_LINK)}
               >
-                <span
-                  style={{ color: f.color, display: "flex", flexShrink: 0 }}
-                >
-                  {f.icon}
-                </span>
+                <span className={cn("flex shrink-0", f.color)}>{f.icon}</span>
                 {f.title}
               </Link>
             ))}
           </div>
 
           {/* Free Tools */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <span
-              className="mono"
-              style={{
-                fontSize: 11,
-                letterSpacing: ".1em",
-                color: "#999",
-                fontWeight: 700,
-                marginBottom: 6,
-                textTransform: "uppercase",
-              }}
-            >
-              Free Tools
-            </span>
+          <div className="flex flex-col gap-2.5">
+            <span className="section-label mb-1.5">Free Tools</span>
             {(
               [
                 ["/tools/character-counter", "Character Counter"],
               ] as [string, string][]
             ).map(([href, label]) => (
-              <Link
-                key={label}
-                href={href}
-                style={{ textDecoration: "none", color: "#777", fontSize: 13.5 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#ededed")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
-              >
+              <Link key={label} href={href} className={FOOT_LINK}>
                 {label}
               </Link>
             ))}
           </div>
 
           {/* Product */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <span
-              className="mono"
-              style={{
-                fontSize: 11,
-                letterSpacing: ".1em",
-                color: "#999",
-                fontWeight: 700,
-                marginBottom: 6,
-                textTransform: "uppercase",
-              }}
-            >
-              Product
-            </span>
+          <div className="flex flex-col gap-2.5">
+            <span className="section-label mb-1.5">Product</span>
             {(
               [
                 ["/pricing", "Pricing"],
@@ -256,13 +145,7 @@ export function LandingFooter() {
                 rel={
                   href.startsWith("http") ? "noopener noreferrer" : undefined
                 }
-                style={{
-                  textDecoration: "none",
-                  color: "#777",
-                  fontSize: 13.5,
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#ededed")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
+                className={FOOT_LINK}
               >
                 {label}
               </a>
@@ -270,20 +153,8 @@ export function LandingFooter() {
           </div>
 
           {/* Company */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <span
-              className="mono"
-              style={{
-                fontSize: 11,
-                letterSpacing: ".1em",
-                color: "#999",
-                fontWeight: 700,
-                marginBottom: 6,
-                textTransform: "uppercase",
-              }}
-            >
-              Company
-            </span>
+          <div className="flex flex-col gap-2.5">
+            <span className="section-label mb-1.5">Company</span>
             {(
               [
                 ["mailto:guna@posthive.co", "Contact me"],
@@ -291,17 +162,7 @@ export function LandingFooter() {
                 ["/terms", "Terms of service"],
               ] as [string, string][]
             ).map(([href, label]) => (
-              <a
-                key={label}
-                href={href}
-                style={{
-                  textDecoration: "none",
-                  color: "#777",
-                  fontSize: 13.5,
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#ededed")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
-              >
+              <a key={label} href={href} className={FOOT_LINK}>
                 {label}
               </a>
             ))}
@@ -309,27 +170,16 @@ export function LandingFooter() {
         </div>
       </div>
 
-      <div style={{ borderTop: "1px solid #161616" }}>
-        <div
-          style={{
-            maxWidth: 1120,
-            margin: "0 auto",
-            padding: "20px 40px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 16,
-            flexWrap: "wrap",
-          }}
-        >
-          <span className="mono" style={{ fontSize: 12.5, color: "#999" }}>
+      <div className="border-t border-border">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-5 md:px-12">
+          <span className="type-body-r-xs text-muted">
             © 2026 Posthive. All rights reserved.
           </span>
-          <span className="mono" style={{ fontSize: 12.5, color: "#999" }}>
+          <span className="type-body-r-xs text-muted">
             Open-source · AGPL-3.0 · Built by an indie builder.
           </span>
           <a href="https://kittylaunch.com/p/posthive?utm_source=badge" target="_blank" rel="noopener">
-            <img src="https://kittylaunch.com/api/public/badges/launch_badge.svg?style=pill&theme=dark" width="160" alt="Posthive — Verified by KittyLaunch" />
+            <img src="https://kittylaunch.com/api/public/badges/launch_badge.svg?style=pill&theme=light" width="160" alt="Posthive — Verified by KittyLaunch" />
           </a>
         </div>
       </div>

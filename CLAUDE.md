@@ -135,6 +135,8 @@ All 10 tools mirror the HTTP MCP server: `list_accounts`, `create_post`, `get_po
 - `components/PlatformPreview.tsx` — per-platform post preview cards; `PLATFORM_COLOR`, `PLATFORM_LIMIT` maps
 - `components/TrialBanner.tsx` — bottom-left trial countdown
 - `components/DateTimePicker.tsx` — datetime input used in compose
+- `components/SiteNav.tsx` — simple top bar for blog, privacy, terms (landing/features/platforms use `LandingNav`)
+- `components/BlogPostHeader.tsx` — `BlogPostHeader` (back link, category, date, title, author) + `BlogCategoryBadge`
 
 ### API Client
 - `lib/api.ts` — `apiFetch()` wrapper that auto-attaches auth cookie and handles 401 refresh
@@ -224,6 +226,7 @@ Scales: `brand-*` (yellow), `neutral-*` (olive), `red-*`, `blue-*`, `green-*`. S
 - `section-label` — small uppercase heading above a field group
 - `dropzone` — dashed empty / upload area (`bg-surface`; add `bg-bg` when inside a `card`)
 - `page-header` — top bar of a dashboard page (`h-16`, lines up with the sidebar header)
+- `article-body` — long-form text (blog, privacy, terms): write plain `<p>`/`<h2>`/`<ul>`/`<table>` inside; block rules hit direct children only, links with a className are left alone
 - Existing: `job-card`, `job-action-btn`, `modal-backdrop`, `modal-panel`, `masonry-accounts`
 
 Conditional classes: `cn()` from `apps/web/src/lib/cn.ts`.
