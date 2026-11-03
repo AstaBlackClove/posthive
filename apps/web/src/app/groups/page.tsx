@@ -6,20 +6,12 @@ import { apiFetch } from "../../lib/api";
 import { PlatformIcon } from "../../components/PlatformIcon";
 import { useToast } from "../../components/Toast";
 import { cn } from "../../lib/cn";
-
-const PLATFORM_BRAND: Record<string, string> = {
-  bluesky: "#0085ff", threads: "#1a1a1a", linkedin: "#0077b5",
-  mastodon: "#6364ff", pixelfed: "#ff8c00", youtube: "#ff0000",
-  facebook: "#1877f2", pinterest: "#e60023", telegram: "#229ED9",
-  nostr: "#8B5CF6", twitter: "#000000", instagram: "#e1306c",
-  tumblr: "#35465c", lemmy: "#ff6314", googlebusiness: "#4285f4",
-  tiktok: "#010101", discord: "#5865f2",
-};
+import { PLATFORM_COLOR } from "../../components/PlatformPreview";
 
 // Platform-native color, fed to classes via the --platform CSS variable.
 // Near-black brands (threads, x, tiktok) read fine on the light theme, so no substitutes.
 function brandColor(platform: string) {
-  return PLATFORM_BRAND[platform] ?? "#6b7280";
+  return PLATFORM_COLOR[platform] ?? "#6b7280";
 }
 
 interface Account {

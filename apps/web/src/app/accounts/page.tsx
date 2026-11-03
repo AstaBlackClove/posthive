@@ -39,7 +39,7 @@ interface Account {
 
 const PLATFORM_META: Record<string, { label: string; brand: string }> = {
   bluesky:   { label: "Bluesky",   brand: "#0085ff" },
-  threads:   { label: "Threads",   brand: "#1a1a1a" },
+  threads:   { label: "Threads",   brand: "#000000" },
   linkedin:  { label: "LinkedIn",  brand: "#0077b5" },
   mastodon:  { label: "Mastodon",  brand: "#6364ff" },
   pixelfed:  { label: "Pixelfed",  brand: "#ff8c00" },
