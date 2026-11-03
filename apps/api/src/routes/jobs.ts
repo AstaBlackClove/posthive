@@ -15,6 +15,8 @@ import type { StorageAdapter } from "../lib/storage.js";
 import { adapters } from "../adapters/index.js";
 import { withoutTemplateMedia } from "../lib/templates.js";
 import { bucketJobCounts, jobFilterWhere } from "../lib/jobFilters.js";
+import { canEditJob, sameContent, shouldResetReview } from "../lib/jobEditRules.js";
+import { missingForReview, type MissingField } from "../lib/submitReadiness.js";
 import { CATEGORIES, PILLARS, pillarFor, type Category, type Pillar } from "../lib/contentTypes.js";
 
 const TARGET_SELECT = {
@@ -31,6 +33,23 @@ const perAccountOverrideSchema = z.object({
 // Content type (docs/content-types.md). The pillar always follows the category; a
 // pillar alone is allowed while the category is still undecided.
 type ContentType = { pillar: Pillar | null; category: Category | null };
+
+type ReadinessJob = { scheduledFor: Date | null; content: string; targets: { account: { platform: string } | null }[] };
+
+/** Input for missingForReview from a job row, plus a display title for reports. */
+function readinessInput(job: ReadinessJob) {
+  let title = "Untitled";
+  try {
+    const c = JSON.parse(job.content) as { title?: string; text?: string };
+    title = c.title?.trim() || c.text?.trim() || "Untitled";
+  } catch { /* keep fallback */ }
+  return {
+    title,
+    scheduledFor: job.scheduledFor,
+    content: job.content,
+    targetPlatforms: job.targets.map((t) => t.account?.platform).filter((p): p is string => !!p),
+  };
+}
 
 function contentType(pillar: Pillar | null | undefined, category: Category | null | undefined): ContentType | { error: string } {
   if (!category) return { pillar: pillar ?? null, category: null };
@@ -363,6 +382,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const { id } = req.params as { id: string };
     const body = z.object({
       scheduledFor: z.string().datetime().optional(),
+      title: z.string().max(300).optional(),
       text: z.string().optional(),
       commentText: z.string().optional(),
       mediaUrls: z.array(z.string()).optional(),
@@ -390,43 +410,32 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const type = typeChanged ? contentType(body.data.pillar, body.data.category) : null;
     if (type && "error" in type) return reply.status(400).send({ error: type.error });
 
-    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, content: true, userId: true, approvalStatus: true } });
+    const job = await prisma.postJob.findFirst({
+      where: { id, workspaceId },
+      select: { status: true, content: true, commentText: true, userId: true, approvalStatus: true, targets: { select: { accountId: true } } },
+    });
     if (!job) return reply.status(404).send({ error: "Job not found" });
-    if (job.status !== "pending" && job.status !== "draft") {
-      return reply.status(409).send({ error: `Cannot edit a job with status "${job.status}"` });
-    }
     const role = await getWorkspaceRole(userId, workspaceId);
     // Tim Desain (and unknown roles) cannot edit content — read-only + approve/reject
     if (!isContentEditorRole(role)) {
       return reply.status(403).send(CONTENT_EDITOR_FORBIDDEN);
     }
-    if ((role !== "owner" && role !== "admin") && job.userId !== userId) {
-      return reply.status(403).send({ error: "You can only edit your own posts.", code: "FORBIDDEN" });
+    // Marketing: own posts, before approval only. Admin/owner: any draft or scheduled post.
+    const editCheck = canEditJob(role, userId, job);
+    if (!editCheck.ok) {
+      return reply.status(editCheck.status).send({ error: editCheck.error, ...(editCheck.code ? { code: editCheck.code } : {}) });
     }
 
     const updateData: Record<string, unknown> = {};
 
-    // Creator editing their own submitted/rejected draft resets the review —
-    // it must be re-submitted for design approval afterwards.
-    // Manage roles (owner/admin/) may edit without resetting the review.
-    if (
-      job.status === "draft" &&
-      (job.approvalStatus === "pending" || job.approvalStatus === "rejected") &&
-      !isManageRole(role)
-    ) {
-      updateData.approvalStatus = null;
-      updateData.reviewNote = null;
-      updateData.reviewedByUserId = null;
-      updateData.reviewedAt = null;
-    }
-
     if (body.data.scheduledFor) {
       updateData.scheduledFor = new Date(body.data.scheduledFor);
     }
-    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.youtubeVideoMode !== undefined || body.data.youtubeVideoUrl !== undefined || body.data.youtubeThumbnailUrl !== undefined || body.data.pixelfedSensitive !== undefined || body.data.pixelfedVisibility !== undefined || body.data.youtubeVisibility !== undefined || body.data.youtubeTags !== undefined || body.data.youtubeMadeForKids !== undefined || body.data.linkedinVisibility !== undefined || body.data.blueskyLanguage !== undefined || body.data.blueskyContentWarning !== undefined || body.data.perAccount !== undefined || typeChanged) {
+    if (body.data.title !== undefined || body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.youtubeVideoMode !== undefined || body.data.youtubeVideoUrl !== undefined || body.data.youtubeThumbnailUrl !== undefined || body.data.pixelfedSensitive !== undefined || body.data.pixelfedVisibility !== undefined || body.data.youtubeVisibility !== undefined || body.data.youtubeTags !== undefined || body.data.youtubeMadeForKids !== undefined || body.data.linkedinVisibility !== undefined || body.data.blueskyLanguage !== undefined || body.data.blueskyContentWarning !== undefined || body.data.perAccount !== undefined || typeChanged) {
       const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; youtubeType?: string; youtubeVideoMode?: string; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; pixelfedSensitive?: boolean; pixelfedVisibility?: string; youtubeVisibility?: string; youtubeTags?: string[]; youtubeMadeForKids?: boolean; linkedinVisibility?: string; blueskyLanguage?: string; blueskyContentWarning?: string; perAccount?: Record<string, unknown> };
       updateData.content = JSON.stringify({
         ...existing,
+        ...(body.data.title !== undefined ? { title: body.data.title.trim() } : {}),
         ...(body.data.text !== undefined ? { text: body.data.text } : {}),
         ...(body.data.mediaUrls !== undefined ? { mediaUrls: body.data.mediaUrls } : {}),
         ...(body.data.mediaType !== undefined ? { mediaType: body.data.mediaType } : {}),
@@ -448,6 +457,22 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     }
     if (body.data.commentText !== undefined) {
       updateData.commentText = body.data.commentText || null;
+    }
+
+    // Only a real content change (not the date, not a re-save of the same values)
+    // sends a submitted/rejected draft back out of review.
+    const accountsChanged = body.data.accountIds !== undefined &&
+      (body.data.accountIds.length !== job.targets.length ||
+        body.data.accountIds.some((a) => !job.targets.some((t) => t.accountId === a)));
+    const contentChanged =
+      (updateData.content !== undefined && !sameContent(updateData.content as string, job.content)) ||
+      (updateData.commentText !== undefined && updateData.commentText !== job.commentText) ||
+      accountsChanged;
+    if (shouldResetReview(role, job, contentChanged)) {
+      updateData.approvalStatus = null;
+      updateData.reviewNote = null;
+      updateData.reviewedByUserId = null;
+      updateData.reviewedAt = null;
     }
 
     const updated = await prisma.postJob.update({ where: { id }, data: updateData });
@@ -591,7 +616,10 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { approvalRequired: true } });
     if (!ws?.approvalRequired) return reply.status(400).send({ error: "Approval is not enabled for this workspace" });
 
-    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, approvalStatus: true, userId: true } });
+    const job = await prisma.postJob.findFirst({
+      where: { id, workspaceId },
+      select: { status: true, approvalStatus: true, userId: true, scheduledFor: true, content: true, targets: { select: { account: { select: { platform: true } } } } },
+    });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status !== "draft") return reply.status(409).send({ error: "Only drafts can be submitted for review" });
     if (job.approvalStatus === "pending") return reply.status(409).send({ error: "Already awaiting review" });
@@ -601,6 +629,10 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (job.userId !== userId && role !== "owner" && role !== "admin") {
       return reply.status(403).send({ error: "You can only submit your own posts.", code: "FORBIDDEN" });
     }
+    const missing = missingForReview(readinessInput(job));
+    if (missing.length > 0) {
+      return reply.status(422).send({ error: `Complete the required fields first: ${missing.join(", ")}.`, code: "INCOMPLETE", missing });
+    }
 
     const updated = await prisma.postJob.update({
       where: { id },
@@ -608,6 +640,52 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       include: { targets: { select: TARGET_SELECT } },
     });
     return reply.send(updated);
+  });
+
+  // Bulk "Send for Design Approval": complete drafts are submitted, the rest are skipped with a reason.
+  app.post("/jobs/submit-bulk", { preHandler: [withAuth], config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const body = z.object({ ids: z.array(z.string().cuid()).min(1).max(100) }).safeParse(req.body);
+    if (!body.success) return reply.status(400).send({ error: "ids must be 1-100 job ids" });
+
+    const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { approvalRequired: true } });
+    if (!ws?.approvalRequired) return reply.status(400).send({ error: "Approval is not enabled for this workspace" });
+    const role = await getWorkspaceRole(userId, workspaceId);
+    if (!isContentEditorRole(role)) return reply.status(403).send(CONTENT_EDITOR_FORBIDDEN);
+
+    const jobs = await prisma.postJob.findMany({
+      where: { id: { in: body.data.ids }, workspaceId },
+      select: { id: true, status: true, approvalStatus: true, userId: true, scheduledFor: true, content: true, targets: { select: { account: { select: { platform: true } } } } },
+    });
+    const byId = new Map(jobs.map((j) => [j.id, j]));
+    const submit: string[] = [];
+    const skipped: { id: string; title: string; reason: string; missing?: MissingField[] }[] = [];
+
+    for (const id of body.data.ids) {
+      const job = byId.get(id);
+      if (!job) { skipped.push({ id, title: "Unknown post", reason: "Post not found" }); continue; }
+      const title = readinessInput(job).title;
+      if (job.userId !== userId && role !== "owner" && role !== "admin") {
+        skipped.push({ id, title, reason: "Not your post" });
+      } else if (job.status !== "draft") {
+        skipped.push({ id, title, reason: "Not a draft" });
+      } else if (job.approvalStatus === "pending") {
+        skipped.push({ id, title, reason: "Already in review" });
+      } else {
+        const missing = missingForReview(readinessInput(job));
+        if (missing.length > 0) skipped.push({ id, title, reason: "Missing required fields", missing });
+        else submit.push(id);
+      }
+    }
+
+    if (submit.length > 0) {
+      await prisma.postJob.updateMany({
+        where: { id: { in: submit }, workspaceId, status: "draft" },
+        data: { approvalStatus: "pending", reviewNote: null, reviewedByUserId: null, reviewedAt: null },
+      });
+    }
+    return reply.send({ submitted: submit, skipped });
   });
 
   // Retry only the failed targets on a partially-failed job.
