@@ -978,8 +978,7 @@ TIKTOK_REDIRECT_URI="https://your-domain.com/auth/tiktok/callback"`}</pre>
               {/* ── Design templates (anchor kept for old links) ── */}
               <h3 className="mt-6 mb-2.5 type-head-sb-5 text-fg" id="post-templates">Design templates</h3>
               <p className="mb-4 type-body-r-m text-muted">
-                A template is the design team&apos;s reference design for one content type: a <strong>content pillar</strong> plus a <strong>content category</strong> (for example Promotional, Case Study). There is one template per category. It holds a Figma link (figma.com/design, file, proto or board), plus an optional preview image. Older templates may still show a read-only legacy .fig file.
-              </p>
+                A template is the design team&apos;s reference design for one content type: a <strong>content pillar</strong> plus a <strong>content category</strong> (for example Promotional, Case Study). There is one template per category. It holds a Figma link (figma.com/design, file, proto or board), plus an optional preview image.              </p>
               <h4 className="mt-7 mb-2.5 type-body-sb-m text-fg">Managing templates (design team)</h4>
               <ol className="mb-4 list-decimal space-y-1.5 pl-5 type-body-r-m text-muted">
                 <li>Open <strong>Templates</strong>. Each pillar lists its categories; empty ones show <strong>+ Upload</strong>.</li>

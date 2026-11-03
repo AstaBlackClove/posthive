@@ -9,9 +9,6 @@ export interface DesignTemplate {
   name: string;
   pillar: Pillar | null;
   category: Category;
-  fileUrl: string | null;
-  fileName: string | null;
-  fileSize: number | null;
   linkUrl: string | null;
   previewUrl: string | null;
   updatedAt?: string;
@@ -36,7 +33,7 @@ export function formatBytes(bytes: number): string {
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
-/** Templates without a Figma link (migrated or old .fig-only ones) need one from the design team. */
+/** Templates without a Figma link (migrated ones) need one from the design team. */
 export function isIncomplete(t: DesignTemplate): boolean {
   return !t.linkUrl;
 }

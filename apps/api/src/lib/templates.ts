@@ -8,9 +8,6 @@ export const TEMPLATE_SELECT = {
   name: true,
   pillar: true,
   category: true,
-  fileUrl: true,
-  fileName: true,
-  fileSize: true,
   linkUrl: true,
   previewUrl: true,
   createdAt: true,
@@ -26,14 +23,13 @@ export async function withoutTemplateMedia(urls: string[]): Promise<string[]> {
   if (!urls.length) return urls;
   const [templates, legacy] = await Promise.all([
     prisma.template.findMany({
-      where: { OR: [{ fileUrl: { in: urls } }, { previewUrl: { in: urls } }] },
-      select: { fileUrl: true, previewUrl: true },
+      where: { previewUrl: { in: urls } },
+      select: { previewUrl: true },
     }),
     prisma.legacyTemplateMedia.findMany({ where: { url: { in: urls } }, select: { url: true } }),
   ]);
   const inUse = new Set(legacy.map((l) => l.url));
   for (const t of templates) {
-    if (t.fileUrl) inUse.add(t.fileUrl);
     if (t.previewUrl) inUse.add(t.previewUrl);
   }
   return urls.filter((url) => !inUse.has(url));
@@ -47,9 +43,6 @@ export function absoluteUrl(url: string): string {
 }
 
 type TemplateFiles = {
-  fileUrl: string | null;
-  fileName: string | null;
-  fileSize: number | null;
   linkUrl: string | null;
   previewUrl: string | null;
 };
@@ -57,9 +50,6 @@ type TemplateFiles = {
 /** The design reference returned by the public API and MCP (absolute URLs). */
 export function designReference(t: TemplateFiles) {
   return {
-    fileUrl: t.fileUrl ? absoluteUrl(t.fileUrl) : null,
-    fileName: t.fileName,
-    fileSize: t.fileSize,
     linkUrl: t.linkUrl,
     previewUrl: t.previewUrl ? absoluteUrl(t.previewUrl) : null,
   };

@@ -5,7 +5,7 @@ import { apiFetch } from "../lib/api";
 import { cn } from "../lib/cn";
 import type { Category } from "../lib/contentTypes";
 import { figmaLinkError } from "../lib/figmaLink";
-import { fileHref, formatBytes, type DesignTemplate } from "../lib/templates";
+import { fileHref, type DesignTemplate } from "../lib/templates";
 import { ContentTypeSelects, type ContentType } from "./ContentTypeSelects";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -111,7 +111,6 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
   const busy = uploadingPreview;
   const linkError = figmaLinkError(linkUrl);
   const showLinkError = linkTouched && !!linkError;
-  const legacyFile = template?.fileUrl ? { url: template.fileUrl, name: template.fileName ?? "design.fig", size: template.fileSize } : null;
   const otherTaken = new Set([...takenCategories].filter((c) => c !== template?.category));
 
   return (
@@ -151,20 +150,6 @@ export function TemplateEditor({ template, presetCategory, takenCategories, onCl
               className={cn("field mt-1.5", showLinkError && "border-red-200 bg-red-50")} />
             {showLinkError && <p id="template-link-error" className="type-body-r-xs mt-1.5 text-red-600">{linkError}</p>}
           </div>
-
-          {legacyFile && (
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-bg">
-              <span className="type-body-sb-xs px-1.5 py-0.5 rounded-sm shrink-0 bg-neutral-100 text-fg">FIG</span>
-              <div className="flex-1 min-w-0">
-                <p className="type-body-sb-xs text-fg">Legacy .fig file</p>
-                <a href={fileHref(legacyFile.url)} download={legacyFile.name} className="block type-body-r-s text-fg truncate underline-offset-2 hover:underline">
-                  {legacyFile.name}
-                </a>
-                <p className="type-body-r-xs text-muted">Kept as it is. Add a Figma link to save changes.</p>
-              </div>
-              {legacyFile.size ? <span className="type-body-r-xs shrink-0 text-muted">{formatBytes(legacyFile.size)}</span> : null}
-            </div>
-          )}
 
           <section>
             <h3 className="type-body-sb-s text-fg">

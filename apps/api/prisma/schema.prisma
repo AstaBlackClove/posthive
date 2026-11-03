@@ -336,10 +336,7 @@ model Template {
   name        String // derived from category
   pillar      String? // derived from category; null for Ask Me Anything
   category    String? // one of CATEGORIES; becomes required once legacy rows are cleaned up
-  fileUrl     String? // editable design file (.fig)
-  fileName    String?
-  fileSize    Int?
-  linkUrl     String? // https link to the design (e.g. Figma)
+  linkUrl     String? // Figma link to the design
   previewUrl  String? // optional preview image, shown in the library and compose only
   content     String     @default("{}") // DEPRECATED: legacy template-kit JSON, no longer written
   createdAt   DateTime   @default(now())
@@ -347,7 +344,6 @@ model Template {
 
   @@index([userId])
   @@index([workspaceId])
-  @@index([fileUrl])
   @@index([previewUrl])
 }
 

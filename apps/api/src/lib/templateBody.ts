@@ -7,8 +7,7 @@ const urlPath = (url: string) => { try { return new URL(url, "http://x").pathnam
 // Design template (docs/content-types.md): the reference design for one content type
 // (Pillar + Category) — a Figma link plus an optional preview image.
 // One per workspace and category. Posts only take the pillar/category, never the link.
-// Old templates may still hold a .fig file (fileUrl/fileName/fileSize); it is kept
-// in the database but can no longer be set through this body.
+// The old .fig upload fields are not part of the body; unknown keys are ignored.
 export const templateBody = z.object({
   pillar: z.enum(PILLARS).nullable(),
   category: z.enum(CATEGORIES),

@@ -301,7 +301,7 @@ switch (command) {
     out({
       ...(data as object),
       _note: (schedule ? "Post created and scheduled." : "Post created as DRAFT.") +
-        " The template's design file/link (designReference) is a reference only.",
+        " The template's Figma link (designReference) is a reference only.",
     });
     break;
   }

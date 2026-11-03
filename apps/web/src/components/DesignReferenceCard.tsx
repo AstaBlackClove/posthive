@@ -1,11 +1,11 @@
 "use client";
 
 import type { Category } from "../lib/contentTypes";
-import { fileHref, formatBytes, isFigmaLink, isIncomplete, type DesignTemplate } from "../lib/templates";
+import { fileHref, isFigmaLink, isIncomplete, type DesignTemplate } from "../lib/templates";
 import { contentTypeLabel } from "./ContentTypeSelects";
 
 // The design template for a post's content type, shown next to the post as a reference.
-// Its file and link are never attached to the post.
+// Its link and preview are never attached to the post.
 export function DesignReferenceCard({ template, category, showPreview = false }: {
   template: DesignTemplate | null | undefined;
   /** The post's category; with no template for it, a short note is shown instead. */
@@ -37,7 +37,7 @@ export function DesignReferenceCard({ template, category, showPreview = false }:
         <p className="type-body-r-xs mt-0.5 text-muted">
           {contentTypeLabel(template.category, template.pillar)}. For reference only; it is not attached to the post.
         </p>
-        {isIncomplete(template) && !template.fileUrl ? (
+        {isIncomplete(template) ? (
           <p className="type-body-r-xs mt-2 text-muted">Figma link not added yet.</p>
         ) : (
           <div className="flex flex-wrap gap-2 mt-2">
@@ -45,13 +45,6 @@ export function DesignReferenceCard({ template, category, showPreview = false }:
               <a href={template.linkUrl} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border type-body-m-xs text-fg hover:bg-surface">
                 {isFigmaLink(template.linkUrl) ? "Open in Figma" : "Open link"} <span aria-hidden>↗</span>
-              </a>
-            )}
-            {template.fileUrl && (
-              <a href={fileHref(template.fileUrl)} download={template.fileName ?? undefined}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border type-body-m-xs text-fg hover:bg-surface">
-                Legacy .fig file
-                {template.fileSize ? <span className="text-muted">{formatBytes(template.fileSize)}</span> : null}
               </a>
             )}
           </div>

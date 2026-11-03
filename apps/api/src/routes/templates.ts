@@ -17,9 +17,6 @@ function templateData(t: TemplateBody) {
   };
 }
 
-// Legacy .fig files are never touched by create or edit; only the preview is managed here.
-const filesOf = (t: { fileUrl?: string | null; previewUrl: string | null }) =>
-  [t.fileUrl, t.previewUrl].filter((u): u is string => !!u);
 const previewsOf = (t: { previewUrl: string | null }) => (t.previewUrl ? [t.previewUrl] : []);
 
 function isUniqueViolation(err: unknown): boolean {
@@ -97,7 +94,7 @@ export async function templateRoutes(
     }
   });
 
-  // Replace a template (content type, link, preview); a legacy .fig file stays as it is, — design team only
+  // Replace a template (content type, link, preview); — design team only
   app.patch("/templates/:id", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
     const workspaceId = getWorkspaceId(req);
@@ -154,12 +151,12 @@ export async function templateRoutes(
 
     const template = await prisma.template.findFirst({
       where: { id, workspaceId },
-      select: { id: true, fileUrl: true, previewUrl: true },
+      select: { id: true, previewUrl: true },
     });
     if (!template) return reply.status(404).send({ error: "Not found" });
 
     await prisma.template.delete({ where: { id } });
-    await removeFiles(filesOf(template));
+    await removeFiles(previewsOf(template));
     return reply.send({ ok: true });
   });
 }

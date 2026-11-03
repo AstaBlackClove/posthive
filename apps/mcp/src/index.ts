@@ -412,7 +412,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           _note: (scheduleDirectly
             ? "Post created and scheduled."
             : "Post created as DRAFT. Add the caption and design, then use approve_draft to schedule it.") +
-            " The template's design file/link (designReference) is a reference only; attach the finished design yourself.",
+            " The template's Figma link (designReference) is a reference only; attach the finished design yourself.",
         });
       }
 

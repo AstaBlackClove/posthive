@@ -56,7 +56,7 @@ pnpm db:migrate   # Run pending migrations
 | `routes/publicApi.ts` | `/api/v1` | Public REST API — accounts, posts, upload, templates |
 | `routes/mcp.ts` | `/mcp` | MCP Streamable HTTP server (Bearer + key-in-URL) |
 | `routes/oauth.ts` | `/oauth`, `/.well-known` | OAuth 2.0 + PKCE server for Claude.ai MCP connector |
-| `routes/templates.ts` | `/templates` | Design templates: one per content category (Figma link + optional preview image; old `.fig` files stay read-only); write = designer only. Never copied into posts |
+| `routes/templates.ts` | `/templates` | Design templates: one per content category (Figma link + optional preview image); write = designer only. Never copied into posts |
 
 ### Platform Adapters — `src/adapters/`
 Each adapter implements `PlatformAdapter` from `types.ts`:
@@ -301,7 +301,7 @@ Schema at `apps/api/prisma/schema.prisma`. Migrations use Postgres SQL.
 | `Account` | Connected social account. Credentials AES-256-GCM encrypted. |
 | `PostJob` | A scheduled post. Has `content` (JSON string), status, scheduledFor. |
 | `PostJobTarget` | One per platform per PostJob. Tracks per-platform status + errors. Cascades on PostJob delete. |
-| `Template` | Design template: one per workspace + category (Figma link / preview; `fileUrl/fileName/fileSize` = legacy `.fig`, read-only). Legacy `content` JSON is deprecated. |
+| `Template` | Design template: one per workspace + category (Figma link / preview). Legacy `content` JSON is deprecated. |
 | `LegacyTemplateMedia` | Files of old template kits that posts still share — never deleted by post cleanup (`withoutTemplateMedia`). |
 
 ---

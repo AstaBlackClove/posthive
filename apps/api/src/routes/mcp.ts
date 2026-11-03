@@ -328,9 +328,6 @@ const TOOLS = [
               name:         { type: "string" },
               pillar:       { type: ["string", "null"] },
               category:     { type: "string" },
-              fileUrl:      { type: ["string", "null"] },
-              fileName:     { type: ["string", "null"] },
-              fileSize:     { type: ["number", "null"] },
               linkUrl:      { type: ["string", "null"] },
               previewUrl:   { type: ["string", "null"] },
               createdAt:    { type: "string" },
@@ -380,9 +377,6 @@ const TOOLS = [
         designReference: {
           type: "object",
           properties: {
-            fileUrl:    { type: ["string", "null"] },
-            fileName:   { type: ["string", "null"] },
-            fileSize:   { type: ["number", "null"] },
             linkUrl:    { type: ["string", "null"] },
             previewUrl: { type: ["string", "null"] },
           },
