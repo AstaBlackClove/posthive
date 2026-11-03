@@ -14,6 +14,7 @@ import { getPlan } from "../lib/plans.js";
 import type { StorageAdapter } from "../lib/storage.js";
 import { adapters } from "../adapters/index.js";
 import { withoutTemplateMedia } from "../lib/templates.js";
+import { bucketJobCounts, jobFilterWhere } from "../lib/jobFilters.js";
 import { CATEGORIES, PILLARS, pillarFor, type Category, type Pillar } from "../lib/contentTypes.js";
 
 const TARGET_SELECT = {
@@ -287,28 +288,18 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
   app.get("/jobs", { preHandler: [withAuth] }, async (req, reply) => {
     const { id: userId } = getUser(req);
     const workspaceId = getWorkspaceId(req);
-    const query = req.query as { cursor?: string; limit?: string; status?: string; review?: string };
+    const query = req.query as { cursor?: string; limit?: string; status?: string; review?: string; platform?: string };
     const limit = Math.min(Number(query.limit ?? 50), 100);
     const cursor = query.cursor ?? undefined;
-    const statusFilter = query.status;
+    // `review=pending` is the legacy spelling of `status=review`
+    const statusFilter = query.review === "pending" ? "review" : query.status;
 
     const role = await getWorkspaceRole(userId, workspaceId);
-    const where: Prisma.PostJobWhereInput = { workspaceId, ...jobVisibilityWhere(role, userId) };
-    if (statusFilter) {
-      const statusMap: Record<string, string[]> = {
-        draft: ["draft"],
-        pending: ["pending", "running"],
-        done: ["done", "comment_done", "post_done"],
-        failed: ["failed", "post_failed", "comment_failed"],
-      };
-      const statuses = statusMap[statusFilter] ?? [statusFilter];
-      where.status = { in: statuses };
-    }
-    // Review queue — drafts awaiting design approval (always visible to approvers)
-    if (query.review === "pending") {
-      where.status = { in: ["draft"] };
-      where.approvalStatus = "pending";
-    }
+    // Visibility and filter both may use OR — combine with AND so neither overrides the other
+    const and: Prisma.PostJobWhereInput[] = [jobVisibilityWhere(role, userId)];
+    if (statusFilter) and.push(jobFilterWhere(statusFilter) ?? { status: statusFilter });
+    if (query.platform) and.push({ targets: { some: { account: { platform: query.platform } } } });
+    const where: Prisma.PostJobWhereInput = { workspaceId, AND: and };
 
     const jobs = await prisma.postJob.findMany({
       where,
@@ -330,6 +321,23 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const nextCursor = hasMore ? items[items.length - 1].id : null;
 
     return reply.send({ items, nextCursor, hasMore });
+  });
+
+  // Per-filter counts for the Posts chips. Computed over every visible job, so
+  // they never depend on the active status filter or sort — only on the platform.
+  app.get("/jobs/counts", { preHandler: [withAuth] }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const workspaceId = getWorkspaceId(req);
+    const { platform } = req.query as { platform?: string };
+    const role = await getWorkspaceRole(userId, workspaceId);
+    const and: Prisma.PostJobWhereInput[] = [jobVisibilityWhere(role, userId)];
+    if (platform) and.push({ targets: { some: { account: { platform } } } });
+    const rows = await prisma.postJob.groupBy({
+      by: ["status", "approvalStatus"],
+      where: { workspaceId, AND: and },
+      _count: true,
+    });
+    return reply.send(bucketJobCounts(rows));
   });
 
   // Single job detail — scoped to workspace. Hidden drafts 404 so they can't
