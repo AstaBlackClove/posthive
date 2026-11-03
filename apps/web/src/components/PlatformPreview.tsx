@@ -3,8 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import { PlatformIcon } from "./PlatformIcon";
 import { formatTime } from "../lib/datetime";
+import { cn } from "../lib/cn";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+// Mockups render each platform's LIGHT mode: white card, platform-native colors as
+// arbitrary classes. The header bar above each mockup is app chrome (tokens).
+const CARD = "overflow-hidden rounded-2xl border border-border bg-white";
+const HEADER = "flex items-center gap-2 border-b border-l-3 border-border bg-surface px-4 py-2.5";
+const IG_GRADIENT = "bg-[linear-gradient(135deg,#f09433_0%,#e6683c_25%,#dc2743_50%,#cc2366_75%,#bc1888_100%)]";
+
+// Light-mode text / secondary / border for platforms rendered by the generic preview
+type MockTheme = { text: string; sub: string; border: string };
+const GENERIC_THEME: Record<string, MockTheme> = {
+  bluesky:  { text: "text-[#0b0f14]", sub: "text-[#42576c]", border: "border-[#d4dbe2]" },
+  threads:  { text: "text-black",     sub: "text-[#737373]", border: "border-[#dbdbdb]" },
+  facebook: { text: "text-[#050505]", sub: "text-[#65676b]", border: "border-[#ced0d4]" },
+};
+const GENERIC_THEME_DEFAULT: MockTheme = { text: "text-[#111111]", sub: "text-[#666666]", border: "border-[#e5e5e5]" };
 
 interface OGData { title?: string; description?: string; image?: string | null; url?: string }
 
@@ -37,15 +53,15 @@ function useLinkCard(text: string, enabled: boolean): OGData | null {
 
 function LinkCard({ og }: { og: OGData }) {
   return (
-    <div className="mt-2 rounded-xl overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
+    <div className="mt-2 rounded-xl overflow-hidden border border-[#d4dbe2]">
       {og.image && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={og.image} alt="" className="w-full h-32 object-cover" />
       )}
-      <div className="px-3 py-2" style={{ backgroundColor: "#1a1a1a" }}>
-        {og.url && <p className="text-[10px] mb-0.5 truncate" style={{ color: "#555" }}>{new URL(og.url).hostname}</p>}
-        <p className="text-xs font-semibold leading-snug line-clamp-2" style={{ color: "#ededed" }}>{og.title}</p>
-        {og.description && <p className="text-[11px] mt-0.5 line-clamp-2" style={{ color: "#888" }}>{og.description}</p>}
+      <div className="px-3 py-2 bg-white">
+        {og.url && <p className="text-[10px] mb-0.5 truncate text-[#42576c]">{new URL(og.url).hostname}</p>}
+        <p className="text-xs font-semibold leading-snug line-clamp-2 text-[#0b0f14]">{og.title}</p>
+        {og.description && <p className="text-[11px] mt-0.5 line-clamp-2 text-[#42576c]">{og.description}</p>}
       </div>
     </div>
   );
@@ -72,14 +88,14 @@ export interface UploadedImage {
 
 export const PLATFORM_COLOR: Record<string, string> = {
   bluesky: "#0085ff",
-  threads: "#aaaaaa",
+  threads: "#000000",
   linkedin: "#0077b5",
   instagram: "#e1306c",
   mastodon: "#6364ff",
   pixelfed: "#ff8c00",
   youtube: "#ff0000",
   facebook: "#1877f2",
-  twitter: "#e7e9ea",
+  twitter: "#0f1419",
   pinterest: "#e60023",
   telegram: "#229ED9",
   nostr: "#7B5EA7",
@@ -128,35 +144,33 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
   const video = mediaItems.find(m => m.isVideo) ?? null;
   const [carouselIdx, setCarouselIdx] = useState(0);
   const initial = account.displayName[0]?.toUpperCase() ?? "?";
-  const igGradient = "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)";
 
   const FORMAT_LABEL: Record<string, string> = { post: "Post", reel: "Reel", story: "Story" };
+  const AVATAR_SIZE = { 7: "size-7", 8: "size-8" } as const;
 
-  function Avatar({ size = 8 }: { size?: number }) {
-    const cls = `w-${size} h-${size} rounded-full shrink-0`;
+  function Avatar({ size = 8 }: { size?: keyof typeof AVATAR_SIZE }) {
+    const cls = cn(AVATAR_SIZE[size], "rounded-full shrink-0");
     return account.avatarUrl ? (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={account.avatarUrl} alt="" className={`${cls} object-cover`} />
+      <img src={account.avatarUrl} alt="" className={cn(cls, "object-cover")} />
     ) : (
-      <div className={`${cls} flex items-center justify-center text-xs font-bold text-white`}
-        style={{ background: igGradient }}>{initial}</div>
+      <div className={cn(cls, IG_GRADIENT, "flex items-center justify-center text-xs font-bold text-white")}>{initial}</div>
     );
   }
 
   // ── STORY ───────────────────────────────────────────────────────────────────
   if (igMediaType === "story") {
     return (
-      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-        <div className="flex items-center gap-2 px-4 py-2.5"
-          style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a", borderLeft: "3px solid #e1306c" }}>
+      <div className={CARD}>
+        <div className={cn(HEADER, "border-l-[#e1306c]")}>
           <PlatformIcon platform="instagram" size={16} />
-          <span className="text-xs font-semibold" style={{ color: "#e1306c" }}>Instagram</span>
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm ml-1" style={{ backgroundColor: "#E1306C20", color: "#E1306C" }}>STORY</span>
-          <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+          <span className="type-body-sb-xs text-[#e1306c]">Instagram</span>
+          <span className="type-body-sb-xxs px-1.5 py-0.5 rounded-sm ml-1 bg-[#e1306c]/12 text-[#e1306c]">STORY</span>
+          <span className="type-body-r-xs ml-auto text-muted">{account.displayName}</span>
         </div>
 
         {/* 9:16 story canvas */}
-        <div className="relative w-full overflow-hidden" style={{ aspectRatio: "9/16", backgroundColor: "#000" }}>
+        <div className="relative w-full overflow-hidden aspect-9/16 bg-black">
           {video ? (
             <video src={video.previewUrl} className="w-full h-full object-cover" muted playsInline loop autoPlay />
           ) : images.length > 0 ? (
@@ -170,7 +184,7 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
                   <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="1.5" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 15l-5-5L5 21" />
                 </svg>
-                <p className="text-xs" style={{ color: "#555" }}>Add an image or video</p>
+                <p className="type-body-r-xs text-neutral-500">Add an image or video</p>
               </div>
             </div>
           )}
@@ -197,17 +211,16 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
   // ── REEL ────────────────────────────────────────────────────────────────────
   if (igMediaType === "reel") {
     return (
-      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-        <div className="flex items-center gap-2 px-4 py-2.5"
-          style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a", borderLeft: "3px solid #e1306c" }}>
+      <div className={CARD}>
+        <div className={cn(HEADER, "border-l-[#e1306c]")}>
           <PlatformIcon platform="instagram" size={16} />
-          <span className="text-xs font-semibold" style={{ color: "#e1306c" }}>Instagram</span>
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm ml-1" style={{ backgroundColor: "#E1306C20", color: "#E1306C" }}>REEL</span>
-          <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+          <span className="type-body-sb-xs text-[#e1306c]">Instagram</span>
+          <span className="type-body-sb-xxs px-1.5 py-0.5 rounded-sm ml-1 bg-[#e1306c]/12 text-[#e1306c]">REEL</span>
+          <span className="type-body-r-xs ml-auto text-muted">{account.displayName}</span>
         </div>
 
         {/* 9:16 reel canvas */}
-        <div className="relative w-full overflow-hidden" style={{ aspectRatio: "9/16", backgroundColor: "#000" }}>
+        <div className="relative w-full overflow-hidden aspect-9/16 bg-black">
           {video ? (
             <video src={video.previewUrl} className="w-full h-full object-cover" muted loop />
           ) : (
@@ -216,7 +229,7 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
                 <svg className="w-10 h-10 mx-auto mb-2 opacity-20" fill="none" stroke="white" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
                 </svg>
-                <p className="text-xs" style={{ color: "#555" }}>Add a video</p>
+                <p className="type-body-r-xs text-neutral-500">Add a video</p>
               </div>
             </div>
           )}
@@ -261,21 +274,20 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
 
   // ── POST (default) ───────────────────────────────────────────────────────────
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2a2a2a", backgroundColor: "#0a0a0a", borderLeft: "3px solid #e1306c" }}>
+    <div className={CARD}>
+      <div className={cn(HEADER, "border-l-[#e1306c]")}>
         <PlatformIcon platform="instagram" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#e1306c" }}>Instagram</span>
-        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm ml-1" style={{ backgroundColor: "#E1306C20", color: "#E1306C" }}>{FORMAT_LABEL[igMediaType]}</span>
-        <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+        <span className="type-body-sb-xs text-[#e1306c]">Instagram</span>
+        <span className="type-body-sb-xxs px-1.5 py-0.5 rounded-sm ml-1 bg-[#e1306c]/12 text-[#e1306c]">{FORMAT_LABEL[igMediaType]}</span>
+        <span className="type-body-r-xs ml-auto text-muted">{account.displayName}</span>
       </div>
 
       <div className="flex items-center gap-2.5 px-3 py-2.5">
-        <div className="ring-2 ring-pink-500 ring-offset-1 ring-offset-[#111] rounded-full">
+        <div className="ring-2 ring-pink-500 ring-offset-1 ring-offset-white rounded-full">
           <Avatar size={8} />
         </div>
-        <span className="text-sm font-semibold flex-1" style={{ color: "#ededed" }}>{account.displayName}</span>
-        <span className="text-xs font-semibold" style={{ color: "#3b82f6" }}>Follow</span>
+        <span className="text-sm font-semibold flex-1 text-black">{account.displayName}</span>
+        <span className="text-xs font-semibold text-[#0095f6]">Follow</span>
       </div>
 
       {mediaItems.length > 0 ? (
@@ -301,8 +313,7 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
               <button type="button"
                 onClick={() => setCarouselIdx(i => Math.max(0, i - 1))}
                 disabled={carouselIdx === 0}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-0 transition-opacity"
-                style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-0 transition-opacity bg-black/55">
                 <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -310,8 +321,7 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
               <button type="button"
                 onClick={() => setCarouselIdx(i => Math.min(mediaItems.length - 1, i + 1))}
                 disabled={carouselIdx === mediaItems.length - 1}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-0 transition-opacity"
-                style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-0 transition-opacity bg-black/55">
                 <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
@@ -321,8 +331,7 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
               <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
                 {mediaItems.map((_, i) => (
                   <button key={i} type="button" onClick={() => setCarouselIdx(i)}
-                    className="w-1.5 h-1.5 rounded-full transition-all"
-                    style={{ backgroundColor: i === carouselIdx ? "#fff" : "rgba(255,255,255,0.4)" }} />
+                    className={cn("w-1.5 h-1.5 rounded-full transition-all", i === carouselIdx ? "bg-white" : "bg-white/40")} />
                 ))}
               </div>
 
@@ -336,60 +345,59 @@ export function InstagramPreview({ account, text, commentText, mediaItems = [], 
           )}
         </div>
       ) : (
-        <div className="w-full aspect-square flex items-center justify-center" style={{ backgroundColor: "#1a1a1a" }}>
-          <div className="text-center">
-            <svg className="w-10 h-10 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-full aspect-square flex items-center justify-center bg-surface">
+          <div className="text-center text-neutral-500">
+            <svg className="w-10 h-10 mx-auto mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <rect x="3" y="3" width="18" height="18" rx="3" strokeWidth="1.5" />
               <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="1.5" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 15l-5-5L5 21" />
             </svg>
-            <p className="text-xs" style={{ color: "#555" }}>Add media to preview</p>
+            <p className="type-body-r-xs">Add media to preview</p>
           </div>
         </div>
       )}
 
-      <div className="flex items-center gap-3 px-3 pt-2.5 pb-1">
-        <svg className="w-6 h-6" fill="none" stroke="#ededed" viewBox="0 0 24 24" strokeWidth="1.5">
+      <div className="flex items-center gap-3 px-3 pt-2.5 pb-1 text-black">
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
         </svg>
-        <svg className="w-6 h-6" fill="none" stroke="#ededed" viewBox="0 0 24 24" strokeWidth="1.5">
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
         </svg>
-        <svg className="w-6 h-6" fill="none" stroke="#ededed" viewBox="0 0 24 24" strokeWidth="1.5">
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
         </svg>
-        <svg className="w-6 h-6 ml-auto" fill="none" stroke="#ededed" viewBox="0 0 24 24" strokeWidth="1.5">
+        <svg className="w-6 h-6 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
         </svg>
       </div>
 
       <div className="px-3 pb-3">
-        <p className="text-xs" style={{ color: "#888" }}>0 likes</p>
+        <p className="text-xs text-[#737373]">0 likes</p>
         {text ? (
-          <p className="text-xs mt-1 leading-relaxed" style={{ color: "#ededed" }}>
+          <p className="text-xs mt-1 leading-relaxed text-black">
             <span className="font-semibold">{account.displayName}</span>{" "}
             <span className="whitespace-pre-wrap">{text}</span>
           </p>
         ) : (
-          <p className="text-xs mt-1 italic" style={{ color: "#555" }}>Caption will appear here…</p>
+          <p className="type-body-r-xs mt-1 italic text-neutral-500">Caption will appear here…</p>
         )}
-        <p className="text-xs mt-1.5" style={{ color: "#555" }}>View all comments</p>
+        <p className="text-xs mt-1.5 text-[#737373]">View all comments</p>
         {commentText && (
           <div className="flex gap-2 mt-2">
             {account.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={account.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5" />
             ) : (
-              <div className="w-5 h-5 rounded-full shrink-0 mt-0.5"
-                style={{ background: "linear-gradient(135deg, #f09433, #bc1888)" }} />
+              <div className="w-5 h-5 rounded-full shrink-0 mt-0.5 bg-[linear-gradient(135deg,#f09433,#bc1888)]" />
             )}
-            <p className="text-xs leading-relaxed" style={{ color: "#ededed" }}>
+            <p className="text-xs leading-relaxed text-black">
               <span className="font-semibold">{account.displayName}</span>{" "}
               <span className="whitespace-pre-wrap">{commentText}</span>
             </p>
           </div>
         )}
-        <p className="text-xs mt-1.5" style={{ color: "#555" }}>just now</p>
+        <p className="text-xs mt-1.5 text-[#737373]">just now</p>
       </div>
     </div>
   );
@@ -403,13 +411,12 @@ function LinkedInPreview({ account, text, commentText, images }: {
 }) {
   const initial = account.displayName[0]?.toUpperCase() ?? "?";
   return (
-    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#1b1f23", border: "1px solid #2a2a2a" }}>
+    <div className={cn(CARD, "shadow-xs")}>
       {/* Header bar */}
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #0077b5", backgroundColor: "#0a0a0a" }}>
+      <div className={cn(HEADER, "border-l-[#0077b5]")}>
         <PlatformIcon platform="linkedin" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#0077b5" }}>LinkedIn</span>
-        <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+        <span className="type-body-sb-xs text-[#0077b5]">LinkedIn</span>
+        <span className="type-body-r-xs ml-auto text-muted">{account.displayName}</span>
       </div>
 
       <div className="p-4">
@@ -419,22 +426,21 @@ function LinkedInPreview({ account, text, commentText, images }: {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={account.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white"
-              style={{ background: "#0077b5" }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white bg-[#0077b5]">
               {initial}
             </div>
           )}
           <div>
-            <p className="text-sm font-semibold" style={{ color: "#ededed" }}>{account.displayName}</p>
-            <p className="text-xs" style={{ color: "#888" }}>Just now · 🌐</p>
+            <p className="text-sm font-semibold text-[#191919]">{account.displayName}</p>
+            <p className="text-xs text-[#666666]">Just now · 🌐</p>
           </div>
         </div>
 
         {/* Post text — LinkedIn shows "...more" after 3 lines */}
         {text ? (
-          <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed line-clamp-6" style={{ color: "#d4d4d4" }}>{text}</p>
+          <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed line-clamp-6 text-[#191919]">{text}</p>
         ) : (
-          <p className="text-sm italic" style={{ color: "#444" }}>Start writing your post for a preview…</p>
+          <p className="type-body-r-s italic text-neutral-500">Start writing your post for a preview…</p>
         )}
 
         {/* Images */}
@@ -449,16 +455,16 @@ function LinkedInPreview({ account, text, commentText, images }: {
         )}
 
         {/* Engagement bar */}
-        <div className="mt-3 pt-2.5 flex items-center gap-4" style={{ borderTop: "1px solid #2a2a2a" }}>
+        <div className="mt-3 pt-2.5 flex items-center gap-4 border-t border-[#e0dfdc]">
           {["👍 Like", "💬 Comment", "🔁 Repost", "📤 Send"].map((action) => (
-            <span key={action} className="text-xs font-semibold" style={{ color: "#888" }}>{action}</span>
+            <span key={action} className="text-xs font-semibold text-[#666666]">{action}</span>
           ))}
         </div>
 
         {/* First comment — LinkedIn API removed first comment support */}
         {commentText && (
-          <div className="mt-3 pt-2.5" style={{ borderTop: "1px solid #1a1a1a" }}>
-            <p className="text-xs" style={{ color: "#888" }}>
+          <div className="mt-3 pt-2.5 border-t border-[#e0dfdc]">
+            <p className="type-body-r-xs text-muted">
               ⚠️ LinkedIn no longer supports first comments via API — this won&apos;t be posted.
             </p>
           </div>
@@ -484,22 +490,21 @@ function YouTubePreview({ account, text, commentText, mediaItems = [], youtubeTy
   const initial = account.displayName[0]?.toUpperCase() ?? "?";
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#0f0f0f", border: "1px solid #2a2a2a" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #ff0000", backgroundColor: "#0a0a0a" }}>
+    <div className={cn(CARD, "shadow-xs")}>
+      <div className={cn(HEADER, "border-l-[#ff0000]")}>
         <PlatformIcon platform="youtube" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#ff0000" }}>YouTube</span>
-        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm ml-1" style={{ backgroundColor: "#ff000020", color: "#ff0000" }}>
+        <span className="type-body-sb-xs text-[#ff0000]">YouTube</span>
+        <span className="type-body-sb-xxs px-1.5 py-0.5 rounded-sm ml-1 bg-[#ff0000]/12 text-[#ff0000]">
           {isShort ? "SHORT" : "VIDEO"}
         </span>
-        <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+        <span className="type-body-r-xs ml-auto text-muted">{account.displayName}</span>
       </div>
 
       <div className="p-4">
         {/* Video thumbnail — actual video if attached, otherwise a placeholder. Shorts render
             as a tall 9:16 canvas (matching the real Shorts player), regular videos as 16:9. */}
         {isShort ? (
-          <div className="mx-auto rounded-xl overflow-hidden relative" style={{ width: 160, aspectRatio: "9/16", backgroundColor: "#000", border: "1px solid #2a2a2a" }}>
+          <div className="mx-auto rounded-xl overflow-hidden relative w-40 aspect-9/16 bg-black border border-[#e5e5e5]">
             {video ? (
               <video src={video.previewUrl} className="w-full h-full object-cover" muted playsInline loop autoPlay />
             ) : (
@@ -512,7 +517,7 @@ function YouTubePreview({ account, text, commentText, mediaItems = [], youtubeTy
             )}
           </div>
         ) : (
-          <div className="rounded-xl overflow-hidden relative" style={{ aspectRatio: "16/9", backgroundColor: "#000", border: "1px solid #2a2a2a" }}>
+          <div className="rounded-xl overflow-hidden relative aspect-video bg-black border border-[#e5e5e5]">
             {video ? (
               <video src={video.previewUrl} className="w-full h-full object-cover" muted />
             ) : (
@@ -531,34 +536,32 @@ function YouTubePreview({ account, text, commentText, mediaItems = [], youtubeTy
             // eslint-disable-next-line @next/next/no-img-element
             <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white"
-              style={{ background: "#ff0000" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white bg-[#ff0000]">
               {account.displayName[0]?.toUpperCase() ?? "?"}
             </div>
           )}
           <div className="flex-1 min-w-0">
             {title ? (
-              <p className="text-sm font-semibold leading-snug" style={{ color: "#ededed" }}>{title}</p>
+              <p className="text-sm font-semibold leading-snug text-[#0f0f0f]">{title}</p>
             ) : (
-              <p className="text-sm italic" style={{ color: "#444" }}>Title — first line of your post</p>
+              <p className="type-body-r-s italic text-neutral-500">Title — first line of your post</p>
             )}
-            <p className="text-xs mt-1" style={{ color: "#888" }}>{account.displayName}</p>
+            <p className="text-xs mt-1 text-[#606060]">{account.displayName}</p>
             {description ? (
-              <p className="text-xs mt-2 whitespace-pre-wrap wrap-break-word leading-relaxed line-clamp-3" style={{ color: "#aaa" }}>{description}</p>
+              <p className="text-xs mt-2 whitespace-pre-wrap wrap-break-word leading-relaxed line-clamp-3 text-[#606060]">{description}</p>
             ) : (
-              <p className="text-xs mt-2 italic" style={{ color: "#444" }}>Description everything after the first line</p>
+              <p className="type-body-r-xs mt-2 italic text-neutral-500">Description everything after the first line</p>
             )}
           </div>
         </div>
 
         {/* First comment */}
         {commentText && (
-          <div className="mt-3 pt-2.5 flex gap-2" style={{ borderTop: "1px solid #1a1a1a" }}>
-            <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
-              style={{ background: "#ff0000" }}>{initial}</div>
-            <div className="flex-1 rounded-lg px-3 py-2" style={{ backgroundColor: "#111111" }}>
-              <p className="text-xs font-semibold mb-0.5" style={{ color: "#ededed" }}>{account.displayName}</p>
-              <p className="text-xs" style={{ color: "#aaa" }}>{commentText}</p>
+          <div className="mt-3 pt-2.5 flex gap-2 border-t border-[#e5e5e5]">
+            <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white bg-[#ff0000]">{initial}</div>
+            <div className="flex-1 rounded-lg px-3 py-2 bg-[#f2f2f2]">
+              <p className="text-xs font-semibold mb-0.5 text-[#0f0f0f]">{account.displayName}</p>
+              <p className="text-xs text-[#606060]">{commentText}</p>
             </div>
           </div>
         )}
@@ -578,12 +581,11 @@ function PixelfedPreview({ account, text, commentText, images, video }: {
   const timeStr = formatTime(new Date());
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#1a1215", border: "1px solid #2a2a2a" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #ff8c00", backgroundColor: "#0a0a0a" }}>
+    <div className={cn(CARD, "shadow-xs")}>
+      <div className={cn(HEADER, "border-l-[#ff8c00]")}>
         <PlatformIcon platform="pixelfed" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#ff8c00" }}>Pixelfed</span>
-        <span className="text-xs ml-auto" style={{ color: "#666" }}>@{account.displayName}</span>
+        <span className="type-body-sb-xs text-[#ff8c00]">Pixelfed</span>
+        <span className="type-body-r-xs ml-auto text-muted">@{account.displayName}</span>
       </div>
 
       <div className="p-4">
@@ -592,24 +594,23 @@ function PixelfedPreview({ account, text, commentText, images, video }: {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white"
-              style={{ background: "#ff8c00" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white bg-[#ff8c00]">
               {initial}
             </div>
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-1.5 mb-1">
-              <span className="text-sm font-bold" style={{ color: "#ededed" }}>{account.displayName}</span>
-              <span className="text-xs" style={{ color: "#555" }}>{timeStr}</span>
+              <span className="text-sm font-bold text-[#212529]">{account.displayName}</span>
+              <span className="text-xs text-[#6c757d]">{timeStr}</span>
             </div>
             {text ? (
-              <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#d4d4d4" }}>{text}</p>
+              <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed text-[#212529]">{text}</p>
             ) : (
-              <p className="text-sm italic" style={{ color: "#444" }}>Start writing your post…</p>
+              <p className="type-body-r-s italic text-neutral-500">Start writing your post…</p>
             )}
 
             {video && (
-              <div className="mt-2.5 rounded-xl overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
+              <div className="mt-2.5 rounded-xl overflow-hidden border border-[#dee2e6]">
                 <video src={video.previewUrl} className="w-full h-48 object-cover" muted />
               </div>
             )}
@@ -624,9 +625,9 @@ function PixelfedPreview({ account, text, commentText, images, video }: {
             )}
 
             {commentText && (
-              <div className="mt-3 pt-3 border-t" style={{ borderColor: "#2a2a2a" }}>
-                <p className="text-xs mb-1" style={{ color: "#555" }}>First comment</p>
-                <p className="text-sm" style={{ color: "#aaa" }}>{commentText}</p>
+              <div className="mt-3 pt-3 border-t border-[#dee2e6]">
+                <p className="text-xs mb-1 text-[#6c757d]">First comment</p>
+                <p className="text-sm text-[#6c757d]">{commentText}</p>
               </div>
             )}
           </div>
@@ -647,12 +648,11 @@ function MastodonPreview({ account, text, commentText, images, video }: {
   const timeStr = formatTime(new Date());
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#1f1f2e", border: "1px solid #2a2a2a" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #6364ff", backgroundColor: "#0a0a0a" }}>
+    <div className={cn(CARD, "shadow-xs")}>
+      <div className={cn(HEADER, "border-l-[#6364ff]")}>
         <PlatformIcon platform="mastodon" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#6364ff" }}>Mastodon</span>
-        <span className="text-xs ml-auto" style={{ color: "#666" }}>@{account.displayName}</span>
+        <span className="type-body-sb-xs text-[#6364ff]">Mastodon</span>
+        <span className="type-body-r-xs ml-auto text-muted">@{account.displayName}</span>
       </div>
 
       <div className="p-4">
@@ -661,24 +661,23 @@ function MastodonPreview({ account, text, commentText, images, video }: {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white"
-              style={{ background: "#6364ff" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white bg-[#6364ff]">
               {initial}
             </div>
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-1.5 mb-1">
-              <span className="text-sm font-bold" style={{ color: "#ededed" }}>{account.displayName}</span>
-              <span className="text-xs" style={{ color: "#555" }}>{timeStr}</span>
+              <span className="text-sm font-bold text-[#282c37]">{account.displayName}</span>
+              <span className="text-xs text-[#606984]">{timeStr}</span>
             </div>
             {text ? (
-              <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#d4d4d4" }}>{text}</p>
+              <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed text-[#282c37]">{text}</p>
             ) : (
-              <p className="text-sm italic" style={{ color: "#444" }}>Start writing your post…</p>
+              <p className="type-body-r-s italic text-neutral-500">Start writing your post…</p>
             )}
 
             {video && (
-              <div className="mt-2.5 rounded-xl overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
+              <div className="mt-2.5 rounded-xl overflow-hidden border border-[#d9e1e8]">
                 <video src={video.previewUrl} className="w-full h-48 object-cover" muted />
               </div>
             )}
@@ -695,17 +694,16 @@ function MastodonPreview({ account, text, commentText, images, video }: {
 
             <div className="mt-3 flex items-center gap-4">
               {["💬", "🔁", "⭐", "🔖"].map((icon) => (
-                <span key={icon} className="text-base" style={{ color: "#555" }}>{icon}</span>
+                <span key={icon} className="text-base text-[#606984]">{icon}</span>
               ))}
             </div>
 
             {commentText && (
-              <div className="mt-3 pt-2.5 flex gap-2" style={{ borderTop: "1px solid #2a2a2a" }}>
-                <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
-                  style={{ background: "#6364ff" }}>{initial}</div>
-                <div className="flex-1 rounded-lg px-3 py-2" style={{ backgroundColor: "#111111" }}>
-                  <p className="text-xs font-semibold mb-0.5" style={{ color: "#ededed" }}>@{account.displayName}</p>
-                  <p className="text-xs" style={{ color: "#aaa" }}>{commentText}</p>
+              <div className="mt-3 pt-2.5 flex gap-2 border-t border-[#d9e1e8]">
+                <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white bg-[#6364ff]">{initial}</div>
+                <div className="flex-1 rounded-lg px-3 py-2 bg-[#eff3f5]">
+                  <p className="text-xs font-semibold mb-0.5 text-[#282c37]">@{account.displayName}</p>
+                  <p className="text-xs text-[#606984]">{commentText}</p>
                 </div>
               </div>
             )}
@@ -728,36 +726,35 @@ function PinterestPreview({ account, text, images }: {
   const initial = account.displayName[0]?.toUpperCase() ?? "?";
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #e60023", backgroundColor: "#0a0a0a" }}>
+    <div className={cn(CARD, "shadow-xs")}>
+      <div className={cn(HEADER, "border-l-[#e60023]")}>
         <PlatformIcon platform="pinterest" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#e60023" }}>Pinterest</span>
-        <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+        <span className="type-body-sb-xs text-[#e60023]">Pinterest</span>
+        <span className="type-body-r-xs ml-auto text-muted">{account.displayName}</span>
       </div>
 
       <div className="p-4">
         {/* Pin card */}
-        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", maxWidth: 220, margin: "0 auto" }}>
+        <div className="mx-auto max-w-55 rounded-2xl overflow-hidden bg-white border border-[#e9e9e9]">
           {images.length > 0 ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={images[0].previewUrl} alt="" className="w-full object-cover" style={{ maxHeight: 300 }} />
+            <img src={images[0].previewUrl} alt="" className="w-full object-cover max-h-75" />
           ) : (
-            <div className="w-full flex flex-col items-center justify-center py-10" style={{ backgroundColor: "#1a1a1a", minHeight: 160 }}>
-              <svg className="w-8 h-8 mb-2 opacity-20" fill="none" stroke="#e60023" viewBox="0 0 24 24">
+            <div className="w-full flex flex-col items-center justify-center py-10 min-h-40 bg-surface">
+              <svg className="w-8 h-8 mb-2 opacity-40" fill="none" stroke="#e60023" viewBox="0 0 24 24">
                 <rect x="3" y="3" width="18" height="18" rx="3" strokeWidth="1.5" />
                 <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="1.5" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 15l-5-5L5 21" />
               </svg>
-              <p className="text-xs" style={{ color: "#555" }}>Image required for Pinterest</p>
+              <p className="type-body-r-xs text-neutral-500">Image required for Pinterest</p>
             </div>
           )}
 
           <div className="p-3 space-y-1">
-            {title && <p className="text-sm font-bold leading-snug" style={{ color: "#ededed" }}>{title}</p>}
-            {description && !title && <p className="text-xs line-clamp-3" style={{ color: "#aaa" }}>{description}</p>}
-            {title && description && <p className="text-xs line-clamp-2" style={{ color: "#aaa" }}>{description}</p>}
-            {link && <p className="text-[10px] truncate" style={{ color: "#e60023" }}>{link}</p>}
+            {title && <p className="text-sm font-bold leading-snug text-[#111111]">{title}</p>}
+            {description && !title && <p className="text-xs line-clamp-3 text-[#767676]">{description}</p>}
+            {title && description && <p className="text-xs line-clamp-2 text-[#767676]">{description}</p>}
+            {link && <p className="text-[10px] truncate text-[#e60023]">{link}</p>}
           </div>
 
           <div className="px-3 pb-3 flex items-center gap-2">
@@ -765,11 +762,10 @@ function PinterestPreview({ account, text, images }: {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={account.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
             ) : (
-              <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                style={{ background: "#e60023" }}>{initial}</div>
+              <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white bg-[#e60023]">{initial}</div>
             )}
-            <span className="text-[10px]" style={{ color: "#888" }}>{account.displayName}</span>
-            <button className="ml-auto text-[10px] font-bold px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: "#e60023" }}>
+            <span className="text-[10px] text-[#767676]">{account.displayName}</span>
+            <button className="ml-auto text-[10px] font-bold px-2.5 py-1 rounded-full text-white bg-[#e60023]">
               Save
             </button>
           </div>
@@ -790,12 +786,11 @@ function TwitterPreview({ account, text, commentText, images, video }: {
   const timeStr = formatTime(new Date());
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#000000", border: "1px solid #2f3336" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2f3336", borderLeft: "3px solid #e7e9ea", backgroundColor: "#000000" }}>
+    <div className={cn(CARD, "shadow-xs")}>
+      <div className={cn(HEADER, "border-l-[#0f1419]")}>
         <PlatformIcon platform="twitter" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#e7e9ea" }}>X (Twitter)</span>
-        <span className="text-xs ml-auto" style={{ color: "#71767b" }}>@{account.displayName}</span>
+        <span className="type-body-sb-xs text-[#0f1419]">X (Twitter)</span>
+        <span className="type-body-r-xs ml-auto text-muted">@{account.displayName}</span>
       </div>
 
       <div className="p-4">
@@ -804,24 +799,23 @@ function TwitterPreview({ account, text, commentText, images, video }: {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-black"
-              style={{ background: "#e7e9ea" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white bg-[#0f1419]">
               {initial}
             </div>
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-1.5 mb-1">
-              <span className="text-sm font-bold" style={{ color: "#e7e9ea" }}>{account.displayName}</span>
-              <span className="text-xs" style={{ color: "#71767b" }}>@{account.displayName} · {timeStr}</span>
+              <span className="text-sm font-bold text-[#0f1419]">{account.displayName}</span>
+              <span className="text-xs text-[#536471]">@{account.displayName} · {timeStr}</span>
             </div>
             {text ? (
-              <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#e7e9ea" }}>{text}</p>
+              <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed text-[#0f1419]">{text}</p>
             ) : (
-              <p className="text-sm italic" style={{ color: "#555" }}>Start writing your tweet…</p>
+              <p className="type-body-r-s italic text-neutral-500">Start writing your tweet…</p>
             )}
 
             {video && (
-              <div className="mt-2.5 rounded-xl overflow-hidden" style={{ border: "1px solid #2f3336" }}>
+              <div className="mt-2.5 rounded-xl overflow-hidden border border-[#eff3f4]">
                 <video src={video.previewUrl} className="w-full h-48 object-cover" muted />
               </div>
             )}
@@ -836,7 +830,7 @@ function TwitterPreview({ account, text, commentText, images, video }: {
               </div>
             )}
 
-            <div className="mt-3 flex items-center gap-5" style={{ color: "#71767b" }}>
+            <div className="mt-3 flex items-center gap-5 text-[#536471]">
               {[
                 <svg key="reply" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
                 <svg key="retweet" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
@@ -847,12 +841,11 @@ function TwitterPreview({ account, text, commentText, images, video }: {
             </div>
 
             {commentText && (
-              <div className="mt-3 pt-2.5 flex gap-2" style={{ borderTop: "1px solid #2f3336" }}>
-                <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-black"
-                  style={{ background: "#e7e9ea" }}>{initial}</div>
-                <div className="flex-1 rounded-lg px-3 py-2" style={{ backgroundColor: "#0d0d0d", border: "1px solid #2f3336" }}>
-                  <p className="text-xs font-semibold mb-0.5" style={{ color: "#e7e9ea" }}>@{account.displayName}</p>
-                  <p className="text-xs" style={{ color: "#aaa" }}>{commentText}</p>
+              <div className="mt-3 pt-2.5 flex gap-2 border-t border-[#eff3f4]">
+                <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white bg-[#0f1419]">{initial}</div>
+                <div className="flex-1 rounded-lg px-3 py-2 bg-[#f7f9f9] border border-[#eff3f4]">
+                  <p className="text-xs font-semibold mb-0.5 text-[#0f1419]">@{account.displayName}</p>
+                  <p className="text-xs text-[#536471]">{commentText}</p>
                 </div>
               </div>
             )}
@@ -873,36 +866,33 @@ function TelegramPreview({ account, text, images, video }: {
   const hasMedia = images.length > 0 || video !== null;
 
   return (
-    <div className="rounded-2xl shadow-xs overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #229ED9", backgroundColor: "#0a0a0a" }}>
+    <div className={cn(CARD, "shadow-xs")}>
+      <div className={cn(HEADER, "border-l-[#229ED9]")}>
         <PlatformIcon platform="telegram" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#229ED9" }}>Telegram</span>
-        <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+        <span className="type-body-sb-xs text-[#229ED9]">Telegram</span>
+        <span className="type-body-r-xs ml-auto text-muted">{account.displayName}</span>
       </div>
 
-      <div className="p-4" style={{ backgroundColor: "#17212B" }}>
+      <div className="p-4 bg-[#e7ebf0]">
         <div className="flex justify-end">
-          <div className="max-w-[85%] rounded-2xl rounded-tr-sm overflow-hidden" style={{ backgroundColor: "#2B5278" }}>
+          <div className="max-w-[85%] rounded-2xl rounded-tr-sm overflow-hidden bg-[#effdde] shadow-xs">
             {/* Media */}
             {video ? (
-              <div className="relative w-full" style={{ aspectRatio: "9/16", maxHeight: 240, backgroundColor: "#1a1a1a" }}>
+              <div className="relative w-full aspect-9/16 max-h-60 bg-black">
                 <video src={video.previewUrl} className="w-full h-full object-cover" muted />
-                <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-sm text-[10px] font-semibold"
-                  style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#fff" }}>▶ Video</div>
+                <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-sm text-[10px] font-semibold bg-black/60 text-white">▶ Video</div>
               </div>
             ) : images.length === 1 ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={images[0].previewUrl} alt="" className="w-full object-cover" style={{ maxHeight: 240 }} />
+              <img src={images[0].previewUrl} alt="" className="w-full object-cover max-h-60" />
             ) : images.length > 1 ? (
-              <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(${Math.min(images.length, 2)}, 1fr)` }}>
+              <div className="grid grid-cols-2 gap-0.5">
                 {images.slice(0, 4).map((img, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
                   <div key={i} className="relative">
-                    <img src={img.previewUrl} alt="" className="w-full object-cover" style={{ height: 100 }} />
+                    <img src={img.previewUrl} alt="" className="w-full object-cover h-25" />
                     {i === 3 && images.length > 4 && (
-                      <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white"
-                        style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>+{images.length - 4}</div>
+                      <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white bg-black/50">+{images.length - 4}</div>
                     )}
                   </div>
                 ))}
@@ -912,15 +902,15 @@ function TelegramPreview({ account, text, images, video }: {
             {/* Text */}
             {text && (
               <div className={`px-3 ${hasMedia ? "py-2" : "pt-2 pb-1"}`}>
-                <p className="text-sm whitespace-pre-wrap wrap-break-word" style={{ color: "#e8e8e8" }}>{text}</p>
+                <p className="text-sm whitespace-pre-wrap wrap-break-word text-black">{text}</p>
                 <div className="flex justify-end mt-1">
-                  <span className="text-[10px]" style={{ color: "#7d9bb9" }}>{timeStr} ✓✓</span>
+                  <span className="text-[10px] text-[#4fae4e]">{timeStr} ✓✓</span>
                 </div>
               </div>
             )}
             {!text && (
               <div className="flex justify-end px-2 pb-1">
-                <span className="text-[10px]" style={{ color: "#7d9bb9" }}>{timeStr} ✓✓</span>
+                <span className="text-[10px] text-[#4fae4e]">{timeStr} ✓✓</span>
               </div>
             )}
           </div>
@@ -937,42 +927,40 @@ function NostrPreview({ account, text, images }: {
 }) {
   const timeStr = formatTime(new Date());
   return (
-    <div className="rounded-2xl shadow-xs overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #7B5EA7", backgroundColor: "#0a0a0a" }}>
+    <div className={cn(CARD, "shadow-xs")}>
+      <div className={cn(HEADER, "border-l-[#7B5EA7]")}>
         <PlatformIcon platform="nostr" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#7B5EA7" }}>Nostr</span>
-        <span className="text-xs ml-auto truncate max-w-[140px]" style={{ color: "#666" }}>{account.displayName}</span>
+        <span className="type-body-sb-xs text-[#7B5EA7]">Nostr</span>
+        <span className="type-body-r-xs ml-auto truncate max-w-35 text-muted">{account.displayName}</span>
       </div>
-      <div className="p-4" style={{ backgroundColor: "#0f0f0f" }}>
+      <div className="p-4">
         <div className="flex gap-3">
           {account.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={account.avatarUrl} alt={account.displayName}
               className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-bold"
-              style={{ background: "#7B5EA7", color: "#fff" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-bold bg-[#7B5EA7] text-white">
               {account.displayName[0]?.toUpperCase() ?? "N"}
             </div>
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-sm font-semibold" style={{ color: "#ededed" }}>{account.displayName}</span>
-              <span className="text-xs" style={{ color: "#555" }}>{timeStr}</span>
+              <span className="text-sm font-semibold text-[#111111]">{account.displayName}</span>
+              <span className="text-xs text-[#6b6b6b]">{timeStr}</span>
             </div>
-            {text && <p className="text-sm whitespace-pre-wrap wrap-break-word" style={{ color: "#ccc" }}>{text}</p>}
+            {text && <p className="text-sm whitespace-pre-wrap wrap-break-word text-[#111111]">{text}</p>}
             {images.length > 0 && (
-              <div className="mt-2 grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(images.length, 2)}, 1fr)` }}>
+              <div className={cn("mt-2 grid gap-1", images.length === 1 ? "grid-cols-1" : "grid-cols-2")}>
                 {images.slice(0, 4).map((img, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={i} src={img.previewUrl} alt="" className="w-full rounded-sm object-cover" style={{ height: 120 }} />
+                  <img key={i} src={img.previewUrl} alt="" className="w-full rounded-sm object-cover h-30" />
                 ))}
               </div>
             )}
             <div className="flex gap-5 mt-3">
               {["↩ Reply", "⚡ Zap", "♡ Like", "↗ Boost"].map(a => (
-                <span key={a} className="text-xs" style={{ color: "#555" }}>{a}</span>
+                <span key={a} className="text-xs text-[#6b6b6b]">{a}</span>
               ))}
             </div>
           </div>
@@ -985,23 +973,22 @@ function NostrPreview({ account, text, images }: {
 function TumblrPreview({ account, text, images }: { account: Account; text: string; images: UploadedImage[] }) {
   const blogName = account.displayName;
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#35465c", fontFamily: "sans-serif" }}>
+    <div className={CARD}>
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3" style={{ backgroundColor: "#2c3e50" }}>
-        <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-          style={{ backgroundColor: "#00b8ff", color: "#fff" }}>
+      <div className="flex items-center gap-2 px-4 py-3">
+        <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-[#00b8ff] text-white">
           {account.avatarUrl
             // eslint-disable-next-line @next/next/no-img-element
             ? <img src={account.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover" />
             : blogName[0]?.toUpperCase()}
         </div>
-        <span className="text-xs font-semibold" style={{ color: "#a9b8c3" }}>{blogName}</span>
+        <span className="text-xs font-semibold text-black">{blogName}</span>
       </div>
 
       {/* Body */}
       <div className="px-4 py-3 space-y-3">
         {text && (
-          <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#ffffff" }}>
+          <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed text-black">
             {text.length > 280 ? text.slice(0, 280) + "…" : text}
           </p>
         )}
@@ -1010,17 +997,16 @@ function TumblrPreview({ account, text, images }: { account: Account; text: stri
             {images.slice(0, 4).map((img, i) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={i} src={img.previewUrl} alt=""
-                className="w-full rounded-lg object-cover"
-                style={{ maxHeight: images.length === 1 ? 300 : 140 }} />
+                className={cn("w-full rounded-lg object-cover", images.length === 1 ? "max-h-75" : "max-h-35")} />
             ))}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="flex items-center gap-4 px-4 py-2" style={{ borderTop: "1px solid #2c3e50" }}>
+      <div className="flex items-center gap-4 px-4 py-2 border-t border-[#ebebeb]">
         {[["❤", "Like"], ["🔁", "Reblog"], ["✉", "Reply"]].map(([icon, label]) => (
-          <button key={label} className="flex items-center gap-1 text-xs" style={{ color: "#a9b8c3", background: "none", border: "none", cursor: "default" }}>
+          <button key={label} className="flex items-center gap-1 text-xs text-[#595959] bg-transparent border-0 cursor-default">
             <span>{icon}</span><span>{label}</span>
           </button>
         ))}
@@ -1036,31 +1022,31 @@ function LemmyPreview({ account, text, commentText, images }: { account: Account
   const community = account.displayName;
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#1c1c1c", fontFamily: "sans-serif" }}>
+    <div className={CARD}>
       {/* Header bar */}
-      <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#111", borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #ff6314" }}>
+      <div className={cn(HEADER, "border-l-[#ff6314]")}>
         <PlatformIcon platform="lemmy" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#ff6314" }}>Lemmy</span>
-        <span className="text-xs ml-auto" style={{ color: "#666" }}>{community}</span>
+        <span className="type-body-sb-xs text-[#ff6314]">Lemmy</span>
+        <span className="type-body-r-xs ml-auto text-muted">{community}</span>
       </div>
 
       {/* Post card */}
       <div className="px-4 py-3 space-y-2">
-        <p className="text-sm font-semibold leading-snug" style={{ color: "#ededed" }}>
-          {title || <span style={{ color: "#555" }}>Post title (first line of text)</span>}
+        <p className="text-sm font-semibold leading-snug text-[#222222]">
+          {title || <span className="text-neutral-500">Post title (first line of text)</span>}
         </p>
         {images.length > 0 && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={images[0].previewUrl} alt="" className="w-full rounded-lg object-cover" style={{ maxHeight: 220 }} />
+          <img src={images[0].previewUrl} alt="" className="w-full rounded-lg object-cover max-h-55" />
         )}
         {body && (
-          <p className="text-xs whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#aaa" }}>
+          <p className="text-xs whitespace-pre-wrap wrap-break-word leading-relaxed text-[#6c757d]">
             {body.length > 300 ? body.slice(0, 300) + "…" : body}
           </p>
         )}
         <div className="flex items-center gap-3 pt-1">
           {[["▲", "Vote"], ["💬", "Comment"], ["🔗", "Share"]].map(([icon, label]) => (
-            <span key={label} className="flex items-center gap-1 text-xs" style={{ color: "#555" }}>
+            <span key={label} className="flex items-center gap-1 text-xs text-[#6c757d]">
               <span>{icon}</span><span>{label}</span>
             </span>
           ))}
@@ -1069,9 +1055,9 @@ function LemmyPreview({ account, text, commentText, images }: { account: Account
 
       {commentText && (
         <div className="px-4 pb-3">
-          <div className="rounded-xl p-2.5" style={{ backgroundColor: "#111", border: "1px solid #2a2a2a" }}>
-            <p className="text-xs font-semibold mb-1" style={{ color: "#ff6314" }}>First comment</p>
-            <p className="text-xs whitespace-pre-wrap wrap-break-word" style={{ color: "#aaa" }}>{commentText}</p>
+          <div className="rounded-xl p-2.5 bg-[#f8f9fa] border border-[#dee2e6]">
+            <p className="text-xs font-semibold mb-1 text-[#ff6314]">First comment</p>
+            <p className="text-xs whitespace-pre-wrap wrap-break-word text-[#6c757d]">{commentText}</p>
           </div>
         </div>
       )}
@@ -1092,12 +1078,11 @@ function DiscordPreview({ account, text, commentText, images, video }: {
   const serverName = serverMatch ? serverMatch[1] : account.displayName;
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#313338", border: "1px solid #2a2a2a" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #5865F2", backgroundColor: "#0a0a0a" }}>
+    <div className={cn(CARD, "shadow-xs")}>
+      <div className={cn(HEADER, "border-l-[#5865F2]")}>
         <PlatformIcon platform="discord" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#5865F2" }}>Discord</span>
-        <span className="text-xs ml-auto" style={{ color: "#666" }}>{serverName}</span>
+        <span className="type-body-sb-xs text-[#5865F2]">Discord</span>
+        <span className="type-body-r-xs ml-auto text-muted">{serverName}</span>
       </div>
 
       <div className="px-4 py-3 flex gap-3">
@@ -1105,24 +1090,22 @@ function DiscordPreview({ account, text, commentText, images, video }: {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={account.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0 mt-0.5" />
         ) : (
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-0.5"
-            style={{ background: "#5865F2", color: "#fff" }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-0.5 bg-[#5865F2] text-white">
             {initial}
           </div>
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-sm font-semibold" style={{ color: "#00b0f4" }}>Posthive Bot</span>
-            <span className="text-[10px]" style={{ color: "#949ba4" }}>Today at {formatTime(new Date())}</span>
+            <span className="text-sm font-semibold text-[#0089c7]">Posthive Bot</span>
+            <span className="text-[10px] text-[#5c5e66]">Today at {formatTime(new Date())}</span>
           </div>
           {text ? (
-            <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#dbdee1" }}>{text}</p>
+            <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed text-[#313338]">{text}</p>
           ) : (
-            <p className="text-sm italic" style={{ color: "#4e5058" }}>Start writing your post for a preview…</p>
+            <p className="type-body-r-s italic text-neutral-500">Start writing your post for a preview…</p>
           )}
           {images.length > 0 && (
-            <div className={`mt-2 rounded-lg overflow-hidden grid gap-0.5 ${images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}
-              style={{ maxWidth: 400 }}>
+            <div className={`mt-2 rounded-lg overflow-hidden grid gap-0.5 max-w-100 ${images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
               {images.slice(0, 4).map((img, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img key={i} src={img.previewUrl} alt="" className={`w-full object-cover ${images.length === 1 ? "h-48" : "h-28"}`} />
@@ -1130,14 +1113,14 @@ function DiscordPreview({ account, text, commentText, images, video }: {
             </div>
           )}
           {video && (
-            <div className="mt-2 rounded-lg overflow-hidden" style={{ maxWidth: 400 }}>
-              <video src={video.previewUrl} className="w-full rounded-lg" style={{ maxHeight: 200 }} controls={false} muted />
+            <div className="mt-2 rounded-lg overflow-hidden max-w-100">
+              <video src={video.previewUrl} className="w-full rounded-lg max-h-50" controls={false} muted />
             </div>
           )}
           {commentText && (
-            <div className="mt-3 pl-3 py-2" style={{ borderLeft: "2px solid #5865F2" }}>
-              <span className="text-xs font-semibold" style={{ color: "#00b0f4" }}>Posthive Bot </span>
-              <span className="text-xs" style={{ color: "#dbdee1" }}>{commentText}</span>
+            <div className="mt-3 pl-3 py-2 border-l-2 border-l-[#5865F2]">
+              <span className="text-xs font-semibold text-[#0089c7]">Posthive Bot </span>
+              <span className="text-xs text-[#313338]">{commentText}</span>
             </div>
           )}
         </div>
@@ -1149,16 +1132,15 @@ function DiscordPreview({ account, text, commentText, images, video }: {
 function TikTokPreview({ account, text, video }: { account: Account; text: string; video: UploadedImage | null }) {
   const initial = account.displayName[0]?.toUpperCase() ?? "?";
   return (
-    <div className="rounded-2xl overflow-hidden shadow-xs" style={{ backgroundColor: "#111", border: "1px solid #2a2a2a" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: "3px solid #ff004f", backgroundColor: "#0a0a0a" }}>
+    <div className={cn(CARD, "shadow-xs")}>
+      <div className={cn(HEADER, "border-l-[#ff004f]")}>
         <PlatformIcon platform="tiktok" size={16} />
-        <span className="text-xs font-semibold" style={{ color: "#ff004f" }}>TikTok</span>
-        <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+        <span className="type-body-sb-xs text-[#ff004f]">TikTok</span>
+        <span className="type-body-r-xs ml-auto text-muted">{account.displayName}</span>
       </div>
 
       {/* Full-width 9:16 canvas */}
-      <div className="relative w-full overflow-hidden" style={{ aspectRatio: "9/16", backgroundColor: "#000" }}>
+      <div className="relative w-full overflow-hidden aspect-9/16 bg-black">
         {video ? (
           <video src={video.previewUrl} className="w-full h-full object-cover" muted playsInline loop autoPlay />
         ) : (
@@ -1167,7 +1149,7 @@ function TikTokPreview({ account, text, video }: { account: Account; text: strin
               <svg className="w-10 h-10 mx-auto mb-2 opacity-20" fill="none" stroke="white" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
               </svg>
-              <p className="text-xs" style={{ color: "#555" }}>Add a video</p>
+              <p className="type-body-r-xs text-neutral-500">Add a video</p>
             </div>
           </div>
         )}
@@ -1199,15 +1181,14 @@ function TikTokPreview({ account, text, video }: { account: Account; text: strin
               // eslint-disable-next-line @next/next/no-img-element
               <img src={account.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover ring-1 ring-white/50" />
             ) : (
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ring-1 ring-white/50"
-                style={{ backgroundColor: "#ff004f" }}>{initial}</div>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ring-1 ring-white/50 bg-[#ff004f]">{initial}</div>
             )}
             <span className="text-sm font-semibold text-white drop-shadow-sm">@{account.displayName}</span>
           </div>
           {text ? (
             <p className="text-xs text-white/80 leading-relaxed line-clamp-3 drop-shadow-sm">{text}</p>
           ) : (
-            <p className="text-xs italic" style={{ color: "#666" }}>Your caption here…</p>
+            <p className="type-body-r-xs italic text-neutral-500">Your caption here…</p>
           )}
         </div>
       </div>
@@ -1274,13 +1255,15 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
   const showLinkCard = account.platform === "bluesky" && images.length === 0 && !video;
   const og = useLinkCard(text, showLinkCard);
 
+  const theme = GENERIC_THEME[account.platform] ?? GENERIC_THEME_DEFAULT;
+
   return (
-    <div className="rounded-2xl shadow-xs overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5"
-        style={{ borderBottom: "1px solid #2a2a2a", borderLeft: `3px solid ${color}`, backgroundColor: "#0a0a0a" }}>
+    <div className={cn(CARD, "shadow-xs")}
+      style={{ "--pc": color } as React.CSSProperties}>
+      <div className={cn(HEADER, "border-l-(--pc)")}>
         <PlatformIcon platform={account.platform} size={16} />
-        <span className="text-xs font-semibold capitalize" style={{ color }}>{account.platform}</span>
-        <span className="text-xs ml-auto" style={{ color: "#666" }}>{account.displayName}</span>
+        <span className="type-body-sb-xs capitalize text-(--pc)">{account.platform}</span>
+        <span className="type-body-r-xs ml-auto text-muted">{account.displayName}</span>
       </div>
 
       <div className="p-4">
@@ -1289,25 +1272,24 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
             // eslint-disable-next-line @next/next/no-img-element
             <img src={account.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white"
-              style={{ background: color }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white bg-(--pc)">
               {initial}
             </div>
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-1.5 mb-1">
-              <span className="text-sm font-bold" style={{ color: "#ededed" }}>{account.displayName}</span>
-              <span className="text-xs" style={{ color: "#555" }}>{timeStr}</span>
+              <span className={cn("text-sm font-bold", theme.text)}>{account.displayName}</span>
+              <span className={cn("text-xs", theme.sub)}>{timeStr}</span>
             </div>
             {text ? (
-              <p className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed" style={{ color: "#d4d4d4" }}>{text}</p>
+              <p className={cn("text-sm whitespace-pre-wrap wrap-break-word leading-relaxed", theme.text)}>{text}</p>
             ) : (
-              <p className="text-sm italic" style={{ color: "#444" }}>Start writing your post for a preview…</p>
+              <p className="type-body-r-s italic text-neutral-500">Start writing your post for a preview…</p>
             )}
 
             {/* Video preview */}
             {video && account.platform !== "instagram" && (
-              <div className="mt-2.5 rounded-xl overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
+              <div className={cn("mt-2.5 rounded-xl overflow-hidden border", theme.border)}>
                 <video src={video.previewUrl} className="w-full h-48 object-cover" muted />
               </div>
             )}
@@ -1332,27 +1314,26 @@ export function PlatformPreview({ account, text, commentText, mediaItems = [], i
           </div>
         </div>
 
-        <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: "1px solid #1f1f1f", color: "#555" }}>
+        <div className={cn("flex items-center gap-4 mt-3 pt-3 border-t", theme.border, theme.sub)}>
           <span className="text-xs">♡ 0</span>
           <span className="text-xs">↩ Reply</span>
           <span className="text-xs">↗ Share</span>
         </div>
 
         {commentText && (
-          <div className="mt-3 pt-3 flex gap-2.5" style={{ borderTop: "1px solid #1f1f1f" }}>
+          <div className={cn("mt-3 pt-3 flex gap-2.5 border-t", theme.border)}>
             {account.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={account.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 text-white"
-                style={{ background: color }}>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 text-white bg-(--pc)">
                 {initial}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <span className="text-xs font-bold" style={{ color: "#aaa" }}>{account.displayName} </span>
-              <span className="text-xs" style={{ color: "#555" }}>· first comment</span>
-              <p className="text-sm mt-0.5 whitespace-pre-wrap wrap-break-word" style={{ color: "#888" }}>{commentText}</p>
+              <span className={cn("text-xs font-bold", theme.text)}>{account.displayName} </span>
+              <span className={cn("text-xs", theme.sub)}>· first comment</span>
+              <p className={cn("text-sm mt-0.5 whitespace-pre-wrap wrap-break-word", theme.sub)}>{commentText}</p>
             </div>
           </div>
         )}

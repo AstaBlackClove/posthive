@@ -7,6 +7,7 @@ import { PlatformIcon } from "../../components/PlatformIcon";
 import { TimeInput24 } from "../../components/TimeInput24";
 import { APP_TIMEZONE, formatDate, formatTime } from "../../lib/datetime";
 import { cn } from "../../lib/cn";
+import { PLATFORM_COLOR } from "../../components/PlatformPreview";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -1131,15 +1132,6 @@ function SettingsPanel({ library, accounts, onClose, onSaved, onError, onSuccess
 
 // ── Create / Edit Modal ────────────────────────────────────────────────────
 
-const PLATFORM_BRAND_LIB: Record<string, string> = {
-  bluesky: "#0085ff", threads: "#888888", linkedin: "#0077b5",
-  mastodon: "#6364ff", pixelfed: "#ff8c00", youtube: "#ff0000",
-  facebook: "#1877f2", pinterest: "#e60023", telegram: "#229ED9",
-  nostr: "#8B5CF6", twitter: "#000000", instagram: "#e1306c",
-  tumblr: "#35465c", lemmy: "#ff6314", googlebusiness: "#4285f4",
-  tiktok: "#ff004f", discord: "#5865f2",
-};
-
 function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClose, maxDripPerDay = 50 }: {
   title: string;
   accounts: Account[];
@@ -1236,7 +1228,7 @@ function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClos
                 <div className="space-y-1.5">
                   {accounts.map(a => {
                     const checked = form.accountIds.includes(a.id);
-                    const color = PLATFORM_BRAND_LIB[a.platform] ?? "#6b7280";
+                    const color = PLATFORM_COLOR[a.platform] ?? "#6b7280";
                     const platformLabel = a.platform.charAt(0).toUpperCase() + a.platform.slice(1);
                     return (
                       <button

@@ -3,8 +3,10 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { PlatformIcon } from "../../../components/PlatformIcon";
+import { PLATFORM_COLOR } from "../../../components/PlatformPreview";
 import { MarketingNavBar } from "../../../components/MarketingNavBar";
 import { LandingFooter } from "../../../components/LandingFooter";
+import { cn } from "../../../lib/cn";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -36,30 +38,26 @@ function PlatformRow({ id, name, limit, count }: { id: string; name: string; lim
   const pct = Math.min((count / limit) * 100, 100);
   const over = count > limit;
   const warn = !over && pct >= 80;
-  const barColor = over ? "#ef4444" : warn ? "#f59e0b" : "#5b63d3";
-  const textColor = over ? "#ef4444" : warn ? "#f59e0b" : "#ededed";
   const remaining = limit - count;
 
   return (
-    <div style={{ padding: "12px 16px", borderBottom: "1px solid #1e1e1e" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <div className="border-b border-border px-4 py-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
           <PlatformIcon platform={id} size={16} />
-          <span style={{ fontSize: 14, color: "#ededed", fontWeight: 500 }}>{name}</span>
+          <span className="type-body-m-s text-fg">{name}</span>
         </div>
-        <span style={{ fontSize: 13, color: textColor, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+        <span className={cn("type-body-sb-s tabular-nums", over ? "text-red-600" : warn ? "text-brand-800" : "text-fg")}>
           {over ? `−${Math.abs(remaining).toLocaleString()} over` : `${count.toLocaleString()} / ${limit.toLocaleString()}`}
         </span>
       </div>
-      <div style={{ height: 4, backgroundColor: "#1e1e1e", borderRadius: 2, overflow: "hidden" }}>
+      <div className="h-1 overflow-hidden rounded-xs bg-neutral-100">
         <div
-          style={{
-            height: "100%",
-            width: `${pct}%`,
-            backgroundColor: barColor,
-            borderRadius: 2,
-            transition: "width 0.15s ease, background-color 0.15s ease",
-          }}
+          className={cn(
+            "h-full w-(--w) rounded-xs transition-[width,background-color] duration-150 ease-out",
+            over ? "bg-red-500" : warn ? "bg-accent" : "bg-(--pc)",
+          )}
+          style={{ "--w": `${pct}%`, "--pc": PLATFORM_COLOR[id] ?? "var(--c-fg)" } as React.CSSProperties}
         />
       </div>
     </div>
@@ -72,93 +70,67 @@ export default function CharacterCounterPage() {
   const wordCount = useMemo(() => (text.trim() ? text.trim().split(/\s+/).length : 0), [text]);
 
   return (
-    <main style={{ minHeight: "100vh", backgroundColor: "#0a0a0a", color: "#ededed" }}>
-      <style>{`
-        .cc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
-        .cc-ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-        @media (max-width: 640px) {
-          .cc-grid { grid-template-columns: 1fr; }
-          .cc-ref-grid { grid-template-columns: 1fr 1fr; }
-          .cc-h1 { font-size: 24px !important; }
-        }
-      `}</style>
+    <main className="min-h-screen bg-bg text-fg">
       <MarketingNavBar />
 
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px 80px" }}>
+      <div className="mx-auto max-w-225 px-6 pt-10 pb-20">
         {/* Header */}
-        <div style={{ marginBottom: 32 }}>
-          <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: "#5b63d3", textTransform: "uppercase", marginBottom: 8 }}>
+        <div className="mb-8">
+          <p className="mb-2 type-body-sb-xs uppercase tracking-wider text-brand-800">
             Free Tool
           </p>
-          <h1 className="cc-h1" style={{ fontSize: 32, fontWeight: 800, color: "#ededed", margin: "0 0 10px", lineHeight: 1.2 }}>
+          <h1 className="mb-2.5 type-head-sb-5 text-fg sm:type-head-sb-3">
             Social Media Character Counter
           </h1>
-          <p style={{ fontSize: 16, color: "#888", margin: 0, lineHeight: 1.6 }}>
+          <p className="type-body-r-m text-muted">
             Paste or type your post. See character limits for every major platform instantly - no sign-up required.
           </p>
         </div>
 
-        <div className="cc-grid">
+        <div className="grid grid-cols-1 items-start gap-6 sm:grid-cols-2">
           {/* Left: textarea */}
           <div>
-            <div style={{ position: "relative" }}>
+            <div className="relative">
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Type or paste your post here…"
-                style={{
-                  width: "100%",
-                  minHeight: 260,
-                  backgroundColor: "#111",
-                  border: "1px solid #2a2a2a",
-                  borderRadius: 12,
-                  padding: 16,
-                  color: "#ededed",
-                  fontSize: 15,
-                  lineHeight: 1.6,
-                  resize: "vertical",
-                  outline: "none",
-                  boxSizing: "border-box",
-                  fontFamily: "inherit",
-                }}
+                className="field min-h-65 resize-y bg-surface p-4 type-body-r-m"
                 autoFocus
               />
             </div>
             {/* Stats strip */}
-            <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 800, color: "#ededed", fontVariantNumeric: "tabular-nums" }}>{count.toLocaleString()}</div>
-                <div style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" }}>characters</div>
+            <div className="mt-2.5 flex gap-5">
+              <div className="text-center">
+                <div className="type-head-sb-6 tabular-nums text-fg">{count.toLocaleString()}</div>
+                <div className="type-body-r-xs uppercase tracking-wider text-muted">characters</div>
               </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 800, color: "#ededed", fontVariantNumeric: "tabular-nums" }}>{wordCount.toLocaleString()}</div>
-                <div style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" }}>words</div>
+              <div className="text-center">
+                <div className="type-head-sb-6 tabular-nums text-fg">{wordCount.toLocaleString()}</div>
+                <div className="type-body-r-xs uppercase tracking-wider text-muted">words</div>
               </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 800, color: "#ededed", fontVariantNumeric: "tabular-nums" }}>{text.split(/\n/).length}</div>
-                <div style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" }}>lines</div>
+              <div className="text-center">
+                <div className="type-head-sb-6 tabular-nums text-fg">{text.split(/\n/).length}</div>
+                <div className="type-body-r-xs uppercase tracking-wider text-muted">lines</div>
               </div>
             </div>
 
             {/* CTA */}
-            <div style={{ marginTop: 24, backgroundColor: "#0d0f1f", border: "1px solid #3a3a5a", borderRadius: 12, padding: 18 }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 4px" }}>Schedule this post with Posthive</p>
-              <p style={{ fontSize: 13, color: "#888", margin: "0 0 12px", lineHeight: 1.5 }}>
+            <div className="mt-6 rounded-xl border border-brand-300 bg-brand-100 p-4.5">
+              <p className="mb-1 type-body-sb-s text-fg">Schedule this post with Posthive</p>
+              <p className="mb-3 type-body-r-s text-muted">
                 Schedule to 14 platforms at once. Bluesky, Threads, Instagram, LinkedIn one composer.
               </p>
-              <Link
-                href="/register"
-                style={{ fontSize: 13, fontWeight: 600, color: "#0a0a0a", backgroundColor: "#ffffff", padding: "8px 16px", borderRadius: 8, textDecoration: "none", display: "inline-block" }}
-              >
+              <Link href="/register" className="btn-primary">
                 Start free trial →
               </Link>
             </div>
           </div>
 
           {/* Right: platform list */}
-          <div style={{ backgroundColor: "#111", border: "1px solid #1e1e1e", borderRadius: 12, overflow: "hidden" }}>
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #1e1e1e" }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#555", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <div className="card overflow-hidden rounded-xl">
+            <div className="border-b border-border px-4 py-3">
+              <span className="section-label">
                 Platform Limits
               </span>
             </div>
@@ -169,20 +141,20 @@ export default function CharacterCounterPage() {
         </div>
 
         {/* SEO content */}
-        <div style={{ marginTop: 64, borderTop: "1px solid #1e1e1e", paddingTop: 48 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", marginBottom: 24 }}>Character limits for every major platform (2026)</h2>
-          <div className="cc-ref-grid">
+        <div className="mt-16 border-t border-border pt-12">
+          <h2 className="mb-6 type-head-sb-6 text-fg">Character limits for every major platform (2026)</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
             {PLATFORMS.map((p) => (
-              <div key={p.id} style={{ backgroundColor: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div key={p.id} className="card flex items-center justify-between gap-2 rounded-xl px-3.5 py-3">
+                <div className="flex items-center gap-2">
                   <PlatformIcon platform={p.id} size={14} />
-                  <span style={{ fontSize: 13, color: "#888" }}>{p.name}</span>
+                  <span className="type-body-r-s text-muted">{p.name}</span>
                 </div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#ededed", fontVariantNumeric: "tabular-nums" }}>{p.limit.toLocaleString()}</span>
+                <span className="type-body-sb-s tabular-nums text-fg">{p.limit.toLocaleString()}</span>
               </div>
             ))}
           </div>
-          <p style={{ marginTop: 20, fontSize: 13, color: "#555", lineHeight: 1.7 }}>
+          <p className="mt-5 type-body-r-s text-muted">
             Character limits vary by platform and post type. Twitter/X limits to 280 characters for standard accounts (25,000 for verified).
             Instagram captions allow up to 2,200 characters but only the first 125 show before truncation.
             LinkedIn posts support up to 3,000 characters. Bluesky and Mastodon share a 300–500 character default.
