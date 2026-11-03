@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { PlatformIcon } from "./PlatformIcon";
+import { cn } from "../lib/cn";
 
 export const PLATFORMS_NAV = [
   { platform: "bluesky",   label: "Bluesky",   desc: "300 chars, AT Protocol" },
@@ -31,16 +32,21 @@ const SparklesNavIcon = () => (
   </svg>
 );
 
+// bg = icon tile, color = icon. Tailwind classes, written out in full so the scanner sees them.
 export const FEATURES_NAV = [
-  { icon: <SunIcon />,          bg: "rgba(91,99,211,.18)",  color: "#9ba2ee", title: "Multi-platform posting",  desc: "One composer, seven platforms",     slug: "multi-platform-posting" },
-  { icon: <InstagramIcon />,    bg: "rgba(225,100,100,.18)",color: "#e86b6b", title: "Reels & Stories",         desc: "Full Instagram media support",      slug: "instagram-reels-scheduler" },
-  { icon: <CalendarIcon />,     bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Drag-to-reschedule",      desc: "Visual calendar view",              slug: "drag-to-reschedule" },
-  { icon: <CommentIcon />,      bg: "rgba(220,160,60,.18)", color: "#d4a83c", title: "First comment",           desc: "Auto-reply on publish",             slug: "first-comment" },
-  { icon: <SlidersIcon />,      bg: "rgba(140,100,220,.18)",color: "#a07ee0", title: "Per-platform overrides",  desc: "Custom text per network",           slug: "per-platform-overrides" },
-  { icon: <CsvNavIcon />,       bg: "rgba(80,180,120,.18)", color: "#5cb88a", title: "Bulk CSV scheduling",     desc: "Schedule hundreds from a file",     slug: "bulk-csv-scheduling" },
-  { icon: <CodeIcon />,         bg: "rgba(60,180,200,.18)", color: "#3db8c8", title: "Self-hostable",           desc: "AGPL-3.0 open source",              slug: "self-hostable" },
-  { icon: <SparklesNavIcon />,  bg: "rgba(167,139,250,.18)",color: "#a78bfa", title: "AI caption assist",       desc: "Rewrite in one click",              slug: "ai-caption-assist" },
+  { icon: <SunIcon />,          bg: "bg-brand-100",   color: "text-brand-800",   title: "Multi-platform posting",  desc: "One composer, seven platforms",     slug: "multi-platform-posting" },
+  { icon: <InstagramIcon />,    bg: "bg-red-100",     color: "text-red-600",     title: "Reels & Stories",         desc: "Full Instagram media support",      slug: "instagram-reels-scheduler" },
+  { icon: <CalendarIcon />,     bg: "bg-green-100",   color: "text-green-700",   title: "Drag-to-reschedule",      desc: "Visual calendar view",              slug: "drag-to-reschedule" },
+  { icon: <CommentIcon />,      bg: "bg-brand-100",   color: "text-brand-800",   title: "First comment",           desc: "Auto-reply on publish",             slug: "first-comment" },
+  { icon: <SlidersIcon />,      bg: "bg-neutral-100", color: "text-neutral-700", title: "Per-platform overrides",  desc: "Custom text per network",           slug: "per-platform-overrides" },
+  { icon: <CsvNavIcon />,       bg: "bg-green-100",   color: "text-green-700",   title: "Bulk CSV scheduling",     desc: "Schedule hundreds from a file",     slug: "bulk-csv-scheduling" },
+  { icon: <CodeIcon />,         bg: "bg-blue-100",    color: "text-blue-700",    title: "Self-hostable",           desc: "AGPL-3.0 open source",              slug: "self-hostable" },
+  { icon: <SparklesNavIcon />,  bg: "bg-brand-100",   color: "text-brand-800",   title: "AI caption assist",       desc: "Rewrite in one click",              slug: "ai-caption-assist" },
 ];
+
+const NAV_LINK = "flex cursor-pointer items-center gap-1 px-3 py-2.5 type-body-m-s text-muted transition-colors hover:text-fg";
+const MENU_ITEM = "flex items-center gap-2.5 rounded-lg px-3 py-2 transition-colors hover:bg-neutral-100";
+const MOBILE_ITEM = "flex items-center gap-2.5 px-1 py-2";
 
 interface NavBarProps {
   user: boolean;
@@ -70,91 +76,75 @@ export function NavBar({ user, ctaHref, navCtaLabel, loading }: NavBarProps) {
   const closePlat = () => { platTimer.current = setTimeout(() => setPlatOpen(false), 120); };
 
   const chevron = (open: boolean) => (
-    <svg width="11" height="11" fill="none" viewBox="0 0 12 12" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 150ms", opacity: 0.5 }}>
+    <svg width="11" height="11" fill="none" viewBox="0 0 12 12" className={cn("opacity-50 transition-transform duration-150", open && "rotate-180")}>
       <path d="M2 4.5l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 
-  const dropStyle = (open: boolean): React.CSSProperties => ({
-    position: "absolute", top: "calc(100% + 12px)", left: "50%", transform: "translateX(-50%)",
-    width: 480, background: "#161616", border: "1px solid rgba(255,255,255,.1)",
-    borderRadius: 14, boxShadow: "0 20px 60px rgba(0,0,0,.6)", padding: 14, zIndex: 200,
-    opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none",
-    transition: "opacity 120ms ease",
-  });
-
-  const btnStyle: React.CSSProperties = {
-    display: "flex", alignItems: "center", gap: 5,
-    color: "#888", padding: "10px 12px", fontSize: 14.5, fontWeight: 500,
-    background: "none", border: "none", cursor: "pointer", fontFamily: "inherit",
-  };
+  const dropClass = (open: boolean) => cn(
+    "card absolute top-full left-1/2 z-200 mt-3 -translate-x-1/2 p-3.5 shadow-lg transition-opacity duration-150",
+    open ? "opacity-100" : "pointer-events-none opacity-0",
+  );
 
   return (
     <>
     {mobileOpen && (
-      <div onClick={(e) => { if (e.target === e.currentTarget) setMobileOpen(false); }} style={{ position: "fixed", top: 64, left: 0, right: 0, bottom: 0, background: "#111", borderBottom: "1px solid rgba(255,255,255,.08)", padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: 4, overflowY: "auto", zIndex: 99, WebkitOverflowScrolling: "touch" as any }}>
-        <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>Features</p>
+      <div onClick={(e) => { if (e.target === e.currentTarget) setMobileOpen(false); }} className="fixed inset-x-0 top-16 bottom-0 z-99 flex flex-col gap-1 overflow-y-auto border-b border-border bg-bg px-6 pt-5 pb-7 lg:hidden">
+        <p className="section-label mb-2">Features</p>
         {FEATURES_NAV.map(f => (
-          <a key={f.title} href={`/features/${f.slug}`} onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", textDecoration: "none" }}>
-            <div style={{ width: 28, height: 28, borderRadius: 7, background: f.bg, color: f.color, display: "grid", placeItems: "center" }}>{f.icon}</div>
-            <span style={{ fontSize: 14, fontWeight: 500, color: "#ededed" }}>{f.title}</span>
+          <a key={f.title} href={`/features/${f.slug}`} onClick={() => setMobileOpen(false)} className={MOBILE_ITEM}>
+            <div className={cn("grid size-7 place-items-center rounded-md", f.bg, f.color)}>{f.icon}</div>
+            <span className="type-body-m-s text-fg">{f.title}</span>
           </a>
         ))}
-        <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", margin: "12px 0" }} />
-        <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>Platforms</p>
+        <div className="my-3 border-t border-border" />
+        <p className="section-label mb-2">Platforms</p>
         {PLATFORMS_NAV.map(p => (
-          <a key={p.platform} href={`/platforms/${p.platform}`} onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", textDecoration: "none" }}>
-            <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(255,255,255,.06)", display: "grid", placeItems: "center" }}>
+          <a key={p.platform} href={`/platforms/${p.platform}`} onClick={() => setMobileOpen(false)} className={MOBILE_ITEM}>
+            <div className="grid size-7 place-items-center rounded-md bg-surface">
               <PlatformIcon platform={p.platform} size={16} />
             </div>
-            <span style={{ fontSize: 14, fontWeight: 500, color: "#ededed" }}>{p.label}</span>
+            <span className="type-body-m-s text-fg">{p.label}</span>
           </a>
         ))}
-        <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", margin: "12px 0" }} />
+        <div className="my-3 border-t border-border" />
         {([["/pricing", "Pricing"], ["/agent", "Agents"], ["/blog", "Blog"], ["/docs", "Docs"], ["/for-developers", "API"]] as [string, string][]).map(([href, label]) => (
-          <a key={label} href={href} onClick={() => setMobileOpen(false)} style={{ padding: "9px 4px", fontSize: 14, fontWeight: 500, color: "#888", textDecoration: "none" }}>{label}</a>
+          <a key={label} href={href} onClick={() => setMobileOpen(false)} className="px-1 py-2 type-body-m-s text-muted transition-colors hover:text-fg">{label}</a>
         ))}
         {!user && (
           <>
-            <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", margin: "12px 0" }} />
-            <Link href="/login" onClick={() => setMobileOpen(false)} style={{ textAlign: "center", padding: "10px 0", borderRadius: 8, border: "1px solid rgba(255,255,255,.12)", color: "#ededed", fontSize: 14, fontWeight: 500, textDecoration: "none" }}>Sign in</Link>
+            <div className="my-3 border-t border-border" />
+            <Link href="/login" onClick={() => setMobileOpen(false)} className="btn-secondary py-2.5">Sign in</Link>
           </>
         )}
       </div>
     )}
-    <nav className="ph-nav" style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      height: 64,
-      backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-      background: "rgba(10,10,10,.88)",
-      borderBottom: scrolled ? "1px solid rgba(255,255,255,.08)" : "1px solid transparent",
-      transition: "border-color 200ms ease",
-    }}>
+    <nav className={cn(
+      "fixed inset-x-0 top-0 z-100 flex h-16 items-center justify-between border-b bg-bg/90 px-4 backdrop-blur transition-colors duration-200 lg:px-10",
+      scrolled ? "border-border" : "border-transparent",
+    )}>
       {/* Brand */}
-      <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
-        <Image src="/posthivemain.png" alt="Posthive" width={30} height={30} style={{ objectFit: "contain" }} />
-        <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-.02em" }}>Posthive</span>
+      <Link href="/" className="flex items-center gap-2.5 text-fg">
+        <Image src="/posthivemain.png" alt="Posthive" width={30} height={30} className="object-contain" />
+        <span className="type-body-sb-l tracking-tight">Posthive</span>
       </Link>
 
       {/* Desktop nav */}
-      <div className="ph-nav-right" style={{ display: "flex", alignItems: "center", gap: 2 }}>
-        {/* Links + auth — hidden on mobile, replaced by hamburger */}
-        <div className="ph-desktop-links" style={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <div className="flex items-center gap-2.5 lg:gap-0.5">
+        {/* Links + auth — hidden below lg, replaced by hamburger */}
+        <div className="hidden items-center gap-0.5 lg:flex">
         {/* Features dropdown */}
-        <div style={{ position: "relative" }} onMouseEnter={openFeat} onMouseLeave={closeFeat}>
-          <button style={btnStyle}>Features {chevron(featOpen)}</button>
-          <div onMouseEnter={openFeat} onMouseLeave={closeFeat} style={dropStyle(featOpen)}>
-            <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8, paddingLeft: 6 }}>FEATURES</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+        <div className="relative" onMouseEnter={openFeat} onMouseLeave={closeFeat}>
+          <button className={NAV_LINK}>Features {chevron(featOpen)}</button>
+          <div onMouseEnter={openFeat} onMouseLeave={closeFeat} className={cn(dropClass(featOpen), "w-120")}>
+            <p className="section-label mb-2 pl-1.5">FEATURES</p>
+            <div className="grid grid-cols-2 gap-0.5">
               {FEATURES_NAV.map((f) => (
-                <a key={f.title} href={`/features/${f.slug}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 9, textDecoration: "none", transition: "background 100ms" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.04)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "none"; }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: f.bg, color: f.color, display: "grid", placeItems: "center", flexShrink: 0 }}>{f.icon}</div>
+                <a key={f.title} href={`/features/${f.slug}`} className={MENU_ITEM}>
+                  <div className={cn("grid size-8 shrink-0 place-items-center rounded-lg", f.bg, f.color)}>{f.icon}</div>
                   <div>
-                    <p style={{ fontSize: 13.5, fontWeight: 600, color: "#ededed", marginBottom: 1, lineHeight: 1.3 }}>{f.title}</p>
-                    <p style={{ fontSize: 11.5, color: "#666", lineHeight: 1.4 }}>{f.desc}</p>
+                    <p className="type-body-sb-s text-fg">{f.title}</p>
+                    <p className="type-body-r-xs text-muted">{f.desc}</p>
                   </div>
                 </a>
               ))}
@@ -163,21 +153,19 @@ export function NavBar({ user, ctaHref, navCtaLabel, loading }: NavBarProps) {
         </div>
 
         {/* Platforms dropdown */}
-        <div style={{ position: "relative" }} onMouseEnter={openPlat} onMouseLeave={closePlat}>
-          <button style={btnStyle}>Platforms {chevron(platOpen)}</button>
-          <div onMouseEnter={openPlat} onMouseLeave={closePlat} style={{ ...dropStyle(platOpen), width: 640 }}>
-            <p style={{ fontSize: 10.5, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8, paddingLeft: 6 }}>SUPPORTED PLATFORMS</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+        <div className="relative" onMouseEnter={openPlat} onMouseLeave={closePlat}>
+          <button className={NAV_LINK}>Platforms {chevron(platOpen)}</button>
+          <div onMouseEnter={openPlat} onMouseLeave={closePlat} className={cn(dropClass(platOpen), "w-160")}>
+            <p className="section-label mb-2 pl-1.5">SUPPORTED PLATFORMS</p>
+            <div className="grid grid-cols-2 gap-0.5">
               {PLATFORMS_NAV.map((p) => (
-                <a key={p.platform} href={`/platforms/${p.platform}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 9, textDecoration: "none", transition: "background 100ms" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.04)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "none"; }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(255,255,255,.06)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                <a key={p.platform} href={`/platforms/${p.platform}`} className={MENU_ITEM}>
+                  <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-bg">
                     <PlatformIcon platform={p.platform} size={18} />
                   </div>
                   <div>
-                    <p style={{ fontSize: 13.5, fontWeight: 600, color: "#ededed", marginBottom: 1, lineHeight: 1.3 }}>{p.label}</p>
-                    <p style={{ fontSize: 11.5, color: "#666", lineHeight: 1.4 }}>{p.desc}</p>
+                    <p className="type-body-sb-s text-fg">{p.label}</p>
+                    <p className="type-body-r-xs text-muted">{p.desc}</p>
                   </div>
                 </a>
               ))}
@@ -185,23 +173,19 @@ export function NavBar({ user, ctaHref, navCtaLabel, loading }: NavBarProps) {
           </div>
         </div>
 
-        <Link href="/pricing" style={{ ...btnStyle, textDecoration: "none" }}>Pricing</Link>
-        <Link href="/agent" style={{ ...btnStyle, textDecoration: "none" }}>Agents</Link>
-        <Link href="/blog" style={{ ...btnStyle, textDecoration: "none" }}>Blog</Link>
-        <Link href="/docs" style={{ ...btnStyle, textDecoration: "none" }}>Docs</Link>
-        <Link href="/for-developers" style={{ ...btnStyle, textDecoration: "none" }}>API</Link>
+        <Link href="/pricing" className={NAV_LINK}>Pricing</Link>
+        <Link href="/agent" className={NAV_LINK}>Agents</Link>
+        <Link href="/blog" className={NAV_LINK}>Blog</Link>
+        <Link href="/docs" className={NAV_LINK}>Docs</Link>
+        <Link href="/for-developers" className={NAV_LINK}>API</Link>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: 8 }}>
+        <div className="ml-2 flex items-center gap-2.5">
           {loading ? (
-            <span style={{ width: 96, height: 34, borderRadius: 8, background: "#1a1a1a", display: "inline-block" }} className="ph-cta-skeleton" />
+            <span className="inline-block h-9 w-24 animate-pulse rounded-lg bg-neutral-100" />
           ) : (
             <>
-              {!user && <Link href="/login" style={{ fontSize: 14, color: "#888", padding: "9px 12px", textDecoration: "none" }}>Sign in</Link>}
-              <Link href={ctaHref} style={{
-                fontSize: 14, fontWeight: 600, padding: "9px 18px", borderRadius: 8,
-                background: "#5b63d3", color: "#fff",
-                boxShadow: "0 0 0 1px rgba(255,255,255,.08), 0 8px 24px -8px rgba(91,99,211,.75)",
-              }}>
+              {!user && <Link href="/login" className="px-3 py-2 type-body-r-s text-muted transition-colors hover:text-fg">Sign in</Link>}
+              <Link href={ctaHref} className="btn-primary">
                 {navCtaLabel}
               </Link>
             </>
@@ -211,38 +195,20 @@ export function NavBar({ user, ctaHref, navCtaLabel, loading }: NavBarProps) {
 
         {/* Mobile-only: CTA stays visible outside the hamburger menu */}
         {loading ? (
-          <span className="ph-mobile-cta ph-cta-skeleton" style={{ display: "none", width: 88, height: 30, borderRadius: 8, background: "#1a1a1a" }} />
+          <span className="inline-block h-9 w-22 animate-pulse rounded-lg bg-neutral-100 lg:hidden" />
         ) : (
-          <Link href={ctaHref} className="ph-mobile-cta" style={{
-            display: "none", fontSize: 13.5, fontWeight: 600, padding: "8px 14px", borderRadius: 8,
-            background: "#5b63d3", color: "#fff",
-            boxShadow: "0 0 0 1px rgba(255,255,255,.08), 0 8px 24px -8px rgba(91,99,211,.75)",
-          }}>
+          <Link href={ctaHref} className="btn-primary px-3.5 lg:hidden">
             {navCtaLabel}
           </Link>
         )}
 
-        <button onClick={() => setMobileOpen(o => !o)} style={{ display: "none", background: "none", border: "none", cursor: "pointer", padding: 8, color: "#ededed" }} className="ph-hamburger" aria-label="Menu">
+        <button onClick={() => setMobileOpen(o => !o)} className="block cursor-pointer p-2 text-fg lg:hidden" aria-label="Menu">
           {mobileOpen
             ? <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4l12 12M16 4L4 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
             : <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
           }
         </button>
       </div>
-
-
-      <style>{`
-        .ph-nav { padding: 0 40px; }
-        .ph-cta-skeleton { animation: ph-pulse 1.4s ease-in-out infinite; }
-        @keyframes ph-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
-        @media (max-width: 768px) {
-          .ph-nav { padding: 0 16px; }
-          .ph-nav-right { gap: 10px !important; }
-          .ph-desktop-links { display: none !important; }
-          .ph-mobile-cta { display: inline-flex !important; align-items: center; }
-          .ph-hamburger { display: block !important; }
-        }
-      `}</style>
     </nav>
     </>
   );
