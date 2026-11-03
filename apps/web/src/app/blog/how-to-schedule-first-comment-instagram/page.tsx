@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cn } from "../../../lib/cn";
 import { BlogCtaBanner } from "../../../components/BlogCtaBanner";
+import { BlogPostHeader } from "../../../components/BlogPostHeader";
+import { SiteNav } from "../../../components/SiteNav";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -106,35 +109,23 @@ export const metadata: Metadata = {
   },
 };
 
-function BlogNav() {
-  return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-      height: 64, background: "#0a0a0a", borderBottom: "1px solid #1a1a1a",
-      display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px",
-    }}>
-      <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-        <img src="/posthivemain.png" alt="Posthive" style={{ height: 28 }} />
-      </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-        <Link href="/blog" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Blog</Link>
-        <Link href="/pricing" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Pricing</Link>
-        <Link href="/docs" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Docs</Link>
-        <Link href="/register" style={{ fontSize: 14, fontWeight: 600, padding: "8px 16px", borderRadius: 8, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>Get started</Link>
-      </div>
-    </nav>
-  );
-}
+// Platform-native brand colors for the left accent border
+const PLATFORM_BORDER: Record<string, string> = {
+  LinkedIn: "border-l-[#0077b5]",
+  Bluesky: "border-l-[#0085ff]",
+  Mastodon: "border-l-[#6364ff]",
+  Threads: "border-l-black",
+};
 
 function StepCard({ n, title, desc }: { n: number; title: string; desc: string }) {
   return (
-    <div style={{ display: "flex", gap: 18, marginBottom: 24 }}>
-      <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(91,99,211,.15)", border: "1px solid rgba(91,99,211,.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <span style={{ fontSize: 13, fontWeight: 900, color: "#9ba2ee" }}>0{n}</span>
+    <div className="card flex gap-4 p-5">
+      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent type-body-sb-xs text-accent-fg">
+        0{n}
       </div>
       <div>
-        <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 6px" }}>{title}</p>
-        <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{desc}</p>
+        <p className="mb-2 type-body-sb-m text-fg">{title}</p>
+        <p className="type-body-r-s text-muted">{desc}</p>
       </div>
     </div>
   );
@@ -142,135 +133,122 @@ function StepCard({ n, title, desc }: { n: number; title: string; desc: string }
 
 export default function HowToScheduleFirstCommentPage() {
   return (
-    <div className="mkt" style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
+    <div className="min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }} />
-      <BlogNav />
+      <SiteNav />
 
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "120px 24px 100px" }}>
+      <div className="mx-auto max-w-170 px-6 pt-14 pb-24">
 
-        <Link href="/blog" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#555", textDecoration: "none", marginBottom: 40 }}>
-          ← All posts
-        </Link>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#e86b6b", background: "rgba(232,107,107,.1)", borderRadius: 6, padding: "3px 9px", letterSpacing: ".04em" }}>Guide</span>
-          <span style={{ fontSize: 12, color: "#444" }}>July 17, 2026</span>
-          <span style={{ fontSize: 12, color: "#444" }}>· 5 min read</span>
-        </div>
-
-        <h1 style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15, margin: "0 0 24px", color: "#ededed" }}>
-          How to Schedule a First Comment on Instagram (and Why You Should)
-        </h1>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0", borderTop: "1px solid #1e1e1e", borderBottom: "1px solid #1e1e1e", marginBottom: 40 }}>
-          <img src="/founder.jpg" alt="Founder" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#ededed" }}>Guna</div>
-            <div style={{ fontSize: 12, color: "#555" }}>Founder, Posthive</div>
-          </div>
-        </div>
+        <BlogPostHeader
+          category="Guide"
+          date="July 17, 2026"
+          readTime="5 min read"
+          title="How to Schedule a First Comment on Instagram (and Why You Should)"
+        />
 
         <BlogCtaBanner />
 
-        <div style={{ fontSize: 16, lineHeight: 1.85, color: "#888" }}>
+        <div className="article-body">
 
           {/* Quick answer */}
-          <div style={{ background: "#111", border: "1px solid #2a2a2a", borderLeft: "3px solid #5b63d3", borderRadius: 8, padding: "18px 20px", marginBottom: 32 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#5b63d3", letterSpacing: ".06em", textTransform: "uppercase", margin: "0 0 10px" }}>Quick answer</p>
-            <p style={{ fontSize: 15, color: "#ccc", lineHeight: 1.7, margin: 0 }}>
-              <strong style={{ color: "#ededed" }}>Yes, you can schedule a first comment on Instagram.</strong> In Posthive, write your post caption, add hashtags or a CTA to the First Comment field below it, then schedule. Posthive posts the comment automatically within seconds of the post going live.
+          <div className="my-8 rounded-xl border border-brand-300 bg-brand-100 px-5 py-4">
+            <p className="section-label mb-2 text-brand-800">Quick answer</p>
+            <p className="type-body-r-m text-fg">
+              <strong>Yes, you can schedule a first comment on Instagram.</strong> In Posthive, write your post caption, add hashtags or a CTA to the First Comment field below it, then schedule. Posthive posts the comment automatically within seconds of the post going live.
             </p>
           </div>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             The first comment trick is one of the most underused Instagram tactics. Instead of stuffing 30 hashtags into your caption — which looks cluttered and signals spam to some users — you put them in the first comment posted immediately after. The caption stays clean. The hashtags still work. Your reach stays intact.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             The problem: posting a first comment manually means you need to be at your phone the moment your post goes live. If you schedule posts in advance, that breaks the workflow. This guide shows how to automate it completely.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             What is a first comment on Instagram?
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             A first comment is a comment you post on your own content immediately after it goes live — before anyone else has a chance to comment. Because it appears at the top of the comments section, it is visible to everyone who views the post.
           </p>
 
-          <p style={{ marginBottom: 20 }}>Most creators use it for three things:</p>
+          <p>Most creators use it for three things:</p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {[
               { title: "Hashtags", desc: "Move all 30 hashtags out of the caption and into the first comment. Caption reads naturally. Hashtags still drive discoverability." },
               { title: "Call to action", desc: "\"Link in bio\" or \"Save this post\" without it feeling like part of the caption content. Keeps the caption focused." },
               { title: "Extra context", desc: "Add a longer explanation, a resource link, or a question to drive comments — all without making the caption feel overwhelming." },
             ].map((item) => (
-              <div key={item.title} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "16px 18px", display: "flex", gap: 14 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#5b63d3", flexShrink: 0, marginTop: 6 }} />
+              <div key={item.title} className="card flex gap-3 p-5">
+                <div className="mt-2 size-2 shrink-0 rounded-full bg-accent" />
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 6px" }}>{item.title}</p>
-                  <p style={{ fontSize: 13, color: "#666", lineHeight: 1.65, margin: 0 }}>{item.desc}</p>
+                  <p className="mb-2 type-body-sb-m text-fg">{item.title}</p>
+                  <p className="type-body-r-s text-muted">{item.desc}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Do hashtags in the first comment actually work?
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Yes. Instagram indexes hashtags in both captions and comments. There is no algorithmic penalty for putting hashtags in comments instead of the caption. The discoverability is the same — your post will appear in hashtag feeds and explore pages whether the hashtags are in the caption or the first comment.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             The practical advantage is readability. A caption that ends with 30 hashtags looks like spam. A clean caption followed by a comment with hashtags reads naturally on both sides.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             How to schedule a first comment on Instagram with Posthive
           </h2>
 
-          <p style={{ marginBottom: 28 }}>
+          <p>
             Posthive supports first comments on feed posts, Reels, and carousels. Here is the exact process:
           </p>
 
-          <StepCard n={1} title="Create your account and connect Instagram" desc="Sign up at posthive.co. Go to Accounts in the sidebar and connect your Instagram Business or Creator account. Personal accounts are not supported by the Instagram API." />
-          <StepCard n={2} title="Open the Compose page" desc="Click Compose in the sidebar. Select your Instagram account from the platform picker at the top." />
-          <StepCard n={3} title="Write your caption" desc="Write your post content in the main text area. Keep it clean — this is what your audience reads first. No hashtags here." />
-          <StepCard n={4} title="Add your first comment" desc="Below the caption, you will see a First Comment field. Add your hashtags, CTA, or any additional text here. This is posted as a comment automatically right after the post goes live." />
-          <StepCard n={5} title="Upload media and set your schedule" desc="Attach your image, video, or carousel. Pick a date and time for the post to go live." />
-          <StepCard n={6} title="Schedule" desc="Click Schedule. At the chosen time, Posthive publishes the post and immediately posts the first comment. You do not need to be online." />
+          <div className="mb-8 flex flex-col gap-3">
+            <StepCard n={1} title="Create your account and connect Instagram" desc="Sign up at posthive.co. Go to Accounts in the sidebar and connect your Instagram Business or Creator account. Personal accounts are not supported by the Instagram API." />
+            <StepCard n={2} title="Open the Compose page" desc="Click Compose in the sidebar. Select your Instagram account from the platform picker at the top." />
+            <StepCard n={3} title="Write your caption" desc="Write your post content in the main text area. Keep it clean — this is what your audience reads first. No hashtags here." />
+            <StepCard n={4} title="Add your first comment" desc="Below the caption, you will see a First Comment field. Add your hashtags, CTA, or any additional text here. This is posted as a comment automatically right after the post goes live." />
+            <StepCard n={5} title="Upload media and set your schedule" desc="Attach your image, video, or carousel. Pick a date and time for the post to go live." />
+            <StepCard n={6} title="Schedule" desc="Click Schedule. At the chosen time, Posthive publishes the post and immediately posts the first comment. You do not need to be online." />
+          </div>
 
-          <div style={{ background: "rgba(91,99,211,.08)", border: "1px solid rgba(91,99,211,.2)", borderLeft: "3px solid #5b63d3", borderRadius: 8, padding: "14px 18px", margin: "28px 0" }}>
-            <p style={{ fontSize: 14, color: "#9ba2ee", fontWeight: 700, margin: "0 0 6px" }}>Works for Reels too</p>
-            <p style={{ fontSize: 14, color: "#aaa", margin: 0 }}>
+          <div className="my-8 rounded-xl border border-brand-300 bg-brand-100 px-5 py-4">
+            <p className="mb-1.5 type-body-sb-s text-brand-800">Works for Reels too</p>
+            <p className="type-body-r-s text-fg">
               First comment scheduling works on Instagram feed posts, Reels, and carousels. Select the content type in the Compose page — the First Comment field appears for all of them.
             </p>
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             How many hashtags should you put in the first comment?
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Instagram allows up to 30 hashtags per post, split between caption and comments. Most creators move all 30 into the first comment to keep the caption completely clean.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Research on optimal hashtag count is mixed. Some studies show 5-10 highly relevant hashtags outperform 30 generic ones. A practical approach: use 10-15 targeted hashtags (mix of niche and mid-size) rather than maxing out at 30 with broad tags that have millions of posts.
           </p>
 
-          <div style={{ overflowX: "auto", marginBottom: 28 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <div className="mb-8 overflow-x-auto">
+            <table>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Hashtag type</th>
-                  <th style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Post count</th>
-                  <th style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Recommended count</th>
+                  <th>Hashtag type</th>
+                  <th>Post count</th>
+                  <th>Recommended count</th>
                 </tr>
               </thead>
               <tbody>
@@ -280,68 +258,64 @@ export default function HowToScheduleFirstCommentPage() {
                   ["Large", "1M – 10M posts", "2-3 — for exposure, not primary driver"],
                   ["Mega", "10M+ posts", "0-1 — almost no value, post disappears instantly"],
                 ].map(([type, count, rec]) => (
-                  <tr key={type as string} style={{ borderBottom: "1px solid #111" }}>
-                    <td style={{ padding: "10px 14px", color: "#ededed", fontSize: 14, fontWeight: 600 }}>{type as string}</td>
-                    <td style={{ padding: "10px 14px", color: "#666", fontSize: 13 }}>{count as string}</td>
-                    <td style={{ padding: "10px 14px", color: "#9ba2ee", fontSize: 13 }}>{rec as string}</td>
+                  <tr key={type as string}>
+                    <td className="text-fg">{type as string}</td>
+                    <td className="text-muted">{count as string}</td>
+                    <td className="text-brand-800">{rec as string}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             First comment on other platforms — LinkedIn, Bluesky, Mastodon, Threads
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
+          <p>
             First comment scheduling is not just an Instagram trick. Posthive supports it across multiple platforms, each with a slightly different use case:
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {([
               {
                 platform: "LinkedIn",
-                color: "#0077b5",
                 use: "LinkedIn actively deprioritises posts that contain external links in the caption. Many creators put the link in the first comment instead, keeping the caption link-free and getting better organic reach. The first comment on LinkedIn appears immediately below the post.",
               },
               {
                 platform: "Bluesky",
-                color: "#0085ff",
                 use: "Bluesky posts are capped at 300 characters. First comments let you continue a thought, add a link, or start a thread — the same way you would manually reply to yourself. Posthive posts the reply within seconds of the main post going live.",
               },
               {
                 platform: "Mastodon",
-                color: "#6364ff",
                 use: "Mastodon toots are limited to 500 characters by default (varies by instance). First comments post as a reply to your toot immediately after publishing — useful for content warnings, thread continuations, or hashtag lists you want to keep out of the main toot.",
               },
               {
                 platform: "Threads",
-                color: "#000",
                 use: "Threads posts can carry a first comment for extra context or a call to action. Posthive supports first comments on Threads the same way it does Instagram — write it in the First Comment field in the composer.",
               },
-            ] as { platform: string; color: string; use: string }[]).map((row) => (
-              <div key={row.platform} style={{ background: "#111", border: "1px solid #1e1e1e", borderLeft: `3px solid ${row.color}`, borderRadius: 10, padding: "16px 18px" }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 8px" }}>{row.platform}</p>
-                <p style={{ fontSize: 13, color: "#666", lineHeight: 1.7, margin: 0 }}>{row.use}</p>
+            ] as { platform: string; use: string }[]).map((row) => (
+              <div key={row.platform} className={cn("card border-l-3 p-5", PLATFORM_BORDER[row.platform])}>
+                <p className="mb-2 type-body-sb-m text-fg">{row.platform}</p>
+                <p className="type-body-r-s text-muted">{row.use}</p>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Which schedulers support first comment scheduling?
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
+          <p>
             First comment scheduling is rarer than it should be. Most major tools do not support it, or gate it behind expensive plans:
           </p>
 
-          <div style={{ overflowX: "auto", marginBottom: 28 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <div className="mb-8 overflow-x-auto">
+            <table>
               <thead>
-                <tr style={{ background: "#111" }}>
+                <tr>
                   {["Tool", "Instagram", "LinkedIn", "Bluesky", "Mastodon", "Threads", "Price"].map((h) => (
-                    <th key={h} style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #2a2a2a", color: "#555", fontWeight: 700, fontSize: 11, whiteSpace: "nowrap" }}>{h}</th>
+                    <th key={h} className="whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -354,10 +328,10 @@ export default function HowToScheduleFirstCommentPage() {
                   ["Hootsuite", "✓", "✗", "✗", "✗", "✗", "From $99/mo"],
                   ["Meta Business Suite", "✗", "✗", "✗", "✗", "✗", "Free"],
                 ] as string[][]).map(([tool, ...vals]) => (
-                  <tr key={tool} style={{ borderBottom: "1px solid #111" }}>
-                    <td style={{ padding: "10px 12px", color: tool === "Posthive" ? "#9ba2ee" : "#aaa", fontWeight: tool === "Posthive" ? 700 : 400, fontSize: 13 }}>{tool}</td>
+                  <tr key={tool}>
+                    <td className={cn(tool === "Posthive" ? "type-body-sb-s text-brand-800" : "text-fg")}>{tool}</td>
                     {vals.map((v, i) => (
-                      <td key={i} style={{ padding: "10px 12px", color: v === "✓" ? (tool === "Posthive" ? "#9ba2ee" : "#888") : v === "✗" ? "#333" : "#666", fontSize: 13 }}>{v}</td>
+                      <td key={i} className={cn(v === "✗" ? "text-neutral-400" : v === "✓" ? "text-green-700" : tool === "Posthive" ? "text-brand-800" : "text-muted")}>{v}</td>
                     ))}
                   </tr>
                 ))}
@@ -365,15 +339,15 @@ export default function HowToScheduleFirstCommentPage() {
             </table>
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             What makes a good first comment?
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
+          <p>
             The first comment has a specific job. It should add value or context, not repeat the caption. Here is what works:
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {([
               { label: "Hashtags (Instagram)", tip: "10–20 targeted hashtags in the first comment. Mix niche tags (under 100K posts) with mid-size tags (100K–1M). Avoid mega-tags with 10M+ posts — your post disappears instantly." },
               { label: "A link (LinkedIn)", tip: "Paste the URL in the first comment, not the caption. LinkedIn's algorithm rewards posts without external links in the body. Move the link down and keep the caption clean." },
@@ -381,50 +355,50 @@ export default function HowToScheduleFirstCommentPage() {
               { label: "A CTA", tip: "\"Save this for later\" / \"Drop a comment below\" / \"Link in bio\" — one clear action, phrased conversationally, not like an ad." },
               { label: "Credit or context", tip: "If the post references someone or something, credit them in the first comment rather than cluttering the caption." },
             ] as { label: string; tip: string }[]).map((row) => (
-              <div key={row.label} style={{ display: "flex", gap: 14, padding: "12px 16px", background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#5b63d3", minWidth: 160, paddingTop: 1 }}>{row.label}</span>
-                <span style={{ fontSize: 13, color: "#666", lineHeight: 1.65 }}>{row.tip}</span>
+              <div key={row.label} className="card flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:gap-3.5">
+                <span className="type-body-sb-xs text-brand-800 sm:w-40 sm:shrink-0">{row.label}</span>
+                <span className="type-body-r-s text-muted">{row.tip}</span>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Frequently asked questions
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {faqSchema.mainEntity.map((item) => (
-              <div key={item.name} style={{ borderBottom: "1px solid #1a1a1a", padding: "22px 0" }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>{item.name}</p>
-                <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{item.acceptedAnswer.text}</p>
+              <div key={item.name} className="card p-5">
+                <p className="mb-2 type-body-sb-m text-fg">{item.name}</p>
+                <p className="type-body-r-s text-muted">{item.acceptedAnswer.text}</p>
               </div>
             ))}
           </div>
 
-          <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px", textAlign: "center", marginTop: 48 }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>Schedule first comments automatically</p>
-            <p style={{ fontSize: 14, color: "#666", margin: "0 0 24px" }}>14-day free trial. No credit card required. Works on posts, Reels, and carousels.</p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href="/register" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>
+          <div className="card mt-12 p-8 text-center">
+            <p className="mb-2 type-head-sb-5 text-fg">Schedule first comments automatically</p>
+            <p className="mb-6 type-body-r-s text-muted">14-day free trial. No credit card required. Works on posts, Reels, and carousels.</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/register" className="btn-primary px-6 py-3">
                 Get started free
               </Link>
-              <Link href="/features/first-comment" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
+              <Link href="/features/first-comment" className="btn-secondary px-6 py-3">
                 See first comment feature
               </Link>
             </div>
           </div>
 
-          <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 48, paddingTop: 36 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 16 }}>Related reading</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="mt-12 border-t border-border pt-9">
+            <p className="section-label mb-4">Related reading</p>
+            <div className="flex flex-col gap-3">
               {[
                 { href: "/blog/how-to-schedule-instagram-reels", label: "How to schedule Instagram Reels in 2026" },
                 { href: "/features/first-comment", label: "First comment scheduling — feature overview" },
                 { href: "/platforms/instagram", label: "Instagram scheduler: Reels, Stories, carousels, and feed posts" },
                 { href: "/blog/best-social-media-scheduler", label: "The best social media schedulers in 2026 compared" },
               ].map(({ href, label }) => (
-                <Link key={href} href={href} style={{ fontSize: 14, color: "#5b63d3", textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#333" }}>→</span> {label}
+                <Link key={href} href={href} className="flex items-center gap-2 type-body-r-s text-brand-800 transition-colors hover:text-brand-900">
+                  <span className="text-neutral-400">→</span> {label}
                 </Link>
               ))}
             </div>
@@ -433,13 +407,13 @@ export default function HowToScheduleFirstCommentPage() {
         </div>
       </div>
 
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "40px 24px", textAlign: "center" }}>
-        <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+      <footer className="border-t border-border px-6 py-10 text-center">
+        <div className="mb-4 flex flex-wrap justify-center gap-6">
           {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Pricing", "/pricing"], ["Blog", "/blog"]] as [string, string][]).map(([label, href]) => (
-            <Link key={label} href={href} style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>{label}</Link>
+            <Link key={label} href={href} className="type-body-r-s text-muted transition-colors hover:text-fg">{label}</Link>
           ))}
         </div>
-        <p style={{ fontSize: 12, color: "#444" }}>© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
+        <p className="type-body-r-xs text-muted">© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
       </footer>
     </div>
   );

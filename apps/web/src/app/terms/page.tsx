@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SiteNav } from "../../components/SiteNav";
 
 export const metadata: Metadata = {
   title: "Terms of Service - Posthive",
@@ -11,43 +12,24 @@ const CONTACT_EMAIL = "guna@posthive.co";
 
 export default function TermsPage() {
   return (
-    <div className="mkt" style={{ minHeight: "100vh", background: "#0a0a0a", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
-      <style>{`
-        .prose h2 { font-size: 20px; font-weight: 600; color: #ededed; margin: 40px 0 12px; letter-spacing: -.01em; }
-        .prose h3 { font-size: 15px; font-weight: 600; color: #cfcfcf; margin: 24px 0 8px; }
-        .prose p  { font-size: 15px; line-height: 1.75; color: #888; margin-bottom: 14px; }
-        .prose ul { padding-left: 20px; margin-bottom: 14px; }
-        .prose li { font-size: 15px; line-height: 1.75; color: #888; margin-bottom: 6px; }
-        .prose a  { color: #9ba2ee; text-decoration: underline; text-underline-offset: 3px; }
-        .prose a:hover { color: #c7caff; }
-        .section-divider { border: none; border-top: 1px solid rgba(255,255,255,.06); margin: 0; }
-      `}</style>
-
-      {/* Nav */}
-      <nav style={{ borderBottom: "1px solid rgba(255,255,255,.06)", padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/posthivemain.png" alt="Posthive" width={28} height={28} style={{ objectFit: "contain" }} />
-          <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-.02em" }}>Posthive</span>
-        </Link>
-        <Link href="/" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>← Back to home</Link>
-      </nav>
+    <div className="min-h-screen">
+      <SiteNav />
 
       {/* Content */}
-      <div className="px-5 md:px-10" style={{ maxWidth: 740, margin: "0 auto", paddingTop: 72, paddingBottom: 100 }}>
-        <div style={{ marginBottom: 48 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 12px", borderRadius: 999, border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.03)", fontSize: 12, color: "#666", fontFamily: "monospace", marginBottom: 20 }}>
+      <div className="mx-auto max-w-185 px-5 pt-16 pb-24 md:px-10">
+        <div className="mb-12">
+          <div className="mb-5 inline-flex rounded-full border border-border bg-surface px-3 py-1 type-mono-r-xs text-muted">
             Last updated: {LAST_UPDATED}
           </div>
-          <h1 style={{ fontSize: 42, fontWeight: 700, letterSpacing: "-.03em", marginBottom: 16 }}>Terms of Service</h1>
-          <p style={{ fontSize: 16, color: "#777", lineHeight: 1.7 }}>
+          <h1 className="mb-4 type-head-sb-2">Terms of Service</h1>
+          <p className="type-body-r-m text-muted">
             By using Posthive you agree to these terms. They are written to be readable, not intimidating. If something is unclear, email us.
           </p>
         </div>
 
-        <hr className="section-divider" />
+        <hr className="border-border" />
 
-        <div className="prose">
+        <div className="article-body">
           <h2>1. Acceptance</h2>
           <p>
             By creating an account or using the Posthive service ("Service") you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the Service. If you are using Posthive on behalf of an organisation, you represent that you have authority to bind that organisation.
@@ -119,7 +101,7 @@ export default function TermsPage() {
 
           <h2>9. Disclaimer of warranties</h2>
           <p>
-            The Service is provided <strong style={{ color: "#ededed" }}>"as is"</strong> and <strong style={{ color: "#ededed" }}>"as available"</strong> without warranty of any kind. We do not guarantee that the Service will be uninterrupted, error-free, or that posts will be published at the exact scheduled time (though we aim for &lt;1 second accuracy). We are not liable for posts that fail to publish due to third-party API outages.
+            The Service is provided <strong>"as is"</strong> and <strong>"as available"</strong> without warranty of any kind. We do not guarantee that the Service will be uninterrupted, error-free, or that posts will be published at the exact scheduled time (though we aim for &lt;1 second accuracy). We are not liable for posts that fail to publish due to third-party API outages.
           </p>
 
           <h2>10. Limitation of liability</h2>
@@ -150,11 +132,11 @@ export default function TermsPage() {
       </div>
 
       {/* Footer */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "24px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, color: "#555" }}>
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border px-5 py-6 type-body-r-s text-muted md:px-10">
         <span>© 2026 Posthive. Open source under AGPL-3.0.</span>
-        <div style={{ display: "flex", gap: 24 }}>
-          <Link href="/privacy" style={{ color: "#777", textDecoration: "none" }}>Privacy</Link>
-          <Link href="/terms" style={{ color: "#9ba2ee" }}>Terms</Link>
+        <div className="flex gap-6">
+          <Link href="/privacy" className="transition-colors hover:text-fg">Privacy</Link>
+          <Link href="/terms" className="text-brand-800">Terms</Link>
         </div>
       </div>
     </div>

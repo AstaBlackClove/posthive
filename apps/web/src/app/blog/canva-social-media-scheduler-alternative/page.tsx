@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cn } from "../../../lib/cn";
 import { BlogCtaBanner } from "../../../components/BlogCtaBanner";
+import { BlogPostHeader } from "../../../components/BlogPostHeader";
+import { SiteNav } from "../../../components/SiteNav";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -67,78 +70,43 @@ export const metadata: Metadata = {
   },
 };
 
-function BlogNav() {
-  return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-      height: 64, background: "#0a0a0a", borderBottom: "1px solid #1a1a1a",
-      display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px",
-    }}>
-      <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-        <img src="/posthivemain.png" alt="Posthive" style={{ height: 28 }} />
-      </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-        <Link href="/blog" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Blog</Link>
-        <Link href="/pricing" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Pricing</Link>
-        <Link href="/docs" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Docs</Link>
-        <Link href="/register" style={{ fontSize: 14, fontWeight: 600, padding: "8px 16px", borderRadius: 8, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>Get started</Link>
-      </div>
-    </nav>
-  );
-}
-
 export default function CanvaSchedulerAlternativePage() {
   return (
-    <div className="mkt" style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
+    <div className="min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <BlogNav />
+      <SiteNav />
 
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "120px 24px 100px" }}>
+      <div className="mx-auto max-w-170 px-6 pt-14 pb-24">
 
-        <Link href="/blog" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#555", textDecoration: "none", marginBottom: 40 }}>
-          All posts
-        </Link>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#5cb88a", background: "rgba(80,180,120,.1)", borderRadius: 6, padding: "3px 9px", letterSpacing: ".04em" }}>Comparison</span>
-          <span style={{ fontSize: 12, color: "#444" }}>July 7, 2026</span>
-          <span style={{ fontSize: 12, color: "#444" }}>· 7 min read</span>
-        </div>
-
-        <h1 style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15, margin: "0 0 24px", color: "#ededed" }}>
-          The Best Canva Social Media Scheduler Alternative in 2026
-        </h1>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0", borderTop: "1px solid #1e1e1e", borderBottom: "1px solid #1e1e1e", marginBottom: 40 }}>
-          <img src="/founder.jpg" alt="Founder" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#ededed" }}>Guna</div>
-            <div style={{ fontSize: 12, color: "#555" }}>Founder, Posthive</div>
-          </div>
-        </div>
+        <BlogPostHeader
+          category="Comparison"
+          date="July 7, 2026"
+          readTime="7 min read"
+          title="The Best Canva Social Media Scheduler Alternative in 2026"
+        />
 
         <BlogCtaBanner />
 
-        <div style={{ fontSize: 16, lineHeight: 1.85, color: "#888" }}>
+        <div className="article-body">
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Canva is the go-to design tool for millions of creators and marketers. The drag-and-drop editor, the template library, the brand kit support — it is genuinely excellent for creating social content. But the built-in Canva scheduler is a secondary feature with real limitations, and many users are looking for something more capable.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             This guide breaks down exactly what the Canva scheduler can and cannot do, and where a dedicated scheduler like Posthive fills the gaps.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             What the Canva scheduler actually does
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
+          <p>
             Canva Pro includes a scheduling feature that lets you publish content directly from your Canva design to connected social media accounts. It is convenient for people who design and post in one workflow. Here is what it supports:
           </p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 28 }}>
+          <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
               { label: "Supported platforms", value: "Instagram, Facebook, LinkedIn, X, Pinterest, TikTok, Slack, Teams" },
               { label: "Cost", value: "Canva Pro required ($15/month)" },
@@ -147,22 +115,22 @@ export default function CanvaSchedulerAlternativePage() {
               { label: "Content calendar", value: "Basic view only" },
               { label: "Bluesky / Mastodon", value: "Not supported" },
             ].map((item) => (
-              <div key={item.label} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "12px 16px" }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#444", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 6 }}>{item.label}</div>
-                <div style={{ fontSize: 13, color: "#aaa" }}>{item.value}</div>
+              <div key={item.label} className="card px-4 py-3">
+                <div className="section-label mb-1.5">{item.label}</div>
+                <div className="type-body-r-s text-fg">{item.value}</div>
               </div>
             ))}
           </div>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             The key limitation is platform coverage. Canva does not support Bluesky, Mastodon, Threads, Telegram, or YouTube scheduling. If any of these platforms matter to your audience, you need a different tool.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Where Canva scheduler falls short
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3.5">
             {[
               {
                 title: "Locked behind Canva Pro",
@@ -185,24 +153,24 @@ export default function CanvaSchedulerAlternativePage() {
                 desc: "The content calendar in Canva is read-only. You cannot drag posts to reschedule them or get a visual overview of your publishing cadence across platforms.",
               },
             ].map((item) => (
-              <div key={item.title} style={{ borderLeft: "2px solid #2a2a2a", paddingLeft: 18 }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 8px" }}>{item.title}</p>
-                <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{item.desc}</p>
+              <div key={item.title} className="border-l-2 border-border pl-4.5">
+                <p className="mb-2 type-body-sb-m text-fg">{item.title}</p>
+                <p className="type-body-r-s text-muted">{item.desc}</p>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Canva vs Posthive: full comparison
           </h2>
 
-          <div style={{ overflowX: "auto", marginBottom: 32 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <div className="mb-8 overflow-x-auto">
+            <table>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Feature</th>
-                  <th style={{ textAlign: "center", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Canva Pro</th>
-                  <th style={{ textAlign: "center", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#9ba2ee", fontWeight: 700, fontSize: 12 }}>Posthive</th>
+                  <th>Feature</th>
+                  <th className="text-center">Canva Pro</th>
+                  <th className="text-center text-brand-800">Posthive</th>
                 </tr>
               </thead>
               <tbody>
@@ -221,25 +189,25 @@ export default function CanvaSchedulerAlternativePage() {
                   ["Open source / self-hostable", "✕", "✓"],
                   ["Design tool built-in", "✓", "✕"],
                 ].map(([feature, canva, posthive]) => (
-                  <tr key={feature as string} style={{ borderBottom: "1px solid #111" }}>
-                    <td style={{ padding: "10px 14px", color: "#aaa", fontSize: 14 }}>{feature as string}</td>
-                    <td style={{ textAlign: "center", padding: "10px 14px", color: canva === "✕" ? "#3a3a3a" : "#888", fontSize: canva === "✕" || canva === "✓" ? 16 : 13 }}>{canva as string}</td>
-                    <td style={{ textAlign: "center", padding: "10px 14px", color: posthive === "✕" ? "#3a3a3a" : "#9ba2ee", fontSize: posthive === "✕" || posthive === "✓" ? 16 : 13 }}>{posthive as string}</td>
+                  <tr key={feature as string}>
+                    <td className="text-fg">{feature as string}</td>
+                    <td className={cn("text-center", canva === "✕" ? "text-neutral-400" : canva === "✓" ? "text-green-700" : "text-muted")}>{canva as string}</td>
+                    <td className={cn("text-center", posthive === "✕" ? "text-neutral-400" : posthive === "✓" ? "text-green-700" : "text-brand-800")}>{posthive as string}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             The best workflow: Canva plus Posthive
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
+          <p>
             You do not have to choose one or the other. The most effective workflow for visual creators is to use Canva for design and Posthive for scheduling. Here is how it works in practice:
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {[
               { n: 1, title: "Design in Canva", desc: "Create your post graphics, Reel covers, or carousel slides in Canva. Use their templates, brand kit, and design tools." },
               { n: 2, title: "Export your assets", desc: "Download your designs as JPG, PNG, or MP4 depending on the content type." },
@@ -247,64 +215,64 @@ export default function CanvaSchedulerAlternativePage() {
               { n: 4, title: "Upload your Canva exports", desc: "Attach your downloaded assets. Posthive accepts images and videos for multiple supported platforms." },
               { n: 5, title: "Write your caption and schedule", desc: "Write your copy, add a first comment for hashtags if needed, pick your publish time, and schedule. Done." },
             ].map((step) => (
-              <div key={step.n} style={{ display: "flex", gap: 18, padding: "18px 0", borderBottom: "1px solid #111" }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(91,99,211,.12)", border: "1px solid rgba(91,99,211,.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ fontSize: 12, fontWeight: 900, color: "#9ba2ee" }}>0{step.n}</span>
+              <div key={step.n} className="card flex gap-4 p-5">
+                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent type-body-sb-xs text-accent-fg">
+                  0{step.n}
                 </div>
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 6px" }}>{step.title}</p>
-                  <p style={{ fontSize: 13, color: "#666", lineHeight: 1.7, margin: 0 }}>{step.desc}</p>
+                  <p className="mb-2 type-body-sb-m text-fg">{step.title}</p>
+                  <p className="type-body-r-s text-muted">{step.desc}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             This workflow gives you the best of both tools. Canva handles design better than any scheduler will. Posthive handles scheduling and distribution better than Canva ever will. Using them together costs $9/month for Posthive plus whatever you pay for Canva, and you get a much more capable setup than either tool alone.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Who should stick with Canva scheduler
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             The Canva scheduler makes sense if you only post to Instagram, Facebook, LinkedIn, and X, and you already pay for Canva Pro. In that case, having scheduling built into your design tool saves a step and keeps your workflow in one place.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             But the moment you need Bluesky, Mastodon, Threads, Telegram, or YouTube, or when you want bulk scheduling, first comments, or a real content calendar, a dedicated scheduler becomes necessary.
           </p>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#ededed", margin: "48px 0 16px", letterSpacing: "-0.02em" }}>
+          <h2>
             Frequently asked questions
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {faqSchema.mainEntity.map((item) => (
-              <div key={item.name} style={{ borderBottom: "1px solid #1a1a1a", padding: "22px 0" }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>{item.name}</p>
-                <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{item.acceptedAnswer.text}</p>
+              <div key={item.name} className="card p-5">
+                <p className="mb-2 type-body-sb-m text-fg">{item.name}</p>
+                <p className="type-body-r-s text-muted">{item.acceptedAnswer.text}</p>
               </div>
             ))}
           </div>
 
-          <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px", textAlign: "center", marginTop: 48 }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>Schedule across multiple platforms for $9/month</p>
-            <p style={{ fontSize: 14, color: "#666", margin: "0 0 24px" }}>14-day free trial. Works alongside Canva. No credit card required.</p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href="/register" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>
+          <div className="card mt-12 p-8 text-center">
+            <p className="mb-2 type-head-sb-5 text-fg">Schedule across multiple platforms for $9/month</p>
+            <p className="mb-6 type-body-r-s text-muted">14-day free trial. Works alongside Canva. No credit card required.</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/register" className="btn-primary px-6 py-3">
                 Get started free
               </Link>
-              <Link href="/pricing" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
+              <Link href="/pricing" className="btn-secondary px-6 py-3">
                 View pricing
               </Link>
             </div>
           </div>
 
           {/* Related reading */}
-          <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 48, paddingTop: 36 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 16 }}>Related reading</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="mt-12 border-t border-border pt-9">
+            <p className="section-label mb-4">Related reading</p>
+            <div className="flex flex-col gap-3">
               {[
                 { href: "/blog/how-to-schedule-instagram-reels", label: "How to schedule Instagram Reels in 2026 (step-by-step)" },
                 { href: "/blog/buffer-alternative-open-source", label: "The best open-source Buffer alternative in 2026" },
@@ -313,8 +281,8 @@ export default function CanvaSchedulerAlternativePage() {
                 { href: "/platforms/mastodon", label: "Schedule to any Mastodon instance with Posthive" },
                 { href: "/platforms/threads", label: "Post to Threads on schedule, not on impulse" },
               ].map(({ href, label }) => (
-                <Link key={href} href={href} style={{ fontSize: 14, color: "#5b63d3", textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#333" }}>→</span> {label}
+                <Link key={href} href={href} className="flex items-center gap-2 type-body-r-s text-brand-800 transition-colors hover:text-brand-900">
+                  <span className="text-neutral-400">→</span> {label}
                 </Link>
               ))}
             </div>
@@ -323,13 +291,13 @@ export default function CanvaSchedulerAlternativePage() {
         </div>
       </div>
 
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "40px 24px", textAlign: "center" }}>
-        <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+      <footer className="border-t border-border px-6 py-10 text-center">
+        <div className="mb-4 flex flex-wrap justify-center gap-6">
           {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Pricing", "/pricing"], ["Blog", "/blog"]] as [string, string][]).map(([label, href]) => (
-            <Link key={label} href={href} style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>{label}</Link>
+            <Link key={label} href={href} className="type-body-r-s text-muted transition-colors hover:text-fg">{label}</Link>
           ))}
         </div>
-        <p style={{ fontSize: 12, color: "#444" }}>© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
+        <p className="type-body-r-xs text-muted">© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
       </footer>
     </div>
   );

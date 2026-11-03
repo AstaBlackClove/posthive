@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cn } from "../../../lib/cn";
 import { BlogCtaBanner } from "../../../components/BlogCtaBanner";
+import { BlogPostHeader } from "../../../components/BlogPostHeader";
+import { SiteNav } from "../../../components/SiteNav";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
@@ -67,90 +70,50 @@ export const metadata: Metadata = {
   },
 };
 
-function BlogNav() {
-  return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-      height: 64, background: "#0a0a0a", borderBottom: "1px solid #1a1a1a",
-      display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px",
-    }}>
-      <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-        <img src="/posthivemain.png" alt="Posthive" style={{ height: 28 }} />
-      </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-        <Link href="/blog" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Blog</Link>
-        <Link href="/pricing" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Pricing</Link>
-        <Link href="/docs" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Docs</Link>
-        <Link href="/register" style={{
-          fontSize: 14, fontWeight: 600, padding: "8px 16px", borderRadius: 8,
-          background: "#5b63d3", color: "#fff", textDecoration: "none",
-        }}>Get started</Link>
-      </div>
-    </nav>
-  );
-}
-
 export default function BufferAlternativePage() {
   return (
-    <div className="mkt" style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
+    <div className="min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <BlogNav />
+      <SiteNav />
 
-      <div style={{ maxWidth: 680, margin: "0 auto", padding: "120px 24px 100px" }}>
+      <div className="mx-auto max-w-170 px-6 pt-14 pb-24">
 
-        <Link href="/blog" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#555", textDecoration: "none", marginBottom: 40 }}>
-          ← All posts
-        </Link>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#5cb88a", background: "rgba(80,180,120,.1)", borderRadius: 6, padding: "3px 9px", letterSpacing: ".04em" }}>
-            Comparison
-          </span>
-          <span style={{ fontSize: 12, color: "#444" }}>July 7, 2026</span>
-          <span style={{ fontSize: 12, color: "#444" }}>· 7 min read</span>
-        </div>
-
-        <h1 style={{ fontSize: 38, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15, margin: "0 0 24px", color: "#ededed" }}>
-          The Best Open-Source Buffer Alternative in 2026
-        </h1>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0", borderTop: "1px solid #1e1e1e", borderBottom: "1px solid #1e1e1e", marginBottom: 40 }}>
-          <img src="/founder.jpg" alt="Founder" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#ededed" }}>Guna</div>
-            <div style={{ fontSize: 12, color: "#555" }}>Founder, Posthive</div>
-          </div>
-        </div>
+        <BlogPostHeader
+          category="Comparison"
+          date="July 7, 2026"
+          readTime="7 min read"
+          title="The Best Open-Source Buffer Alternative in 2026"
+        />
 
         <BlogCtaBanner />
 
-        <div style={{ fontSize: 16, lineHeight: 1.85, color: "#888" }}>
+        <div className="article-body">
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Buffer is good. It was one of the first tools to make social media scheduling approachable, and it still works fine for basic use cases. But if you&apos;re a developer, an indie hacker, or someone who cares about where your OAuth credentials live — Buffer has a ceiling. It&apos;s a closed, per-channel SaaS that gets expensive fast and doesn&apos;t support Bluesky, Mastodon, or Threads.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
-            That&apos;s why we built <strong style={{ color: "#ededed" }}>Posthive</strong> — an open-source, self-hostable social media scheduler that covers more platforms, costs less, and gives you full control over your data.
+          <p>
+            That&apos;s why we built <strong>Posthive</strong> — an open-source, self-hostable social media scheduler that covers more platforms, costs less, and gives you full control over your data.
           </p>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             Buffer vs Posthive: platform coverage
           </h2>
 
-          <p style={{ marginBottom: 20 }}>
+          <p>
             This is where the gap is most obvious. Buffer supports Instagram, Facebook, X, LinkedIn, Pinterest, TikTok, and YouTube — a solid list, but missing the newer networks entirely.
           </p>
 
           {/* Comparison table */}
-          <div style={{ overflowX: "auto", marginBottom: 32 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <div className="mb-8 overflow-x-auto">
+            <table>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Platform</th>
-                  <th style={{ textAlign: "center", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Buffer</th>
-                  <th style={{ textAlign: "center", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#9ba2ee", fontWeight: 700, fontSize: 12 }}>Posthive</th>
+                  <th>Platform</th>
+                  <th className="text-center">Buffer</th>
+                  <th className="text-center text-brand-800">Posthive</th>
                 </tr>
               </thead>
               <tbody>
@@ -171,36 +134,36 @@ export default function BufferAlternativePage() {
                   ["Nostr", false, true],
                   ["Lemmy", false, true],
                 ].map(([platform, buffer, posthive]) => (
-                  <tr key={platform as string} style={{ borderBottom: "1px solid #111" }}>
-                    <td style={{ padding: "10px 14px", color: "#aaa", fontSize: 14 }}>{platform as string}</td>
-                    <td style={{ textAlign: "center", padding: "10px 14px", fontSize: 16 }}>{buffer ? "✓" : <span style={{ color: "#3a3a3a" }}>—</span>}</td>
-                    <td style={{ textAlign: "center", padding: "10px 14px", fontSize: 16, color: "#9ba2ee" }}>{posthive ? "✓" : <span style={{ color: "#3a3a3a" }}>—</span>}</td>
+                  <tr key={platform as string}>
+                    <td className="text-fg">{platform as string}</td>
+                    <td className={cn("text-center", buffer ? "text-green-700" : "text-neutral-400")}>{buffer ? "✓" : "—"}</td>
+                    <td className={cn("text-center", posthive ? "text-green-700" : "text-neutral-400")}>{posthive ? "✓" : "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             Pricing: Buffer gets expensive fast
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Buffer charges per channel. At $6/month per channel on Essentials, connecting just 5 accounts costs $30/month. The Team plan jumps to $12/channel. If you&apos;re running multiple brands or clients, the math gets painful quickly.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Posthive&apos;s hosted plan starts at $9/month with no per-channel pricing. Or self-host it for free — your only cost is the VPS or cloud instance, which can be near-zero on Railway&apos;s or Fly.io&apos;s hobby tier.
           </p>
 
           {/* Pricing comparison table */}
-          <div style={{ overflowX: "auto", marginBottom: 32 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <div className="mb-8 overflow-x-auto">
+            <table>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Scenario</th>
-                  <th style={{ textAlign: "center", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#555", fontWeight: 700, fontSize: 12 }}>Buffer/mo</th>
-                  <th style={{ textAlign: "center", padding: "10px 14px", borderBottom: "1px solid #1e1e1e", color: "#9ba2ee", fontWeight: 700, fontSize: 12 }}>Posthive/mo</th>
+                  <th>Scenario</th>
+                  <th className="text-center">Buffer/mo</th>
+                  <th className="text-center text-brand-800">Posthive/mo</th>
                 </tr>
               </thead>
               <tbody>
@@ -211,37 +174,37 @@ export default function BufferAlternativePage() {
                   ["Agency, 20+ accounts", "$120+", "$17"],
                   ["Self-hosted (any accounts)", "N/A", "Free"],
                 ].map(([scenario, buffer, posthive]) => (
-                  <tr key={scenario} style={{ borderBottom: "1px solid #111" }}>
-                    <td style={{ padding: "10px 14px", color: "#aaa", fontSize: 14 }}>{scenario}</td>
-                    <td style={{ textAlign: "center", padding: "10px 14px", color: "#666", fontSize: 14 }}>{buffer}</td>
-                    <td style={{ textAlign: "center", padding: "10px 14px", fontSize: 14, color: "#9ba2ee", fontWeight: 600 }}>{posthive}</td>
+                  <tr key={scenario}>
+                    <td className="text-fg">{scenario}</td>
+                    <td className="text-center text-muted">{buffer}</td>
+                    <td className="text-center type-body-sb-s text-brand-800">{posthive}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Buffer&apos;s per-channel model makes sense if you manage one or two accounts. The moment you scale — multiple brands, client accounts, or a team — Posthive&apos;s flat pricing wins decisively.
           </p>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             Open source: full control, no lock-in
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Buffer is proprietary. When you connect your social accounts, your OAuth tokens live on their servers. You have to trust that their security practices are solid and that they won&apos;t change their pricing model next quarter.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
-            Posthive is <strong style={{ color: "#ededed" }}>AGPL-3.0</strong>. The entire codebase is on GitHub. OAuth credentials are AES-256-GCM encrypted at rest. If you self-host, they never leave your server. You can audit every line of code that touches your tokens.
+          <p>
+            Posthive is <strong>AGPL-3.0</strong>. The entire codebase is on GitHub. OAuth credentials are AES-256-GCM encrypted at rest. If you self-host, they never leave your server. You can audit every line of code that touches your tokens.
           </p>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             Features Buffer doesn&apos;t have
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {[
               { title: "MCP / AI agent scheduling", desc: "Claude, ChatGPT, and Grok Bot can schedule posts directly through Posthive via MCP — no UI required. Buffer has no AI agent integration." },
               { title: "Bulk CSV scheduling", desc: "Upload a spreadsheet and schedule hundreds of posts at once. Specify different platforms per row with pipe-separated account names." },
@@ -250,56 +213,56 @@ export default function BufferAlternativePage() {
               { title: "Drag-to-reschedule calendar", desc: "A visual content calendar where you can drag posts to new dates instantly. No form-filling, no dropdowns." },
               { title: "Self-hostable + open source", desc: "AGPL-3.0. Full codebase on GitHub. OAuth tokens AES-256-GCM encrypted at rest. Buffer is closed-source SaaS — your credentials live on their servers." },
             ].map((f) => (
-              <div key={f.title} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "16px 20px" }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#ededed", marginBottom: 6 }}>✓ {f.title}</div>
-                <div style={{ fontSize: 13.5, color: "#666", lineHeight: 1.65 }}>{f.desc}</div>
+              <div key={f.title} className="card p-5">
+                <div className="mb-2 type-body-sb-m text-fg">✓ {f.title}</div>
+                <div className="type-body-r-s text-muted">{f.desc}</div>
               </div>
             ))}
           </div>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             When Buffer is still the right choice
           </h2>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             Buffer is polished, battle-tested, and has a great mobile app. If you need a native mobile scheduler or don&apos;t want to manage your own infrastructure, Buffer is still a solid option. It&apos;s also the safer choice for non-technical teams who aren&apos;t comfortable with self-hosting.
           </p>
 
-          <p style={{ marginBottom: 24 }}>
+          <p>
             But if you post to Bluesky, Threads, Mastodon, Telegram, Discord, or Tumblr — or if you care about open source, data ownership, or AI agent scheduling — Posthive is the better fit.
           </p>
 
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+          <h2>
             Frequently asked questions
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 32 }}>
+          <div className="mb-8 flex flex-col gap-3">
             {faqSchema.mainEntity.map((item) => (
-              <div key={item.name} style={{ borderBottom: "1px solid #1a1a1a", padding: "20px 0" }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#ededed", margin: "0 0 8px" }}>{item.name}</p>
-                <p style={{ fontSize: 14, color: "#666", lineHeight: 1.75, margin: 0 }}>{item.acceptedAnswer.text}</p>
+              <div key={item.name} className="card p-5">
+                <p className="mb-2 type-body-sb-m text-fg">{item.name}</p>
+                <p className="type-body-r-s text-muted">{item.acceptedAnswer.text}</p>
               </div>
             ))}
           </div>
 
           {/* CTA */}
-          <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "32px 28px", textAlign: "center", marginTop: 48 }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "#ededed", margin: "0 0 10px" }}>Try Posthive free for 14 days</p>
-            <p style={{ fontSize: 14, color: "#666", margin: "0 0 24px" }}>No credit card required. Connect your first account in under a minute.</p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href="/register" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", textDecoration: "none" }}>
+          <div className="card mt-12 p-8 text-center">
+            <p className="mb-2 type-head-sb-5 text-fg">Try Posthive free for 14 days</p>
+            <p className="mb-6 type-body-r-s text-muted">No credit card required. Connect your first account in under a minute.</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/register" className="btn-primary px-6 py-3">
                 Get started free
               </Link>
-              <Link href="https://github.com/posthive/posthive" style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 10, background: "#111", color: "#888", textDecoration: "none", border: "1px solid #2a2a2a" }}>
+              <Link href="https://github.com/posthive/posthive" className="btn-secondary px-6 py-3">
                 View on GitHub
               </Link>
             </div>
           </div>
 
           {/* Related reading */}
-          <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 48, paddingTop: 36 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#555", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 16 }}>Related reading</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="mt-12 border-t border-border pt-9">
+            <p className="section-label mb-4">Related reading</p>
+            <div className="flex flex-col gap-3">
               {[
                 { href: "/blog/how-to-schedule-first-comment-instagram", label: "How to schedule your first comment on Instagram (and why it matters)" },
                 { href: "/blog/how-to-schedule-instagram-reels", label: "How to schedule Instagram Reels in 2026 (step-by-step)" },
@@ -309,8 +272,8 @@ export default function BufferAlternativePage() {
                 { href: "/platforms/mastodon", label: "Schedule to any Mastodon instance with Posthive" },
                 { href: "/platforms/threads", label: "Post to Threads on schedule, not on impulse" },
               ].map(({ href, label }) => (
-                <Link key={href} href={href} style={{ fontSize: 14, color: "#5b63d3", textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#333" }}>→</span> {label}
+                <Link key={href} href={href} className="flex items-center gap-2 type-body-r-s text-brand-800 transition-colors hover:text-brand-900">
+                  <span className="text-neutral-400">→</span> {label}
                 </Link>
               ))}
             </div>
@@ -319,13 +282,13 @@ export default function BufferAlternativePage() {
         </div>
       </div>
 
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,.06)", padding: "40px 24px", textAlign: "center" }}>
-        <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+      <footer className="border-t border-border px-6 py-10 text-center">
+        <div className="mb-4 flex flex-wrap justify-center gap-6">
           {([["Privacy", "/privacy"], ["Terms", "/terms"], ["Docs", "/docs"], ["Pricing", "/pricing"], ["Blog", "/blog"]] as [string, string][]).map(([label, href]) => (
-            <Link key={label} href={href} style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>{label}</Link>
+            <Link key={label} href={href} className="type-body-r-s text-muted transition-colors hover:text-fg">{label}</Link>
           ))}
         </div>
-        <p style={{ fontSize: 12, color: "#444" }}>© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
+        <p className="type-body-r-xs text-muted">© {new Date().getFullYear()} Posthive · AGPL-3.0</p>
       </footer>
     </div>
   );

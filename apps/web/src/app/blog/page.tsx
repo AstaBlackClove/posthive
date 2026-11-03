@@ -1,7 +1,6 @@
-"use client";
-
 import Link from "next/link";
-
+import { BlogCategoryBadge } from "../../components/BlogPostHeader";
+import { SiteNav } from "../../components/SiteNav";
 
 const POSTS = [
   {
@@ -79,87 +78,43 @@ const POSTS = [
   },
 ];
 
-function BlogNav() {
-  return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-      height: 64, background: "#0a0a0a", borderBottom: "1px solid #1a1a1a",
-      display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px",
-    }}>
-      <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-        <img src="/posthivemain.png" alt="Posthive" style={{ height: 28 }} />
-      </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-        <Link href="/pricing" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Pricing</Link>
-        <Link href="/docs" style={{ fontSize: 14, color: "#888", textDecoration: "none" }}>Docs</Link>
-        <Link href="/register" style={{
-          fontSize: 14, fontWeight: 600, padding: "8px 16px", borderRadius: 8,
-          background: "#5b63d3", color: "#fff", textDecoration: "none",
-        }}>Get started</Link>
-      </div>
-    </nav>
-  );
-}
-
 export default function BlogPage() {
   return (
-    <div className="mkt" style={{ background: "#0a0a0a", minHeight: "100vh", color: "#ededed", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
-      <BlogNav />
+    <div className="min-h-screen">
+      <SiteNav />
 
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "120px 24px 100px" }}>
+      <div className="mx-auto max-w-3xl px-6 pt-14 pb-24">
         {/* Header */}
-        <div style={{ marginBottom: 64 }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "rgba(91,99,211,.1)", border: "1px solid rgba(91,99,211,.25)",
-            borderRadius: 20, padding: "6px 16px", fontSize: 12, fontWeight: 700,
-            color: "#9ba2ee", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 24,
-          }}>
+        <div className="mb-16">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-300 bg-brand-100 px-4 py-1.5 type-body-sb-xs uppercase tracking-wider text-brand-800">
             Blog
           </div>
-          <h1 style={{ fontSize: 44, fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 12px", lineHeight: 1.1, fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
+          <h1 className="mb-3 type-head-sb-2 tracking-tight text-fg sm:type-head-sb-1">
             Updates &amp; insights
           </h1>
-          <p style={{ fontSize: 17, color: "#666", margin: 0 }}>
+          <p className="type-body-r-l text-muted">
             Product updates, guides, and creator insights from the Posthive team.
           </p>
         </div>
 
         {/* Posts */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="flex flex-col gap-4">
           {POSTS.map((post) => (
-            <Link
-              key={post.slug}
-              href={`/blog/${post.slug}`}
-              style={{ textDecoration: "none" }}
-            >
-              <article style={{
-                background: "#111", border: "1px solid #1e1e1e", borderRadius: 14,
-                padding: "28px 32px", transition: "border-color .15s",
-              }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = "#333")}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = "#1e1e1e")}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                  <span style={{
-                    fontSize: 11, fontWeight: 700,
-                    color: post.category === "Comparison" ? "#5cb88a" : post.category === "Guide" ? "#e86b6b" : "#9ba2ee",
-                    background: post.category === "Comparison" ? "rgba(80,180,120,.1)" : post.category === "Guide" ? "rgba(232,107,107,.1)" : "rgba(91,99,211,.1)",
-                    borderRadius: 6, padding: "3px 9px", letterSpacing: ".04em",
-                  }}>
-                    {post.category}
-                  </span>
-                  <span style={{ fontSize: 12, color: "#444" }}>{post.date}</span>
-                  <span style={{ fontSize: 12, color: "#444" }}>·</span>
-                  <span style={{ fontSize: 12, color: "#444" }}>{post.readTime}</span>
+            <Link key={post.slug} href={`/blog/${post.slug}`} className="block">
+              <article className="card p-6 transition-colors hover:border-neutral-300">
+                <div className="mb-3.5 flex flex-wrap items-center gap-2.5 type-body-r-xs text-muted">
+                  <BlogCategoryBadge category={post.category} />
+                  <span>{post.date}</span>
+                  <span>·</span>
+                  <span>{post.readTime}</span>
                 </div>
-                <h2 style={{ fontSize: 20, fontWeight: 600, color: "#ededed", margin: "0 0 10px", lineHeight: 1.3, letterSpacing: "-0.01em", fontFamily: "var(--font-figtree), system-ui, sans-serif" }}>
+                <h2 className="mb-2.5 type-head-sb-6 tracking-tight text-fg">
                   {post.title}
                 </h2>
-                <p style={{ fontSize: 14, color: "#666", margin: "0 0 20px", lineHeight: 1.7 }}>
+                <p className="mb-5 type-body-r-s text-muted">
                   {post.excerpt}
                 </p>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#9ba2ee" }}>
+                <span className="type-body-sb-s text-brand-800">
                   Read more
                 </span>
               </article>
