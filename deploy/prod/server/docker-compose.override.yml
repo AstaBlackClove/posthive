@@ -1,0 +1,36 @@
+# Server-local tweaks for the production box. Installed at /root/posthive/docker-compose.override.yml
+# (gitignored there). Source of truth: deploy/prod/server/docker-compose.override.yml.
+services:
+  api:
+    build:
+      dockerfile: deploy-local/Dockerfile.api
+    volumes:
+      - uploads:/app/apps/api/uploads
+
+  web:
+    build:
+      dockerfile: deploy-local/Dockerfile.web
+    environment:
+      HOSTNAME: 0.0.0.0
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy-local/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  uploads:
+    external: true
+    name: posthive_uploads
+  caddy_data:
+  caddy_config:

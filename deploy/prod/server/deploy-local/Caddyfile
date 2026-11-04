@@ -1,0 +1,30 @@
+marketing.playmates.dev {
+	encode zstd gzip
+
+	# Next.js owns this one API route (OG image generation)
+	handle /api/og* {
+		# The route fetches its own logo from request origin. Behind TLS the
+		# standalone server builds an https URL for an internal http port, so
+		# tell it the request arrived over plain http; the public URL still
+		# redirects to HTTPS for anyone hitting it directly.
+		reverse_proxy web:3000 {
+			header_up X-Forwarded-Proto http
+		}
+	}
+
+	# Everything else under /api is the Fastify backend; strip the prefix
+	handle_path /api/* {
+		reverse_proxy api:3001
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	log {
+		output file /data/access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}

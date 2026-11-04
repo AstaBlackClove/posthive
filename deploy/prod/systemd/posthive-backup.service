@@ -5,6 +5,8 @@ After=docker.service
 
 [Service]
 Type=oneshot
-ExecStart=/opt/posthive/scripts/backup.sh daily
+WorkingDirectory=/root/posthive
+ExecStart=/root/posthive/scripts/backup.sh daily
 Nice=10
 IOSchedulingClass=idle
+UMask=0077

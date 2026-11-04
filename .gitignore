@@ -53,3 +53,5 @@ posthive-daily-playbook.md
 # Local deployment — Caddy reverse proxy + quick-tunnel demo doc (laptop only)
 Caddyfile
 docs/quick-tunnel-demo.md
+# …except the production reference copy
+!deploy/prod/server/deploy-local/Caddyfile

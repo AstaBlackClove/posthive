@@ -1,21 +1,27 @@
 #!/usr/bin/env bash
-# Posthive backup: verified Postgres dump + uploads archive into /opt/posthive/backups.
+# Posthive backup: verified Postgres dump + uploads archive into /root/posthive/backups.
 #
-# Usage: scripts/backup.sh [label]     e.g. daily | pre-migrate | pre-deploy-<sha7> | manual
+# Usage: backup.sh [label]      e.g. daily | pre-migrate | pre-deploy-<sha7> | manual
 #
-# A dump is only kept after `pg_restore --list` can read it. The uploads volume is read from
-# its host mountpoint and is never created here (creating it outside Compose would leave it
-# owned by root and break uploads).
+# A dump is kept only after `pg_restore --list` can read it. The uploads volume is archived
+# from its host mountpoint and is never created here: creating it outside Compose would leave
+# it owned by root and break uploads.
+#
+# Installed on the server at /root/posthive/scripts/backup.sh.
+# Source of truth: deploy/prod/scripts/backup.sh.
 set -euo pipefail
 umask 077
 
-ROOT=/opt/posthive
+ROOT="${POSTHIVE_ROOT:-/root/posthive}"
 BACKUP_DIR="$ROOT/backups"
-UPLOADS_VOLUME=posthive-prod_uploads
+UPLOADS_VOLUME=posthive_uploads
 LABEL="${1:-manual}"
 case "$LABEL" in *[!A-Za-z0-9._-]*) echo "invalid label: $LABEL" >&2; exit 2 ;; esac
 
+mkdir -p -- "$BACKUP_DIR"
+chmod 700 "$BACKUP_DIR"
 cd "$ROOT"
+
 exec 9>"$ROOT/.backup.lock"
 flock -w 900 9 || { echo "another backup is still running" >&2; exit 1; }
 
@@ -26,6 +32,10 @@ trap 'rm -f -- "$base.dump.tmp" "$base.uploads.tgz.tmp"' EXIT
 # --- Database ------------------------------------------------------------------------------
 docker compose exec -T db pg_dump -U posthive -d posthive -Fc > "$base.dump.tmp"
 entries="$(docker compose exec -T db pg_restore --list < "$base.dump.tmp" | { grep -cE '^[0-9]+;' || true; })"
+if [ "${entries:-0}" -eq 0 ]; then
+  echo "dump has no restorable TOC entries; refusing to keep it" >&2
+  exit 1
+fi
 mv -- "$base.dump.tmp" "$base.dump"
 echo "db: $name.dump ($(stat -c %s "$base.dump") bytes, $entries TOC entries)"
 
@@ -39,6 +49,7 @@ else
   echo "uploads: volume $UPLOADS_VOLUME does not exist yet, skipped"
 fi
 
+# --- Checksums -----------------------------------------------------------------------------
 ( cd "$BACKUP_DIR" && sha256sum -- "$name".* ) >> "$BACKUP_DIR/SHA256SUMS"
 
 # --- Retention: 14 days of daily backups, the 10 most recent pre-deploy backups -------------

@@ -1,72 +1,88 @@
 #!/usr/bin/env bash
-# Posthive deploy: switch the stack to images already loaded by build-and-ship.sh.
+# Posthive deploy on the production server (source of truth: deploy/prod/scripts/deploy.sh).
 #
-# Usage: scripts/deploy.sh <git-sha>
+# Usage: deploy.sh [branch]        default: main
 #
-#   1. checks posthive-prod-{api,web}:<sha7> are loaded
-#   2. refuses while a post is mid-publish (PostJob.status = 'running' would stay stuck)
-#   3. stops api (worker + crons), takes a verified backup
-#   4. retags :current -> :previous and <sha7> -> :current, runs prisma migrate deploy
-#   5. recreates api + web, waits for health, records the deploy
+#   guard clean tree / fast-forward / no post mid-publish
+#   tag the running images posthive-{api,web}:rollback-<sha>
+#   fast-forward the checkout, build api + web on the server
+#   stop api, take a verified pre-deploy backup
+#   recreate api + web, wait for health
+#   append one line to deploy-history.log
 #
+# Migrations run inside the api image at container start (apps/api/Dockerfile CMD).
 # Rollback: README.md, "Rollback".
 set -euo pipefail
 
-ROOT=/opt/posthive
+ROOT="${POSTHIVE_ROOT:-/root/posthive}"
+BRANCH="${1:-main}"
 cd "$ROOT"
+
 exec 8>"$ROOT/.deploy.lock"
 flock -n 8 || { echo "another deploy is running" >&2; exit 1; }
 
-SHA="${1:?usage: deploy.sh <git-sha>}"
-[[ "$SHA" =~ ^[0-9a-f]{7,40}$ ]] || { echo "not a git sha: $SHA" >&2; exit 2; }
-git -C app fetch --quiet origin
-FULL="$(git -C app rev-parse --verify --quiet "$SHA^{commit}")" || { echo "unknown commit: $SHA" >&2; exit 1; }
-TAG="${FULL:0:7}"
+API_STOPPED=0
+trap '[ "$API_STOPPED" = 1 ] && echo "api is stopped; restart with: cd $ROOT && docker compose up -d api" >&2' ERR
 
-for s in api web; do
-  docker image inspect "posthive-prod-$s:$TAG" > /dev/null 2>&1 \
-    || { echo "image posthive-prod-$s:$TAG is not loaded; run build-and-ship.sh $FULL first" >&2; exit 1; }
-done
+[ "$(git symbolic-ref -q --short HEAD || true)" = "$BRANCH" ] \
+  || { echo "checkout $BRANCH first (currently $(git rev-parse --short HEAD))" >&2; exit 1; }
+git diff --quiet && git diff --cached --quiet \
+  || { echo "tracked files are modified; commit or stash first" >&2; exit 1; }
+
+git fetch --quiet origin "$BRANCH"
+CURRENT="$(git rev-parse HEAD)"
+TARGET="$(git rev-parse "origin/$BRANCH")"
+if [ "$TARGET" = "$CURRENT" ]; then
+  echo "already at $BRANCH ${CURRENT:0:7}; nothing to deploy"
+  exit 0
+fi
+git merge-base --is-ancestor "$CURRENT" "$TARGET" \
+  || { echo "origin/$BRANCH is not a fast-forward of ${CURRENT:0:7}; resolve manually" >&2; exit 1; }
 
 sql() { docker compose exec -T db psql -U posthive -d posthive -Atq -c "$1"; }
-
-echo "== db + redis"
-docker compose up -d --wait db redis
-
 if [ "$(sql "select to_regclass('public.\"PostJob\"') is not null")" = "t" ]; then
   running="$(sql "select count(*) from \"PostJob\" where status = 'running'")"
-  [ "$running" = "0" ] || { echo "$running post(s) are being published right now; retry in a minute" >&2; exit 1; }
+  [ "$running" = "0" ] || { echo "$running post(s) publishing right now; retry in a minute" >&2; exit 1; }
 fi
 
-previous="none"
-if docker image inspect posthive-prod-api:current > /dev/null 2>&1; then
-  previous="$(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.revision"}}' posthive-prod-api:current 2>/dev/null || true)"
-  [ -n "$previous" ] || previous="$(cat "$ROOT/.current-tag" 2>/dev/null || echo unknown)"
-  for s in api web; do docker tag "posthive-prod-$s:current" "posthive-prod-$s:previous"; done
-fi
+# The running images stay around so a rollback can retag them (README.md, "Rollback").
+PREV="${CURRENT:0:7}"
+for s in api web; do
+  docker image inspect "posthive-$s:latest" >/dev/null 2>&1 \
+    && docker tag "posthive-$s:latest" "posthive-$s:rollback-$PREV"
+done
 
-echo "== stop api for a consistent backup + migration"
+echo "== fast-forward $BRANCH to ${TARGET:0:7}"
+git merge --ff-only --quiet "$TARGET"
+
+echo "== build api web (slow, memory-heavy: the box uses swap)"
+docker compose build api web
+
+echo "== stop api for a consistent backup"
+API_STOPPED=1
 docker compose stop api
-"$ROOT/scripts/backup.sh" "pre-deploy-$TAG"
+"$ROOT/scripts/backup.sh" "pre-deploy-${TARGET:0:7}"
 
-for s in api web; do docker tag "posthive-prod-$s:$TAG" "posthive-prod-$s:current"; done
+echo "== recreate api web"
+docker compose up -d --no-deps --force-recreate api web
+API_STOPPED=0
 
-echo "== migrations ($TAG)"
-if ! docker compose run --rm --no-deps -T api node_modules/.bin/prisma migrate deploy; then
-  echo "migration FAILED; restoring previous images and restarting the old api" >&2
-  if docker image inspect posthive-prod-api:previous > /dev/null 2>&1; then
-    for s in api web; do docker tag "posthive-prod-$s:previous" "posthive-prod-$s:current"; done
-    docker compose up -d --no-deps --wait api || true
+echo "== health"
+ok=0
+for _ in $(seq 1 150); do
+  if curl -fsS http://127.0.0.1:3001/health >/dev/null 2>&1 \
+     && curl -fsS http://127.0.0.1:3000/robots.txt >/dev/null 2>&1; then
+    ok=1
+    break
   fi
-  echo "inspect with: docker compose run --rm --no-deps api node_modules/.bin/prisma migrate status" >&2
+  sleep 2
+done
+if [ "$ok" != 1 ]; then
+  docker compose logs --tail=60 api web >&2
+  echo "health check FAILED; see README.md, 'Rollback'" >&2
   exit 1
 fi
 
-echo "== start $TAG"
-docker compose up -d --no-deps --force-recreate --wait --wait-timeout 240 api web
-
-git -C app -c advice.detachedHead=false checkout --quiet --detach "$FULL"
-echo "$TAG" > "$ROOT/.current-tag"
-echo "$(date -u +%FT%TZ) deployed $TAG (previous: $previous)" >> "$ROOT/deploy-history.log"
+echo "$(date -u +%FT%TZ) deployed ${TARGET:0:7} (previous: $PREV)" >> "$ROOT/deploy-history.log"
 docker compose ps --format 'table {{.Service}}\t{{.Status}}'
-echo "deploy ok: $TAG"
+echo "deploy ok: ${TARGET:0:7}"
