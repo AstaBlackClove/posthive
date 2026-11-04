@@ -59,3 +59,10 @@ docs/quick-tunnel-demo.md
 # Production server-only files (live only on the box, mirrored in deploy/prod/server/)
 /docker-compose.override.yml
 /deploy-local/
+
+# Production server runtime state (created on the box by the deploy + backup scripts)
+/.backup.lock
+/.deploy.lock
+/backups/
+/scripts/
+/deploy-history.log

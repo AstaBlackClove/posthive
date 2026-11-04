@@ -29,6 +29,8 @@ Two facts drive everything below:
 The server-only files are kept in `deploy/prod/server/` in the repo for reference and disaster
 recovery. They are gitignored **inside the clone** by name (`docker-compose.override.yml`,
 `deploy-local/`) so `git pull` stays clean; edit them on the server, then mirror changes back here.
+Runtime state created by the scripts (`backups/`, `scripts/`, `deploy-history.log`, `*.lock`) is
+gitignored too, so `git status` on the server should be empty.
 
 There is no registry and no `build-and-ship.sh` any more: the old `/opt/posthive` stack with
 prebuilt `posthive-prod-*` images was replaced by this build-on-the-server setup.
