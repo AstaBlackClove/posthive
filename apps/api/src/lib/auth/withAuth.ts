@@ -1,28 +1,17 @@
-import type { FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyRequest } from "fastify";
 import type { Prisma } from "@prisma/client";
 import { authProvider } from "./index.js";
-import type { AuthUser } from "./types.js";
 import { prisma } from "../prisma.js";
+import { createAuthGuard } from "./authGuard.js";
+import type { AuthUser } from "./types.js";
 
-const ACCESS_COOKIE = "ss-access-token";
-const REFRESH_COOKIE = "ss-refresh-token";
-
-export const COOKIE_OPTS = {
-  httpOnly: true,
-  sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production" || process.env.SECURE_COOKIES === "true",
-  path: "/",
-};
-
-export const ACCESS_COOKIE_NAME = ACCESS_COOKIE;
-export const REFRESH_COOKIE_NAME = REFRESH_COOKIE;
-
-declare module "fastify" {
-  interface FastifyRequest {
-    user?: AuthUser;
-    workspaceId?: string | null;
-  }
-}
+export {
+  COOKIE_OPTS,
+  ACCESS_COOKIE_NAME,
+  REFRESH_COOKIE_NAME,
+  setAuthCookies,
+  clearAuthCookies,
+} from "./authGuard.js";
 
 async function resolveWorkspace(req: FastifyRequest, userId: string): Promise<void> {
   const wsHeader = req.headers["x-workspace-id"] as string | undefined;
@@ -58,71 +47,15 @@ async function resolveWorkspace(req: FastifyRequest, userId: string): Promise<vo
     null;
 }
 
-async function resolveUser(
-  req: FastifyRequest,
-  reply: FastifyReply,
-  accessToken: string | undefined,
-): Promise<boolean> {
-  const refreshToken = req.cookies?.[REFRESH_COOKIE];
-
-  if (!accessToken && !refreshToken) {
-    await reply.status(401).send({ error: "Not authenticated" });
-    return false;
-  }
-
-  // Try access token first
-  if (accessToken) {
-    const user = await authProvider.validateAccessToken(accessToken);
-    if (user) {
-      req.user = user;
-      await resolveWorkspace(req, user.id);
-      return true;
-    }
-  }
-
-  // Access token expired — try refresh
-  if (refreshToken) {
-    const tokens = await authProvider.refreshTokens(refreshToken);
-    if (tokens) {
-      reply.setCookie(ACCESS_COOKIE, tokens.accessToken, {
-        ...COOKIE_OPTS,
-        maxAge: 15 * 60, // 15 min
-      });
-      reply.setCookie(REFRESH_COOKIE, tokens.refreshToken, {
-        ...COOKIE_OPTS,
-        maxAge: 30 * 24 * 60 * 60, // 30 days
-      });
-
-      const user = await authProvider.validateAccessToken(tokens.accessToken);
-      if (user) {
-        req.user = user;
-        await resolveWorkspace(req, user.id);
-        return true;
-      }
-    }
-  }
-
-  // Clear bad cookies
-  reply.clearCookie(ACCESS_COOKIE, { path: "/" });
-  reply.clearCookie(REFRESH_COOKIE, { path: "/" });
-  await reply.status(401).send({ error: "Session expired — please log in again" });
-  return false;
-}
+const guard = createAuthGuard({ provider: authProvider, resolveWorkspace });
 
 // Fastify preHandler — cookies only, no query param.
 // Use this on all routes except SSE.
-export async function withAuth(req: FastifyRequest, reply: FastifyReply): Promise<void> {
-  const accessToken = req.cookies?.[ACCESS_COOKIE];
-  await resolveUser(req, reply, accessToken);
-}
+export const withAuth = guard.withAuth;
 
 // For the SSE route only — also accepts ?token= query param because EventSource
 // cannot send cookies cross-origin. Do not use on any other route.
-export async function withAuthOrToken(req: FastifyRequest, reply: FastifyReply): Promise<void> {
-  const queryToken = (req.query as Record<string, string>)?.token;
-  const accessToken = queryToken ?? req.cookies?.[ACCESS_COOKIE];
-  await resolveUser(req, reply, accessToken);
-}
+export const withAuthOrToken = guard.withAuthOrToken;
 
 // Type helpers — use in route handlers after withAuth preHandler
 export function getUser(req: FastifyRequest): AuthUser {
@@ -151,12 +84,6 @@ export async function requireAdminRole(userId: string, workspaceId: string): Pro
     return { error: "Only workspace admins can perform this action.", code: "FORBIDDEN" };
   }
   return null;
-}
-
-/** Set auth cookies on a reply (access 2h, refresh 30d). */
-export function setAuthCookies(reply: FastifyReply, accessToken: string, refreshToken: string): void {
-  reply.setCookie(ACCESS_COOKIE, accessToken, { ...COOKIE_OPTS, maxAge: 2 * 60 * 60 });
-  reply.setCookie(REFRESH_COOKIE, refreshToken, { ...COOKIE_OPTS, maxAge: 30 * 24 * 60 * 60 });
 }
 
 /** Returns 403 payload if the user is not the workspace owner, null if allowed. */

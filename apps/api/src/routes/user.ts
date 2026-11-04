@@ -4,7 +4,8 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { prisma } from "../lib/prisma.js";
 import { authProvider } from "../lib/auth/index.js";
-import { withAuth, getUser, getWorkspaceId, COOKIE_OPTS, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, getWorkspaceId, setAuthCookies, clearAuthCookies, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from "../lib/auth/withAuth.js";
+import { SESSION_EXPIRED_BODY, UNAUTHENTICATED_BODY } from "../lib/auth/authGuard.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/mailer.js";
 
 const registerBody = z.object({
@@ -17,11 +18,6 @@ const loginBody = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 });
-
-function setAuthCookies(reply: Parameters<typeof withAuth>[1], accessToken: string, refreshToken: string) {
-  reply.setCookie(ACCESS_COOKIE_NAME, accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 });
-  reply.setCookie(REFRESH_COOKIE_NAME, refreshToken, { ...COOKIE_OPTS, maxAge: 30 * 24 * 60 * 60 });
-}
 
 export async function userRoutes(app: FastifyInstance): Promise<void> {
 
@@ -73,9 +69,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   // Logout
   app.post("/auth/logout", { preHandler: [withAuth] }, async (req, reply) => {
     const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
-    if (refreshToken) await authProvider.logout(refreshToken);
-    reply.clearCookie(ACCESS_COOKIE_NAME, { path: "/" });
-    reply.clearCookie(REFRESH_COOKIE_NAME, { path: "/" });
+    await authProvider.logout(refreshToken ?? "", req.sessionId);
+    clearAuthCookies(reply);
     return reply.send({ ok: true });
   });
 
@@ -96,18 +91,21 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   // Refresh — explicitly refresh tokens (called by frontend if needed)
   app.post("/auth/refresh", { config: { rateLimit: { max: 20, timeWindow: "15 minutes" } } }, async (req, reply) => {
     const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
-    if (!refreshToken) return reply.status(401).send({ error: "No refresh token" });
+    if (!refreshToken) return reply.status(401).send(UNAUTHENTICATED_BODY);
 
     const tokens = await authProvider.refreshTokens(refreshToken);
     if (!tokens) {
-      reply.clearCookie(ACCESS_COOKIE_NAME, { path: "/" });
-      reply.clearCookie(REFRESH_COOKIE_NAME, { path: "/" });
-      return reply.status(401).send({ error: "Session expired" });
+      clearAuthCookies(reply);
+      return reply.status(401).send(SESSION_EXPIRED_BODY);
     }
 
     setAuthCookies(reply, tokens.accessToken, tokens.refreshToken);
     return reply.send({ ok: true });
   });
+
+  // Heartbeat — the web app calls this while the user is active (typing in compose
+  // sends no API requests) so the 1h idle timeout does not fire mid-work.
+  app.post("/auth/ping", { preHandler: [withAuth] }, async (_req, reply) => reply.status(204).send());
 
   // ── Email verification ────────────────────────────────────────────────────
 
@@ -227,7 +225,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const passwordHash = await bcrypt.hash(password, 12);
     await prisma.user.update({ where: { id: reset.userId }, data: { passwordHash } });
     await prisma.passwordReset.update({ where: { id: reset.id }, data: { usedAt: new Date() } });
-    await prisma.refreshToken.deleteMany({ where: { userId: reset.userId } });
+    await authProvider.revokeOtherSessions?.(reset.userId);
 
     return reply.send({ ok: true });
   });
@@ -268,6 +266,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    // Sign out every other device; this one stays logged in.
+    await authProvider.revokeOtherSessions?.(userId, req.sessionId);
     return reply.send({ ok: true });
   });
 
@@ -419,8 +419,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     // 6. Clear user's activeWorkspaceId to avoid FK violation on user delete
     await prisma.user.update({ where: { id: userId }, data: { activeWorkspaceId: null } });
 
-    // 7. Delete remaining user data (cascade handles WorkspaceMember, RefreshToken, ApiKey, Template, etc.)
-    await prisma.refreshToken.deleteMany({ where: { userId } });
+    // 7. Delete remaining user data (cascade handles WorkspaceMember, AuthSession, ApiKey, Template, etc.)
+    await authProvider.revokeOtherSessions?.(userId);
     await prisma.user.delete({ where: { id: userId } });
 
     // Also remove from Supabase auth so the row doesn't linger in auth.users

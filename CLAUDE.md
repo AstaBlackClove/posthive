@@ -51,7 +51,7 @@ pnpm db:migrate   # Run pending migrations
 | `routes/jobs.ts` | `/jobs` | CRUD + reschedule + delete scheduled posts |
 | `routes/upload.ts` | `/upload` | Image/video upload → local disk or Supabase Storage |
 | `routes/billing.ts` | `/billing` | Dodo Payments checkout + webhook |
-| `routes/user.ts` | `/user` | Profile info + `/auth/refresh` (rate-limited 20/15 min) |
+| `routes/user.ts` | `/user` | Profile info + `/auth/refresh` (rate-limited 20/15 min) + `/auth/ping` (activity heartbeat) |
 | `routes/apiKeys.ts` | `/user/api-keys` | Create / list / revoke API keys (Pro/Team) |
 | `routes/publicApi.ts` | `/api/v1` | Public REST API — accounts, posts, upload, templates |
 | `routes/mcp.ts` | `/mcp` | MCP Streamable HTTP server (Bearer + key-in-URL) |
@@ -297,7 +297,7 @@ Schema at `apps/api/prisma/schema.prisma`. Migrations use Postgres SQL.
 | Model | Purpose |
 |-------|---------|
 | `User` | App user. Has plan/billing fields. |
-| `RefreshToken` | JWT refresh tokens. One per active session (cleaned on login). |
+| `AuthSession` | Server-side login session (local auth). Access JWT carries its id as `sid`; refresh token is opaque, hashed, rotated on use. Idle 1h, absolute 7d (`lib/auth/sessionPolicy.ts`). |
 | `Account` | Connected social account. Credentials AES-256-GCM encrypted. |
 | `PostJob` | A scheduled post. Has `content` (JSON string), status, scheduledFor. |
 | `PostJobTarget` | One per platform per PostJob. Tracks per-platform status + errors. Cascades on PostJob delete. |

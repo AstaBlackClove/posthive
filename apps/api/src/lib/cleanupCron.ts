@@ -28,6 +28,11 @@ async function runCleanup(): Promise<void> {
   const cut30d = new Date(now - 30 * 24 * 60 * 60 * 1000);
   const cut7d  = new Date(now -  7 * 24 * 60 * 60 * 1000);
 
+  // Auth sessions past their absolute expiry or idle for over a day (idle limit is 1h)
+  await prisma.authSession.deleteMany({
+    where: { OR: [{ expiresAt: { lt: new Date(now) } }, { lastActiveAt: { lt: cut1d } }] },
+  });
+
   const [oldSessions, bounceSessions, oldEvents, oldPostJobs, oldOAuthStates, oldEmailVerifications, revokedApiKeys, staleApiKeys, staleOAuthClients] = await Promise.all([
     // Sessions older than 90 days
     prisma.session.deleteMany({ where: { createdAt: { lt: cut90d } } }),

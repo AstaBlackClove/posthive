@@ -37,7 +37,7 @@ model User {
   accounts           Account[]
   postJobs           PostJob[]
   reviewedJobs       PostJob[]           @relation("PostJobReviewedBy")
-  refreshTokens      RefreshToken[]
+  authSessions       AuthSession[]
   apiKeys            ApiKey[]
   emailVerifications EmailVerification[]
   templates          Template[]
@@ -123,14 +123,20 @@ model WorkspaceInvite {
   @@index([workspaceId])
 }
 
-// Stored refresh tokens for local auth — allows revocation on logout.
-model RefreshToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+// Server-side login session (local auth). `id` is the `sid` claim in the access JWT.
+// The refresh token is opaque; only its sha256 is stored. Rotated on every use;
+// the previous hash is kept for a short grace window. `expiresAt` is the absolute
+// limit and is never extended. Policy numbers: src/lib/auth/sessionPolicy.ts.
+model AuthSession {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash     String    @unique
+  prevTokenHash String?   @unique
+  rotatedAt     DateTime?
+  lastActiveAt  DateTime  @default(now())
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
 
   @@index([userId])
 }
