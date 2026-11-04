@@ -49,7 +49,7 @@
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=uKsbnNJRYLk" target="_blank">
-    <img alt="Posthive" src="https://img.youtube.com/vi/uKsbnNJRYLk/hqdefault.jpg" width="100%" />
+    <img alt="Posthive" src="docs/demo-thumbnail.jpg" width="100%" />
   </a>
 </p>
 
