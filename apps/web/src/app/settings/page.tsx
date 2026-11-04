@@ -6,6 +6,7 @@ import { apiFetch } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
 import { useWorkspace } from "../../context/WorkspaceContext";
 import { useToast } from "../../components/Toast";
+import { PasswordInput } from "../../components/PasswordInput";
 import type { ReactNode } from "react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,10 +29,10 @@ function Section({ title, description, icon, children }: { title: string; descri
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({ label, htmlFor, children }: { label: string; htmlFor?: string; children: ReactNode }) {
   return (
     <div>
-      <label className="mb-1.5 block type-body-m-xs text-muted">{label}</label>
+      <label htmlFor={htmlFor} className="mb-1.5 block type-body-m-xs text-muted">{label}</label>
       {children}
     </div>
   );
@@ -187,14 +188,14 @@ export default function SettingsPage() {
               }
             >
               <form onSubmit={changePassword} className="space-y-4">
-                <Field label="Current password">
-                  <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="field" placeholder="••••••••" />
+                <Field label="Current password" htmlFor="current-password">
+                  <PasswordInput id="current-password" autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" />
                 </Field>
-                <Field label="New password">
-                  <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="field" placeholder="••••••••" />
+                <Field label="New password" htmlFor="new-password">
+                  <PasswordInput id="new-password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" />
                 </Field>
-                <Field label="Confirm new password">
-                  <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="field" placeholder="••••••••" />
+                <Field label="Confirm new password" htmlFor="confirm-new-password">
+                  <PasswordInput id="confirm-new-password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" />
                 </Field>
                 <div className="flex justify-end pt-1">
                   <button type="submit" disabled={pwLoading || !currentPassword || !newPassword || !confirmPassword}
@@ -337,9 +338,9 @@ export default function SettingsPage() {
               All your workspaces, scheduled posts, and connected accounts will be permanently deleted. This cannot be undone.
             </p>
             {user?.hasPassword ? (
-              <Field label="Your password">
-                <input type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)}
-                  className="field" placeholder="••••••••" autoFocus />
+              <Field label="Your password" htmlFor="delete-password">
+                <PasswordInput id="delete-password" autoComplete="current-password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="••••••••" autoFocus />
               </Field>
             ) : (
               <Field label={`Type ${user?.email} to confirm`}>

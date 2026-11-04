@@ -5,13 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { register } from "../../lib/auth";
 import { useAuth } from "../../context/AuthContext";
+import { PasswordInput } from "../../components/PasswordInput";
+import { safeReturnTo } from "../../lib/session";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+  const returnTo = safeReturnTo(searchParams.get("returnTo"));
   const { refresh } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -71,22 +73,23 @@ function RegisterContent() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1.5 block type-body-sb-xs text-muted">Name</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+              <label htmlFor="name" className="mb-1.5 block type-body-sb-xs text-muted">Name</label>
+              <input id="name" name="name" autoComplete="name" type="text" value={name} onChange={(e) => setName(e.target.value)}
                 placeholder="Your name" required autoFocus
                 className="field px-4 py-2.5" />
             </div>
             <div>
-              <label className="mb-1.5 block type-body-sb-xs text-muted">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              <label htmlFor="email" className="mb-1.5 block type-body-sb-xs text-muted">Email</label>
+              <input id="email" name="email" autoComplete="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com" required
                 className="field px-4 py-2.5" />
             </div>
             <div>
-              <label className="mb-1.5 block type-body-sb-xs text-muted">Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+              <label htmlFor="password" className="mb-1.5 block type-body-sb-xs text-muted">Password</label>
+              <PasswordInput id="password" name="password" autoComplete="new-password"
+                value={password} onChange={(e) => setPassword(e.target.value)}
                 placeholder="At least 8 characters" required minLength={8}
-                className="field px-4 py-2.5" />
+                className="px-4 py-2.5" />
             </div>
 
             {error && (

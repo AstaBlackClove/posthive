@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense, useEffect } from "react";
+import { PasswordInput } from "../../components/PasswordInput";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "../../lib/api";
@@ -89,26 +90,29 @@ function ResetPasswordForm() {
 
               <form onSubmit={submit} className="space-y-4">
                 <div>
-                  <label className="mb-1.5 block type-body-sb-xs text-muted">New password</label>
-                  <input
-                    type="password"
+                  <label htmlFor="new-password" className="mb-1.5 block type-body-sb-xs text-muted">New password</label>
+                  <PasswordInput
+                    id="new-password"
+                    autoComplete="new-password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     required
                     autoFocus
                     placeholder="••••••••"
-                    className="field px-4 py-2.5"
+                    className="px-4 py-2.5"
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block type-body-sb-xs text-muted">Confirm password</label>
-                  <input
-                    type="password"
+                  <label htmlFor="confirm-password" className="mb-1.5 block type-body-sb-xs text-muted">Confirm password</label>
+                  <PasswordInput
+                    id="confirm-password"
+                    autoComplete="new-password"
                     value={confirm}
                     onChange={e => setConfirm(e.target.value)}
                     required
                     placeholder="••••••••"
-                    className="field px-4 py-2.5"
+                    aria-invalid={!!confirm && confirm !== password}
+                    className="px-4 py-2.5"
                   />
                 </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "../../components/PasswordInput";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
@@ -227,13 +228,14 @@ function BlueskyConnect({ onConnected }: { onConnected: () => void }) {
           autoFocus
           className="field rounded-lg px-3.5"
         />
-        <input
-          type="password"
+        <PasswordInput
+          autoComplete="off"
+          aria-label="App password"
           placeholder="App password"
           value={appPassword}
           onChange={(e) => setAppPassword(e.target.value)}
           required
-          className="field rounded-lg px-3.5"
+          className="rounded-lg px-3.5"
         />
         {error && (
           <p className="type-body-r-xs rounded-lg px-3 py-2 border border-red-200 bg-red-50 text-red-600">

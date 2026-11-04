@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "../../components/PasswordInput";
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { cn } from "../../lib/cn";
@@ -246,10 +247,11 @@ export default function AdminPage() {
           <p className="type-body-r-s text-muted">Enter your PIN to view visitor intelligence.</p>
         </div>
         <form onSubmit={handlePin} className="flex flex-col gap-2">
-          <input
-            type="password" value={pin} onChange={e => setPin(e.target.value)}
+          <PasswordInput
+            autoComplete="off" aria-label="PIN" aria-invalid={pinError || undefined}
+            value={pin} onChange={e => setPin(e.target.value)}
             placeholder="PIN" autoFocus
-            className={cn("field rounded-md tracking-[0.2em]", pinError && "border-red-500 animate-[shake_.3s_ease]")}
+            className={cn("rounded-md tracking-[0.2em]", pinError && "border-red-500 animate-[shake_.3s_ease]")}
           />
           {pinError && <p className="type-body-r-xs text-red-600">Incorrect PIN</p>}
           <button type="submit" className="btn-primary rounded-md">Continue</button>

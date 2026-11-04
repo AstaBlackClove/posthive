@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "../../components/PasswordInput";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
@@ -288,12 +289,12 @@ function BlueskyDialog({ onClose, onConnected }: { onClose: () => void; onConnec
             required autoFocus
             className="field" />
           <div>
-            <input
-              type="password"
+            <PasswordInput
+              autoComplete="off"
+              aria-label="App password"
               placeholder="App password"
               value={appPassword} onChange={(e) => setAppPassword(e.target.value)}
-              required
-              className="field" />
+              required />
             <p className="type-body-r-xs mt-1.5 text-muted">
               bsky.app → Settings → App Passwords → Add App Password
             </p>
@@ -478,13 +479,13 @@ function LemmyDialog({ onClose, onConnected }: { onClose: () => void; onConnecte
               className="field" />
           </div>
           <div>
-            <label className="mb-1.5 block type-body-m-xs text-muted">Password</label>
-            <input
-              type="password"
+            <label htmlFor="lemmy-password" className="mb-1.5 block type-body-m-xs text-muted">Password</label>
+            <PasswordInput
+              id="lemmy-password"
+              autoComplete="off"
               placeholder="your password"
               value={password} onChange={(e) => setPassword(e.target.value)}
-              required
-              className="field" />
+              required />
           </div>
           <div>
             <label className="mb-1.5 block type-body-m-xs text-muted">Community to post to</label>

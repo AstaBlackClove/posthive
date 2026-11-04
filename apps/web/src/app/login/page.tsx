@@ -5,13 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { login } from "../../lib/auth";
 import { useAuth } from "../../context/AuthContext";
+import { PasswordInput } from "../../components/PasswordInput";
+import { safeReturnTo } from "../../lib/session";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+  const returnTo = safeReturnTo(searchParams.get("returnTo"));
+  const expired = searchParams.get("reason") === "expired";
   const { refresh } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,18 +71,25 @@ function LoginContent() {
             <div className="h-px flex-1 bg-border" />
           </div>
 
+          {expired && (
+            <div role="status" className="mb-4 rounded-lg border border-brand-400 bg-brand-100 px-3 py-2 type-body-r-xs text-brand-800">
+              Your session has ended. Please log in again.
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1.5 block type-body-sb-xs text-muted">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              <label htmlFor="email" className="mb-1.5 block type-body-sb-xs text-muted">Email</label>
+              <input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com" required autoFocus
                 className="field px-4 py-2.5" />
             </div>
             <div>
-              <label className="mb-1.5 block type-body-sb-xs text-muted">Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+              <label htmlFor="password" className="mb-1.5 block type-body-sb-xs text-muted">Password</label>
+              <PasswordInput id="password" name="password" autoComplete="current-password"
+                value={password} onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••" required
-                className="field px-4 py-2.5" />
+                className="px-4 py-2.5" />
             </div>
 
             {error && (
