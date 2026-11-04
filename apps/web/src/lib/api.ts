@@ -1,16 +1,20 @@
+import { notifySessionExpired } from "./session";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-let refreshing: Promise<boolean> | null = null;
+type RefreshResult = "ok" | "expired" | "error";
 
-async function tryRefresh(): Promise<boolean> {
+let refreshing: Promise<RefreshResult> | null = null;
+
+async function tryRefresh(): Promise<RefreshResult> {
   // Deduplicate concurrent refresh attempts
   if (refreshing) return refreshing;
   refreshing = fetch(`${API_BASE}/auth/refresh`, {
     method: "POST",
     credentials: "include",
   })
-    .then((r) => r.ok)
-    .catch(() => false)
+    .then((r): RefreshResult => (r.ok ? "ok" : r.status === 401 ? "expired" : "error"))
+    .catch((): RefreshResult => "error")
     .finally(() => { refreshing = null; });
   return refreshing;
 }
@@ -38,8 +42,11 @@ export async function apiFetch<T>(
   // Access token expired — try a silent refresh then retry once
   if (res.status === 401) {
     const refreshed = await tryRefresh();
-    if (refreshed) {
+    if (refreshed === "ok") {
       res = await doFetch();
+    } else if (refreshed === "expired") {
+      // Refresh token is gone/expired/revoked: tell the app shell (login redirect or save-your-work dialog)
+      notifySessionExpired("expired");
     }
   }
 

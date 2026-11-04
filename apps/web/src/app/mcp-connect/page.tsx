@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../lib/api";
 import Image from "next/image";
@@ -9,7 +9,6 @@ import Image from "next/image";
 export default function McpConnectPage() {
   const { user, loading } = useAuth();
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const redirectUri       = searchParams.get("redirect_uri") ?? "";
   const state             = searchParams.get("state") ?? "";
@@ -20,13 +19,7 @@ export default function McpConnectPage() {
   const [approving, setApproving] = useState(false);
   const [error, setError]         = useState("");
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!loading && !user) {
-      const returnTo = encodeURIComponent(window.location.href);
-      router.push(`/login?next=${returnTo}`);
-    }
-  }, [loading, user, router]);
+  // Not logged in: AuthGuard (in AppShell) sends the user to /login?returnTo=<this page> and back.
 
   // Validate required params
   const paramsValid = redirectUri && codeChallenge;

@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useUnsavedChanges } from "../../lib/session";
 import { useRouter } from "next/navigation";
 import { Info } from "lucide-react";
 import confetti from "canvas-confetti";
@@ -96,6 +97,8 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
   // Content type (docs/content-types.md). Picking a template only sets this — the
   // template's design stays a reference and is never attached to the post.
   const [title, setTitle] = useState("");
+  // Warn instead of silently dropping the draft if the session ends mid-compose
+  useUnsavedChanges("compose", !!(text.trim() || title.trim() || commentText.trim() || mediaItems.length));
   const [contentType, setContentType] = useState<ContentType>({ pillar: null, category: null });
   const [showReorder, setShowReorder] = useState(false);
   const [accountOrder, setAccountOrder] = useState<string[]>(() => {

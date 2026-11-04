@@ -1,18 +1,22 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import { loginUrl } from "../lib/session";
+import { SessionWatcher } from "./SessionWatcher";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login");
+      // Keep where the user was, but not for the plain /login case
+      router.replace(loginUrl(pathname + window.location.search));
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, pathname]);
 
   if (loading) {
     return (
@@ -24,5 +28,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (!user) return null;
 
-  return <>{children}</>;
+  return (
+    <>
+      <SessionWatcher />
+      {children}
+    </>
+  );
 }
