@@ -4,8 +4,9 @@
 
 /* --font-koho / --font-inter come from next/font in app/layout.tsx */
 :root {
-  --ff-koho: var(--font-koho), ui-sans-serif, system-ui, sans-serif;
-  --ff-inter: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --ff-koho: var(--ff-koho), ui-sans-serif, system-ui, sans-serif;
+  --ff-inter: var(--ff-inter), ui-sans-serif, system-ui, sans-serif;
+  --ff-mono: var(--ff-inter);
 }
 
 /* theme tokens */
@@ -134,6 +135,7 @@
 
   --font-heading: var(--ff-koho);
   --font-sans:    var(--ff-inter);
+  --font-mono:    var(--ff-mono);
 }
 
 /* typogrphy */
@@ -171,44 +173,44 @@
 @utility type-head-r-6 { font: 400 1.375rem/2rem var(--ff-koho); }
 
 /* Body · Semibold (600) */
-@utility type-body-sb-xl  { font: 600 1.25rem/1.75rem var(--ff-inter); }
-@utility type-body-sb-l   { font: 600 1.125rem/1.625rem var(--ff-inter); }
-@utility type-body-sb-m   { font: 600 1rem/1.5rem var(--ff-inter); }
-@utility type-body-sb-s   { font: 600 0.875rem/1.25rem var(--ff-inter); }
-@utility type-body-sb-xs  { font: 600 0.75rem/1.125rem var(--ff-inter); }
-@utility type-body-sb-xxs { font: 600 0.625rem/1rem var(--ff-inter); }
+@utility type-body-sb-xl  { font: 600 1.25rem/1.875rem var(--ff-inter); }  /* 20/30 */
+@utility type-body-sb-l   { font: 600 1.125rem/1.75rem var(--ff-inter); }  /* 18/28 */
+@utility type-body-sb-m   { font: 600 1rem/1.5rem var(--ff-inter); }       /* 16/24 */
+@utility type-body-sb-s   { font: 600 0.875rem/1.375rem var(--ff-inter); } /* 14/22 */
+@utility type-body-sb-xs  { font: 600 0.75rem/1.125rem var(--ff-inter); }  /* 12/18 */
+@utility type-body-sb-xxs { font: 600 0.625rem/1rem var(--ff-inter); }     /* 10/16 */
 
-/* Body · Medium (500) */
-@utility type-body-m-xl  { font: 500 1.25rem/1.75rem var(--ff-inter); }
-@utility type-body-m-l   { font: 500 1.125rem/1.625rem var(--ff-inter); }
-@utility type-body-m-m   { font: 500 1rem/1.5rem var(--ff-inter); }
-@utility type-body-m-s   { font: 500 0.875rem/1.25rem var(--ff-inter); }
-@utility type-body-m-xs  { font: 500 0.75rem/1.125rem var(--ff-inter); }
-@utility type-body-m-xxs { font: 500 0.625rem/1rem var(--ff-inter); }
+/* Body · Medium (500): ukuran dan line-height sama dengan Semibold */
+@utility type-body-m-xl  { font: 500 1.25rem/1.875rem var(--ff-inter); }  /* 20/30 */
+@utility type-body-m-l   { font: 500 1.125rem/1.75rem var(--ff-inter); }  /* 18/28 */
+@utility type-body-m-m   { font: 500 1rem/1.5rem var(--ff-inter); }       /* 16/24 */
+@utility type-body-m-s   { font: 500 0.875rem/1.375rem var(--ff-inter); } /* 14/22 */
+@utility type-body-m-xs  { font: 500 0.75rem/1.125rem var(--ff-inter); }  /* 12/18 */
+@utility type-body-m-xxs { font: 500 0.625rem/1rem var(--ff-inter); }     /* 10/16 */
 
-/* Body · Regular (400) */
-@utility type-body-r-xl  { font: 400 1.25rem/1.75rem var(--ff-inter); }
-@utility type-body-r-l   { font: 400 1.125rem/1.625rem var(--ff-inter); }
-@utility type-body-r-m   { font: 400 1rem/1.375rem var(--ff-inter); }
-@utility type-body-r-s   { font: 400 0.875rem/1.25rem var(--ff-inter); }
-@utility type-body-r-xs  { font: 400 0.75rem/1.125rem var(--ff-inter); }
-@utility type-body-r-xxs { font: 400 0.625rem/1rem var(--ff-inter); }
+/* Body · Regular (400): ukuran dan line-height sama dengan Semibold */
+@utility type-body-r-xl  { font: 400 1.25rem/1.875rem var(--ff-inter); }  /* 20/30 */
+@utility type-body-r-l   { font: 400 1.125rem/1.75rem var(--ff-inter); }  /* 18/28 */
+@utility type-body-r-m   { font: 400 1rem/1.5rem var(--ff-inter); }       /* 16/24 */
+@utility type-body-r-s   { font: 400 0.875rem/1.375rem var(--ff-inter); } /* 14/22 */
+@utility type-body-r-xs  { font: 400 0.75rem/1.125rem var(--ff-inter); }  /* 12/18 */
+@utility type-body-r-xxs { font: 400 0.625rem/1rem var(--ff-inter); }     /* 10/16 */
 
 /* Mono · Semibold (600) */
-@utility type-mono-sb-l { font: 600 1.125rem/1.75rem var(--ff-inter); }
-@utility type-mono-sb-m { font: 600 1rem/1.5rem var(--ff-inter); }
-@utility type-mono-sb-s { font: 600 0.875rem/1.375rem var(--ff-inter); }
+@utility type-mono-sb-l { font: 600 1.125rem/1.75rem var(--ff-mono); }   /* 18/28 */
+@utility type-mono-sb-m { font: 600 1rem/1.5rem var(--ff-mono); }        /* 16/24 */
+@utility type-mono-sb-s { font: 600 0.875rem/1.375rem var(--ff-mono); }  /* 14/22 */
 
 /* Mono · Medium (500) */
-@utility type-mono-m-l { font: 500 1.125rem/1.75rem var(--ff-inter); }
-@utility type-mono-m-m { font: 500 1rem/1.5rem var(--ff-inter); }
-@utility type-mono-m-s { font: 500 0.875rem/1.375rem var(--ff-inter); }
+@utility type-mono-m-l { font: 500 1.125rem/1.75rem var(--ff-mono); }    /* 18/28 */
+@utility type-mono-m-m { font: 500 1rem/1.5rem var(--ff-mono); }         /* 16/24 */
+@utility type-mono-m-s { font: 500 0.875rem/1.375rem var(--ff-mono); }   /* 14/22 */
 
-/* Mono · Regular (400) */
-@utility type-mono-r-l  { font: 400 1.125rem/1.75rem var(--ff-inter); }
-@utility type-mono-r-m  { font: 400 1rem/1.5rem var(--ff-inter); }
-@utility type-mono-r-s  { font: 400 0.875rem/1.375rem var(--ff-inter); }
-@utility type-mono-r-xs { font: 400 0.75rem/1.125rem var(--ff-inter); }
+/* Mono · Regular (400). xs hanya ada di Regular. */
+@utility type-mono-r-l  { font: 400 1.125rem/1.75rem var(--ff-mono); }   /* 18/28 */
+@utility type-mono-r-m  { font: 400 1rem/1.5rem var(--ff-mono); }        /* 16/24 */
+@utility type-mono-r-s  { font: 400 0.875rem/1.375rem var(--ff-mono); }  /* 14/22 */
+@utility type-mono-r-xs { font: 400 0.75rem/1.125rem var(--ff-mono); }   /* 12/18 */
 
 /* ─────────────────────────────────────────────
    BASE
