@@ -94,6 +94,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#0085ff",
     headline: "Schedule Bluesky posts without the tab-switching",
     subheadline: "Stay consistent on the open social web. Write your Bluesky posts in Posthive, set a time, and let it publish while you focus on everything else.",
+    metaTitle: "Bluesky Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Bluesky posts in advance with a free 14-day trial, no credit card required. Write once, set a time, and let Posthive publish while you focus on everything else.",
     supports: [
       { label: "Text posts up to 300 chars", icon: "text" as IconKey },
       { label: "Up to 4 images per post", icon: "image" as IconKey },
@@ -127,6 +129,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#ededed",
     headline: "Post to Threads on schedule, not on impulse",
     subheadline: "Build a consistent presence on Threads without being glued to your phone. Write ahead, schedule smart, and let Posthive handle the publishing.",
+    metaTitle: "Threads Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Threads posts in advance with a free 14-day trial, no credit card required. Write ahead, schedule smart, let Posthive handle the publishing.",
     supports: [
       { label: "Text posts up to 500 chars", icon: "text" as IconKey },
       { label: "Images and video", icon: "image" as IconKey },
@@ -194,6 +198,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#0077b5",
     headline: "Stay consistent on LinkedIn without logging in every day",
     subheadline: "LinkedIn rewards consistency. Posthive lets you batch your content in one session, spread it across the week, and grow your professional presence on autopilot.",
+    metaTitle: "LinkedIn Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule LinkedIn posts in advance with a free 14-day trial, no credit card required. Batch your content, spread it across the week, grow on autopilot.",
     supports: [
       { label: "Text posts up to 3,000 chars", icon: "text" as IconKey },
       { label: "Single image and multi-image", icon: "image" as IconKey },
@@ -227,6 +233,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#6364ff",
     headline: "Schedule to any Mastodon instance, yours or anyone's",
     subheadline: "Mastodon.social, Fosstodon, Hachyderm. It doesn't matter which instance you're on. Posthive works with any Mastodon-compatible server.",
+    metaTitle: "Mastodon Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Mastodon posts to any instance with a free 14-day trial, no credit card required. Mastodon.social, Fosstodon, Hachyderm, or your own server.",
     supports: [
       { label: "Any Mastodon instance", icon: "globe" as IconKey },
       { label: "Text posts up to 500 chars", icon: "text" as IconKey },
@@ -260,6 +268,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#ff8c00",
     headline: "Schedule to Pixelfed the federated, open-source photo platform",
     subheadline: "An Instagram alternative built on ActivityPub. Share photos to the fediverse without algorithmic manipulation or ads.",
+    metaTitle: "Pixelfed Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Pixelfed posts with a free 14-day trial, no credit card required. Share photos to the fediverse without algorithmic manipulation or ads.",
     supports: [
       { label: "Photo posts up to 2,001 chars", icon: "text" as IconKey },
       { label: "Up to 4 images per post", icon: "image" as IconKey },
@@ -293,6 +303,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#ff0000",
     headline: "Schedule YouTube Shorts without opening YouTube Studio",
     subheadline: "Upload your video, write your description, and let Posthive post it at the right moment. No more rushing to hit publish during peak hours.",
+    metaTitle: "YouTube Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule YouTube Shorts and videos with a free 14-day trial, no credit card required. Upload once, let Posthive publish at the right moment.",
     supports: [
       { label: "YouTube Shorts", icon: "reel" as IconKey },
       { label: "Regular video uploads", icon: "video" as IconKey },
@@ -326,6 +338,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#1877f2",
     headline: "Keep your Facebook Page active on autopilot",
     subheadline: "Batch your Facebook content in one session and spread it across the week. Posthive posts to your Page while you focus on building.",
+    metaTitle: "Facebook Page Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Facebook Page posts with a free 14-day trial, no credit card required. Batch your content in one session, spread it across the week.",
     supports: [
       { label: "Text posts up to 63,206 chars", icon: "text" as IconKey },
       { label: "Single photo posts", icon: "image" as IconKey },
@@ -359,7 +373,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#e60023",
     headline: "Schedule Pinterest Pins without losing momentum",
     subheadline: "Pinterest rewards consistency. Write your Pin descriptions in Posthive, attach your image, set a time, and let it publish — so your boards stay active without you staying online.",
-    metaDescription: "Schedule Pinterest Pins automatically. Attach images, write descriptions, pick a time, and publish to your boards — all without staying online.",
+    metaTitle: "Pinterest Pin Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Pinterest Pins with a free 14-day trial, no credit card required. Write descriptions, attach images, set a time, keep your boards active.",
     supports: [
       { label: "Pin with image (required)", icon: "image" as IconKey },
       { label: "Title and description text", icon: "text" as IconKey },
@@ -394,6 +409,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#229ED9",
     headline: "Schedule Telegram channel posts without staying online",
     subheadline: "Broadcast to your Telegram channel on a consistent schedule. Write your messages in Posthive, set a time, and let it publish — no OAuth, no complexity.",
+    metaTitle: "Telegram Channel Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Telegram channel posts with a free 14-day trial, no credit card required. Write your messages, set a time, no OAuth, no complexity.",
     supports: [
       { label: "Text posts up to 4,096 chars", icon: "text" as IconKey },
       { label: "Single image with caption", icon: "image" as IconKey },
@@ -428,7 +445,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#5865F2",
     headline: "Schedule Discord announcements without staying online",
     subheadline: "Post to your Discord server channels on a consistent schedule. Write your message in Posthive, pick a time, and let it publish via webhook — no manual posting needed.",
-    metaDescription: "Schedule messages to Discord channels via webhook. Write in Posthive, pick a time, and let it publish automatically — no manual posting.",
+    metaTitle: "Discord Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Discord server announcements with a free 14-day trial, no credit card required. Write a message, pick a time, publish via webhook.",
     supports: [
       { label: "Text posts up to 2,000 chars", icon: "text" as IconKey },
       { label: "Single image with message", icon: "image" as IconKey },
@@ -463,7 +481,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#8B5CF6",
     headline: "Schedule Nostr notes without staying online",
     subheadline: "Publish to the decentralized social web on a consistent schedule. Write your notes in Posthive, set a time, and let it broadcast to Nostr relays — no OAuth, no approval needed.",
-    metaDescription: "Schedule Nostr notes to broadcast across public relays. No OAuth needed — just your nsec key. Write ahead, set a time, let Posthive publish.",
+    metaTitle: "Nostr Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Nostr notes with a free 14-day trial, no credit card required. Write your notes, set a time, broadcast to relays — no OAuth needed.",
     supports: [
       { label: "Text notes up to 10,000 chars", icon: "text" as IconKey },
       { label: "Images appended as URLs (NIP-92 imeta)", icon: "image" as IconKey },
@@ -498,6 +517,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#35465c",
     headline: "Schedule Tumblr posts without staying logged in",
     subheadline: "Write your blog posts in Posthive, pick a publish time, and let Posthive push them to your Tumblr blog automatically text, images, and all.",
+    metaTitle: "Tumblr Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Tumblr posts with a free 14-day trial, no credit card required. Write your post, pick a time, let Posthive publish automatically.",
     supports: [
       { label: "Text posts up to 4,096 chars", icon: "text" as IconKey },
       { label: "Images in NPF format", icon: "image" as IconKey },
@@ -531,7 +552,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#ff6314",
     headline: "Schedule posts to any Lemmy community automatically",
     subheadline: "Post to federated Lemmy communities on a schedule. Write once in Posthive, pick a time, and let it publish to any instance — lemmy.world, lemmy.ml, beehaw.org, or your own.",
-    metaDescription: "Schedule posts to Lemmy communities on any instance. Write once in Posthive, pick a time, and publish to lemmy.world, beehaw.org, or your own.",
+    metaTitle: "Lemmy Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Lemmy community posts with a free 14-day trial, no credit card required. Write once, pick a time, publish to any instance.",
     supports: [
       { label: "Text posts with Markdown body", icon: "text" as IconKey },
       { label: "Image upload via pictrs", icon: "image" as IconKey },
@@ -566,6 +588,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#e7e7e7",
     headline: "Schedule tweets without watching the clock",
     subheadline: "Stop posting in real time. Write your tweets ahead of time, schedule them for peak hours, and let Posthive publish while you focus on everything else.",
+    metaTitle: "X (Twitter) Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule tweets with a free 14-day trial, no credit card required. Write ahead of time, schedule for peak hours, let Posthive publish.",
     supports: [
       { label: "Text tweets up to 280 chars", icon: "text" as IconKey },
       { label: "Up to 4 images per tweet", icon: "image" as IconKey },
@@ -599,6 +623,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#010101",
     headline: "Schedule TikTok videos without opening the app",
     subheadline: "Batch your TikTok content in one sitting, schedule it for peak hours, and let Posthive handle the upload. No phone required — just your video file and a caption.",
+    metaTitle: "TikTok Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule TikTok videos with a free 14-day trial, no credit card required. Batch your content, schedule for peak hours, no phone required.",
     supports: [
       { label: "Video upload via Content Posting API", icon: "video" as IconKey },
       { label: "Caption up to 2,200 chars", icon: "text" as IconKey },
