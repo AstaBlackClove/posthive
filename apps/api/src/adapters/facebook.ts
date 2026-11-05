@@ -102,6 +102,15 @@ async function uploadPhotoBuffer(
     mimeType = "image/jpeg";
   }
 
+  // Progressive JPEGs also trigger "reduce the amount of data" on Graph API — force baseline encoding
+  if (mimeType === "image/jpeg") {
+    const sharp = (await import("sharp")).default;
+    const meta = await sharp(buffer).metadata();
+    if (meta.isProgressive) {
+      buffer = await sharp(buffer).jpeg({ quality: 92, progressive: false }).toBuffer();
+    }
+  }
+
   const form = new FormData();
   form.append("source", new Blob([new Uint8Array(buffer)], { type: mimeType }), "photo.jpg");
   form.append("access_token", pageAccessToken);
