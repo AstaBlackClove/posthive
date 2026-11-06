@@ -1,13 +1,14 @@
-﻿import { randomBytes, createHash } from "crypto";
+﻿import { randomBytes, createHash, timingSafeEqual } from "crypto";
 import type { FastifyInstance } from "fastify";
 import { TwitterApi } from "twitter-api-v2";
 import { encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import { getPlan } from "../lib/plans.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
-import { sendWelcomeEmail } from "../lib/mailer.js";
 import { withAuth, getUser, getWorkspaceId, requireAdminRole, setAuthCookies } from "../lib/auth/withAuth.js";
 import { createLocalTokens } from "../lib/auth/localAuth.js";
+import { findOrCreateOAuthUser } from "../lib/auth/oauthUser.js";
+import { safeReturnTo } from "../lib/auth/returnTo.js";
 import { getDiscordChannels, encryptDiscordCredentials } from "../adapters/discord.js";
 import { tumblrRequestTokenAuth, tumblrAccessTokenAuth, tumblrApiAuthHeader, encryptTumblrCredentials } from "../adapters/tumblr.js";
 import { downloadAndStoreAvatar } from "../lib/avatarStore.js";
@@ -26,6 +27,12 @@ async function getUserWorkspaceId(userId: string): Promise<string | null> {
   return u?.activeWorkspaceId ?? u?.workspaceMembers?.[0]?.workspaceId ?? null;
 }
 
+function safeEqual(a: string, b: string): boolean {
+  const x = Buffer.from(a);
+  const y = Buffer.from(b);
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
 const APP_ID = process.env.THREADS_APP_ID!;
 const APP_SECRET = process.env.THREADS_APP_SECRET!;
 const REDIRECT_URI = process.env.THREADS_REDIRECT_URI!;
@@ -38,6 +45,9 @@ const IG_REDIRECT_URI = process.env.INSTAGRAM_REDIRECT_URI!;
 const LI_CLIENT_ID = process.env.LINKEDIN_CLIENT_ID!;
 const LI_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET!;
 const LI_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI!;
+// Separate redirect URI for "Sign in with LinkedIn" (the one above CONNECTS a social account).
+// Register both in the LinkedIn app. Unset = sign-in is "not configured".
+const LI_LOGIN_REDIRECT_URI = process.env.LINKEDIN_LOGIN_REDIRECT_URI ?? "";
 
 const MASTO_CLIENT_ID = process.env.MASTODON_CLIENT_ID!;
 const MASTO_CLIENT_SECRET = process.env.MASTODON_CLIENT_SECRET!;
@@ -1932,7 +1942,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const { returnTo } = req.query as { returnTo?: string };
-    const safeReturnTo = returnTo && /^\//.test(returnTo) ? returnTo : "/compose";
+    const target = safeReturnTo(returnTo);
 
     if (process.env.AUTH_PROVIDER === "supabase") {
       const supabaseUrl = process.env.SUPABASE_URL!;
@@ -1946,7 +1956,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const now = Date.now();
       for (const [k, v] of googlePkceStore) if (v.expiresAt < now) googlePkceStore.delete(k);
 
-      googlePkceStore.set(nonce, { codeVerifier, returnTo: safeReturnTo, expiresAt: now + 10 * 60 * 1000 });
+      googlePkceStore.set(nonce, { codeVerifier, returnTo: target, expiresAt: now + 10 * 60 * 1000 });
 
       // Store nonce in short-lived httpOnly cookie so the callback can retrieve the verifier
       reply.setCookie("_gpkce", nonce, {
@@ -1966,7 +1976,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
 
     // Local auth — redirect directly to Google
-    const state = Buffer.from(JSON.stringify({ returnTo: safeReturnTo })).toString("base64url");
+    const state = Buffer.from(JSON.stringify({ returnTo: target })).toString("base64url");
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     url.searchParams.set("client_id", GOOGLE_SIGNIN_CLIENT_ID);
     url.searchParams.set("redirect_uri", GOOGLE_SIGNIN_REDIRECT_URI);
@@ -2067,7 +2077,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     let returnTo = "/compose";
     try {
       const parsed = JSON.parse(Buffer.from(state ?? "", "base64url").toString()) as { returnTo?: string };
-      if (parsed.returnTo?.startsWith("/")) returnTo = parsed.returnTo;
+      returnTo = safeReturnTo(parsed.returnTo);
     } catch { /* ignore bad state */ }
 
     try {
@@ -2088,39 +2098,16 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const profileRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });
-      const profile = await profileRes.json() as { email?: string; name?: string; picture?: string };
+      const profile = await profileRes.json() as { email?: string; verified_email?: boolean; name?: string; picture?: string };
       if (!profile.email) return reply.redirect(errorRedirect);
+      // Matching an existing account by email is only safe when Google vouches for that email.
+      if (profile.verified_email !== true) return reply.redirect(`${WEB_URL}/login?error=google_email_unverified`);
 
-      let dbUser = await prisma.user.findUnique({ where: { email: profile.email } });
-      let isNew = false;
-
-      if (!dbUser) {
-        isNew = true;
-        dbUser = await prisma.user.create({
-          data: {
-            email: profile.email,
-            name: profile.name ?? profile.email.split("@")[0],
-            avatarUrl: profile.picture ?? null,
-            emailVerified: true,
-          },
-        });
-        const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-        const workspace = await prisma.workspace.create({
-          data: {
-            name: `${dbUser.name}'s Workspace`,
-            plan: "trialing",
-            planStatus: "trialing",
-            trialEndsAt,
-            allowTrial: false,
-            members: { create: { userId: dbUser.id, role: "owner" } },
-          },
-        });
-        await prisma.user.update({ where: { id: dbUser.id }, data: { activeWorkspaceId: workspace.id } });
-        sendWelcomeEmail(dbUser.email, dbUser.name ?? "there").catch(() => {});
-      } else if (profile.picture && !dbUser.avatarUrl) {
-        // Backfill avatar for existing users who signed up before Google picture was saved
-        dbUser = await prisma.user.update({ where: { id: dbUser.id }, data: { avatarUrl: profile.picture } });
-      }
+      const { user: dbUser, isNew } = await findOrCreateOAuthUser({
+        email: profile.email,
+        name: profile.name,
+        avatarUrl: profile.picture,
+      });
 
       const { accessToken, refreshToken } = await createLocalTokens(dbUser.id);
       setAuthCookies(reply, accessToken, refreshToken);
@@ -2201,6 +2188,110 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     } catch (err) {
       console.error("[google-session]", err);
       return reply.status(500).send({ error: "Auth failed" });
+    }
+  });
+
+  // ─── LinkedIn Sign-In (OpenID Connect, local auth mode only) ──────────────
+
+  const linkedinLoginConfigured = () =>
+    !!(LI_CLIENT_ID && LI_CLIENT_SECRET && LI_LOGIN_REDIRECT_URI) && process.env.AUTH_PROVIDER !== "supabase";
+  const LI_LOGIN_COOKIE = "_lilogin";
+  const LI_LOGIN_CALLBACK_PATH = "/auth/linkedin/login/callback";
+
+  // GET /auth/linkedin/login — start sign-in. Not logged in yet, so no withAuth.
+  app.get("/auth/linkedin/login", {
+    config: { rateLimit: { max: 20, timeWindow: "15 minutes" } },
+  }, async (req, reply) => {
+    if (!linkedinLoginConfigured()) return reply.redirect(`${WEB_URL}/login?error=linkedin_not_configured`);
+
+    const { returnTo } = req.query as { returnTo?: string };
+    const target = safeReturnTo(returnTo);
+
+    // Login-CSRF guard: the nonce lives in a cookie AND in state; the callback requires both to match.
+    const nonce = randomBytes(32).toString("hex");
+    reply.setCookie(LI_LOGIN_COOKIE, nonce, {
+      httpOnly: true,
+      sameSite: "lax", // must be sent on the top-level redirect back from LinkedIn
+      secure: process.env.NODE_ENV === "production" || process.env.SECURE_COOKIES === "true",
+      path: LI_LOGIN_CALLBACK_PATH,
+      maxAge: 10 * 60,
+    });
+
+    const url = new URL("https://www.linkedin.com/oauth/v2/authorization");
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("client_id", LI_CLIENT_ID);
+    url.searchParams.set("redirect_uri", LI_LOGIN_REDIRECT_URI);
+    url.searchParams.set("scope", "openid profile email");
+    url.searchParams.set("state", Buffer.from(JSON.stringify({ returnTo: target, nonce })).toString("base64url"));
+    return reply.redirect(url.toString());
+  });
+
+  // GET /auth/linkedin/login/callback — exchange the code, then find/create the user and set cookies
+  app.get(LI_LOGIN_CALLBACK_PATH, {
+    config: { rateLimit: { max: 20, timeWindow: "15 minutes" } },
+  }, async (req, reply) => {
+    const fail = (code: string) => reply.redirect(`${WEB_URL}/login?error=${code}`);
+    const { code, state, error } = req.query as Record<string, string | undefined>;
+
+    const cookieNonce = req.cookies?.[LI_LOGIN_COOKIE];
+    reply.clearCookie(LI_LOGIN_COOKIE, { path: LI_LOGIN_CALLBACK_PATH });
+
+    if (!linkedinLoginConfigured()) return fail("linkedin_not_configured");
+    if (error || !code || !state) return fail("linkedin_oauth_failed");
+
+    let returnTo = "/compose";
+    let stateNonce = "";
+    try {
+      const parsed = JSON.parse(Buffer.from(state, "base64url").toString()) as { returnTo?: string; nonce?: string };
+      stateNonce = typeof parsed.nonce === "string" ? parsed.nonce : "";
+      returnTo = safeReturnTo(parsed.returnTo);
+    } catch {
+      return fail("linkedin_oauth_failed");
+    }
+    if (!cookieNonce || !stateNonce || !safeEqual(cookieNonce, stateNonce)) return fail("linkedin_oauth_failed");
+
+    try {
+      const tokenRes = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: LI_LOGIN_REDIRECT_URI,
+          client_id: LI_CLIENT_ID,
+          client_secret: LI_CLIENT_SECRET,
+        }).toString(),
+      });
+      const tokenData = await tokenRes.json() as { access_token?: string };
+      if (!tokenData.access_token) return fail("linkedin_oauth_failed");
+
+      const profileRes = await fetch("https://api.linkedin.com/v2/userinfo", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      const profile = await profileRes.json() as {
+        email?: string;
+        email_verified?: boolean | string;
+        name?: string;
+        picture?: string;
+      };
+      if (!profile.email) return fail("linkedin_oauth_failed");
+      // Matching an existing account by email is only safe when LinkedIn vouches for that email.
+      if (profile.email_verified !== true && profile.email_verified !== "true") return fail("linkedin_email_unverified");
+
+      const { user: dbUser, isNew } = await findOrCreateOAuthUser({
+        email: profile.email,
+        name: profile.name,
+        avatarUrl: profile.picture,
+      });
+
+      const { accessToken, refreshToken } = await createLocalTokens(dbUser.id);
+      setAuthCookies(reply, accessToken, refreshToken);
+
+      const dest = isNew ? "/onboarding" : returnTo;
+      return reply.redirect(`${WEB_URL}/auth/callback?returnTo=${encodeURIComponent(dest)}`);
+    } catch (err) {
+      console.error("[linkedin-login]", err);
+      return fail("linkedin_oauth_failed");
     }
   });
 
