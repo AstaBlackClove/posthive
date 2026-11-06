@@ -10,6 +10,11 @@
   --ff-koho: var(--font-koho), ui-sans-serif, system-ui, sans-serif;
   --ff-inter: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --ff-mono: var(--ff-inter);
+
+  /* Layers of the ui/* overlays. They sit above the hand-built dialogs (z-900 … 1200) while those
+     still exist; the last migration commit lowers them to 50 / 60 and nothing else changes. */
+  --z-overlay: 1300; /* dialog, alert-dialog, sheet */
+  --z-popover: 1400; /* popover, select, dropdown, tooltip: they open from inside a dialog */
 }
 
 /* theme tokens */
