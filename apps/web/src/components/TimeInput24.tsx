@@ -1,8 +1,10 @@
 "use client";
 
-// 24-hour "HH:MM" input — native <input type="time"> follows the OS locale and can show AM/PM.
+// 24-hour "HH:MM" input. A native <input type="time"> follows the OS locale and can show AM/PM,
+// and a native <select> keeps the phone's own picker, so this is two NativeSelects.
 
-import { cn } from "../lib/cn";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { cn } from "@/lib/cn";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const HOURS = Array.from({ length: 24 }, (_, i) => pad(i));
@@ -19,13 +21,25 @@ export function TimeInput24({ value, onChange, className }: Props) {
 
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      <select value={h} onChange={(e) => onChange(`${e.target.value}:${m}`)} className="field w-auto flex-1 px-2 py-1.5 scheme-light" aria-label="Hour">
-        {HOURS.map((x) => <option key={x} value={x}>{x}</option>)}
-      </select>
+      <NativeSelect
+        aria-label="Hour"
+        value={h}
+        onChange={(e) => onChange(`${e.target.value}:${m}`)}
+        containerClassName="w-auto flex-1"
+        className="py-1.5 pr-7 pl-2 scheme-light"
+      >
+        {HOURS.map((x) => <NativeSelectOption key={x} value={x}>{x}</NativeSelectOption>)}
+      </NativeSelect>
       <span className="type-body-r-xs text-neutral-500">:</span>
-      <select value={m} onChange={(e) => onChange(`${h}:${e.target.value}`)} className="field w-auto flex-1 px-2 py-1.5 scheme-light" aria-label="Minute">
-        {MINUTES.map((x) => <option key={x} value={x}>{x}</option>)}
-      </select>
+      <NativeSelect
+        aria-label="Minute"
+        value={m}
+        onChange={(e) => onChange(`${h}:${e.target.value}`)}
+        containerClassName="w-auto flex-1"
+        className="py-1.5 pr-7 pl-2 scheme-light"
+      >
+        {MINUTES.map((x) => <NativeSelectOption key={x} value={x}>{x}</NativeSelectOption>)}
+      </NativeSelect>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
 import { PlatformIcon } from "../../components/PlatformIcon";
+import { TimezoneSelect } from "../../components/TimezoneSelect";
 import { TimeInput24 } from "../../components/TimeInput24";
 import { APP_TIMEZONE, formatDate, formatTime } from "../../lib/datetime";
 import { cn } from "../../lib/cn";
@@ -1083,10 +1084,11 @@ function SettingsPanel({ library, accounts, onClose, onSaved, onError, onSuccess
         {/* Timezone */}
         <div>
           <label className="block type-body-m-xs mb-1.5 text-muted">Timezone</label>
-          <input
+          <TimezoneSelect
+            aria-label="Timezone"
             value={form.timezone}
-            onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))}
-            className="field rounded-lg px-2.5 type-body-r-xs"
+            onChange={timezone => setForm(f => ({ ...f, timezone }))}
+            className="rounded-lg px-2.5 type-body-r-xs"
           />
         </div>
 
@@ -1185,8 +1187,8 @@ function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClos
               </div>
               <div>
                 <label className="block mb-1.5 type-body-r-xs text-muted">Timezone</label>
-                <input value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} placeholder="UTC"
-                  className="field rounded-lg" />
+                <TimezoneSelect aria-label="Timezone" value={form.timezone} onChange={timezone => setForm(f => ({ ...f, timezone }))}
+                  className="rounded-lg" />
               </div>
             </div>
 

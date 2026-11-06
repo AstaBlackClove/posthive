@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { RepeatIcon } from "lucide-react";
 import { DatePicker } from "./DatePicker";
-import { minKeyForInterval } from "../lib/datetime";
-import { cn } from "../lib/cn";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/cn";
+import { minKeyForInterval } from "@/lib/datetime";
 
 const INTERVALS = [
   { value: "daily", label: "Every Day" },
@@ -13,6 +14,9 @@ const INTERVALS = [
 
 type Interval = "daily" | "weekly" | "monthly";
 
+// Radix Select cannot have an item with value "": "Do Not Repeat" gets a name of its own.
+const NONE = "none";
+
 interface Props {
   value: Interval | "";
   endsAt: string;
@@ -20,104 +24,39 @@ interface Props {
   onChangeEndsAt: (v: string) => void;
 }
 
+/** How often a post repeats (opens upward, like the compose footer it sits in), and until when. */
 export function RepeatPicker({ value, endsAt, onChangeInterval, onChangeEndsAt }: Props) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  const label = value ? INTERVALS.find(i => i.value === value)?.label : "Repeat Post…";
+  const label = value ? INTERVALS.find((i) => i.value === value)?.label : "Repeat Post…";
 
   return (
     <div className="flex items-center gap-2">
-      {/* Trigger */}
-      <div ref={ref} className="relative">
-        <button
-          type="button"
-          onClick={() => setOpen(o => !o)}
-          className={cn(
-            "field flex w-auto cursor-pointer items-center gap-1.5 py-1.5",
-            value ? "text-fg" : "text-muted",
-            open && "border-accent",
-          )}
-        >
-          {/* repeat icon */}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2"
-            strokeLinecap="round" strokeLinejoin="round"
-            className={value ? "text-brand-800" : "text-neutral-500"}>
-            <path d="M17 1l4 4-4 4" />
-            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-            <path d="M7 23l-4-4 4-4" />
-            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-          </svg>
-          <span>{label}</span>
-          {/* chevron */}
-          <svg
-            width="12" height="12" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            className={cn("text-neutral-500 transition-transform", open && "rotate-180")}
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
+      <Select
+        value={value || NONE}
+        onValueChange={(next) => {
+          onChangeInterval(next === NONE ? "" : (next as Interval));
+          onChangeEndsAt("");
+        }}
+      >
+        <SelectTrigger aria-label="Repeat" className={cn("w-auto py-1.5", value ? "text-fg" : "text-muted")}>
+          <span className="flex items-center gap-1.5">
+            <RepeatIcon aria-hidden="true" className={cn("size-3.5", value ? "text-brand-800" : "text-neutral-500")} />
+            <SelectValue>{label}</SelectValue>
+          </span>
+        </SelectTrigger>
+        <SelectContent side="top" align="start">
+          <SelectItem value={NONE}>Do Not Repeat</SelectItem>
+          {INTERVALS.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-        {/* Dropdown — opens upward */}
-        {open && (
-          <div className="card absolute bottom-full left-0 z-300 mb-2 min-w-45 overflow-hidden rounded-xl shadow-lg">
-            {/* No repeat option */}
-            <button
-              type="button"
-              onClick={() => { onChangeInterval(""); onChangeEndsAt(""); setOpen(false); }}
-              className={cn(
-                "block w-full cursor-pointer border-b border-border px-4 py-2.5 text-left type-body-r-s",
-                !value ? "bg-brand-100 text-brand-800" : "text-muted hover:bg-neutral-100",
-              )}
-            >
-              Do Not Repeat
-            </button>
-            {INTERVALS.map(opt => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => { onChangeInterval(opt.value); onChangeEndsAt(""); setOpen(false); }}
-                className={cn(
-                  "block w-full cursor-pointer border-b border-border px-4 py-2.5 text-left type-body-r-s",
-                  value === opt.value ? "bg-brand-100 text-brand-800" : "text-muted hover:bg-neutral-100",
-                )}
-              >
-                <span className="flex items-center justify-between">
-                  {opt.label}
-                  {value === opt.value && (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* End date — only when interval selected */}
       {value && (
         <div className="flex items-center gap-1.5">
           <span className="type-body-m-s text-muted">until</span>
-          <DatePicker
-            value={endsAt}
-            onChange={onChangeEndsAt}
-            min={minKeyForInterval(value)}
-            placeholder="End date (optional)"
-          />
+          <DatePicker value={endsAt} onChange={onChangeEndsAt} min={minKeyForInterval(value)} placeholder="End date (optional)" />
         </div>
       )}
     </div>

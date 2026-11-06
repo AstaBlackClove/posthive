@@ -8,10 +8,8 @@ import { useWorkspace } from "../../context/WorkspaceContext";
 import { useToast } from "../../components/Toast";
 import { isOwnerRole } from "../../lib/permissions";
 import { PasswordInput } from "../../components/PasswordInput";
+import { TimezoneSelect } from "../../components/TimezoneSelect";
 import type { ReactNode } from "react";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const TIMEZONES: string[] = (Intl as any).supportedValuesOf("timeZone");
 
 function Section({ title, description, icon, children }: { title: string; description?: string; icon: ReactNode; children: ReactNode }) {
   return (
@@ -164,11 +162,7 @@ export default function SettingsPage() {
                 <input type="email" value={email} disabled className="field" />
               </Field>
               <Field label="Timezone">
-                <select value={timezone} onChange={(e) => setTimezone(e.target.value)} className="field">
-                  {TIMEZONES.map((tz) => (
-                    <option key={tz} value={tz}>{tz.replace(/_/g, " ")}</option>
-                  ))}
-                </select>
+                <TimezoneSelect aria-label="Timezone" value={timezone} onChange={setTimezone} />
               </Field>
               <div className="flex justify-end pt-1">
                 <button type="submit" disabled={profileLoading} className="btn-primary">
