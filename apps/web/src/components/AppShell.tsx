@@ -11,7 +11,7 @@ import { useWorkspace } from "../context/WorkspaceContext";
 import { canAccessPage } from "../lib/permissions";
 
 // No auth, no sidebar — public pages (exact) or prefixes
-const PUBLIC_EXACT = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/privacy", "/terms", "/features", "/docs", "/verify-email", "/pricing", "/blog", "/for-developers", "/agent", "/invite"];
+const PUBLIC_EXACT = ["/", "/login", "/register", "/register/verify", "/forgot-password", "/reset-password", "/privacy", "/terms", "/features", "/docs", "/verify-email", "/pricing", "/blog", "/for-developers", "/agent", "/invite"];
 const PUBLIC_PREFIXES = ["/features/", "/platforms/", "/docs/", "/blog/", "/tools/"];
 
 // Redirects users to /jobs when they open a page their role cannot access
