@@ -9,6 +9,9 @@ import { PasswordInput } from "../../components/PasswordInput";
 import { AuthShell, AuthHeading } from "../../components/auth/AuthShell";
 import { AuthAlert } from "../../components/auth/AuthAlert";
 import { OAuthButtons, OrDivider } from "../../components/auth/OAuthButtons";
+import { Input } from "../../components/ui/input";
+import { Button } from "../../components/ui/button";
+import { Checkbox } from "../../components/ui/checkbox";
 import { safeReturnTo } from "../../lib/session";
 
 // `?error=` codes the API redirects back with after Google / LinkedIn sign-in.
@@ -76,11 +79,11 @@ function LoginContent() {
         <div className="space-y-6 short:space-y-4">
           <div>
             <label htmlFor="email" className={LABEL}>Email</label>
-            <input
+            <Input
               id="email" name="email" type="email" autoComplete="email" required autoFocus
+              variant="line"
               value={email} onChange={(e) => setEmail(e.target.value)}
               aria-invalid={!!error} aria-describedby={error ? "login-error" : undefined}
-              className="field-line"
             />
           </div>
           <div>
@@ -95,9 +98,10 @@ function LoginContent() {
 
         <div className="flex items-center justify-between gap-4">
           <label className="flex cursor-pointer items-center gap-2 type-body-r-xs text-neutral-200">
-            <input
-              type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)}
-              className="size-4 cursor-pointer rounded-sm accent-brand-500"
+            <Checkbox
+              checked={remember}
+              onCheckedChange={(v) => setRemember(v === true)}
+              aria-label="Keep me logged in"
             />
             Keep me logged in
           </label>
@@ -106,9 +110,9 @@ function LoginContent() {
           </Link>
         </div>
 
-        <button type="submit" disabled={loading} className="btn-primary h-12 min-w-45 bg-brand-500 px-8 hover:bg-brand-400">
+        <Button type="submit" disabled={loading} variant="auth">
           {loading ? "Logging in…" : "Log in"}
-        </button>
+        </Button>
 
         <p className="type-body-r-xs text-neutral-300">
           By logging in, you agree to our{" "}
