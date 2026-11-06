@@ -10,6 +10,7 @@ import { createLocalTokens } from "../lib/auth/localAuth.js";
 import { passwordProblem, RESET_LINK_TTL_MIN } from "../lib/auth/passwordPolicy.js";
 import { generateCode, hashCode, isCodeFormat } from "../lib/auth/emailCode.js";
 import { markEmailVerified, verifyEmailCode } from "../lib/auth/emailVerification.js";
+import { claimResetAndSetPassword } from "../lib/auth/passwordReset.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/mailer.js";
 
 const registerBody = z.object({
@@ -67,8 +68,14 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       );
       setAuthCookies(reply, accessToken, refreshToken);
 
+      // The account already exists and the user is logged in, so a failure here must not turn
+      // the sign-up into a 400 (a retry would say "Email already in use"). Log it and go on.
       if (parsed.data.marketing) {
-        await prisma.user.update({ where: { id: user.id }, data: { marketingOptIn: true } });
+        try {
+          await prisma.user.update({ where: { id: user.id }, data: { marketingOptIn: true } });
+        } catch (err) {
+          console.error("[register] marketing opt-in not saved:", err);
+        }
       }
 
       // Verification email (link + 6-digit code). Mail failures must not fail the sign-up:
@@ -314,18 +321,13 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: "This reset link is invalid or has expired." });
     }
 
-    // Claim the token atomically BEFORE touching the password, so two parallel
-    // requests with the same link cannot both succeed.
-    const claimed = await prisma.passwordReset.updateMany({
-      where: { id: reset.id, usedAt: null, expiresAt: { gt: new Date() } },
-      data: { usedAt: new Date() },
-    });
-    if (claimed.count === 0) {
+    // Hash first (slow), so the transaction inside the helper stays short.
+    const passwordHash = await bcrypt.hash(password, 12);
+    // Claim the link and set the password together: parallel requests with the same link
+    // cannot both succeed, and a failed save does not burn the link.
+    if (!(await claimResetAndSetPassword(reset.id, reset.userId, passwordHash))) {
       return reply.status(400).send({ error: "This reset link is invalid or has expired." });
     }
-
-    const passwordHash = await bcrypt.hash(password, 12);
-    await prisma.user.update({ where: { id: reset.userId }, data: { passwordHash } });
     // Everything signed in with the old password is out; this request gets a fresh session.
     await authProvider.revokeOtherSessions?.(reset.userId);
     const { accessToken, refreshToken } = await createLocalTokens(reset.userId);
