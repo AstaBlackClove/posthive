@@ -4,6 +4,7 @@ import * as React from "react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CheckIcon, InfoIcon, TriangleAlertIcon, XIcon } from "lucide-react"
 import { cn } from "@/lib/cn"
+import { TONE } from "@/lib/tone"
 
 export type ToastType = "success" | "error" | "warning" | "info"
 
@@ -14,12 +15,12 @@ const ICONS = {
   info: InfoIcon,
 } as const
 
-// box: panel + text / icon colour; icon: the round badge behind the icon. Status colours from CLAUDE.md.
+// box: panel + text / icon colour (lib/tone.ts); icon: the round badge behind the icon.
 const TONES: Record<ToastType, { box: string; icon: string }> = {
-  success: { box: "border-green-200 bg-green-50 text-green-700", icon: "bg-green-100" },
-  error: { box: "border-red-200 bg-red-50 text-red-600", icon: "bg-red-100" },
-  warning: { box: "border-brand-400 bg-brand-100 text-brand-800", icon: "bg-brand-200" },
-  info: { box: "border-blue-200 bg-blue-50 text-blue-700", icon: "bg-blue-100" },
+  success: { box: TONE.success, icon: "bg-green-100" },
+  error: { box: TONE.danger, icon: "bg-red-100" },
+  warning: { box: TONE.warning, icon: "bg-brand-200" },
+  info: { box: TONE.info, icon: "bg-blue-100" },
 }
 
 // What one toast looks like. sonner places it, stacks it, times it and lets it be swiped away.

@@ -48,13 +48,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { AccountAvatar } from "@/components/AccountAvatar";
+import { AccountPicker, type PickerAccount } from "@/components/AccountPicker";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { FilterChips } from "@/components/FilterChips";
+import { FormField } from "@/components/FormField";
 import { InlineAlert } from "@/components/InlineAlert";
+import { ListRow } from "@/components/ListRow";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionCard } from "@/components/SectionCard";
 import { Spinner } from "@/components/Spinner";
+import { StatTile } from "@/components/StatTile";
+import { ApprovalBadge, ItemStatusBadge, PlanStatusBadge, RoleBadge, StatusBadge } from "@/components/StatusBadge";
 import { useToast } from "@/components/Toast";
+import { UsageBar } from "@/components/UsageBar";
 
 const TIMEZONES = ["Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura", "Europe/Paris", "America/New_York"];
+
+const DEMO_ACCOUNTS: PickerAccount[] = [
+  { id: "1", platform: "instagram", displayName: "@posthive" },
+  { id: "2", platform: "linkedin", displayName: "Posthive Inc" },
+  { id: "3", platform: "bluesky", displayName: "posthive.bsky.social" },
+  { id: "4", platform: "twitter", displayName: "@posthive_co" },
+];
+
+const POST_STATUSES = ["draft", "pending", "running", "done", "failed", "post_done", "comment_done", "post_failed", "comment_failed"];
 
 function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
@@ -82,6 +101,8 @@ export function UiShowcase() {
   const [comboOpen, setComboOpen] = useState(false);
   const [view, setView] = useState("list");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [picked, setPicked] = useState<string[]>(["1"]);
+  const [statusFilter, setStatusFilter] = useState("all");
   const toast = useToast();
 
   return (
@@ -174,6 +195,81 @@ export function UiShowcase() {
         <div className="rounded-2xl border border-dashed border-border">
           <EmptyState size="compact" icon={<PlusIcon />} title="No posts scheduled yet" description="Schedule your first post and it will appear here." action={<Button>Write your first post →</Button>} />
         </div>
+      </Section>
+
+      <Section title="Status and roles" note="One badge per status: lib/status.ts decides the label, tone and dot.">
+        <Row label="post status">
+          <div className="flex flex-wrap gap-2">{POST_STATUSES.map((s) => <StatusBadge key={s} status={s} />)}</div>
+        </Row>
+        <Row label="approval"><ApprovalBadge approvalStatus="pending" /><ApprovalBadge approvalStatus="rejected" reviewedBy={{ name: "Rani" }} /><ApprovalBadge approvalStatus="approved" /></Row>
+        <Row label="library item">{["queued", "scheduled", "published", "skipped", "failed"].map((s) => <ItemStatusBadge key={s} status={s} />)}</Row>
+        <Row label="plan">
+          <PlanStatusBadge status="active" />
+          <PlanStatusBadge status="trialing" trialDaysLeft={10} />
+          <PlanStatusBadge status="trialing" trialDaysLeft={2} />
+          <PlanStatusBadge status="trialing" trialDaysLeft={5} trialEndsAt="2020-01-01T00:00:00Z" />
+          <PlanStatusBadge status="on_hold" />
+          <PlanStatusBadge status="cancelling" />
+          <PlanStatusBadge status="cancelled" />
+        </Row>
+        <Row label="role"><RoleBadge role="owner" /><RoleBadge role="admin" /><RoleBadge role="designer" /><RoleBadge role="member" /></Row>
+      </Section>
+
+      <Section title="Layout pieces" note="PageHeader, SectionCard, StatTile, UsageBar, ListRow, FormField.">
+        <div className="overflow-hidden rounded-2xl border border-border"><PageHeader title="Accounts" subtitle="Connect the social accounts you want to post to." actions={<Badge variant="success">3 connected</Badge>} /></div>
+        <SectionCard title="Profile" description="Your name and photo" icon={<SettingsIcon />} action={<Button size="sm" variant="secondary">Edit</Button>}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField label="Display name" hint="Shown to your team">{(c) => <Input placeholder="Puteri" {...c} />}</FormField>
+            <FormField label="Email" error="Enter a valid email">{(c) => <Input defaultValue="puteri@" {...c} />}</FormField>
+          </div>
+        </SectionCard>
+        <SectionCard title="Danger zone" description="Deleting cannot be undone" tone="danger" icon={<Trash2Icon />}>
+          <Button variant="destructive-outline">Delete workspace</Button>
+        </SectionCard>
+        <div className="grid gap-3 md:grid-cols-3">
+          <StatTile label="Total posts" value={128} sub="last 30 days" />
+          <StatTile label="Likes" value="1.2k" />
+          <StatTile label="Reach" value="48.9k" sub="+12% vs last month" />
+        </div>
+        <Row label="inline stats">
+          <StatTile variant="inline" label="Total" value={24} />
+          <StatTile variant="inline" label="Queued" value={9} tone="brand" />
+          <StatTile variant="inline" label="Published" value={14} tone="success" />
+          <StatTile variant="inline" label="Failed" value={1} tone="danger" />
+        </Row>
+        <div className="grid gap-4 md:grid-cols-3">
+          <UsageBar label="Accounts" used={2} max={10} />
+          <UsageBar label="Seats" used={4} max={5} />
+          <UsageBar label="Reels" used={3} max={3} />
+          <UsageBar label="Posts" used={42} max={null} />
+        </div>
+        <div className="space-y-2">
+          <ListRow leading={<AccountAvatar platform="instagram" size="lg" />} title="@posthive" description="Instagram · connected 3 days ago" trailing={<><Badge variant="success">Live</Badge><Button size="sm" variant="destructive-outline">Disconnect</Button></>} />
+          <ListRow leading={<Avatar><AvatarFallback>PA</AvatarFallback></Avatar>} title="Puteri Anggraini" description="puteri@example.com" trailing={<RoleBadge role="admin" />} />
+        </div>
+      </Section>
+
+      <Section title="Accounts and filters">
+        <Row label="avatar">
+          <AccountAvatar platform="instagram" size="sm" />
+          <AccountAvatar platform="linkedin" />
+          <AccountAvatar platform="bluesky" size="lg" />
+          <AccountAvatar platform="twitter" avatarUrl="https://broken.invalid/x.png" />
+        </Row>
+        <div className="max-w-sm"><AccountPicker accounts={DEMO_ACCOUNTS} value={picked} onChange={setPicked} /></div>
+        <FilterChips
+          label="Status"
+          value={statusFilter}
+          onChange={setStatusFilter}
+          itemClassName="px-3 py-1.5 rounded-xl"
+          options={[
+            { value: "all", label: "All", count: 24 },
+            { value: "draft", label: "Drafts", dot: "bg-neutral-500", count: 3 },
+            { value: "pending", label: "Scheduled", dot: "bg-accent", count: 9 },
+            { value: "done", label: "Published", dot: "bg-green-500", count: 11 },
+            { value: "failed", label: "Failed", dot: "bg-red-500", count: 1 },
+          ]}
+        />
       </Section>
 
       <Section title="Form controls">

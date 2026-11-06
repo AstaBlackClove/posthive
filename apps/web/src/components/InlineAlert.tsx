@@ -1,15 +1,16 @@
 import type { ReactNode } from "react";
 import { CircleAlertIcon, CircleCheckIcon, InfoIcon, TriangleAlertIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { TONE } from "@/lib/tone";
 
 export type AlertTone = "danger" | "warning" | "success" | "info";
 
-// Status colours from CLAUDE.md: 50 fill, 200 border, 700 text (danger 600, warning brand-800).
+// Status colours from CLAUDE.md, shared through lib/tone.ts.
 const LIGHT: Record<AlertTone, string> = {
-  danger: "border-red-200 bg-red-50 text-red-600",
-  warning: "border-brand-400 bg-brand-100 text-brand-800",
-  success: "border-green-200 bg-green-50 text-green-700",
-  info: "border-blue-200 bg-blue-50 text-blue-700",
+  danger: TONE.danger,
+  warning: TONE.warning,
+  success: TONE.success,
+  info: TONE.info,
 };
 
 // The dark auth panel (login, register, forgot / reset password, verify).
