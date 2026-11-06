@@ -99,6 +99,30 @@ describe("PasswordInput", () => {
     expect((screen.getByRole("button") as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it("line variant uses the underline field and a Show/Hide text toggle", async () => {
+    const user = userEvent.setup();
+    render(<PasswordInput id="l" autoComplete="current-password" variant="line" aria-label="pw" />);
+    const input = screen.getByLabelText("pw") as HTMLInputElement;
+    expect(input.className).toContain("field-line");
+    expect(input.className).not.toMatch(/(^|\s)field(\s|$)/);
+
+    const btn = screen.getByRole("button", { name: "Show password" });
+    expect(btn.textContent).toBe("Show");
+    await user.click(btn);
+    expect(input.type).toBe("text");
+    const hide = screen.getByRole("button", { name: "Hide password" });
+    expect(hide.textContent).toBe("Hide");
+    expect(hide.querySelector("svg")).toBeNull();
+  });
+
+  it("box variant stays the default and keeps the eye icon", () => {
+    render(<PasswordInput id="b" autoComplete="off" aria-label="pw" />);
+    const input = screen.getByLabelText("pw") as HTMLInputElement;
+    expect(input.className).toMatch(/(^|\s)field(\s|$)/);
+    expect(input.className).not.toContain("field-line");
+    expect(screen.getByRole("button").querySelector("svg")).not.toBeNull();
+  });
+
   it("works uncontrolled", async () => {
     const user = userEvent.setup();
     render(<PasswordInput id="u" autoComplete="off" aria-label="pw" />);

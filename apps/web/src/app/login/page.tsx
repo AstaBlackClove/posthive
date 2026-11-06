@@ -6,31 +6,41 @@ import Link from "next/link";
 import { login } from "../../lib/auth";
 import { useAuth } from "../../context/AuthContext";
 import { PasswordInput } from "../../components/PasswordInput";
+import { AuthShell, AuthHeading } from "../../components/auth/AuthShell";
+import { AuthAlert } from "../../components/auth/AuthAlert";
+import { OAuthButtons, OrDivider } from "../../components/auth/OAuthButtons";
 import { safeReturnTo } from "../../lib/session";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+// `?error=` codes the API redirects back with after Google / LinkedIn sign-in.
+const OAUTH_ERRORS: Record<string, string> = {
+  google_oauth_failed: "Google sign-in didn't work. Please try again.",
+  google_email_unverified: "Google says this email isn't verified. Verify it with Google, or log in another way.",
+  linkedin_oauth_failed: "LinkedIn sign-in didn't work. Please try again.",
+  linkedin_not_configured: "LinkedIn sign-in isn't available yet.",
+  linkedin_email_unverified: "LinkedIn says this email isn't verified. Verify it on LinkedIn, or log in another way.",
+};
+
+const LABEL = "mb-1 block type-body-sb-xs text-neutral-200";
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = safeReturnTo(searchParams.get("returnTo"));
   const expired = searchParams.get("reason") === "expired";
+  const passwordReset = searchParams.get("reset") === "1";
+  const oauthError = OAUTH_ERRORS[searchParams.get("error") ?? ""] ?? null;
   const { refresh } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  function handleGoogle() {
-    const dest = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : "";
-    window.location.href = `${API_BASE}/auth/google${dest}`;
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true); setError(null);
     try {
-      await login(email, password);
+      await login(email, password, remember);
       await refresh();
       router.replace(returnTo ?? "/compose");
     } catch (err) {
@@ -40,84 +50,74 @@ function LoginContent() {
     }
   }
 
+  const shownError = error ?? oauthError;
+  const info = expired
+    ? "Your session has ended. Please log in again."
+    : passwordReset
+      ? "Password updated. Log in with your new password."
+      : null;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-4">
-      <div className="w-full max-w-sm">
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/posthivemain.png" alt="Posthive" className="w-9 h-9 rounded-xl object-cover" />
-          <div>
-            <p className="type-body-sb-s text-fg">Posthive</p>
-          </div>
-        </div>
+    <AuthShell cta="signup" returnTo={returnTo}>
+      <AuthHeading
+        title={<>Log in to plan<br className="short:hidden" /> your next post.</>}
+        subtitle="Your calendar, drafts and approvals are right where your team left them."
+      />
 
-        <div className="card p-8">
-          <h1 className="mb-1 type-head-sb-5 text-fg">Welcome back</h1>
-          <p className="mb-6 type-body-r-s text-muted">Sign in to your account</p>
+      <OAuthButtons returnTo={returnTo} />
+      <OrDivider>or log in with email</OrDivider>
 
-          {/* Google OAuth */}
-          <button
-            type="button"
-            onClick={handleGoogle}
-            className="btn-secondary mb-4 w-full gap-2.5 py-2.5"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            Continue with Google
-          </button>
-
-          <div className="mb-4 flex items-center gap-2.5">
-            <div className="h-px flex-1 bg-border" />
-            <span className="type-body-r-xs text-neutral-500">or</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          {expired && (
-            <div role="status" className="mb-4 rounded-lg border border-brand-400 bg-brand-100 px-3 py-2 type-body-r-xs text-brand-800">
-              Your session has ended. Please log in again.
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="mb-1.5 block type-body-sb-xs text-muted">Email</label>
-              <input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com" required autoFocus
-                className="field px-4 py-2.5" />
-            </div>
-            <div>
-              <label htmlFor="password" className="mb-1.5 block type-body-sb-xs text-muted">Password</label>
-              <PasswordInput id="password" name="password" autoComplete="current-password"
-                value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••" required
-                className="px-4 py-2.5" />
-            </div>
-
-            {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 type-body-r-xs text-red-600">
-                {error}
-              </div>
-            )}
-
-            <button type="submit" disabled={loading}
-              className="btn-primary w-full py-2.5">
-              {loading ? "Signing in…" : "Sign in"}
-            </button>
-          </form>
-        </div>
-
-        <p className="mt-5 text-center type-body-r-s text-muted">
-          Don&apos;t have an account?{" "}
-          <Link href={returnTo ? `/register?returnTo=${encodeURIComponent(returnTo)}` : "/register"} className="type-body-sb-s text-brand-800 hover:underline">
-            Create one
-          </Link>
-        </p>
-        <p className="mt-2 text-center type-body-r-xs">
-          <Link href="/forgot-password" className="text-muted transition-colors hover:text-fg">
-            Forgot your password?
-          </Link>
-        </p>
+      <div className="space-y-3 empty:hidden">
+        {info && <AuthAlert tone="info">{info}</AuthAlert>}
+        {shownError && <AuthAlert id="login-error">{shownError}</AuthAlert>}
       </div>
-    </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5 short:space-y-4">
+        <div className="space-y-6 short:space-y-4">
+          <div>
+            <label htmlFor="email" className={LABEL}>Email</label>
+            <input
+              id="email" name="email" type="email" autoComplete="email" required autoFocus
+              value={email} onChange={(e) => setEmail(e.target.value)}
+              aria-invalid={!!error} aria-describedby={error ? "login-error" : undefined}
+              className="field-line"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className={LABEL}>Password</label>
+            <PasswordInput
+              id="password" name="password" autoComplete="current-password" required variant="line"
+              value={password} onChange={(e) => setPassword(e.target.value)}
+              aria-invalid={!!error} aria-describedby={error ? "login-error" : undefined}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <label className="flex cursor-pointer items-center gap-2 type-body-r-xs text-neutral-200">
+            <input
+              type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)}
+              className="size-4 cursor-pointer rounded-sm accent-brand-500"
+            />
+            Keep me logged in
+          </label>
+          <Link href="/forgot-password" className="type-body-sb-xs text-brand-500 hover:text-brand-300">
+            Forgot password?
+          </Link>
+        </div>
+
+        <button type="submit" disabled={loading} className="btn-primary h-12 min-w-45 bg-brand-500 px-8 hover:bg-brand-400">
+          {loading ? "Logging in…" : "Log in"}
+        </button>
+
+        <p className="type-body-r-xs text-neutral-300">
+          By logging in, you agree to our{" "}
+          <Link href="/terms" className="underline underline-offset-2 hover:text-white">Terms</Link>
+          {" & "}
+          <Link href="/privacy" className="underline underline-offset-2 hover:text-white">Privacy Policy</Link>.
+        </p>
+      </form>
+    </AuthShell>
   );
 }
 

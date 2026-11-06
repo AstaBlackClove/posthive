@@ -1,11 +1,13 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+/* Laptop-height viewports: auth screens tighten spacing so the submit button stays on screen */
+@custom-variant short (@media (max-height: 860px));
 
 /* --font-koho / --font-inter come from next/font in app/layout.tsx */
 :root {
-  --ff-koho: var(--ff-koho), ui-sans-serif, system-ui, sans-serif;
-  --ff-inter: var(--ff-inter), ui-sans-serif, system-ui, sans-serif;
+  --ff-koho: var(--font-koho), ui-sans-serif, system-ui, sans-serif;
+  --ff-inter: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --ff-mono: var(--ff-inter);
 }
 
@@ -274,6 +276,18 @@
     @apply w-full rounded-xl border border-border bg-bg px-3 py-2 type-body-r-s text-fg outline-none
       transition-colors focus:border-accent focus:ring-2 focus:ring-accent/30
       disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  /* Underline-only input for the dark auth panel (login, register, forgot, reset) */
+  .field-line {
+    @apply w-full border-0 border-b border-neutral-500 bg-transparent px-0 py-2 type-body-r-m text-white
+      outline-none transition-colors placeholder:text-neutral-400 focus:border-brand-500
+      aria-[invalid=true]:border-red-400 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  /* Chrome paints autofilled inputs light; keep the dark panel dark */
+  .field-line:-webkit-autofill {
+    -webkit-text-fill-color: var(--color-white);
+    transition: background-color 9999s ease-in-out 0s;
   }
 
   .card {

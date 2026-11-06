@@ -5,10 +5,17 @@ import { PasswordInput } from "../../components/PasswordInput";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "../../lib/api";
+import { useAuth } from "../../context/AuthContext";
+import { AuthShell, AuthHeading } from "../../components/auth/AuthShell";
+import { AuthAlert } from "../../components/auth/AuthAlert";
+import { PASSWORD_HINT, passwordProblem } from "../../lib/passwordRule";
+
+const LABEL = "mb-1 block type-body-sb-xs text-neutral-200";
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refresh } = useAuth();
 
   // Local auth: token comes as ?token= query param.
   // Supabase auth: token comes in URL hash as #access_token=xxx&type=recovery.
@@ -30,108 +37,94 @@ function ResetPasswordForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const problem = passwordProblem(password);
+    if (problem) { setError(problem); return; }
     if (password !== confirm) { setError("Passwords don't match"); return; }
     setLoading(true);
     setError(null);
     try {
-      await apiFetch("/auth/reset-password", {
+      const res = await apiFetch<{ ok: boolean; loggedIn?: boolean }>("/auth/reset-password", {
         method: "POST",
         body: JSON.stringify({ token, password }),
       });
-      setDone(true);
-      setTimeout(() => router.push("/login"), 2500);
+      if (res.loggedIn) {
+        // The API signed the user in with a fresh session: go straight to the app.
+        await refresh();
+        router.replace("/compose");
+      } else {
+        router.replace("/login?reset=1");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
+      const status = (err as { status?: number }).status;
+      setError(
+        status === 429
+          ? "Too many attempts. Try again in a few minutes."
+          : err instanceof Error ? err.message : "Something went wrong",
+      );
       setLoading(false);
     }
   }
 
+  if (!token) {
+    return (
+      <AuthShell cta="signup">
+        <AuthHeading
+          title="This link doesn't work"
+          subtitle="The reset link is missing or incomplete. Request a new one and try again."
+        />
+        <Link
+          href="/forgot-password"
+          className="btn-primary h-12 min-w-45 bg-brand-500 px-8 hover:bg-brand-400"
+        >
+          Request a new link
+        </Link>
+      </AuthShell>
+    );
+  }
+
+  const mismatch = !!confirm && confirm !== password;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-4">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="flex size-8 items-center justify-center rounded-xl bg-accent">
-            <svg className="size-4 text-accent-fg" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
+    <AuthShell cta="signup">
+      <AuthHeading title="Set a new password" subtitle="Choose something you haven't used before." />
+
+      <form onSubmit={submit} className="space-y-5">
+        <div className="space-y-6 short:space-y-4">
+          <div>
+            <label htmlFor="new-password" className={LABEL}>New password</label>
+            <PasswordInput
+              id="new-password" name="new-password" autoComplete="new-password" required autoFocus variant="line"
+              value={password} onChange={(e) => setPassword(e.target.value)}
+              aria-describedby="password-hint"
+            />
           </div>
-          <span className="type-body-sb-s text-fg">Posthive</span>
+          <div>
+            <label htmlFor="confirm-password" className={LABEL}>Confirm password</label>
+            <PasswordInput
+              id="confirm-password" name="confirm-password" autoComplete="new-password" required variant="line"
+              value={confirm} onChange={(e) => setConfirm(e.target.value)}
+              aria-invalid={mismatch} aria-describedby="password-hint"
+            />
+          </div>
         </div>
 
-        <div className="card p-8">
-          {!token ? (
-            <div className="text-center">
-              <p className="mb-4 type-body-r-s text-red-600">Invalid or missing reset token.</p>
-              <Link href="/forgot-password" className="type-body-sb-s text-brand-800 hover:underline">
-                Request a new link
-              </Link>
-            </div>
-          ) : done ? (
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full border border-green-200 bg-green-50">
-                <svg className="size-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h1 className="mb-2 type-head-sb-5 text-fg">Password updated!</h1>
-              <p className="type-body-r-s text-muted">Redirecting you to login…</p>
-            </div>
-          ) : (
-            <>
-              <h1 className="mb-1 type-head-sb-5 text-fg">Set new password</h1>
-              <p className="mb-6 type-body-r-s text-muted">Choose a strong password at least 8 characters.</p>
+        <p id="password-hint" className="type-body-r-xs text-neutral-300">{PASSWORD_HINT}</p>
 
-              <form onSubmit={submit} className="space-y-4">
-                <div>
-                  <label htmlFor="new-password" className="mb-1.5 block type-body-sb-xs text-muted">New password</label>
-                  <PasswordInput
-                    id="new-password"
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                    autoFocus
-                    placeholder="••••••••"
-                    className="px-4 py-2.5"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="confirm-password" className="mb-1.5 block type-body-sb-xs text-muted">Confirm password</label>
-                  <PasswordInput
-                    id="confirm-password"
-                    autoComplete="new-password"
-                    value={confirm}
-                    onChange={e => setConfirm(e.target.value)}
-                    required
-                    placeholder="••••••••"
-                    aria-invalid={!!confirm && confirm !== password}
-                    className="px-4 py-2.5"
-                  />
-                </div>
+        {error && <AuthAlert>{error}</AuthAlert>}
 
-                {error && (
-                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 type-body-r-xs text-red-600">
-                    {error}
-                  </p>
-                )}
-
-                <button type="submit" disabled={loading || !password || !confirm}
-                  className="btn-primary w-full py-2.5">
-                  {loading ? "Updating…" : "Update password"}
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+        <button
+          type="submit" disabled={loading || !password || !confirm}
+          className="btn-primary h-12 min-w-45 bg-brand-500 px-8 hover:bg-brand-400"
+        >
+          {loading ? "Saving…" : "Save & log in"}
+        </button>
+        <p className="type-body-r-xs text-neutral-300">You&apos;ll go straight to your dashboard.</p>
+      </form>
+    </AuthShell>
   );
 }
 

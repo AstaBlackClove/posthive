@@ -3,15 +3,32 @@
 import { useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "../../lib/api";
+import { AuthShell, AuthHeading } from "../../components/auth/AuthShell";
+import { AuthAlert } from "../../components/auth/AuthAlert";
+import { formatCountdown, useCountdown } from "../../components/auth/useCountdown";
+
+const RESEND_COOLDOWN_S = 30;
+/** Keep in sync with RESET_LINK_TTL_MIN in apps/api/src/lib/auth/passwordPolicy.ts. */
+const LINK_TTL_MIN = 30;
+
+const BACK_LINK = "inline-flex items-center gap-1.5 type-body-sb-xs text-brand-500 hover:text-brand-300";
+
+function BackToLogin() {
+  return (
+    <Link href="/login" className={BACK_LINK}>
+      <span aria-hidden="true">←</span> Back to log in
+    </Link>
+  );
+}
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const { remaining: cooldown, start: startCooldown } = useCountdown();
   const [error, setError] = useState<string | null>(null);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function send() {
     setLoading(true);
     setError(null);
     try {
@@ -20,113 +37,81 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
       setSent(true);
+      startCooldown(RESEND_COOLDOWN_S);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const status = (err as { status?: number }).status;
+      setError(
+        status === 429
+          ? "Too many requests. Try again in a few minutes."
+          : err instanceof Error ? err.message : "Something went wrong",
+      );
     } finally {
       setLoading(false);
     }
   }
 
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    void send();
+  }
+
+  if (sent) {
+    return (
+      <AuthShell cta="signup">
+        <span className="flex size-22 items-center justify-center rounded-full bg-brand-500 text-neutral-700">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="2.5" />
+            <path d="m3.5 7 8.5 6 8.5-6" />
+          </svg>
+        </span>
+        <AuthHeading
+          title="Check your inbox"
+          subtitle={<>We sent a reset link to <strong className="font-semibold text-white">{email}</strong>. It expires in {LINK_TTL_MIN} minutes.</>}
+        />
+
+        {error && <AuthAlert>{error}</AuthAlert>}
+
+        <p className="type-body-r-xs text-neutral-300">
+          Didn&apos;t get it? Check spam or{" "}
+          <button
+            type="button"
+            onClick={() => void send()}
+            disabled={cooldown > 0 || loading}
+            className="type-body-sb-xs text-brand-500 hover:text-brand-300 disabled:cursor-not-allowed disabled:text-neutral-300 disabled:hover:text-neutral-300"
+          >
+            Resend link{cooldown > 0 && ` (${formatCountdown(cooldown)})`}
+          </button>
+        </p>
+
+        <BackToLogin />
+      </AuthShell>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-4">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <img
-            src="/posthivemain.png"
-            alt="Posthive"
-            className="w-9 h-9 rounded-xl object-cover"
-          />
-          <span className="type-body-sb-s text-fg">
-            Posthive
-          </span>
-        </div>
+    <AuthShell cta="signup">
+      <AuthHeading
+        title="Forgot your password?"
+        subtitle="Enter your work email and we'll send you a link to reset it."
+      />
 
-        <div className="card p-8">
-          {sent ? (
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full border border-green-200 bg-green-50">
-                <svg
-                  className="size-6 text-green-700"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h1 className="mb-2 type-head-sb-5 text-fg">
-                Check your email
-              </h1>
-              <p className="mb-6 type-body-r-s text-muted">
-                If <strong className="text-fg">{email}</strong> has an
-                account, we&apos;ve sent a reset link. It expires in 1 hour.
-              </p>
-              <Link
-                href="/login"
-                className="type-body-sb-s text-brand-800 hover:underline"
-              >
-                ← Back to login
-              </Link>
-            </div>
-          ) : (
-            <>
-              <h1 className="mb-1 type-head-sb-5 text-fg">
-                Forgot password?
-              </h1>
-              <p className="mb-6 type-body-r-s text-muted">
-                Enter your email and we&apos;ll send you a reset link.
-              </p>
+      <form onSubmit={submit} className="space-y-6">
+        <label htmlFor="email" className="mb-1 block type-body-sb-xs text-neutral-200">Email</label>
+        <input
+          id="email" name="email" type="email" autoComplete="email" required autoFocus
+          value={email} onChange={(e) => setEmail(e.target.value)}
+          aria-invalid={!!error} aria-describedby={error ? "forgot-error" : undefined}
+          className="field-line"
+        />
 
-              <form onSubmit={submit} className="space-y-4">
-                <div>
-                  <label className="mb-1.5 block type-body-sb-xs text-muted">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoFocus
-                    placeholder="you@example.com"
-                    className="field px-4 py-2.5"
-                  />
-                </div>
+        {error && <AuthAlert id="forgot-error">{error}</AuthAlert>}
 
-                {error && (
-                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 type-body-r-xs text-red-600">
-                    {error}
-                  </p>
-                )}
+        <button type="submit" disabled={loading || !email} className="btn-primary h-12 min-w-45 bg-brand-500 px-8 hover:bg-brand-400">
+          {loading ? "Sending…" : "Send reset link"}
+        </button>
+      </form>
 
-                <button
-                  type="submit"
-                  disabled={loading || !email}
-                  className="btn-primary w-full py-2.5"
-                >
-                  {loading ? "Sending…" : "Send reset link"}
-                </button>
-              </form>
-
-              <p className="mt-5 text-center type-body-r-xs text-muted">
-                Remembered it?{" "}
-                <Link
-                  href="/login"
-                  className="type-body-sb-xs text-brand-800 hover:underline"
-                >
-                  Log in
-                </Link>
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+      <BackToLogin />
+    </AuthShell>
   );
 }

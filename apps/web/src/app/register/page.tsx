@@ -3,12 +3,17 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { register } from "../../lib/auth";
+import { register, EMAIL_TAKEN } from "../../lib/auth";
 import { useAuth } from "../../context/AuthContext";
 import { PasswordInput } from "../../components/PasswordInput";
+import { AuthShell, AuthHeading } from "../../components/auth/AuthShell";
+import { AuthAlert } from "../../components/auth/AuthAlert";
+import { OAuthButtons, OrDivider } from "../../components/auth/OAuthButtons";
+import { BRAND } from "../../lib/brand";
 import { safeReturnTo } from "../../lib/session";
+import { PASSWORD_HINT, passwordProblem } from "../../lib/passwordRule";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const LABEL = "mb-1 block type-body-sb-xs text-neutral-200";
 
 function RegisterContent() {
   const router = useRouter();
@@ -18,101 +23,100 @@ function RegisterContent() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [marketing, setMarketing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  function handleGoogle() {
-    const dest = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : "";
-    window.location.href = `${API_BASE}/auth/google${dest}`;
-  }
+  const emailTaken = error === EMAIL_TAKEN;
+  const loginHref = returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : "/login";
+  const verifyHref = returnTo ? `/register/verify?returnTo=${encodeURIComponent(returnTo)}` : "/register/verify";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const problem = passwordProblem(password);
+    if (problem) { setError(problem); return; }
     setLoading(true); setError(null);
     try {
-      await register(email, password, name);
+      await register(email, password, name, marketing);
       await refresh();
-      router.replace(returnTo ?? "/onboarding");
+      // The API mailed a 6-digit code: confirm the email before onboarding.
+      router.replace(verifyHref);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
-    } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-4">
-      <div className="w-full max-w-sm">
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/posthivemain.png" alt="Posthive" className="w-9 h-9 rounded-xl object-cover" />
+    <AuthShell cta="login" returnTo={returnTo}>
+      <AuthHeading
+        title={<>Create your<br className="short:hidden" /> {BRAND.name} account</>}
+        subtitle="Then start your 14-day free trial."
+      />
+
+      <OAuthButtons returnTo={returnTo} />
+      <OrDivider>or sign up with email</OrDivider>
+
+      {error && !emailTaken && <AuthAlert id="register-error">{error}</AuthAlert>}
+
+      <form onSubmit={handleSubmit} className="space-y-5 short:space-y-4">
+        <div className="space-y-5 short:space-y-3">
           <div>
-            <p className="type-body-sb-s text-fg">Posthive</p>
+            <label htmlFor="name" className={LABEL}>Full name</label>
+            <input
+              id="name" name="name" type="text" autoComplete="name" required autoFocus
+              value={name} onChange={(e) => setName(e.target.value)}
+              className="field-line"
+            />
           </div>
-        </div>
-
-        <div className="card p-8">
-          <h1 className="mb-1 type-head-sb-5 text-fg">Create your account</h1>
-          <p className="mb-6 type-body-r-s text-muted">Then start your 14-day free trial</p>
-
-          {/* Google OAuth */}
-          <button
-            type="button"
-            onClick={handleGoogle}
-            className="btn-secondary mb-4 w-full gap-2.5 py-2.5"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            Sign up with Google
-          </button>
-
-          <div className="mb-4 flex items-center gap-2.5">
-            <div className="h-px flex-1 bg-border" />
-            <span className="type-body-r-xs text-neutral-500">or</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="name" className="mb-1.5 block type-body-sb-xs text-muted">Name</label>
-              <input id="name" name="name" autoComplete="name" type="text" value={name} onChange={(e) => setName(e.target.value)}
-                placeholder="Your name" required autoFocus
-                className="field px-4 py-2.5" />
-            </div>
-            <div>
-              <label htmlFor="email" className="mb-1.5 block type-body-sb-xs text-muted">Email</label>
-              <input id="email" name="email" autoComplete="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com" required
-                className="field px-4 py-2.5" />
-            </div>
-            <div>
-              <label htmlFor="password" className="mb-1.5 block type-body-sb-xs text-muted">Password</label>
-              <PasswordInput id="password" name="password" autoComplete="new-password"
-                value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 8 characters" required minLength={8}
-                className="px-4 py-2.5" />
-            </div>
-
-            {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 type-body-r-xs text-red-600">
-                {error}
-              </div>
+          <div>
+            <label htmlFor="email" className={LABEL}>Work email</label>
+            <input
+              id="email" name="email" type="email" autoComplete="email" required
+              value={email} onChange={(e) => { setEmail(e.target.value); if (emailTaken) setError(null); }}
+              aria-invalid={emailTaken} aria-describedby={emailTaken ? "email-taken" : undefined}
+              className="field-line"
+            />
+            {emailTaken && (
+              <p id="email-taken" role="alert" className="mt-2 type-body-r-xs text-red-300">
+                This email already has an account.{" "}
+                <Link href={loginHref} className="type-body-sb-xs text-brand-500 hover:text-brand-300">Log in instead?</Link>
+              </p>
             )}
-
-            <button type="submit" disabled={loading}
-              className="btn-primary w-full py-2.5">
-              {loading ? "Creating account…" : "Create account"}
-            </button>
-          </form>
+          </div>
+          <div>
+            <label htmlFor="password" className={LABEL}>Password</label>
+            <PasswordInput
+              id="password" name="password" autoComplete="new-password" required variant="line"
+              value={password} onChange={(e) => setPassword(e.target.value)}
+              aria-describedby="password-hint"
+            />
+            <p id="password-hint" className="mt-2 type-body-r-xs text-neutral-300">{PASSWORD_HINT}</p>
+          </div>
         </div>
 
-        <p className="mt-5 text-center type-body-r-s text-muted">
-          Already have an account?{" "}
-          <Link href="/login" className="type-body-sb-s text-brand-800 hover:underline">
-            Sign in
-          </Link>
+        <label className="flex cursor-pointer items-center gap-2 type-body-r-xs text-neutral-200">
+          <input
+            type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)}
+            className="size-4 cursor-pointer rounded-sm accent-brand-500"
+          />
+          Send me tips &amp; product updates
+        </label>
+
+        <button type="submit" disabled={loading} className="btn-primary h-12 min-w-45 bg-brand-500 px-8 hover:bg-brand-400">
+          {loading ? "Creating account…" : "Create account"}
+        </button>
+
+        <p className="type-body-r-xs text-neutral-300">
+          By creating an account, you agree to our{" "}
+          <Link href="/terms" className="underline underline-offset-2 hover:text-white">Terms &amp; Conditions</Link>
+          {" and "}
+          <Link href="/privacy" className="underline underline-offset-2 hover:text-white">Privacy Policy</Link>.
+          <br className="max-sm:hidden" />
+          {" "}Worth a quick read, so you know what you&apos;re signing up for.
         </p>
-      </div>
-    </div>
+      </form>
+    </AuthShell>
   );
 }
 

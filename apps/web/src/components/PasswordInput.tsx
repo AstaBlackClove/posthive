@@ -7,6 +7,8 @@ import { cn } from "../lib/cn";
 type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "autoComplete"> & {
   /** Required: "current-password" (login), "new-password" (register/change), or "off". */
   autoComplete: "current-password" | "new-password" | "off";
+  /** `box`: bordered field with an eye icon. `line`: underline field with a "Show"/"Hide" text toggle (dark auth panel). */
+  variant?: "box" | "line";
 };
 
 function EyeIcon({ off }: { off: boolean }) {
@@ -24,7 +26,7 @@ function EyeIcon({ off }: { off: boolean }) {
  * The toggle never takes focus on mouse click, so the caret and selection in the input survive.
  */
 export const PasswordInput = forwardRef<HTMLInputElement, Props>(function PasswordInput(
-  { className, disabled, id, ...rest },
+  { className, disabled, id, variant = "box", ...rest },
   forwardedRef,
 ) {
   const [visible, setVisible] = useState(false);
@@ -65,7 +67,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, Props>(function Passwo
         ref={setRefs as Ref<HTMLInputElement>}
         type={visible ? "text" : "password"}
         disabled={disabled}
-        className={cn("field pr-11", className)}
+        className={cn(variant === "line" ? "field-line pr-14" : "field pr-11", className)}
       />
       <button
         type="button"
@@ -75,9 +77,14 @@ export const PasswordInput = forwardRef<HTMLInputElement, Props>(function Passwo
         disabled={disabled}
         aria-label={visible ? "Hide password" : "Show password"}
         aria-controls={id}
-        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-muted transition-colors hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-60"
+        className={cn(
+          "absolute inset-y-0 right-0 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60",
+          variant === "line"
+            ? "rounded px-1 type-body-sb-xs text-brand-500 hover:text-brand-300 focus-visible:ring-brand-500/60"
+            : "w-11 rounded-r-xl text-muted hover:text-fg focus-visible:ring-accent/40",
+        )}
       >
-        <EyeIcon off={visible} />
+        {variant === "line" ? (visible ? "Hide" : "Show") : <EyeIcon off={visible} />}
       </button>
     </div>
   );
