@@ -2,12 +2,25 @@ import { useEffect } from "react";
 
 export type ExpiryReason = "expired" | "idle";
 
-/** Only same-site absolute paths. Blocks open redirects and login loops. */
+const ORIGIN = "http://returnto.invalid";
+
+/**
+ * Only same-site absolute paths. Blocks open redirects and login loops.
+ * Parses the value the way a browser does: it drops tabs and newlines inside a URL, so
+ * "/\t/evil.com" becomes "//evil.com". Keep in sync with apps/api/src/lib/auth/returnTo.ts.
+ */
 export function safeReturnTo(value: string | null | undefined): string | null {
   if (!value || !value.startsWith("/")) return null;
-  if (value.startsWith("//") || value.startsWith("/\\")) return null;
-  if (/^\/(login|register)(\/|\?|#|$)/.test(value)) return null;
-  return value;
+  let path: string;
+  try {
+    const url = new URL(value, ORIGIN);
+    if (url.origin !== ORIGIN) return null;
+    path = url.pathname + url.search + url.hash;
+  } catch {
+    return null;
+  }
+  if (/^\/(login|register)(\/|\?|#|$)/.test(path)) return null;
+  return path;
 }
 
 export function loginUrl(returnTo?: string | null, reason?: ExpiryReason): string {

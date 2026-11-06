@@ -26,6 +26,12 @@ describe("safeReturnTo", () => {
     expect(safeReturnTo("/\\evil.com")).toBeNull();
     expect(safeReturnTo("javascript:alert(1)")).toBeNull();
   });
+  it("rejects tab / newline tricks that a browser turns into //host", () => {
+    expect(safeReturnTo("/\t/evil.com")).toBeNull();
+    expect(safeReturnTo("/\n/evil.com")).toBeNull();
+    expect(safeReturnTo("/\r/evil.com")).toBeNull();
+    expect(safeReturnTo("/\\\t/evil.com")).toBeNull();
+  });
   it("rejects paths that bounce back to auth pages", () => {
     expect(safeReturnTo("/login")).toBeNull();
     expect(safeReturnTo("/login?returnTo=/x")).toBeNull();
