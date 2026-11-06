@@ -15,6 +15,7 @@
     "@fullcalendar/luxon3": "^6.1.21",
     "@fullcalendar/react": "^6.1.21",
     "@fullcalendar/timegrid": "^6.1.21",
+    "@tanstack/react-table": "^9.3.1",
     "@vercel/analytics": "^2.0.1",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",

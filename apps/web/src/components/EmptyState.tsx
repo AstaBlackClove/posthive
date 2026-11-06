@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { cn } from "@/lib/cn";
 
 type Props = {
@@ -6,31 +7,29 @@ type Props = {
   icon?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
-  /** Usually a <Button> or a <Button asChild><Link>. */
+  /** Usually a <Button> or two inside a fragment. */
   action?: ReactNode;
-  /** "page" fills a whole screen area (py-24); "compact" sits inside a card (py-10). */
-  size?: "page" | "compact";
+  /** "page" fills a whole screen area; "compact" sits inside a card; "inline" is a small tile with tight spacing. */
+  size?: "page" | "compact" | "inline";
   className?: string;
 };
 
-/** Nothing here yet: icon tile, title, a line of help and what to do next. */
+const PADDING = { page: "py-24", compact: "py-10", inline: "py-4" } as const;
+
+/** Nothing here yet: a thin wrapper over the shadcn Empty (icon tile, title, a line of help, next steps). */
 export function EmptyState({ icon, title, description, action, size = "page", className }: Props) {
   return (
-    <div
-      className={cn(
-        "flex flex-col items-center justify-center px-4 text-center",
-        size === "page" ? "py-24" : "py-10",
-        className
-      )}
-    >
-      {icon && (
-        <div className="mb-5 flex size-14 items-center justify-center rounded-2xl border border-brand-300 bg-brand-100 text-brand-800 [&_svg]:size-7" aria-hidden="true">
-          {icon}
-        </div>
-      )}
-      <p className="mb-2 type-body-sb-m text-fg">{title}</p>
-      {description && <p className="max-w-xs type-body-r-s text-muted">{description}</p>}
-      {action && <div className="mt-6">{action}</div>}
-    </div>
+    <Empty className={cn("px-4", PADDING[size], className)}>
+      <EmptyHeader>
+        {icon && (
+          <EmptyMedia variant="icon" aria-hidden="true">
+            {icon}
+          </EmptyMedia>
+        )}
+        <EmptyTitle>{title}</EmptyTitle>
+        {description && <EmptyDescription>{description}</EmptyDescription>}
+      </EmptyHeader>
+      {action && <EmptyContent className="flex-row justify-center gap-2">{action}</EmptyContent>}
+    </Empty>
   );
 }
