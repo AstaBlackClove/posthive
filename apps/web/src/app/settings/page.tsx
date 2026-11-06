@@ -6,6 +6,7 @@ import { apiFetch } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
 import { useWorkspace } from "../../context/WorkspaceContext";
 import { useToast } from "../../components/Toast";
+import { isOwnerRole } from "../../lib/permissions";
 import { PasswordInput } from "../../components/PasswordInput";
 import type { ReactNode } from "react";
 
@@ -224,8 +225,8 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            {user?.role === "owner" ? (() => {
-              const isLastWorkspace = workspaces.filter((w) => w.role === "owner").length <= 1;
+            {isOwnerRole(user?.role) ? (() => {
+              const isLastWorkspace = workspaces.filter((w) => isOwnerRole(w.role)).length <= 1;
               return (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4">
                   <div className="flex-1 min-w-0">

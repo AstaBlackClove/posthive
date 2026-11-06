@@ -10,7 +10,7 @@ import { cn } from "../lib/cn";
 import { TrialBanner } from "./TrialBanner";
 import { Wordmark } from "./Wordmark";
 import { useToast } from "./Toast";
-import { navByRole, canEditContent } from "../lib/permissions";
+import { usePermissions } from "../lib/usePermissions";
 
 function WhatsNewCard() {
   const [dismissed, setDismissed] = useState(false);
@@ -225,9 +225,7 @@ export function Sidebar() {
   const initial = user?.name?.[0]?.toUpperCase() ?? "?";
   const wsInitial = activeWorkspace?.name?.[0]?.toUpperCase() ?? "W";
 
-  const role = activeWorkspace?.role ?? user?.role;
-  const navGroups = navByRole(role);
-  const showNewPost = canEditContent(role);
+  const { navGroups, canEditContent: showNewPost } = usePermissions();
 
   return (
     <>

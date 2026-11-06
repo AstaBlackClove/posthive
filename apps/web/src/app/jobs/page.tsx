@@ -15,8 +15,7 @@ import { TrialUrgentBanner } from "../../components/TrialUrgentBanner";
 import { DatePicker } from "../../components/DatePicker";
 import { formatDateTime, formatTime, minKeyForInterval, wibDateKey } from "../../lib/datetime";
 import { useAuth } from "../../context/AuthContext";
-import { useWorkspace } from "../../context/WorkspaceContext";
-import { canEditContent, canReview as roleCanReview } from "../../lib/permissions";
+import { usePermissions } from "../../lib/usePermissions";
 import type { Account, PerAccountOverride } from "../../components/PlatformPreview";
 import { cn } from "../../lib/cn";
 import { missingForReview, MISSING_LABEL, type MissingField } from "../../lib/submitReadiness";
@@ -459,7 +458,6 @@ export default function JobsPage() {
   const router = useRouter();
   const { success, error: toastError } = useToast();
   const { user } = useAuth();
-  const { activeWorkspace } = useWorkspace();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
@@ -484,10 +482,7 @@ export default function JobsPage() {
   const [knownPlatforms, setKnownPlatforms] = useState<string[]>([]);
 
   // Design-approval flow — owner/admin/designer review; members submit for review
-  const role = activeWorkspace?.role ?? user?.role;
-  const canReview = roleCanReview(role);
-  const canSubmitOwn = (activeWorkspace?.approvalRequired ?? false) && !canReview;
-  const canEditContentAccess = canEditContent(role);
+  const { canReview, canSubmitOwn, canEditContent: canEditContentAccess } = usePermissions();
   // Review-only roles never create drafts, so they get no Drafts tab
   const showDraftTab = canEditContentAccess;
   // Admin/owner move any draft or scheduled post. Marketing moves its own posts until

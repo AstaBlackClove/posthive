@@ -7,6 +7,7 @@ import { apiFetch } from "../../lib/api";
 import { cn } from "../../lib/cn";
 import { PlatformIcon } from "../../components/PlatformIcon";
 import { useToast } from "../../components/Toast";
+import { isAdminRole } from "../../lib/permissions";
 import { useAuth } from "../../context/AuthContext";
 
 // Module-level sets persist across re-mounts — prevents duplicate toasts/modals on navigation.
@@ -742,7 +743,8 @@ interface PlanStatus {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function AccountsPage() {
   const { user } = useAuth();
-  const isAdmin = !user || user.role === "owner" || user.role === "admin";
+  // Session role; shown while the session loads (the API still refuses a non-admin)
+  const isAdmin = !user || isAdminRole(user.role);
   const { success, error: toastError } = useToast();
   const searchParams = useSearchParams();
   const [accounts, setAccounts] = useState<Account[]>([]);

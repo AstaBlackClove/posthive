@@ -5,6 +5,7 @@ import { apiFetch } from "../../lib/api";
 import { useWorkspace } from "../../context/WorkspaceContext";
 import { useToast } from "../../components/Toast";
 import { cn } from "../../lib/cn";
+import { isAdminRole, isOwnerRole } from "../../lib/permissions";
 
 interface Member {
   id: string;
@@ -30,6 +31,9 @@ type RoleChoice = "admin" | "designer" | "member";
 export default function TeamPage() {
   const { activeWorkspace, refresh } = useWorkspace();
   const { toast } = useToast();
+  // This page reads the workspace role only (no session fallback): with no workspace there are no admin controls
+  const isAdmin = isAdminRole(activeWorkspace?.role);
+  const isOwner = isOwnerRole(activeWorkspace?.role);
 
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -160,7 +164,7 @@ export default function TeamPage() {
           <h1 className="type-body-sb-l text-fg">Team</h1>
           <p className="type-body-r-xs mt-0.5 hidden sm:block text-muted">Manage members and invitations for {activeWorkspace?.name}</p>
         </div>
-        {(activeWorkspace?.role === "owner" || activeWorkspace?.role === "admin") && (
+        {isAdmin && (
           <button
             onClick={() => setShowInviteModal(true)}
             className="btn-primary rounded-lg"
@@ -202,8 +206,8 @@ export default function TeamPage() {
               <div className="space-y-2">
                 {members.map((m) => {
                   const initial = m.name?.[0]?.toUpperCase() ?? "?";
-                  const canManage = activeWorkspace?.role === "owner" || activeWorkspace?.role === "admin";
-                  const canChangeRole = activeWorkspace?.role === "owner" && m.role !== "owner";
+                  const canManage = isAdmin;
+                  const canChangeRole = isOwner && m.role !== "owner";
                   return (
                     <div key={m.id} className="flex items-center gap-3 rounded-xl px-4 py-3 transition-colors border border-border bg-bg">
                       {/* Avatar */}
@@ -272,7 +276,7 @@ export default function TeamPage() {
         </div>
 
         {/* Design review toggle */}
-        {(activeWorkspace?.role === "owner" || activeWorkspace?.role === "admin") && (
+        {isAdmin && (
           <div className="card overflow-hidden">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
               <div className="w-8 h-8 rounded-xl flex items-center justify-center border border-brand-300 bg-brand-100">
@@ -313,7 +317,7 @@ export default function TeamPage() {
         )}
 
         {/* Pending invites */}
-        {(activeWorkspace?.role === "owner" || activeWorkspace?.role === "admin") && (
+        {isAdmin && (
           <div className="card overflow-hidden">
             {/* Section header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">

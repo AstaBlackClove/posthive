@@ -6,9 +6,7 @@ import { Sidebar } from "./Sidebar";
 import { AuthGuard } from "./AuthGuard";
 import { PlanGuard } from "./PlanGuard";
 import { OnboardingChecklist } from "./OnboardingChecklist";
-import { useAuth } from "../context/AuthContext";
-import { useWorkspace } from "../context/WorkspaceContext";
-import { canAccessPage } from "../lib/permissions";
+import { usePermissions } from "../lib/usePermissions";
 
 // No auth, no sidebar — public pages (exact) or prefixes
 const PUBLIC_EXACT = ["/", "/login", "/register", "/register/verify", "/forgot-password", "/reset-password", "/privacy", "/terms", "/features", "/docs", "/verify-email", "/pricing", "/blog", "/for-developers", "/agent", "/invite"];
@@ -19,11 +17,9 @@ const PUBLIC_PREFIXES = ["/features/", "/platforms/", "/docs/", "/blog/", "/tool
 export function RoleGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
-  const { activeWorkspace, loading } = useWorkspace();
+  const { canAccess, loading } = usePermissions();
 
-  const role = activeWorkspace?.role ?? user?.role;
-  const allowed = canAccessPage(pathname, role);
+  const allowed = canAccess(pathname);
 
   useEffect(() => {
     if (!loading && !allowed) router.replace("/jobs");

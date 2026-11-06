@@ -27,6 +27,7 @@ import { fromWibInput, toWibInput, wibDateKey } from "../../lib/datetime";
 import { MediaSection } from "../../components/composer/MediaSection";
 import { RepeatPicker } from "../../components/RepeatPicker";
 import { useWorkspace } from "../../context/WorkspaceContext";
+import { canReview } from "../../lib/permissions";
 import { fileHref, templatesByCategory, type DesignTemplate } from "../../lib/templates";
 import { ContentTypeSelects, toContentType, type ContentType } from "../../components/ContentTypeSelects";
 import { DesignReferenceCard } from "../../components/DesignReferenceCard";
@@ -47,8 +48,7 @@ export default function ComposePage() {
   const router = useRouter();
   const { activeWorkspace } = useWorkspace();
   // Design-approval flow — members send posts for review instead of scheduling
-  const canReview = ["owner", "admin", "designer"].includes(activeWorkspace?.role ?? "");
-  const needsApprovalFlow = (activeWorkspace?.approvalRequired ?? false) && !canReview;
+  const needsApprovalFlow = (activeWorkspace?.approvalRequired ?? false) && !canReview(activeWorkspace?.role);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [groups, setGroups] = useState<{ id: string; name: string; accountIds: string[] }[]>([]);

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 import { cn } from "../../lib/cn";
 import { useToast } from "../../components/Toast";
+import { isOwnerRole } from "../../lib/permissions";
 import { trackEvent } from "../../lib/track";
 import { useAuth } from "../../context/AuthContext";
 
@@ -277,7 +278,8 @@ function CancelModal({ onConfirm, onClose, loading }: {
 function BillingContent() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const isOwner = !user || user.role === "owner";
+  // Session role; shown while the session loads (the API still refuses a non-owner)
+  const isOwner = !user || isOwnerRole(user.role);
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);

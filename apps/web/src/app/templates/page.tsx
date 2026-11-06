@@ -4,9 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
-import { useAuth } from "../../context/AuthContext";
 import { useWorkspace } from "../../context/WorkspaceContext";
-import { canEditContent, canManageTemplates } from "../../lib/permissions";
+import { usePermissions } from "../../lib/usePermissions";
 import { PILLARS, categoriesFor, type Category, type Pillar } from "../../lib/contentTypes";
 import { fileHref, isIncomplete, templatesByCategory, type DesignTemplate } from "../../lib/templates";
 import { TemplateEditor } from "../../components/TemplateEditor";
@@ -33,11 +32,8 @@ const categoriesOf = (g: Group) => categoriesFor(g === "No pillar" ? null : g);
 
 export default function TemplatesPage() {
   const router = useRouter();
-  const { user } = useAuth();
   const { activeWorkspace } = useWorkspace();
-  const role = activeWorkspace?.role ?? user?.role;
-  const canManage = canManageTemplates(role);
-  const canUse = canEditContent(role);
+  const { canManageTemplates: canManage, canEditContent: canUse } = usePermissions();
   const { success: toastSuccess, error: toastError } = useToast();
 
   const [templates, setTemplates] = useState<DesignTemplate[]>([]);
