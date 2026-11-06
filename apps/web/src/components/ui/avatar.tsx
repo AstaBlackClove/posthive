@@ -4,6 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/cn"
 import { Avatar as AvatarPrimitive } from "radix-ui"
 
+// Image first; if it is missing or fails to load, the fallback (the first initial) shows.
 function Avatar({
   className,
   size = "default",
@@ -31,7 +32,7 @@ function AvatarImage({
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
-      className={cn("aspect-square size-full", className)}
+      className={cn("aspect-square size-full object-cover", className)}
       {...props}
     />
   )
@@ -45,7 +46,7 @@ function AvatarFallback({
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        "flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs",
+        "flex size-full items-center justify-center rounded-full bg-brand-100 type-body-sb-xs text-brand-800 uppercase group-data-[size=sm]/avatar:type-body-sb-xxs",
         className
       )}
       {...props}
@@ -53,12 +54,13 @@ function AvatarFallback({
   )
 }
 
+// A small dot in the corner (online, platform colour…). Recolour with className="bg-green-500".
 function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="avatar-badge"
       className={cn(
-        "absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground ring-2 ring-background select-none",
+        "absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full bg-green-500 text-white ring-2 ring-bg select-none",
         "group-data-[size=sm]/avatar:size-2 group-data-[size=sm]/avatar:[&>svg]:hidden",
         "group-data-[size=default]/avatar:size-2.5 group-data-[size=default]/avatar:[&>svg]:size-2",
         "group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2",
@@ -74,7 +76,7 @@ function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="avatar-group"
       className={cn(
-        "group/avatar-group flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background",
+        "group/avatar-group flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-bg",
         className
       )}
       {...props}
@@ -90,7 +92,7 @@ function AvatarGroupCount({
     <div
       data-slot="avatar-group-count"
       className={cn(
-        "relative flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm text-muted-foreground ring-2 ring-background group-has-data-[size=lg]/avatar-group:size-10 group-has-data-[size=sm]/avatar-group:size-6 [&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
+        "relative flex size-8 shrink-0 items-center justify-center rounded-full bg-surface type-body-sb-xs text-muted-foreground ring-2 ring-bg group-has-data-[size=lg]/avatar-group:size-10 group-has-data-[size=sm]/avatar-group:size-6 [&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
         className
       )}
       {...props}

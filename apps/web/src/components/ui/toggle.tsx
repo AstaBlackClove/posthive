@@ -5,19 +5,21 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/cn"
 import { Toggle as TogglePrimitive } from "radix-ui"
 
+// default = the old `chip` / `chip-active` (own border, brand-100 when on).
+// pill = one segment of a pill group: transparent, yellow when on (Day / Week / Month).
 const toggleVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-[color,box-shadow] outline-none hover:bg-muted hover:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex cursor-pointer items-center justify-center gap-1.5 border whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-red-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-']):not([class*='w-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-transparent",
-        outline:
-          "border border-input bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground",
+        default:
+          "rounded-lg border-border bg-surface text-muted-foreground hover:text-fg data-[state=on]:border-brand-300 data-[state=on]:bg-brand-100 data-[state=on]:text-brand-800 data-[state=on]:hover:text-brand-800",
+        pill: "rounded-full border-transparent bg-transparent text-muted-foreground hover:text-fg data-[state=on]:bg-brand-500 data-[state=on]:text-accent-fg data-[state=on]:hover:text-accent-fg",
       },
       size: {
-        default: "h-9 min-w-9 px-2",
-        sm: "h-8 min-w-8 px-1.5",
-        lg: "h-10 min-w-10 px-2.5",
+        default: "px-2.5 py-1 type-body-sb-xs",
+        sm: "px-2 py-0.5 type-body-sb-xxs",
+        lg: "px-3 py-1.5 type-body-sb-s",
       },
     },
     defaultVariants: {

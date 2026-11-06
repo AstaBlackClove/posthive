@@ -133,7 +133,7 @@ function AlertDialogMedia({
     <div
       data-slot="alert-dialog-media"
       className={cn(
-        "inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-muted-foreground *:[svg:not([class*='size-'])]:size-5",
+        "inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-muted-foreground *:[svg:not([class*='size-']):not([class*='w-'])]:size-5",
         className
       )}
       {...props}

@@ -31,7 +31,7 @@ const buttonVariants = cva(
     },
     compoundVariants: [
       // a link has no box
-      { variant: "link", class: "h-auto min-w-0 rounded-md p-0" },
+      { variant: "link", class: "h-auto min-w-0 rounded-sm p-0" },
     ],
     defaultVariants: {
       variant: "default",

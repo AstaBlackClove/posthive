@@ -39,7 +39,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-border bg-bg px-3 py-2 type-body-r-s whitespace-nowrap text-fg transition-colors outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-red-400 data-[placeholder]:text-muted-foreground data-[size=sm]:rounded-lg data-[size=sm]:py-1 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
+        "flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-border bg-bg px-3 py-2 type-body-r-s whitespace-nowrap text-fg transition-colors outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-red-400 data-[placeholder]:text-muted-foreground data-[size=sm]:rounded-lg data-[size=sm]:py-1 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-']):not([class*='w-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
         className
       )}
       {...props}
@@ -115,7 +115,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-1.5 pr-8 pl-2 type-body-r-s text-fg outline-hidden select-none focus:bg-neutral-100 focus:text-fg data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=checked]:type-body-sb-s [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-1.5 pr-8 pl-2 type-body-r-s text-fg outline-hidden select-none focus:bg-neutral-100 focus:text-fg data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=checked]:type-body-sb-s [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-']):not([class*='w-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
       {...props}

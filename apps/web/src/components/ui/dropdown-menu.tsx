@@ -5,9 +5,9 @@ import { cn } from "@/lib/cn"
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
 
-// Hover / keyboard focus is neutral-100 (NOT bg-accent: that is brand yellow in this project).
+// Hover / keyboard focus is neutral-100: the shadcn "accent" fill would be brand yellow here.
 const ITEM_BASE =
-  "relative flex cursor-pointer items-center gap-2 rounded-lg type-body-m-s text-fg outline-hidden select-none focus:bg-neutral-100 focus:text-fg data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+  "relative flex cursor-pointer items-center gap-2 rounded-lg type-body-m-s text-fg outline-hidden select-none focus:bg-neutral-100 focus:text-fg data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-']):not([class*='w-'])]:size-4"
 
 function DropdownMenu({
   ...props
