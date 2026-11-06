@@ -8,7 +8,6 @@ import {
   canReview,
   isAdminRole,
   isOwnerRole,
-  navByRole,
   permissionsFor,
 } from "./permissions";
 
@@ -68,7 +67,8 @@ describe("page access", () => {
     expect(open("/analytics")).toEqual(["owner", "admin", "member"]);
   });
 
-  it("the calendar and the template library open for everyone", () => {
+  it("the dashboard, the calendar and the template library open for everyone", () => {
+    expect(open("/dashboard")).toEqual([...ROLES]);
     expect(open("/jobs")).toEqual([...ROLES]);
     expect(open("/templates")).toEqual([...ROLES]);
   });
@@ -96,35 +96,6 @@ describe("page access", () => {
       expect(canAccessPage("/compose", odd)).toBe(false);
       expect(canAccessPage("/billing", odd)).toBe(false);
     }
-  });
-});
-
-describe("navByRole", () => {
-  const hrefs = (role: string) => navByRole(role).flatMap((g) => g.items.map((i) => i.href));
-
-  // /compose is not in the sidebar: it opens from the "New post" button, shown when canEditContent.
-  it("owner and admin see every page, member and designer see fewer", () => {
-    for (const r of ["owner", "admin"]) {
-      expect(hrefs(r)).toEqual(expect.arrayContaining(["/jobs", "/templates", "/jobs/import", "/library", "/analytics", "/accounts", "/groups", "/team", "/settings", "/integrations", "/billing"]));
-    }
-    expect(hrefs("member").length).toBeLessThan(hrefs("owner").length);
-    expect(hrefs("designer").length).toBeLessThan(hrefs("member").length);
-  });
-
-  it("a member never gets a link to a page the guard would bounce them from", () => {
-    for (const r of ROLES) for (const href of hrefs(r)) expect(canAccessPage(href, r), `${r} ${href}`).toBe(true);
-  });
-
-  it("a designer sees the posts and templates only; a member also gets import and analytics but no manage pages", () => {
-    expect(hrefs("designer")).toEqual(["/jobs", "/templates"]);
-    expect(hrefs("member")).toEqual(["/jobs", "/templates", "/jobs/import", "/analytics"]);
-    for (const p of ["/accounts", "/groups", "/team", "/settings", "/integrations", "/billing", "/library"]) {
-      expect(hrefs("member"), p).not.toContain(p);
-    }
-  });
-
-  it("drops a group that ends up empty", () => {
-    for (const r of ROLES) for (const g of navByRole(r)) expect(g.items.length).toBeGreaterThan(0);
   });
 });
 
@@ -206,9 +177,8 @@ describe("usePermissions", () => {
     expect(p.canAccess("/billing")).toBe(false);
   });
 
-  it("gives the nav and the page check for its role", () => {
+  it("gives the page check for its role", () => {
     const member = as("member");
-    expect(member.navGroups.flatMap((g) => g.items.map((i) => i.href))).toContain("/jobs/import");
     expect(member.canAccess("/billing")).toBe(false);
     expect(member.canAccess("/compose")).toBe(true);
     expect(as("owner").canAccess("/billing")).toBe(true);

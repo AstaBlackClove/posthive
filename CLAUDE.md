@@ -128,7 +128,7 @@ All 10 tools mirror the HTTP MCP server: `list_accounts`, `create_post`, `get_po
 | `/register` | `app/register/page.tsx` | Register |
 
 ### Key Components
-- `components/Sidebar.tsx` — nav sidebar with trial banner
+- `components/app-sidebar/AppSidebar.tsx` — the app sidebar (shadcn `Sidebar`, collapses to icons, drawer on mobile): workspace switcher, links per role from `nav-config.ts`, trial banner, feedback and new-workspace dialogs
 - `components/AppShell.tsx` — layout guard; `/mcp-connect` and `/onboarding` skip sidebar
 - `components/CalendarView.tsx` — FullCalendar month/week/day with drag-to-reschedule
 - `components/PlatformIcon.tsx` — favicon-based platform icons (Google S2); Telegram + Nostr use custom SVG

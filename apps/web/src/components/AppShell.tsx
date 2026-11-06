@@ -2,10 +2,11 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Sidebar } from "./Sidebar";
+import { AppSidebar, MobileMenuButton } from "./app-sidebar/AppSidebar";
 import { AuthGuard } from "./AuthGuard";
 import { PlanGuard } from "./PlanGuard";
 import { OnboardingChecklist } from "./OnboardingChecklist";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { usePermissions } from "../lib/usePermissions";
 
 // No auth, no sidebar — public pages (exact) or prefixes
@@ -30,6 +31,8 @@ export function RoleGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Sidebar open / closed is remembered by the shadcn sidebar in the `sidebar_state` cookie.
+// h-svh + overflow-hidden keeps every page scrolling inside its own area, like the old layout.
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
@@ -47,13 +50,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <AuthGuard>
       <PlanGuard>
         <RoleGuard>
-          <div className="flex h-full">
-            <Sidebar />
-            <main className="flex-1 overflow-hidden flex flex-col">
-              {children}
-            </main>
+          <SidebarProvider className="h-svh overflow-hidden">
+            <AppSidebar />
+            <MobileMenuButton />
+            <SidebarInset className="min-h-0 overflow-hidden">{children}</SidebarInset>
             <OnboardingChecklist />
-          </div>
+          </SidebarProvider>
         </RoleGuard>
       </PlanGuard>
     </AuthGuard>

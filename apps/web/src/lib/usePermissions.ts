@@ -2,13 +2,11 @@
 
 import { useAuth } from "../context/AuthContext";
 import { useWorkspace } from "../context/WorkspaceContext";
-import { canAccessPage, navByRole, permissionsFor, type NavGroup, type Permissions } from "./permissions";
+import { canAccessPage, permissionsFor, type Permissions } from "./permissions";
 
 export interface UsePermissions extends Permissions {
   /** The workspace list is still loading, so the role is not final. */
   loading: boolean;
-  /** Sidebar items this role may open. */
-  navGroups: NavGroup[];
   canAccess: (pathname: string) => boolean;
 }
 
@@ -25,7 +23,6 @@ export function usePermissions(): UsePermissions {
   return {
     ...permissionsFor(role, { approvalRequired: activeWorkspace?.approvalRequired }),
     loading,
-    navGroups: navByRole(role),
     canAccess: (pathname) => canAccessPage(pathname, role),
   };
 }
