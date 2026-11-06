@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { RESET_LINK_TTL_MIN } from "./auth/passwordPolicy.js";
+import { CODE_TTL_MIN } from "./auth/emailCode.js";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = process.env.EMAIL_FROM ?? "Posthive <noreply@posthive.co>";
@@ -47,12 +49,19 @@ function infoBox(content: string): string {
   return `<div style="background:#141414;border:1px solid #242424;border-radius:7px;padding:14px 18px;margin-bottom:18px;">${content}</div>`;
 }
 
-export async function sendVerificationEmail(to: string, verifyUrl: string): Promise<void> {
+/** `code` is the 6-digit code to type on the sign-up screen; the link verifies in one click. */
+export async function sendVerificationEmail(to: string, verifyUrl: string, code?: string): Promise<void> {
+  const codeBlock = code
+    ? infoBox(`<p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 6px;">Your code</p><p style="font-size:30px;font-weight:700;letter-spacing:0.28em;color:#ededed;margin:0 0 6px;">${code}</p><p style="font-size:12px;color:#7a7a7a;margin:0;">Expires in ${CODE_TTL_MIN} minutes.</p>`)
+    : infoBox(`<p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 5px;">Link expires in</p><p style="font-size:14px;font-weight:600;color:#ededed;margin:0;">24 hours</p>`);
   const body = `
     ${eyebrow("One step left")}
     ${heading("Verify your email address.")}
-    ${bodyText("Thanks for signing up for Posthive. Confirm your email to activate your account and unlock your 14-day free trial.")}
-    ${infoBox(`<p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 5px;">Link expires in</p><p style="font-size:14px;font-weight:600;color:#ededed;margin:0;">24 hours</p>`)}
+    ${bodyText(code
+      ? "Thanks for signing up for Posthive. Enter this code on the sign-up screen to activate your account and unlock your 14-day free trial."
+      : "Thanks for signing up for Posthive. Confirm your email to activate your account and unlock your 14-day free trial.")}
+    ${codeBlock}
+    ${bodyText(code ? "Or verify in one click. This link works for 24 hours." : "", "margin-bottom:6px;")}
     ${ctaButton(verifyUrl, "Verify email address")}
     ${divider()}
     ${bodyText(`If the button does not work, copy this URL into your browser:<br><span style="color:#555;font-size:12px;word-break:break-all;">${verifyUrl}</span>`, "font-size:12.5px;")}
@@ -64,17 +73,17 @@ export async function sendVerificationEmail(to: string, verifyUrl: string): Prom
   );
 
   if (!resend) {
-    console.log(`[mailer] Email verification link for ${to}:\n${verifyUrl}`);
+    console.log(`[mailer] Email verification for ${to}:${code ? `\ncode: ${code}` : ""}\nlink: ${verifyUrl}`);
     return;
   }
-  await resend.emails.send({ from: FROM, to, subject: "Verify your Posthive email", html });
+  await resend.emails.send({ from: FROM, to, subject: code ? `${code} is your Posthive verification code` : "Verify your Posthive email", html });
 }
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
   const body = `
     ${eyebrow("Security")}
     ${heading("Reset your password.")}
-    ${bodyText("We received a request to reset the password on your Posthive account. Use the button below. This link is valid for <strong style=\"color:#ededed;\">1 hour</strong>.")}
+    ${bodyText(`We received a request to reset the password on your Posthive account. Use the button below. This link is valid for <strong style="color:#ededed;">${RESET_LINK_TTL_MIN} minutes</strong>.`)}
     ${ctaButton(resetUrl, "Set new password")}
     ${divider()}
     ${bodyText("Did not request this? Your account is safe. Someone may have typed your email by mistake. No action is needed.", "font-size:12.5px;")}
@@ -82,7 +91,7 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
   const html = emailShell(
     "linear-gradient(90deg,#5b63d3,#7c84e8)",
     body,
-    `This link expires after 1 hour and can only be used once.<br><a href="https://posthive.co" style="color:#555;">posthive.co</a>`,
+    `This link expires after ${RESET_LINK_TTL_MIN} minutes and can only be used once.<br><a href="https://posthive.co" style="color:#555;">posthive.co</a>`,
   );
 
   if (!resend) {

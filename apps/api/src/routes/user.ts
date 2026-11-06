@@ -4,20 +4,53 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { prisma } from "../lib/prisma.js";
 import { authProvider } from "../lib/auth/index.js";
-import { withAuth, getUser, getWorkspaceId, setAuthCookies, clearAuthCookies, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, getWorkspaceId, setAuthCookies, clearAuthCookies, isPersistent, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from "../lib/auth/withAuth.js";
 import { SESSION_EXPIRED_BODY, UNAUTHENTICATED_BODY } from "../lib/auth/authGuard.js";
+import { createLocalTokens } from "../lib/auth/localAuth.js";
+import { passwordProblem, RESET_LINK_TTL_MIN } from "../lib/auth/passwordPolicy.js";
+import { generateCode, hashCode, isCodeFormat } from "../lib/auth/emailCode.js";
+import { markEmailVerified, verifyEmailCode } from "../lib/auth/emailVerification.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/mailer.js";
 
 const registerBody = z.object({
   email: z.string().email(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().superRefine((value, ctx) => {
+    const problem = passwordProblem(value);
+    if (problem) ctx.addIssue({ code: z.ZodIssueCode.custom, message: problem });
+  }),
   name: z.string().min(1),
+  // "Send me tips & product updates"
+  marketing: z.boolean().optional().default(false),
 });
+
+const VERIFY_LINK_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Replace the user's pending verification with a fresh link token + 6-digit code and mail both.
+ * Replacing the row also resets the wrong-guess counter, so a resend is a clean start.
+ */
+async function issueVerification(userId: string, email: string): Promise<void> {
+  await prisma.emailVerification.deleteMany({ where: { userId, usedAt: null } });
+  const token = crypto.randomBytes(32).toString("hex");
+  const code = generateCode();
+  await prisma.emailVerification.create({
+    data: { userId, token, email, codeHash: hashCode(token, code), expiresAt: new Date(Date.now() + VERIFY_LINK_TTL_MS) },
+  });
+  const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
+  await sendVerificationEmail(email, `${webUrl}/verify-email?token=${token}`, code);
+}
 
 const loginBody = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+  // "Keep me logged in". Unchecked = session cookies that end when the browser closes.
+  remember: z.boolean().optional().default(true),
 });
+
+/** First validation message as a plain string, so the web app can show it as-is. */
+function firstIssue(error: z.ZodError): string {
+  return error.issues[0]?.message ?? "Invalid request";
+}
 
 export async function userRoutes(app: FastifyInstance): Promise<void> {
 
@@ -26,7 +59,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     config: { rateLimit: { max: 10, timeWindow: "15 minutes" } },
   }, async (req, reply) => {
     const parsed = registerBody.safeParse(req.body);
-    if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
+    if (!parsed.success) return reply.status(400).send({ error: firstIssue(parsed.error) });
 
     try {
       const { user, accessToken, refreshToken } = await authProvider.register(
@@ -34,12 +67,17 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       );
       setAuthCookies(reply, accessToken, refreshToken);
 
-      // Send verification email (fire-and-forget — don't block registration)
-      const verifyToken = crypto.randomBytes(32).toString("hex");
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      await prisma.emailVerification.create({ data: { userId: user.id, token: verifyToken, expiresAt } });
-      const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
-      sendVerificationEmail(parsed.data.email, `${webUrl}/verify-email?token=${verifyToken}`).catch(() => {});
+      if (parsed.data.marketing) {
+        await prisma.user.update({ where: { id: user.id }, data: { marketingOptIn: true } });
+      }
+
+      // Verification email (link + 6-digit code). Mail failures must not fail the sign-up:
+      // the user can ask for a new one from the verify screen.
+      try {
+        await issueVerification(user.id, parsed.data.email);
+      } catch (err) {
+        console.error("[register] verification email failed:", err);
+      }
 
       return reply.status(201).send({ user });
     } catch (err) {
@@ -53,13 +91,13 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     config: { rateLimit: { max: 10, timeWindow: "15 minutes" } },
   }, async (req, reply) => {
     const parsed = loginBody.safeParse(req.body);
-    if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
+    if (!parsed.success) return reply.status(400).send({ error: firstIssue(parsed.error) });
 
     try {
       const { user, accessToken, refreshToken } = await authProvider.login(
         parsed.data.email, parsed.data.password
       );
-      setAuthCookies(reply, accessToken, refreshToken);
+      setAuthCookies(reply, accessToken, refreshToken, { persistent: parsed.data.remember });
       return reply.send({ user });
     } catch (err) {
       return reply.status(401).send({ error: String(err instanceof Error ? err.message : err) });
@@ -99,7 +137,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(401).send(SESSION_EXPIRED_BODY);
     }
 
-    setAuthCookies(reply, tokens.accessToken, tokens.refreshToken);
+    setAuthCookies(reply, tokens.accessToken, tokens.refreshToken, { persistent: isPersistent(req) });
     return reply.send({ ok: true });
   });
 
@@ -119,8 +157,12 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: "This verification link is invalid or has expired." });
     }
 
-    await prisma.user.update({ where: { id: record.userId }, data: { emailVerified: true } });
+    // Only counts while the user's email is still the address this link was mailed to.
+    const verified = await markEmailVerified(record.userId, record.email);
     await prisma.emailVerification.delete({ where: { id: record.id } });
+    if (!verified) {
+      return reply.status(400).send({ error: "This verification link is invalid or has expired." });
+    }
 
     return reply.send({ ok: true });
   });
@@ -135,17 +177,65 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     if (!user) return reply.status(404).send({ error: "User not found" });
     if (user.emailVerified) return reply.status(400).send({ error: "Email already verified" });
 
-    // Invalidate previous unused tokens
-    await prisma.emailVerification.deleteMany({ where: { userId, usedAt: null } });
-
-    const token = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await prisma.emailVerification.create({ data: { userId, token, expiresAt } });
-
-    const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
-    await sendVerificationEmail(user.email, `${webUrl}/verify-email?token=${token}`);
-
+    await issueVerification(userId, user.email);
     return reply.send({ ok: true });
+  });
+
+  // Verify with the 6-digit code from the email. The user is already logged in (sign-up logs in first).
+  app.post("/auth/verify-email/code", {
+    preHandler: [withAuth],
+    config: { rateLimit: { max: 10, timeWindow: "15 minutes" } },
+  }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const { code } = (req.body ?? {}) as { code?: unknown };
+    if (!isCodeFormat(code)) return reply.status(400).send({ error: "Enter the 6-digit code." });
+
+    const problem = await verifyEmailCode(userId, code);
+    if (problem) return reply.status(400).send({ error: problem });
+    return reply.send({ ok: true });
+  });
+
+  // "Wrong email? Change": fix a typo in the sign-up email while it is still unverified.
+  // Safe because the new address must be verified with a fresh code before it counts.
+  app.post("/auth/change-email", {
+    preHandler: [withAuth],
+    config: { rateLimit: { max: 5, timeWindow: "15 minutes" } },
+  }, async (req, reply) => {
+    const { id: userId } = getUser(req);
+    const parsed = z.object({ email: z.string().email() }).safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: "Enter a valid email address." });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, emailVerified: true, passwordHash: true },
+    });
+    if (!user) return reply.status(404).send({ error: "User not found" });
+    if (user.emailVerified) return reply.status(400).send({ error: "Your email is already verified." });
+    // Supabase accounts keep their email in Supabase; changing only our copy would split them.
+    if (!user.passwordHash) return reply.status(400).send({ error: "Email change isn't available for this account." });
+
+    const email = parsed.data.email;
+    if (email !== user.email) {
+      try {
+        // Conditional on "still unverified" so a code verified in parallel cannot end up
+        // attached to an address nobody checked.
+        const changed = await prisma.user.updateMany({
+          where: { id: userId, emailVerified: false },
+          data: { email },
+        });
+        if (changed.count === 0) {
+          return reply.status(400).send({ error: "Your email is already verified." });
+        }
+      } catch (err) {
+        if ((err as { code?: string }).code === "P2002") {
+          return reply.status(400).send({ error: "Email already in use" });
+        }
+        throw err;
+      }
+    }
+
+    await issueVerification(userId, email);
+    return reply.send({ ok: true, email });
   });
 
   // ── Password reset ────────────────────────────────────────────────────────
@@ -182,7 +272,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       await prisma.passwordReset.deleteMany({ where: { userId: user.id, usedAt: null } });
 
       const token = crypto.randomBytes(32).toString("hex");
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+      const expiresAt = new Date(Date.now() + RESET_LINK_TTL_MIN * 60 * 1000);
       await prisma.passwordReset.create({ data: { userId: user.id, token, expiresAt } });
 
       const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
@@ -198,7 +288,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   }, async (req, reply) => {
     const { token, password } = req.body as { token?: string; password?: string };
     if (!token || !password) return reply.status(400).send({ error: "Token and password required" });
-    if (password.length < 8) return reply.status(400).send({ error: "Password must be at least 8 characters" });
+    const problem = passwordProblem(password);
+    if (problem) return reply.status(400).send({ error: problem });
 
     // Supabase reset: token is the access_token from the recovery magic-link hash.
     // Validate it to get the Supabase user ID, then use admin API to set the password.
@@ -214,7 +305,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       }
       const { error } = await admin.auth.admin.updateUserById(userData.user.id, { password });
       if (error) return reply.status(400).send({ error: error.message });
-      return reply.send({ ok: true });
+      // Supabase sessions come from Supabase, not us: the web app sends the user to /login.
+      return reply.send({ ok: true, loggedIn: false });
     }
 
     const reset = await prisma.passwordReset.findUnique({ where: { token } });
@@ -222,12 +314,24 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: "This reset link is invalid or has expired." });
     }
 
+    // Claim the token atomically BEFORE touching the password, so two parallel
+    // requests with the same link cannot both succeed.
+    const claimed = await prisma.passwordReset.updateMany({
+      where: { id: reset.id, usedAt: null, expiresAt: { gt: new Date() } },
+      data: { usedAt: new Date() },
+    });
+    if (claimed.count === 0) {
+      return reply.status(400).send({ error: "This reset link is invalid or has expired." });
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
     await prisma.user.update({ where: { id: reset.userId }, data: { passwordHash } });
-    await prisma.passwordReset.update({ where: { id: reset.id }, data: { usedAt: new Date() } });
+    // Everything signed in with the old password is out; this request gets a fresh session.
     await authProvider.revokeOtherSessions?.(reset.userId);
+    const { accessToken, refreshToken } = await createLocalTokens(reset.userId);
+    setAuthCookies(reply, accessToken, refreshToken);
 
-    return reply.send({ ok: true });
+    return reply.send({ ok: true, loggedIn: true });
   });
 
   // ── Settings ──────────────────────────────────────────────────────────────
@@ -256,7 +360,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const { id: userId } = getUser(req);
     const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
     if (!currentPassword || !newPassword) return reply.status(400).send({ error: "Both fields required" });
-    if (newPassword.length < 8) return reply.status(400).send({ error: "Password must be at least 8 characters" });
+    const problem = passwordProblem(newPassword);
+    if (problem) return reply.status(400).send({ error: problem });
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user?.passwordHash) return reply.status(400).send({ error: "Password change not supported for this account" });

@@ -23,6 +23,8 @@ model User {
   timezone     String  @default("UTC")
 
   emailVerified Boolean @default(false)
+  // "Send me tips & product updates" on the sign-up form. Unchecked or social sign-up = false.
+  marketingOptIn Boolean @default(false)
 
   // Onboarding email tracking — prevent duplicate sends
   day3NudgeSentAt    DateTime?
@@ -270,6 +272,13 @@ model EmailVerification {
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   token     String    @unique
+  // The address the link/code was mailed to. Verifying only counts while it is still the user's email.
+  // Null on rows created before this column existed.
+  email     String?
+  // sha256(token:code) of the 6-digit code mailed with the link. Null on rows created before codes existed.
+  codeHash  String?
+  // Wrong code guesses so far. The code is dead after MAX_CODE_ATTEMPTS.
+  attempts  Int       @default(0)
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
