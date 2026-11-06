@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 /* Laptop-height viewports: auth screens tighten spacing so the submit button stays on screen */
@@ -134,6 +135,25 @@
   --color-muted:     var(--c-muted);
   --color-accent:    var(--c-accent);
   --color-accent-fg: var(--c-accent-fg);
+
+  /* shadcn/ui names → Postly tokens. `accent` and `muted` are NOT aliased: here they mean
+     brand yellow and secondary text, so every ui/* file maps shadcn's hover / subtle-bg
+     usages to neutral-100 / bg-surface instead (guarded by components/ui/guard.test.ts). */
+  --color-background:             var(--c-bg);
+  --color-foreground:             var(--c-fg);
+  --color-card:                   var(--c-surface);
+  --color-card-foreground:        var(--c-fg);
+  --color-popover:                var(--c-surface);
+  --color-popover-foreground:     var(--c-fg);
+  --color-primary:                var(--c-accent);
+  --color-primary-foreground:     var(--c-accent-fg);
+  --color-secondary:              var(--c-surface);
+  --color-secondary-foreground:   var(--c-fg);
+  --color-muted-foreground:       var(--c-muted);
+  --color-destructive:            var(--color-red-500);
+  --color-destructive-foreground: var(--color-white);
+  --color-input:                  var(--c-border);
+  --color-ring:                   var(--c-accent);
 
   --font-heading: var(--ff-koho);
   --font-sans:    var(--ff-inter);
