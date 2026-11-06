@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { PlatformIcon } from "./PlatformIcon";
+import { Wordmark } from "./Wordmark";
 import { cn } from "../lib/cn";
 
 export const PLATFORMS_NAV = [
@@ -125,8 +125,7 @@ export function NavBar({ user, ctaHref, navCtaLabel, loading }: NavBarProps) {
     )}>
       {/* Brand */}
       <Link href="/" className="flex items-center gap-2.5 text-fg">
-        <Image src="/posthivemain.png" alt="Posthive" width={30} height={30} className="object-contain" />
-        <span className="type-body-sb-l tracking-tight">Posthive</span>
+        <Wordmark size="md" />
       </Link>
 
       {/* Desktop nav */}

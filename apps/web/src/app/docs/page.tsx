@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { DocsMcpConnectorTabs } from "../../components/DocsMcpConnectorTabs";
+import { Wordmark } from "../../components/Wordmark";
 import { cn } from "../../lib/cn";
 
 function CopyCode({ children }: { children: string }) {
@@ -274,7 +275,7 @@ export default function DocsPage() {
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
             </button>
-            <img src="/posthivemain.png" alt="Posthive" className="h-6.5 w-auto" />
+            <Wordmark size="md" className="text-fg" />
           </div>
 
           {/* Centre: section tabs */}

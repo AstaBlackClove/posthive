@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { FEATURES_NAV } from "./LandingNav";
+import { Wordmark } from "./Wordmark";
 import { cn } from "../lib/cn";
 
 const FOOT_LINK = "type-body-r-s text-muted transition-colors hover:text-fg";
@@ -14,14 +14,7 @@ export function LandingFooter() {
         {/* Brand column */}
         <div>
           <div className="mb-3.5 flex items-center gap-2.5 text-fg">
-            <Image
-              src="/posthivemain.png"
-              alt="Posthive"
-              width={28}
-              height={28}
-              className="object-contain"
-            />
-            <span className="type-body-sb-m tracking-tight">Posthive</span>
+            <Wordmark size="md" />
           </div>
           <p className="mb-6 type-body-r-s text-muted">
             The social media scheduler built for creators and teams. Write once,

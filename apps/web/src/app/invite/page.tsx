@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../lib/api";
 import { cn } from "../../lib/cn";
+import { Wordmark } from "../../components/Wordmark";
 
 interface InviteInfo {
   id: string;
@@ -73,12 +74,7 @@ function InviteContent() {
       <div className="card w-full max-w-110 p-8 text-center">
         {/* Logo */}
         <div className="mb-8">
-          <img
-            src="/posthivemain.png"
-            alt="Posthive"
-            className="mx-auto mb-3 block size-12 rounded-xl object-cover"
-          />
-          <span className="type-body-sb-l text-fg">Posthive</span>
+          <Wordmark size="lg" className="text-fg" />
         </div>
 
         {authLoading ? (

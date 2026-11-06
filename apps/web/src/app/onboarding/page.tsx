@@ -5,6 +5,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 import { PlatformIcon } from "../../components/PlatformIcon";
+import { Wordmark } from "../../components/Wordmark";
 import { DateTimePicker } from "../../components/DateTimePicker";
 import { fromWibInput, toWibInput, wibDateKey } from "../../lib/datetime";
 import { cn } from "../../lib/cn";
@@ -352,8 +353,7 @@ function OnboardingContent() {
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border border-brand-300 bg-brand-100"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/posthivemain.png" alt="Posthive" className="w-10 h-10 rounded-xl object-cover" />
+            <Wordmark variant="mark" size="lg" />
           </div>
 
           <h1 className="type-head-sb-3 mb-3 text-fg">

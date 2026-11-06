@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../lib/api";
-import Image from "next/image";
+import { Wordmark } from "../../components/Wordmark";
 
 export default function McpConnectPage() {
   const { user, loading } = useAuth();
@@ -80,7 +80,7 @@ export default function McpConnectPage() {
         {/* Logos */}
         <div className="mb-8 flex items-center justify-center gap-5">
           <div className="flex size-13 items-center justify-center rounded-xl border border-brand-300 bg-brand-100">
-            <Image src="/posthivemain.png" alt="Posthive" width={32} height={32} className="rounded-md" />
+            <Wordmark variant="mark" size="md" />
           </div>
           <div className="flex gap-1">
             {[0,1,2].map(i => <div key={i} className="size-1 rounded-full bg-neutral-300" />)}

@@ -8,6 +8,7 @@ import { useWorkspace } from "../context/WorkspaceContext";
 import { apiFetch } from "../lib/api";
 import { cn } from "../lib/cn";
 import { TrialBanner } from "./TrialBanner";
+import { Wordmark } from "./Wordmark";
 import { useToast } from "./Toast";
 import { navByRole, canEditContent } from "../lib/permissions";
 
@@ -255,14 +256,8 @@ export function Sidebar() {
       >
         {/* Logo */}
         <div className="relative flex h-16 shrink-0 items-center gap-2 border-b border-border px-3">
-          <Link href="/" className="flex items-center gap-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/posthivemain.png" alt="Posthive" width={28} height={28} className="object-contain" />
-            {!showCollapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="type-body-sb-s text-fg">Posthive</p>
-              </div>
-            )}
+          <Link href="/" className="flex items-center gap-2.5 text-fg">
+            {showCollapsed ? <Wordmark variant="mark" size="sm" /> : <Wordmark size="md" />}
           </Link>
         </div>
 

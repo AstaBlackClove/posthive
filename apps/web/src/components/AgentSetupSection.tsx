@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { cn } from "../lib/cn";
+import { Wordmark } from "./Wordmark";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -306,13 +307,7 @@ export function AgentSetupSection() {
         <div className="relative rounded-xl border border-border bg-surface px-4.5 pt-4.5 pb-5 shadow-sm">
           <div className="absolute top-2.5 right-3 rounded-sm border border-border px-2 py-0.5 type-body-r-xxs uppercase tracking-widest text-muted">Preview</div>
           <div className="mb-4 flex items-center gap-3.5">
-            <Image
-              src={`/posthivemain.png`}
-              alt={app.label}
-              width={36}
-              height={36}
-              className="rounded-lg"
-            />
+            <Wordmark variant="mark" size="lg" />
             <svg width="20" height="12" viewBox="0 0 20 12" className="text-muted">
               <path
                 d="M0 6h18M14 2l4 4-4 4"
