@@ -3,33 +3,36 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/cn"
 import { Slot } from "radix-ui"
 
+// Heights come from padding + the type-* line height, not a fixed h-*: default is 38px,
+// secondary-style buttons 40px (the border adds 2px), same as the old btn-* classes.
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl type-body-sb-s whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-']):not([class*='w-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-primary text-primary-foreground hover:bg-brand-500",
+        secondary: "border border-border bg-surface text-fg hover:bg-neutral-100",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-red-600",
+        "destructive-outline":
+          "border border-red-200 bg-surface text-red-600 hover:bg-red-50",
+        ghost: "text-muted-foreground hover:bg-neutral-100 hover:text-fg",
+        link: "text-brand-800 underline-offset-4 hover:text-brand-900 hover:underline",
+        // Dark auth screens: taller, brighter yellow
+        auth: "h-12 min-w-45 bg-brand-500 px-8 text-accent-fg hover:bg-brand-400",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        default: "px-4 py-2",
+        sm: "gap-1.5 rounded-lg px-2.5 py-1 type-body-sb-xs",
+        lg: "px-6 py-3",
+        icon: "size-10",
+        // 28px square, the old job-action-btn
+        "icon-sm": "size-7 rounded-lg",
       },
     },
+    compoundVariants: [
+      // a link has no box
+      { variant: "link", class: "h-auto min-w-0 rounded-md p-0" },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",
