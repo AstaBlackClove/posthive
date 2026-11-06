@@ -13,7 +13,7 @@ interface Props {
   youtubeVideoUrl: string;
   onYoutubeVideoUrlChange: (url: string) => void;
   onlyYoutube: boolean;
-  ytVideoInputRef: RefObject<HTMLInputElement>;
+  ytVideoInputRef: RefObject<HTMLInputElement | null>;
   onYtVideoUpload: (file: File) => void;
 
   // Media state (normalized)
@@ -36,7 +36,7 @@ interface Props {
   uploading: boolean;
   uploadProgress?: { done: number; total: number } | null;
   uploadError: string | null;
-  fileInputRef: RefObject<HTMLInputElement>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
   // Called for post/story file picks (images, or videos in story mode)
   onFileUpload: (files: File[]) => void;
   // Called for explicit reel video pick

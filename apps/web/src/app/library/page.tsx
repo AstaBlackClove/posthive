@@ -724,9 +724,9 @@ function LibraryDetail({
   itemsHasMore: boolean;
   itemsFilter: string;
   setItemsFilter: (v: string) => void;
-  sentinelRef: React.RefObject<HTMLDivElement>;
+  sentinelRef: React.RefObject<HTMLDivElement | null>;
   csvUploading: boolean;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   settingsOpen: boolean;
   setSettingsOpen: (v: boolean) => void;
   onCsvFile: (f: File) => void;
