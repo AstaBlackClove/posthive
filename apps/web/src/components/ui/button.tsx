@@ -12,6 +12,8 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-brand-500",
         secondary: "border border-border bg-surface text-fg hover:bg-neutral-100",
+        // The olive button of the dashboard design ("Import plan", "Add account")
+        olive: "bg-neutral-600 text-white hover:bg-neutral-800",
         destructive: "bg-destructive text-destructive-foreground hover:bg-red-600",
         "destructive-outline":
           "border border-red-200 bg-surface text-red-600 hover:bg-red-50",

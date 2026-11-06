@@ -5,6 +5,7 @@ import { Slot } from "radix-ui"
 
 import { Separator } from "@/components/ui/separator"
 
+// A row: media, title + description, actions (a channel, a member, a task).
 function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -31,13 +32,13 @@ function ItemSeparator({
 }
 
 const itemVariants = cva(
-  "group/item flex flex-wrap items-center rounded-md border border-transparent text-sm transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:transition-colors [a]:hover:bg-accent/50",
+  "group/item flex flex-wrap items-center rounded-xl border border-transparent transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 [a]:transition-colors [a]:hover:bg-neutral-100/50",
   {
     variants: {
       variant: {
         default: "bg-transparent",
         outline: "border-border",
-        muted: "bg-muted/50",
+        muted: "bg-bg",
       },
       size: {
         default: "gap-4 p-4",
@@ -77,9 +78,9 @@ const itemMediaVariants = cva(
     variants: {
       variant: {
         default: "bg-transparent",
-        icon: "size-8 rounded-sm border bg-muted [&_svg:not([class*='size-'])]:size-4",
+        icon: "size-8 rounded-lg border border-border bg-bg [&_svg:not([class*='size-']):not([class*='w-'])]:size-4",
         image:
-          "size-10 overflow-hidden rounded-sm [&_img]:size-full [&_img]:object-cover",
+          "size-10 overflow-hidden rounded-lg [&_img]:size-full [&_img]:object-cover",
       },
     },
     defaultVariants: {
@@ -108,7 +109,7 @@ function ItemContent({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="item-content"
       className={cn(
-        "flex flex-1 flex-col gap-1 [&+[data-slot=item-content]]:flex-none",
+        "flex flex-1 flex-col gap-0.5 [&+[data-slot=item-content]]:flex-none",
         className
       )}
       {...props}
@@ -120,10 +121,7 @@ function ItemTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="item-title"
-      className={cn(
-        "flex w-fit items-center gap-2 text-sm leading-snug font-medium",
-        className
-      )}
+      className={cn("flex w-fit items-center gap-2 type-body-m-s text-fg", className)}
       {...props}
     />
   )
@@ -134,8 +132,8 @@ function ItemDescription({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="item-description"
       className={cn(
-        "line-clamp-2 text-sm leading-normal font-normal text-balance text-muted-foreground",
-        "[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
+        "line-clamp-2 type-body-r-xs text-balance text-muted-foreground",
+        "[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-brand-900",
         className
       )}
       {...props}

@@ -121,6 +121,29 @@
   --c-muted:      var(--color-neutral-600);
   --c-accent:     var(--color-brand-600);
   --c-accent-fg:  var(--color-neutral-950);
+
+  /* App sidebar (shadcn Sidebar). Light only, like the rest of the app. Measured from the
+     Figma export: olive frame, a darker active row with yellow text, olive-600 rules. */
+  --sidebar:                    var(--color-neutral-700);
+  --sidebar-foreground:         var(--color-neutral-50);
+  --sidebar-primary:            var(--color-brand-500);
+  --sidebar-primary-foreground: var(--color-neutral-950);
+  --sidebar-accent:             var(--color-neutral-800);
+  --sidebar-accent-foreground:  var(--color-brand-500);
+  --sidebar-border:             var(--color-neutral-600);
+  --sidebar-ring:               var(--color-brand-500);
+
+  /* The two content-status colours that are not on the palette (everything else maps to a scale
+     step in lib/content-status.ts). Values are the Figma export's. */
+  --status-design:  #4f7cac; /* In design */
+  --status-changes: #f36a1d; /* Changes requested / Rejected */
+}
+
+/* Dashboard surface: a neutral-50 canvas with white cards, as in docs/design/dashboard-empty-state.png.
+   The rest of the app keeps the cream canvas; this scope swaps the two tokens, the way .dark does. */
+.theme-dashboard {
+  --c-bg:      var(--color-neutral-50);
+  --c-surface: var(--color-white);
 }
 .dark {
   --c-bg:         var(--color-neutral-950);
@@ -159,6 +182,18 @@
   --color-destructive-foreground: var(--color-white);
   --color-input:                  var(--c-border);
   --color-ring:                   var(--c-accent);
+
+  --color-sidebar:                    var(--sidebar);
+  --color-sidebar-foreground:         var(--sidebar-foreground);
+  --color-sidebar-primary:            var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent:             var(--sidebar-accent);
+  --color-sidebar-accent-foreground:  var(--sidebar-accent-foreground);
+  --color-sidebar-border:             var(--sidebar-border);
+  --color-sidebar-ring:               var(--sidebar-ring);
+
+  --color-status-design:  var(--status-design);
+  --color-status-changes: var(--status-changes);
 
   --font-heading: var(--ff-koho);
   --font-sans:    var(--ff-inter);
