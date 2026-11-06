@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { TYPEFACE, TYPE_STYLES, WEIGHT_VALUE, typeStyleLabel } from "../../lib/typography";
+import { UiShowcase } from "./UiShowcase";
 
 export const metadata: Metadata = { title: "Typography", robots: { index: false, follow: false } };
 
@@ -8,7 +9,7 @@ const COLUMNS = ["Typography Type", "Typeface", "Weight", "Size", "Line Height",
 
 const cell = "border-b border-border px-4 py-3 align-middle whitespace-nowrap";
 
-/** Dev-only preview of the Body + Mono scale (src/lib/typography.ts). 404 in production. */
+/** Dev-only preview of the Body + Mono scale (src/lib/typography.ts) and of components/ui. 404 in production. */
 export default function TypographyPage() {
   if (process.env.NODE_ENV === "production") notFound();
 
@@ -48,6 +49,8 @@ export default function TypographyPage() {
             </tbody>
           </table>
         </div>
+
+        <UiShowcase />
       </div>
     </div>
   );
