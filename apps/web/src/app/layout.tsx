@@ -21,7 +21,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "../context/AuthContext";
 import { WorkspaceProvider } from "../context/WorkspaceContext";
 import { AppShell } from "../components/AppShell";
-import { ToastProvider } from "../components/Toast";
+import { Toaster } from "@/components/ui/sonner";
 import { TrackingProvider } from "../components/TrackingProvider";
 
 const OG_BASE = process.env.NEXT_PUBLIC_WEB_URL || "https://posthive.co";
@@ -127,13 +127,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="h-full font-sans antialiased">
         <AuthProvider>
           <WorkspaceProvider>
-            <ToastProvider>
-              <TrackingProvider>
-                <AppShell>{children}</AppShell>
-              </TrackingProvider>
-            </ToastProvider>
+            <TrackingProvider>
+              <AppShell>{children}</AppShell>
+            </TrackingProvider>
           </WorkspaceProvider>
         </AuthProvider>
+        <Toaster />
         <Analytics />
         <Script id="posthive-console" strategy="afterInteractive">{`
           console.log('%c Posthive ','background:#5b63d3;color:#fff;font-size:16px;font-weight:700;padding:6px 14px;border-radius:6px;font-family:sans-serif;');

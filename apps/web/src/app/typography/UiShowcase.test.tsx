@@ -11,7 +11,7 @@ afterEach(cleanup);
 describe("UiShowcase", () => {
   it("renders every section", () => {
     render(<UiShowcase />);
-    for (const title of ["Button", "Badge and Alert", "Form controls", "Toggle group, tabs, progress", "Avatar, card, table, collapsible", "Overlays"]) {
+    for (const title of ["Button", "Badge and Alert", "Feedback", "Form controls", "Toggle group, tabs, progress", "Avatar, card, table, collapsible", "Overlays"]) {
       expect(screen.getByRole("heading", { name: title })).toBeTruthy();
     }
     // 7 badge tones + the 4 alerts

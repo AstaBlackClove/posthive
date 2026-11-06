@@ -48,6 +48,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
+import { InlineAlert } from "@/components/InlineAlert";
+import { Spinner } from "@/components/Spinner";
+import { useToast } from "@/components/Toast";
 
 const TIMEZONES = ["Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura", "Europe/Paris", "America/New_York"];
 
@@ -76,6 +81,8 @@ export function UiShowcase() {
   const [zone, setZone] = useState("Asia/Jakarta");
   const [comboOpen, setComboOpen] = useState(false);
   const [view, setView] = useState("list");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const toast = useToast();
 
   return (
     <div className="mt-14">
@@ -129,6 +136,43 @@ export function UiShowcase() {
           <Alert variant="danger"><AlertTitle>Could not publish</AlertTitle><AlertDescription>The token has expired.</AlertDescription></Alert>
           <Alert variant="warning"><AlertTitle>Trial ends soon</AlertTitle><AlertDescription>3 days left.</AlertDescription></Alert>
           <Alert variant="info"><AlertTitle>Tip</AlertTitle><AlertDescription>Drag a post to reschedule it.</AlertDescription></Alert>
+        </div>
+      </Section>
+
+      <Section title="Feedback" note="Postly components on top of ui/: toast (sonner, bottom right), InlineAlert, ConfirmDialog, Spinner, EmptyState.">
+        <Row label="toast">
+          <Button variant="secondary" size="sm" onClick={() => toast.success("Post deleted.")}>Success</Button>
+          <Button variant="secondary" size="sm" onClick={() => toast.error("Could not publish: the token has expired.")}>Error (6s)</Button>
+          <Button variant="secondary" size="sm" onClick={() => toast.warning("Trial ends in 3 days.")}>Warning</Button>
+          <Button variant="secondary" size="sm" onClick={() => toast.toast("Copied!")}>Info</Button>
+        </Row>
+        <div className="grid gap-3 md:grid-cols-2">
+          <InlineAlert tone="danger" title="Could not publish">The token has expired. Reconnect the account.</InlineAlert>
+          <InlineAlert tone="warning">3 of 5 accounts used.</InlineAlert>
+          <InlineAlert tone="success">Your plan was imported.</InlineAlert>
+          <InlineAlert tone="info">Drag a post to reschedule it.</InlineAlert>
+        </div>
+        <div className="rounded-2xl bg-neutral-900 p-5 space-y-3">
+          <InlineAlert onDark tone="danger">Wrong email or password.</InlineAlert>
+          <InlineAlert onDark tone="info">We sent a 6-digit code to you@example.com.</InlineAlert>
+        </div>
+        <Row label="confirm">
+          <Button variant="destructive-outline" onClick={() => setConfirmOpen(true)}>Delete a post (ConfirmDialog)</Button>
+          <ConfirmDialog
+            open={confirmOpen}
+            onOpenChange={setConfirmOpen}
+            title="Delete this post?"
+            description="This will permanently delete the scheduled post and any uploaded images. This cannot be undone."
+            confirmLabel="Delete post"
+            pendingLabel="Deleting…"
+            onConfirm={async () => { await new Promise((r) => setTimeout(r, 900)); toast.success("Post deleted."); }}
+          >
+            <div className="card mt-3 rounded-xl px-3 py-2.5"><p className="type-body-r-xs text-neutral-500">Launch teaser for the new scheduler…</p></div>
+          </ConfirmDialog>
+        </Row>
+        <Row label="spinner"><Spinner size="sm" /><Spinner /><Spinner size="lg" className="text-brand-800" /></Row>
+        <div className="rounded-2xl border border-dashed border-border">
+          <EmptyState size="compact" icon={<PlusIcon />} title="No posts scheduled yet" description="Schedule your first post and it will appear here." action={<Button>Write your first post →</Button>} />
         </div>
       </Section>
 
