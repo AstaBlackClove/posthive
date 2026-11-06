@@ -6,6 +6,13 @@ import { ACCESS_TTL_MS, ABSOLUTE_TTL_MS } from "./sessionPolicy.js";
 
 export const ACCESS_COOKIE_NAME = "ss-access-token";
 export const REFRESH_COOKIE_NAME = "ss-refresh-token";
+/**
+ * Present ("1") when the user logged in WITHOUT "Keep me logged in": the auth cookies are
+ * then session cookies (gone when the browser closes) and rotation must keep them that way.
+ * Server-side limits (1h idle, 7d cap) apply either way, so tampering with this cookie
+ * only changes how long the browser keeps the user's own cookies.
+ */
+export const SESSION_ONLY_COOKIE_NAME = "ss-session-only";
 
 export const COOKIE_OPTS = {
   httpOnly: true,
@@ -32,17 +39,36 @@ declare module "fastify" {
   }
 }
 
-/** Set auth cookies. Pass `refreshToken: null` to leave the refresh cookie unchanged. */
-export function setAuthCookies(reply: FastifyReply, accessToken: string, refreshToken: string | null): void {
-  reply.setCookie(ACCESS_COOKIE_NAME, accessToken, { ...COOKIE_OPTS, maxAge: Math.floor(ACCESS_TTL_MS / 1000) });
+/** False when the request carries the session-only marker (login without "Keep me logged in"). */
+export function isPersistent(req: FastifyRequest): boolean {
+  return req.cookies?.[SESSION_ONLY_COOKIE_NAME] !== "1";
+}
+
+/**
+ * Set auth cookies. Pass `refreshToken: null` to leave the refresh cookie unchanged.
+ * `persistent: false` omits `maxAge` (session cookies) and sets the session-only marker.
+ */
+export function setAuthCookies(
+  reply: FastifyReply,
+  accessToken: string,
+  refreshToken: string | null,
+  opts: { persistent?: boolean } = {},
+): void {
+  const persistent = opts.persistent ?? true;
+  const lifetime = (ms: number) => (persistent ? { maxAge: Math.floor(ms / 1000) } : {});
+
+  reply.setCookie(ACCESS_COOKIE_NAME, accessToken, { ...COOKIE_OPTS, ...lifetime(ACCESS_TTL_MS) });
   if (refreshToken) {
-    reply.setCookie(REFRESH_COOKIE_NAME, refreshToken, { ...COOKIE_OPTS, maxAge: Math.floor(ABSOLUTE_TTL_MS / 1000) });
+    reply.setCookie(REFRESH_COOKIE_NAME, refreshToken, { ...COOKIE_OPTS, ...lifetime(ABSOLUTE_TTL_MS) });
   }
+  if (persistent) reply.clearCookie(SESSION_ONLY_COOKIE_NAME, { path: "/" });
+  else reply.setCookie(SESSION_ONLY_COOKIE_NAME, "1", COOKIE_OPTS);
 }
 
 export function clearAuthCookies(reply: FastifyReply): void {
   reply.clearCookie(ACCESS_COOKIE_NAME, { path: "/" });
   reply.clearCookie(REFRESH_COOKIE_NAME, { path: "/" });
+  reply.clearCookie(SESSION_ONLY_COOKIE_NAME, { path: "/" });
 }
 
 export interface AuthGuardDeps {
@@ -86,7 +112,7 @@ export function createAuthGuard(deps: AuthGuardDeps) {
       if (tokens) {
         const result = await provider.validateAccessToken(tokens.accessToken);
         if (result) {
-          setAuthCookies(reply, tokens.accessToken, tokens.refreshToken);
+          setAuthCookies(reply, tokens.accessToken, tokens.refreshToken, { persistent: isPersistent(req) });
           await accept(req, result);
           return true;
         }

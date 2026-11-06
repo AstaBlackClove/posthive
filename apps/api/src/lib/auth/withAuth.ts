@@ -11,6 +11,7 @@ export {
   REFRESH_COOKIE_NAME,
   setAuthCookies,
   clearAuthCookies,
+  isPersistent,
 } from "./authGuard.js";
 
 async function resolveWorkspace(req: FastifyRequest, userId: string): Promise<void> {
