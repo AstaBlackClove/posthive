@@ -19,6 +19,22 @@ social-scheduler/
 
 ---
 
+## Querying Production DB
+
+Use Supabase CLI — already linked to prod. Never use local Prisma for prod data.
+
+```bash
+# Run any SQL against prod (from repo root)
+supabase db query --linked "SELECT ..."
+
+# Example: check failed posts for a user
+supabase db query --linked "SELECT a.platform, pjt.status, pjt.error, pj.\"scheduledFor\" FROM \"PostJobTarget\" pjt JOIN \"PostJob\" pj ON pj.id = pjt.\"postJobId\" JOIN \"Account\" a ON a.id = pjt.\"accountId\" JOIN \"Workspace\" w ON w.id = pj.\"workspaceId\" JOIN \"WorkspaceMember\" wm ON wm.\"workspaceId\" = w.id JOIN \"User\" u ON u.id = wm.\"userId\" WHERE u.email = 'user@example.com' ORDER BY pj.\"createdAt\" DESC LIMIT 20;"
+```
+
+Note: `PostJobTarget` has no `platform` column — join `Account` on `accountId` to get platform.
+
+---
+
 ## Running the Project
 
 ```bash

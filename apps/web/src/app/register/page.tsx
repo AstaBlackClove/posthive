@@ -3,8 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { register } from "../../lib/auth";
-import { useAuth } from "../../context/AuthContext";
+import { registerPending } from "../../lib/auth";
 import { safeReturnTo } from "../../lib/safeReturnTo";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -13,7 +12,6 @@ function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = safeReturnTo(searchParams.get("returnTo"), "/onboarding");
-  const { refresh } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,9 +27,10 @@ function RegisterContent() {
     e.preventDefault();
     setLoading(true); setError(null);
     try {
-      await register(email, password, name);
-      await refresh();
-      router.replace(returnTo);
+      await registerPending(email, password, name);
+      const params = new URLSearchParams({ email });
+      if (returnTo) params.set("returnTo", returnTo);
+      router.replace(`/register/verify?${params.toString()}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

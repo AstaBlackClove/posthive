@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { CODE_TTL_MIN } from "./auth/emailCode.js";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = process.env.EMAIL_FROM ?? "Posthive <noreply@posthive.co>";
@@ -47,12 +48,19 @@ function infoBox(content: string): string {
   return `<div style="background:#141414;border:1px solid #242424;border-radius:7px;padding:14px 18px;margin-bottom:18px;">${content}</div>`;
 }
 
-export async function sendVerificationEmail(to: string, verifyUrl: string): Promise<void> {
+/** `code` is the 6-digit code typed on the sign-up screen; the link verifies in one click too. */
+export async function sendVerificationEmail(to: string, verifyUrl: string, code?: string): Promise<void> {
+  const codeBlock = code
+    ? infoBox(`<p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 6px;">Your code</p><p style="font-size:30px;font-weight:700;letter-spacing:0.28em;color:#ededed;margin:0 0 6px;">${code}</p><p style="font-size:12px;color:#7a7a7a;margin:0;">Expires in ${CODE_TTL_MIN} minutes.</p>`)
+    : infoBox(`<p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 5px;">Link expires in</p><p style="font-size:14px;font-weight:600;color:#ededed;margin:0;">24 hours</p>`);
   const body = `
     ${eyebrow("One step left")}
     ${heading("Verify your email address.")}
-    ${bodyText("Thanks for signing up for Posthive. Confirm your email to activate your account and unlock your 14-day free trial.")}
-    ${infoBox(`<p style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#7a7a7a;margin:0 0 5px;">Link expires in</p><p style="font-size:14px;font-weight:600;color:#ededed;margin:0;">24 hours</p>`)}
+    ${bodyText(code
+      ? "Thanks for signing up for Posthive. Enter this code on the sign-up screen to activate your account and unlock your 14-day free trial."
+      : "Thanks for signing up for Posthive. Confirm your email to activate your account and unlock your 14-day free trial.")}
+    ${codeBlock}
+    ${code ? bodyText("Or verify in one click. This link also works for 24 hours.", "font-size:12.5px;") : ""}
     ${ctaButton(verifyUrl, "Verify email address")}
     ${divider()}
     ${bodyText(`If the button does not work, copy this URL into your browser:<br><span style="color:#555;font-size:12px;word-break:break-all;">${verifyUrl}</span>`, "font-size:12.5px;")}
@@ -64,10 +72,10 @@ export async function sendVerificationEmail(to: string, verifyUrl: string): Prom
   );
 
   if (!resend) {
-    console.log(`[mailer] Email verification link for ${to}:\n${verifyUrl}`);
+    console.log(`[mailer] Email verification for ${to}:${code ? `\ncode: ${code}` : ""}\nlink: ${verifyUrl}`);
     return;
   }
-  await resend.emails.send({ from: FROM, to, subject: "Verify your Posthive email", html });
+  await resend.emails.send({ from: FROM, to, subject: code ? `${code} is your Posthive verification code` : "Verify your Posthive email", html });
 }
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
@@ -161,7 +169,7 @@ export async function sendWelcomeEmail(to: string, name: string): Promise<void> 
 
 export async function sendCleanupSummaryEmail(
   to: string,
-  stats: { sessions: number; events: number; postJobs: number; oauthStates: number; emailVerifications: number; libraryItems?: number },
+  stats: { sessions: number; events: number; postJobs: number; oauthStates: number; emailVerifications: number; pendingSignups?: number; libraryItems?: number },
 ): Promise<void> {
   const now = new Date().toUTCString();
   const rows = [
@@ -170,6 +178,7 @@ export async function sendCleanupSummaryEmail(
     ["PostJobs deleted", stats.postJobs],
     ["OAuth states cleared", stats.oauthStates],
     ["Email verifications cleared", stats.emailVerifications],
+    ...(stats.pendingSignups !== undefined ? [["Pending signups cleared", stats.pendingSignups] as [string, number]] : []),
     ...(stats.libraryItems !== undefined ? [["Library items deleted", stats.libraryItems] as [string, number]] : []),
   ] as [string, number][];
 

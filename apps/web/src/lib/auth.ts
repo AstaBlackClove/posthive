@@ -34,16 +34,41 @@ export async function login(email: string, password: string): Promise<AuthUser> 
   return data.user!;
 }
 
-export async function register(email: string, password: string, name: string): Promise<AuthUser> {
+// Stages the signup — no account exists yet. Confirm with verifyPendingSignup.
+export async function registerPending(email: string, password: string, name: string): Promise<{ email: string }> {
   const res = await fetch(`${API_BASE}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify({ email, password, name }),
   });
-  const data = await res.json() as { user?: AuthUser; error?: string };
+  const data = await res.json() as { email?: string; error?: string };
   if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Registration failed");
+  return { email: data.email! };
+}
+
+// Creates the account — pass either the 6-digit code + email, or the link token.
+export async function verifyPendingSignup(body: { email: string; code: string } | { token: string }): Promise<AuthUser> {
+  const res = await fetch(`${API_BASE}/auth/verify-pending`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(body),
+  });
+  const data = await res.json() as { user?: AuthUser; error?: string };
+  if (!res.ok) throw new Error(data.error ?? "Verification failed");
   return data.user!;
+}
+
+export async function resendPendingSignup(email: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/auth/resend-pending`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ email }),
+  });
+  const data = await res.json() as { error?: string };
+  if (!res.ok) throw new Error(data.error ?? "Could not resend code");
 }
 
 export async function logout(): Promise<void> {

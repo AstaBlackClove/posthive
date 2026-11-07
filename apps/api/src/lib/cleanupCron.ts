@@ -53,7 +53,7 @@ async function runCleanup(): Promise<void> {
     }
   }
 
-  const [oldSessions, bounceSessions, oldEvents, oldPostJobs, oldOAuthStates, oldEmailVerifications, revokedApiKeys, staleApiKeys, staleOAuthClients, oldLibraryItems] = await Promise.all([
+  const [oldSessions, bounceSessions, oldEvents, oldPostJobs, oldOAuthStates, oldEmailVerifications, oldPendingSignups, revokedApiKeys, staleApiKeys, staleOAuthClients, oldLibraryItems] = await Promise.all([
     // Sessions older than 90 days
     prisma.session.deleteMany({ where: { createdAt: { lt: cut90d } } }),
 
@@ -81,6 +81,9 @@ async function runCleanup(): Promise<void> {
 
     // EmailVerification tokens older than 1 day
     prisma.emailVerification.deleteMany({ where: { createdAt: { lt: cut1d } } }),
+
+    // Abandoned signups — code/link expired (15min TTL) and never verified
+    prisma.pendingSignup.deleteMany({ where: { expiresAt: { lt: new Date() } } }),
 
     // Revoked API keys older than 90 days — no longer useful
     prisma.apiKey.deleteMany({
@@ -112,6 +115,7 @@ async function runCleanup(): Promise<void> {
     ` (${oldSessions.count} old, ${bounceSessions.count} bounces), events: ${oldEvents.count} deleted,` +
     ` postJobs: ${oldPostJobs.count} deleted, oauthStates: ${oldOAuthStates.count} deleted,` +
     ` emailVerifications: ${oldEmailVerifications.count} deleted,` +
+    ` pendingSignups: ${oldPendingSignups.count} deleted,` +
     ` apiKeys: ${revokedApiKeys.count + staleApiKeys.count} deleted` +
     ` (${revokedApiKeys.count} revoked, ${staleApiKeys.count} stale),` +
     ` oauthClients: ${staleOAuthClients.count} deleted,` +
@@ -120,7 +124,7 @@ async function runCleanup(): Promise<void> {
 
   // Only send summary email if something was actually deleted — suppresses
   // duplicate emails when multiple instances run the cron at the same time.
-  const totalDeleted = sessionCount + oldEvents.count + oldPostJobs.count + oldOAuthStates.count + oldEmailVerifications.count + revokedApiKeys.count + staleApiKeys.count + staleOAuthClients.count + oldLibraryItems.count;
+  const totalDeleted = sessionCount + oldEvents.count + oldPostJobs.count + oldOAuthStates.count + oldEmailVerifications.count + oldPendingSignups.count + revokedApiKeys.count + staleApiKeys.count + staleOAuthClients.count + oldLibraryItems.count;
   if (totalDeleted > 0) {
     sendCleanupSummaryEmail("guna@posthive.co", {
       sessions: sessionCount,
@@ -128,6 +132,7 @@ async function runCleanup(): Promise<void> {
       postJobs: oldPostJobs.count,
       oauthStates: oldOAuthStates.count,
       emailVerifications: oldEmailVerifications.count,
+      pendingSignups: oldPendingSignups.count,
       libraryItems: oldLibraryItems.count,
     }).catch((e) => console.error("[cleanup-cron] summary email error:", e));
   }

@@ -6,6 +6,8 @@ import { prisma } from "../lib/prisma.js";
 import { authProvider } from "../lib/auth/index.js";
 import { withAuth, getUser, getWorkspaceId, COOKIE_OPTS, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from "../lib/auth/withAuth.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/mailer.js";
+import { generateCode, hashCode, codeMatches, isCodeFormat, MAX_CODE_ATTEMPTS, CODE_TTL_MIN } from "../lib/auth/emailCode.js";
+import { encrypt, decrypt } from "../lib/encryption.js";
 
 const registerBody = z.object({
   email: z.string().email(),
@@ -25,31 +27,110 @@ function setAuthCookies(reply: Parameters<typeof withAuth>[1], accessToken: stri
 
 export async function userRoutes(app: FastifyInstance): Promise<void> {
 
-  // Register
+  // Register — no User row yet. Stages a PendingSignup; the account is only created
+  // once the code (or link) is verified, so an abandoned/typo'd signup never leaves
+  // a real account behind.
   app.post("/auth/register", {
     config: { rateLimit: { max: 10, timeWindow: "15 minutes" } },
   }, async (req, reply) => {
     const parsed = registerBody.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
+    const { email, password, name } = parsed.data;
 
     try {
-      const { user, accessToken, refreshToken } = await authProvider.register(
-        parsed.data.email, parsed.data.password, parsed.data.name
-      );
-      setAuthCookies(reply, accessToken, refreshToken);
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing) return reply.status(400).send({ error: "Email already in use" });
 
-      // Send verification email (fire-and-forget — don't block registration)
-      const verifyToken = crypto.randomBytes(32).toString("hex");
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      await prisma.emailVerification.create({ data: { userId: user.id, token: verifyToken, expiresAt } });
+      await prisma.pendingSignup.deleteMany({ where: { email } });
+
+      const token = crypto.randomBytes(32).toString("hex");
+      const code = generateCode();
+      const expiresAt = new Date(Date.now() + CODE_TTL_MIN * 60 * 1000);
+      await prisma.pendingSignup.create({
+        data: { email, name, passwordEnc: encrypt(password), token, codeHash: hashCode(token, code), expiresAt },
+      });
+
       const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
-      sendVerificationEmail(parsed.data.email, `${webUrl}/verify-email?token=${verifyToken}`).catch(() => {});
+      sendVerificationEmail(email, `${webUrl}/register/verify?token=${token}`, code).catch(() => {});
 
-      return reply.status(201).send({ user });
+      return reply.status(201).send({ pending: true, email });
     } catch (err) {
       console.error("[register] error:", err);
       return reply.status(400).send({ error: err instanceof Error ? err.message : "Registration failed" });
     }
+  });
+
+  // Confirm a pending signup — by code (typed on screen) or token (clicked link).
+  // Creates the User row only here, on success.
+  app.post("/auth/verify-pending", {
+    config: { rateLimit: { max: 10, timeWindow: "15 minutes" } },
+  }, async (req, reply) => {
+    const { email, code, token } = req.body as { email?: string; code?: string; token?: string };
+
+    const pending = token
+      ? await prisma.pendingSignup.findUnique({ where: { token } })
+      : email
+        ? await prisma.pendingSignup.findUnique({ where: { email } })
+        : null;
+
+    if (!pending || pending.expiresAt < new Date()) {
+      return reply.status(400).send({ error: "This signup has expired. Register again." });
+    }
+
+    if (!token) {
+      if (!code || !isCodeFormat(code)) return reply.status(400).send({ error: "Enter the 6-digit code." });
+
+      // Spend an attempt atomically before comparing, so parallel requests can't bypass the limit.
+      const spent = await prisma.pendingSignup.updateMany({
+        where: { id: pending.id, attempts: { lt: MAX_CODE_ATTEMPTS } },
+        data: { attempts: { increment: 1 } },
+      });
+      if (spent.count === 0) return reply.status(400).send({ error: "Too many attempts. Request a new code." });
+
+      if (!codeMatches(pending.token, code, pending.codeHash)) {
+        return reply.status(400).send({ error: "Incorrect code." });
+      }
+    }
+
+    try {
+      const password = decrypt(pending.passwordEnc);
+      const { user, accessToken, refreshToken } = await authProvider.register(pending.email, password, pending.name);
+      await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } });
+      await prisma.pendingSignup.delete({ where: { id: pending.id } });
+
+      setAuthCookies(reply, accessToken, refreshToken);
+      return reply.send({ user: { ...user, emailVerified: true } });
+    } catch (err) {
+      // Most likely: a User with this email showed up in the meantime (double-submit,
+      // or signed up another way while the code email sat unread). Clear the stuck
+      // pending row so the person isn't locked out of both registering and verifying.
+      await prisma.pendingSignup.delete({ where: { id: pending.id } }).catch(() => {});
+      console.error("[verify-pending] error:", err);
+      return reply.status(400).send({ error: "This email already has an account. Log in instead." });
+    }
+  });
+
+  // Resend a pending signup's code/link — always 200 to avoid leaking which emails are mid-signup.
+  app.post("/auth/resend-pending", {
+    config: { rateLimit: { max: 5, timeWindow: "15 minutes" } },
+  }, async (req, reply) => {
+    const { email } = req.body as { email?: string };
+    if (!email) return reply.status(400).send({ error: "Email required" });
+
+    const pending = await prisma.pendingSignup.findUnique({ where: { email } });
+    if (pending) {
+      const token = crypto.randomBytes(32).toString("hex");
+      const code = generateCode();
+      const expiresAt = new Date(Date.now() + CODE_TTL_MIN * 60 * 1000);
+      await prisma.pendingSignup.update({
+        where: { id: pending.id },
+        data: { token, codeHash: hashCode(token, code), attempts: 0, expiresAt },
+      });
+      const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
+      await sendVerificationEmail(email, `${webUrl}/register/verify?token=${token}`, code);
+    }
+
+    return reply.send({ ok: true });
   });
 
   // Login
@@ -127,7 +208,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ ok: true });
   });
 
-  // Resend verification email
+  // Resend verification email — legacy path, for pre-existing users who registered
+  // before the code-based pending-signup flow and are still unverified.
   app.post("/auth/resend-verification", {
     preHandler: [withAuth],
     config: { rateLimit: { max: 3, timeWindow: "15 minutes" } },

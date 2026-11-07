@@ -258,6 +258,21 @@ model EmailVerification {
   @@index([token])
 }
 
+// Signup not yet confirmed — no User row exists until the code or link is verified.
+model PendingSignup {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String
+  passwordEnc String
+  token      String   @unique
+  codeHash   String
+  attempts   Int      @default(0)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([token])
+}
+
 // Password reset token — single-use, 1-hour TTL.
 model PasswordReset {
   id        String   @id @default(cuid())
