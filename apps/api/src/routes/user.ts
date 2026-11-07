@@ -8,10 +8,14 @@ import { withAuth, getUser, getWorkspaceId, COOKIE_OPTS, ACCESS_COOKIE_NAME, REF
 import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/mailer.js";
 import { generateCode, hashCode, codeMatches, isCodeFormat, MAX_CODE_ATTEMPTS, CODE_TTL_MIN } from "../lib/auth/emailCode.js";
 import { encrypt, decrypt } from "../lib/encryption.js";
+import { passwordProblem } from "../lib/auth/passwordPolicy.js";
 
 const registerBody = z.object({
   email: z.string().email(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().superRefine((value, ctx) => {
+    const problem = passwordProblem(value);
+    if (problem) ctx.addIssue({ code: z.ZodIssueCode.custom, message: problem });
+  }),
   name: z.string().min(1),
 });
 
@@ -127,7 +131,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         data: { token, codeHash: hashCode(token, code), attempts: 0, expiresAt },
       });
       const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
-      await sendVerificationEmail(email, `${webUrl}/register/verify?token=${token}`, code);
+      // Fire-and-forget — awaiting the send would make this endpoint's response time
+      // leak whether a pending signup exists for this email.
+      sendVerificationEmail(email, `${webUrl}/register/verify?token=${token}`, code).catch(() => {});
     }
 
     return reply.send({ ok: true });
@@ -282,7 +288,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   }, async (req, reply) => {
     const { token, password } = req.body as { token?: string; password?: string };
     if (!token || !password) return reply.status(400).send({ error: "Token and password required" });
-    if (password.length < 8) return reply.status(400).send({ error: "Password must be at least 8 characters" });
+    const problem = passwordProblem(password);
+    if (problem) return reply.status(400).send({ error: problem });
 
     // Supabase reset: token is the access_token from the recovery magic-link hash.
     // Validate it to get the Supabase user ID, then use admin API to set the password.
@@ -340,7 +347,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const { id: userId } = getUser(req);
     const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
     if (!currentPassword || !newPassword) return reply.status(400).send({ error: "Both fields required" });
-    if (newPassword.length < 8) return reply.status(400).send({ error: "Password must be at least 8 characters" });
+    const problem = passwordProblem(newPassword);
+    if (problem) return reply.status(400).send({ error: problem });
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user?.passwordHash) return reply.status(400).send({ error: "Password change not supported for this account" });

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { registerPending } from "../../lib/auth";
 import { safeReturnTo } from "../../lib/safeReturnTo";
+import { PASSWORD_HINT, passwordProblem } from "../../lib/passwordRule";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -25,6 +26,8 @@ function RegisterContent() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const problem = passwordProblem(password);
+    if (problem) { setError(problem); return; }
     setLoading(true); setError(null);
     try {
       await registerPending(email, password, name);
@@ -88,9 +91,10 @@ function RegisterContent() {
             <div>
               <label className="block text-xs font-semibold mb-1.5" style={{ color: "#888" }}>Password</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 8 characters" required minLength={8}
+                placeholder={PASSWORD_HINT} required minLength={8}
                 className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
                 style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }} />
+              <p className="text-[11px] mt-1" style={{ color: "#555" }}>{PASSWORD_HINT}</p>
             </div>
 
             {error && (
