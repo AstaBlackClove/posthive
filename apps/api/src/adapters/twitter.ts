@@ -98,6 +98,8 @@ function humanizeTwitterError(err: unknown): never {
     throw new Error("X allows a maximum of one cashtag ($SYMBOL) per post.");
   if (/maximum of 4 items/i.test(detail))
     throw new Error("X allows a maximum of 4 media items per post.");
+  if (/video.*image|image.*video|cannot.*mix/i.test(detail))
+    throw new Error("X doesn't allow mixing video with images in one post.");
   if (/service unavailable/i.test(detail))
     throw new Error("X is currently unavailable. Please try again later.");
 
@@ -107,17 +109,26 @@ function humanizeTwitterError(err: unknown): never {
 async function uploadImages(client: TwitterApi, mediaUrls: string[]): Promise<string[]> {
   const mediaIds: string[] = [];
 
+  // X allows either up to 4 images/GIFs, or exactly 1 video per tweet — never mixed.
   const port = process.env.PORT ?? "3001";
-  for (const rawUrl of mediaUrls.slice(0, 4)) {
+  const firstUrl = mediaUrls[0] ?? "";
+  const firstRes = await fetch(firstUrl.startsWith("http") ? firstUrl : `http://localhost:${port}${firstUrl}`);
+  const isVideo = (firstRes.headers.get("content-type") ?? "").startsWith("video/");
+  const urls = isVideo ? [mediaUrls[0]] : mediaUrls.slice(0, 4);
+
+  for (let i = 0; i < urls.length; i++) {
+    const rawUrl = urls[i];
     const url = rawUrl.startsWith("http") ? rawUrl : `http://localhost:${port}${rawUrl}`;
-    const res = await fetch(url);
+    const res = i === 0 ? firstRes : await fetch(url);
     if (!res.ok) throw new Error(`Failed to fetch media: ${url}`);
 
     const buffer = Buffer.from(await res.arrayBuffer());
     const contentType = res.headers.get("content-type") ?? "image/jpeg";
 
     let mimeType: EUploadMimeType;
-    if (contentType.includes("png"))  mimeType = EUploadMimeType.Png;
+    if (contentType.includes("mp4")) mimeType = EUploadMimeType.Mp4;
+    else if (contentType.includes("quicktime") || contentType.includes("mov")) mimeType = EUploadMimeType.Mov;
+    else if (contentType.includes("png"))  mimeType = EUploadMimeType.Png;
     else if (contentType.includes("gif")) mimeType = EUploadMimeType.Gif;
     else if (contentType.includes("webp")) mimeType = EUploadMimeType.Webp;
     else mimeType = EUploadMimeType.Jpeg;
