@@ -107,6 +107,9 @@ async function main() {
       cb(new Error("Not allowed by CORS"), false);
     },
     credentials: true,
+    // @fastify/cors v11 narrowed its default from GET,HEAD,PUT,PATCH,POST,DELETE
+    // to GET,HEAD,POST — set explicitly so cross-origin DELETE/PATCH/PUT keep working.
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   });
   await app.register(helmet, {
     contentSecurityPolicy: false, // API — no HTML served here
