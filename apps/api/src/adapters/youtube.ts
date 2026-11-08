@@ -241,4 +241,24 @@ export const youtubeAdapter: PlatformAdapter = {
     const data = await res.json() as { id: string };
     return { platformCommentId: data.id };
   },
+
+  async getAnalytics(account, platformPostId) {
+    const refreshed = await refreshIfNeeded(account);
+    const { accessToken } = getCredentials(refreshed);
+
+    const res = await fetch(`${API_URL}/videos?part=statistics&id=${platformPostId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error(`YouTube analytics failed: ${res.status} ${await res.text()}`);
+    const data = await res.json() as { items: Array<{ statistics: Record<string, string> }> };
+    const stats = data.items[0]?.statistics;
+    if (!stats) throw new Error(`YouTube video not found: ${platformPostId}`);
+
+    return {
+      likes:     Number(stats.likeCount ?? 0),
+      replies:   Number(stats.commentCount ?? 0),
+      views:     Number(stats.viewCount ?? 0),
+      fetchedAt: new Date().toISOString(),
+    };
+  },
 };

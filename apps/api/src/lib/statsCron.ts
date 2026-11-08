@@ -12,7 +12,7 @@ import cron from "node-cron";
 import { prisma } from "./prisma.js";
 import { adapters } from "../adapters/index.js";
 
-const SUPPORTED = new Set(["bluesky", "mastodon", "pixelfed", "threads", "instagram", "facebook"]);
+const SUPPORTED = new Set(["bluesky", "mastodon", "pixelfed", "threads", "instagram", "facebook", "youtube"]);
 const RECENCY_MS  = 11 * 60 * 60 * 1000; // skip targets synced within 11h
 const BATCH = 5;                          // concurrent platform API calls
 const BATCH_DELAY_MS = 300;               // pause between batches (rate-limit headroom)
