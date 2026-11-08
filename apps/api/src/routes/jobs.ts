@@ -14,6 +14,15 @@ import type { StorageAdapter } from "../lib/storage.js";
 import { adapters } from "../adapters/index.js";
 import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
 
+// Tab filters cover multiple real PostJob.status values — shared by GET /jobs,
+// GET /jobs/counts, and DELETE /jobs/bulk's status-based delete.
+const STATUS_FILTER_MAP: Record<string, string[]> = {
+  draft: ["draft"],
+  pending: ["pending", "running"],
+  done: ["done", "comment_done", "post_done"],
+  failed: ["failed", "post_failed", "comment_failed"],
+};
+
 const TARGET_SELECT = {
   id: true, accountId: true, status: true,
   platformPostId: true, error: true, attempts: true,
@@ -428,13 +437,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     const where: { workspaceId: string; status?: { in: string[] } } = { workspaceId };
     if (statusFilter) {
-      const statusMap: Record<string, string[]> = {
-        draft: ["draft"],
-        pending: ["pending", "running"],
-        done: ["done", "comment_done", "post_done"],
-        failed: ["failed", "post_failed", "comment_failed"],
-      };
-      const statuses = statusMap[statusFilter] ?? [statusFilter];
+      const statuses = STATUS_FILTER_MAP[statusFilter] ?? [statusFilter];
       where.status = { in: statuses };
     }
 
@@ -456,6 +459,25 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const nextCursor = hasMore ? items[items.length - 1].id : null;
 
     return reply.send({ items, nextCursor, hasMore });
+  });
+
+  // Real per-tab counts across the whole workspace, not just the loaded page —
+  // the jobs list only loads 50 at a time, so counting the client's `jobs` state
+  // undercounts past the first page.
+  app.get("/jobs/counts", { preHandler: [withAuth] }, async (req, reply) => {
+    const workspaceId = getWorkspaceId(req);
+    const grouped = await prisma.postJob.groupBy({
+      by: ["status"],
+      where: { workspaceId },
+      _count: { _all: true },
+    });
+    const byStatus = new Map(grouped.map((g) => [g.status, g._count._all]));
+    const counts: Record<string, number> = { all: 0 };
+    for (const [tab, statuses] of Object.entries(STATUS_FILTER_MAP)) {
+      counts[tab] = statuses.reduce((sum, s) => sum + (byStatus.get(s) ?? 0), 0);
+    }
+    counts.all = grouped.reduce((sum, g) => sum + g._count._all, 0);
+    return reply.send(counts);
   });
 
   // Single job detail — scoped to workspace
@@ -746,14 +768,20 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const workspaceId = getWorkspaceId(req);
 
     const parsed = z.object({
-      ids: z.array(z.string().cuid()).min(1).max(500),
-    }).safeParse(req.body);
+      ids: z.array(z.string().cuid()).min(1).max(500).optional(),
+      // Delete every job of this status in the workspace — not bound to whatever
+      // page the client happened to have loaded (jobs list only loads 50 at a time).
+      status: z.enum(["draft", "pending", "done", "failed"]).optional(),
+    }).refine((b) => !!b.ids !== !!b.status, { message: "Provide exactly one of ids or status" })
+      .safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
-    const { ids } = parsed.data;
+    const { ids, status } = parsed.data;
 
     // Fetch all jobs — verify ownership + skip running
     const jobs = await prisma.postJob.findMany({
-      where: { id: { in: ids }, workspaceId },
+      where: ids
+        ? { id: { in: ids }, workspaceId }
+        : { workspaceId, status: { in: STATUS_FILTER_MAP[status!] } },
       select: { id: true, status: true, content: true, userId: true },
     });
 

@@ -406,6 +406,14 @@ export default function JobsPage() {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [bulkDeleteType, setBulkDeleteType] = useState<"selected" | "draft" | "pending" | "done" | "failed">("selected");
 
+  // Real per-status counts across the whole workspace — the jobs list only loads
+  // 50 at a time, so counting `jobs` directly undercounts past the first page.
+  const [serverCounts, setServerCounts] = useState<Record<string, number>>({ all: 0, draft: 0, pending: 0, done: 0, failed: 0 });
+  const loadCounts = useCallback(() => {
+    apiFetch<Record<string, number>>("/jobs/counts").then(setServerCounts).catch(() => {});
+  }, []);
+  useEffect(() => { loadCounts(); }, [loadCounts]);
+
   useEffect(() => {
     apiFetch<Account[]>("/accounts").then(setAccounts).catch(() => {});
   }, []);
@@ -450,6 +458,32 @@ export default function JobsPage() {
       setJobs(prev => prev.filter(j => !ids.includes(j.id)));
       setSelectedIds(new Set());
       success(`Deleted ${deleted} post${deleted !== 1 ? "s" : ""}.`);
+    } finally {
+      setBulkDeleting(false);
+      setShowBulkDeleteConfirm(false);
+    }
+  }
+
+  // "Delete all drafts/pending/done/failed" means every job of that status in the
+  // workspace, not just the 50 currently loaded — deletes server-side by status,
+  // then reloads the list and counts rather than trying to guess which ids were hit.
+  async function bulkDeleteByStatus(status: "draft" | "pending" | "done" | "failed") {
+    setBulkDeleting(true);
+    try {
+      const res = await apiFetch("/jobs/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const { deleted } = res as { deleted: number };
+      setSelectedIds(new Set());
+      success(`Deleted ${deleted} post${deleted !== 1 ? "s" : ""}.`);
+      loadCounts();
+      setNextCursor(null);
+      setHasMore(false);
+      loadJobs(filter);
+    } catch (err) {
+      toastError(String(err));
     } finally {
       setBulkDeleting(false);
       setShowBulkDeleteConfirm(false);
@@ -672,13 +706,7 @@ export default function JobsPage() {
     return () => es?.close();
   }, []);
 
-  const counts = {
-    all: jobs.length,
-    draft: jobs.filter((j) => j.status === "draft").length,
-    pending: jobs.filter((j) => j.status === "pending" || j.status === "running").length,
-    done: jobs.filter((j) => j.status === "done").length,
-    failed: jobs.filter((j) => j.status === "failed").length,
-  };
+  const counts = serverCounts;
 
   const allPlatforms = Array.from(new Set(jobs.flatMap((j) => j.targets.map((t) => t.account?.platform).filter(Boolean) as string[])));
 
@@ -691,18 +719,36 @@ export default function JobsPage() {
   const selectAll = (ids: string[]) => setSelectedIds(new Set(ids));
   const clearSelection = () => setSelectedIds(new Set());
 
+  // "Select all" needs to mean ALL matching jobs, not just the 50-at-a-time page
+  // that happens to be loaded — fetch every remaining page for the current status
+  // filter first, then select from the full set.
+  const [selectingAll, setSelectingAll] = useState(false);
+  async function selectAllAcrossPages() {
+    if (!hasMore) { selectAll(filteredJobs.map((j) => j.id)); return; }
+    setSelectingAll(true);
+    try {
+      let cursor = nextCursor;
+      let all = jobs;
+      while (cursor) {
+        const params = new URLSearchParams({ limit: "50" });
+        if (filter !== "all") params.set("status", filter);
+        params.set("cursor", cursor);
+        const data = await apiFetch<{ items: Job[]; nextCursor: string | null; hasMore: boolean }>(`/jobs?${params}`);
+        all = [...all, ...data.items];
+        cursor = data.hasMore ? data.nextCursor : null;
+      }
+      setJobs(all);
+      setNextCursor(null);
+      setHasMore(false);
+      const matching = all.filter((j) => platformFilter === "all" || j.targets.some((t) => t.account?.platform === platformFilter));
+      selectAll(matching.map((j) => j.id));
+    } finally {
+      setSelectingAll(false);
+    }
+  }
+
   // IDs to delete based on bulkDeleteType
-  const getBulkDeleteIds = (): string[] => {
-    if (bulkDeleteType === "selected") return [...selectedIds];
-    const statusMap: Record<string, string[]> = {
-      draft: ["draft"],
-      pending: ["pending", "running"],
-      done: ["done", "comment_done", "post_done"],
-      failed: ["failed", "post_failed", "comment_failed"],
-    };
-    const statuses = statusMap[bulkDeleteType] ?? [];
-    return jobs.filter(j => statuses.includes(j.status)).map(j => j.id);
-  };
+  const getBulkDeleteIds = (): string[] => [...selectedIds];
 
   const filteredJobs = jobs.filter((j) => {
     if (filter !== "all") {
@@ -760,13 +806,14 @@ export default function JobsPage() {
       {/* Bulk delete confirm dialog */}
       {showBulkDeleteConfirm && (() => {
         const ids = getBulkDeleteIds();
-        const label = bulkDeleteType === "selected" ? `${ids.length} selected` : `all ${bulkDeleteType} posts (${ids.length})`;
+        const count = bulkDeleteType === "selected" ? ids.length : (serverCounts[bulkDeleteType] ?? 0);
+        const label = bulkDeleteType === "selected" ? `${count} selected` : `all ${bulkDeleteType} posts (${count})`;
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
             <div className="w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
               <h3 className="text-base font-bold mb-2" style={{ color: "#ededed" }}>Delete {label}?</h3>
               <p className="text-sm mb-5" style={{ color: "#888" }}>
-                This will permanently delete {ids.length} post{ids.length !== 1 ? "s" : ""}. This cannot be undone.
+                This will permanently delete {count} post{count !== 1 ? "s" : ""}. This cannot be undone.
               </p>
               <div className="flex gap-3">
                 <button onClick={() => setShowBulkDeleteConfirm(false)} disabled={bulkDeleting}
@@ -774,7 +821,9 @@ export default function JobsPage() {
                   style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
                   Cancel
                 </button>
-                <button onClick={() => bulkDelete(ids)} disabled={bulkDeleting || ids.length === 0}
+                <button
+                  onClick={() => bulkDeleteType === "selected" ? bulkDelete(ids) : bulkDeleteByStatus(bulkDeleteType)}
+                  disabled={bulkDeleting || count === 0}
                   className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-80 disabled:opacity-40"
                   style={{ backgroundColor: "#7f1d1d", color: "#fca5a5", border: "1px solid #991b1b" }}>
                   {bulkDeleting ? "Deleting…" : `Delete ${ids.length}`}
@@ -887,12 +936,13 @@ export default function JobsPage() {
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
-              checked={filteredJobs.length > 0 && filteredJobs.every(j => selectedIds.has(j.id))}
-              onChange={(e) => e.target.checked ? selectAll(filteredJobs.map(j => j.id)) : clearSelection()}
+              checked={filteredJobs.length > 0 && filteredJobs.every(j => selectedIds.has(j.id)) && !hasMore}
+              disabled={selectingAll}
+              onChange={(e) => e.target.checked ? selectAllAcrossPages() : clearSelection()}
               className="w-3.5 h-3.5 rounded accent-indigo-500 cursor-pointer"
             />
             <span className="text-xs" style={{ color: "#555" }}>
-              {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
+              {selectingAll ? "Loading all…" : selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
             </span>
           </label>
 
@@ -923,12 +973,7 @@ export default function JobsPage() {
               { type: "done" as const, label: "Published", color: "#22c55e" },
               { type: "failed" as const, label: "Failed", color: "#ef4444" },
             ]).map(({ type, label, color }) => {
-              const statusMap: Record<string, string[]> = {
-                draft: ["draft"], pending: ["pending", "running"],
-                done: ["done", "comment_done", "post_done"],
-                failed: ["failed", "post_failed", "comment_failed"],
-              };
-              const count = jobs.filter(j => statusMap[type]?.includes(j.status)).length;
+              const count = serverCounts[type] ?? 0;
               if (count === 0) return null;
               return (
                 <button

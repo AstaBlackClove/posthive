@@ -608,7 +608,7 @@ export default function BulkPage() {
 
           {/* Table */}
           {parsed && rows.length > 0 && (
-            <div className="overflow-x-auto lg:flex-1 lg:overflow-y-auto">
+            <div className="overflow-x-auto overflow-y-auto max-h-[60vh] lg:max-h-none lg:flex-1">
               <table className="w-full text-xs" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
                 <thead className="sticky top-0 z-10" style={{ backgroundColor: "#0d0d0d" }}>
                   <tr style={{ borderBottom: "1px solid #1e1e1e" }}>
