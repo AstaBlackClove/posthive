@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.2.0",
   "license": "AGPL-3.0",
+  "packageManager": "pnpm@11.8.0",
   "scripts": {
     "dev:db": "docker start posthive-pg || docker run -d --name posthive-pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:15",
     "dev": "pnpm dev:db && pnpm --parallel --filter api --filter web dev",
