@@ -617,8 +617,8 @@ packages:
     peerDependencies:
       '@fullcalendar/core': ~6.1.21
 
-  '@hono/node-server@1.19.14':
-    resolution: {integrity: sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw==}
+  '@hono/node-server@1.19.18':
+    resolution: {integrity: sha512-609kppIP9GITS+EwPyB6Kiq8z2yXONaYD1VHpo7MMP9celRJYbkFr9KakJncHwK0EK/XYtlogqmrLchDv5HX5w==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
@@ -3576,7 +3576,7 @@ snapshots:
       '@fullcalendar/core': 6.1.21
       '@fullcalendar/daygrid': 6.1.21(@fullcalendar/core@6.1.21)
 
-  '@hono/node-server@1.19.14(hono@4.12.27)':
+  '@hono/node-server@1.19.18(hono@4.12.27)':
     dependencies:
       hono: 4.12.27
 
@@ -3811,7 +3811,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.32.0(zod@3.25.76)':
     dependencies:
-      '@hono/node-server': 1.19.14(hono@4.12.27)
+      '@hono/node-server': 1.19.18(hono@4.12.27)
       ajv: 8.20.0
       ajv-formats: 3.0.1
       content-type: 1.0.5
