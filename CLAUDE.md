@@ -9,7 +9,7 @@ Social media scheduling SaaS. Schedule posts to Bluesky, Threads, Instagram, Lin
 ```
 social-scheduler/
 ├── apps/
-│   ├── api/          Fastify v4 backend (Node.js, TypeScript, ESM)
+│   ├── api/          Fastify v5 backend (Node.js, TypeScript, ESM)
 │   ├── web/          Next.js 16 frontend (App Router, TypeScript)
 │   └── mcp/          MCP stdio server (Claude Code / Cursor / local agents)
 ├── .claude/
@@ -55,7 +55,7 @@ pnpm db:migrate   # Run pending migrations
 
 ## API — `apps/api`
 
-**Stack:** Fastify v4 · Prisma 5 · SQLite (dev) / Postgres (prod) · BullMQ · Redis (Upstash) · TypeScript ESM
+**Stack:** Fastify v5 · Prisma 5 · SQLite (dev) / Postgres (prod) · BullMQ · Redis (Upstash) · TypeScript ESM
 
 **Entry:** `src/index.ts` — registers CORS, routes, starts worker
 
@@ -354,3 +354,14 @@ N+1 queries, missing indexes, unbounded fetches, connection pool.
 4. `/shipping-and-launch` — check before Railway deploy
 5. Push to prod
 6. Monitor Railway logs + Sentry for 15 min after deploy
+
+---
+
+## Daily Check-In Routine
+
+When asked "how is the product doing" / "how are paying users doing" / morning check-ins, always include:
+
+1. **New signups** — count, who, past-week activity (accounts connected, posts scheduled).
+2. **Paying users** — plan/status, recent post volume, any failures.
+3. **Sentry** — new unresolved errors since last check.
+4. **`posthive.co/admin` → Feedback tab** — check for new entries since last check (bug reports, feature requests, general). This is separate from Sentry — users self-report issues here directly, often catching things Sentry doesn't (platform-side limits, UX complaints, confusion). Cross-check each bug report against real DB data before replying — users often misjudge severity (e.g. "50% of posts failing" turned out to be <3%, misread from the jobs list).

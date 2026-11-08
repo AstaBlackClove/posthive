@@ -83,7 +83,7 @@
 | Layer | Technology |
 |-------|-----------|
 | Frontend | Next.js 16 (App Router), React 18, Tailwind CSS |
-| Backend | Fastify v4, TypeScript ESM, Node.js |
+| Backend | Fastify v5, TypeScript ESM, Node.js |
 | Database | Prisma 5 (SQLite for dev, Postgres for prod) |
 | Queue | BullMQ + Redis (Upstash / Railway) |
 | Storage | Local disk (dev) / Supabase Storage (prod) |
