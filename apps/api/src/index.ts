@@ -2,7 +2,7 @@ import "./instrument.js";
 import * as Sentry from "@sentry/node";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import Fastify from "fastify";
+import Fastify, { type FastifyError } from "fastify";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 import multipart from "@fastify/multipart";
@@ -13,8 +13,7 @@ import underPressure from "@fastify/under-pressure";
 import helmet from "@fastify/helmet";
 import rawBody from "fastify-raw-body";
 import { createBullBoard } from "@bull-board/api";
-// @ts-ignore — @bull-board/api v5 has no exports map; .js extension required for ESM runtime
-import { BullMQAdapter } from "@bull-board/api/bullMQAdapter.js";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { FastifyAdapter as BullBoardFastifyAdapter } from "@bull-board/fastify";
 import { Queue } from "bullmq";
 import { prisma } from "./lib/prisma.js";
@@ -160,7 +159,7 @@ async function main() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createBullBoard({ queues: [new BullMQAdapter(postJobsQueue) as any], serverAdapter: bullBoardAdapter });
   bullBoardAdapter.setBasePath("/admin/queues");
-  await app.register(bullBoardAdapter.registerPlugin(), { basePath: "/admin/queues", prefix: "/admin/queues" });
+  await app.register(bullBoardAdapter.registerPlugin(), { prefix: "/admin/queues" });
   // Guard: restrict to local in prod unless BULL_BOARD_TOKEN is set
   app.addHook("onRequest", async (req, reply) => {
     if (!req.url.startsWith("/admin/queues")) return;
@@ -233,7 +232,7 @@ async function main() {
   });
 
   // Global error handler — captures only 5xx errors to Sentry (not CORS/4xx noise)
-  app.setErrorHandler((err, _req, reply) => {
+  app.setErrorHandler((err: FastifyError, _req, reply) => {
     const status = err.statusCode ?? 500;
     if (status >= 500) Sentry.captureException(err);
     // Don't leak internal error details for server errors
