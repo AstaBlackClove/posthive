@@ -23,7 +23,7 @@
   },
   "engines": {
     "node": ">=22.0.0",
-    "pnpm": ">=9.0.0"
+    "pnpm": "11.8.0"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.21"
