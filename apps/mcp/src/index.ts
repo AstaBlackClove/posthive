@@ -93,7 +93,8 @@ const TOOLS = [
       "Use list_accounts to get valid account IDs before calling this tool. " +
       "Each platform has its own character limit for both the post text and the first_comment — the request is rejected with a 400 if either exceeds it for any selected account: " +
       "Bluesky 300, Threads/Mastodon/Pinterest 500, Instagram/TikTok 2200, Discord 2000, LinkedIn 3000, Telegram/Tumblr 4096, YouTube 5000, Nostr/Lemmy 10000, Twitter/X 25000, Facebook 63206. " +
-      "Check the content and first_comment length against the shortest limit among the selected platforms before calling, and warn the user if a caption (especially a long hashtag block) would be rejected.",
+      "Check the content and first_comment length against the shortest limit among the selected platforms before calling, and warn the user if a caption (especially a long hashtag block) would be rejected. " +
+      "TikTok accounts require a video in media_urls (.mp4/.mov) plus tiktok_privacy_level, or the request is rejected with a 400.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -118,6 +119,16 @@ const TOOLS = [
           enum: ["short", "video"],
           description: "YouTube video type. 'short' = YouTube Short (vertical, ≤60s), 'video' = standard upload. Only relevant for YouTube accounts.",
         },
+        tiktok_privacy_level: {
+          type: "string",
+          description: "Required for TikTok accounts. Who can view the video (e.g. 'PUBLIC_TO_EVERYONE', 'SELF_ONLY', 'MUTUAL_FOLLOW_FRIENDS') — use the exact value from the account's TikTok creator settings.",
+        },
+        tiktok_title: { type: "string", description: "TikTok video title/caption. Defaults to content if omitted." },
+        tiktok_disable_comment: { type: "boolean", description: "Disable comments on the TikTok video. Defaults to true." },
+        tiktok_disable_duet: { type: "boolean", description: "Disable duets on the TikTok video. Defaults to true." },
+        tiktok_disable_stitch: { type: "boolean", description: "Disable stitch on the TikTok video. Defaults to true." },
+        tiktok_branded_content: { type: "boolean", description: "Mark as branded content (paid partnership) for TikTok commercial disclosure." },
+        tiktok_your_brand: { type: "boolean", description: "Mark as promoting your own brand for TikTok commercial disclosure." },
         first_comment: { type: "string", description: "Optional first comment to fire immediately after the post goes live." },
         scheduled_time: {
           type: "string",
@@ -203,6 +214,13 @@ const TOOLS = [
         content: { type: "string", description: "Updated post text content." },
         scheduled_time: { type: "string", description: "Updated scheduled time (ISO 8601)." },
         first_comment: { type: "string", description: "Updated first comment text." },
+        tiktok_privacy_level: { type: "string", description: "Required for TikTok accounts. Who can view the video." },
+        tiktok_title: { type: "string", description: "TikTok video title/caption." },
+        tiktok_disable_comment: { type: "boolean", description: "Disable comments on the TikTok video." },
+        tiktok_disable_duet: { type: "boolean", description: "Disable duets on the TikTok video." },
+        tiktok_disable_stitch: { type: "boolean", description: "Disable stitch on the TikTok video." },
+        tiktok_branded_content: { type: "boolean", description: "Mark as branded content for TikTok commercial disclosure." },
+        tiktok_your_brand: { type: "boolean", description: "Mark as promoting your own brand for TikTok commercial disclosure." },
         per_account: {
           type: "object",
           description: "Updated per-account content overrides.",
@@ -305,6 +323,13 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           ...(a.media_urls ? { images: a.media_urls } : {}),
           ...(a.media_type ? { mediaType: a.media_type } : {}),
           ...(a.youtube_type ? { youtubeType: a.youtube_type } : {}),
+          ...(a.tiktok_privacy_level ? { tiktokPrivacyLevel: a.tiktok_privacy_level } : {}),
+          ...(a.tiktok_title ? { tiktokTitle: a.tiktok_title } : {}),
+          ...(a.tiktok_disable_comment !== undefined ? { tiktokDisableComment: a.tiktok_disable_comment } : {}),
+          ...(a.tiktok_disable_duet !== undefined ? { tiktokDisableDuet: a.tiktok_disable_duet } : {}),
+          ...(a.tiktok_disable_stitch !== undefined ? { tiktokDisableStitch: a.tiktok_disable_stitch } : {}),
+          ...(a.tiktok_branded_content !== undefined ? { tiktokBrandedContent: a.tiktok_branded_content } : {}),
+          ...(a.tiktok_your_brand !== undefined ? { tiktokYourBrand: a.tiktok_your_brand } : {}),
           ...(a.first_comment ? { commentText: a.first_comment } : {}),
           ...(a.per_account ? { perAccount: a.per_account } : {}),
           ...(a.dry_run ? { dryRun: true } : {}),
@@ -346,12 +371,23 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case "update_post": {
-        const { post_id, content, scheduled_time, first_comment, per_account } = a as {
+        const {
+          post_id, content, scheduled_time, first_comment, per_account,
+          tiktok_privacy_level, tiktok_title, tiktok_disable_comment,
+          tiktok_disable_duet, tiktok_disable_stitch, tiktok_branded_content, tiktok_your_brand,
+        } = a as {
           post_id: string;
           content?: string;
           scheduled_time?: string;
           first_comment?: string;
           per_account?: Record<string, { text?: string; commentText?: string }>;
+          tiktok_privacy_level?: string;
+          tiktok_title?: string;
+          tiktok_disable_comment?: boolean;
+          tiktok_disable_duet?: boolean;
+          tiktok_disable_stitch?: boolean;
+          tiktok_branded_content?: boolean;
+          tiktok_your_brand?: boolean;
         };
 
         const body: Record<string, unknown> = {
@@ -359,6 +395,13 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           ...(scheduled_time !== undefined ? { scheduledFor: scheduled_time } : {}),
           ...(first_comment !== undefined ? { commentText: first_comment } : {}),
           ...(per_account !== undefined ? { perAccount: per_account } : {}),
+          ...(tiktok_privacy_level !== undefined ? { tiktokPrivacyLevel: tiktok_privacy_level } : {}),
+          ...(tiktok_title !== undefined ? { tiktokTitle: tiktok_title } : {}),
+          ...(tiktok_disable_comment !== undefined ? { tiktokDisableComment: tiktok_disable_comment } : {}),
+          ...(tiktok_disable_duet !== undefined ? { tiktokDisableDuet: tiktok_disable_duet } : {}),
+          ...(tiktok_disable_stitch !== undefined ? { tiktokDisableStitch: tiktok_disable_stitch } : {}),
+          ...(tiktok_branded_content !== undefined ? { tiktokBrandedContent: tiktok_branded_content } : {}),
+          ...(tiktok_your_brand !== undefined ? { tiktokYourBrand: tiktok_your_brand } : {}),
         };
 
         if (Object.keys(body).length === 0) {

@@ -21,6 +21,38 @@ function normalizePerAccount(
 }
 const MAX_VIDEO_SIZE_BYTES = 100_000_000;
 
+const VIDEO_URL_RE = /\.(mp4|mov|quicktime)(\?|#|$)/i;
+const isVideoUrl = (u: string): boolean => VIDEO_URL_RE.test(u);
+
+// Mirrors the client-side checks in apps/web/src/app/compose/page.tsx's validate() —
+// the API/MCP path has no browser form to block a bad submit before it reaches the queue,
+// so a post that would fail at publish time (days later) must be rejected here instead.
+function validatePlatformContent(
+  accounts: { id: string; platform: string }[],
+  opts: { text: string; images: string[]; mediaType?: string; tiktokPrivacyLevel?: string }
+): string | null {
+  const hasVideo = opts.images.some(isVideoUrl);
+  const hasMedia = opts.images.length > 0;
+
+  for (const a of accounts) {
+    if (a.platform === "instagram") {
+      if (opts.mediaType === "story" && !hasMedia) return "Instagram Story requires an image or video.";
+      if (opts.mediaType === "reel" && !hasVideo) return "Instagram Reel requires a video.";
+      if ((opts.mediaType ?? "post") === "post" && !hasMedia) return "Instagram Post requires at least one image or video.";
+    }
+    if (a.platform === "bluesky" && !opts.text.trim()) return "Bluesky requires a caption.";
+    if (a.platform === "threads" && !opts.text.trim()) return "Threads requires a caption.";
+    if (a.platform === "tiktok") {
+      if (!hasVideo) return "TikTok requires a video — attach an mp4 or mov file.";
+      if (!opts.tiktokPrivacyLevel) return "TikTok requires tiktokPrivacyLevel to be set before posting.";
+    }
+    if (a.platform === "youtube" && !hasVideo) return "YouTube requires a video attached.";
+    if (a.platform === "pinterest" && !hasMedia) return "Pinterest requires at least one image.";
+    if (a.platform === "pixelfed" && !hasMedia) return "Pixelfed requires at least one image.";
+  }
+  return null;
+}
+
 export async function publicApiRoutes(
   app: FastifyInstance,
   { storage }: { storage: StorageAdapter }
@@ -64,6 +96,13 @@ export async function publicApiRoutes(
       perAccount?: Record<string, { text?: string; commentText?: string }> | Array<{ accountId: string; text?: string; commentText?: string }>;
       repeatInterval?: "daily" | "weekly" | "monthly";
       repeatEndsAt?: string;
+      tiktokPrivacyLevel?: string;
+      tiktokTitle?: string;
+      tiktokDisableComment?: boolean;
+      tiktokDisableDuet?: boolean;
+      tiktokDisableStitch?: boolean;
+      tiktokBrandedContent?: boolean;
+      tiktokYourBrand?: boolean;
     };
 
     if (!body.content?.trim()) return reply.status(400).send({ error: "content is required" });
@@ -110,6 +149,14 @@ export async function publicApiRoutes(
       return reply.status(400).send({ error: formatTextLimitError(textViolations), code: "TEXT_LIMIT", violations: textViolations });
     }
 
+    const mediaError = validatePlatformContent(accounts, {
+      text: body.content,
+      images: body.images ?? [],
+      mediaType: body.mediaType,
+      tiktokPrivacyLevel: body.tiktokPrivacyLevel,
+    });
+    if (mediaError) return reply.status(400).send({ error: mediaError, code: "MEDIA_REQUIREMENT" });
+
     const contentPayload = JSON.stringify({
       text: body.content,
       mediaUrls: body.images ?? [],
@@ -117,6 +164,13 @@ export async function publicApiRoutes(
       ...(body.mediaType ? { mediaType: body.mediaType } : {}),
       ...(body.youtubeType ? { youtubeType: body.youtubeType } : {}),
       ...(normalizedPerAccount ? { perAccount: normalizedPerAccount } : {}),
+      ...(body.tiktokPrivacyLevel ? { tiktokPrivacyLevel: body.tiktokPrivacyLevel } : {}),
+      ...(body.tiktokTitle ? { tiktokTitle: body.tiktokTitle } : {}),
+      ...(body.tiktokDisableComment !== undefined ? { tiktokDisableComment: body.tiktokDisableComment } : {}),
+      ...(body.tiktokDisableDuet !== undefined ? { tiktokDisableDuet: body.tiktokDisableDuet } : {}),
+      ...(body.tiktokDisableStitch !== undefined ? { tiktokDisableStitch: body.tiktokDisableStitch } : {}),
+      ...(body.tiktokBrandedContent !== undefined ? { tiktokBrandedContent: body.tiktokBrandedContent } : {}),
+      ...(body.tiktokYourBrand !== undefined ? { tiktokYourBrand: body.tiktokYourBrand } : {}),
     });
 
     const job = await prisma.postJob.create({
@@ -255,6 +309,13 @@ export async function publicApiRoutes(
       mediaType?: "post" | "reel" | "story";
       youtubeType?: "short" | "video";
       perAccount?: Record<string, { text?: string; commentText?: string }> | Array<{ accountId: string; text?: string; commentText?: string }>;
+      tiktokPrivacyLevel?: string;
+      tiktokTitle?: string;
+      tiktokDisableComment?: boolean;
+      tiktokDisableDuet?: boolean;
+      tiktokDisableStitch?: boolean;
+      tiktokBrandedContent?: boolean;
+      tiktokYourBrand?: boolean;
     };
 
     const job = await prisma.postJob.findFirst({ where: { id, workspaceId } });
@@ -279,16 +340,22 @@ export async function publicApiRoutes(
 
     const needsContentUpdate = body.content !== undefined || body.images !== undefined ||
       body.altTexts !== undefined || body.mediaType !== undefined ||
-      body.youtubeType !== undefined || body.perAccount !== undefined;
+      body.youtubeType !== undefined || body.perAccount !== undefined ||
+      body.tiktokPrivacyLevel !== undefined || body.tiktokTitle !== undefined ||
+      body.tiktokDisableComment !== undefined || body.tiktokDisableDuet !== undefined ||
+      body.tiktokDisableStitch !== undefined || body.tiktokBrandedContent !== undefined ||
+      body.tiktokYourBrand !== undefined;
+
+    const existing = JSON.parse(job.content) as {
+      text: string; mediaUrls?: string[]; altTexts?: string[];
+      mediaType?: string; youtubeType?: string;
+      perAccount?: Record<string, { text?: string; commentText?: string }>;
+      tiktokPrivacyLevel?: string;
+    };
 
     if (needsContentUpdate) {
       if (body.content !== undefined && !body.content.trim())
         return reply.status(400).send({ error: "content cannot be empty" });
-      const existing = JSON.parse(job.content) as {
-        text: string; mediaUrls?: string[]; altTexts?: string[];
-        mediaType?: string; youtubeType?: string;
-        perAccount?: Record<string, { text?: string; commentText?: string }>;
-      };
       updateData.content = JSON.stringify({
         ...existing,
         ...(body.content !== undefined ? { text: body.content } : {}),
@@ -297,6 +364,13 @@ export async function publicApiRoutes(
         ...(body.mediaType !== undefined ? { mediaType: body.mediaType } : {}),
         ...(body.youtubeType !== undefined ? { youtubeType: body.youtubeType } : {}),
         ...(body.perAccount !== undefined ? { perAccount: normalizePerAccount(body.perAccount) } : {}),
+        ...(body.tiktokPrivacyLevel !== undefined ? { tiktokPrivacyLevel: body.tiktokPrivacyLevel } : {}),
+        ...(body.tiktokTitle !== undefined ? { tiktokTitle: body.tiktokTitle } : {}),
+        ...(body.tiktokDisableComment !== undefined ? { tiktokDisableComment: body.tiktokDisableComment } : {}),
+        ...(body.tiktokDisableDuet !== undefined ? { tiktokDisableDuet: body.tiktokDisableDuet } : {}),
+        ...(body.tiktokDisableStitch !== undefined ? { tiktokDisableStitch: body.tiktokDisableStitch } : {}),
+        ...(body.tiktokBrandedContent !== undefined ? { tiktokBrandedContent: body.tiktokBrandedContent } : {}),
+        ...(body.tiktokYourBrand !== undefined ? { tiktokYourBrand: body.tiktokYourBrand } : {}),
       });
     }
 
@@ -323,11 +397,12 @@ export async function publicApiRoutes(
       finalAccounts = existingTargets.map((t) => t.account);
     }
 
-    const finalPerAccount = body.perAccount !== undefined
-      ? normalizePerAccount(body.perAccount)
-      : (JSON.parse(job.content) as { perAccount?: Record<string, { text?: string; commentText?: string }> }).perAccount;
-    const finalText = body.content ?? (JSON.parse(job.content) as { text: string }).text;
+    const finalPerAccount = body.perAccount !== undefined ? normalizePerAccount(body.perAccount) : existing.perAccount;
+    const finalText = body.content ?? existing.text;
     const finalCommentText = body.commentText !== undefined ? body.commentText : job.commentText;
+    const finalImages = body.images ?? existing.mediaUrls ?? [];
+    const finalMediaType = body.mediaType ?? existing.mediaType;
+    const finalTiktokPrivacyLevel = body.tiktokPrivacyLevel ?? existing.tiktokPrivacyLevel;
 
     const updateViolations = checkTextLimits(finalAccounts.map((a) => ({
       platform: a.platform,
@@ -337,6 +412,14 @@ export async function publicApiRoutes(
     if (updateViolations.length) {
       return reply.status(400).send({ error: formatTextLimitError(updateViolations), code: "TEXT_LIMIT", violations: updateViolations });
     }
+
+    const mediaError = validatePlatformContent(finalAccounts, {
+      text: finalText,
+      images: finalImages,
+      mediaType: finalMediaType,
+      tiktokPrivacyLevel: finalTiktokPrivacyLevel,
+    });
+    if (mediaError) return reply.status(400).send({ error: mediaError, code: "MEDIA_REQUIREMENT" });
 
     const updated = await prisma.postJob.update({ where: { id }, data: updateData });
 
