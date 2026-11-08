@@ -12,6 +12,7 @@ import { enforcePlan } from "../lib/enforcePlan.js";
 import { getPlan } from "../lib/plans.js";
 import type { StorageAdapter } from "../lib/storage.js";
 import { adapters } from "../adapters/index.js";
+import { filterUrlsSafeToDelete } from "../runner/jobRunner.js";
 import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
 
 // Tab filters cover multiple real PostJob.status values — shared by GET /jobs,
@@ -624,8 +625,9 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         ]);
         const removed = [...oldUrls].filter(u => !newUrls.has(u));
         if (removed.length) {
-          await Promise.allSettled(removed.map(u => storage.delete(u)));
-          await prisma.upload.deleteMany({ where: { url: { in: removed }, userId } });
+          const deletable = await filterUrlsSafeToDelete(removed, id, workspaceId);
+          await Promise.allSettled(deletable.map(u => storage.delete(u)));
+          await prisma.upload.deleteMany({ where: { url: { in: deletable }, userId } });
         }
       } catch { /* non-fatal */ }
     }
@@ -748,8 +750,9 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         ...(content.youtubeThumbnailUrl ? [content.youtubeThumbnailUrl] : []),
       ];
       if (urlsToDelete.length) {
-        await Promise.allSettled(urlsToDelete.map((url) => storage.delete(url)));
-        await prisma.upload.deleteMany({ where: { url: { in: urlsToDelete } } });
+        const deletable = await filterUrlsSafeToDelete(urlsToDelete, id, workspaceId);
+        await Promise.allSettled(deletable.map((url) => storage.delete(url)));
+        await prisma.upload.deleteMany({ where: { url: { in: deletable } } });
       }
     } catch { /* non-fatal */ }
 
@@ -812,12 +815,13 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     // hundreds/thousands of storage calls at once. No delay between batches (unlike
     // cleanupCron's background throttling) since this is a request a user is waiting on.
     if (mediaUrlsToDelete.length) {
+      const deletable = await filterUrlsSafeToDelete(mediaUrlsToDelete, deletableIds, workspaceId);
       const DELETE_BATCH = 50;
-      for (let i = 0; i < mediaUrlsToDelete.length; i += DELETE_BATCH) {
-        const batch = mediaUrlsToDelete.slice(i, i + DELETE_BATCH);
+      for (let i = 0; i < deletable.length; i += DELETE_BATCH) {
+        const batch = deletable.slice(i, i + DELETE_BATCH);
         await Promise.allSettled(batch.map((url) => storage.delete(url)));
       }
-      await prisma.upload.deleteMany({ where: { url: { in: mediaUrlsToDelete } } });
+      await prisma.upload.deleteMany({ where: { url: { in: deletable } } });
     }
 
     // Bulk delete — targets cascade

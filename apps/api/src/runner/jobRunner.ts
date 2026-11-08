@@ -260,18 +260,7 @@ export async function runJob(
     ];
     const ownedUrls = urlsToClean.filter((url) => storage.ownsUrl(url));
     if (ownedUrls.length) {
-      // Same media can be reused across multiple scheduled PostJobs (e.g. one video
-      // posted at several times). Deleting it the moment the first job succeeds 404s
-      // every other job still waiting to use it — only delete URLs nothing else needs.
-      const stillNeededUrls = new Set<string>();
-      const otherPendingJobs = await prisma.postJob.findMany({
-        where: { id: { not: job.id }, workspaceId: job.workspaceId, status: { in: ["pending", "running"] } },
-        select: { content: true },
-      });
-      for (const url of ownedUrls) {
-        if (otherPendingJobs.some((j) => j.content.includes(url))) stillNeededUrls.add(url);
-      }
-      const deletableUrls = ownedUrls.filter((url) => !stillNeededUrls.has(url));
+      const deletableUrls = await filterUrlsSafeToDelete(ownedUrls, job.id, job.workspaceId);
 
       if (deletableUrls.length) {
         await Promise.allSettled(
@@ -284,6 +273,23 @@ export async function runJob(
       }
     }
   }
+}
+
+// Same media can be reused across multiple scheduled PostJobs (e.g. one video
+// posted at several times). Deleting it the moment one job is done with it 404s
+// every other job still waiting to use it — only delete URLs nothing else needs.
+// Used by the post-success cleanup here and by the job edit/delete routes.
+export async function filterUrlsSafeToDelete(
+  urls: string[],
+  excludeJobId: string | string[],
+  workspaceId: string | null,
+): Promise<string[]> {
+  const excludeIds = Array.isArray(excludeJobId) ? excludeJobId : [excludeJobId];
+  const otherJobs = await prisma.postJob.findMany({
+    where: { id: { notIn: excludeIds }, workspaceId, status: { in: ["draft", "pending", "running"] } },
+    select: { content: true },
+  });
+  return urls.filter((url) => !otherJobs.some((j) => j.content.includes(url)));
 }
 
 type EffectiveContent = {
