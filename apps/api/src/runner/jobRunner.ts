@@ -260,13 +260,28 @@ export async function runJob(
     ];
     const ownedUrls = urlsToClean.filter((url) => storage.ownsUrl(url));
     if (ownedUrls.length) {
-      await Promise.allSettled(
-        ownedUrls.map((url) => {
-          console.log(`[storage] deleting ${url} after successful post`);
-          return storage.delete(url);
-        })
-      );
-      await prisma.upload.deleteMany({ where: { url: { in: ownedUrls } } });
+      // Same media can be reused across multiple scheduled PostJobs (e.g. one video
+      // posted at several times). Deleting it the moment the first job succeeds 404s
+      // every other job still waiting to use it — only delete URLs nothing else needs.
+      const stillNeededUrls = new Set<string>();
+      const otherPendingJobs = await prisma.postJob.findMany({
+        where: { id: { not: job.id }, workspaceId: job.workspaceId, status: { in: ["pending", "running"] } },
+        select: { content: true },
+      });
+      for (const url of ownedUrls) {
+        if (otherPendingJobs.some((j) => j.content.includes(url))) stillNeededUrls.add(url);
+      }
+      const deletableUrls = ownedUrls.filter((url) => !stillNeededUrls.has(url));
+
+      if (deletableUrls.length) {
+        await Promise.allSettled(
+          deletableUrls.map((url) => {
+            console.log(`[storage] deleting ${url} after successful post`);
+            return storage.delete(url);
+          })
+        );
+        await prisma.upload.deleteMany({ where: { url: { in: deletableUrls } } });
+      }
     }
   }
 }
