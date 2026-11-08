@@ -225,6 +225,34 @@ const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body)
   async getAnalytics(account: Account, platformPostId: string): Promise<AnalyticsResult> {
     const { accessToken } = getCredentials(account);
 
+    // Stories don't support likes/comments/saved/shares via Insights — only
+    // FEED/REELS do. Check the media's own product type first.
+    const media = await apiGet<{ media_product_type?: string }>(
+      `/${platformPostId}`,
+      accessToken,
+      { fields: "media_product_type" },
+    );
+    const isStory = media.media_product_type === "STORY";
+
+    const get = (data: Array<{ name: string; values?: Array<{ value: number }> }>, name: string): number =>
+      data.find((m) => m.name === name)?.values?.[0]?.value ?? 0;
+
+    if (isStory) {
+      // Stories: replies + reach only. No likes/comments/saved/shares metric exists.
+      const res = await apiGet<{
+        data: Array<{ name: string; values?: Array<{ value: number }> }>;
+      }>(
+        `/${platformPostId}/insights`,
+        accessToken,
+        { metric: "replies,reach", period: "lifetime" },
+      );
+      return {
+        replies:   get(res.data, "replies"),
+        views:     get(res.data, "reach"),
+        fetchedAt: new Date().toISOString(),
+      };
+    }
+
     // Meta's reach/impressions metrics are broken for Reels since Sep 2024.
     // Fetch basic metrics first; attempt reach separately and swallow the error.
     const res = await apiGet<{
@@ -234,8 +262,6 @@ const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body)
       accessToken,
       { metric: "likes,comments,saved,shares", period: "lifetime" },
     );
-    const get = (name: string): number =>
-      res.data.find((m) => m.name === name)?.values?.[0]?.value ?? 0;
 
     let views: number | undefined;
     try {
@@ -253,9 +279,9 @@ const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body)
     }
 
     return {
-      likes:     get("likes"),
-      replies:   get("comments"),
-      reposts:   get("shares"),
+      likes:     get(res.data, "likes"),
+      replies:   get(res.data, "comments"),
+      reposts:   get(res.data, "shares"),
       views,
       fetchedAt: new Date().toISOString(),
     };
