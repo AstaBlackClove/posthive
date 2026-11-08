@@ -28,19 +28,19 @@ const T = {
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://posthive.co";
 
 export const metadata: Metadata = {
-  title: "Schedule Social Media with AI — Claude, Cursor & ChatGPT Integration",
-  description: "Connect Claude, Cursor, or any AI agent to Posthive and schedule posts across 14 platforms. Draft-first workflow — nothing goes live without your approval.",
+  title: "AI Agent Social Media Scheduler — MCP for Claude | Posthive",
+  description: "Give Claude, Cursor, or ChatGPT an MCP tool to schedule posts across 14 platforms. Draft-first — nothing publishes without your approval. Free to install.",
   keywords: ["MCP social media", "Claude MCP social scheduler", "AI agent social media posting", "posthive-mcp", "social media API agent", "Claude tool social media"],
   alternates: { canonical: `${WEB_URL}/agent` },
   openGraph: {
-    title: "Schedule Social Media with AI — Claude, Cursor & ChatGPT Integration",
+    title: "AI Agent Social Media Scheduler — MCP for Claude | Posthive",
     description: "Give Claude, Cursor, or any AI agent the ability to schedule posts across 14 platforms. Draft-first — nothing goes live without your approval.",
     url: `${WEB_URL}/agent`,
     images: [{ url: "/og/fordeveloperogimage.jpg", width: 1200, height: 630, alt: "Posthive Agent — MCP + CLI for social media" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Schedule Social Media with AI — Claude, Cursor & ChatGPT Integration",
+    title: "AI Agent Social Media Scheduler — MCP for Claude | Posthive",
     description: "MCP server + CLI for Claude, Cursor, VS Code, ChatGPT and more. Draft-first, revocable API keys.",
     images: ["/og/fordeveloperogimage.jpg"],
   },

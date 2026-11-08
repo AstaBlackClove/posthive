@@ -163,8 +163,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#e1306c",
     headline: "Reels, Stories, and feed posts all scheduled",
     subheadline: "Posthive is one of the few schedulers that supports the full range of Instagram content types. Stop opening the app to post. Set it and forget it.",
-    metaTitle: "Schedule Instagram Posts, Reels & Stories Free | Posthive",
-    metaDescription: "Schedule Instagram feed posts, Reels, Stories, and carousels from one place. Posthive supports the full Instagram content mix — free 14-day trial.",
+    metaTitle: "Instagram Scheduler — Reels, Stories, Carousels | Posthive",
+    metaDescription: "Open-source Instagram scheduler for Reels, Stories & carousels. Self-host or use our cloud — no vendor lock-in. Free 14-day trial, no card required.",
     supports: [
       { label: "Feed posts (single + carousel)", icon: "image" as IconKey },
       { label: "Instagram Reels", icon: "reel" as IconKey },

@@ -50,20 +50,20 @@ const faqSchema = {
 };
 
 export const metadata: Metadata = {
-  title: "10 Best Social Media Schedulers 2026: Free & Paid Compared",
-  description: "Compared: Buffer, Hootsuite, Later, Posthive, and more. Pricing, platform support (Bluesky, Threads, Instagram), free plans, and who each tool is actually built for.",
+  title: "Best Social Media Scheduler 2026: 10 Tools Tested & Compared",
+  description: "We tested 10 social media schedulers — Buffer, Hootsuite, Later, Posthive & more — on pricing, platforms, and free plans. See which wins for you.",
   keywords: ["best social media scheduler", "best free social media scheduler", "social media scheduler comparison", "cheapest social media scheduler", "top social media scheduling tools"],
   alternates: { canonical: `${WEB_URL}/blog/best-social-media-scheduler` },
   openGraph: {
-    title: "10 Best Social Media Schedulers 2026: Free & Paid Compared",
-    description: "Compared: Buffer, Hootsuite, Later, Posthive, and more. Pricing, platform support, free plans, and who each tool is actually built for.",
+    title: "Best Social Media Scheduler 2026: 10 Tools Tested & Compared",
+    description: "We tested 10 social media schedulers — Buffer, Hootsuite, Later, Posthive & more — on pricing, platforms, and free plans. See which wins for you.",
     url: `${WEB_URL}/blog/best-social-media-scheduler`,
     images: [{ url: "/api/og?layout=post&title=Best+Social+Media+Scheduler+2026&desc=Free+and+paid+options+compared&badge=Comparison&date=July+7%2C+2026", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "10 Best Social Media Schedulers 2026: Free & Paid Compared",
-    description: "Compared: Buffer, Hootsuite, Later, Posthive, and more. Pricing, platform support, free plans, and who each tool is actually built for.",
+    title: "Best Social Media Scheduler 2026: 10 Tools Tested & Compared",
+    description: "We tested 10 social media schedulers — Buffer, Hootsuite, Later, Posthive & more — on pricing, platforms, and free plans.",
   },
 };
 
