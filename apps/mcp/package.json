@@ -41,7 +41,7 @@
     "url": "https://github.com/AstaBlackClove/posthive/issues"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1"
+    "@modelcontextprotocol/sdk": "^1.32.0"
   },
   "devDependencies": {
     "typescript": "^5.5.4",
