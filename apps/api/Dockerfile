@@ -1,5 +1,5 @@
 FROM node:22-alpine AS base
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@11.8.0
 
 # ── Install deps + build ───────────────────────────────────────────────────────
 FROM base AS builder
