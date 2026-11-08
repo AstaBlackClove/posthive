@@ -1,7 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import crypto from "node:crypto";
 import { prisma } from "../lib/prisma.js";
-import { withAuth, getUser } from "../lib/auth/withAuth.js";
+import { withAuth, getUser, ACCESS_COOKIE_NAME } from "../lib/auth/withAuth.js";
+import { authProvider } from "../lib/auth/index.js";
 
 const ALLOWED_EVENTS = new Set([
   "checkout_clicked",
@@ -45,12 +46,15 @@ export async function trackRoutes(app: FastifyInstance): Promise<void> {
     const safeDuration = typeof duration === "number" && duration >= 0 && duration < 86400
       ? Math.round(duration) : undefined;
 
-    // Try to resolve userId from auth cookie (optional — session can be anonymous)
+    // Try to resolve userId from auth cookie (optional — session can be anonymous).
+    // Uses the token check directly, not withAuth — withAuth sends its own 401 reply
+    // on failure instead of throwing, which would double-send on this route.
     let userId: string | undefined;
-    try {
-      await withAuth(req, reply);
-      userId = getUser(req).id;
-    } catch { /* anonymous — fine */ }
+    const accessToken = req.cookies?.[ACCESS_COOKIE_NAME];
+    if (accessToken) {
+      const user = await authProvider.validateAccessToken(accessToken);
+      if (user) userId = user.id;
+    }
 
     await prisma.session.upsert({
       where: { id: safeVisitorId },
