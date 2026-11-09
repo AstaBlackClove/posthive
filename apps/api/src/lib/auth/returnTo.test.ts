@@ -8,10 +8,10 @@ describe("safeReturnTo", () => {
   });
 
   it("falls back for empty or non-string input", () => {
-    expect(safeReturnTo(undefined)).toBe("/compose");
-    expect(safeReturnTo(null)).toBe("/compose");
-    expect(safeReturnTo("")).toBe("/compose");
-    expect(safeReturnTo(42)).toBe("/compose");
+    expect(safeReturnTo(undefined)).toBe("/dashboard");
+    expect(safeReturnTo(null)).toBe("/dashboard");
+    expect(safeReturnTo("")).toBe("/dashboard");
+    expect(safeReturnTo(42)).toBe("/dashboard");
     expect(safeReturnTo("", "/x")).toBe("/x");
   });
 
@@ -27,7 +27,7 @@ describe("safeReturnTo", () => {
       "javascript:alert(1)",
       "evil.com",
     ]) {
-      expect(safeReturnTo(bad), JSON.stringify(bad)).toBe("/compose");
+      expect(safeReturnTo(bad), JSON.stringify(bad)).toBe("/dashboard");
     }
   });
 });

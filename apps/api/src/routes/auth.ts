@@ -2074,7 +2074,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
 
     // ── Local auth mode: exchange Google authorization code ─────────────────
-    let returnTo = "/compose";
+    let returnTo = "/dashboard";
     try {
       const parsed = JSON.parse(Buffer.from(state ?? "", "base64url").toString()) as { returnTo?: string };
       returnTo = safeReturnTo(parsed.returnTo);
@@ -2239,7 +2239,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     if (!linkedinLoginConfigured()) return fail("linkedin_not_configured");
     if (error || !code || !state) return fail("linkedin_oauth_failed");
 
-    let returnTo = "/compose";
+    let returnTo = "/dashboard";
     let stateNonce = "";
     try {
       const parsed = JSON.parse(Buffer.from(state, "base64url").toString()) as { returnTo?: string; nonce?: string };

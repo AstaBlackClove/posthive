@@ -9,7 +9,7 @@ const BASE = "http://returnto.invalid";
  * so "/\t/evil.com" would become "//evil.com". A first-characters regex misses that;
  * parsing and comparing the origin does not.
  */
-export function safeReturnTo(value: unknown, fallback = "/compose"): string {
+export function safeReturnTo(value: unknown, fallback = "/dashboard"): string {
   if (typeof value !== "string" || !value.startsWith("/")) return fallback;
   try {
     const url = new URL(value, BASE);
