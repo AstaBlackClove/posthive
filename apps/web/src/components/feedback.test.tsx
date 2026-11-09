@@ -132,6 +132,18 @@ describe("InlineAlert", () => {
     expect(screen.getByText("i").closest("[role]")!.getAttribute("role")).toBe("status");
   });
 
+  it("a role can be chosen: a warning that is just on the page is read politely, a success can interrupt", () => {
+    render(
+      <>
+        <InlineAlert tone="warning" role="status">w</InlineAlert>
+        <InlineAlert tone="success" role="alert">s</InlineAlert>
+      </>
+    );
+    expect(screen.getByText("w").closest("[role]")!.getAttribute("role")).toBe("status");
+    expect(screen.getByText("w").closest("[data-tone]")!.getAttribute("data-tone")).toBe("warning");
+    expect(screen.getByText("s").closest("[role]")!.getAttribute("role")).toBe("alert");
+  });
+
   it("defaults to danger with the CLAUDE.md colours", () => {
     render(<InlineAlert>Wrong password</InlineAlert>);
     const box = screen.getByRole("alert");

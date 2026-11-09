@@ -92,6 +92,22 @@ const keyOf = (f: ReviewFields) =>
 
 const sameKey = (a: ReviewFields, b: ReviewFields) => keyOf(a) === keyOf(b);
 
+/**
+ * For each post (title, date, channels) the lowest file row that is kept and valid: a later row with
+ * the same post is a copy of it. Built once for the whole batch, so checking every row stays O(n)
+ * (scanning the earlier rows for each row took seconds at the 1,000-row limit).
+ */
+export function duplicateIndex(all: ReviewRow[]): Map<string, number> {
+  const first = new Map<string, number>();
+  for (const other of all) {
+    if (other.removed || validateFields(other.fields).length > 0) continue;
+    const key = keyOf(other.fields);
+    const seen = first.get(key);
+    if (seen === undefined || other.sourceRow < seen) first.set(key, other.sourceRow);
+  }
+  return first;
+}
+
 /** True when the user changed this field from what the file had. */
 export const fieldChanged = (row: ReviewRow, field: keyof ReviewFields) =>
   JSON.stringify(row.fields[field]) !== JSON.stringify(row.original[field]);
@@ -105,6 +121,8 @@ export function issuesOf(
   row: ReviewRow,
   all: ReviewRow[],
   serverRowErrors?: ReadonlyMap<number, FieldIssue[]>,
+  /** From duplicateIndex(all). Pass it when checking many rows; alone, it is built here. */
+  index: ReadonlyMap<string, number> = duplicateIndex(all),
 ): { errors: FieldIssue[]; warnings: string[] } {
   const errors: FieldIssue[] = [];
   const own = validateFields(row.fields);
@@ -118,9 +136,8 @@ export function issuesOf(
     if (row.duplicateReason && row.duplicateKind === "workspace" && keyUnchanged) {
       errors.push({ field: "title", message: row.duplicateReason });
     } else {
-      const first = all.find((other) => !other.removed && other.sourceRow < row.sourceRow
-        && validateFields(other.fields).length === 0 && sameKey(other.fields, row.fields));
-      if (first) errors.push({ field: "title", message: `Same as row ${first.sourceRow} in this file.` });
+      const first = index.get(keyOf(row.fields));
+      if (first !== undefined && first < row.sourceRow) errors.push({ field: "title", message: `Same as row ${first} in this file.` });
     }
   }
 
@@ -147,7 +164,8 @@ export interface ReviewSummary {
 
 export function reviewSummary(rows: ReviewRow[], serverRowErrors?: ReadonlyMap<number, FieldIssue[]>): ReviewSummary {
   const kept = rows.filter((r) => !r.removed);
-  const needsFix = kept.filter((r) => issuesOf(r, rows, serverRowErrors).errors.length > 0).length;
+  const index = duplicateIndex(rows);
+  const needsFix = kept.filter((r) => issuesOf(r, rows, serverRowErrors, index).errors.length > 0).length;
   return {
     total: rows.length,
     valid: kept.length - needsFix,
@@ -160,7 +178,8 @@ export function reviewSummary(rows: ReviewRow[], serverRowErrors?: ReadonlyMap<n
 /** Import is on only when at least one row is kept and every kept row is valid. */
 export function canImport(rows: ReviewRow[], serverRowErrors?: ReadonlyMap<number, FieldIssue[]>): boolean {
   const kept = rows.filter((r) => !r.removed);
-  return kept.length > 0 && kept.every((r) => issuesOf(r, rows, serverRowErrors).errors.length === 0);
+  const index = duplicateIndex(rows);
+  return kept.length > 0 && kept.every((r) => issuesOf(r, rows, serverRowErrors, index).errors.length === 0);
 }
 
 export interface CommitPayload {

@@ -2,7 +2,7 @@
 // what to call a row, what to say under its title, which tab it is in, in what order, which
 // dates to suggest for a date that does not exist, and what the success screen counts.
 import { normalizeCategory } from "./contentTypes";
-import { IMPORT_PLATFORMS, issuesOf, type FieldIssue, type ReviewRow } from "./importReview";
+import { IMPORT_PLATFORMS, duplicateIndex, issuesOf, type FieldIssue, type ReviewRow } from "./importReview";
 import { platformLabel } from "./platforms";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -57,8 +57,14 @@ function channelNote(row: ReviewRow, issue: FieldIssue): string {
 }
 
 /** What a row is right now, from the importer's findings plus the user's edits. */
-export function rowState(row: ReviewRow, all: ReviewRow[], serverRowErrors?: ReadonlyMap<number, FieldIssue[]>): RowState {
-  const { errors } = issuesOf(row, all, serverRowErrors);
+export function rowState(
+  row: ReviewRow,
+  all: ReviewRow[],
+  serverRowErrors?: ReadonlyMap<number, FieldIssue[]>,
+  /** From duplicateIndex(all), when many rows are checked. */
+  index?: ReadonlyMap<string, number>,
+): RowState {
+  const { errors } = issuesOf(row, all, serverRowErrors, index);
 
   if (row.removed) {
     const duplicate = row.duplicateKind !== null;
@@ -112,7 +118,8 @@ export interface Classified {
 }
 
 export function classify(rows: ReviewRow[], serverRowErrors?: ReadonlyMap<number, FieldIssue[]>): Classified[] {
-  return rows.map((row) => ({ row, state: rowState(row, rows, serverRowErrors) }));
+  const index = duplicateIndex(rows);
+  return rows.map((row) => ({ row, state: rowState(row, rows, serverRowErrors, index) }));
 }
 
 export function tabCounts(items: Classified[]): Record<RowTab, number> {

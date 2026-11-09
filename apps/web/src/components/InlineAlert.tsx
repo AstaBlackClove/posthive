@@ -36,6 +36,11 @@ type Props = {
   /** Replace the tone's icon, or pass null for none. */
   icon?: ReactNode | null;
   id?: string;
+  /**
+   * How it is announced. Default: danger and warning interrupt (alert), success and info wait (status).
+   * Pass "status" for a warning that is simply on the page and not a reaction to what the user just did.
+   */
+  role?: "alert" | "status";
   className?: string;
   children: ReactNode;
 };
@@ -44,13 +49,13 @@ type Props = {
  * A notice inside a page or a dialog (a toast is for something that just happened).
  * Danger and warning are announced at once (role=alert), success and info politely (role=status).
  */
-export function InlineAlert({ tone = "danger", onDark = false, title, icon, id, className, children }: Props) {
+export function InlineAlert({ tone = "danger", onDark = false, title, icon, id, role, className, children }: Props) {
   const Icon = ICON[tone];
   return (
     <div
       id={id}
       data-tone={tone}
-      role={tone === "danger" || tone === "warning" ? "alert" : "status"}
+      role={role ?? (tone === "danger" || tone === "warning" ? "alert" : "status")}
       className={cn(
         "flex items-start gap-2.5 rounded-xl border px-3.5 py-3 type-body-r-s",
         (onDark ? DARK : LIGHT)[tone],

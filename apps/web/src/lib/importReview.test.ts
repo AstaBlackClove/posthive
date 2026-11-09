@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  duplicateIndex,
   buildCommitPayload,
   buildReviewRows,
   canImport,
@@ -157,5 +158,34 @@ describe("buildCommitPayload", () => {
       include: [2, 3],
       edits: { 3: { title: "New title", platforms: ["instagram", "linkedin"] } },
     });
+  });
+});
+
+describe("duplicateIndex", () => {
+  it("holds the lowest kept, valid row of each post", () => {
+    const rows = buildReviewRows([server(5), server(2), server(9, {}, { title: "Other" })]);
+    expect([...duplicateIndex(rows).values()].sort()).toEqual([2, 9]);
+  });
+
+  it("skips a row that is removed or not valid, so the next copy becomes the first", () => {
+    const rows = buildReviewRows([server(2), server(3), server(4, {}, { title: "" })]);
+    rows[0] = { ...rows[0], removed: true };
+    expect([...duplicateIndex(rows).values()]).toEqual([3]);
+    expect(issuesOf(rows[1], rows).errors).toEqual([]);
+  });
+
+  it("gives the same answer when it is passed in as when it is built per row", () => {
+    const rows = buildReviewRows([server(2), server(3), server(4, {}, { title: "Other" }), server(5)]);
+    const index = duplicateIndex(rows);
+    for (const row of rows) expect(issuesOf(row, rows, undefined, index)).toEqual(issuesOf(row, rows));
+    expect(issuesOf(rows[3], rows, undefined, index).errors).toEqual([{ field: "title", message: "Same as row 2 in this file." }]);
+  });
+
+  it("checks a full 1,000-row import in well under a second (it scanned the earlier rows for every row: seconds)", () => {
+    const rows = buildReviewRows(Array.from({ length: 1000 }, (_, i) => server(i + 2, {}, { title: `Post number ${i}` })));
+    const t = performance.now();
+    expect(canImport(rows)).toBe(true);
+    expect(reviewSummary(rows).valid).toBe(1000);
+    expect(performance.now() - t).toBeLessThan(500);
   });
 });
