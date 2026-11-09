@@ -29,23 +29,22 @@ async function resolveWorkspace(req: FastifyRequest, userId: string): Promise<vo
     // Header supplied but not a member — fall through to active workspace
   }
 
-  // Resolve from DB: activeWorkspaceId, fall back to first membership
+  // Resolve from DB: the active workspace, but only while the person is still a member of it
+  // (removing a member does not reset their activeWorkspaceId), else the first membership
   const dbUser = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       activeWorkspaceId: true,
       workspaceMembers: {
         orderBy: { joinedAt: "asc" },
-        take: 1,
         select: { workspaceId: true },
       },
     },
   });
 
-  req.workspaceId =
-    dbUser?.activeWorkspaceId ??
-    dbUser?.workspaceMembers[0]?.workspaceId ??
-    null;
+  const memberOf = dbUser?.workspaceMembers ?? [];
+  const active = dbUser?.activeWorkspaceId;
+  req.workspaceId = (active && memberOf.some((m) => m.workspaceId === active) ? active : memberOf[0]?.workspaceId) ?? null;
 }
 
 const guard = createAuthGuard({ provider: authProvider, resolveWorkspace });
