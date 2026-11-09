@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HomeIcon, InboxIcon, SearchIcon } from "lucide-react";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "./breadcrumb";
 import { Button } from "./button";
 import { ButtonGroup, ButtonGroupSeparator } from "./button-group";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "./empty";
@@ -50,6 +51,52 @@ describe("Empty", () => {
   it("the title uses the body type scale", () => {
     render(<Empty><EmptyTitle>T</EmptyTitle></Empty>);
     expect(classesOf(screen.getByText("T"))).toContain("type-body-sb-m");
+  });
+});
+
+describe("Breadcrumb", () => {
+  const trail = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem><BreadcrumbLink href="/dashboard">Content workspace</BreadcrumbLink></BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem><BreadcrumbPage>Import quarter plan</BreadcrumbPage></BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
+  it("is a navigation landmark: a link to the parent and the current page marked", () => {
+    render(trail);
+    expect(screen.getByRole("navigation", { name: "breadcrumb" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Content workspace" }).getAttribute("href")).toBe("/dashboard");
+    const page = screen.getByText("Import quarter plan");
+    expect(page.getAttribute("aria-current")).toBe("page");
+    // the page you are on is not a link you can follow
+    expect(page.getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("hides the separator from screen readers, so only the two names are read", () => {
+    render(trail);
+    expect(document.querySelector("[data-slot=breadcrumb-separator]")!.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("parents are the muted text colour and the current page the main one", () => {
+    render(trail);
+    expect(classesOf(screen.getByRole("list"))).toContain("text-muted");
+    expect(classesOf(screen.getByText("Import quarter plan"))).toEqual(expect.arrayContaining(["text-fg", "type-body-m-xs"]));
+  });
+
+  it("asChild lets a router link carry the styling", () => {
+    render(
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem><BreadcrumbLink asChild><a href="/jobs">Posts</a></BreadcrumbLink></BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+    const link = screen.getByRole("link", { name: "Posts" });
+    expect(link.getAttribute("data-slot")).toBe("breadcrumb-link");
+    expect(link.getAttribute("href")).toBe("/jobs");
   });
 });
 
