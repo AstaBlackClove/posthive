@@ -66,3 +66,6 @@ docs/quick-tunnel-demo.md
 /backups/
 /scripts/
 /deploy-history.log
+
+# Design mockups (reference PNGs, kept local)
+/docs/design/
