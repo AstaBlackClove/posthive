@@ -21,7 +21,9 @@ export function SectionPanel({ title, description, action, className, contentCla
   return (
     <Card className={cn("gap-3 py-4", className)}>
       <CardHeader className="px-4">
-        <CardTitle className="type-body-sb-m">{title}</CardTitle>
+        <CardTitle className="type-body-sb-m">
+          <h2>{title}</h2>
+        </CardTitle>
         {description && <CardDescription className="type-body-r-xs">{description}</CardDescription>}
         {action && <CardAction>{action}</CardAction>}
       </CardHeader>

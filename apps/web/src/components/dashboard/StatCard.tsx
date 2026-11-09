@@ -38,13 +38,15 @@ export function StatCard({ title, subtitle, value, unit, total, tone = "default"
   return (
     <Card className={cn("gap-3 py-4", TONE[tone], className)}>
       <CardHeader className="px-4">
-        <CardTitle className="type-body-sb-m">{title}</CardTitle>
+        <CardTitle className="type-body-sb-m">
+          <h2>{title}</h2>
+        </CardTitle>
         <CardDescription className="type-body-r-xs">{subtitle}</CardDescription>
       </CardHeader>
       <CardContent className="mt-auto space-y-2 px-4">
         <div className="flex items-end justify-between gap-2">
           <p className="flex items-baseline gap-2">
-            <span className="type-head-sb-3 text-fg tabular-nums">{value}</span>
+            <span className="type-head-r-3 text-fg tabular-nums">{value}</span>
             <span className="type-body-r-xs text-muted-foreground">
               {hasTotal ? `/ ${total} ` : ""}
               {unit}

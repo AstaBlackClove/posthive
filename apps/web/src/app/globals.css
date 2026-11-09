@@ -144,6 +144,7 @@
 .theme-dashboard {
   --c-bg:      var(--color-neutral-50);
   --c-surface: var(--color-white);
+  --c-accent:  var(--color-brand-500); /* the design's buttons and fills are #ffd43b; the app default is brand-600 */
 }
 .dark {
   --c-bg:         var(--color-neutral-950);
