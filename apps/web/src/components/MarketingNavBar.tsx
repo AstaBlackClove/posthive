@@ -9,7 +9,7 @@ export function MarketingNavBar() {
     <NavBar
       user={!!user}
       loading={loading}
-      ctaHref={user ? "/compose" : "/register"}
+      ctaHref={user ? "/dashboard" : "/register"}
       navCtaLabel={user ? "Go to app" : "Get started free"}
     />
   );

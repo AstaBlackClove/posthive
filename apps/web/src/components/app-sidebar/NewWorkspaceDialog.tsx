@@ -35,7 +35,7 @@ export function NewWorkspaceDialog({ open, onOpenChange }: Props) {
       onOpenChange(false);
       setName("");
       // A reload clears every workspace-scoped bit of client state
-      window.location.href = "/compose";
+      window.location.href = "/dashboard";
     } catch (err) {
       error(err instanceof Error ? err.message : "Failed to create workspace");
     } finally {

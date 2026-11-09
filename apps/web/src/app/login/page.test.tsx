@@ -48,13 +48,13 @@ describe("login page", () => {
     expect(screen.getByRole("checkbox", { name: "Keep me logged in" }).getAttribute("aria-checked")).toBe("true");
   });
 
-  it("logs in with remember = true by default and goes to /compose", async () => {
+  it("logs in with remember = true by default and goes to /dashboard", async () => {
     render(<LoginPage />);
     await fill();
     await userEvent.click(screen.getByRole("button", { name: "Log in" }));
     await waitFor(() => expect(h.login).toHaveBeenCalledWith("puteri@example.com", "S3cret-pass!", true));
     expect(h.refresh).toHaveBeenCalled();
-    expect(h.replace).toHaveBeenCalledWith("/compose");
+    expect(h.replace).toHaveBeenCalledWith("/dashboard");
   });
 
   it("clicking the TEXT of the label turns it off, and the session-only flag reaches login()", async () => {
@@ -95,7 +95,7 @@ describe("login page", () => {
     render(<LoginPage />);
     await fill();
     await userEvent.click(screen.getByRole("button", { name: "Log in" }));
-    await waitFor(() => expect(h.replace).toHaveBeenCalledWith("/compose"));
+    await waitFor(() => expect(h.replace).toHaveBeenCalledWith("/dashboard"));
   });
 
   it("a failed login shows the message, marks both fields invalid and stays on the page", async () => {

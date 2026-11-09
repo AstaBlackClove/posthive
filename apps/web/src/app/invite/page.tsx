@@ -55,7 +55,7 @@ function InviteContent() {
         { method: "POST" }
       );
       setAccepted(true);
-      setTimeout(() => { window.location.href = "/compose"; }, 1500);
+      setTimeout(() => { window.location.href = "/dashboard"; }, 1500);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to accept invite.";
       setAcceptError(msg);

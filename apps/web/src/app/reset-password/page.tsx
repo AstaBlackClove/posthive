@@ -54,7 +54,7 @@ function ResetPasswordForm() {
       if (res.loggedIn) {
         // The API signed the user in with a fresh session: go straight to the app.
         await refresh();
-        router.replace("/compose");
+        router.replace("/dashboard");
       } else {
         router.replace("/login?reset=1");
       }

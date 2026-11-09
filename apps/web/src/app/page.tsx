@@ -473,7 +473,7 @@ export default function RootPage() {
   const { user, loading: authLoading } = useAuth();
   const [isIndia, setIsIndia] = useIsIndia();
   useScrollReveal();
-  const ctaHref = user ? "/compose" : "/register";
+  const ctaHref = user ? "/dashboard" : "/register";
   const ctaLabel = user ? "Go to scheduler" : "Get started free";
   const navCtaLabel = user ? "Go to scheduler" : "Get started free";
   const publicStats = usePublicStats();

@@ -328,7 +328,7 @@ function OnboardingContent() {
         }),
       });
       if (billingEnabled) goStep(4);
-      else router.replace("/compose?onboarded=1");
+      else router.replace("/dashboard");
     } catch (err) {
       setScheduleError(String(err));
       setScheduling(false);
@@ -645,7 +645,7 @@ function OnboardingContent() {
             <button
               onClick={() => {
                 if (billingEnabled) goStep(4);
-                else router.replace("/compose?onboarded=1");
+                else router.replace("/dashboard");
               }}
               className="type-body-r-xs text-center py-1 text-muted hover:opacity-70 transition-opacity"
             >
@@ -750,7 +750,7 @@ function OnboardingContent() {
 
           {/* Primary CTA — go to app, no checkout required */}
           <button
-            onClick={() => router.replace("/compose?onboarded=1")}
+            onClick={() => router.replace("/dashboard")}
             className="btn-primary w-full py-3.5 transition-all active:scale-[0.98] mb-3"
           >
             Start posting →

@@ -63,7 +63,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   async function switchWorkspace(id: string) {
     await apiFetch(`/workspaces/switch/${id}`, { method: "PATCH" });
     // Hard reload — clears all workspace-scoped client state
-    window.location.href = "/compose";
+    window.location.href = "/dashboard";
   }
 
   return (

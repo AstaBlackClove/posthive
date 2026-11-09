@@ -9,10 +9,10 @@ export default function NotFound() {
         The page you're looking for doesn't exist or has been moved.
       </div>
       <Link
-        href="/compose"
+        href="/dashboard"
         className="btn-primary mt-2 rounded-lg px-5 py-2.5"
       >
-        Go to Compose
+        Go to dashboard
       </Link>
     </div>
   );

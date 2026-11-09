@@ -17,7 +17,7 @@ function CallbackContent() {
     if (ran.current) return;
     ran.current = true;
 
-    const returnTo = safeReturnTo(searchParams.get("returnTo")) ?? "/compose";
+    const returnTo = safeReturnTo(searchParams.get("returnTo")) ?? "/dashboard";
 
     // API already set cookies (both local and Supabase PKCE modes).
     // Just refresh the auth context and navigate.

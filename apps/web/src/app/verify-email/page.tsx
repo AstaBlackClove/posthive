@@ -33,7 +33,7 @@ function VerifyEmailContent() {
       .then(async () => {
         setState("success");
         await refresh();
-        setTimeout(() => router.replace("/compose"), REDIRECT_MS);
+        setTimeout(() => router.replace("/dashboard"), REDIRECT_MS);
       })
       .catch((err) => {
         setState("error");

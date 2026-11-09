@@ -120,7 +120,7 @@ export default function SettingsPage() {
     setDeleteWorkspaceLoading(true);
     try {
       await apiFetch(`/workspaces/${activeWorkspace.id}`, { method: "DELETE" });
-      window.location.href = "/compose";
+      window.location.href = "/dashboard";
     } catch (err) {
       toast(err instanceof Error ? err.message : "Failed to delete workspace", "error");
       setShowDeleteWorkspace(false);
@@ -257,7 +257,7 @@ export default function SettingsPage() {
                     if (!confirm(`Leave ${activeWorkspace.name}? You will lose access immediately.`)) return;
                     try {
                       await apiFetch(`/workspaces/${activeWorkspace.id}/leave`, { method: "DELETE" });
-                      window.location.href = "/compose";
+                      window.location.href = "/dashboard";
                     } catch (err) {
                       toast(err instanceof Error ? err.message : "Failed to leave workspace", "error");
                     }

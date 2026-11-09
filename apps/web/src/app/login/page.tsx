@@ -45,7 +45,7 @@ function LoginContent() {
     try {
       await login(email, password, remember);
       await refresh();
-      router.replace(returnTo ?? "/compose");
+      router.replace(returnTo ?? "/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
