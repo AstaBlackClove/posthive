@@ -9,7 +9,7 @@ export const MAX_TITLE = 200;
 export type ImportField = "title" | "postDate" | "platforms" | "category" | "row";
 export interface FieldIssue { field: ImportField; message: string }
 
-/** The fields the review table lets the user change. */
+/** The fields the review step lets the user change. */
 export interface ReviewFields {
   title: string;
   /** YYYY-MM-DD, or "" when the file's date could not be read. */
@@ -27,6 +27,8 @@ export interface ServerRow {
   errors: FieldIssue[];
   warnings: string[];
   duplicateReason: string | null;
+  /** "workspace": already imported before. "file": a copy of an earlier row of this file. */
+  duplicateKind: "file" | "workspace" | null;
   details: Record<string, string | number | null | undefined>;
 }
 
@@ -39,6 +41,7 @@ export interface ReviewRow {
   /** Problems the server found in the file, per field. */
   serverErrors: FieldIssue[];
   duplicateReason: string | null;
+  duplicateKind: "file" | "workspace" | null;
   warnings: string[];
   details: ServerRow["details"];
   /** Left out of the batch. Already-imported rows start out removed. */
@@ -52,9 +55,10 @@ export function buildReviewRows(rows: ServerRow[]): ReviewRow[] {
     fields: r.fields,
     serverErrors: r.errors,
     duplicateReason: r.status === "duplicate" ? r.duplicateReason : null,
+    duplicateKind: r.status === "duplicate" ? r.duplicateKind : null,
     warnings: r.warnings,
     details: r.details,
-    removed: r.status === "duplicate" && !r.duplicateReason?.startsWith("Duplikat dengan baris"),
+    removed: r.status === "duplicate" && r.duplicateKind === "workspace",
   }));
 }
 
@@ -66,20 +70,20 @@ function isRealDate(value: string): boolean {
   return check.getUTCFullYear() === y && check.getUTCMonth() === mo - 1 && check.getUTCDate() === d;
 }
 
-/** Problems that block the import. An unknown category is only a warning (see warningsOf). */
+/** Problems that block the import. An unknown category is only a warning (see issuesOf). */
 export function validateFields(f: ReviewFields): FieldIssue[] {
   const issues: FieldIssue[] = [];
   const title = f.title.trim();
-  if (!title) issues.push({ field: "title", message: "Content Title wajib diisi." });
-  else if (title.length > MAX_TITLE) issues.push({ field: "title", message: `Content Title maksimal ${MAX_TITLE} karakter.` });
+  if (!title) issues.push({ field: "title", message: "Content title is required." });
+  else if (title.length > MAX_TITLE) issues.push({ field: "title", message: `Content title must be ${MAX_TITLE} characters or fewer.` });
 
   const date = f.postDate.trim();
-  if (!date) issues.push({ field: "postDate", message: "Post Date wajib diisi." });
-  else if (!isRealDate(date)) issues.push({ field: "postDate", message: `Post Date tidak valid: "${date}".` });
+  if (!date) issues.push({ field: "postDate", message: "Publish date is required." });
+  else if (!isRealDate(date)) issues.push({ field: "postDate", message: `Publish date isn't valid: "${date}".` });
 
   const unknown = f.platforms.filter((p) => !(IMPORT_PLATFORMS as readonly string[]).includes(p));
-  if (unknown.length > 0) issues.push({ field: "platforms", message: `Platform tidak dikenal: ${unknown.join(", ")}.` });
-  else if (f.platforms.length === 0) issues.push({ field: "platforms", message: "Platform wajib diisi." });
+  if (unknown.length > 0) issues.push({ field: "platforms", message: `Unsupported channel: ${unknown.join(", ")}.` });
+  else if (f.platforms.length === 0) issues.push({ field: "platforms", message: "Channel is required." });
   return issues;
 }
 
@@ -88,7 +92,8 @@ const keyOf = (f: ReviewFields) =>
 
 const sameKey = (a: ReviewFields, b: ReviewFields) => keyOf(a) === keyOf(b);
 
-const fieldChanged = (row: ReviewRow, field: keyof ReviewFields) =>
+/** True when the user changed this field from what the file had. */
+export const fieldChanged = (row: ReviewRow, field: keyof ReviewFields) =>
   JSON.stringify(row.fields[field]) !== JSON.stringify(row.original[field]);
 
 /**
@@ -110,12 +115,12 @@ export function issuesOf(
 
   if (errors.length === 0) {
     const keyUnchanged = sameKey(row.fields, row.original);
-    if (row.duplicateReason && !row.duplicateReason.startsWith("Duplikat dengan baris") && keyUnchanged) {
+    if (row.duplicateReason && row.duplicateKind === "workspace" && keyUnchanged) {
       errors.push({ field: "title", message: row.duplicateReason });
     } else {
       const first = all.find((other) => !other.removed && other.sourceRow < row.sourceRow
         && validateFields(other.fields).length === 0 && sameKey(other.fields, row.fields));
-      if (first) errors.push({ field: "title", message: `Duplikat dengan baris ${first.sourceRow} di batch ini.` });
+      if (first) errors.push({ field: "title", message: `Same as row ${first.sourceRow} in this file.` });
     }
   }
 
@@ -125,7 +130,7 @@ export function issuesOf(
   const warnings = [...row.warnings];
   const category = row.fields.category?.trim();
   if (category && !isKnownCategory(category)) {
-    warnings.push(`Kategori "${category}" tidak dikenal. Pilih kategori sebelum mengirim untuk review.`);
+    warnings.push(`Category "${category}" isn't recognised. Pick a category before sending for review.`);
   }
   return { errors, warnings };
 }

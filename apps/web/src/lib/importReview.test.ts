@@ -27,6 +27,7 @@ const server = (sourceRow: number, patch: Partial<ServerRow> = {}, f: Partial<Re
   errors: [],
   warnings: [],
   duplicateReason: null,
+  duplicateKind: null,
   details: {},
   ...patch,
 });
@@ -39,23 +40,28 @@ describe("validateFields", () => {
   });
 
   it("explains each empty or bad field", () => {
-    expect(validateFields(fields({ title: " " }))).toEqual([{ field: "title", message: "Content Title wajib diisi." }]);
-    expect(validateFields(fields({ postDate: "" }))[0]).toMatchObject({ field: "postDate", message: "Post Date wajib diisi." });
+    expect(validateFields(fields({ title: " " }))).toEqual([{ field: "title", message: "Content title is required." }]);
+    expect(validateFields(fields({ postDate: "" }))[0]).toMatchObject({ field: "postDate", message: "Publish date is required." });
     expect(validateFields(fields({ postDate: "2026-02-31" }))[0]).toMatchObject({ field: "postDate" });
-    expect(validateFields(fields({ platforms: [] }))[0]).toMatchObject({ field: "platforms", message: "Platform wajib diisi." });
+    expect(validateFields(fields({ platforms: [] }))[0]).toMatchObject({ field: "platforms", message: "Channel is required." });
   });
 
   it("does not block on an unknown category", () => {
     expect(validateFields(fields({ category: "Nonsense" }))).toEqual([]);
+  });
+
+  it("flags a title over 200 characters and a channel it does not know", () => {
+    expect(validateFields(fields({ title: "x".repeat(201) }))[0]).toMatchObject({ field: "title", message: "Content title must be 200 characters or fewer." });
+    expect(validateFields(fields({ platforms: ["pinterest"] }))[0]).toMatchObject({ field: "platforms", message: "Unsupported channel: pinterest." });
   });
 });
 
 describe("issuesOf", () => {
   it("keeps the server's reason for a field the user has not touched", () => {
     const [row] = buildReviewRows([
-      server(2, { status: "invalid", errors: [{ field: "postDate", message: 'Post Date tidak valid: "31-02-2099".' }] }, { postDate: "" }),
+      server(2, { status: "invalid", errors: [{ field: "postDate", message: 'Publish date isn\'t valid: "31-02-2099".' }] }, { postDate: "" }),
     ]);
-    expect(issuesOf(row, [row]).errors).toEqual([{ field: "postDate", message: 'Post Date tidak valid: "31-02-2099".' }]);
+    expect(issuesOf(row, [row]).errors).toEqual([{ field: "postDate", message: 'Publish date isn\'t valid: "31-02-2099".' }]);
   });
 
   it("clears the marker once the field is fixed", () => {
@@ -69,7 +75,7 @@ describe("issuesOf", () => {
   it("marks the second copy of a post inside the batch", () => {
     const rows = buildReviewRows([server(2), server(3)]);
     expect(issuesOf(rows[0], rows).errors).toEqual([]);
-    expect(issuesOf(rows[1], rows).errors).toEqual([{ field: "title", message: "Duplikat dengan baris 2 di batch ini." }]);
+    expect(issuesOf(rows[1], rows).errors).toEqual([{ field: "title", message: "Same as row 2 in this file." }]);
   });
 
   it("ignores a removed row when looking for duplicates", () => {
@@ -79,16 +85,16 @@ describe("issuesOf", () => {
   });
 
   it("keeps a restored duplicate flagged until its title, date or platform changes", () => {
-    const [dup] = buildReviewRows([server(2, { status: "duplicate", duplicateReason: "Sudah pernah diimpor ke workspace ini." })]);
+    const [dup] = buildReviewRows([server(2, { status: "duplicate", duplicateReason: "Already imported into this workspace.", duplicateKind: "workspace" })]);
     const restored = { ...dup, removed: false };
-    expect(issuesOf(restored, [restored]).errors).toEqual([{ field: "title", message: "Sudah pernah diimpor ke workspace ini." }]);
+    expect(issuesOf(restored, [restored]).errors).toEqual([{ field: "title", message: "Already imported into this workspace." }]);
     const changed = edit(restored, { title: "New title" });
     expect(issuesOf(changed, [changed]).errors).toEqual([]);
   });
 
   it("shows errors the server sent back for a row until it is edited", () => {
     const [row] = buildReviewRows([server(2)]);
-    const serverErrors = new Map([[2, [{ field: "title" as const, message: "Sudah pernah diimpor ke workspace ini." }]]]);
+    const serverErrors = new Map([[2, [{ field: "title" as const, message: "Already imported into this workspace." }]]]);
     expect(issuesOf(row, [row], serverErrors).errors).toHaveLength(1);
     expect(issuesOf(edit(row, { title: "Other" }), [row], serverErrors).errors).toEqual([]);
   });
@@ -98,8 +104,8 @@ describe("summary and import button", () => {
   it("counts total, valid, needs fix, removed and duplicates", () => {
     const rows = buildReviewRows([
       server(2),
-      server(3, { status: "invalid", errors: [{ field: "title", message: "Content Title wajib diisi." }] }, { title: "" }),
-      server(4, { status: "duplicate", duplicateReason: "Sudah pernah diimpor ke workspace ini." }),
+      server(3, { status: "invalid", errors: [{ field: "title", message: "Content title is required." }] }, { title: "" }),
+      server(4, { status: "duplicate", duplicateReason: "Already imported into this workspace.", duplicateKind: "workspace" }),
       server(5),
     ]);
     rows[3] = { ...rows[3], removed: true };
@@ -109,7 +115,7 @@ describe("summary and import button", () => {
   it("only allows Import when every kept row is valid", () => {
     const rows = buildReviewRows([
       server(2),
-      server(3, { status: "invalid", errors: [{ field: "title", message: "Content Title wajib diisi." }] }, { title: "" }),
+      server(3, { status: "invalid", errors: [{ field: "title", message: "Content title is required." }] }, { title: "" }),
     ]);
     expect(canImport(rows)).toBe(false);
     expect(canImport([rows[0], edit(rows[1], { title: "Fixed" })])).toBe(true);
@@ -121,8 +127,18 @@ describe("summary and import button", () => {
     expect(canImport(rows)).toBe(false);
   });
 
+  it("sets aside a row the workspace already has, but keeps a copy inside the file to be fixed or removed", () => {
+    const rows = buildReviewRows([
+      server(2),
+      server(3, { status: "duplicate", duplicateReason: "Same as row 2 in this file.", duplicateKind: "file" }),
+    ]);
+    expect(rows.map((r) => r.removed)).toEqual([false, false]);
+    expect(rows[1].duplicateKind).toBe("file");
+    expect(issuesOf(rows[1], rows).errors).toEqual([{ field: "title", message: "Same as row 2 in this file." }]);
+  });
+
   it("starts with already-imported rows set aside", () => {
-    const [row] = buildReviewRows([server(2, { status: "duplicate", duplicateReason: "x" })]);
+    const [row] = buildReviewRows([server(2, { status: "duplicate", duplicateReason: "x", duplicateKind: "workspace" })]);
     expect(row.removed).toBe(true);
   });
 });
