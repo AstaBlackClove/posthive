@@ -40,11 +40,11 @@ describe("validatePlanFields", () => {
 
   it("flags an empty title with a clear reason", () => {
     const r = validatePlanFields(fields({ title: "  " }));
-    expect(r.errors).toEqual([{ field: "title", message: "Content Title wajib diisi." }]);
+    expect(r.errors).toEqual([{ field: "title", message: "Content title is required." }]);
   });
 
   it("flags an empty or impossible date", () => {
-    expect(validatePlanFields(fields({ postDate: "" })).errors[0]).toMatchObject({ field: "postDate", message: "Post Date wajib diisi." });
+    expect(validatePlanFields(fields({ postDate: "" })).errors[0]).toMatchObject({ field: "postDate", message: "Publish date is required." });
     expect(validatePlanFields(fields({ postDate: "2026-02-31" })).errors[0]).toMatchObject({ field: "postDate" });
     expect(validatePlanFields(fields({ postDate: "31-02-2026" })).errors[0]).toMatchObject({ field: "postDate" });
   });
@@ -53,7 +53,7 @@ describe("validatePlanFields", () => {
     expect(validatePlanFields(fields({ platforms: [] })).errors[0]).toMatchObject({ field: "platforms" });
     expect(validatePlanFields(fields({ platforms: ["tiktok"] })).errors[0]).toMatchObject({
       field: "platforms",
-      message: "Platform tidak dikenal: tiktok.",
+      message: "Unsupported channel: tiktok.",
     });
   });
 
@@ -65,7 +65,7 @@ describe("validatePlanFields", () => {
   });
 
   it("warns about a past date and a website-only row", () => {
-    expect(validatePlanFields(fields({ postDate: "2020-01-01" })).warnings.join(" ")).toMatch(/lewat/);
+    expect(validatePlanFields(fields({ postDate: "2020-01-01" })).warnings.join(" ")).toMatch(/in the past/);
     expect(validatePlanFields(fields({ platforms: ["website"] })).warnings.join(" ")).toMatch(/Website/);
   });
 
@@ -78,19 +78,19 @@ describe("reviewDrafts", () => {
   it("marks a row with an empty field invalid and keeps the reason per field", () => {
     const r = only(reviewDrafts([draft(2, { title: "" })]));
     expect(r.status).toBe("invalid");
-    expect(r.errors).toEqual([{ field: "title", message: "Content Title wajib diisi." }]);
+    expect(r.errors).toEqual([{ field: "title", message: "Content title is required." }]);
   });
 
   it("keeps the original reason for a date and platform the file could not read", () => {
-    const r = only(reviewDrafts([draft(2, { postDate: "", platforms: [] }, { rawPostDate: "31-02-2026", platformError: "Platform tidak dikenal: TikTok." })]));
+    const r = only(reviewDrafts([draft(2, { postDate: "", platforms: [] }, { rawPostDate: "31-02-2026", platformError: "Unsupported channel: TikTok." })]));
     expect(r.errors.map((e) => e.message)).toEqual([
-      'Post Date tidak valid: "31-02-2026". Gunakan format DD-MM-YYYY (YYYY-MM-DD juga diterima).',
-      "Platform tidak dikenal: TikTok.",
+      'Publish date isn\'t valid: "31-02-2026". Use DD-MM-YYYY (YYYY-MM-DD also works).',
+      "Unsupported channel: TikTok.",
     ]);
   });
 
   it("passes the row once the field is fixed and re-validated", () => {
-    const broken = draft(2, { postDate: "", platforms: [] }, { rawPostDate: "31-02-2026", platformError: "Platform tidak dikenal: TikTok." });
+    const broken = draft(2, { postDate: "", platforms: [] }, { rawPostDate: "31-02-2026", platformError: "Unsupported channel: TikTok." });
     expect(only(reviewDrafts([broken])).status).toBe("invalid");
     const fixed = only(reviewDrafts([broken], { edits: { 2: { postDate: "2099-03-10", platforms: ["instagram"] } } }));
     expect(fixed.status).toBe("valid");
@@ -101,14 +101,17 @@ describe("reviewDrafts", () => {
     const key = makeImportKey("Slope stability", "2099-03-10", ["linkedin"]);
     const r = only(reviewDrafts([draft(2)], { existingKeys: new Set([key]) }));
     expect(r.status).toBe("duplicate");
-    expect(r.duplicateReason).toBe("Sudah pernah diimpor ke workspace ini.");
+    expect(r.duplicateReason).toBe("Already imported into this workspace.");
+    expect(r.duplicateKind).toBe("workspace");
   });
 
   it("flags the second copy of a row inside the same file", () => {
     const [a, b] = reviewDrafts([draft(2), draft(3)]);
     expect(a.status).toBe("valid");
     expect(b.status).toBe("duplicate");
-    expect(b.duplicateReason).toBe("Duplikat dengan baris 2 di file ini.");
+    expect(b.duplicateReason).toBe("Same as row 2 in this file.");
+    expect(b.duplicateKind).toBe("file");
+    expect(a.duplicateKind).toBeUndefined();
   });
 
   it("no longer counts a duplicate once its title is changed", () => {
@@ -128,7 +131,7 @@ describe("commitFromDrafts", () => {
     const r = commitFromDrafts([draft(2), draft(3, { title: "" })], { include: [2, 3] });
     expect(r).toEqual({
       ok: false,
-      rowErrors: [{ sourceRow: 3, errors: [{ field: "title", message: "Content Title wajib diisi." }] }],
+      rowErrors: [{ sourceRow: 3, errors: [{ field: "title", message: "Content title is required." }] }],
     });
   });
 

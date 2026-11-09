@@ -7,26 +7,33 @@ export const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
 
 export type PlanningImportFormat = "csv" | "xlsx";
 
-type PlanningField =
-  | "title"
-  | "pillar"
-  | "category"
-  | "designCopy"
-  | "caption"
-  | "assetNotes"
-  | "postDate"
-  | "platform"
-  | "picContent"
-  | "contentReview"
-  | "approvedBy"
-  | "reviewer"
-  | "picDesign"
-  | "progress"
-  | "outputUrl"
-  | "sourceStatus";
+/** Every column of a plan file the importer can read. The mapping step lets the user pick one per column. */
+export const PLANNING_FIELDS = [
+  "title",
+  "pillar",
+  "category",
+  "designCopy",
+  "caption",
+  "assetNotes",
+  "postDate",
+  "platform",
+  "picContent",
+  "contentReview",
+  "approvedBy",
+  "reviewer",
+  "picDesign",
+  "progress",
+  "outputUrl",
+  "sourceStatus",
+] as const;
+
+export type PlanningField = (typeof PLANNING_FIELDS)[number];
+
+/** A plan cannot be read without these three. */
+export const REQUIRED_FIELDS: readonly PlanningField[] = ["title", "postDate", "platform"];
 
 const HEADER_ALIASES: Record<PlanningField, string[]> = {
-  title: ["content title", "title", "judul konten", "judul"],
+  title: ["content title", "title", "post title", "judul konten", "judul"],
   pillar: ["content pillar", "main content pillar", "pillar", "pilar konten", "pilar"],
   category: ["content category", "content categories", "kategori konten", "kategori"],
   designCopy: ["link copywrite", "link copywriter", "link copy", "copywrite", "copywriter", "design copy", "copy desain"],
@@ -65,6 +72,28 @@ export interface PlanningHeader {
   dataStart: number;
   columns: Partial<Record<PlanningField, number>>;
   recognizedColumns: number;
+  /** Header text per column (a two-row header is joined), "" for an empty cell. */
+  labels: string[];
+}
+
+/** What the user maps in the second step: column index → field, or null for "don't import". */
+export type PlanningMapping = Record<number, PlanningField | null>;
+
+/** One column of the file as the mapping step shows it. */
+export interface PlanningColumn {
+  index: number;
+  label: string;
+  /** First non-empty value below the header, cut to 80 characters. */
+  sample: string;
+  /** The field the column is read as (the importer's guess, or the user's choice). */
+  field: PlanningField | null;
+}
+
+export class ImportMappingError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ImportMappingError";
+  }
 }
 
 export interface PlanningRow {
@@ -116,6 +145,10 @@ export interface PlanningParseResult {
   sheetName: string | null;
   candidateSheets: string[];
   totalDataRows: number;
+  /** Every column with a header or a value, for the mapping step. */
+  columns: PlanningColumn[];
+  /** Required fields no column is read as. While any is missing no row is parsed. */
+  missingFields: PlanningField[];
 }
 
 export interface PlanningRowsParseOptions {
@@ -250,10 +283,112 @@ export function findPlanningHeader(rows: string[][]): PlanningHeader | null {
       dataStart: rowIndex + (useSubHeader ? 2 : 1),
       columns,
       recognizedColumns: Object.keys(columns).length,
+      labels: headerLabels(rows[rowIndex], useSubHeader ? nextRow : undefined),
     };
   }
 
   return null;
+}
+
+function headerLabels(first: string[], second?: string[]): string[] {
+  const width = Math.max(first.length, second?.length ?? 0);
+  const labels: string[] = [];
+  for (let index = 0; index < width; index += 1) {
+    const a = cleanCell(first[index]);
+    const b = cleanCell(second?.[index]);
+    labels.push(a && b && a.toLowerCase() !== b.toLowerCase() ? `${a} / ${b}` : b || a);
+  }
+  return labels;
+}
+
+/**
+ * For a file that has none of the three required headers: the row among the first 20 with
+ * the most recognised headers; among equals, the one with the most filled cells (so a title
+ * line above the table loses to the header row). The user maps the rest by hand. A single
+ * header row; null only for a file with no filled row.
+ */
+export function findLooseHeader(rows: string[][]): PlanningHeader | null {
+  const limit = Math.min(rows.length, 20);
+  let best: { index: number; columns: Partial<Record<PlanningField, number>>; count: number; score: number } | null = null;
+
+  for (let index = 0; index < limit; index += 1) {
+    if (isBlankRow(rows[index])) continue;
+    const columns = mapHeaderColumns(rows[index]);
+    const count = Object.keys(columns).length;
+    const score = count * 1000 + rows[index].filter((cell) => cell.trim() !== "").length;
+    if (!best || score > best.score) best = { index, columns, count, score };
+  }
+  if (!best) return null;
+
+  return {
+    headerRow: best.index + 1,
+    subHeaderRow: null,
+    dataStart: best.index + 1,
+    columns: best.columns,
+    recognizedColumns: best.count,
+    labels: headerLabels(rows[best.index]),
+  };
+}
+
+function columnCount(rows: string[][], header: PlanningHeader): number {
+  let width = header.labels.length;
+  for (let index = header.dataStart; index < rows.length; index += 1) width = Math.max(width, rows[index].length);
+  return width;
+}
+
+/**
+ * Replaces the guessed columns with the user's choice. Each field can be read from one column
+ * only, and every index has to be a column of the file. The server checks this again on commit.
+ */
+export function applyMapping(header: PlanningHeader, rows: string[][], mapping: PlanningMapping): PlanningHeader {
+  const width = columnCount(rows, header);
+  const columns: Partial<Record<PlanningField, number>> = {};
+
+  for (const [key, field] of Object.entries(mapping)) {
+    const index = Number(key);
+    if (!Number.isInteger(index) || index < 0 || index >= width) {
+      throw new ImportMappingError(`Column ${index + 1} isn't in the file.`);
+    }
+    if (field === null) continue;
+    if (columns[field] !== undefined) throw new ImportMappingError(`"${field}" is mapped to more than one column.`);
+    columns[field] = index;
+  }
+
+  return { ...header, columns, recognizedColumns: Object.keys(columns).length };
+}
+
+function columnLetter(index: number): string {
+  let n = index + 1;
+  let letters = "";
+  while (n > 0) {
+    letters = String.fromCharCode(65 + ((n - 1) % 26)) + letters;
+    n = Math.floor((n - 1) / 26);
+  }
+  return letters;
+}
+
+/** Every column that has a header or a value, with the first value as a sample. */
+function describeColumns(rows: string[][], header: PlanningHeader): PlanningColumn[] {
+  const fieldAt = new Map<number, PlanningField>();
+  for (const [field, index] of Object.entries(header.columns) as Array<[PlanningField, number]>) fieldAt.set(index, field);
+
+  const columns: PlanningColumn[] = [];
+  const width = columnCount(rows, header);
+  for (let index = 0; index < width; index += 1) {
+    let sample = "";
+    for (let row = header.dataStart; row < rows.length && !sample; row += 1) {
+      sample = cleanCell(rows[row]?.[index]).replace(/\s+/g, " ");
+    }
+    const label = header.labels[index] ?? "";
+    if (!label && !sample) continue;
+    columns.push({
+      index,
+      label: label || `Column ${columnLetter(index)}`,
+      sample: sample.slice(0, 80),
+      field: fieldAt.get(index) ?? null,
+    });
+  }
+  return columns;
 }
 
 function parsePostDate(raw: string): { date: string; value: Date; warning?: string } | null {
@@ -284,11 +419,11 @@ function parsePostDate(raw: string): { date: string; value: Date; warning?: stri
     } else if (second > 12 && first <= 12) {
       month = first;
       day = second;
-      warning = "Tanggal dibaca sebagai MM/DD/YYYY.";
+      warning = "Date read as MM/DD/YYYY.";
     } else {
       day = first;
       month = second;
-      warning = "Tanggal ambigu; dibaca sebagai DD-MM-YYYY.";
+      warning = "Ambiguous date; read as DD-MM-YYYY.";
     }
   }
 
@@ -331,7 +466,7 @@ export function parsePlatforms(raw: string): {
   error?: string;
 } {
   const label = raw.trim();
-  if (!label) return { platforms: [], label, error: "Platform wajib diisi." };
+  if (!label) return { platforms: [], label, error: "Channel is required." };
 
   if (/mirror|li\s*&\s*ig|li\s*and\s*ig/i.test(label)) {
     return { platforms: ["linkedin", "instagram"], label };
@@ -356,12 +491,12 @@ export function parsePlatforms(raw: string): {
     return {
       platforms: [...platforms],
       label,
-      error: `Platform tidak dikenal: ${unknown.join(", ")}.`,
+      error: `Unsupported channel: ${unknown.join(", ")}.`,
     };
   }
 
   if (platforms.size === 0) {
-    return { platforms: [], label, error: "Platform wajib diisi." };
+    return { platforms: [], label, error: "Channel is required." };
   }
 
   return { platforms: [...platforms], label };
@@ -396,7 +531,7 @@ export function parsePlanningRows(
 
   if (nonBlankRows.length > MAX_IMPORT_ROWS) {
     throw new CsvParseError(
-      `File berisi ${nonBlankRows.length} baris data. Maksimum ${MAX_IMPORT_ROWS} baris per import.`,
+      `The file has ${nonBlankRows.length} data rows. The limit is ${MAX_IMPORT_ROWS} rows per import.`,
     );
   }
 
@@ -405,6 +540,26 @@ export function parsePlanningRows(
   const duplicates: PlanningDuplicateRow[] = [];
   const drafts: PlanningDraft[] = [];
   const seenKeys = new Map<string, number>();
+
+  const columnsInfo = describeColumns(rows, header);
+  const missingFields = REQUIRED_FIELDS.filter((field) => header.columns[field] === undefined);
+  if (missingFields.length > 0) {
+    // Nothing to read until the user says which column is the title, the date and the channel.
+    return {
+      drafts,
+      rows: validRows,
+      invalidRows,
+      duplicates,
+      header,
+      format: options.format,
+      delimiter: options.delimiter,
+      sheetName: options.sheetName ?? null,
+      candidateSheets: options.candidateSheets ?? [],
+      totalDataRows: nonBlankRows.length,
+      columns: columnsInfo,
+      missingFields,
+    };
+  }
 
   for (let index = 0; index < dataRows.length; index += 1) {
     const row = dataRows[index];
@@ -416,12 +571,12 @@ export function parsePlanningRows(
     const platformRaw = cleanCell(getCell(row, header.columns, "platform"));
 
     const errors: string[] = [];
-    if (!title) errors.push("Content Title wajib diisi.");
-    if (!postDateRaw) errors.push("Post Date wajib diisi.");
+    if (!title) errors.push("Content title is required.");
+    if (!postDateRaw) errors.push("Publish date is required.");
 
     const parsedDate = parsePostDate(postDateRaw);
     if (postDateRaw && !parsedDate) {
-      errors.push(`Post Date tidak valid: "${postDateRaw}". Gunakan format DD-MM-YYYY (YYYY-MM-DD juga diterima).`);
+      errors.push(`Publish date isn't valid: "${postDateRaw}". Use DD-MM-YYYY (YYYY-MM-DD also works).`);
     }
 
     const parsedPlatforms = parsePlatforms(platformRaw);
@@ -456,7 +611,7 @@ export function parsePlanningRows(
       warnings: [
         ...(parsedDate?.warning ? [parsedDate.warning] : []),
         ...(/^published$/i.test(cleanCell(getCell(row, header.columns, "sourceStatus")))
-          ? ["Status sumber Published; di Posthive tetap disimpan sebagai draft."]
+          ? ["The source status is Published; it is still saved as a draft."]
           : []),
         ...extraWarnings,
       ],
@@ -477,15 +632,15 @@ export function parsePlanningRows(
     const warnings: string[] = [];
     if (parsedDate.warning) warnings.push(parsedDate.warning);
     if (parsedPlatforms.platforms.includes("website")) {
-      warnings.push("Website belum didukung untuk publishing; draft disimpan tanpa target sosial.");
+      warnings.push("Website isn't supported for publishing yet; the draft is saved without social targets.");
     }
     if (parsedDate.value.getTime() < Date.now()) {
-      warnings.push("Tanggal sudah lewat; draft disimpan sebagai arsip.");
+      warnings.push("The publish date is in the past; the draft is saved as an archive.");
     }
 
     const sourceStatus = nullable(cleanCell(getCell(row, header.columns, "sourceStatus")));
     if (sourceStatus && /^published$/i.test(sourceStatus)) {
-      warnings.push("Status sumber Published; di Posthive tetap disimpan sebagai draft.");
+      warnings.push("The source status is Published; it is still saved as a draft.");
     }
 
     if (extraWarnings.length > 0) warnings.push(...extraWarnings);
@@ -501,7 +656,7 @@ export function parsePlanningRows(
         sourceRow,
         importKey,
         title,
-        reason: `Duplikat dengan baris ${duplicateOf} di file ini.`,
+        reason: `Same as row ${duplicateOf} in this file.`,
       });
       continue;
     }
@@ -544,10 +699,15 @@ export function parsePlanningRows(
     sheetName: options.sheetName ?? null,
     candidateSheets: options.candidateSheets ?? [],
     totalDataRows: nonBlankRows.length,
+    columns: columnsInfo,
+    missingFields,
   };
 }
 
-export function parsePlanningCsv(input: string): PlanningParseResult {
+export function parsePlanningCsv(
+  input: string,
+  options: { mapping?: PlanningMapping } = {},
+): PlanningParseResult {
   const attempts = parseCsvWithDelimiters(input);
   let selected: {
     delimiter: CsvDelimiter;
@@ -563,10 +723,14 @@ export function parsePlanningCsv(input: string): PlanningParseResult {
       continue;
     }
 
-    const header = findPlanningHeader(attempt.rows);
+    // A file with the three required headers always beats one the user has to map by hand
+    const strict = findPlanningHeader(attempt.rows);
+    const header = strict ?? findLooseHeader(attempt.rows);
     if (!header) continue;
 
-    const score = header.recognizedColumns + header.dataStart;
+    const score = strict
+      ? 1_000_000 + header.recognizedColumns + header.dataStart
+      : header.recognizedColumns * 1000 + header.labels.length;
     if (!selected || score > selected.score) {
       selected = {
         delimiter: attempt.delimiter,
@@ -579,12 +743,11 @@ export function parsePlanningCsv(input: string): PlanningParseResult {
 
   if (!selected) {
     if (firstError) throw firstError;
-    throw new CsvHeaderError(
-      "Kolom wajib tidak ditemukan. File harus memiliki header Content Title, Post Date, dan Platform.",
-    );
+    throw new CsvHeaderError("The file has no rows to read.");
   }
 
-  return parsePlanningRows(selected.rows, selected.header, {
+  const header = options.mapping ? applyMapping(selected.header, selected.rows, options.mapping) : selected.header;
+  return parsePlanningRows(selected.rows, header, {
     format: "csv",
     delimiter: selected.delimiter,
     sheetName: null,

@@ -8,9 +8,12 @@ import {
 } from "../lib/import/csv.js";
 import {
   CsvHeaderError,
+  ImportMappingError,
   MAX_IMPORT_BYTES,
+  PLANNING_FIELDS,
   parsePlanningCsv,
   type PlanningImportFormat,
+  type PlanningMapping,
 } from "../lib/import/planningImport.js";
 import {
   IMPORT_PLATFORMS,
@@ -23,7 +26,7 @@ import {
   type PlanningEdits,
   type RowErrors,
 } from "../lib/import/reviewRows.js";
-import { XlsxParseError, parsePlanningXlsx } from "../lib/import/planningXlsx.js";
+import { MAX_XLSX_SCAN_COLUMNS, XlsxParseError, parsePlanningXlsx } from "../lib/import/planningXlsx.js";
 
 class ImportUploadError extends Error {
   readonly statusCode: number;
@@ -46,6 +49,8 @@ interface ImportUpload {
   include?: number[];
   /** Fixes made in the review table, by file row number. */
   edits?: PlanningEdits;
+  /** Which column is read as which field, when the user changed the importer's guess. */
+  mapping?: PlanningMapping;
 }
 
 interface ImportAccount {
@@ -65,10 +70,10 @@ function parseInclude(raw: string): number[] {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new ImportUploadError("Field include harus berupa array nomor baris.");
+    throw new ImportUploadError("The include field must be an array of row numbers.");
   }
   const rows = z.array(z.number().int().min(1)).max(1000).safeParse(parsed);
-  if (!rows.success) throw new ImportUploadError("Field include harus berisi nomor baris positif.");
+  if (!rows.success) throw new ImportUploadError("The include field must hold positive row numbers.");
   return [...new Set(rows.data)];
 }
 
@@ -86,25 +91,45 @@ function parseEdits(raw: string): PlanningEdits {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new ImportUploadError("Field edits harus berupa objek JSON.");
+    throw new ImportUploadError("The edits field must be a JSON object.");
   }
   const result = z.record(z.string().regex(/^\d+$/), editSchema).safeParse(parsed);
   if (!result.success) {
-    throw new ImportUploadError("Field edits tidak valid.", 422, "IMPORT_INVALID");
+    throw new ImportUploadError("The edits field isn't valid.", 422, "IMPORT_INVALID");
   }
   return Object.fromEntries(
     Object.entries(result.data).map(([row, edit]) => [Number(row), edit]),
   ) as PlanningEdits;
 }
 
+// { "<column index>": field | null }: null means "don't import this column". Checked, not trusted.
+const mappingSchema = z
+  .record(z.string().regex(/^\d+$/), z.enum(PLANNING_FIELDS).nullable())
+  .refine((m) => Object.keys(m).length <= MAX_XLSX_SCAN_COLUMNS, "Too many columns.");
+
+function parseMapping(raw: string): PlanningMapping {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new ImportUploadError("The mapping field must be a JSON object.", 400, "INVALID_MAPPING");
+  }
+  const result = mappingSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new ImportUploadError("The mapping field isn't valid.", 400, "INVALID_MAPPING");
+  }
+  return Object.fromEntries(Object.entries(result.data).map(([index, field]) => [Number(index), field]));
+}
+
 async function readUpload(req: FastifyRequest): Promise<ImportUpload> {
   if (!req.isMultipart()) {
-    throw new ImportUploadError("Upload file CSV atau XLSX sebagai multipart/form-data dengan field 'file'.");
+    throw new ImportUploadError("Upload a CSV or XLSX file as multipart/form-data in the 'file' field.");
   }
 
   let file: { buffer: Buffer; filename: string; mimetype: string } | null = null;
   let include: number[] | undefined;
   let edits: PlanningEdits | undefined;
+  let mapping: PlanningMapping | undefined;
 
   for await (const part of req.parts()) {
     if (part.type === "file") {
@@ -114,7 +139,7 @@ async function readUpload(req: FastifyRequest): Promise<ImportUpload> {
       }
       if (file) {
         part.file.resume();
-        throw new ImportUploadError("Hanya satu file CSV/XLSX yang boleh diunggah.");
+        throw new ImportUploadError("Upload only one CSV or XLSX file.");
       }
 
       const chunks: Buffer[] = [];
@@ -123,7 +148,7 @@ async function readUpload(req: FastifyRequest): Promise<ImportUpload> {
         total += chunk.length;
         if (total > MAX_IMPORT_BYTES) {
           throw new ImportUploadError(
-            `File terlalu besar. Maksimum ${MAX_IMPORT_BYTES / 1024 / 1024} MB.`,
+            `The file is too large. The limit is ${MAX_IMPORT_BYTES / 1024 / 1024} MB.`,
             413,
             "FILE_TOO_LARGE",
           );
@@ -141,10 +166,11 @@ async function readUpload(req: FastifyRequest): Promise<ImportUpload> {
 
     if (part.fieldname === "include") include = parseInclude(String(part.value));
     if (part.fieldname === "edits") edits = parseEdits(String(part.value));
+    if (part.fieldname === "mapping") mapping = parseMapping(String(part.value));
   }
 
   if (!file) {
-    throw new ImportUploadError("File CSV atau XLSX wajib diunggah pada field 'file'.");
+    throw new ImportUploadError("A CSV or XLSX file is required in the 'file' field.");
   }
 
   const filename = file.filename.toLowerCase();
@@ -154,7 +180,7 @@ async function readUpload(req: FastifyRequest): Promise<ImportUpload> {
     format = "xlsx";
   } else if (filename.endsWith(".xls") || filename.endsWith(".xlsm")) {
     throw new ImportUploadError(
-      "File Excel lama (.xls/.xlsm) belum didukung. Simpan ulang sebagai .xlsx atau CSV UTF-8.",
+      "Old Excel files (.xls/.xlsm) aren't supported. Save the file again as .xlsx or UTF-8 CSV.",
       415,
       "UNSUPPORTED_FILE_TYPE",
     );
@@ -162,13 +188,13 @@ async function readUpload(req: FastifyRequest): Promise<ImportUpload> {
     format = "csv";
   } else {
     throw new ImportUploadError(
-      "Format file harus .csv atau .xlsx.",
+      "The file must be .csv or .xlsx.",
       415,
       "UNSUPPORTED_FILE_TYPE",
     );
   }
 
-  return { ...file, format, include, edits };
+  return { ...file, format, include, edits, mapping };
 }
 
 function resolveTargets(platforms: string[], accounts: ImportAccount[]): {
@@ -190,10 +216,10 @@ function resolveTargets(platforms: string[], accounts: ImportAccount[]): {
         displayName: account.displayName,
       });
     } else if (matches.length === 0) {
-      warnings.push(`Akun ${platform} belum terhubung; draft dibuat tanpa target.`);
+      warnings.push(`No ${platform} account is connected; the draft is created without a target.`);
     } else {
       warnings.push(
-        `Ada ${matches.length} akun ${platform}; target tidak dipilih otomatis. Pilih akun manual sebelum scheduling.`,
+        `${matches.length} ${platform} accounts are connected; no target is picked automatically. Choose the account by hand before scheduling.`,
       );
     }
   }
@@ -205,8 +231,8 @@ async function prepareImport(workspaceId: string, req: FastifyRequest) {
   const upload = await readUpload(req);
   const parsed =
     upload.format === "xlsx"
-      ? await parsePlanningXlsx(upload.buffer)
-      : parsePlanningCsv(decodeUtf8(upload.buffer));
+      ? await parsePlanningXlsx(upload.buffer, { mapping: upload.mapping })
+      : parsePlanningCsv(decodeUtf8(upload.buffer), { mapping: upload.mapping });
 
   const accounts = await prisma.account.findMany({
     where: { workspaceId },
@@ -234,6 +260,9 @@ function importError(reply: { status: (code: number) => { send: (body: unknown) 
   }
   if (error instanceof XlsxParseError) {
     return reply.status(400).send({ error: error.message, code: error.code });
+  }
+  if (error instanceof ImportMappingError) {
+    return reply.status(400).send({ error: error.message, code: "INVALID_MAPPING" });
   }
   if (error instanceof CsvParseError || error instanceof CsvHeaderError) {
     return reply.status(400).send({ error: error.message, code: "INVALID_CSV" });
@@ -271,9 +300,12 @@ export async function importRoutes(app: FastifyInstance): Promise<void> {
             errors: row.errors,
             warnings: row.warnings,
             duplicateReason: row.duplicateReason ?? null,
+            duplicateKind: row.duplicateKind ?? null,
             // Columns the review does not edit, shown for context
             details: {
               platformLabel: draft.platformLabel ?? "",
+              // The date cell as the file had it, when it could not be read (the fix dialog suggests dates from it)
+              rawPostDate: draft.rawPostDate ?? null,
               pillar: draft.extras.pillar,
               picContent: draft.extras.picContent,
               reviewer: draft.extras.reviewer,
@@ -302,6 +334,10 @@ export async function importRoutes(app: FastifyInstance): Promise<void> {
             headerRow: parsed.header.headerRow,
             subHeaderRow: parsed.header.subHeaderRow,
           },
+          // For the mapping step: every column with its first value and the field it is read as
+          columns: parsed.columns,
+          // Required fields no column is read as; no row is read until they are mapped
+          missingFields: parsed.missingFields,
           summary: {
             totalRows: parsed.totalDataRows,
             validRows: rows.filter((r) => r.status === "valid").length,
@@ -330,14 +366,14 @@ export async function importRoutes(app: FastifyInstance): Promise<void> {
 
       const refuse = (rows: RowErrors[], status: number) =>
         reply.status(status).send({
-          error: "Beberapa baris belum valid. Tidak ada yang disimpan.",
+          error: "Some rows aren't valid yet. Nothing was saved.",
           code: "IMPORT_INVALID",
           rows,
         });
 
       try {
         const { upload, parsed, accounts } = await prepareImport(workspaceId, req);
-        if (!upload.include) throw new ImportUploadError("Field include wajib diisi.");
+        if (!upload.include) throw new ImportUploadError("The include field is required.");
 
         // Same rules as the preview, run again on what the browser sent
         const existingKeys = await existingImportKeys(workspaceId, parsed.drafts, upload.edits);
@@ -414,7 +450,7 @@ export async function importRoutes(app: FastifyInstance): Promise<void> {
             .filter((row) => taken.has(row.importKey))
             .map((row) => ({
               sourceRow: row.sourceRow,
-              errors: [{ field: "title" as const, message: "Sudah pernah diimpor ke workspace ini." }],
+              errors: [{ field: "title" as const, message: "Already imported into this workspace." }],
             }));
           if (clashes.length === 0) throw error;
           return refuse(clashes, 409);

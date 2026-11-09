@@ -21,7 +21,7 @@ export function decodeUtf8(buffer: Buffer): string {
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(buffer);
   } catch {
-    throw new CsvParseError("File CSV harus menggunakan encoding UTF-8.");
+    throw new CsvParseError("The CSV file must be UTF-8 encoded.");
   }
 }
 
@@ -102,7 +102,7 @@ export function parseCsv(input: string, delimiter: CsvDelimiter = ","): string[]
   }
 
   if (inQuotes) {
-    throw new CsvParseError(`Tanda kutip pada CSV tidak ditutup (baris ${line}).`, line);
+    throw new CsvParseError(`A quote in the CSV is never closed (line ${line}).`, line);
   }
 
   // Do not emit a phantom row for a trailing newline.
@@ -130,7 +130,7 @@ export function parseCsvWithDelimiters(input: string): Array<{
       return {
         delimiter,
         rows: [],
-        error: error instanceof CsvParseError ? error : new CsvParseError("CSV tidak valid."),
+        error: error instanceof CsvParseError ? error : new CsvParseError("The CSV isn't valid."),
       };
     }
   });

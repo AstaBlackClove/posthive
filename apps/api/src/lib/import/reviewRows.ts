@@ -53,7 +53,7 @@ export interface PlanningDraft {
 
 export type PlanningEdits = Record<number, Partial<PlanningFields>>;
 
-const DATE_FORMAT_HINT = "Gunakan format DD-MM-YYYY (YYYY-MM-DD juga diterima).";
+const DATE_FORMAT_HINT = "Use DD-MM-YYYY (YYYY-MM-DD also works).";
 
 function readDate(value: string): Date | null {
   const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -83,31 +83,31 @@ export function validatePlanFields(
   const warnings: string[] = [];
   const title = fields.title.trim();
 
-  if (!title) errors.push({ field: "title", message: "Content Title wajib diisi." });
-  else if (title.length > MAX_TITLE) errors.push({ field: "title", message: `Content Title maksimal ${MAX_TITLE} karakter.` });
+  if (!title) errors.push({ field: "title", message: "Content title is required." });
+  else if (title.length > MAX_TITLE) errors.push({ field: "title", message: `Content title must be ${MAX_TITLE} characters or fewer.` });
 
   const postDate = fields.postDate.trim();
   const scheduledFor = postDate ? readDate(postDate) : null;
   if (!postDate && !file.rawPostDate) {
-    errors.push({ field: "postDate", message: "Post Date wajib diisi." });
+    errors.push({ field: "postDate", message: "Publish date is required." });
   } else if (!scheduledFor) {
-    errors.push({ field: "postDate", message: `Post Date tidak valid: "${postDate || file.rawPostDate}". ${DATE_FORMAT_HINT}` });
+    errors.push({ field: "postDate", message: `Publish date isn't valid: "${postDate || file.rawPostDate}". ${DATE_FORMAT_HINT}` });
   } else if (scheduledFor.getTime() < Date.now()) {
-    warnings.push("Tanggal sudah lewat; draft disimpan sebagai arsip.");
+    warnings.push("The publish date is in the past; the draft is saved as an archive.");
   }
 
   const unknown = fields.platforms.filter((p) => !(IMPORT_PLATFORMS as readonly string[]).includes(p));
   if (file.platformError) errors.push({ field: "platforms", message: file.platformError });
-  else if (unknown.length > 0) errors.push({ field: "platforms", message: `Platform tidak dikenal: ${unknown.join(", ")}.` });
-  else if (fields.platforms.length === 0) errors.push({ field: "platforms", message: "Platform wajib diisi." });
+  else if (unknown.length > 0) errors.push({ field: "platforms", message: `Unsupported channel: ${unknown.join(", ")}.` });
+  else if (fields.platforms.length === 0) errors.push({ field: "platforms", message: "Channel is required." });
   else if (fields.platforms.includes("website")) {
-    warnings.push("Website belum didukung untuk publishing; draft disimpan tanpa target sosial.");
+    warnings.push("Website isn't supported for publishing yet; the draft is saved without social targets.");
   }
 
   const rawCategory = fields.category?.trim() ?? "";
   const category = normalizeCategory(rawCategory);
   if (rawCategory && !category) {
-    warnings.push(`Kategori "${rawCategory}" tidak dikenal. Pilih kategori sebelum mengirim untuk review.`);
+    warnings.push(`Category "${rawCategory}" isn't recognised. Pick a category before sending for review.`);
   }
 
   return { errors, warnings, title, category, pillar: category ? pillarFor(category) : null, scheduledFor };
@@ -123,6 +123,8 @@ export interface ReviewedRow {
   errors: ImportFieldError[];
   warnings: string[];
   duplicateReason?: string;
+  /** "workspace": already imported before. "file": a copy of an earlier row of this file. */
+  duplicateKind?: "file" | "workspace";
   importKey?: string;
 }
 
@@ -168,12 +170,14 @@ function evaluate(drafts: PlanningDraft[], options: ReviewOptions) {
     row.importKey = makeImportKey(check.title, fields.postDate.trim(), fields.platforms);
     if (options.existingKeys?.has(row.importKey)) {
       row.status = "duplicate";
-      row.duplicateReason = "Sudah pernah diimpor ke workspace ini.";
+      row.duplicateReason = "Already imported into this workspace.";
+      row.duplicateKind = "workspace";
     } else if (included) {
       const first = seen.get(row.importKey);
       if (first !== undefined) {
         row.status = "duplicate";
-        row.duplicateReason = `Duplikat dengan baris ${first} di file ini.`;
+        row.duplicateReason = `Same as row ${first} in this file.`;
+        row.duplicateKind = "file";
       } else {
         seen.set(row.importKey, draft.sourceRow);
       }
@@ -216,7 +220,7 @@ export function commitFromDrafts(
   options: ReviewOptions & { include: number[] },
 ): CommitPlan {
   if (options.include.length === 0) {
-    return { ok: false, rowErrors: [{ sourceRow: 0, errors: [{ field: "row", message: "Pilih minimal satu baris untuk diimpor." }] }] };
+    return { ok: false, rowErrors: [{ sourceRow: 0, errors: [{ field: "row", message: "Pick at least one row to import." }] }] };
   }
   const evaluated = evaluate(drafts, options);
   const known = new Set(drafts.map((d) => d.sourceRow));
@@ -225,7 +229,7 @@ export function commitFromDrafts(
 
   for (const sourceRow of new Set(options.include)) {
     if (!known.has(sourceRow)) {
-      rowErrors.push({ sourceRow, errors: [{ field: "row", message: "Baris tidak ditemukan di file." }] });
+      rowErrors.push({ sourceRow, errors: [{ field: "row", message: "Row not found in the file." }] });
     }
   }
 
@@ -236,7 +240,7 @@ export function commitFromDrafts(
       continue;
     }
     if (row.status === "duplicate") {
-      rowErrors.push({ sourceRow: row.sourceRow, errors: [{ field: "title", message: row.duplicateReason ?? "Duplikat." }] });
+      rowErrors.push({ sourceRow: row.sourceRow, errors: [{ field: "title", message: row.duplicateReason ?? "Duplicate." }] });
       continue;
     }
     const edited = options.edits?.[draft.sourceRow]?.platforms !== undefined;

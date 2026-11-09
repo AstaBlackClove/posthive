@@ -1,9 +1,12 @@
 import type { Cell, Worksheet } from "exceljs";
 import { CsvParseError } from "./csv.js";
 import {
+  applyMapping,
+  findLooseHeader,
   findPlanningHeader,
   parsePlanningRows,
   type PlanningHeader,
+  type PlanningMapping,
   type PlanningParseResult,
 } from "./planningImport.js";
 
@@ -245,10 +248,10 @@ function candidateScore(candidate: SheetCandidate): number {
 
 export async function parsePlanningXlsx(
   buffer: Buffer,
-  options: { sheetName?: string } = {},
+  options: { sheetName?: string; mapping?: PlanningMapping } = {},
 ): Promise<PlanningParseResult> {
   if (buffer.length < 4 || buffer[0] !== 0x50 || buffer[1] !== 0x4b) {
-    throw new XlsxParseError("File XLSX tidak valid, rusak, atau dilindungi password.");
+    throw new XlsxParseError("The XLSX file isn't valid, is damaged, or is password protected.");
   }
 
   const ExcelJS = await loadExcelJs();
@@ -258,25 +261,27 @@ export async function parsePlanningXlsx(
     // ExcelJS's bundled type shadows Node's Buffer with an ArrayBuffer.
     await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
   } catch {
-    throw new XlsxParseError("File XLSX tidak valid, rusak, atau dilindungi password.");
+    throw new XlsxParseError("The XLSX file isn't valid, is damaged, or is password protected.");
   }
 
   const worksheets = workbook.worksheets;
   if (worksheets.length === 0) {
-    throw new XlsxParseError("Workbook XLSX tidak memiliki sheet.");
+    throw new XlsxParseError("The workbook has no sheets.");
   }
   if (worksheets.length > MAX_XLSX_SHEETS) {
     throw new XlsxParseError(
-      `Workbook berisi ${worksheets.length} sheet. Maksimum ${MAX_XLSX_SHEETS} sheet per file.`,
+      `The workbook has ${worksheets.length} sheets. The limit is ${MAX_XLSX_SHEETS} sheets per file.`,
     );
   }
 
   const requestedSheet = options.sheetName?.trim();
   if (requestedSheet && !worksheets.some((worksheet) => worksheet.name === requestedSheet)) {
-    throw new XlsxParseError(`Sheet "${requestedSheet}" tidak ditemukan di workbook.`);
+    throw new XlsxParseError(`Sheet "${requestedSheet}" isn't in the workbook.`);
   }
 
   const candidates: SheetCandidate[] = [];
+  // Sheets without the three required headers, kept in case no sheet has them: the user maps those by hand
+  const looseCandidates: SheetCandidate[] = [];
 
   for (const worksheet of worksheets) {
     if (worksheet.state === "veryHidden") continue;
@@ -285,7 +290,7 @@ export async function parsePlanningXlsx(
     if (worksheet.actualRowCount > MAX_XLSX_SCAN_ROWS) {
       if (requestedSheet) {
         throw new XlsxParseError(
-          `Sheet "${worksheet.name}" berisi lebih dari ${MAX_XLSX_SCAN_ROWS} baris dan tidak dapat diproses.`,
+          `Sheet "${worksheet.name}" has more than ${MAX_XLSX_SCAN_ROWS} rows and can't be read.`,
         );
       }
       continue;
@@ -293,17 +298,18 @@ export async function parsePlanningXlsx(
     if (worksheet.actualColumnCount > MAX_XLSX_SCAN_COLUMNS) {
       if (requestedSheet) {
         throw new XlsxParseError(
-          `Sheet "${worksheet.name}" berisi lebih dari ${MAX_XLSX_SCAN_COLUMNS} kolom dan tidak dapat diproses.`,
+          `Sheet "${worksheet.name}" has more than ${MAX_XLSX_SCAN_COLUMNS} columns and can't be read.`,
         );
       }
       continue;
     }
 
     const matrix = worksheetToMatrix(worksheet);
-    const header = findPlanningHeader(matrix.rows);
+    const strict = findPlanningHeader(matrix.rows);
+    const header = strict ?? findLooseHeader(matrix.rows);
     if (!header) continue;
 
-    candidates.push({
+    (strict ? candidates : looseCandidates).push({
       name: worksheet.name,
       matrix,
       header,
@@ -311,16 +317,17 @@ export async function parsePlanningXlsx(
     });
   }
 
-  if (candidates.length === 0) {
-    const scope = requestedSheet ? `Sheet "${requestedSheet}"` : "Workbook XLSX";
-    throw new XlsxParseError(
-      `${scope} tidak memiliki header Content Title, Post Date, dan Platform. ` +
-        "Pastikan header berada di 20 baris pertama.",
-    );
+  const pool = candidates.length > 0 ? candidates : looseCandidates;
+  if (pool.length === 0) {
+    const scope = requestedSheet ? `Sheet "${requestedSheet}"` : "The workbook";
+    throw new XlsxParseError(`${scope} has no rows to read.`);
   }
 
-  candidates.sort((a, b) => candidateScore(b) - candidateScore(a) || a.name.localeCompare(b.name));
-  const selected = candidates[0];
+  pool.sort((a, b) => candidateScore(b) - candidateScore(a) || a.name.localeCompare(b.name));
+  const selected = pool[0];
+
+  // The user's choice replaces the guess before anything reads columns (links, date serials, formula warnings)
+  if (options.mapping) selected.header = applyMapping(selected.header, selected.matrix.rows, options.mapping);
 
   applyHyperlinks(selected.matrix.rows, selected.header, selected.matrix.links);
   normalizeDateSerials(selected.matrix.rows, selected.header, Boolean(workbook.properties.date1904));
@@ -332,10 +339,10 @@ export async function parsePlanningXlsx(
       format: "xlsx",
       delimiter: null,
       sheetName: selected.name,
-      candidateSheets: candidates.map((candidate) => candidate.name),
+      candidateSheets: pool.map((candidate) => candidate.name),
       rowWarnings: (sourceRow) =>
         warningRows.has(sourceRow)
-          ? ["Ada formula tanpa nilai tersimpan di baris ini; buka file di Excel lalu simpan ulang."]
+          ? ["This row has a formula without a saved value; open the file in Excel and save it again."]
           : [],
     });
   } catch (error) {
