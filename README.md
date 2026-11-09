@@ -15,6 +15,7 @@
   <a href="https://github.com/AstaBlackClove/posthive/blob/main/LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" /></a>
   <a href="https://github.com/AstaBlackClove/posthive"><img alt="GitHub Repo" src="https://img.shields.io/github/stars/AstaBlackClove/posthive?style=social" /></a>
   <a href="https://discord.gg/UEdnAtHxgN"><img alt="Discord" src="https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white" /></a>
+  <a href="https://m8ven.ai/mcp/astablackclove-posthive-1e6xnz?s=readme"><img alt="M8ven Score" src="https://m8ven.ai/badge/mcp/astablackclove-posthive-1e6xnz?v=e4feb344e43383db68180a0787fc471d" /></a>
 </p>
 
 <p align="center">
