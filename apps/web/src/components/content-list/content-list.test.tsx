@@ -210,7 +210,8 @@ describe("ContentListTable", () => {
 describe("SelectionBar", () => {
   const bar = (patch: Partial<Parameters<typeof SelectionBar>[0]> = {}) => {
     const handlers = { onClear: vi.fn(), onSubmit: vi.fn(), onDelete: vi.fn() };
-    render(<SelectionBar count={0} canEdit canSubmitOwn busy={false} {...handlers} {...patch} />);
+    // by default everything ticked is a plain draft that can be sent
+    render(<SelectionBar count={0} submittable={patch.count ?? 0} canEdit canSubmitOwn busy={false} {...handlers} {...patch} />);
     return handlers;
   };
 
@@ -239,6 +240,24 @@ describe("SelectionBar", () => {
     cleanup();
     bar({ count: 2, canEdit: false, canSubmitOwn: false });
     expect(screen.queryByRole("button", { name: /Delete|Submit/ })).toBeNull();
+  });
+
+  it("ticked posts that were all sent back for changes (or are in review) have no Submit; Delete stays", () => {
+    bar({ count: 3, submittable: 0 });
+    expect(screen.queryByRole("button", { name: /Submit/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Delete 3" })).toBeTruthy();
+    expect(screen.getByText(/3 selected/)).toBeTruthy();
+  });
+
+  it("with a mix, Submit says how many of the ticked ones it will send", async () => {
+    const { onSubmit } = bar({ count: 4, submittable: 1 });
+    await userEvent.click(screen.getByRole("button", { name: "Submit 1 of 4 for review" }));
+    expect(onSubmit).toHaveBeenCalledOnce();
+  });
+
+  it("with nothing ticked the button waits, as in the design", () => {
+    bar({ count: 0, submittable: 0 });
+    expect((screen.getByRole("button", { name: "Submit selected for review" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("while something runs, the buttons wait", () => {
@@ -369,10 +388,26 @@ describe("ContentDrawer", () => {
       expect(buttons()).toEqual(["Delete", "Close", "Edit Content"]);
     });
 
-    it("a post sent back for changes follows the same gate as a draft", async () => {
+    it("a post sent back for changes has no Submit, complete or not: nothing changed since the reviewer said no", async () => {
+      await open(detail({ approvalStatus: "rejected", missing: [] }), { canSubmitOwn: true });
+      expect(buttons()).toEqual(["Delete", "Close", "Edit Content"]);
+      expect(screen.queryByRole("button", { name: "Submit for review" })).toBeNull();
       await open(detail({ approvalStatus: "rejected", missing: lacking }), { canSubmitOwn: true });
       expect(buttons()).toEqual(["Close", "Edit Content"]);
-      await open(detail({ approvalStatus: "rejected", missing: [] }), { canSubmitOwn: true });
+    });
+
+    it("says why there is no Submit on a post sent back, to the person who submits; the reviewer's note is in the Overview", async () => {
+      await open(detail({ approvalStatus: "rejected", missing: [], reviewNote: "Fix the hook" }), { canSubmitOwn: true });
+      const dialog = within(screen.getByRole("dialog"));
+      expect(dialog.getByRole("status").textContent).toBe("Revision requested. Edit the content to send it for review again.");
+      expect(dialog.getByText(/Fix the hook/)).toBeTruthy();
+      await open(detail({ approvalStatus: "rejected", missing: [] }), { canSubmitOwn: false });
+      expect(within(screen.getByRole("dialog")).queryByRole("status")).toBeNull();
+    });
+
+    it("once an edit has changed the content the server makes the post a plain draft again, and Submit is back", async () => {
+      // what the detail answers after Marketing edits a post that was sent back: approval cleared, note cleared
+      await open(detail({ approvalStatus: null, reviewNote: null, missing: [] }), { canSubmitOwn: true });
       expect(buttons()).toEqual(["Delete", "Submit for review", "Close", "Edit Content"]);
     });
 
@@ -400,9 +435,29 @@ describe("ContentDrawer", () => {
       expect(onReview).toHaveBeenCalledWith("p1");
     });
 
-    it("a post that is not the person's own has only Close, for a person who goes through review: the server refuses their edit, submit and delete", async () => {
+    it("a colleague's draft (the head of marketing imported the plan) can be edited and submitted by the team, not only by its uploader", async () => {
       await open(detail({ mine: false, missing: [] }), { canSubmitOwn: true });
+      expect(buttons()).toEqual(["Submit for review", "Close", "Edit Content"]);
+      await open(detail({ mine: false, missing: lacking }), { canSubmitOwn: true });
+      expect(buttons()).toEqual(["Close", "Edit Content"]);
+      expect(within(screen.getByRole("dialog")).getByRole("status").textContent).toBe("Add an account and media to send for approval.");
+    });
+
+    it("a colleague's draft has no Delete and no Retry: those stay with the person who made the post, or an admin", async () => {
+      await open(detail({ mine: false, missing: [] }), { canSubmitOwn: true });
+      expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+      await open(detail({ mine: false, status: "post_failed", missing: [] }), { canSubmitOwn: true });
       expect(buttons()).toEqual(["Close"]);
+    });
+
+    it("an admin deletes any draft, whoever made it", async () => {
+      await open(detail({ mine: false, missing: [] }), { canReview: true });
+      expect(buttons()).toEqual(["Delete", "Close", "Edit Content"]);
+    });
+
+    it("the uploader keeps every button they had", async () => {
+      await open(detail({ mine: true, missing: [] }), { canSubmitOwn: true });
+      expect(buttons()).toEqual(["Delete", "Submit for review", "Close", "Edit Content"]);
     });
 
     it("a role that cannot make content can only read: Close, and the footer says only 'Preview only'", async () => {

@@ -316,6 +316,23 @@ describe("Content List page", () => {
       await waitFor(() => expect(footer()).toEqual(["Delete", "Submit for review", "Close", "Edit Content"]));
     });
 
+    it("a post the reviewer sent back has no Submit when it is opened again; once an edit has cleared the rejection the button is back", async () => {
+      h.perms = { canEditContent: true, canReview: false, canSubmitOwn: true };
+      let state: { approvalStatus: string | null; reviewNote: string | null } = { approvalStatus: "rejected", reviewNote: "Fix the hook" };
+      serve();
+      const base = h.apiFetch.getMockImplementation()!;
+      h.apiFetch.mockImplementation(async (path: string, init?: unknown) =>
+        path === "/jobs/p1/detail" ? { ...detail(), ...state, missing: [] } : base(path, init as never));
+      render(<ContentListPage />);
+      await userEvent.click(await screen.findByRole("row", { name: "Open Post 1" }));
+      await screen.findByRole("heading", { name: "Post 1" });
+      expect(footer()).toEqual(["Delete", "Close", "Edit Content"]);
+      await userEvent.click(within(screen.getByRole("dialog").querySelector("footer")!).getByRole("button", { name: "Close" }));
+      state = { approvalStatus: null, reviewNote: null }; // the server cleared the rejection when the content changed
+      await userEvent.click(await screen.findByRole("row", { name: "Open Post 1" }));
+      await waitFor(() => expect(footer()).toEqual(["Delete", "Submit for review", "Close", "Edit Content"]));
+    });
+
     it("Submit for review sends that post and closes the drawer", async () => {
       h.perms = { canEditContent: true, canReview: false, canSubmitOwn: true };
       serve();
@@ -392,6 +409,46 @@ describe("Content List page", () => {
       await userEvent.click(screen.getByRole("button", { name: "Submit selected for review" }));
       await waitFor(() => expect(h.apiFetch).toHaveBeenCalledWith("/jobs/submit-bulk", { method: "POST", body: JSON.stringify({ ids: ["p1", "p2"] }) }));
       await waitFor(() => expect(h.toast.success).toHaveBeenCalledWith("Sent 2 for design review."));
+    });
+
+    it("a row sent back for changes ticked alone leaves no Submit under the list; ticking a plain draft too brings it back for that one only", async () => {
+      h.perms = { canEditContent: true, canReview: false, canSubmitOwn: true };
+      serve(() => answer({ items: [row(1, { approvalStatus: "rejected" }), row(2), row(3, { approvalStatus: "pending" })] }));
+      render(<ContentListPage />);
+      await userEvent.click(await screen.findByRole("checkbox", { name: "Select Post 1" }));
+      expect(screen.getByText(/1 selected/)).toBeTruthy();
+      expect(screen.queryByRole("button", { name: /Submit/ })).toBeNull();
+      expect(screen.getByRole("button", { name: "Delete 1" })).toBeTruthy();
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select Post 3" }));
+      expect(screen.queryByRole("button", { name: /Submit/ })).toBeNull();
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select Post 2" }));
+      await userEvent.click(screen.getByRole("button", { name: "Submit 1 of 3 for review" }));
+      // only the plain draft is sent: the sent-back post and the one in review are not asked about
+      await waitFor(() => expect(h.apiFetch).toHaveBeenCalledWith("/jobs/submit-bulk", { method: "POST", body: JSON.stringify({ ids: ["p2"] }) }));
+    });
+
+    it("a ticked post that has been sent since (from the drawer) is no longer offered to Submit: the page's fresh row wins", async () => {
+      h.perms = { canEditContent: true, canReview: false, canSubmitOwn: true };
+      let inReview = false;
+      serve(() => answer({ items: [row(1, { approvalStatus: inReview ? "pending" : null })] }));
+      render(<ContentListPage />);
+      await userEvent.click(await screen.findByRole("checkbox", { name: "Select Post 1" }));
+      expect(screen.getByRole("button", { name: "Submit selected for review" })).toBeTruthy();
+      inReview = true; // sent from the drawer: the list is asked again and answers In Review
+      await userEvent.click(await screen.findByRole("row", { name: "Open Post 1" }));
+      await userEvent.click(await screen.findByRole("button", { name: "Submit for review" }));
+      await waitFor(() => expect(h.toast.success).toHaveBeenCalled());
+      await waitFor(() => expect(screen.queryByRole("button", { name: /Submit selected|Submit \d/ })).toBeNull());
+      expect(screen.getByRole("button", { name: "Delete 1" })).toBeTruthy();
+    });
+
+    it("the header checkbox ticks the whole page; with only sent-back and in-review posts there is no Submit", async () => {
+      h.perms = { canEditContent: true, canReview: false, canSubmitOwn: true };
+      serve(() => answer({ items: [row(1, { approvalStatus: "rejected" }), row(3, { approvalStatus: "pending" })] }));
+      render(<ContentListPage />);
+      await userEvent.click(await screen.findByRole("checkbox", { name: "Select all on this page" }));
+      expect(screen.getByText(/2 selected/)).toBeTruthy();
+      expect(screen.queryByRole("button", { name: /Submit/ })).toBeNull();
     });
 
     it("says which posts were skipped and why", async () => {

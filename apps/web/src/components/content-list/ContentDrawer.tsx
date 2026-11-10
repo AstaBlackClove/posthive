@@ -88,17 +88,26 @@ export function ContentDrawer({ id, templates, canEdit, canReview, canSubmitOwn,
 
   // Which buttons the footer has. Until the required fields are there a draft has only Close and Edit Content; once
   // they are, Submit for review and Delete appear. A post that is already in review, out or failed is past that gate.
-  // A person who goes through review changes only their own posts (the server refuses the rest).
+  // A draft belongs to the workspace, not to whoever uploaded it: a plan is imported by one person and kept by the
+  // team, so every person who makes content may edit and submit it. Deleting and retrying stay with the person who made
+  // the post, or an admin (the server refuses the rest).
   const unsent = filter === "draft" || filter === "rejected";
   const complete = post ? post.missing.length === 0 : false;
-  const mayChange = canEdit && Boolean(post && (canReview || post.mine));
-  const canEditPost = mayChange && (unsent || filter === "review" || (filter === "pending" && !canSubmitOwn));
+  const ownerOrAdmin = canEdit && Boolean(post && (canReview || post.mine));
+  const canEditPost = canEdit && (unsent || filter === "review" || (filter === "pending" && !canSubmitOwn));
   // In review the post has been sent: nothing to submit until an edit pulls it back to a draft
-  const canSubmit = mayChange && canSubmitOwn && unsent && complete;
-  const canDelete = mayChange && (!unsent || complete);
-  const canRetry = mayChange && filter === "failed";
+  // Sent back by the reviewer is the same: nothing to send until an edit changes the content (the server clears the
+  // rejection then and the post is a plain draft again, with Submit)
+  const canSubmit = canEdit && canSubmitOwn && filter === "draft" && complete;
+  const canDelete = ownerOrAdmin && (!unsent || complete);
+  const canRetry = ownerOrAdmin && filter === "failed";
   // Told only to the person who sends posts for review: why their draft has only two buttons
-  const hint = post && mayChange && canSubmitOwn && unsent && !complete ? missingMessage(post.missing) : null;
+  const hint =
+    post && canEdit && canSubmitOwn && filter === "rejected"
+      ? "Revision requested. Edit the content to send it for review again."
+      : post && canEdit && canSubmitOwn && unsent && !complete
+        ? missingMessage(post.missing)
+        : null;
 
   return (
     <Sheet open={id !== null} onOpenChange={(open) => !open && onClose()}>

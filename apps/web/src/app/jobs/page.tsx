@@ -27,7 +27,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/cn";
 import { apiFetch } from "@/lib/api";
-import { LIST_STATUS, footerLine, listSubtitle, showDraftBanner, visibleFilters, type ListFilter } from "@/lib/content-list";
+import { LIST_STATUS, filterOf, footerLine, listSubtitle, showDraftBanner, visibleFilters, type ListFilter, type ListItem } from "@/lib/content-list";
 import {
   approveJob, deleteJob, deleteMany, fetchJob, rejectJob, retryFailed, savedMessage, submitForReview, submitMany, updateJob,
 } from "@/lib/jobActions";
@@ -55,7 +55,9 @@ export default function ContentListPage() {
   const { data, source, loading, error, reload } = useContentList(filter, page);
 
   const [openId, setOpenId] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  // The rows ticked, with their status: the bar under the list offers only what each of them may do (a page turn keeps them)
+  const [picked, setPicked] = useState<Map<string, ListItem>>(new Map());
+  const selected = useMemo(() => new Set(picked.keys()), [picked]);
   const [busy, setBusy] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [templates, setTemplates] = useState<DesignTemplate[]>([]);
@@ -77,21 +79,31 @@ export default function ContentListPage() {
   function pick(next: ListFilter) {
     setFilter(next);
     setPage(1);
-    setSelected(new Set());
+    setPicked(new Map());
   }
 
   const toggle = (id: string) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(id)) next.add(id);
+    setPicked((prev) => {
+      const next = new Map(prev);
+      const row = items.find((i) => i.id === id);
+      if (!next.delete(id) && row) next.set(id, row);
       return next;
     });
   const toggleAll = (ids: string[], on: boolean) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      for (const id of ids) on ? next.add(id) : next.delete(id);
+    setPicked((prev) => {
+      const next = new Map(prev);
+      for (const id of ids) {
+        const row = items.find((i) => i.id === id);
+        if (!on) next.delete(id);
+        else if (row) next.set(id, row);
+      }
       return next;
     });
+
+  // Only a plain draft is sent for review: one that is in review, sent back by the reviewer (until an edit changes it),
+  // scheduled, out or failed is not, so the bar does not offer to send it
+  // The page's own row wins over the one kept when it was ticked: a post sent from the drawer since is in review now
+  const submittable = [...picked.values()].filter((i) => filterOf(items.find((x) => x.id === i.id) ?? i) === "draft").map((i) => i.id);
 
   /** Open the full post in a dialog (they need its whole content, not the list's light rows). */
   async function openDialog(id: string, kind: "edit" | "review") {
@@ -126,14 +138,14 @@ export default function ContentListPage() {
 
   const sendSelected = () =>
     run(async () => {
-      const res = await submitMany([...selected]);
+      const res = await submitMany(submittable);
       if (res.submitted.length > 0) success(`Sent ${res.submitted.length} for design review.`);
       if (res.skipped.length > 0) {
         const first = res.skipped[0];
         const why = first.missing ? `missing ${first.missing.map((m) => MISSING_LABEL[m as MissingField] ?? m).join(", ")}` : first.reason.toLowerCase();
         toastError(`Skipped ${res.skipped.length}: "${first.title}" ${why}${res.skipped.length > 1 ? " and more" : ""}.`);
       }
-      setSelected(new Set());
+      setPicked(new Map());
       reload();
     });
 
@@ -151,7 +163,7 @@ export default function ContentListPage() {
     if (removed === 0) toastError(`Nothing was deleted. ${skipped}`);
     else if (removed < ids.length) success(`Deleted ${removed} of ${ids.length} posts. ${skipped}`);
     else success(`Deleted ${removed} post${removed === 1 ? "" : "s"}.`);
-    setSelected(new Set());
+    setPicked(new Map());
     setOpenId(null);
     reload();
   }
@@ -279,13 +291,14 @@ export default function ContentListPage() {
 
             {(canEditContent || canSubmitOwn) && (
               <SelectionBar
-                count={selected.size}
+                count={picked.size}
+                submittable={submittable.length}
                 canEdit={canEditContent}
                 canSubmitOwn={canSubmitOwn}
                 busy={busy}
-                onClear={() => setSelected(new Set())}
+                onClear={() => setPicked(new Map())}
                 onSubmit={sendSelected}
-                onDelete={() => setDeleting([...selected])}
+                onDelete={() => setDeleting([...picked.keys()])}
               />
             )}
           </>
