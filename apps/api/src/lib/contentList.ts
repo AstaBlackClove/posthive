@@ -4,6 +4,7 @@
 // hold a whole design copy.
 import { normalizeCategory, pillarFor } from "./contentTypes.js";
 import { contentOf, images, text } from "./dashboardData.js";
+import { missingForReview, type MissingField } from "./submitReadiness.js";
 
 /** Rows in a page of the table, as the design draws it. */
 export const LIST_PAGE_SIZE = 10;
@@ -159,6 +160,8 @@ export interface PostDetail extends ListItem {
   reviewNote: string | null;
   source: { fileName: string; importedAt: string } | null;
   activity: ActivityEntry[];
+  /** What a post still lacks before it can be sent for review (the rule the submit route applies), in form order. */
+  missing: MissingField[];
 }
 
 /** What is recorded about a post, oldest first: when it came in, who answered its review, what failed. */
@@ -201,5 +204,10 @@ export function toDetail(job: DetailRecord): PostDetail {
     reviewNote: job.reviewNote,
     source: importSourceOf(content),
     activity: activityOf(job, content),
+    missing: missingForReview({
+      scheduledFor: job.scheduledFor,
+      content: job.content,
+      targetPlatforms: job.targets.flatMap((t) => (t.account ? [t.account.platform] : [])),
+    }),
   };
 }

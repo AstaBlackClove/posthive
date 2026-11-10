@@ -229,3 +229,32 @@ describe("activityOf", () => {
     expect(failures[0].note).toHaveLength(300);
   });
 });
+
+describe("toDetail: what is still missing before review", () => {
+  const complete = { title: "T", text: "Caption", category: "Blog Post", mediaUrls: ["/uploads/a.png"] };
+  const withAccount = [{ status: "pending", error: null, account: { platform: "instagram", displayName: "@a" } }];
+
+  it("a post with everything the review needs lacks nothing", () => {
+    expect(toDetail(detail({ content: complete, targets: withAccount })).missing).toEqual([]);
+  });
+
+  it("a draft that came in from a plan lacks its account and its media, in form order", () => {
+    const planned = { title: "T", text: "Caption", category: "Blog Post", platforms: ["linkedin"], sourceRow: 1 };
+    // the channel the file named is not an account: the review needs a connected one
+    expect(toDetail(detail({ content: planned })).missing).toEqual(["accounts", "media"]);
+  });
+
+  it("each field is named: title, date, caption, category, account, media", () => {
+    expect(toDetail(detail({ content: {}, scheduledFor: null })).missing).toEqual(["title", "date", "caption", "category", "accounts", "media"]);
+  });
+
+  it("a caption is not needed when every channel carries its own text (YouTube, Pinterest)", () => {
+    const targets = [{ status: "pending", error: null, account: { platform: "youtube", displayName: "Y" } }];
+    expect(toDetail(detail({ content: { ...complete, text: "" }, targets })).missing).toEqual([]);
+  });
+
+  it("is the same answer the submit route gives for the same post", () => {
+    const j = detail({ content: { title: "T", text: "", category: "Blog Post" }, targets: withAccount });
+    expect(toDetail(j).missing).toEqual(["caption", "media"]);
+  });
+});

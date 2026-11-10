@@ -236,6 +236,13 @@ describe("GET /jobs/:id/detail", () => {
     expect(res.json().activity[0]).toMatchObject({ kind: "imported", by: "Putri" });
   });
 
+  it("lists what the post still lacks before review, from the content and the accounts it has", async () => {
+    h.job = detailRow({ content: JSON.stringify({ title: "T", text: "C", category: "Blog Post" }), targets: [] });
+    expect((await app.inject({ method: "GET", url: "/jobs/p1/detail" })).json().missing).toEqual(["accounts", "media"]);
+    h.job = detailRow({ content: JSON.stringify({ title: "T", text: "C", category: "Blog Post", mediaUrls: ["/uploads/a.png"] }), targets: [{ status: "pending", error: null, account: { platform: "instagram", displayName: "@a" } }] });
+    expect((await app.inject({ method: "GET", url: "/jobs/p1/detail" })).json().missing).toEqual([]);
+  });
+
   it("says whether the post is the viewer's own: the drawer offers Submit only on those", async () => {
     h.job = detailRow({ userId: "user-1" });
     expect((await app.inject({ method: "GET", url: "/jobs/p1/detail" })).json().mine).toBe(true);
