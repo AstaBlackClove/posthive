@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  attentionNote,
+  subtitleOf,
   calendarStatus,
   channelStats,
   eventsByDay,
@@ -14,7 +16,7 @@ import {
   type ApiDashboard,
   type ApiPost,
 } from "./dashboard-data";
-import { wibDateKey } from "./datetime";
+import { formatTime, wibDateKey } from "./datetime";
 
 const post = (patch: Partial<ApiPost> = {}): ApiPost => ({
   id: "p1",
@@ -24,6 +26,8 @@ const post = (patch: Partial<ApiPost> = {}): ApiPost => ({
   scheduledFor: "2026-11-18T02:00:00.000Z",
   channels: ["instagram"],
   owner: "Putri",
+  category: null,
+  thumbnail: null,
   ...patch,
 });
 
@@ -72,15 +76,15 @@ describe("a post's publication stage", () => {
 });
 
 describe("toContentRow", () => {
-  it("is the table's row: first channel, how many more, date, owner and both statuses", () => {
-    expect(toContentRow(post({ channels: ["linkedin", "instagram", "mastodon"] }))).toEqual({
-      id: "p1", title: "5 Habits", channel: "linkedin", alsoOn: 2, publishAt: "2026-11-18T02:00:00.000Z", owner: "Putri",
-      production: "approved", publication: "scheduled",
+  it("is the table's row: every channel, category, picture, date, owner and both statuses", () => {
+    expect(toContentRow(post({ channels: ["linkedin", "instagram", "mastodon"], category: "Industry insight", thumbnail: "/uploads/a.png" }))).toEqual({
+      id: "p1", title: "5 Habits", channels: ["linkedin", "instagram", "mastodon"], category: "Industry insight", thumbnail: "/uploads/a.png",
+      publishAt: "2026-11-18T02:00:00.000Z", owner: "Putri", production: "approved", publication: "scheduled",
     });
   });
   it("a draft has no publication stage: null, not one it has not reached", () => {
     const row = toContentRow(post({ status: "draft", approvalStatus: "pending", scheduledFor: null, channels: [], owner: null }));
-    expect(row).toMatchObject({ channel: "", alsoOn: 0, publishAt: null, owner: null, production: "review", publication: null });
+    expect(row).toMatchObject({ channels: [], publishAt: null, owner: null, production: "review", publication: null });
   });
   it("a failed post is shown as Failed, not as scheduled or published", () => {
     expect(toContentRow(post({ status: "failed" })).publication).toBe("failed");
@@ -224,27 +228,74 @@ describe("toDashboardData", () => {
 });
 
 describe("calendar", () => {
-  it("a post shows the status it is in: out, waiting for its time, failed, else where it is in production", () => {
+  it("a post shows how it ended (published, failed), else where it is in production; waiting for its time it is still Approved, as in the design", () => {
     expect(calendarStatus(post({ status: "failed" }))).toBe("failed");
     expect(calendarStatus(post({ status: "done" }))).toBe("published");
-    expect(calendarStatus(post({ status: "pending" }))).toBe("scheduled");
+    expect(calendarStatus(post({ status: "pending" }))).toBe("approved");
     expect(calendarStatus(post({ status: "draft", approvalStatus: "rejected" }))).toBe("changes");
     expect(calendarStatus(post({ status: "draft" }))).toBe("brief");
   });
 
   it("events sit on the WIB day, not the UTC one: 20:00 UTC is already tomorrow in Jakarta", () => {
-    const events = toCalendarEvents([post({ scheduledFor: "2026-11-09T20:00:00.000Z" }), post({ id: "p2", scheduledFor: "2026-11-09T16:59:00.000Z" })], (iso) => wibDateKey(new Date(iso)));
+    const events = toCalendarEvents([post({ scheduledFor: "2026-11-09T20:00:00.000Z" }), post({ id: "p2", scheduledFor: "2026-11-09T16:59:00.000Z" })], (iso) => wibDateKey(new Date(iso)), (iso) => formatTime(new Date(iso)));
     expect(events.map((e) => e.day)).toEqual(["2026-11-10", "2026-11-09"]);
   });
 
+  it("an event carries the WIB time of day for its pill", () => {
+    const [e] = toCalendarEvents([post({ scheduledFor: "2026-11-13T07:00:00.000Z" })], (iso) => iso.slice(0, 10), (iso) => formatTime(new Date(iso)));
+    expect(e.time).toBe("14:00");
+  });
+
   it("a post with no date has no day, so it is not on the grid", () => {
-    expect(toCalendarEvents([post({ scheduledFor: null })], (i) => i)).toEqual([]);
+    expect(toCalendarEvents([post({ scheduledFor: null })], (i) => i, (i) => i)).toEqual([]);
   });
 
   it("groups the events of a day, in the order they came", () => {
-    const events = toCalendarEvents([post({ id: "a" }), post({ id: "b" }), post({ id: "c", scheduledFor: "2026-11-19T02:00:00.000Z" })], (iso) => iso.slice(0, 10));
+    const events = toCalendarEvents([post({ id: "a" }), post({ id: "b" }), post({ id: "c", scheduledFor: "2026-11-19T02:00:00.000Z" })], (iso) => iso.slice(0, 10), (iso) => iso.slice(11, 16));
     const days = eventsByDay(events);
     expect(days.get("2026-11-18")!.map((e) => e.id)).toEqual(["a", "b"]);
     expect(days.get("2026-11-19")!.map((e) => e.id)).toEqual(["c"]);
+  });
+});
+
+describe("attentionNote", () => {
+  const list = (posts: ApiPost[], count = posts.length) => ({ count, posts });
+
+  it("says what the posts that need attention are, when the list holds all of them", () => {
+    const note = attentionNote(list([post({ status: "failed" }), post({ id: "b", status: "draft", approvalStatus: "rejected" }), post({ id: "c", status: "draft" })]));
+    expect(note).toBe("1 publish failed · 1 changes requested · 1 behind schedule");
+  });
+
+  it("uses the plural for several failures, and leaves out what there is none of", () => {
+    expect(attentionNote(list([post({ status: "failed" }), post({ id: "b", status: "post_failed" })]))).toBe("2 publishes failed");
+  });
+
+  it("says nothing when the list is cut (a split of part of the posts would be a wrong number) or empty", () => {
+    expect(attentionNote(list([post({ status: "failed" })], 25))).toBeUndefined();
+    expect(attentionNote(list([]))).toBeUndefined();
+  });
+});
+
+describe("subtitleOf", () => {
+  const today = (posts: ApiPost[]) => ({ count: posts.length, posts });
+  const scheduledAt = (id: string, iso: string) => post({ id, status: "pending", scheduledFor: iso });
+
+  it("a workspace with nothing planned is told to plan", () => {
+    expect(subtitleOf(api({ quarter: { label: "Q4 2026", planned: 0, published: 0 } }))).toBe("Your workspace is ready — plan your first posts and they'll show up here.");
+  });
+
+  it("a plan that came in from a file, with one post going out today, says when, in WIB", () => {
+    const text = subtitleOf(api({ quarter: { label: "Q4 2026", planned: 60, published: 1 }, setup: { imported: true, created: false, accounts: 2, members: 1, invites: 0 }, todayPosts: today([scheduledAt("a", "2026-11-13T07:00:00.000Z")]) }));
+    expect(text).toBe("60 posts imported from your Q4 plan · 1 post goes live today at 14:00.");
+  });
+
+  it("posts made by hand are 'planned', not 'imported'; several going out name the first time", () => {
+    const text = subtitleOf(api({ quarter: { label: "Q4 2026", planned: 12, published: 0 }, setup: { imported: true, created: true, accounts: 2, members: 1, invites: 0 }, todayPosts: today([scheduledAt("a", "2026-11-13T07:00:00.000Z"), scheduledAt("b", "2026-11-13T09:00:00.000Z")]) }));
+    expect(text).toBe("12 posts planned in Q4 2026 · 2 posts go live today, the first at 14:00.");
+  });
+
+  it("nothing going out today ends after the count; drafts and posts already out do not count as going live", () => {
+    const text = subtitleOf(api({ quarter: { label: "Q4 2026", planned: 1, published: 0 }, todayPosts: today([post({ status: "draft" }), post({ id: "b", status: "done" })]) }));
+    expect(text).toBe("1 post planned in Q4 2026.");
   });
 });

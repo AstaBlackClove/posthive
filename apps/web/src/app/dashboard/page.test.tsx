@@ -17,7 +17,7 @@ import DashboardPage from "./page";
 
 const post = (patch: Partial<ApiPost> = {}): ApiPost => ({
   id: "p1", title: "5 Habits", status: "pending", approvalStatus: null, scheduledFor: "2099-03-10T02:00:00.000Z",
-  channels: ["instagram"], owner: "Putri", ...patch,
+  channels: ["instagram"], owner: "Putri", category: null, thumbnail: null, ...patch,
 });
 
 const dashboard = (patch: Partial<ApiDashboard> = {}): ApiDashboard => ({
@@ -89,8 +89,23 @@ describe("dashboard page: real data", () => {
     expect(screen.getByText("Today post")).toBeTruthy();
     expect(screen.getByText("My own draft")).toBeTruthy();
     expect(screen.getByText("@postly.studio")).toBeTruthy();
-    expect(screen.getByText("Showing 1 of 31")).toBeTruthy();
-    expect(screen.getByText("Here is where Q4 2026 stands.")).toBeTruthy();
+    expect(screen.getByText("Showing 1 of 31 posts")).toBeTruthy();
+    // the fixture's one post for today is scheduled for 09:00 WIB
+    expect(screen.getByText("12 posts planned in Q4 2026 · 1 post goes live today at 09:00.")).toBeTruthy();
+  });
+
+  it("greets a workspace that has posts by the time of day, and a brand-new one with a welcome", async () => {
+    serve(dashboard());
+    const { unmount } = render(<DashboardPage />);
+    await screen.findByText("Plan Marketing");
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toMatch(/^Good (morning|afternoon|evening), Putri$/);
+    unmount();
+
+    serve(dashboard({ quarter: { label: "Q4 2026", planned: 0, published: 0 }, setup: { imported: false, created: false, accounts: 0, members: 1, invites: 0 }, todayPosts: { count: 0, posts: [] }, myTasks: { count: 0, posts: [] } }));
+    render(<DashboardPage />);
+    await screen.findByText("Plan Marketing");
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Welcome to Postly, Putri");
+    expect(screen.getByText("Your workspace is ready — plan your first posts and they'll show up here.")).toBeTruthy();
   });
 
   it("the pipeline counts the drafts by stage", async () => {

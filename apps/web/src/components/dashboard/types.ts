@@ -32,10 +32,12 @@ export interface MilestoneData {
 export interface ContentRow {
   id: string;
   title: string;
-  /** A platform id: the first channel of the post, "" when it has none yet. */
-  channel: string;
-  /** How many more channels the post goes to. */
-  alsoOn?: number;
+  /** Platform ids the post goes to, the first being its main one; none yet for a plan row without an account. */
+  channels: string[];
+  /** The content category a plan file named, for the line under the title. */
+  category?: string | null;
+  /** The first image of the post (an upload path or an http(s) URL). */
+  thumbnail?: string | null;
   /** ISO date-time. */
   publishAt: string | null;
   owner: string | null;
@@ -58,6 +60,8 @@ export interface DashboardData {
   readyToSchedule: number;
   published: number;
   needAttention: number;
+  /** What the attention posts are, "1 publish failed · 1 changes requested"; left out when the list is cut and cannot be split. */
+  needAttentionNote?: string;
   tasksToday: number;
   /** The first of the person's own posts for today (tasksToday may be larger). */
   taskRows: ContentRow[];

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "./api";
-import { wibDateKey } from "./datetime";
+import { formatTime, wibDateKey } from "./datetime";
 import type { ApiCalendar, ApiDashboard, CalendarEvent } from "./dashboard-data";
 import { toCalendarEvents } from "./dashboard-data";
 
@@ -66,6 +66,8 @@ export interface CalendarState {
 
 /** WIB day of an instant, for placing a post on its cell. */
 export const dayOf = (iso: string) => wibDateKey(new Date(iso));
+/** WIB time of an instant, "14:00", for the pill of a post. */
+export const timeOf = (iso: string) => formatTime(new Date(iso));
 
 /**
  * The posts of the days the calendar shows. Moving the grid asks for the new range; an answer that
@@ -108,7 +110,7 @@ export function useCalendar(): CalendarState {
 
   // Only an answer for the range on screen counts; while the next one loads the grid shows no posts of the old range
   const events = useMemo(
-    () => (answer && range && answer.from === range.from && answer.to === range.to ? toCalendarEvents(answer.posts, dayOf) : []),
+    () => (answer && range && answer.from === range.from && answer.to === range.to ? toCalendarEvents(answer.posts, dayOf, timeOf) : []),
     [answer, range]
   );
   return { events, loading, truncated: Boolean(answer?.truncated && events.length > 0), error, setRange, retry };

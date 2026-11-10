@@ -8,8 +8,8 @@ import { InlineAlert } from "@/components/InlineAlert";
 import { useAuth } from "@/context/AuthContext";
 import { BRAND } from "@/lib/brand";
 import { wibDateKey } from "@/lib/datetime";
-import { firstName } from "@/lib/dashboard-format";
-import { rowsByTab, toDashboardData } from "@/lib/dashboard-data";
+import { firstName, greetingFor } from "@/lib/dashboard-format";
+import { rowsByTab, subtitleOf, toDashboardData } from "@/lib/dashboard-data";
 import { useCalendar, useDashboard } from "@/lib/useDashboard";
 import { usePermissions } from "@/lib/usePermissions";
 import { ContentCalendar } from "@/components/dashboard/ContentCalendar";
@@ -37,16 +37,21 @@ export default function DashboardPage() {
   // The table's rows must keep their identity between renders (TanStack rebuilds its rows when they change)
   const rows = useMemo(() => (api ? rowsByTab(api) : undefined), [api]);
 
-  let subtitle = "Your workspace is ready — plan your first posts and they'll show up here.";
-  if (!api) subtitle = loading ? "Loading your workspace…" : "We couldn't load your workspace.";
-  else if (api.quarter.planned > 0) subtitle = `Here is where ${api.quarter.label} stands.`;
+  // A workspace with posts in it is greeted by the time of day, as in the design; a brand-new one is welcomed
+  const hasContent = Boolean(api && (api.quarter.planned > 0 || api.setup.imported || api.setup.created));
+  const first = firstName(user?.name);
+  const greeting = hasContent ? `${greetingFor(now)}${first ? `, ${first}` : ""}` : undefined;
+  let subtitle = "Loading your workspace…";
+  if (api) subtitle = subtitleOf(api);
+  else if (!loading) subtitle = "We couldn't load your workspace.";
 
   return (
     // The shell clips its content, so the page scrolls inside this box
     <div className="theme-dashboard flex-1 overflow-y-auto bg-background">
       <div className="mx-auto flex max-w-[110rem] flex-col gap-4 p-4 pt-16 md:p-6 md:pt-6">
         <Topbar
-          firstName={firstName(user?.name)}
+          greeting={greeting}
+          firstName={first}
           fullName={user?.name ?? ""}
           avatarUrl={user?.avatarUrl}
           brand={BRAND.name}
@@ -79,7 +84,8 @@ export default function DashboardPage() {
           <>
             <QuickStartBanner steps={data.quickStart} done={data.quickStartDone} title={data.quickStartTitle} />
 
-            <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+            {/* grid-cols-1 is minmax(0, 1fr): without it the single column is as wide as its widest content (a long title) and the page scrolls sideways */}
+            <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
               <div className="flex min-w-0 flex-col gap-3">
                 <PlanMarketingCard plan={data.plan} />
                 <StatGrid data={data} />
@@ -96,7 +102,7 @@ export default function DashboardPage() {
               <SideColumn data={data} today={now} />
             </div>
 
-            <ContentTable rows={rows} tabCounts={data.tabCounts} />
+            <ContentTable rows={rows} tabCounts={data.tabCounts} todayKey={todayKey} />
           </>
         )}
       </div>

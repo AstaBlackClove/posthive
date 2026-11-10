@@ -56,6 +56,8 @@ export function TopbarActions({ fullName, avatarUrl, today }: ActionsProps) {
 }
 
 type Props = ActionsProps & {
+  /** The whole greeting ("Good morning, Puteri"); without it, "Welcome to Postly, Puteri". */
+  greeting?: string;
   /** The person's first name, for the greeting. */
   firstName: string;
   /** The product name: "Welcome to Postly, Puteri". */
@@ -64,15 +66,14 @@ type Props = ActionsProps & {
 };
 
 /** The greeting on the left; the actions on the right. */
-export function Topbar({ firstName, brand, fullName, avatarUrl, subtitle, today }: Props) {
+export function Topbar({ greeting, firstName, brand, fullName, avatarUrl, subtitle, today }: Props) {
   return (
     <header className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-6">
       <div className="min-w-0">
         <h1 className="type-display-m-6 text-fg">
-          Welcome to {brand}
-          {firstName ? `, ${firstName}` : ""}
+          {greeting ?? `Welcome to ${brand}${firstName ? `, ${firstName}` : ""}`}
         </h1>
-        <p className="mt-1 max-w-lg type-body-r-m text-fg">{subtitle}</p>
+        <p className="mt-1 max-w-2xl type-body-r-m text-fg">{subtitle}</p>
       </div>
 
       <TopbarActions fullName={fullName} avatarUrl={avatarUrl} today={today} />

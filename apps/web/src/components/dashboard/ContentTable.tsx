@@ -20,12 +20,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/cn";
-import { sortSummary } from "@/lib/dashboard-format";
-import { formatDate } from "@/lib/datetime";
 import { statusLabel } from "@/lib/content-status";
+import { formatPublishAt, shortName, sortSummary } from "@/lib/dashboard-format";
+import { formatTime, wibDateKey } from "@/lib/datetime";
 import { platformLabel } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
-import { StatusDot } from "./StatusDot";
+import { StatusPill } from "./StatusPill";
 import type { ContentRow, TabKey } from "./types";
 
 // Module scope on purpose: TanStack Table needs stable features, columns and fallback data, or it rebuilds its rows on every render.
@@ -41,7 +41,7 @@ const NO_ROWS: ContentRow[] = [];
 const columns = helper.columns([
   helper.accessor("title", { id: "content", header: "Content", sortFn: "text" }),
   // "" (no channel yet) would sort first; undefined goes last
-  helper.accessor((r) => r.channel || undefined, { id: "channel", header: "Channel", sortFn: "text", sortUndefined: "last" }),
+  helper.accessor((r) => r.channels[0] || undefined, { id: "channel", header: "Channel", sortFn: "text", sortUndefined: "last" }),
   // undefined, not "" or null: an empty string sorts FIRST, and sortUndefined: "last" only covers undefined
   helper.accessor((r) => r.publishAt ?? undefined, { id: "publishAt", header: "Publish date", sortFn: "datetime", sortUndefined: "last" }),
   helper.accessor((r) => r.owner ?? undefined, { id: "owner", header: "Owner", sortFn: "text", sortUndefined: "last" }),
@@ -68,6 +68,8 @@ type Props = {
   /** The rows of each tab (the lists are cut, the count in the tab is the true total). A tab with none is empty. */
   rows?: Partial<Record<TabKey, ContentRow[]>>;
   tabCounts: Record<TabKey, number>;
+  /** Today as a WIB "YYYY-MM-DD" key: a post of today has its row marked and says "today 14:00". */
+  todayKey?: string;
 };
 
 function SortIcon({ state }: { state: false | "asc" | "desc" }) {
@@ -77,7 +79,7 @@ function SortIcon({ state }: { state: false | "asc" | "desc" }) {
 }
 
 /** The tabs and the table of content (sortable, selectable). With no rows it is the empty state inside the table. */
-export function ContentTable({ rows: rowsByTab, tabCounts }: Props) {
+export function ContentTable({ rows: rowsByTab, tabCounts, todayKey }: Props) {
   const [tab, setTab] = useState<TabKey>("upcoming");
   const rows = rowsByTab?.[tab] ?? NO_ROWS;
   // The list starts in the order its footer promises: by publish date, soonest first
@@ -109,7 +111,7 @@ export function ContentTable({ rows: rowsByTab, tabCounts }: Props) {
           </Button>
         </div>
 
-        <TabsContent value={tab} className="rounded-2xl border border-neutral-200 bg-bg">
+        <TabsContent value={tab} className="overflow-hidden rounded-2xl border border-neutral-200 bg-bg">
           <Table aria-label={TABS.find((t) => t.key === tab)?.label} className="min-w-160">
             <TableHeader>
               {table.getHeaderGroups().map((group) => (
@@ -137,43 +139,55 @@ export function ContentTable({ rows: rowsByTab, tabCounts }: Props) {
               ))}
             </TableHeader>
             <TableBody>
-              {result.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
-                  <TableCell>
-                    <Checkbox aria-label={`Select ${row.original.title}`} checked={row.getIsSelected()} onCheckedChange={(v) => row.toggleSelected(v === true)} />
-                  </TableCell>
-                  <TableCell className="max-w-64 truncate type-body-m-s">{row.original.title}</TableCell>
-                  <TableCell>
-                    {row.original.channel ? (
-                      <span className="inline-flex items-center gap-2">
-                        <PlatformIcon platform={row.original.channel} size={14} />
-                        {platformLabel(row.original.channel)}
-                        {row.original.alsoOn ? <span className="text-muted-foreground">+{row.original.alsoOn}</span> : null}
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </TableCell>
-                  <TableCell>{row.original.publishAt ? formatDate(new Date(row.original.publishAt)) : "—"}</TableCell>
-                  <TableCell>{row.original.owner ?? "—"}</TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center gap-2">
-                      <StatusDot status={row.original.production} />
-                      {statusLabel(row.original.production)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {row.original.publication ? (
-                      <span className="inline-flex items-center gap-2">
-                        <StatusDot status={row.original.publication} />
-                        {statusLabel(row.original.publication)}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground" title="Not scheduled yet">—</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {result.map((row) => {
+                const post = row.original;
+                const at = post.publishAt ? new Date(post.publishAt) : null;
+                const isToday = Boolean(at && todayKey && wibDateKey(at) === todayKey);
+                return (
+                  <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined} data-today={isToday || undefined} className={cn("bg-surface hover:bg-brand-50", isToday && "bg-brand-50")}>
+                    <TableCell>
+                      <Checkbox aria-label={`Select ${post.title}`} checked={row.getIsSelected()} onCheckedChange={(v) => row.toggleSelected(v === true)} />
+                    </TableCell>
+                    <TableCell className="max-w-72 min-w-48 whitespace-normal">
+                      <p className="line-clamp-2 type-body-m-s break-words" title={post.title}>
+                        {post.title}
+                      </p>
+                      {post.category && <p className="mt-0.5 truncate type-body-r-xxs text-brand-800">{post.category}</p>}
+                    </TableCell>
+                    <TableCell>
+                      {post.channels.length > 0 ? (
+                        <ul className="space-y-1.5">
+                          {post.channels.map((c) => (
+                            <li key={c} className="flex items-center gap-2">
+                              <PlatformIcon platform={c} size={18} />
+                              {platformLabel(c)}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">{at ? formatPublishAt(at) : "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap">{post.owner ? shortName(post.owner) : "—"}</TableCell>
+                    <TableCell>
+                      <StatusPill status={post.production} solid>
+                        {statusLabel(post.production)}
+                      </StatusPill>
+                    </TableCell>
+                    <TableCell>
+                      {post.publication ? (
+                        <StatusPill status={post.publication}>
+                          {post.publication === "scheduled" && at ? `Scheduled · ${isToday ? "today " : ""}${formatTime(at)}` : statusLabel(post.publication)}
+                        </StatusPill>
+                      ) : (
+                        // a draft is not on its way out: the grey "brief" tint, not a stage it has not reached
+                        <StatusPill status="brief">Not scheduled</StatusPill>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
 
@@ -208,7 +222,7 @@ export function ContentTable({ rows: rowsByTab, tabCounts }: Props) {
 
         <div className="flex flex-wrap items-center justify-between gap-2 px-1 type-body-r-xs text-muted-foreground">
           <p aria-live="polite">
-            Showing {result.length} of {Math.max(tabCounts[tab], result.length)}
+            Showing {result.length} of {Math.max(tabCounts[tab], result.length)} posts
           </p>
           <p>{sortSummary(table.state.sorting)}</p>
         </div>

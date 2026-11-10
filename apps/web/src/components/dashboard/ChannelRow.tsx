@@ -38,7 +38,12 @@ export function ChannelRow({ channel, emptyHandle = "No account linked" }: Props
           <ItemTitle>{name}</ItemTitle>
           <ItemDescription>{connected && handle ? handle : emptyHandle}</ItemDescription>
         </ItemContent>
-        {!connected && (
+        {connected ? (
+          <Badge variant="success" className="gap-1.5 border-transparent bg-green-600/10">
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-green-600" />
+            Connected
+          </Badge>
+        ) : (
           <Badge variant="danger" className="gap-1.5">
             <span aria-hidden="true" className="size-1.5 rounded-full bg-red-500" />
             Not connected

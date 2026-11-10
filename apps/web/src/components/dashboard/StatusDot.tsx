@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import { CALENDAR_LEGEND, CONTENT_STATUS, PRODUCTION_STAGES, statusLabel, type ContentStatusKey, type StatusContext } from "@/lib/content-status";
+import { CALENDAR_LEGEND, CONTENT_STATUS, PRODUCTION_STAGES, statusLabel, type ContentStatusKey } from "@/lib/content-status";
 
 /** The coloured dot of a status. Decorative: the label always sits next to it. */
 export function StatusDot({ status, className }: { status: ContentStatusKey; className?: string }) {
@@ -16,14 +16,13 @@ type LegendProps = {
 
 /** The status key: with counts under the pipeline, as a plain legend under the calendar. */
 export function StatusLegend({ variant, counts, className }: LegendProps) {
-  const context: StatusContext = variant;
   if (variant === "calendar") {
     return (
       <ul aria-label="Status legend" className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5 type-body-r-xs text-muted-foreground", className)}>
         {CALENDAR_LEGEND.map((key) => (
           <li key={key} className="flex items-center gap-1.5">
             <StatusDot status={key} />
-            {statusLabel(key, context)}
+            {statusLabel(key)}
           </li>
         ))}
       </ul>
@@ -34,7 +33,7 @@ export function StatusLegend({ variant, counts, className }: LegendProps) {
       {PRODUCTION_STAGES.map((key) => (
         <li key={key} className="flex items-center gap-2 type-body-r-xs text-fg">
           <StatusDot status={key} />
-          <span className="flex-1">{statusLabel(key, context)}</span>
+          <span className="flex-1">{statusLabel(key)}</span>
           <span className="tabular-nums">{counts?.[key] ?? 0}</span>
         </li>
       ))}

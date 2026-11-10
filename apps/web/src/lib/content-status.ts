@@ -9,20 +9,18 @@ export type ContentStatusKey = (typeof CONTENT_STATUS_KEYS)[number];
 
 export interface ContentStatus {
   key: ContentStatusKey;
-  /** Shown in the production pipeline and the table. */
+  /** Shown in the production pipeline, the table, the calendar and its legend. */
   label: string;
-  /** Shown in the calendar legend when it reads differently ("Draft", "Rejected"). */
-  calendarLabel?: string;
   /** Background class of the dot. */
   dot: string;
 }
 
 export const CONTENT_STATUS: Record<ContentStatusKey, ContentStatus> = {
-  brief: { key: "brief", label: "Brief needed", calendarLabel: "Draft", dot: "bg-neutral-200" },
+  brief: { key: "brief", label: "Brief needed", dot: "bg-neutral-200" },
   copywriting: { key: "copywriting", label: "Copywriting", dot: "bg-neutral-500" },
   design: { key: "design", label: "In design", dot: "bg-status-design" },
   review: { key: "review", label: "In review", dot: "bg-brand-600" },
-  changes: { key: "changes", label: "Changes requested", calendarLabel: "Rejected", dot: "bg-status-changes" },
+  changes: { key: "changes", label: "Changes requested", dot: "bg-status-changes" },
   approved: { key: "approved", label: "Approved", dot: "bg-green-600" },
   scheduled: { key: "scheduled", label: "Scheduled", dot: "bg-neutral-800" },
   published: { key: "published", label: "Published", dot: "bg-brand-500" },
@@ -39,11 +37,8 @@ export const PUBLICATION_STAGES: readonly ContentStatusKey[] = ["scheduled", "pu
 /** Everything the calendar legend lists, in the design's order, with Failed after them. */
 export const CALENDAR_LEGEND: readonly ContentStatusKey[] = CONTENT_STATUS_KEYS;
 
-export type StatusContext = "pipeline" | "calendar";
-
-export function statusLabel(key: ContentStatusKey, context: StatusContext = "pipeline"): string {
-  const s = CONTENT_STATUS[key];
-  return context === "calendar" ? (s.calendarLabel ?? s.label) : s.label;
+export function statusLabel(key: ContentStatusKey): string {
+  return CONTENT_STATUS[key].label;
 }
 
 /** A count for every stage, all zero: the starting point of a pipeline. */

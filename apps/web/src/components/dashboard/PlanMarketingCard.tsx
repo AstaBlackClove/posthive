@@ -3,6 +3,7 @@ import { CloudUploadIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { quarterMonths } from "@/lib/dashboard-format";
 import { percentOf } from "./StatCard";
 import type { PlanQuarter } from "./types";
 
@@ -17,7 +18,7 @@ export function PlanMarketingCard({ plan }: Props) {
     <Card className="flex-col gap-4 px-5 py-4 xl:flex-row xl:items-center xl:gap-5">
       <div className="xl:shrink-0">
         <h2 className="whitespace-nowrap type-head-m-5 text-fg">Plan Marketing</h2>
-        <p className="type-body-r-xs text-muted-foreground">{label}</p>
+        <p className="type-body-r-xs text-muted-foreground">{[label, quarterMonths(label)].filter(Boolean).join(" · ")}</p>
       </div>
       <div className="min-w-0 flex-1 space-y-2 xl:min-w-48">
         <p className="flex min-w-0 flex-wrap items-baseline gap-x-2">
@@ -34,7 +35,7 @@ export function PlanMarketingCard({ plan }: Props) {
         <Button asChild variant="olive">
           <Link href="/jobs/import">
             <CloudUploadIcon />
-            Import planning
+            Import plan
           </Link>
         </Button>
         <Button asChild>

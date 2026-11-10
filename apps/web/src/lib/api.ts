@@ -1,6 +1,11 @@
 import { notifySessionExpired } from "./session";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+/** The address of a stored file: an upload path lives on the API, a full URL is already one. */
+export function assetUrl(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `${API_BASE}${url}`;
+}
 
 type RefreshResult = "ok" | "expired" | "error";
 

@@ -146,10 +146,10 @@ describe("StatusDot and StatusLegend", () => {
     ]);
   });
 
-  it("the calendar legend lists the statuses under their calendar names, Failed last", () => {
+  it("the calendar legend lists the statuses under the pipeline's names, Failed last", () => {
     render(<StatusLegend variant="calendar" />);
     const items = within(screen.getByRole("list", { name: "Status legend" })).getAllByRole("listitem");
-    expect(items.map((i) => i.textContent)).toEqual(["Draft", "Copywriting", "In design", "In review", "Rejected", "Approved", "Scheduled", "Published", "Failed"]);
+    expect(items.map((i) => i.textContent)).toEqual(["Brief needed", "Copywriting", "In design", "In review", "Changes requested", "Approved", "Scheduled", "Published", "Failed"]);
   });
 
   it("the same status has the same colour in the pipeline and the calendar", () => {

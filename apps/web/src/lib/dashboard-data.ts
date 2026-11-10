@@ -12,6 +12,7 @@ import type { ContentRow, DashboardData, TabKey } from "@/components/dashboard/t
 import type { QuickStart } from "@/components/dashboard/QuickStartStep";
 import type { ChannelStat } from "@/components/dashboard/ChannelRow";
 import { emptyStatusCounts, type ContentStatusKey } from "@/lib/content-status";
+import { formatTime } from "@/lib/datetime";
 import { STATUS_GROUPS } from "@/lib/postList";
 
 // ── The API's answer ────────────────────────────────────────────────────────
@@ -24,6 +25,8 @@ export interface ApiPost {
   scheduledFor: string | null;
   channels: string[];
   owner: string | null;
+  category: string | null;
+  thumbnail: string | null;
 }
 
 export interface ApiList {
@@ -79,8 +82,9 @@ export function toContentRow(post: ApiPost): ContentRow {
   return {
     id: post.id,
     title: post.title,
-    channel: post.channels[0] ?? "",
-    alsoOn: Math.max(0, post.channels.length - 1),
+    channels: post.channels,
+    category: post.category,
+    thumbnail: post.thumbnail,
     publishAt: post.scheduledFor,
     owner: post.owner,
     production,
@@ -103,6 +107,47 @@ export function pipelineCounts(groups: ApiDashboard["inProduction"]): Record<Con
     else if (g.approvalStatus === "approved" && inGroup(STATUS_GROUPS.pending, g.status)) counts.approved += g.count;
   }
   return counts;
+}
+
+// ── What the page says about the quarter ────────────────────────────────────
+
+/**
+ * "1 publish failed · 1 changes requested": what the posts that need attention are. Only said when the
+ * list holds all of them (it is cut at twenty): a split of part of them would be a wrong number.
+ */
+export function attentionNote(list: ApiList): string | undefined {
+  if (list.count === 0 || list.count > list.posts.length) return undefined;
+  let failed = 0;
+  let changes = 0;
+  for (const p of list.posts) {
+    if (publicationOf(p) === "failed") failed += 1;
+    else if (productionOf(p) === "changes") changes += 1;
+  }
+  const behind = list.count - failed - changes;
+  return [
+    failed > 0 && `${failed} ${failed === 1 ? "publish" : "publishes"} failed`,
+    changes > 0 && `${changes} changes requested`,
+    behind > 0 && `${behind} behind schedule`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/**
+ * The line under the greeting: what the quarter holds and what goes out today. A plan imported and
+ * nothing made by hand is "imported from your Q4 plan"; otherwise they are just planned.
+ */
+export function subtitleOf(api: ApiDashboard): string {
+  const { label, planned } = api.quarter;
+  if (planned === 0) return "Your workspace is ready — plan your first posts and they'll show up here.";
+  const posts = `${planned} ${planned === 1 ? "post" : "posts"}`;
+  const fromPlan = api.setup.imported && !api.setup.created;
+  const head = fromPlan ? `${posts} imported from your ${label.split(" ")[0]} plan` : `${posts} planned in ${label}`;
+
+  const out = api.todayPosts.posts.filter((p) => p.scheduledFor && publicationOf(p) === "scheduled");
+  if (out.length === 0) return `${head}.`;
+  const first = formatTime(new Date(out[0].scheduledFor as string));
+  return out.length === 1 ? `${head} · 1 post goes live today at ${first}.` : `${head} · ${out.length} posts go live today, the first at ${first}.`;
 }
 
 // ── Quick start ─────────────────────────────────────────────────────────────
@@ -171,6 +216,7 @@ export function toDashboardData({ api, userName, brand, canAccess }: Build): Das
     readyToSchedule: api.readyToSchedule,
     published: api.quarter.published,
     needAttention: api.needAttention,
+    needAttentionNote: attentionNote(api.lists.attention),
     tasksToday: api.myTasks.count,
     taskRows: api.myTasks.posts.map(toContentRow),
     today: { count: api.todayPosts.count, rows: api.todayPosts.posts.map(toContentRow) },
@@ -202,19 +248,25 @@ export interface CalendarEvent {
   title: string;
   /** The WIB day, "YYYY-MM-DD". */
   day: string;
+  /** The WIB time of day, "14:00". */
+  time: string;
   channels: string[];
   status: ContentStatusKey;
 }
 
-/** The status a post shows on the calendar: published and scheduled win, then where it is in production. */
+/**
+ * The status a post shows on the calendar. As in the design, a post waiting for its time is still "Approved"
+ * (the table says "Scheduled" beside it); only how it ended, Published or Failed, takes its place.
+ */
 export function calendarStatus(post: ApiPost): ContentStatusKey {
-  return publicationOf(post) ?? productionOf(post);
+  const outcome = publicationOf(post);
+  return outcome === "published" || outcome === "failed" ? outcome : productionOf(post);
 }
 
-/** Posts of a range as calendar events, each on its WIB day; a post with no date has no day and is left out. */
-export function toCalendarEvents(posts: ApiPost[], dayOf: (iso: string) => string): CalendarEvent[] {
+/** Posts of a range as calendar events, each on its WIB day and time; a post with no date has no day and is left out. */
+export function toCalendarEvents(posts: ApiPost[], dayOf: (iso: string) => string, timeOf: (iso: string) => string): CalendarEvent[] {
   return posts.flatMap((p) =>
-    p.scheduledFor ? [{ id: p.id, title: p.title, day: dayOf(p.scheduledFor), channels: p.channels, status: calendarStatus(p) }] : []
+    p.scheduledFor ? [{ id: p.id, title: p.title, day: dayOf(p.scheduledFor), time: timeOf(p.scheduledFor), channels: p.channels, status: calendarStatus(p) }] : []
   );
 }
 

@@ -1,4 +1,4 @@
-import { APP_TIMEZONE } from "./datetime";
+import { APP_TIMEZONE, formatTime } from "./datetime";
 
 const MONTHS_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -18,6 +18,36 @@ export function formatTodayLong(d: Date): string {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: APP_TIMEZONE, day: "numeric", month: "long" }).formatToParts(d);
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
   return `${get("day")} ${get("month")}`;
+}
+
+/** "Fri 13 Nov · 14:00": a publish date as the content table shows it, in WIB. */
+export function formatPublishAt(d: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: APP_TIMEZONE, weekday: "short", day: "numeric", month: "short" }).formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("weekday")} ${get("day")} ${get("month")} · ${formatTime(d)}`;
+}
+
+/** "Good morning" / "Good afternoon" / "Good evening" for the WIB hour (the app's schedule is WIB, not the browser's zone). */
+export function greetingFor(d: Date): string {
+  const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: APP_TIMEZONE, hour: "2-digit", hourCycle: "h23" }).format(d));
+  if (hour >= 5 && hour < 12) return "Good morning";
+  if (hour >= 12 && hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+/** "Oct – Dec" for a label like "Q4 2026"; empty when the label is not a quarter. */
+export function quarterMonths(label: string): string {
+  const q = /^Q([1-4])\b/.exec(label)?.[1];
+  if (!q) return "";
+  const first = (Number(q) - 1) * 3;
+  return `${MONTHS_FULL[first].slice(0, 3)} – ${MONTHS_FULL[first + 2].slice(0, 3)}`;
+}
+
+/** "Putri Anggraini" → "Putri A.": a column is narrow. One word stays as it is. */
+export function shortName(full: string | null | undefined): string {
+  const words = (full ?? "").trim().split(/\s+/).filter(Boolean);
+  if (words.length < 2) return words[0] ?? "";
+  return `${words[0]} ${words[words.length - 1][0].toUpperCase()}.`;
 }
 
 /** "November 2026" for a "YYYY-MM-DD" key. */

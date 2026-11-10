@@ -9,7 +9,7 @@ import { StatusLegend } from "./StatusDot";
 import type { DashboardData } from "./types";
 
 type Props = {
-  data: Pick<DashboardData, "pipeline" | "plan" | "readyToSchedule" | "published" | "needAttention" | "tasksToday">;
+  data: Pick<DashboardData, "pipeline" | "plan" | "readyToSchedule" | "published" | "needAttention" | "needAttentionNote" | "tasksToday">;
 };
 
 // The corner button of a stat card: an arrow to the list behind it, named for screen readers.
@@ -25,7 +25,7 @@ function GoButton({ href, label, className }: { href: string; label: string; cla
 
 /** The production pipeline and the four stat cards beside it. */
 export function StatGrid({ data }: Props) {
-  const { pipeline, plan, readyToSchedule, published, needAttention, tasksToday } = data;
+  const { pipeline, plan, readyToSchedule, published, needAttention, needAttentionNote, tasksToday } = data;
   const inProgress = PRODUCTION_STAGES.reduce((sum, k) => sum + (pipeline.counts[k] ?? 0), 0);
   const segments = PRODUCTION_STAGES.map((k) => ({ label: CONTENT_STATUS[k].label, value: pipeline.counts[k] ?? 0, className: CONTENT_STATUS[k].dot }));
 
@@ -54,7 +54,7 @@ export function StatGrid({ data }: Props) {
       <StatCard title="Published" subtitle="Published this quarter" value={published} total={plan.quota} unit="posts" />
       <StatCard
         title="Need attention"
-        subtitle={needAttention === 0 ? "Nothing at risk right now" : "Behind schedule or blocked"}
+        subtitle={needAttention === 0 ? "Nothing at risk right now" : (needAttentionNote ?? "Behind schedule or blocked")}
         value={needAttention}
         unit="posts"
         tone="warning"

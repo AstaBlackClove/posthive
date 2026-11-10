@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon, CloudUploadIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
 import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EmptyState } from "@/components/EmptyState";
@@ -12,9 +11,10 @@ import { cn } from "@/lib/cn";
 import { inAnchorMonth, rangeTitle, shiftAnchor, visibleDays, type CalendarView } from "@/lib/calendar-range";
 import { monthTitle } from "@/lib/dashboard-format";
 import { platformLabel } from "@/lib/platforms";
-import { CONTENT_STATUS, statusLabel } from "@/lib/content-status";
+import { statusLabel } from "@/lib/content-status";
 import { eventsByDay, type CalendarEvent } from "@/lib/dashboard-data";
 import { StatusDot, StatusLegend } from "./StatusDot";
+import { pillTone } from "./StatusPill";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const BASE_CHANNELS = ["instagram", "linkedin"] as const;
@@ -37,20 +37,32 @@ type Props = {
   onRangeChange?: (from: string, to: string) => void;
 };
 
-/** The posts of one day: a dot for the status and the title, a few lines at most, then "+N more". */
+/**
+ * The posts of one day, as the design draws them: one line each, in the status's soft tint, with its dot, its
+ * time and its title cut with an ellipsis when it does not fit. With more posts than lines the last line is
+ * "+N more". A phone's cell is about 48px wide: there only the status dots fit (time and title are still read
+ * out), the pill comes from sm up.
+ *
+ * The list must not wrap on sm and up: in a wrapping flex column every item is as wide as its text, so a long
+ * title would stretch past the cell's padding instead of being cut.
+ */
 function DayEvents({ events, limit }: { events: CalendarEvent[]; limit: number }) {
   if (events.length === 0) return null;
-  const shown = events.slice(0, limit);
+  const shown = events.length > limit ? events.slice(0, limit - 1) : events;
+  const hidden = events.length - shown.length;
   return (
-    // a phone's cell is about 48px wide: only the status dots fit (the title is still read out), titles from sm up
-    <ul className="mt-1 flex flex-wrap gap-1 sm:block sm:space-y-0.5">
+    <ul className="flex flex-wrap gap-1 sm:flex-col sm:flex-nowrap">
       {shown.map((e) => (
-        <li key={e.id} className="flex items-center gap-1.5 truncate type-body-r-xxs" title={`${e.title} · ${statusLabel(e.status, "calendar")}${e.channels.length ? ` · ${e.channels.map(platformLabel).join(", ")}` : ""}`}>
-          <StatusDot status={e.status} className={CONTENT_STATUS[e.status].dot} />
-          <span className="truncate max-sm:sr-only">{e.title}</span>
+        <li key={e.id} className="min-w-0" title={`${e.title} · ${statusLabel(e.status)}${e.channels.length ? ` · ${e.channels.map(platformLabel).join(", ")}` : ""}`}>
+          <span className={cn("flex min-w-0 flex-wrap items-center gap-x-1.5 rounded-md px-1.5 py-0.5 type-body-r-xxs max-sm:bg-transparent max-sm:p-0", pillTone(e.status))}>
+            <StatusDot status={e.status} className="size-1.5" />
+            <span className="shrink-0 type-body-sb-xxs tabular-nums max-sm:sr-only">{e.time}</span>
+            {/* a wide cell has the title beside the time; a narrow one (the dashboard's column) drops it under, in the same pill */}
+            <span className="min-w-0 basis-full truncate text-fg @[7rem]:flex-1 @[7rem]:basis-0 max-sm:sr-only">{e.title}</span>
+          </span>
         </li>
       ))}
-      {events.length > shown.length && <li className="type-body-r-xxs text-muted-foreground">+{events.length - shown.length}<span className="max-sm:sr-only"> more</span></li>}
+      {hidden > 0 && <li className="px-1.5 type-body-sb-xxs text-muted-foreground">+{hidden}<span className="max-sm:sr-only"> more</span></li>}
     </ul>
   );
 }
@@ -97,80 +109,98 @@ export function ContentCalendar({ todayKey, events, loading = false, truncated =
 
   return (
     <Card aria-labelledby="calendar-title" className="gap-4 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-3 px-4">
-        <div>
-          <h2 id="calendar-title" className="type-body-sb-m text-fg">Content calendar</h2>
-          <p className="type-body-r-xs text-muted-foreground" aria-live="polite">{rangeTitle(view, anchor, monthTitle)}</p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4">
+        <h2 id="calendar-title" className="type-body-m-l text-fg">Content calendar</h2>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <ToggleGroup type="single" variant="pill" value={channel} onValueChange={setChannel} aria-label="Channel" className="border-0 bg-bg">
-            {channels.map((c) => (
-              <ToggleGroupItem key={c} value={c} size="sm">
-                {c === "all" ? "All" : platformLabel(c)}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-
-          <ToggleGroup type="single" variant="pill" value={view} onValueChange={(v) => setView(v as CalendarView)} aria-label="View" className="border-0 bg-bg">
-            <ToggleGroupItem value="day" size="sm">Day</ToggleGroupItem>
-            <ToggleGroupItem value="week" size="sm">Week</ToggleGroupItem>
-            <ToggleGroupItem value="month" size="sm">Month</ToggleGroupItem>
-          </ToggleGroup>
-
-          <Button variant="secondary" size="sm" className="rounded-full border-0 bg-bg hover:bg-neutral-100" onClick={() => setAnchor(todayKey)}>
-            Today
-          </Button>
-
-          <ButtonGroup aria-label="Change range">
-            <Button variant="secondary" size="icon-sm" aria-label={`Previous ${view}`} onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}>
-              <ChevronLeftIcon />
-            </Button>
-            <Button variant="secondary" size="icon-sm" aria-label={`Next ${view}`} onClick={() => setAnchor(shiftAnchor(view, anchor, 1))}>
-              <ChevronRightIcon />
-            </Button>
-          </ButtonGroup>
-        </div>
+        <ToggleGroup type="single" variant="pill" value={channel} onValueChange={setChannel} aria-label="Channel" className="border-0 bg-bg">
+          {channels.map((c) => (
+            <ToggleGroupItem key={c} value={c} size="sm">
+              {c === "all" ? "All" : platformLabel(c)}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
       </div>
 
       <div className="relative px-4">
-        <div role="grid" aria-label={`${month}, content calendar`} className="overflow-hidden rounded-xl border border-border">
-          {view !== "day" && (
-            <div role="row" className="grid grid-cols-7 border-b border-border bg-bg">
-              {WEEKDAYS.map((d) => (
-                <div key={d} role="columnheader" className="px-3 py-2 type-body-sb-xs text-muted-foreground">
-                  {d}
-                </div>
-              ))}
+        {/* the board of the design: the range controls on top, the grid under them, one border around both */}
+        <div className="overflow-hidden rounded-xl border border-border">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 p-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button variant="secondary" size="sm" className="rounded-full px-4 py-1.5" onClick={() => setAnchor(todayKey)}>
+                Today
+              </Button>
+              <div role="group" aria-label="Change range" className="flex items-center gap-1.5">
+                <Button variant="secondary" size="icon-sm" className="size-8 rounded-full" aria-label={`Previous ${view}`} onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}>
+                  <ChevronLeftIcon />
+                </Button>
+                <Button variant="secondary" size="icon-sm" className="size-8 rounded-full" aria-label={`Next ${view}`} onClick={() => setAnchor(shiftAnchor(view, anchor, 1))}>
+                  <ChevronRightIcon />
+                </Button>
+              </div>
+              <p className="type-body-sb-l text-fg" aria-live="polite">{rangeTitle(view, anchor, monthTitle)}</p>
             </div>
-          )}
-          {weeks.map((week, row) => (
-            <div key={week[0]} role="row" className={cn("grid", view === "day" ? "grid-cols-1" : "grid-cols-7", row < weeks.length - 1 && "border-b border-border")}>
-              {week.map((day, col) => {
-                const inMonth = view !== "month" || inAnchorMonth(day, anchor);
-                const isToday = day === todayKey;
-                return (
-                  <div
-                    key={day}
-                    role="gridcell"
-                    aria-label={day}
-                    data-today={isToday || undefined}
-                    className={cn(
-                      "border-border p-2 type-body-r-xs",
-                      view === "day" ? "min-h-40" : "min-h-20 sm:min-h-24",
-                      view !== "day" && col < 6 && "border-r",
-                      inMonth ? "bg-surface text-fg" : "bg-bg/60 text-muted-foreground/60"
-                    )}
-                  >
-                    <span className={cn("inline-flex size-6 items-center justify-center rounded-full", isToday && "bg-brand-500 type-body-sb-xs text-neutral-950")}>
-                      {Number(day.slice(8))}
-                    </span>
-                    <DayEvents events={byDay.get(day) ?? []} limit={view === "day" ? Infinity : PER_CELL} />
+
+            <ToggleGroup type="single" variant="pill" value={view} onValueChange={(v) => setView(v as CalendarView)} aria-label="View" className="border-0 bg-bg">
+              <ToggleGroupItem value="day" size="sm">Day</ToggleGroupItem>
+              <ToggleGroupItem value="week" size="sm">Week</ToggleGroupItem>
+              <ToggleGroupItem value="month" size="sm">Month</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
+          <div role="grid" aria-label={`${month}, content calendar`}>
+            {view !== "day" && (
+              <div role="row" className="grid grid-cols-7 border-b border-border/60 bg-surface">
+                {WEEKDAYS.map((d, col) => (
+                  <div key={d} role="columnheader" className={cn("min-w-0 border-border/60 px-2.5 py-2 type-body-r-xxs text-muted-foreground uppercase", col < 6 && "border-r")}>
+                    {d}
                   </div>
-                );
-              })}
-            </div>
-          ))}
+                ))}
+              </div>
+            )}
+            {weeks.map((week, row) => (
+              <div key={week[0]} role="row" className={cn("grid", view === "day" ? "grid-cols-1" : "grid-cols-7", row < weeks.length - 1 && "border-b border-border/60")}>
+                {week.map((day, col) => {
+                  const inMonth = view !== "month" || inAnchorMonth(day, anchor);
+                  const isToday = day === todayKey;
+                  const dayEvents = byDay.get(day) ?? [];
+                  return (
+                    <div
+                      key={day}
+                      role="gridcell"
+                      aria-label={day}
+                      data-today={isToday || undefined}
+                      className={cn(
+                        // p-1.5: the pills keep 6px from the lines of the cell, however long the title
+                        "@container flex min-w-0 flex-col gap-1 border-border/60 p-1.5 type-body-r-xs",
+                        view === "day" ? "min-h-40" : "min-h-20 sm:min-h-34",
+                        view !== "day" && col < 6 && "border-r",
+                        // today has a yellow edge and a pale yellow fill; the next and last month's days a shade off white, the weekend a hint of it
+                        isToday
+                          ? "bg-brand-50 text-fg ring-2 ring-brand-400 ring-inset"
+                          : !inMonth
+                            ? "bg-bg/50 text-muted-foreground/50"
+                            : view !== "day" && col >= 5
+                              ? "bg-bg/25 text-fg"
+                              : "bg-surface text-fg"
+                      )}
+                    >
+                      <div className="flex h-6 items-center justify-between gap-1">
+                        <span className={cn("flex size-6 items-center justify-center rounded-full type-body-r-s", isToday && "bg-accent type-body-sb-xs text-accent-fg")}>
+                          {Number(day.slice(8))}
+                        </span>
+                        {dayEvents.length > 0 && (
+                          <span className="pr-1 type-body-r-xxs text-muted-foreground max-sm:sr-only">
+                            {dayEvents.length} {dayEvents.length === 1 ? "post" : "posts"}
+                          </span>
+                        )}
+                      </div>
+                      <DayEvents events={dayEvents} limit={view === "day" ? Infinity : PER_CELL} />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
 
         {empty && (

@@ -25,20 +25,15 @@ describe("content status", () => {
   });
 
   it("the calendar legend lists the eight statuses of the design, in order, then Failed (a real state the design has no colour for)", () => {
-    expect(CALENDAR_LEGEND.map((k) => statusLabel(k, "calendar"))).toEqual([
-      "Draft", "Copywriting", "In design", "In review", "Rejected", "Approved", "Scheduled", "Published", "Failed",
+    expect(CALENDAR_LEGEND.map((k) => statusLabel(k))).toEqual([
+      "Brief needed", "Copywriting", "In design", "In review", "Changes requested", "Approved", "Scheduled", "Published", "Failed",
     ]);
   });
 
-  it("'Rejected' (calendar) and 'Changes requested' (pipeline) are one status with one colour", () => {
-    expect(statusLabel("changes", "calendar")).toBe("Rejected");
-    expect(statusLabel("changes", "pipeline")).toBe("Changes requested");
-    expect(CONTENT_STATUS.changes.dot).toBe("bg-status-changes");
-  });
-
-  it("'Draft' (calendar) and 'Brief needed' (pipeline) are one status too", () => {
-    expect(statusLabel("brief", "calendar")).toBe("Draft");
+  it("a status has one name everywhere: the calendar says 'Changes requested' and 'Brief needed', not 'Rejected' and 'Draft'", () => {
+    expect(statusLabel("changes")).toBe("Changes requested");
     expect(statusLabel("brief")).toBe("Brief needed");
+    expect(CONTENT_STATUS.changes.dot).toBe("bg-status-changes");
   });
 
   it("production and publication stages do not overlap and together cover every status", () => {
