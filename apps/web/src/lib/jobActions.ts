@@ -1,7 +1,7 @@
 // What a person can do to a post from the Content List, as plain calls to the API. Moved here from the old
 // Posts page as they were (same routes, same bodies); the page owns the toasts and the reloading.
 import { apiFetch } from "./api";
-import { toContentType, type ContentType } from "../components/ContentTypeSelects";
+import type { ContentType } from "../components/ContentTypeSelects";
 import type { PerAccountOverride } from "../components/PlatformPreview";
 import type { Job } from "./jobTypes";
 
@@ -99,59 +99,4 @@ export async function updateJob(
 /** The toast after a save, by what was saved. */
 export function savedMessage(isDraft: boolean, canSubmitOwn: boolean, send?: boolean): string {
   return isDraft ? (canSubmitOwn ? (send ? "Sent for design review." : "Draft saved.") : "Draft scheduled!") : "Post updated.";
-}
-
-/**
- * Hand the post to the composer as a new draft: its text, title, channels and content type, with the platform
- * fields the composer fills itself left out. Returns nothing; the caller goes to /compose.
- */
-export function stashDuplicate(job: Job, platformOf: (accountId: string) => string | undefined): void {
-  const content = JSON.parse(job.content) as {
-    text: string;
-    title?: string;
-    mediaType?: "post" | "reel" | "story";
-    youtubeType?: "short" | "video";
-    youtubeVideoMode?: "upload" | "url";
-    youtubeVideoUrl?: string;
-    perAccount?: Record<string, { text?: string; commentText?: string }>;
-    pillar?: string | null;
-    category?: string | null;
-  };
-  const accountOf = (platform: string) => job.targets.find((t) => platformOf(t.accountId) === platform)?.accountId;
-
-  // YouTube and Pinterest keep a title and a description in the per-account text
-  const split = (platform: string) => {
-    const parts = (content.perAccount?.[accountOf(platform) ?? ""]?.text ?? "").split("\n\n");
-    return { title: parts[0] ?? "", description: parts.slice(1).join("\n\n") };
-  };
-  const youtube = split("youtube");
-  const pinterest = split("pinterest");
-
-  // Keep manual per-platform overrides (not YouTube and Pinterest: the composer fills those)
-  const perAccount = Object.fromEntries(
-    Object.entries(content.perAccount ?? {}).filter(([id]) => {
-      const platform = platformOf(id);
-      return platform !== "youtube" && platform !== "pinterest";
-    }),
-  );
-
-  sessionStorage.setItem(
-    "posthive_duplicate_draft",
-    JSON.stringify({
-      text: content.text,
-      ...(content.title ? { title: content.title } : {}),
-      commentText: job.commentText ?? "",
-      accountIds: job.targets.map((t) => t.accountId),
-      mediaType: content.mediaType,
-      youtubeType: content.youtubeType,
-      youtubeVideoMode: content.youtubeVideoMode,
-      youtubeVideoUrl: content.youtubeVideoUrl,
-      youtubeTitle: youtube.title,
-      youtubeDescription: youtube.description,
-      pinterestTitle: pinterest.title,
-      pinterestDescription: pinterest.description,
-      ...(Object.keys(perAccount).length > 0 ? { perAccount } : {}),
-      ...toContentType(content.pillar, content.category),
-    }),
-  );
 }

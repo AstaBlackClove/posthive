@@ -69,6 +69,7 @@ const detail = (id = "p1"): PostDetail => ({
   source: null,
   activity: [{ kind: "created", by: "Putri Anggraini", at: "2026-11-13T03:00:00.000Z", note: null, channel: null }],
   mine: true,
+  missing: [],
 });
 
 /** Answer each path; the list can be answered per query. */
@@ -93,7 +94,6 @@ beforeEach(() => {
   h.toast.success.mockReset();
   h.toast.error.mockReset();
   h.perms = { canEditContent: true, canReview: false, canSubmitOwn: false };
-  sessionStorage.clear();
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-13T04:00:00Z"));
 });
@@ -142,8 +142,7 @@ describe("Content List page", () => {
     serve((q) => answer({ page: Number(q.get("page")), items: [row(Number(q.get("page")) * 10)] }));
     render(<ContentListPage />);
     await userEvent.click(await screen.findByRole("row", { name: /^Open Post 10$/ }));
-    await userEvent.click(await screen.findByRole("button", { name: "More actions" }));
-    await userEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }));
     await userEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Delete" }));
     await waitFor(() => expect(h.toast.success).toHaveBeenCalled());
     await waitFor(() => expect(listCalls().at(-1)).toContain("source=1"));
@@ -265,22 +264,11 @@ describe("Content List page", () => {
       expect(await screen.findByRole("dialog", { name: "review dialog" })).toBeTruthy();
     });
 
-    it("Duplicate hands the post to the composer and goes there", async () => {
-      serve();
-      render(<ContentListPage />);
-      await userEvent.click(await screen.findByRole("row", { name: "Open Post 1" }));
-      await userEvent.click(await screen.findByRole("button", { name: "More actions" }));
-      await userEvent.click(await screen.findByRole("menuitem", { name: "Duplicate" }));
-      await waitFor(() => expect(h.push).toHaveBeenCalledWith("/compose"));
-      expect(JSON.parse(sessionStorage.getItem("posthive_duplicate_draft")!)).toMatchObject({ text: "C", title: "T" });
-    });
-
     it("Delete asks first, and then deletes that one post and reloads", async () => {
       serve();
       render(<ContentListPage />);
       await userEvent.click(await screen.findByRole("row", { name: "Open Post 1" }));
-      await userEvent.click(await screen.findByRole("button", { name: "More actions" }));
-      await userEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+      await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Delete" }));
       expect(await screen.findByText("Delete this post?")).toBeTruthy();
       expect(h.apiFetch).not.toHaveBeenCalledWith("/jobs/p1", expect.objectContaining({ method: "DELETE" }));
       const before = listCalls().length;
@@ -288,6 +276,55 @@ describe("Content List page", () => {
       await waitFor(() => expect(h.apiFetch).toHaveBeenCalledWith("/jobs/p1", { method: "DELETE" }));
       await waitFor(() => expect(h.toast.success).toHaveBeenCalledWith("Deleted 1 post."));
       await waitFor(() => expect(listCalls().length).toBeGreaterThan(before));
+    });
+  });
+
+  describe("the drawer's buttons follow what the post has", () => {
+    const footer = () => within(screen.getByRole("dialog").querySelector("footer")!).queryAllByRole("button").map((b) => b.textContent);
+
+    it("a draft that lacks a field has Close and Edit Content; after the edit makes it complete, opening it again shows Submit for review and Delete", async () => {
+      h.perms = { canEditContent: true, canReview: false, canSubmitOwn: true };
+      let complete = false;
+      serve();
+      const base = h.apiFetch.getMockImplementation()!;
+      h.apiFetch.mockImplementation(async (path: string, init?: unknown) =>
+        path === "/jobs/p1/detail" ? { ...detail(), missing: complete ? [] : ["accounts", "media"] } : base(path, init as never));
+      render(<ContentListPage />);
+      await userEvent.click(await screen.findByRole("row", { name: "Open Post 1" }));
+      await screen.findByRole("heading", { name: "Post 1" });
+      expect(footer()).toEqual(["Close", "Edit Content"]);
+      await userEvent.click(within(screen.getByRole("dialog").querySelector("footer")!).getByRole("button", { name: "Close" }));
+      complete = true; // the person filled the account and the media in the editor
+      await userEvent.click(await screen.findByRole("row", { name: "Open Post 1" }));
+      await waitFor(() => expect(footer()).toEqual(["Delete", "Submit for review", "Close", "Edit Content"]));
+    });
+
+    it("a post in review shows no Submit when it is opened again; once an edit pulls it back to a draft the button is back", async () => {
+      h.perms = { canEditContent: true, canReview: false, canSubmitOwn: true };
+      let state: { approvalStatus: string | null } = { approvalStatus: "pending" };
+      serve();
+      const base = h.apiFetch.getMockImplementation()!;
+      h.apiFetch.mockImplementation(async (path: string, init?: unknown) =>
+        path === "/jobs/p1/detail" ? { ...detail(), ...state, missing: [] } : base(path, init as never));
+      render(<ContentListPage />);
+      await userEvent.click(await screen.findByRole("row", { name: "Open Post 1" }));
+      await screen.findByRole("heading", { name: "Post 1" });
+      expect(footer()).toEqual(["Delete", "Close", "Edit Content"]);
+      await userEvent.click(within(screen.getByRole("dialog").querySelector("footer")!).getByRole("button", { name: "Close" }));
+      state = { approvalStatus: null }; // the server reset the review when the content changed
+      await userEvent.click(await screen.findByRole("row", { name: "Open Post 1" }));
+      await waitFor(() => expect(footer()).toEqual(["Delete", "Submit for review", "Close", "Edit Content"]));
+    });
+
+    it("Submit for review sends that post and closes the drawer", async () => {
+      h.perms = { canEditContent: true, canReview: false, canSubmitOwn: true };
+      serve();
+      render(<ContentListPage />);
+      await userEvent.click(await screen.findByRole("row", { name: "Open Post 1" }));
+      await userEvent.click(await screen.findByRole("button", { name: "Submit for review" }));
+      await waitFor(() => expect(h.apiFetch).toHaveBeenCalledWith("/jobs/p1/submit", { method: "POST" }));
+      await waitFor(() => expect(h.toast.success).toHaveBeenCalledWith("Sent for design review: waiting for approval."));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     });
   });
 

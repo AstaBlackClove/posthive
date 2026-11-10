@@ -6,6 +6,7 @@ import type { ContentStatusKey } from "./content-status";
 import { formatPlanDate } from "./import-rows";
 import { shortName } from "./dashboard-format";
 import { formatTime, wibDateKey } from "./datetime";
+import type { MissingField } from "./submitReadiness";
 
 // ── The API's answer ────────────────────────────────────────────────────────
 
@@ -66,6 +67,8 @@ export interface PostDetail extends ListItem {
   activity: ActivityEntry[];
   /** The viewer made this post. */
   mine: boolean;
+  /** What the post still lacks before it can be sent for review (the server's own rule); empty = complete. */
+  missing: MissingField[];
 }
 
 // ── The six statuses ────────────────────────────────────────────────────────

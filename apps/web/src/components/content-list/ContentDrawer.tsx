@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CloudUploadIcon, EllipsisIcon, ImageIcon } from "lucide-react";
+import { CloudUploadIcon, ImageIcon } from "lucide-react";
 import { DesignReferenceCard } from "@/components/DesignReferenceCard";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { PLATFORM_LIMIT } from "@/components/PlatformPreview";
 import { StatusDot } from "@/components/dashboard/StatusDot";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,6 +29,7 @@ import { CONTENT_STATUS } from "@/lib/content-status";
 import { formatPlanDate } from "@/lib/import-rows";
 import { wibDateKey } from "@/lib/datetime";
 import { platformLabel } from "@/lib/platforms";
+import { missingMessage } from "@/lib/submitReadiness";
 import { templatesByCategory, type DesignTemplate } from "@/lib/templates";
 import { InfoTile } from "./InfoTile";
 
@@ -47,7 +47,6 @@ type Props = {
   onReview: (id: string) => void;
   onSubmit: (id: string) => void;
   onRetry: (id: string) => void;
-  onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
 };
 
@@ -62,7 +61,7 @@ function StatusChip({ status, label }: { status: Parameters<typeof StatusDot>[0]
 }
 
 /** The post of one row, read only: what it is, its caption, its design, what happened to it. Everything is edited in the full editor. */
-export function ContentDrawer({ id, templates, canEdit, canReview, canSubmitOwn, onClose, onEdit, onReview, onSubmit, onRetry, onDuplicate, onDelete }: Props) {
+export function ContentDrawer({ id, templates, canEdit, canReview, canSubmitOwn, onClose, onEdit, onReview, onSubmit, onRetry, onDelete }: Props) {
   const [post, setPost] = useState<PostDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState("overview");
@@ -86,6 +85,20 @@ export function ContentDrawer({ id, templates, canEdit, canReview, canSubmitOwn,
   const template = category ? templatesByCategory(templates).get(category) : undefined;
   const limit = post ? captionLimit(post.channels, PLATFORM_LIMIT) : null;
   const filter = post ? filterOf(post) : null;
+
+  // Which buttons the footer has. Until the required fields are there a draft has only Close and Edit Content; once
+  // they are, Submit for review and Delete appear. A post that is already in review, out or failed is past that gate.
+  // A person who goes through review changes only their own posts (the server refuses the rest).
+  const unsent = filter === "draft" || filter === "rejected";
+  const complete = post ? post.missing.length === 0 : false;
+  const mayChange = canEdit && Boolean(post && (canReview || post.mine));
+  const canEditPost = mayChange && (unsent || filter === "review" || (filter === "pending" && !canSubmitOwn));
+  // In review the post has been sent: nothing to submit until an edit pulls it back to a draft
+  const canSubmit = mayChange && canSubmitOwn && unsent && complete;
+  const canDelete = mayChange && (!unsent || complete);
+  const canRetry = mayChange && filter === "failed";
+  // Told only to the person who sends posts for review: why their draft has only two buttons
+  const hint = post && mayChange && canSubmitOwn && unsent && !complete ? missingMessage(post.missing) : null;
 
   return (
     <Sheet open={id !== null} onOpenChange={(open) => !open && onClose()}>
@@ -215,34 +228,24 @@ export function ContentDrawer({ id, templates, canEdit, canReview, canSubmitOwn,
           )}
         </div>
 
-        <footer className="flex flex-wrap items-center gap-2 border-t border-border px-6 py-4">
-          <p className="mr-auto min-w-0 type-body-r-xs text-muted-foreground">
-            {canEdit ? "Preview only · all edits happen in the full-page editor" : "Preview only"}
+        <footer className="space-y-3 border-t border-border px-6 py-4">
+          <p className="type-body-r-xs text-muted-foreground" role={hint ? "status" : undefined}>
+            {hint ?? (canEdit ? "Preview only · all edits happen in the full-page editor" : "Preview only")}
           </p>
-          {post && canEdit && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="icon" aria-label="More actions" className="border-neutral-500">
-                  <EllipsisIcon />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {filter === "failed" && <DropdownMenuItem onSelect={() => onRetry(post.id)}>Retry failed</DropdownMenuItem>}
-                {canSubmitOwn && post.mine && (filter === "draft" || filter === "rejected") && (
-                  <DropdownMenuItem onSelect={() => onSubmit(post.id)}>Submit for review</DropdownMenuItem>
-                )}
-                <DropdownMenuItem onSelect={() => onDuplicate(post.id)}>Duplicate</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onSelect={() => onDelete(post.id)}>Delete</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          {post && canReview && filter === "review" && <Button variant="secondary" className="border-neutral-500" onClick={() => onReview(post.id)}>Review</Button>}
-          <Button variant="secondary" className="border-neutral-500" onClick={onClose}>Close</Button>
-          {/* an approved post is locked for a person who goes through review: the server refuses their edit */}
-          {post && canEdit && (filter === "draft" || filter === "rejected" || filter === "review" || (filter === "pending" && !canSubmitOwn)) && (
-            <Button onClick={() => onEdit(post.id)}>Edit Content</Button>
-          )}
+          {/* Delete stands apart on the left, away from the actions that move the post forward on the right */}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {post && canDelete && (
+              <Button variant="destructive-outline" className="mr-auto" onClick={() => onDelete(post.id)}>
+                Delete
+              </Button>
+            )}
+            {post && canRetry && <Button variant="secondary" className="border-neutral-500" onClick={() => onRetry(post.id)}>Retry failed</Button>}
+            {post && canSubmit && <Button variant="secondary" className="border-neutral-500" onClick={() => onSubmit(post.id)}>Submit for review</Button>}
+            {post && canReview && filter === "review" && <Button variant="secondary" className="border-neutral-500" onClick={() => onReview(post.id)}>Review</Button>}
+            <Button variant="secondary" className="border-neutral-500" onClick={onClose}>Close</Button>
+            {/* an approved post is locked for a person who goes through review: the server refuses their edit */}
+            {post && canEditPost && <Button onClick={() => onEdit(post.id)}>Edit Content</Button>}
+          </div>
         </footer>
         </Tabs>
       </SheetContent>

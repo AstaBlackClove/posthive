@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { CloudUploadIcon, ListIcon, PlusIcon } from "lucide-react";
 import { ContentDrawer } from "@/components/content-list/ContentDrawer";
 import { ContentListTable } from "@/components/content-list/ContentListTable";
@@ -30,7 +29,7 @@ import { cn } from "@/lib/cn";
 import { apiFetch } from "@/lib/api";
 import { LIST_STATUS, footerLine, listSubtitle, showDraftBanner, visibleFilters, type ListFilter } from "@/lib/content-list";
 import {
-  approveJob, deleteJob, deleteMany, fetchJob, rejectJob, retryFailed, savedMessage, stashDuplicate, submitForReview, submitMany, updateJob,
+  approveJob, deleteJob, deleteMany, fetchJob, rejectJob, retryFailed, savedMessage, submitForReview, submitMany, updateJob,
 } from "@/lib/jobActions";
 import type { Job } from "@/lib/jobTypes";
 import { MISSING_LABEL, type MissingField } from "@/lib/submitReadiness";
@@ -46,7 +45,6 @@ const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
  * sends them for review.
  */
 export default function ContentListPage() {
-  const router = useRouter();
   const { user } = useAuth();
   const { success, error: toastError } = useToast();
   const { canEditContent, canReview, canSubmitOwn } = usePermissions();
@@ -145,16 +143,6 @@ export default function ContentListPage() {
       success("Retrying failed platforms…");
       reload();
     });
-
-  async function duplicate(id: string) {
-    try {
-      const job = await fetchJob(id);
-      stashDuplicate(job, (accountId) => accounts.find((a) => a.id === accountId)?.platform);
-      router.push("/compose");
-    } catch (e) {
-      toastError(errorText(e));
-    }
-  }
 
   async function confirmDelete(ids: string[]) {
     const removed = ids.length === 1 ? (await deleteJob(ids[0]), 1) : await deleteMany(ids);
@@ -315,7 +303,6 @@ export default function ContentListPage() {
         onReview={(id) => openDialog(id, "review")}
         onSubmit={sendForReview}
         onRetry={retry}
-        onDuplicate={duplicate}
         onDelete={(id) => setDeleting([id])}
       />
 

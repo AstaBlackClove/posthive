@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const h = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 vi.mock("./api", () => ({ apiFetch: h.apiFetch }));
 
-import { approveJob, deleteMany, savedMessage, stashDuplicate } from "./jobActions";
+import { approveJob, deleteMany, savedMessage } from "./jobActions";
 import type { Job } from "./jobTypes";
 
 const job = (patch: Partial<Job> = {}, content: Record<string, unknown> = { text: "Caption", title: "Title" }): Job => ({
@@ -23,7 +23,6 @@ beforeEach(() => {
   h.apiFetch.mockReset();
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-13T04:00:00Z"));
-  sessionStorage.clear();
 });
 afterEach(() => vi.useRealTimers());
 
@@ -68,35 +67,6 @@ describe("deleteMany", () => {
   it("when nothing could be deleted it says 0, not a success", async () => {
     h.apiFetch.mockRejectedValue(new Error("down"));
     expect(await deleteMany(["a", "b"])).toBe(0);
-  });
-});
-
-describe("stashDuplicate", () => {
-  const stashed = () => JSON.parse(sessionStorage.getItem("posthive_duplicate_draft")!);
-  const platforms: Record<string, string> = { a1: "instagram", a2: "youtube", a3: "pinterest" };
-
-  it("hands the composer the text, title, channels and content type", () => {
-    stashDuplicate(
-      job({ commentText: "First comment", targets: [{ id: "t1", accountId: "a1", status: "pending", platformPostId: null, error: null, attempts: 0, account: null }] }, { text: "Caption", title: "Title", pillar: "Educational", category: "Blog Post" }),
-      (id) => platforms[id],
-    );
-    expect(stashed()).toMatchObject({ text: "Caption", title: "Title", commentText: "First comment", accountIds: ["a1"], pillar: "Educational", category: "Blog Post" });
-  });
-
-  it("keeps a manual per-platform text, but not YouTube's and Pinterest's, which the composer fills itself (as title and description)", () => {
-    const targets = ["a1", "a2", "a3"].map((accountId, i) => ({ id: `t${i}`, accountId, status: "pending", platformPostId: null, error: null, attempts: 0, account: null }));
-    stashDuplicate(
-      job({ targets }, { text: "Caption", perAccount: { a1: { text: "For Instagram" }, a2: { text: "Video title\n\nVideo description" }, a3: { text: "Pin title\n\nPin text" } } }),
-      (id) => platforms[id],
-    );
-    const d = stashed();
-    expect(d.perAccount).toEqual({ a1: { text: "For Instagram" } });
-    expect(d).toMatchObject({ youtubeTitle: "Video title", youtubeDescription: "Video description", pinterestTitle: "Pin title", pinterestDescription: "Pin text" });
-  });
-
-  it("a post without a title does not stash an empty one", () => {
-    stashDuplicate(job({}, { text: "Only a caption" }), () => undefined);
-    expect(stashed()).not.toHaveProperty("title");
   });
 });
 
