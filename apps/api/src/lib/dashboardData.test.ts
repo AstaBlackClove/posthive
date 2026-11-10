@@ -159,8 +159,57 @@ describe("toPost", () => {
       scheduledFor: "2026-11-18T02:00:00.000Z",
       channels: ["instagram"],
       owner: "Putri",
+      category: null,
+      thumbnail: null,
     });
     expect(JSON.stringify(post)).not.toContain("xxxx");
+  });
+
+  it("a title is cut to 200 characters: a plan cell can hold a paragraph", () => {
+    expect(toPost(record({ content: JSON.stringify({ title: "t".repeat(900) }) })).title).toHaveLength(200);
+  });
+
+  it("the category is what the plan file named, trimmed, or null", () => {
+    expect(toPost(record({ content: JSON.stringify({ title: "T", category: "  Industry insight " }) })).category).toBe("Industry insight");
+    expect(toPost(record({ content: JSON.stringify({ title: "T", category: 7 }) })).category).toBeNull();
+    expect(toPost(record({ content: JSON.stringify({ title: "T", category: "c".repeat(500) }) })).category).toHaveLength(60);
+  });
+
+  describe("thumbnail", () => {
+    const thumb = (mediaUrls: unknown) => toPost(record({ content: JSON.stringify({ title: "T", mediaUrls }) })).thumbnail;
+
+    it("is the first picture: one of our uploads or an http(s) address", () => {
+      expect(thumb(["/uploads/a.png", "/uploads/b.png"])).toBe("/uploads/a.png");
+      expect(thumb(["https://cdn.example/a.jpg"])).toBe("https://cdn.example/a.jpg");
+    });
+
+    it("skips a video and takes the next picture; a post with only a video has none", () => {
+      expect(thumb(["/uploads/clip.MP4", "/uploads/b.png"])).toBe("/uploads/b.png");
+      expect(thumb(["/uploads/clip.mov?x=1"])).toBeNull();
+    });
+
+    it("never hands the browser anything but an upload path or an http(s) URL", () => {
+      expect(thumb(["javascript:alert(1)", "data:image/png;base64,AAAA", "//evil.example/a.png", "../secret.png"])).toBeNull();
+      expect(thumb(["/uploads/" + "a".repeat(600)])).toBeNull();
+    });
+
+    it("takes an upload only in the shape storage gives it, so a '..' cannot aim the viewer's browser at another API path", () => {
+      expect(thumb(["/uploads/9f1c-aa.png"])).toBe("/uploads/9f1c-aa.png");
+      expect(thumb(["/uploads/avatars/9f1c-aa.jpg"])).toBe("/uploads/avatars/9f1c-aa.jpg");
+      expect(thumb(["/uploads/../auth/threads"])).toBeNull();
+      expect(thumb(["/uploads/%2e%2e/auth/threads.png"])).toBeNull();
+      expect(thumb(["/uploads/a/b/c.png"])).toBeNull();
+      expect(thumb(["/uploads/a.png?next=/auth/threads"])).toBeNull();
+      // the next one is fine: the bad entry is skipped, not the whole post
+      expect(thumb(["/uploads/../x.png", "/uploads/ok.png"])).toBe("/uploads/ok.png");
+    });
+
+    it("is null when there is no media, or it is not a list, or it holds something else", () => {
+      expect(thumb([])).toBeNull();
+      expect(thumb("/uploads/a.png")).toBeNull();
+      expect(thumb([7, null, {}])).toBeNull();
+      expect(toPost(record({ content: "{}" })).thumbnail).toBeNull();
+    });
   });
 
   it("an untitled post is called by the start of its caption, cut to 80 characters", () => {

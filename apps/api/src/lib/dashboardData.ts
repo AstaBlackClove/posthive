@@ -156,6 +156,10 @@ export interface DashboardPost {
   /** Platform ids: the accounts it goes to, else the channels a plan file named. */
   channels: string[];
   owner: string | null;
+  /** The content category a plan file named ("Industry insight"), for the line under a title. */
+  category: string | null;
+  /** The first image of the post, an upload path or an http(s) URL; null when it has none (a video is not a picture). */
+  thumbnail: string | null;
 }
 
 export interface PostRecord {
@@ -170,9 +174,26 @@ export interface PostRecord {
 
 const text = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
 
+/** A title is a line in a list; a plan cell can hold a paragraph. */
+const TITLE_MAX = 200;
+const VIDEO = /\.(mp4|mov|webm|quicktime)(\?|$)/i;
+// The shape storage.ts gives a file: /uploads/<name>.<ext> or /uploads/<folder>/<name>.<ext>. Anything else (a "..", an
+// encoded "%2e%2e") would make the viewer's browser ask the API for a path the author chose, with the viewer's cookie.
+const UPLOAD_PATH = /^\/uploads\/(?:[\w-]+\/)?[\w-]+\.\w+$/;
+
+/** The first media URL that is a picture the browser can show: one of our uploads or an http(s) address, not a video. */
+function firstImage(mediaUrls: unknown): string | null {
+  if (!Array.isArray(mediaUrls)) return null;
+  for (const url of mediaUrls) {
+    if (typeof url !== "string" || url.length > 500 || VIDEO.test(url)) continue;
+    if (UPLOAD_PATH.test(url) || /^https?:\/\//i.test(url)) return url;
+  }
+  return null;
+}
+
 /** What a list needs from a post. The content JSON stays on the server: it can hold a long design copy. */
 export function toPost(job: PostRecord): DashboardPost {
-  let content: { title?: unknown; text?: unknown; platforms?: unknown; picContent?: unknown } = {};
+  let content: { title?: unknown; text?: unknown; platforms?: unknown; picContent?: unknown; category?: unknown; mediaUrls?: unknown } = {};
   try {
     const parsed: unknown = JSON.parse(job.content);
     // "null", a number or an array parse fine and are still not a post's content
@@ -185,11 +206,13 @@ export function toPost(job: PostRecord): DashboardPost {
 
   return {
     id: job.id,
-    title: text(content.title) || text(content.text).slice(0, 80) || "Untitled",
+    title: text(content.title).slice(0, TITLE_MAX) || text(content.text).slice(0, 80) || "Untitled",
     status: job.status,
     approvalStatus: job.approvalStatus,
     scheduledFor: job.scheduledFor ? job.scheduledFor.toISOString() : null,
     channels,
     owner: text(content.picContent) || job.user?.name || null,
+    category: text(content.category).slice(0, 60) || null,
+    thumbnail: firstImage(content.mediaUrls),
   };
 }
