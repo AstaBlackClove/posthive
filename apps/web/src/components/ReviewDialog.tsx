@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Job } from "../app/jobs/page";
+import type { Job } from "../lib/jobTypes";
 import { PlatformIcon } from "./PlatformIcon";
 import { PlatformPreview, PLATFORM_LIMIT, countGraphemes, type Account } from "./PlatformPreview";
 import { MediaStage, toMediaItems } from "./MediaStage";

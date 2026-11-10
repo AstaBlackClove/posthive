@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeftIcon, ArrowRightIcon, FileSpreadsheetIcon } from "lucide-react";
+import { FileSpreadsheetIcon } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,6 @@ import {
   channelCell,
   dateCell,
   inTab,
-  pageNumbers,
   paginate,
   picOf,
   pinIssues,
@@ -27,6 +26,7 @@ import {
   type RowTab,
   type RowTone,
 } from "@/lib/import-rows";
+import { Pager } from "@/components/Pager";
 import { ImportStat } from "./ImportStat";
 
 const TABS: ReadonlyArray<{ key: RowTab; label: string }> = [
@@ -174,32 +174,7 @@ export function ReviewStep({ file, items, locked, fixedCount, onEditMapping, onE
             {view.total === 0 ? "No rows" : `Showing ${view.from}–${view.to} of ${view.total} ${view.total === 1 ? "row" : "rows"}`}
             {counts.attention > 0 && " · issues pinned to top"}
           </p>
-          {view.pageCount > 1 && (
-            <nav aria-label="Pages" className="flex items-center gap-1">
-              <Button variant="ghost" size="icon-sm" aria-label="Previous page" disabled={view.page === 1} onClick={() => setPage(view.page - 1)}>
-                <ArrowLeftIcon />
-              </Button>
-              {pageNumbers(view.page, view.pageCount).map((n, i) =>
-                n === "gap" ? (
-                  <span key={`gap-${i}`} aria-hidden="true" className="px-1">…</span>
-                ) : (
-                  <Button
-                    key={n}
-                    variant={n === view.page ? "default" : "ghost"}
-                    size="icon-sm"
-                    aria-label={`Page ${n}`}
-                    aria-current={n === view.page ? "page" : undefined}
-                    onClick={() => setPage(n)}
-                  >
-                    {n}
-                  </Button>
-                )
-              )}
-              <Button variant="ghost" size="icon-sm" aria-label="Next page" disabled={view.page === view.pageCount} onClick={() => setPage(view.page + 1)}>
-                <ArrowRightIcon />
-              </Button>
-            </nav>
-          )}
+          <Pager page={view.page} pageCount={view.pageCount} onPage={setPage} />
         </div>
       </section>
     </div>
