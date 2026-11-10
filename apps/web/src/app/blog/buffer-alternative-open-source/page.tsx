@@ -10,7 +10,7 @@ const articleSchema = {
   headline: "The Best Open-Source Buffer Alternative in 2026",
   description: "Looking for a Buffer alternative that's open source, self-hostable, and supports more platforms? Posthive does everything Buffer does — and more — for less.",
   datePublished: "2026-07-07",
-  dateModified: "2026-08-28",
+  dateModified: "2026-11-09",
   image: `${WEB_URL}/og/landingogimage.jpg`,
   author: { "@type": "Person", name: "Guna", url: "https://x.com/gunaa_dev" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
@@ -45,6 +45,16 @@ const faqSchema = {
       "@type": "Question",
       name: "How much does Posthive cost compared to Buffer?",
       acceptedAnswer: { "@type": "Answer", text: "Posthive's hosted plans start at $9/month. Buffer's Essentials plan starts at $6/month per channel — costs scale quickly with multiple accounts. Self-hosted Posthive is free." },
+    },
+    {
+      "@type": "Question",
+      name: "What are the best alternatives to Buffer in 2026?",
+      acceptedAnswer: { "@type": "Answer", text: "The top Buffer alternatives in 2026 are Posthive (open source, most platforms, flat pricing), Hootsuite (enterprise features, higher price), Later (best for Instagram), Metricool (generous free tier), and Publer (team collaboration at a lower price point)." },
+    },
+    {
+      "@type": "Question",
+      name: "How do I migrate from Buffer to Posthive?",
+      acceptedAnswer: { "@type": "Answer", text: "Reconnect each social account through Posthive's Accounts page via OAuth — Buffer doesn't export queued posts in an importable format, so recreate any recurring schedules directly in Posthive's compose screen. Most users finish in under 15 minutes." },
     },
   ],
 };
@@ -268,6 +278,31 @@ export default function BufferAlternativePage() {
           <p style={{ marginBottom: 24 }}>
             But if you post to Bluesky, Threads, Mastodon, Telegram, Discord, or Tumblr — or if you care about open source, data ownership, or AI agent scheduling — Posthive is the better fit.
           </p>
+
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+            How to migrate from Buffer to Posthive
+          </h2>
+
+          <p style={{ marginBottom: 24 }}>
+            Buffer doesn't export queued posts in a format other tools can import, so migration is mostly reconnecting accounts:
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+            {[
+              { step: "1", title: "Connect your accounts", desc: "Go to Accounts in Posthive and authorize each platform via OAuth — about a minute per account." },
+              { step: "2", title: "Recreate recurring posts", desc: "Set up repeat posting (daily/weekly/monthly) directly in Posthive's compose screen." },
+              { step: "3", title: "Move your content backlog", desc: "Copy drafted posts over manually, or bulk-import via CSV if you have more than a handful queued in Buffer." },
+              { step: "4", title: "Verify, then cancel Buffer", desc: "Post a test item on each platform from Posthive before cancelling, so there's no gap in your schedule." },
+            ].map((s) => (
+              <div key={s.step} style={{ display: "flex", gap: 14, background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "16px 18px" }}>
+                <span style={{ fontSize: 13, fontWeight: 900, color: "#5b63d3", flexShrink: 0 }}>{s.step}</span>
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 4px" }}>{s.title}</p>
+                  <p style={{ fontSize: 13.5, color: "#666", lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
 
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
             Frequently asked questions

@@ -10,7 +10,7 @@ const articleSchema = {
   headline: "5 Best Hootsuite Alternatives in 2026 — Cheaper, Open Source, More Platforms",
   description: "Hootsuite starts at $99/month. Here are 5 alternatives that cost less, support more platforms, and one that's free to self-host.",
   datePublished: "2026-07-07",
-  dateModified: "2026-08-01",
+  dateModified: "2026-11-09",
   image: `${WEB_URL}/og/landingogimage.jpg`,
   author: { "@type": "Person", name: "Guna", url: "https://x.com/gunaa_dev" },
   publisher: { "@type": "Organization", name: "Posthive", url: WEB_URL },
@@ -50,6 +50,16 @@ const faqSchema = {
       "@type": "Question",
       name: "What platforms does Posthive support that Hootsuite doesn't?",
       acceptedAnswer: { "@type": "Answer", text: "Posthive supports Bluesky, Mastodon, Pixelfed, Threads, Telegram, Nostr, Discord, Tumblr, and Lemmy — none of which are available on Hootsuite. Hootsuite focuses on mainstream platforms (Twitter, Facebook, Instagram, LinkedIn, Pinterest, TikTok)." },
+    },
+    {
+      "@type": "Question",
+      name: "What are the best Hootsuite competitors in 2026?",
+      acceptedAnswer: { "@type": "Answer", text: "The strongest Hootsuite competitors in 2026 are Posthive (cheapest, open source, most platforms), Buffer (simplest UI), Later (best for Instagram-first creators), Metricool (best free tier), and Publer (best for small teams on a budget)." },
+    },
+    {
+      "@type": "Question",
+      name: "How do I migrate from Hootsuite to Posthive?",
+      acceptedAnswer: { "@type": "Answer", text: "Reconnect each social account through Posthive's OAuth flow (Accounts page), then recreate any recurring schedules — Hootsuite doesn't export schedules in a format other tools can import. Most users are fully migrated in under 15 minutes since there's nothing to transfer except the account connections themselves." },
     },
   ],
 };
@@ -290,6 +300,31 @@ export default function HootsuiteAlternativePage() {
           <p style={{ marginBottom: 24 }}>
             But if you&apos;re a solo creator, a founder, or a small team who just wants a reliable scheduler that covers all the platforms you actually use — Posthive will do more, cost less, and give you back control.
           </p>
+
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
+            How to migrate from Hootsuite to Posthive
+          </h2>
+
+          <p style={{ marginBottom: 24 }}>
+            There's no schedule-export feature in Hootsuite, so migration is mostly reconnecting accounts rather than transferring data:
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+            {[
+              { step: "1", title: "Connect your accounts", desc: "Go to Accounts in Posthive and authorize each platform via OAuth. Takes about a minute per account." },
+              { step: "2", title: "Recreate recurring posts", desc: "Hootsuite's repeat schedules don't export. Set up repeat posting (daily/weekly/monthly) directly in Posthive's compose screen." },
+              { step: "3", title: "Export your content calendar manually", desc: "If you have a backlog of drafted posts in Hootsuite, copy the text over — or bulk-import via Posthive's CSV scheduler if you have more than a handful." },
+              { step: "4", title: "Cancel Hootsuite once accounts are verified live", desc: "Post a test item on each platform from Posthive before cancelling, so you're not caught without a working scheduler mid-cycle." },
+            ].map((s) => (
+              <div key={s.step} style={{ display: "flex", gap: 14, background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "16px 18px" }}>
+                <span style={{ fontSize: 13, fontWeight: 900, color: "#5b63d3", flexShrink: 0 }}>{s.step}</span>
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "#ededed", margin: "0 0 4px" }}>{s.title}</p>
+                  <p style={{ fontSize: 13.5, color: "#666", lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
 
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "#ededed", margin: "40px 0 14px", letterSpacing: "-0.01em" }}>
             Frequently asked questions

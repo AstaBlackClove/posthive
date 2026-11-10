@@ -118,7 +118,7 @@ export default function OpenSourceSocialMediaSchedulerPage() {
         <div style={{ fontSize: 16, lineHeight: 1.85, color: "#888" }}>
 
           <p style={{ marginBottom: 24 }}>
-            Buffer starts at $6/month. Hootsuite starts at $99/month. Sprout Social starts at $249/month. For what — scheduling a few posts per week?
+            <Link href="/blog/buffer-alternative-open-source" style={{ color: "#5b63d3" }}>Buffer</Link> starts at $6/month. <Link href="/blog/hootsuite-alternative" style={{ color: "#5b63d3" }}>Hootsuite</Link> starts at $99/month. Sprout Social starts at $249/month. For what — scheduling a few posts per week?
           </p>
 
           <p style={{ marginBottom: 24 }}>
