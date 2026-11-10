@@ -20,10 +20,9 @@ describe("sameContent (what counts as a content change)", () => {
   });
 });
 
-const job = (patch: Partial<{ status: string; approvalStatus: string | null; userId: string }> = {}) => ({
+const job = (patch: Partial<{ status: string; approvalStatus: string | null }> = {}) => ({
   status: "draft",
   approvalStatus: null as string | null,
-  userId: "marketing-1",
   ...patch,
 });
 
@@ -32,35 +31,44 @@ describe("canEditJob: Marketing (member) changing the post date or content", () 
     ["plain draft", job()],
     ["draft in review", job({ approvalStatus: "pending" })],
     ["rejected draft", job({ approvalStatus: "rejected" })],
-  ])("is allowed on own %s", (_name, j) => {
-    expect(canEditJob("member", "marketing-1", j)).toEqual({ ok: true });
+  ])("is allowed on a %s, whoever made it: a plan is imported by one person and kept by the team", (_name, j) => {
+    expect(canEditJob("member", j)).toEqual({ ok: true });
   });
 
   it("is locked once approved (Scheduled)", () => {
-    const r = canEditJob("member", "marketing-1", job({ status: "pending", approvalStatus: "approved" }));
+    const r = canEditJob("member", job({ status: "pending", approvalStatus: "approved" }));
     expect(r).toMatchObject({ ok: false, status: 403 });
   });
 
   it("is locked on published / failed posts", () => {
-    expect(canEditJob("member", "marketing-1", job({ status: "done" }))).toMatchObject({ ok: false, status: 409 });
-    expect(canEditJob("member", "marketing-1", job({ status: "failed" }))).toMatchObject({ ok: false, status: 409 });
+    expect(canEditJob("member", job({ status: "done" }))).toMatchObject({ ok: false, status: 409 });
+    expect(canEditJob("member", job({ status: "failed" }))).toMatchObject({ ok: false, status: 409 });
   });
 
-  it("is denied on someone else's post", () => {
-    expect(canEditJob("member", "marketing-2", job())).toMatchObject({ ok: false, status: 403 });
+  it("is not about who made the draft: the same answer for the uploader and for a colleague", () => {
+    // the rule takes no user at all, so a draft cannot be one person's and closed to the others
+    expect(canEditJob.length).toBe(2);
+    for (const j of [job(), job({ approvalStatus: "pending" }), job({ approvalStatus: "rejected" })]) {
+      expect(canEditJob("member", j)).toEqual({ ok: true });
+    }
+  });
+
+  it("still locks an approved post for Marketing, whoever made it", () => {
+    expect(canEditJob("member", job({ status: "pending", approvalStatus: "approved" }))).toMatchObject({ ok: false, status: 403 });
+    expect(canEditJob("member", job({ status: "pending" }))).toMatchObject({ ok: false, status: 403 });
   });
 });
 
 describe("canEditJob: other roles", () => {
   it("lets admin and owner edit an approved post, even someone else's", () => {
     const approved = job({ status: "pending", approvalStatus: "approved" });
-    expect(canEditJob("admin", "admin-1", approved)).toEqual({ ok: true });
-    expect(canEditJob("owner", "owner-1", approved)).toEqual({ ok: true });
+    expect(canEditJob("admin", approved)).toEqual({ ok: true });
+    expect(canEditJob("owner", approved)).toEqual({ ok: true });
   });
 
   it("denies the design team and unknown roles", () => {
-    expect(canEditJob("designer", "d-1", job({ approvalStatus: "pending" }))).toMatchObject({ ok: false, status: 403 });
-    expect(canEditJob(null, "x", job())).toMatchObject({ ok: false, status: 403 });
+    expect(canEditJob("designer", job({ approvalStatus: "pending" }))).toMatchObject({ ok: false, status: 403 });
+    expect(canEditJob(null, job())).toMatchObject({ ok: false, status: 403 });
   });
 });
 

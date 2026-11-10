@@ -412,7 +412,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     const job = await prisma.postJob.findFirst({
       where: { id, workspaceId },
-      select: { status: true, content: true, commentText: true, userId: true, approvalStatus: true, targets: { select: { accountId: true } } },
+      select: { status: true, content: true, commentText: true, approvalStatus: true, targets: { select: { accountId: true } } },
     });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     const role = await getWorkspaceRole(userId, workspaceId);
@@ -420,8 +420,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (!isContentEditorRole(role)) {
       return reply.status(403).send(CONTENT_EDITOR_FORBIDDEN);
     }
-    // Marketing: own posts, before approval only. Admin/owner: any draft or scheduled post.
-    const editCheck = canEditJob(role, userId, job);
+    // Marketing: any draft, before approval only. Admin/owner: any draft or scheduled post.
+    const editCheck = canEditJob(role, job);
     if (!editCheck.ok) {
       return reply.status(editCheck.status).send({ error: editCheck.error, ...(editCheck.code ? { code: editCheck.code } : {}) });
     }
@@ -517,7 +517,9 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         const removed = await withoutTemplateMedia([...oldUrls].filter(u => !newUrls.has(u)));
         if (removed.length) {
           await Promise.allSettled(removed.map(u => storage.delete(u)));
-          await prisma.upload.deleteMany({ where: { url: { in: removed }, userId } });
+          // Not scoped to the editor: a draft is kept by the team, so the file may be a colleague's upload. Deleting a
+          // post already drops these rows the same way; a row left behind would point at a file that is gone.
+          await prisma.upload.deleteMany({ where: { url: { in: removed } } });
         }
       } catch { /* non-fatal */ }
     }
@@ -618,17 +620,17 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     const job = await prisma.postJob.findFirst({
       where: { id, workspaceId },
-      select: { status: true, approvalStatus: true, userId: true, scheduledFor: true, content: true, targets: { select: { account: { select: { platform: true } } } } },
+      select: { status: true, approvalStatus: true, scheduledFor: true, content: true, targets: { select: { account: { select: { platform: true } } } } },
     });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status !== "draft") return reply.status(409).send({ error: "Only drafts can be submitted for review" });
     if (job.approvalStatus === "pending") return reply.status(409).send({ error: "Already awaiting review" });
+    // Sent back by the reviewer: the same content is not sent again. An edit that changes it clears the rejection (PATCH).
+    if (job.approvalStatus === "rejected") return reply.status(409).send({ error: "Sent back for changes. Change the post before sending it again.", code: "NEEDS_CHANGES" });
     const role = await getWorkspaceRole(userId, workspaceId);
     // Submitting is a content-editor action (designer reviews, never submits)
+    // Any draft of the workspace: a plan is imported by one person and kept by the team
     if (!isContentEditorRole(role)) return reply.status(403).send(CONTENT_EDITOR_FORBIDDEN);
-    if (job.userId !== userId && role !== "owner" && role !== "admin") {
-      return reply.status(403).send({ error: "You can only submit your own posts.", code: "FORBIDDEN" });
-    }
     const missing = missingForReview(readinessInput(job));
     if (missing.length > 0) {
       return reply.status(422).send({ error: `Complete the required fields first: ${missing.join(", ")}.`, code: "INCOMPLETE", missing });
@@ -656,7 +658,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
 
     const jobs = await prisma.postJob.findMany({
       where: { id: { in: body.data.ids }, workspaceId },
-      select: { id: true, status: true, approvalStatus: true, userId: true, scheduledFor: true, content: true, targets: { select: { account: { select: { platform: true } } } } },
+      select: { id: true, status: true, approvalStatus: true, scheduledFor: true, content: true, targets: { select: { account: { select: { platform: true } } } } },
     });
     const byId = new Map(jobs.map((j) => [j.id, j]));
     const submit: string[] = [];
@@ -666,12 +668,12 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       const job = byId.get(id);
       if (!job) { skipped.push({ id, title: "Unknown post", reason: "Post not found" }); continue; }
       const title = readinessInput(job).title;
-      if (job.userId !== userId && role !== "owner" && role !== "admin") {
-        skipped.push({ id, title, reason: "Not your post" });
-      } else if (job.status !== "draft") {
+      if (job.status !== "draft") {
         skipped.push({ id, title, reason: "Not a draft" });
       } else if (job.approvalStatus === "pending") {
         skipped.push({ id, title, reason: "Already in review" });
+      } else if (job.approvalStatus === "rejected") {
+        skipped.push({ id, title, reason: "Sent back for changes: change it first" });
       } else {
         const missing = missingForReview(readinessInput(job));
         if (missing.length > 0) skipped.push({ id, title, reason: "Missing required fields", missing });

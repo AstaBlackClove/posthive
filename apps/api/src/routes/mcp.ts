@@ -395,7 +395,8 @@ function ok(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
 
-async function handleTool(
+/** Exported for the tests of who may do what; the HTTP routes below are the only caller. */
+export async function handleTool(
   name: string,
   args: Record<string, unknown>,
   userId: string,
@@ -617,11 +618,10 @@ async function handleTool(
 
       // Design-approval gate — member keys may only edit their own drafts,
       // and editing resets the review when the draft was pending/rejected.
-      if (forcedDraft) {
-        if (job.userId !== userId) throw new Error("Member API keys can only edit their own posts.");
-        if (job.status !== "draft") throw new Error("Approved posts are frozen for member keys — duplicate the post instead.");
-      }
-      if (!forcedDraft && ctx.role === "member" && job.userId !== userId) {
+      // A draft is kept by the team (a plan is imported by one person and maintained by others), so any member may
+      // edit it; a scheduled post stays with the person who made it.
+      if (forcedDraft && job.status !== "draft") throw new Error("Approved posts are frozen for member keys — duplicate the post instead.");
+      if (!forcedDraft && ctx.role === "member" && job.status !== "draft" && job.userId !== userId) {
         throw new Error("You can only edit your own posts.");
       }
 

@@ -119,8 +119,8 @@ export async function jobsListRoutes(app: FastifyInstance): Promise<void> {
       const role = await getWorkspaceRole(userId, workspaceId);
       const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: DETAIL_SELECT });
       if (!job || !isDraftVisibleTo(role, userId, job)) return reply.status(404).send({ error: "Job not found" });
-      // `mine`: the server lets a person submit or edit only their own post (unless they manage the workspace), so the
-      // drawer offers those only on posts that are theirs
+      // `mine`: the server lets a person delete or retry only their own post (an admin any), so the drawer offers those
+      // only on posts that are theirs. Editing and submitting a draft is open to the team: it is not about who made it.
       return reply.send({ ...toDetail(job), mine: job.userId === userId });
     },
   );

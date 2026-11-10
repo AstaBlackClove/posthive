@@ -4,7 +4,6 @@
 export interface EditableJobState {
   status: string;
   approvalStatus: string | null;
-  userId: string;
 }
 
 export type EditCheck = { ok: true } | { ok: false; status: 403 | 409; error: string; code?: string };
@@ -13,23 +12,19 @@ const MANAGE = new Set(["owner", "admin", "designer"]);
 
 /**
  * Admin/owner: any draft or scheduled post.
- * Marketing (member): only own posts, and only before approval — draft, in review or rejected.
+ * Marketing (member): any draft, whoever made it, and only before approval — draft, in review or rejected. A quarter
+ * plan is imported by one person and kept by the team, so a draft belongs to the workspace, not to its uploader.
  * Design team and unknown roles: never.
  */
-export function canEditJob(role: string | null | undefined, viewerId: string, job: EditableJobState): EditCheck {
+export function canEditJob(role: string | null | undefined, job: EditableJobState): EditCheck {
   if (job.status !== "pending" && job.status !== "draft") {
     return { ok: false, status: 409, error: `Cannot edit a job with status "${job.status}"` };
   }
   if (role !== "owner" && role !== "admin" && role !== "member") {
     return { ok: false, status: 403, error: "Your role cannot edit content.", code: "FORBIDDEN" };
   }
-  if (role === "member") {
-    if (job.userId !== viewerId) {
-      return { ok: false, status: 403, error: "You can only edit your own posts.", code: "FORBIDDEN" };
-    }
-    if (job.status === "pending") {
-      return { ok: false, status: 403, error: "Approved posts are locked. Ask an admin to change them.", code: "FORBIDDEN" };
-    }
+  if (role === "member" && job.status === "pending") {
+    return { ok: false, status: 403, error: "Approved posts are locked. Ask an admin to change them.", code: "FORBIDDEN" };
   }
   return { ok: true };
 }
