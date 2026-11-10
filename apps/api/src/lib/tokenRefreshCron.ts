@@ -21,6 +21,7 @@ import cron from "node-cron";
 import * as Sentry from "@sentry/node";
 import { prisma } from "./prisma.js";
 import { getAdapter } from "../adapters/index.js";
+import { sendAccountExpiryEmail } from "./mailer.js";
 
 // youtube and googlebusiness use 1-hour Google tokens — inline refresh in the adapter
 // handles them at job time. Proactive cron refresh is wasted API calls for these.
@@ -47,6 +48,7 @@ async function run(skipRecentlyRefreshed = false) {
       orderBy: { id: "asc" },
       take: BATCH_SIZE,
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      include: { user: { select: { email: true } } },
     });
 
     if (!batch.length) break;
@@ -71,6 +73,11 @@ async function run(skipRecentlyRefreshed = false) {
                 tags: { component: "token-refresh", platform: account.platform },
                 extra: { accountId: account.id },
               });
+            } else if (!account.warnedExpiryAt && account.user?.email) {
+              const daysLeft = Math.max(0, Math.ceil((account.expiresAt!.getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
+              await sendAccountExpiryEmail(account.user.email, account.platform, account.displayName, daysLeft)
+                .catch((e) => console.error(`[token-refresh] expiry email failed for ${account.id}:`, e));
+              await prisma.account.update({ where: { id: account.id }, data: { warnedExpiryAt: new Date() } });
             }
           }
         })
