@@ -1,0 +1,195 @@
+// What the dashboard reads out of a workspace: the WIB calendar (the app schedules in WIB), the
+// where-fragments behind each list and count, and the shape of one post in a list.
+// Pure, so the rules are tested without a database; routes/dashboard.ts runs the queries.
+import type { Prisma } from "@prisma/client";
+import { STATUS_GROUPS } from "./jobFilters.js";
+
+// ── WIB calendar ────────────────────────────────────────────────────────────
+// Jakarta has no daylight saving, so a fixed +07:00 is always right (see apps/web/src/lib/datetime.ts).
+
+const WIB_MS = 7 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The WIB calendar day of an instant, "YYYY-MM-DD". */
+export function wibKey(d: Date): string {
+  return new Date(d.getTime() + WIB_MS).toISOString().slice(0, 10);
+}
+
+/** The instant a WIB day starts. */
+export function wibStart(key: string): Date {
+  return new Date(`${key}T00:00:00+07:00`);
+}
+
+/** The years a calendar can be asked about. Year 0000 is a real day to JavaScript, but its WIB start is a negative year Postgres refuses. */
+const FIRST_YEAR = 2000;
+const LAST_YEAR = 2100;
+
+/** A "YYYY-MM-DD" that is a real day (not 2026-02-31) in a year the calendar covers. */
+export function isDateKey(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const year = Number(value.slice(0, 4));
+  if (year < FIRST_YEAR || year > LAST_YEAR) return false;
+  const t = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(t.getTime()) && t.toISOString().slice(0, 10) === value;
+}
+
+export function addDays(key: string, days: number): string {
+  return new Date(new Date(`${key}T00:00:00Z`).getTime() + days * DAY_MS).toISOString().slice(0, 10);
+}
+
+const firstOfMonth = (y: number, m: number) => `${y}-${String(m).padStart(2, "0")}-01`;
+
+/** The calendar quarter a day is in: "Q4 2026", the first day, and the first day AFTER it. */
+export function quarterOf(key: string): { label: string; start: string; end: string } {
+  const [y, m] = key.split("-").map(Number);
+  const q = Math.floor((m - 1) / 3);
+  const next = q === 3 ? firstOfMonth(y + 1, 1) : firstOfMonth(y, (q + 1) * 3 + 1);
+  return { label: `Q${q + 1} ${y}`, start: firstOfMonth(y, q * 3 + 1), end: next };
+}
+
+/** The calendar month a day is in: its first day and the first day after it. */
+export function monthOf(key: string): { start: string; end: string } {
+  const [y, m] = key.split("-").map(Number);
+  return { start: firstOfMonth(y, m), end: m === 12 ? firstOfMonth(y + 1, 1) : firstOfMonth(y, m + 1) };
+}
+
+// ── What each list holds ────────────────────────────────────────────────────
+
+/** Rows a list shows. The count next to it is the true total. */
+export const LIST_LIMIT = 20;
+/** A calendar range answers with at most this many posts. */
+export const CALENDAR_LIMIT = 400;
+/** Longest range the calendar asks for: a six-week month grid is 42 days. */
+export const MAX_CALENDAR_DAYS = 42;
+/** A draft due within this many days and still not scheduled is "at risk". */
+export const RISK_DAYS = 3;
+/**
+ * A scheduled post still `pending` this long after its time did not go out: the worker runs it within
+ * seconds, and stuckJobCron re-queues one that is 5 minutes late, so 15 minutes means that did not work.
+ */
+export const OVERDUE_MINUTES = 15;
+/** "Recent activity" is what changed in this many days. */
+export const ACTIVITY_DAYS = 7;
+
+export type ListKind = "upcoming" | "attention" | "risk" | "activity";
+
+type Where = Prisma.PostJobWhereInput;
+
+const draft: Where = { status: "draft" };
+const notRejected: Where = { OR: [{ approvalStatus: null }, { approvalStatus: { not: "rejected" } }] };
+
+/** Plain drafts: no approval flow in play (the Posts page's Draft filter). */
+export const plainDraft: Where = {
+  status: "draft",
+  OR: [{ approvalStatus: null }, { approvalStatus: { notIn: ["pending", "rejected"] } }],
+};
+
+/**
+ * A plain draft with a date still ahead and at least one account. It is NOT checked for a caption, a
+ * category or media, which the server needs before it accepts the post for review (submitReadiness):
+ * the count says what can be known from the columns, and the card is named for that, not for "ready".
+ * A draft whose date has passed is left out (an archive draft, or one that slipped).
+ */
+export function readyToSchedule(now: Date): Where {
+  return { AND: [plainDraft, { scheduledFor: { gte: now } }, { targets: { some: {} } }] };
+}
+
+/**
+ * The posts behind each tab, `base` being the workspace and what the role may see.
+ * upcoming: scheduled or draft from today on, and drafts with no date yet.
+ * attention: failed, scheduled but long overdue, sent back for changes, or a draft whose date has passed. A draft that came in
+ * with a plan file is left out of the last one: an import saves past dates as archive drafts on purpose.
+ * risk: a draft due in the next few days that nobody has scheduled yet.
+ * activity: whatever changed in the last week.
+ */
+export function listWhere(base: Where, kind: ListKind, now: Date): Where {
+  const todayStart = wibStart(wibKey(now));
+  let extra: Where;
+  if (kind === "upcoming") {
+    extra = {
+      OR: [
+        { status: { in: ["draft", ...STATUS_GROUPS.pending] }, scheduledFor: { gte: todayStart } },
+        { status: "draft", scheduledFor: null },
+      ],
+    };
+  } else if (kind === "attention") {
+    extra = {
+      OR: [
+        { status: { in: [...STATUS_GROUPS.failed] } },
+        { status: "pending", scheduledFor: { lt: new Date(now.getTime() - OVERDUE_MINUTES * 60 * 1000) } },
+        { status: "draft", approvalStatus: "rejected" },
+        { status: "draft", importKey: null, scheduledFor: { lt: now } },
+      ],
+    };
+  } else if (kind === "risk") {
+    extra = { AND: [draft, { scheduledFor: { gte: now, lt: new Date(now.getTime() + RISK_DAYS * DAY_MS) } }, notRejected] };
+  } else {
+    extra = { updatedAt: { gte: new Date(now.getTime() - ACTIVITY_DAYS * DAY_MS) } };
+  }
+  return { AND: [base, extra] };
+}
+
+/** Posts of one person still being worked on or waiting to go out, scheduled for one WIB day: "my tasks today". */
+export function tasksWhere(base: Where, userId: string, key: string): Where {
+  return { AND: [dayWhere(base, key), { userId, status: { in: ["draft", ...STATUS_GROUPS.pending] } }] };
+}
+
+/** Posts scheduled for one WIB day, whatever state they are in. */
+export function dayWhere(base: Where, key: string): Where {
+  return { AND: [base, { scheduledFor: { gte: wibStart(key), lt: wibStart(addDays(key, 1)) } }] };
+}
+
+/** Posts scheduled in a range of WIB days, both ends included. */
+export function rangeWhere(base: Where, from: string, to: string): Where {
+  return { AND: [base, { scheduledFor: { gte: wibStart(from), lt: wibStart(addDays(to, 1)) } }] };
+}
+
+// ── One post ────────────────────────────────────────────────────────────────
+
+export interface DashboardPost {
+  id: string;
+  title: string;
+  status: string;
+  approvalStatus: string | null;
+  /** ISO instant, or null for a draft with no date. */
+  scheduledFor: string | null;
+  /** Platform ids: the accounts it goes to, else the channels a plan file named. */
+  channels: string[];
+  owner: string | null;
+}
+
+export interface PostRecord {
+  id: string;
+  status: string;
+  approvalStatus: string | null;
+  scheduledFor: Date | null;
+  content: string;
+  user: { name: string } | null;
+  targets: { account: { platform: string } | null }[];
+}
+
+const text = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
+
+/** What a list needs from a post. The content JSON stays on the server: it can hold a long design copy. */
+export function toPost(job: PostRecord): DashboardPost {
+  let content: { title?: unknown; text?: unknown; platforms?: unknown; picContent?: unknown } = {};
+  try {
+    const parsed: unknown = JSON.parse(job.content);
+    // "null", a number or an array parse fine and are still not a post's content
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) content = parsed as typeof content;
+  } catch { /* a broken content column is an untitled post, not an error */ }
+
+  const fromTargets = job.targets.flatMap((t) => (t.account ? [t.account.platform] : []));
+  const fromFile = Array.isArray(content.platforms) ? content.platforms.filter((p): p is string => typeof p === "string") : [];
+  const channels = [...new Set(fromTargets.length > 0 ? fromTargets : fromFile)];
+
+  return {
+    id: job.id,
+    title: text(content.title) || text(content.text).slice(0, 80) || "Untitled",
+    status: job.status,
+    approvalStatus: job.approvalStatus,
+    scheduledFor: job.scheduledFor ? job.scheduledFor.toISOString() : null,
+    channels,
+    owner: text(content.picContent) || job.user?.name || null,
+  };
+}

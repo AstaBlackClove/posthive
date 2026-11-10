@@ -33,6 +33,7 @@ import { accountRoutes } from "./routes/accounts.js";
 import { authRoutes } from "./routes/auth.js";
 import { jobRoutes } from "./routes/jobs.js";
 import { importRoutes } from "./routes/import.js";
+import { dashboardRoutes } from "./routes/dashboard.js";
 import { uploadRoutes } from "./routes/upload.js";
 import { userRoutes } from "./routes/user.js";
 import { billingRoutes } from "./routes/billing.js";
@@ -176,6 +177,7 @@ async function main() {
   await app.register(accountRoutes, { storage });
   await app.register(jobRoutes, { storage });
   await app.register(importRoutes);
+  await app.register(dashboardRoutes);
   await app.register(uploadRoutes, { storage });
   if (process.env.ENABLE_BILLING === "true") await app.register(billingRoutes);
   await app.register(apiKeyRoutes);
