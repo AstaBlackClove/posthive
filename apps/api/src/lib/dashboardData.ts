@@ -172,7 +172,16 @@ export interface PostRecord {
   targets: { account: { platform: string } | null }[];
 }
 
-const text = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
+export const text = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
+
+/** The content JSON of a post as an object. A broken column, "null", a number or an array is an empty post, not an error. */
+export function contentOf(json: string): Record<string, unknown> {
+  try {
+    const parsed: unknown = JSON.parse(json);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as Record<string, unknown>;
+  } catch { /* fall through */ }
+  return {};
+}
 
 /** A title is a line in a list; a plan cell can hold a paragraph. */
 const TITLE_MAX = 200;
@@ -181,24 +190,19 @@ const VIDEO = /\.(mp4|mov|webm|quicktime)(\?|$)/i;
 // encoded "%2e%2e") would make the viewer's browser ask the API for a path the author chose, with the viewer's cookie.
 const UPLOAD_PATH = /^\/uploads\/(?:[\w-]+\/)?[\w-]+\.\w+$/;
 
-/** The first media URL that is a picture the browser can show: one of our uploads or an http(s) address, not a video. */
-function firstImage(mediaUrls: unknown): string | null {
-  if (!Array.isArray(mediaUrls)) return null;
-  for (const url of mediaUrls) {
-    if (typeof url !== "string" || url.length > 500 || VIDEO.test(url)) continue;
-    if (UPLOAD_PATH.test(url) || /^https?:\/\//i.test(url)) return url;
-  }
-  return null;
+/** The media URLs that are pictures the browser can show: one of our uploads or an http(s) address, not a video. */
+export function images(mediaUrls: unknown): string[] {
+  if (!Array.isArray(mediaUrls)) return [];
+  return mediaUrls.filter(
+    (url): url is string => typeof url === "string" && url.length <= 500 && !VIDEO.test(url) && (UPLOAD_PATH.test(url) || /^https?:\/\//i.test(url)),
+  );
 }
+
+const firstImage = (mediaUrls: unknown): string | null => images(mediaUrls)[0] ?? null;
 
 /** What a list needs from a post. The content JSON stays on the server: it can hold a long design copy. */
 export function toPost(job: PostRecord): DashboardPost {
-  let content: { title?: unknown; text?: unknown; platforms?: unknown; picContent?: unknown; category?: unknown; mediaUrls?: unknown } = {};
-  try {
-    const parsed: unknown = JSON.parse(job.content);
-    // "null", a number or an array parse fine and are still not a post's content
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) content = parsed as typeof content;
-  } catch { /* a broken content column is an untitled post, not an error */ }
+  const content = contentOf(job.content);
 
   const fromTargets = job.targets.flatMap((t) => (t.account ? [t.account.platform] : []));
   const fromFile = Array.isArray(content.platforms) ? content.platforms.filter((p): p is string => typeof p === "string") : [];
