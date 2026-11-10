@@ -392,7 +392,7 @@ export default function JobsPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [viewTab, setViewTab] = useState<ViewTab>("list");
-  const [filter, setFilter] = useState<FilterTab>("all");
+  const [filter, setFilter] = useState<FilterTab>("done");
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const [editingJob, setEditingJob] = useState<Job | null>(null);
