@@ -40,12 +40,13 @@ const NO_ROWS: ContentRow[] = [];
 
 const columns = helper.columns([
   helper.accessor("title", { id: "content", header: "Content", sortFn: "text" }),
-  helper.accessor("channel", { id: "channel", header: "Channel", sortFn: "text" }),
+  // "" (no channel yet) would sort first; undefined goes last
+  helper.accessor((r) => r.channel || undefined, { id: "channel", header: "Channel", sortFn: "text", sortUndefined: "last" }),
   // undefined, not "" or null: an empty string sorts FIRST, and sortUndefined: "last" only covers undefined
   helper.accessor((r) => r.publishAt ?? undefined, { id: "publishAt", header: "Publish date", sortFn: "datetime", sortUndefined: "last" }),
   helper.accessor((r) => r.owner ?? undefined, { id: "owner", header: "Owner", sortFn: "text", sortUndefined: "last" }),
   helper.accessor("production", { id: "production", header: "Production", sortFn: "text" }),
-  helper.accessor("publication", { id: "publication", header: "Publication", sortFn: "text" }),
+  helper.accessor((r) => r.publication ?? undefined, { id: "publication", header: "Publication", sortFn: "text", sortUndefined: "last" }),
 ]);
 
 const TABS: { key: TabKey; label: string }[] = [
@@ -64,7 +65,8 @@ const EMPTY: Record<TabKey, { title: string; description: string }> = {
 };
 
 type Props = {
-  rows?: ContentRow[];
+  /** The rows of each tab (the lists are cut, the count in the tab is the true total). A tab with none is empty. */
+  rows?: Partial<Record<TabKey, ContentRow[]>>;
   tabCounts: Record<TabKey, number>;
 };
 
@@ -75,8 +77,9 @@ function SortIcon({ state }: { state: false | "asc" | "desc" }) {
 }
 
 /** The tabs and the table of content (sortable, selectable). With no rows it is the empty state inside the table. */
-export function ContentTable({ rows = NO_ROWS, tabCounts }: Props) {
+export function ContentTable({ rows: rowsByTab, tabCounts }: Props) {
   const [tab, setTab] = useState<TabKey>("upcoming");
+  const rows = rowsByTab?.[tab] ?? NO_ROWS;
   // The list starts in the order its footer promises: by publish date, soonest first
   const table = useTable({ features, columns, data: rows, getRowId: (r) => r.id, initialState: { sorting: [{ id: "publishAt", desc: false }] } });
   const result = table.getRowModel().rows;
@@ -141,10 +144,15 @@ export function ContentTable({ rows = NO_ROWS, tabCounts }: Props) {
                   </TableCell>
                   <TableCell className="max-w-64 truncate type-body-m-s">{row.original.title}</TableCell>
                   <TableCell>
-                    <span className="inline-flex items-center gap-2">
-                      <PlatformIcon platform={row.original.channel} size={14} />
-                      {platformLabel(row.original.channel)}
-                    </span>
+                    {row.original.channel ? (
+                      <span className="inline-flex items-center gap-2">
+                        <PlatformIcon platform={row.original.channel} size={14} />
+                        {platformLabel(row.original.channel)}
+                        {row.original.alsoOn ? <span className="text-muted-foreground">+{row.original.alsoOn}</span> : null}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
                   </TableCell>
                   <TableCell>{row.original.publishAt ? formatDate(new Date(row.original.publishAt)) : "—"}</TableCell>
                   <TableCell>{row.original.owner ?? "—"}</TableCell>
@@ -155,10 +163,14 @@ export function ContentTable({ rows = NO_ROWS, tabCounts }: Props) {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span className="inline-flex items-center gap-2">
-                      <StatusDot status={row.original.publication} />
-                      {statusLabel(row.original.publication)}
-                    </span>
+                    {row.original.publication ? (
+                      <span className="inline-flex items-center gap-2">
+                        <StatusDot status={row.original.publication} />
+                        {statusLabel(row.original.publication)}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground" title="Not scheduled yet">—</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -196,7 +208,7 @@ export function ContentTable({ rows = NO_ROWS, tabCounts }: Props) {
 
         <div className="flex flex-wrap items-center justify-between gap-2 px-1 type-body-r-xs text-muted-foreground">
           <p aria-live="polite">
-            Showing {result.length} of {rows.length}
+            Showing {result.length} of {Math.max(tabCounts[tab], result.length)}
           </p>
           <p>{sortSummary(table.state.sorting)}</p>
         </div>

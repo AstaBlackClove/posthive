@@ -24,9 +24,9 @@ describe("content status", () => {
     ]);
   });
 
-  it("the calendar legend lists the eight statuses of the design, in order", () => {
+  it("the calendar legend lists the eight statuses of the design, in order, then Failed (a real state the design has no colour for)", () => {
     expect(CALENDAR_LEGEND.map((k) => statusLabel(k, "calendar"))).toEqual([
-      "Draft", "Copywriting", "In design", "In review", "Rejected", "Approved", "Scheduled", "Published",
+      "Draft", "Copywriting", "In design", "In review", "Rejected", "Approved", "Scheduled", "Published", "Failed",
     ]);
   });
 

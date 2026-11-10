@@ -50,7 +50,7 @@ export function StatGrid({ data }: Props) {
         </CardContent>
       </Card>
 
-      <StatCard title="Ready to schedule" subtitle="Approved, not yet scheduled" value={readyToSchedule} total={plan.quota} unit="posts" />
+      <StatCard title="Drafts to schedule" subtitle="Dated drafts with a channel, not yet scheduled" value={readyToSchedule} total={plan.quota} unit="posts" />
       <StatCard title="Published" subtitle="Published this quarter" value={published} total={plan.quota} unit="posts" />
       <StatCard
         title="Need attention"
@@ -62,7 +62,7 @@ export function StatGrid({ data }: Props) {
       />
       <StatCard
         title="My tasks today"
-        subtitle="Assigned to you for today"
+        subtitle="Yours, scheduled for today"
         value={tasksToday}
         unit="posts in progress"
         action={<GoButton href="/jobs" label="See my tasks" className="bg-neutral-100 hover:bg-neutral-200" />}

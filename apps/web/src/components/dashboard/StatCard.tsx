@@ -32,7 +32,7 @@ export function percentOf(value: number, total?: number): number {
   return Math.min(100, Math.max(0, Math.round((value / total) * 100)));
 }
 
-/** A number with a caption: "Ready to schedule  0 / 60 posts", with a progress bar when it has a total. */
+/** A number with a caption: "Drafts to schedule  0 / 60 posts", with a progress bar when it has a total. */
 export function StatCard({ title, subtitle, value, unit, total, tone = "default", action, className }: Props) {
   const hasTotal = total !== undefined;
   return (

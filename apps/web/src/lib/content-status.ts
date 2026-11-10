@@ -3,7 +3,7 @@
 // in one place. Dot colours are tokens (the two with no palette step are --status-design and
 // --status-changes in globals.css); the strings are written out so Tailwind sees every class.
 
-export const CONTENT_STATUS_KEYS = ["brief", "copywriting", "design", "review", "changes", "approved", "scheduled", "published"] as const;
+export const CONTENT_STATUS_KEYS = ["brief", "copywriting", "design", "review", "changes", "approved", "scheduled", "published", "failed"] as const;
 
 export type ContentStatusKey = (typeof CONTENT_STATUS_KEYS)[number];
 
@@ -26,15 +26,17 @@ export const CONTENT_STATUS: Record<ContentStatusKey, ContentStatus> = {
   approved: { key: "approved", label: "Approved", dot: "bg-green-600" },
   scheduled: { key: "scheduled", label: "Scheduled", dot: "bg-neutral-800" },
   published: { key: "published", label: "Published", dot: "bg-brand-500" },
+  // Not in the design: a post the worker could not publish is real, and showing it as Approved would be wrong
+  failed: { key: "failed", label: "Failed", dot: "bg-red-600" },
 };
 
 /** Stages of making a piece, in order. The pipeline card counts these. */
 export const PRODUCTION_STAGES: readonly ContentStatusKey[] = ["brief", "copywriting", "design", "review", "changes", "approved"];
 
-/** Stages of getting it out. */
-export const PUBLICATION_STAGES: readonly ContentStatusKey[] = ["scheduled", "published"];
+/** Stages of getting it out (and how it ended when it did not go out). */
+export const PUBLICATION_STAGES: readonly ContentStatusKey[] = ["scheduled", "published", "failed"];
 
-/** Everything the calendar legend lists, in the design's order. */
+/** Everything the calendar legend lists, in the design's order, with Failed after them. */
 export const CALENDAR_LEGEND: readonly ContentStatusKey[] = CONTENT_STATUS_KEYS;
 
 export type StatusContext = "pipeline" | "calendar";

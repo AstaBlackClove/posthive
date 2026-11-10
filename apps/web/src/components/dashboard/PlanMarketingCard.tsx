@@ -23,10 +23,12 @@ export function PlanMarketingCard({ plan }: Props) {
         <p className="flex min-w-0 flex-wrap items-baseline gap-x-2">
           <span className="type-head-r-3 text-fg tabular-nums">{planned}</span>
           <span className="type-body-r-xs text-muted-foreground">
-            / {quota} posts planned · quota set for {label.split(" ")[0]}
+            {quota === undefined
+              ? `${planned === 1 ? "post" : "posts"} planned in ${label}`
+              : `/ ${quota} posts planned · quota set for ${label.split(" ")[0]}`}
           </span>
         </p>
-        <Progress value={percentOf(planned, quota)} aria-label={`Posts planned: ${planned} of ${quota}`} />
+        {quota !== undefined && <Progress value={percentOf(planned, quota)} aria-label={`Posts planned: ${planned} of ${quota}`} />}
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
         <Button asChild variant="olive">

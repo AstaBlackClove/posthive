@@ -74,8 +74,8 @@ describe("percentOf", () => {
 
 describe("StatCard", () => {
   it("shows title, subtitle, the value and '/ total unit'", () => {
-    render(<StatCard title="Ready to schedule" subtitle="Approved, not yet scheduled" value={0} total={60} unit="posts" />);
-    expect(screen.getByText("Ready to schedule")).toBeTruthy();
+    render(<StatCard title="Drafts to schedule" subtitle="Approved, not yet scheduled" value={0} total={60} unit="posts" />);
+    expect(screen.getByText("Drafts to schedule")).toBeTruthy();
     expect(screen.getByText("Approved, not yet scheduled")).toBeTruthy();
     expect(screen.getByText("0")).toBeTruthy();
     expect(screen.getByText("/ 60 posts")).toBeTruthy();
@@ -146,10 +146,10 @@ describe("StatusDot and StatusLegend", () => {
     ]);
   });
 
-  it("the calendar legend lists eight statuses under their calendar names", () => {
+  it("the calendar legend lists the statuses under their calendar names, Failed last", () => {
     render(<StatusLegend variant="calendar" />);
     const items = within(screen.getByRole("list", { name: "Status legend" })).getAllByRole("listitem");
-    expect(items.map((i) => i.textContent)).toEqual(["Draft", "Copywriting", "In design", "In review", "Rejected", "Approved", "Scheduled", "Published"]);
+    expect(items.map((i) => i.textContent)).toEqual(["Draft", "Copywriting", "In design", "In review", "Rejected", "Approved", "Scheduled", "Published", "Failed"]);
   });
 
   it("the same status has the same colour in the pipeline and the calendar", () => {

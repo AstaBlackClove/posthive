@@ -6,11 +6,12 @@ import { ItemGroup, ItemSeparator } from "@/components/ui/item";
 import { EmptyState } from "@/components/EmptyState";
 import { formatTodayLong } from "@/lib/dashboard-format";
 import { ChannelRow } from "./ChannelRow";
+import { PostLine } from "./PostLine";
 import { SectionPanel } from "./SectionPanel";
 import type { DashboardData } from "./types";
 
 type Props = {
-  data: Pick<DashboardData, "today" | "milestones" | "channels" | "tasksToday">;
+  data: Pick<DashboardData, "today" | "milestones" | "channels" | "tasksToday" | "taskRows">;
   today: Date;
 };
 
@@ -18,7 +19,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 
 /** Today's publishing, today's tasks, the quarter's milestones and the channels: the right-hand column. */
 export function SideColumn({ data, today }: Props) {
-  const { today: publishToday, milestones, channels, tasksToday } = data;
+  const { today: publishToday, milestones, channels, tasksToday, taskRows } = data;
   const anyDisconnected = channels.some((c) => !c.connected);
 
   return (
@@ -27,6 +28,16 @@ export function SideColumn({ data, today }: Props) {
         title={`Today Publish, ${formatTodayLong(today)}`}
         action={<Badge variant="outline">{plural(publishToday.count, "post", "posts")}</Badge>}
       >
+        {publishToday.rows.length > 0 && (
+          <ItemGroup className="gap-3">
+            {publishToday.rows.map((row) => (
+              <PostLine key={row.id} row={row} />
+            ))}
+          </ItemGroup>
+        )}
+        {publishToday.count > publishToday.rows.length && (
+          <p className="mt-3 type-body-r-xs text-muted-foreground">and {publishToday.count - publishToday.rows.length} more</p>
+        )}
         {publishToday.count === 0 && (
           <EmptyState
             size="inline"
@@ -53,12 +64,22 @@ export function SideColumn({ data, today }: Props) {
           </Button>
         }
       >
+        {taskRows.length > 0 && (
+          <ItemGroup className="gap-3">
+            {taskRows.map((row) => (
+              <PostLine key={row.id} row={row} />
+            ))}
+          </ItemGroup>
+        )}
+        {tasksToday > taskRows.length && (
+          <p className="mt-3 type-body-r-xs text-muted-foreground">and {tasksToday - taskRows.length} more</p>
+        )}
         {tasksToday === 0 && (
           <EmptyState
             size="inline"
             icon={<CheckIcon />}
-            title="No tasks yet"
-            description="When a post is assigned to you for copy, design or review, it shows up here."
+            title="No tasks today"
+            description="Your own posts scheduled for today, and not out yet, show up here."
           />
         )}
       </SectionPanel>
