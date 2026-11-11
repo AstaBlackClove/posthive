@@ -3,7 +3,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  CALENDAR_LEGEND,
   CONTENT_STATUS,
   CONTENT_STATUS_KEYS,
   PRODUCTION_STAGES,
@@ -24,16 +23,16 @@ describe("content status", () => {
     ]);
   });
 
-  it("the calendar legend lists the eight statuses of the design, in order, then Failed (a real state the design has no colour for)", () => {
-    expect(CALENDAR_LEGEND.map((k) => statusLabel(k))).toEqual([
-      "Brief needed", "Copywriting", "In design", "In review", "Changes requested", "Approved", "Scheduled", "Published", "Failed",
-    ]);
-  });
 
-  it("a status has one name everywhere: the calendar says 'Changes requested' and 'Brief needed', not 'Rejected' and 'Draft'", () => {
+  it("a status has one name everywhere: the pipeline and the table say 'Changes requested' and 'Brief needed', not 'Rejected' and 'Draft'", () => {
     expect(statusLabel("changes")).toBe("Changes requested");
     expect(statusLabel("brief")).toBe("Brief needed");
     expect(CONTENT_STATUS.changes.dot).toBe("bg-status-changes");
+  });
+
+  it("Published is blue, so it is not taken for In review, which is yellow", () => {
+    expect(CONTENT_STATUS.published.dot).toBe("bg-blue-600");
+    expect(CONTENT_STATUS.published.dot).not.toBe(CONTENT_STATUS.review.dot);
   });
 
   it("production and publication stages do not overlap and together cover every status", () => {

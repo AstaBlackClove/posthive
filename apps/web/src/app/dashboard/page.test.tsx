@@ -2,7 +2,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ApiCalendar, ApiDashboard, ApiPost } from "@/lib/dashboard-data";
+import type { ApiDashboard, ApiPost } from "@/lib/dashboard-data";
+import type { ListItem } from "@/lib/content-list";
+import type { CalendarAnswer } from "@/lib/useContentList";
 
 const h = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -51,12 +53,17 @@ const dashboard = (patch: Partial<ApiDashboard> = {}): ApiDashboard => ({
   ...patch,
 });
 
-const calendar = (posts: ApiPost[], range: { from: string; to: string }, truncated = false): ApiCalendar => ({ ...range, posts, truncated });
+/** A post of /dashboard as the row /jobs/calendar sends for it: the calendar is the Content List's. */
+const listItem = (p: ApiPost): ListItem => ({
+  id: p.id, status: p.status, approvalStatus: p.approvalStatus, scheduledFor: p.scheduledFor, title: p.title, caption: "",
+  channels: p.channels, sourceRow: null, link: null, designCopy: "", category: p.category,
+});
+const calendar = (posts: ApiPost[], range: { from: string; to: string }, truncated = false): CalendarAnswer => ({ ...range, items: posts.map(listItem), truncated, next: null, prev: null });
 
 /** Route each path to an answer; the calendar can be answered per range. */
 function serve(
   dash: ApiDashboard | Error,
-  cal: (from: string, to: string) => ApiCalendar | Promise<ApiCalendar> = (from, to) => calendar([], { from, to }),
+  cal: (from: string, to: string) => CalendarAnswer | Promise<CalendarAnswer> = (from, to) => calendar([], { from, to }),
   /** Anything else the page may ask (the drawer, the actions): a path answers with its value; unknown paths still fail the test. */
   other: (path: string, init?: { method?: string; body?: string }) => unknown = (path) => {
     throw new Error(`unexpected ${path}`);
@@ -67,7 +74,7 @@ function serve(
       if (dash instanceof Error) throw dash;
       return dash;
     }
-    const m = path.match(/^\/dashboard\/calendar\?from=([\d-]+)&to=([\d-]+)$/);
+    const m = path.match(/^\/jobs\/calendar\?filter=all&from=([\d-]+)&to=([\d-]+)$/);
     if (m) return cal(m[1], m[2]);
     return other(path, init);
   });
@@ -156,8 +163,8 @@ describe("dashboard page: real data", () => {
     serve(dashboard());
     render(<DashboardPage />);
     await screen.findByText("Plan Marketing");
-    await waitFor(() => expect(calls("/dashboard/calendar")).toHaveLength(1));
-    expect(calls("/dashboard/calendar")[0][0]).toBe("/dashboard/calendar?from=2026-10-26&to=2026-12-06");
+    await waitFor(() => expect(calls("/jobs/calendar")).toHaveLength(1));
+    expect(calls("/jobs/calendar")[0][0]).toBe("/jobs/calendar?filter=all&from=2026-10-26&to=2026-12-06");
   });
 
   it("asks for the workspace exactly once, even when the workspace list arrives after the first draw", async () => {
@@ -268,7 +275,7 @@ describe("dashboard page: the calendar", () => {
     serve(dashboard(), (from, to) => calendar([post({ id: "c1", title: "Cal post", scheduledFor: "2026-11-10T02:00:00.000Z" })], { from, to }));
     render(<DashboardPage />);
     await screen.findByText("Plan Marketing");
-    const cell = await screen.findByRole("gridcell", { name: "2026-11-10" });
+    const cell = await screen.findByRole("gridcell", { name: "Tue, 10 Nov 2026" });
     expect(await within(cell).findByText("Cal post")).toBeTruthy();
   });
 
@@ -277,15 +284,15 @@ describe("dashboard page: the calendar", () => {
     render(<DashboardPage />);
     await screen.findByText("Plan Marketing");
     await userEvent.click(screen.getByRole("button", { name: "Next month" }));
-    await waitFor(() => expect(calls("/dashboard/calendar")).toHaveLength(2));
-    expect(calls("/dashboard/calendar")[1][0]).toBe("/dashboard/calendar?from=2026-11-30&to=2027-01-03");
+    await waitFor(() => expect(calls("/jobs/calendar")).toHaveLength(2));
+    expect(calls("/jobs/calendar")[1][0]).toBe("/jobs/calendar?filter=all&from=2026-11-30&to=2027-01-03");
   });
 
   it("an answer that comes back after the person moved on is dropped: November's posts never show on December", async () => {
-    let releaseNovember: (a: ApiCalendar) => void = () => {};
+    let releaseNovember: (a: CalendarAnswer) => void = () => {};
     serve(dashboard(), (from, to) =>
       from === "2026-10-26"
-        ? new Promise<ApiCalendar>((resolve) => { releaseNovember = resolve; })
+        ? new Promise<CalendarAnswer>((resolve) => { releaseNovember = resolve; })
         : calendar([post({ id: "dec", title: "December post", scheduledFor: "2026-12-10T02:00:00.000Z" })], { from, to })
     );
     render(<DashboardPage />);
@@ -305,7 +312,9 @@ describe("dashboard page: the calendar", () => {
     render(<DashboardPage />);
     expect(await screen.findByText("Launch teaser")).toBeTruthy();
     expect(screen.queryByText("Couldn't load the dashboard")).toBeNull();
-    expect((await screen.findByRole("alert")).textContent).toContain("Couldn't load the posts of this range. calendar down");
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("We couldn't load the posts of this range");
+    expect(alert.textContent).toContain("calendar down");
     expect(screen.queryByText("Your calendar is empty")).toBeNull();
   });
 
@@ -321,14 +330,71 @@ describe("dashboard page: the calendar", () => {
     await userEvent.click(within(screen.getByRole("alert")).getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Cal post")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(calls("/dashboard/calendar").map((c) => c[0])).toEqual(Array(2).fill("/dashboard/calendar?from=2026-10-26&to=2026-12-06"));
+    expect(calls("/jobs/calendar").map((c) => c[0])).toEqual(Array(2).fill("/jobs/calendar?filter=all&from=2026-10-26&to=2026-12-06"));
   });
 
   it("while the first range loads the calendar is not called empty", async () => {
-    serve(dashboard(), () => new Promise<ApiCalendar>(() => {}));
+    serve(dashboard(), () => new Promise<CalendarAnswer>(() => {}));
     render(<DashboardPage />);
     await screen.findByText("Plan Marketing");
     expect(screen.queryByText("Your calendar is empty")).toBeNull();
+  });
+
+  it("every post shows the channels it goes to, so the calendar says where each one will be posted", async () => {
+    serve(dashboard(), (from, to) => calendar([
+      post({ id: "both", title: "On both", channels: ["linkedin", "instagram"], scheduledFor: "2026-11-10T02:00:00.000Z" }),
+      post({ id: "li", title: "LinkedIn only", channels: ["linkedin"], scheduledFor: "2026-11-11T02:00:00.000Z" }),
+    ], { from, to }));
+    render(<DashboardPage />);
+    const both = await screen.findByRole("button", { name: "Open 09:00 On both, Ready to Publish" });
+    expect([...both.querySelectorAll("img")].map((i) => i.getAttribute("alt"))).toEqual(["linkedin", "instagram"]);
+    expect([...screen.getByRole("button", { name: "Open 09:00 LinkedIn only, Ready to Publish" }).querySelectorAll("img")].map((i) => i.getAttribute("alt"))).toEqual(["linkedin"]);
+  });
+
+  it("the channel filter keeps the posts that go to the channel picked, and asks the server for nothing", async () => {
+    serve(dashboard(), (from, to) => calendar([
+      post({ id: "ig", title: "Instagram post", channels: ["instagram"], scheduledFor: "2026-11-10T02:00:00.000Z" }),
+      post({ id: "li", title: "LinkedIn post", channels: ["linkedin"], scheduledFor: "2026-11-11T02:00:00.000Z" }),
+    ], { from, to }));
+    render(<DashboardPage />);
+    await screen.findByText("Instagram post");
+    const before = calls("/jobs/calendar").length;
+    await userEvent.click(within(screen.getByRole("radiogroup", { name: "Channel" })).getByRole("radio", { name: "LinkedIn" }));
+    expect(screen.queryByText("Instagram post")).toBeNull();
+    expect(screen.getByText("LinkedIn post")).toBeTruthy();
+    expect(calls("/jobs/calendar")).toHaveLength(before);
+  });
+
+  it("a click on a post opens its drawer, even a post the table below does not list", async () => {
+    serve(dashboard(), (from, to) => calendar([post({ id: "c1", title: "Only on the calendar", scheduledFor: "2026-11-10T02:00:00.000Z" })], { from, to }), (path) => {
+      if (path === "/accounts") return [];
+      if (path === "/templates") return { templates: [] };
+      if (path === "/jobs/c1/detail") return { id: "c1", status: "pending", approvalStatus: null, scheduledFor: "2026-11-10T02:00:00.000Z", title: "Only on the calendar", caption: "", channels: ["instagram"], sourceRow: null, link: null, designCopy: "", category: null, pillar: null, owner: null, accounts: [], captionLength: 0, commentText: null, media: [], reviewNote: null, source: null, activity: [], mine: true, missing: [] };
+      throw new Error(`unexpected ${path}`);
+    });
+    render(<DashboardPage />);
+    expect(screen.queryByRole("row", { name: "Open Only on the calendar" })).toBeNull();
+    await userEvent.click(await screen.findByRole("button", { name: /^Open 09:00 Only on the calendar/ }));
+    expect(await screen.findByRole("heading", { name: "Only on the calendar" })).toBeTruthy();
+    expect(calls("/jobs/c1/detail")).toHaveLength(1);
+  });
+
+  it("the legend names the statuses the chips use", async () => {
+    serve(dashboard());
+    render(<DashboardPage />);
+    await screen.findByText("Plan Marketing");
+    const legend = screen.getByRole("list", { name: "Status legend" });
+    expect(within(legend).getAllByRole("listitem").map((i) => i.textContent)).toEqual(["Draft", "In Review", "Revision Required", "Ready to Publish", "Published", "Failed"]);
+  });
+
+  it("Today brings the calendar back to this month", async () => {
+    serve(dashboard());
+    render(<DashboardPage />);
+    await screen.findByText("Plan Marketing");
+    await userEvent.click(screen.getByRole("button", { name: "Next month" }));
+    expect(await screen.findByRole("heading", { name: "December 2026" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Today" }));
+    expect(await screen.findByRole("heading", { name: "November 2026" })).toBeTruthy();
   });
 
   it("tells the person when the range was cut short", async () => {
@@ -368,7 +434,7 @@ describe("dashboard page: moving the calendar over a month that has posts", () =
     serve(dashboard(), (from, to) =>
       from === "2026-10-26"
         ? calendar([nov], { from, to })
-        : new Promise<ApiCalendar>((resolve) => { release = () => resolve(calendar(posts, { from, to })); })
+        : new Promise<CalendarAnswer>((resolve) => { release = () => resolve(calendar(posts, { from, to })); })
     );
     return () => release();
   }
@@ -393,6 +459,16 @@ describe("dashboard page: moving the calendar over a month that has posts", () =
     release();
     expect(await screen.findByText("Thursday post")).toBeTruthy();
     expect(watch.appeared()).toBe(false);
+  });
+
+  it("names the whole range it is empty for: the week and the day too, not the first word of their names", async () => {
+    serve(dashboard());
+    render(<DashboardPage />);
+    expect(await screen.findByText("Schedule your first post or import a quarter plan to fill November 2026 with content.")).toBeTruthy();
+    await userEvent.click(screen.getByRole("radio", { name: "Week" }));
+    expect(await screen.findByText("Schedule your first post or import a quarter plan to fill 9 – 15 Nov 2026 with content.")).toBeTruthy();
+    await userEvent.click(screen.getByRole("radio", { name: "Day" }));
+    expect(await screen.findByText("Schedule your first post or import a quarter plan to fill Monday, 9 Nov 2026 with content.")).toBeTruthy();
   });
 
   it("still says it when the month it arrives at really has no posts", async () => {
@@ -444,7 +520,7 @@ describe("dashboard page: acting on the content list", () => {
 
   const bar = () => screen.queryByRole("region", { name: "Selected posts" });
   const asked = (path: string, method?: string) => h.apiFetch.mock.calls.filter((c) => c[0] === path && (method === undefined || c[1]?.method === method)).length;
-  const calendarCalls = () => h.apiFetch.mock.calls.filter((c) => String(c[0]).startsWith("/dashboard/calendar")).length;
+  const calendarCalls = () => h.apiFetch.mock.calls.filter((c) => String(c[0]).startsWith("/jobs/calendar")).length;
   const bodyOf = (path: string) => JSON.parse(h.apiFetch.mock.calls.find((c) => c[0] === path)![1].body);
 
   it("there is no bar until a row is ticked; then it shows how many and Delete, and Clear takes it away", async () => {

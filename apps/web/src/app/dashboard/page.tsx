@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,11 +10,11 @@ import { BRAND } from "@/lib/brand";
 import { wibDateKey } from "@/lib/datetime";
 import { firstName, greetingFor } from "@/lib/dashboard-format";
 import { rowsByTab, subtitleOf, toDashboardData } from "@/lib/dashboard-data";
-import { useCalendar, useDashboard } from "@/lib/useDashboard";
+import { useDashboard } from "@/lib/useDashboard";
 import { usePermissions } from "@/lib/usePermissions";
 import { SelectionBar } from "@/components/content-list/SelectionBar";
 import { useContentActions } from "@/components/content-list/useContentActions";
-import { ContentCalendar } from "@/components/dashboard/ContentCalendar";
+import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
 import { ContentTable } from "@/components/dashboard/ContentTable";
 import { PlanMarketingCard } from "@/components/dashboard/PlanMarketingCard";
 import { QuickStartBanner } from "@/components/dashboard/QuickStartBanner";
@@ -28,24 +28,24 @@ import { Topbar } from "@/components/dashboard/Topbar";
 // "use client": it reads the signed-in user, and the calendar and table are interactive.
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { canAccess, canEditContent, canSubmitOwn } = usePermissions();
+  const { canAccess, canEditContent, canReview, canSubmitOwn } = usePermissions();
 
   const now = useMemo(() => new Date(), []);
   const todayKey = wibDateKey(now);
   const { data: api, loading, error, reload } = useDashboard();
-  const calendar = useCalendar();
 
   const data = api ? toDashboardData({ api, userName: user?.name ?? "", brand: BRAND.name, canAccess }) : null;
   // The table's rows must keep their identity between renders (TanStack rebuilds its rows when they change)
   const rows = useMemo(() => (api ? rowsByTab(api) : undefined), [api]);
 
-  // The table acts on a post as the Content List does: the same drawer, bar and dialogs. After a change the numbers and
-  // the calendar are asked again, so they never show a post that was deleted or sent a moment ago.
-  const { retry: reloadCalendar } = calendar;
+  // The table and the calendar act on a post as the Content List does: the same drawer, bar and dialogs. After a change the
+  // numbers and the calendar are asked again (the calendar when `version` changes), so they never show a post that was
+  // deleted or sent a moment ago.
+  const [version, setVersion] = useState(0);
   const afterChange = useCallback(() => {
     reload();
-    reloadCalendar();
-  }, [reload, reloadCalendar]);
+    setVersion((v) => v + 1);
+  }, [reload]);
   // A post can be in two tabs; it is the same post, so the first row found is as good as any
   const allRows = useMemo(() => (rows ? Object.values(rows).flat() : []), [rows]);
   const actions = useContentActions({ rows: allRows, reload: afterChange, keepGone: false });
@@ -102,15 +102,12 @@ export default function DashboardPage() {
               <div className="flex min-w-0 flex-col gap-3">
                 <PlanMarketingCard plan={data.plan} />
                 <StatGrid data={data} />
-                <ContentCalendar
+                <DashboardCalendar
                   todayKey={todayKey}
-                  events={calendar.events}
-                  eventsRange={calendar.range}
-                  loading={calendar.loading}
-                  truncated={calendar.truncated}
-                  error={calendar.error}
-                  onRetry={calendar.retry}
-                  onRangeChange={calendar.setRange}
+                  version={version}
+                  role={{ canEditContent, canReview, canSubmitOwn }}
+                  openId={actions.openId}
+                  onOpen={actions.open}
                 />
               </div>
               <SideColumn data={data} today={now} canImport={canAccess("/jobs/import")} />

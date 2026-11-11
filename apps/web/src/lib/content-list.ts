@@ -95,11 +95,31 @@ export function filterOf(post: { status: string; approvalStatus: string | null }
   return stage === "review" ? "review" : stage === "changes" ? "rejected" : "draft";
 }
 
+/** The dashboard's status key for each status of the list: its pill's colour and dot. The calendar's legend reads the same map. */
+export const PILL_OF: Record<Exclude<ListFilter, "all">, ContentStatusKey> = {
+  draft: "brief",
+  review: "review",
+  rejected: "changes",
+  pending: "approved",
+  done: "published",
+  failed: "failed",
+};
+
+/**
+ * A post's card on the calendar: the colour of its status's dot as a bar on the left, and a tint of it behind. A dot or a badge
+ * is too small to read across a month; the card is what tells the statuses apart. Written out so Tailwind sees every class.
+ */
+export const CARD_TONE: Record<Exclude<ListFilter, "all">, string> = {
+  draft: "border-l-neutral-200 bg-neutral-200/35",
+  review: "border-l-brand-600 bg-brand-600/15",
+  rejected: "border-l-status-changes bg-status-changes/15",
+  pending: "border-l-green-600 bg-green-600/15",
+  done: "border-l-blue-600 bg-blue-600/15",
+  failed: "border-l-red-600 bg-red-600/15",
+};
+
 /** The dashboard's status key for the same post, for its pill (colour and dot). */
-export function pillOf(post: { status: string; approvalStatus: string | null }): ContentStatusKey {
-  const f = filterOf(post);
-  return f === "pending" ? "approved" : f === "done" ? "published" : f === "failed" ? "failed" : f === "review" ? "review" : f === "rejected" ? "changes" : "brief";
-}
+export const pillOf = (post: { status: string; approvalStatus: string | null }): ContentStatusKey => PILL_OF[filterOf(post)];
 
 /** The status as the list names it. */
 export const statusOfPost = (post: { status: string; approvalStatus: string | null }): string => LIST_STATUS[filterOf(post)];
@@ -242,6 +262,20 @@ export function timeRows(postHours: number[]): number[] {
 /** "08:00" */
 export const hourLabel = (hour: number): string => `${String(hour).padStart(2, "0")}:00`;
 
+/** The channels the calendar's filter always lists, as the design draws it. */
+const BASE_CHANNELS = ["instagram", "linkedin"];
+
+/**
+ * What the calendar's channel filter offers: All and the two channels of the design, any other channel a post in view
+ * goes to, and the one picked (so moving to a month without it leaves the filter with something selected).
+ */
+export function channelOptions(items: { channels: string[] }[], picked: string): string[] {
+  const options = new Set(["all", ...BASE_CHANNELS]);
+  for (const item of items) for (const channel of item.channels) options.add(channel);
+  options.add(picked);
+  return [...options];
+}
+
 /** The posts by their WIB day, in the order they came (the API sends them by time). Posts with no date are left out. */
 export function groupByDay(items: ListItem[]): Map<string, ListItem[]> {
   const map = new Map<string, ListItem[]>();
@@ -296,10 +330,10 @@ export function dayLine(items: ListItem[], channelName: (platform: string) => st
 }
 
 /** The footer under the calendar: how many posts the grid shows, and the status split of the whole list. */
-export function calendarFooter(view: CalendarView, anchor: string, shown: number, filter: ListFilter, counts: ListCounts): string {
+export function calendarFooter(view: CalendarView, anchor: string, shown: number, filter: ListFilter, counts?: ListCounts): string {
   const where = view === "month" ? `in ${monthTitle(anchor)}` : view === "week" ? `in the week of ${rangeLabel("week", anchor)}` : `on ${dayLabel(anchor)}`;
   const parts = [`Showing ${plural(shown, "post", "posts")} ${where}`];
-  if (filter === "all") parts.push(...statusSplit(counts));
+  if (filter === "all" && counts) parts.push(...statusSplit(counts));
   // the grid places posts by their date: a draft made without one is only in the table
   parts.push("click a post to preview", "posts with no date are in the table");
   return parts.join(" · ");

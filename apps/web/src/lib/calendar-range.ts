@@ -59,10 +59,3 @@ export function shiftAnchor(view: CalendarView, anchor: string, direction: 1 | -
 export function inAnchorMonth(day: string, anchor: string): boolean {
   return day.slice(0, 7) === anchor.slice(0, 7);
 }
-
-/** The heading under "Content calendar": the month, or the day or week range. */
-export function rangeTitle(view: CalendarView, anchor: string, monthName: (key: string) => string): string {
-  if (view === "month") return monthName(anchor);
-  const days = visibleDays(view, anchor);
-  return view === "day" ? days[0] : `${days[0]} – ${days[days.length - 1]}`;
-}

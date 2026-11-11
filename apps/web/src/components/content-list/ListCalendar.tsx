@@ -1,23 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { InlineAlert } from "@/components/InlineAlert";
-import { StatusDot } from "@/components/dashboard/StatusDot";
-import { StatusPill } from "@/components/dashboard/StatusPill";
+import { StatusLegend } from "@/components/dashboard/StatusDot";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/cn";
 import { inAnchorMonth, shiftAnchor, visibleDays, type CalendarView } from "@/lib/calendar-range";
 import {
   calendarFooter,
+  CARD_TONE,
   dayLabel,
   dayLine,
+  filterOf,
   groupByDay,
   cellKey,
+  channelOptions,
   hourLabel,
   nextStep,
-  pillOf,
   placeByHour,
   postsLabel,
   rangeLabel,
@@ -53,8 +54,9 @@ function chunk<T>(items: T[], size: number): T[][] {
 type Open = { openId: string | null; onOpen: (id: string) => void };
 
 /**
- * A post inside a month cell or a week column: its channels, its time, its status and its title on one line. In a
- * narrow cell (a phone, a small window) the status is only its dot; the full name is in the button's label and title.
+ * A post inside a month cell or a week column: its channels, its time, its status and its title. The card is the colour of
+ * its status (CARD_TONE), which reads across a whole month where a dot would not. In a narrow cell the status name is left
+ * out and the colour stays; the full name is in the button's label and title.
  */
 function Chip({ item, openId, onOpen }: Open & { item: ListItem }) {
   const open = openId === item.id;
@@ -67,18 +69,16 @@ function Chip({ item, openId, onOpen }: Open & { item: ListItem }) {
       title={label}
       data-open={open || undefined}
       className={cn(
-        "@container flex w-full min-w-0 cursor-pointer flex-col gap-1 rounded-lg border px-1.5 py-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40",
-        open ? "border-brand-400 bg-brand-50" : "border-border bg-bg hover:border-neutral-300"
+        "@container flex w-full min-w-0 cursor-pointer flex-col gap-1 rounded-md border-l-3 py-1.5 pr-1.5 pl-2 text-left outline-none transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring/40",
+        CARD_TONE[filterOf(item)],
+        open && "ring-2 ring-neutral-700"
       )}
     >
       <span className="flex min-w-0 items-center gap-1.5">
         <ChannelStack channels={item.channels} size={16} />
-        <span className="shrink-0 type-body-sb-xxs text-brand-800 tabular-nums">{timeOf(item)}</span>
+        <span className="shrink-0 type-body-sb-xxs text-fg tabular-nums">{timeOf(item)}</span>
         {/* wide enough for the status name: a chip in the design's 1440px month cell or week column is about this wide */}
-        <StatusPill status={pillOf(item)} className="ml-auto hidden min-w-0 px-2 @min-[7.5rem]:inline-flex">
-          {statusOfPost(item)}
-        </StatusPill>
-        <StatusDot status={pillOf(item)} className="ml-auto size-1.5 @min-[7.5rem]:hidden" />
+        <span className="ml-auto hidden min-w-0 truncate type-body-sb-xxs text-fg @min-[7.5rem]:block">{statusOfPost(item)}</span>
       </span>
       <span className="truncate type-body-r-xs text-fg">{item.title}</span>
     </button>
@@ -192,7 +192,7 @@ function DayGrid({ day, posts, next, role, openId, onOpen, onGoTo }: Open & { da
             <div role="gridcell" className={cn("flex min-h-11 min-w-0 flex-wrap items-start gap-3 border-l border-border/60 p-3", here.length > 0 ? "bg-brand-50" : "bg-surface")}>
               {here.map((item) => (
                 <div key={item.id} className="w-96 max-w-full">
-                  <PostCard item={item} open={openId === item.id} onOpen={onOpen} />
+                  <PostCard item={item} open={openId === item.id} onOpen={onOpen} tinted />
                 </div>
               ))}
               {/* the next step is about the first post of the day, and sits beside it */}
@@ -234,13 +234,21 @@ export function useCalendarPosition(todayKey: string): CalendarPosition {
 
 type Props = Open & {
   filter: ListFilter;
-  counts: ListCounts;
+  /** The status split for the footer; a page with no status tabs leaves it out. */
+  counts?: ListCounts;
   position: CalendarPosition;
   /** Today as a WIB "YYYY-MM-DD" key. */
   todayKey: string;
   /** Changes when the list was edited: the grid asks again. */
   version: number;
   role: RoleView;
+  /** Offer a filter by channel (All, Instagram, LinkedIn, ...). It only hides posts already loaded. */
+  channelFilter?: boolean;
+  /**
+   * What the page says over the grid when the range has no post: given the range's name ("November 2026"). A page
+   * with its own empty state also stays on the range the person asked for, instead of jumping to the closest post.
+   */
+  whenEmpty?: (range: string) => ReactNode;
 };
 
 /**
@@ -248,21 +256,27 @@ type Props = Open & {
  * hour. It opens on today's month; when that month has no post it jumps once to the closest one (before or after), so a
  * plan for another quarter is not an empty grid. A post only opens the drawer: moving a post to another day is an edit.
  */
-export function ListCalendar({ filter, counts, position, todayKey, version, role, openId, onOpen }: Props) {
+export function ListCalendar({ filter, counts, position, todayKey, version, role, openId, onOpen, channelFilter = false, whenEmpty }: Props) {
   const { view, setView, anchor, setAnchor, jumpedFor } = position;
+  const [channel, setChannel] = useState("all");
   const days = visibleDays(view, anchor);
   const { answer, ready, loading, error, retry } = useListCalendar(filter, days[0], days[days.length - 1], version);
 
-  const items = useMemo(() => answer?.items ?? [], [answer]);
+  const loaded = useMemo(() => answer?.items ?? [], [answer]);
+  const channels = useMemo(() => channelOptions(loaded, channel), [loaded, channel]);
+  const items = useMemo(() => (channel === "all" ? loaded : loaded.filter((i) => i.channels.includes(channel))), [loaded, channel]);
   const byDay = useMemo(() => groupByDay(items), [items]);
+  // `answer` is only ever the one for the days on screen, so while the next range is on its way this is false: waiting is not empty
+  const rangeIsEmpty = answer !== null && !loading && !error && loaded.length === 0;
+  const jumps = whenEmpty === undefined;
 
   // Once for each status tab: an empty grid goes to the closest post. Moving the grid afterwards is the person's.
   useEffect(() => {
-    if (!ready || !answer || jumpedFor.current === filter) return;
+    if (!jumps || !ready || !answer || jumpedFor.current === filter) return;
     jumpedFor.current = filter;
     const target = answer.items.length === 0 ? (answer.next ?? answer.prev) : null;
     if (target?.scheduledFor) setAnchor(dayOf(target));
-  }, [ready, answer, filter, jumpedFor, setAnchor]);
+  }, [jumps, ready, answer, filter, jumpedFor, setAnchor]);
 
   const goToDay = (day: string) => {
     setView("day");
@@ -274,6 +288,9 @@ export function ListCalendar({ filter, counts, position, todayKey, version, role
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1">
+          <Button variant="secondary" size="sm" className="mr-1 rounded-full px-4" onClick={() => setAnchor(todayKey)}>
+            Today
+          </Button>
           <Button variant="ghost" size="icon-sm" aria-label={`Previous ${view}`} onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}>
             <ChevronLeftIcon />
           </Button>
@@ -284,11 +301,22 @@ export function ListCalendar({ filter, counts, position, todayKey, version, role
             {rangeLabel(view, anchor)}
           </h2>
         </div>
-        <ToggleGroup type="single" variant="pill" value={view} onValueChange={(v) => setView(v as CalendarView)} aria-label="Calendar range" className="border-0 bg-transparent p-0">
-          <ToggleGroupItem value="day">Day</ToggleGroupItem>
-          <ToggleGroupItem value="week">Week</ToggleGroupItem>
-          <ToggleGroupItem value="month">Month</ToggleGroupItem>
-        </ToggleGroup>
+        <div className="flex flex-wrap items-center gap-3">
+          {channelFilter && (
+            <ToggleGroup type="single" variant="pill" value={channel} onValueChange={setChannel} aria-label="Channel" className="border-0 bg-transparent p-0">
+              {channels.map((c) => (
+                <ToggleGroupItem key={c} value={c}>
+                  {c === "all" ? "All" : platformLabel(c)}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          )}
+          <ToggleGroup type="single" variant="pill" value={view} onValueChange={(v) => setView(v as CalendarView)} aria-label="Calendar range" className="border-0 bg-transparent p-0">
+            <ToggleGroupItem value="day">Day</ToggleGroupItem>
+            <ToggleGroupItem value="week">Week</ToggleGroupItem>
+            <ToggleGroupItem value="month">Month</ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       </div>
 
       {error && (
@@ -300,17 +328,29 @@ export function ListCalendar({ filter, counts, position, todayKey, version, role
         </InlineAlert>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-border" aria-busy={loading}>
-        <div className={cn("transition-opacity", loading && "opacity-60")}>
-          {view === "month" && <MonthGrid days={days} anchor={anchor} todayKey={todayKey} byDay={byDay} openId={openId} onOpen={onOpen} onDay={goToDay} />}
-          {view === "week" && <WeekGrid days={days} todayKey={todayKey} byDay={byDay} items={items} openId={openId} onOpen={onOpen} />}
-          {view === "day" && <DayGrid day={anchor} posts={byDay.get(anchor) ?? []} next={answer?.next ?? null} role={role} openId={openId} onOpen={onOpen} onGoTo={goToDay} />}
+      {/* A grid of its own, so what a page says about an empty range takes the grid's cell: a day or a week is a short board,
+          and the board grows to the taller of the two instead of the message spilling over the controls. The grids scroll
+          sideways inside their cell, so the message stays centred on what is visible. */}
+      <div data-slot="board" className="grid grid-cols-1 overflow-hidden rounded-xl border border-border">
+        <div className="col-start-1 row-start-1 overflow-x-auto" aria-busy={loading}>
+          <div className={cn("transition-opacity", loading && "opacity-60")}>
+            {view === "month" && <MonthGrid days={days} anchor={anchor} todayKey={todayKey} byDay={byDay} openId={openId} onOpen={onOpen} onDay={goToDay} />}
+            {view === "week" && <WeekGrid days={days} todayKey={todayKey} byDay={byDay} items={items} openId={openId} onOpen={onOpen} />}
+            {view === "day" && <DayGrid day={anchor} posts={byDay.get(anchor) ?? []} next={answer?.next ?? null} role={role} openId={openId} onOpen={onOpen} onGoTo={goToDay} />}
+          </div>
         </div>
+        {rangeIsEmpty && whenEmpty && (
+          <div className="pointer-events-none col-start-1 row-start-1 flex items-center justify-center p-4">
+            <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-border bg-surface shadow-lg">{whenEmpty(rangeLabel(view, anchor))}</div>
+          </div>
+        )}
       </div>
+
+      <StatusLegend variant="calendar" />
 
       {answer?.truncated && (
         <p role="status" className="type-body-r-xs text-brand-800">
-          This range has more posts than the calendar can show. Pick a status or a shorter range to see them all.
+          This range has more posts than the calendar can show. Move to a shorter view to see them all.
         </p>
       )}
       <p className="type-body-r-xs text-muted-foreground" aria-live="polite">

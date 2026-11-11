@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CONTENT_STATUS } from "./content-status";
 import {
   LIST_STATUS,
   activityText,
@@ -7,6 +8,7 @@ import {
   calendarFooter,
   captionLimit,
   cellKey,
+  channelOptions,
   dayLabel,
   dayLine,
   filterOf,
@@ -18,6 +20,8 @@ import {
   longDate,
   nextStep,
   pillOf,
+  PILL_OF,
+  CARD_TONE,
   placeByHour,
   postsLabel,
   publishingLabel,
@@ -76,6 +80,52 @@ describe("the six statuses", () => {
     // jobFilters.bucketJobCounts: draft + pending approval is "review", draft + rejected is "rejected"
     expect(filterOf({ status: "draft", approvalStatus: "pending" })).toBe("review");
     expect(filterOf({ status: "draft", approvalStatus: "rejected" })).toBe("rejected");
+  });
+});
+
+describe("channelOptions: what the calendar's channel filter offers", () => {
+  const on = (...channels: string[]) => ({ channels });
+
+  it("always offers All, Instagram and LinkedIn, so the filter does not change shape from one month to the next", () => {
+    expect(channelOptions([], "all")).toEqual(["all", "instagram", "linkedin"]);
+  });
+
+  it("adds any other channel a post in view goes to, once, in the order they come", () => {
+    expect(channelOptions([on("mastodon", "instagram"), on("bluesky"), on("mastodon")], "all")).toEqual(["all", "instagram", "linkedin", "mastodon", "bluesky"]);
+  });
+
+  it("keeps the channel that is picked, so moving to a month without it does not leave a filter with nothing selected", () => {
+    expect(channelOptions([], "mastodon")).toEqual(["all", "instagram", "linkedin", "mastodon"]);
+    expect(channelOptions([on("mastodon")], "mastodon")).toEqual(["all", "instagram", "linkedin", "mastodon"]);
+  });
+});
+
+describe("PILL_OF: the colour each status of the list is drawn in", () => {
+  it("has a colour for every status and agrees with pillOf, which the chips use", () => {
+    expect(Object.keys(PILL_OF).sort()).toEqual(["draft", "done", "failed", "pending", "rejected", "review"].sort());
+    expect(PILL_OF).toEqual({ draft: "brief", review: "review", rejected: "changes", pending: "approved", done: "published", failed: "failed" });
+    for (const [status, approvalStatus, filter] of [["draft", null, "draft"], ["draft", "pending", "review"], ["draft", "rejected", "rejected"], ["pending", null, "pending"], ["done", null, "done"], ["failed", null, "failed"]] as const) {
+      expect(pillOf({ status, approvalStatus })).toBe(PILL_OF[filter]);
+    }
+  });
+});
+
+describe("CARD_TONE: the colour of a post's card on the calendar", () => {
+  const filters = Object.keys(PILL_OF) as (keyof typeof PILL_OF)[];
+
+  it("has a tone for every status, and no two statuses share a colour: the card is how the status is told apart", () => {
+    expect(Object.keys(CARD_TONE).sort()).toEqual([...filters].sort());
+    expect(new Set(Object.values(CARD_TONE)).size).toBe(filters.length);
+    expect(new Set(filters.map((f) => CONTENT_STATUS[PILL_OF[f]].dot)).size).toBe(filters.length);
+  });
+
+  it("is the colour of the status's dot: a bar on the left in the full colour, a tint behind", () => {
+    for (const f of filters) {
+      const colour = CONTENT_STATUS[PILL_OF[f]].dot.replace(/^bg-/, "");
+      const classes = CARD_TONE[f].split(" ");
+      expect(classes, f).toContain(`border-l-${colour}`);
+      expect(classes.some((c) => c.startsWith(`bg-${colour}/`)), f).toBe(true);
+    }
   });
 });
 
@@ -326,6 +376,8 @@ describe("the footers of the calendar and the board", () => {
     expect(calendarFooter("month", "2026-03-07", 7, "all", c)).toBe("Showing 7 posts in March 2026 · 60 Draft · click a post to preview · posts with no date are in the table");
     expect(calendarFooter("week", "2026-03-25", 3, "all", c)).toContain("Showing 3 posts in the week of 23 – 29 Mar 2026 · 60 Draft · click a post to preview");
     expect(calendarFooter("day", "2026-03-07", 1, "all", c)).toContain("Showing 1 post on Sat, 7 Mar 2026 · 60 Draft · click a post to preview");
+    // a calendar with no counts of its own (the dashboard's) has no split to read, whatever the tab
+    expect(calendarFooter("month", "2026-03-07", 7, "all", undefined)).toBe("Showing 7 posts in March 2026 · click a post to preview · posts with no date are in the table");
     // a status tab is already one status: no split to read
     expect(calendarFooter("month", "2026-03-07", 7, "draft", c)).toBe("Showing 7 posts in March 2026 · click a post to preview · posts with no date are in the table");
   });

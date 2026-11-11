@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { firstName, formatPublishAt, formatTodayPill, greetingFor, initialsOf, monthTitle, quarterMonths, shortName, sortSummary } from "./dashboard-format";
-import { inAnchorMonth, rangeTitle, shiftAnchor, visibleDays } from "./calendar-range";
+import { inAnchorMonth, shiftAnchor, visibleDays } from "./calendar-range";
 
 describe("formatTodayPill", () => {
   it("is 'Fri, 13 Nov 2026' (the design says Thu, but 13 Nov 2026 is a Friday and its own calendar puts it in the Fri column)", () => {
@@ -132,20 +132,11 @@ describe("shiftAnchor", () => {
   });
 });
 
-describe("inAnchorMonth and rangeTitle", () => {
+describe("inAnchorMonth", () => {
   it("days of the neighbouring months are outside", () => {
     expect(inAnchorMonth("2026-10-31", "2026-11-13")).toBe(false);
     expect(inAnchorMonth("2026-11-01", "2026-11-13")).toBe(true);
     expect(inAnchorMonth("2026-12-01", "2026-11-13")).toBe(false);
-  });
-
-  it("the month view is titled with the month", () => {
-    expect(rangeTitle("month", "2026-11-13", monthTitle)).toBe("November 2026");
-  });
-
-  it("the week view shows its first and last day, the day view the day", () => {
-    expect(rangeTitle("week", "2026-11-13", monthTitle)).toBe("2026-11-09 – 2026-11-15");
-    expect(rangeTitle("day", "2026-11-13", monthTitle)).toBe("2026-11-13");
   });
 });
 

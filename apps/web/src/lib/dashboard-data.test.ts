@@ -2,15 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   attentionNote,
   subtitleOf,
-  calendarStatus,
   channelStats,
-  eventsByDay,
   pipelineCounts,
   productionOf,
   publicationOf,
   quickStart,
   rowsByTab,
-  toCalendarEvents,
   toContentRow,
   toDashboardData,
   type ApiDashboard,
@@ -241,37 +238,6 @@ describe("toDashboardData", () => {
 
   it("all text is English", () => {
     expect(JSON.stringify(build())).not.toMatch(/Tambah|Quartal|Akun/);
-  });
-});
-
-describe("calendar", () => {
-  it("a post shows how it ended (published, failed), else where it is in production; waiting for its time it is still Approved, as in the design", () => {
-    expect(calendarStatus(post({ status: "failed" }))).toBe("failed");
-    expect(calendarStatus(post({ status: "done" }))).toBe("published");
-    expect(calendarStatus(post({ status: "pending" }))).toBe("approved");
-    expect(calendarStatus(post({ status: "draft", approvalStatus: "rejected" }))).toBe("changes");
-    expect(calendarStatus(post({ status: "draft" }))).toBe("brief");
-  });
-
-  it("events sit on the WIB day, not the UTC one: 20:00 UTC is already tomorrow in Jakarta", () => {
-    const events = toCalendarEvents([post({ scheduledFor: "2026-11-09T20:00:00.000Z" }), post({ id: "p2", scheduledFor: "2026-11-09T16:59:00.000Z" })], (iso) => wibDateKey(new Date(iso)), (iso) => formatTime(new Date(iso)));
-    expect(events.map((e) => e.day)).toEqual(["2026-11-10", "2026-11-09"]);
-  });
-
-  it("an event carries the WIB time of day for its pill", () => {
-    const [e] = toCalendarEvents([post({ scheduledFor: "2026-11-13T07:00:00.000Z" })], (iso) => iso.slice(0, 10), (iso) => formatTime(new Date(iso)));
-    expect(e.time).toBe("14:00");
-  });
-
-  it("a post with no date has no day, so it is not on the grid", () => {
-    expect(toCalendarEvents([post({ scheduledFor: null })], (i) => i, (i) => i)).toEqual([]);
-  });
-
-  it("groups the events of a day, in the order they came", () => {
-    const events = toCalendarEvents([post({ id: "a" }), post({ id: "b" }), post({ id: "c", scheduledFor: "2026-11-19T02:00:00.000Z" })], (iso) => iso.slice(0, 10), (iso) => iso.slice(11, 16));
-    const days = eventsByDay(events);
-    expect(days.get("2026-11-18")!.map((e) => e.id)).toEqual(["a", "b"]);
-    expect(days.get("2026-11-19")!.map((e) => e.id)).toEqual(["c"]);
   });
 });
 

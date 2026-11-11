@@ -67,7 +67,8 @@ describe("StatusCounts", () => {
     render(<StatusCounts counts={counts()} filters={["draft", "rejected", "done", "failed"]} active="all" onPick={() => {}} />);
     const num = (name: string) => screen.getByRole("button", { name }).querySelector("span")!.className;
     expect(num("Revision Required: 0")).toContain("text-red-600");
-    expect(num("Published: 0")).toContain("text-green-600");
+    // Published is blue everywhere (its dot, its badge, its column): green is Ready to Publish
+    expect(num("Published: 0")).toContain("text-blue-700");
     expect(num("Failed: 0")).toContain("text-red-600");
     expect(num("Draft: 60")).toContain("text-fg");
   });

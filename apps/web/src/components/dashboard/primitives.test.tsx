@@ -11,6 +11,7 @@ import { SegmentedProgress } from "./SegmentedProgress";
 import { StatCard, percentOf } from "./StatCard";
 import { StatusDot, StatusLegend } from "./StatusDot";
 import { CONTENT_STATUS } from "@/lib/content-status";
+import { CARD_TONE } from "@/lib/content-list";
 
 afterEach(cleanup);
 
@@ -146,17 +147,30 @@ describe("StatusDot and StatusLegend", () => {
     ]);
   });
 
-  it("the calendar legend lists the statuses under the pipeline's names, Failed last", () => {
+  it("the calendar legend names the statuses the way the chips on the calendar do, one per status of the list", () => {
     render(<StatusLegend variant="calendar" />);
     const items = within(screen.getByRole("list", { name: "Status legend" })).getAllByRole("listitem");
-    expect(items.map((i) => i.textContent)).toEqual(["Brief needed", "Copywriting", "In design", "In review", "Changes requested", "Approved", "Scheduled", "Published", "Failed"]);
+    expect(items.map((i) => i.textContent)).toEqual(["Draft", "In Review", "Revision Required", "Ready to Publish", "Published", "Failed"]);
   });
 
-  it("the same status has the same colour in the pipeline and the calendar", () => {
+  it("each legend swatch is a small card in the colours of that status: the same classes as the post's card", () => {
+    render(<StatusLegend variant="calendar" />);
+    const items = within(screen.getByRole("list", { name: "Status legend" })).getAllByRole("listitem");
+    const filters = ["draft", "review", "rejected", "pending", "done", "failed"] as const;
+    items.forEach((item, i) => {
+      const swatch = item.querySelector("span")!;
+      expect(swatch.getAttribute("aria-hidden")).toBe("true");
+      for (const c of CARD_TONE[filters[i]].split(" ")) expect(classesOf(swatch), filters[i]).toContain(c);
+    });
+  });
+
+  it("the same status has the same colour in the pipeline and the calendar: the swatch's bar is the pipeline's dot", () => {
     const { container } = render(<><StatusLegend variant="pipeline" /><StatusLegend variant="calendar" /></>);
-    const design = [...container.querySelectorAll("li")].filter((li) => li.textContent?.startsWith("In design"));
-    expect(design).toHaveLength(2);
-    for (const li of design) expect(classesOf(li.querySelector("span")!)).toContain(CONTENT_STATUS.design.dot);
+    const review = [...container.querySelectorAll("li")].filter((li) => /^in review/i.test(li.textContent ?? ""));
+    expect(review).toHaveLength(2);
+    const colour = CONTENT_STATUS.review.dot.replace(/^bg-/, "");
+    expect(classesOf(review[0].querySelector("span")!)).toContain(CONTENT_STATUS.review.dot);
+    expect(classesOf(review[1].querySelector("span")!)).toContain(`border-l-${colour}`);
   });
 });
 

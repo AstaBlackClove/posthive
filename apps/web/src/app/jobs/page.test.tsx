@@ -615,6 +615,14 @@ describe("Content List page: calendar view", () => {
     expect(screen.queryByText(/selected/)).toBeNull();
   });
 
+  it("explains the colours of the posts under the grid", async () => {
+    serve();
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    const legend = await screen.findByRole("list", { name: "Status legend" });
+    expect(within(legend).getAllByRole("listitem").map((i) => i.textContent)).toEqual(["Draft", "In Review", "Revision Required", "Ready to Publish", "Published", "Failed"]);
+  });
+
   it("an empty month jumps once to the month of the closest post, and only once", async () => {
     serve(undefined, (q) => (q.get("from") === "2026-10-26" ? calendar(q, { prev: mar7 }) : calendar(q, { items: [mar7, mar12] })));
     render(<ContentListPage />);
@@ -810,6 +818,15 @@ describe("Content List page: Kanban view", () => {
     expect(screen.getByRole("radio", { name: "Table view" }).getAttribute("aria-checked")).toBe("true");
     await waitFor(() => expect(listCalls().at(-1)).toBe("/jobs/list?filter=draft&page=1&limit=10"));
     expect(screen.getByRole("tab", { name: /^Draft/ }).getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("a card keeps its neutral frame: the column already says the status", async () => {
+    serve(board);
+    render(<ContentListPage />);
+    await openView("Kanban view");
+    const card = (await screen.findByRole("button", { name: "Open Post 3" })).closest("article") as HTMLElement;
+    expect(card.className).not.toMatch(/border-l-/);
+    expect(card.className).toContain("border-border");
   });
 
   it("a card opens the drawer, and is not draggable", async () => {

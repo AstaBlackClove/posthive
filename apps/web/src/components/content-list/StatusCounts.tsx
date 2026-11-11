@@ -6,7 +6,7 @@ import { LIST_STATUS, type ListCounts, type ListFilter } from "@/lib/content-lis
 const NUMBER: Partial<Record<ListFilter, string>> = {
   rejected: "text-red-600",
   failed: "text-red-600",
-  done: "text-green-600",
+  done: "text-blue-700",
 };
 
 type Props = {

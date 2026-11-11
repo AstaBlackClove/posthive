@@ -1,4 +1,4 @@
-// Turns what GET /dashboard and /dashboard/calendar answer into the DashboardData the sections take
+// Turns what GET /dashboard answers into the DashboardData the sections take
 // (components/dashboard/types.ts). Pure: no fetching and no clock, so the rules are tested alone.
 //
 // What a post is in the dashboard's terms:
@@ -44,13 +44,6 @@ export interface ApiDashboard {
   lists: Record<TabKey, ApiList>;
   channels: Array<{ platform: string; accounts: number; handle: string; posts: number }>;
   setup: { imported: boolean; created: boolean; accounts: number; members: number; invites: number };
-}
-
-export interface ApiCalendar {
-  from: string;
-  to: string;
-  posts: ApiPost[];
-  truncated: boolean;
 }
 
 // ── A post's two statuses ───────────────────────────────────────────────────
@@ -244,41 +237,3 @@ export function rowsByTab(api: ApiDashboard): Record<TabKey, ContentRow[]> {
 }
 
 // ── The calendar ────────────────────────────────────────────────────────────
-
-export interface CalendarEvent {
-  id: string;
-  title: string;
-  /** The WIB day, "YYYY-MM-DD". */
-  day: string;
-  /** The WIB time of day, "14:00". */
-  time: string;
-  channels: string[];
-  status: ContentStatusKey;
-}
-
-/**
- * The status a post shows on the calendar. As in the design, a post waiting for its time is still "Approved"
- * (the table says "Scheduled" beside it); only how it ended, Published or Failed, takes its place.
- */
-export function calendarStatus(post: ApiPost): ContentStatusKey {
-  const outcome = publicationOf(post);
-  return outcome === "published" || outcome === "failed" ? outcome : productionOf(post);
-}
-
-/** Posts of a range as calendar events, each on its WIB day and time; a post with no date has no day and is left out. */
-export function toCalendarEvents(posts: ApiPost[], dayOf: (iso: string) => string, timeOf: (iso: string) => string): CalendarEvent[] {
-  return posts.flatMap((p) =>
-    p.scheduledFor ? [{ id: p.id, title: p.title, day: dayOf(p.scheduledFor), time: timeOf(p.scheduledFor), channels: p.channels, status: calendarStatus(p) }] : []
-  );
-}
-
-/** Events grouped by day, in the order they came (the API sends them by time). */
-export function eventsByDay(events: CalendarEvent[]): Map<string, CalendarEvent[]> {
-  const map = new Map<string, CalendarEvent[]>();
-  for (const e of events) {
-    const day = map.get(e.day);
-    if (day) day.push(e);
-    else map.set(e.day, [e]);
-  }
-  return map;
-}

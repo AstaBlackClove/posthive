@@ -13,7 +13,7 @@ const TONE: Record<BoardFilter, { bar: string; dot: string }> = {
   review: { bar: "border-t-brand-700", dot: "bg-brand-700" },
   rejected: { bar: "border-t-red-600", dot: "bg-red-600" },
   pending: { bar: "border-t-green-600", dot: "bg-green-600" },
-  done: { bar: "border-t-brand-500", dot: "bg-brand-500" },
+  done: { bar: "border-t-blue-600", dot: "bg-blue-600" },
   failed: { bar: "border-t-red-600", dot: "bg-red-600" },
 };
 

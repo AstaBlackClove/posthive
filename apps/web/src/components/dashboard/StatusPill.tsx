@@ -16,7 +16,7 @@ const SOFT: Record<ContentStatusKey, string> = {
   changes: "bg-red-500/10 text-red-600",
   approved: "bg-green-600/10 text-green-700",
   scheduled: "bg-neutral-50 text-neutral-800",
-  published: "bg-brand-100 text-brand-800",
+  published: "bg-blue-600/10 text-blue-700",
   failed: "bg-red-500/10 text-red-600",
 };
 
