@@ -371,6 +371,41 @@ describe("ContentDrawer", () => {
     expect(imgs.map((i) => i.getAttribute("src"))).toEqual(expect.arrayContaining(["http://api.test/uploads/a.png"]));
   });
 
+  // A picture whose file is gone (a post published before the files were kept, a deleted upload) answers 404. The drawer
+  // must say so, not draw an empty grey square that looks like a loading bug.
+  describe("a picture that cannot be loaded", () => {
+    const gone = async () => {
+      await open(detail({ media: ["/uploads/a.png", "/uploads/b.png"] }));
+      const dialog = screen.getByRole("dialog");
+      // the design's pictures only: the header has the channels' icons, which are images too
+      return { dialog, imgs: () => [...dialog.querySelectorAll("img[src*=\"/uploads/\"]")] as HTMLImageElement[] };
+    };
+
+    it("is replaced by a note in its own square, and the others stay", async () => {
+      const { dialog, imgs } = await gone();
+      fireEvent.error(imgs()[0]);
+      expect(imgs()).toHaveLength(1);
+      expect(imgs().map((i) => i.getAttribute("src"))).not.toContain("http://api.test/uploads/a.png");
+      expect(imgs().map((i) => i.getAttribute("src"))).toContain("http://api.test/uploads/b.png");
+      expect(within(dialog).getAllByText("File removed").length).toBeGreaterThan(0);
+    });
+
+    it("when none is left, the section says why instead of counting images that are not there", async () => {
+      const { dialog, imgs } = await gone();
+      for (const img of imgs()) fireEvent.error(img);
+      expect(imgs()).toHaveLength(0);
+      expect(within(dialog).queryByText(/images? attached/)).toBeNull();
+      expect(within(dialog).getAllByText(/no longer stored/).length).toBeGreaterThan(0);
+    });
+
+    it("one that loads is not touched", async () => {
+      const { dialog, imgs } = await gone();
+      fireEvent.load(imgs()[0]);
+      expect(within(dialog).queryByText("File removed")).toBeNull();
+      expect(within(dialog).getAllByText("2 images attached").length).toBeGreaterThan(0);
+    });
+  });
+
   it("the tabs show Overview, the design alone, or the activity alone", async () => {
     await open(detail({ activity: [{ kind: "imported", by: null, at: "2026-11-13T03:42:00.000Z", note: null, channel: null }, { kind: "revision", by: "Dewi Kusuma", at: "2026-11-14T02:00:00.000Z", note: "Fix the hook", channel: null }] }));
     expect(screen.getByRole("tab", { name: "Activity (2)" })).toBeTruthy();

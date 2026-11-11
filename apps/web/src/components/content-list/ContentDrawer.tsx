@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CloudUploadIcon, ImageIcon } from "lucide-react";
+import { CloudUploadIcon, ImageIcon, ImageOffIcon } from "lucide-react";
 import { DesignReferenceCard } from "@/components/DesignReferenceCard";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { PLATFORM_LIMIT } from "@/components/PlatformPreview";
@@ -263,6 +263,10 @@ export function ContentDrawer({ id, templates, canEdit, canReview, canSubmitOwn,
 }
 
 function DesignSection({ post, template, category }: { post: PostDetail; template: DesignTemplate | undefined; category: ReturnType<typeof normalizeCategory> }) {
+  // A file that cannot be loaded (deleted from storage) says so in its own square; the others stay. The section is drawn
+  // twice (Overview, Design tab) and is thrown away when the post changes, so each draw learns it from the browser.
+  const [gone, setGone] = useState<ReadonlySet<string>>(() => new Set());
+  const shown = post.media.length - post.media.filter((url) => gone.has(url)).length;
   return (
     <section aria-labelledby={`design-title-${post.id}`}>
       <div className="flex items-baseline justify-between gap-3">
@@ -274,8 +278,15 @@ function DesignSection({ post, template, category }: { post: PostDetail; templat
           <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {post.media.map((url) => (
               <li key={url} className="aspect-square overflow-hidden rounded-xl bg-bg">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={assetUrl(url)} alt="" loading="lazy" className="size-full object-cover" />
+                {gone.has(url) ? (
+                  <div className="flex size-full flex-col items-center justify-center gap-1.5 p-2 text-center text-muted-foreground">
+                    <ImageOffIcon aria-hidden="true" className="size-5" />
+                    <span className="type-body-r-xxs">File removed</span>
+                  </div>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={assetUrl(url)} alt="" loading="lazy" className="size-full object-cover" onError={() => setGone((g) => new Set(g).add(url))} />
+                )}
               </li>
             ))}
           </ul>
@@ -291,7 +302,7 @@ function DesignSection({ post, template, category }: { post: PostDetail; templat
         {post.media.length > 0 && (
           <p className="flex items-center gap-1.5 type-body-r-xs text-muted-foreground">
             <ImageIcon aria-hidden="true" className="size-3.5" />
-            {post.media.length} {post.media.length === 1 ? "image" : "images"} attached
+            {shown > 0 ? `${shown} ${shown === 1 ? "image" : "images"} attached` : "The files of this design are no longer stored."}
           </p>
         )}
         <DesignReferenceCard template={template} category={category} />
