@@ -4,11 +4,24 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import type { ApiCalendar, ApiDashboard, ApiPost } from "@/lib/dashboard-data";
 
-const h = vi.hoisted(() => ({ apiFetch: vi.fn(), role: "member" as string, workspace: "ws-1", workspaceLoading: false }));
+const h = vi.hoisted(() => ({
+  apiFetch: vi.fn(),
+  role: "member" as string,
+  workspace: "ws-1",
+  workspaceLoading: false,
+  approvalRequired: false,
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 
-vi.mock("@/lib/api", () => ({ apiFetch: h.apiFetch }));
+vi.mock("@/lib/api", () => ({ apiFetch: h.apiFetch, assetUrl: (u: string) => u }));
 vi.mock("@/context/AuthContext", () => ({ useAuth: () => ({ user: { name: "Putri Anggraini", avatarUrl: null, role: h.role } }) }));
-vi.mock("@/context/WorkspaceContext", () => ({ useWorkspace: () => ({ activeWorkspace: h.workspaceLoading ? null : { id: h.workspace, role: h.role }, loading: h.workspaceLoading }) }));
+vi.mock("@/context/WorkspaceContext", () => ({
+  useWorkspace: () => ({ activeWorkspace: h.workspaceLoading ? null : { id: h.workspace, role: h.role, approvalRequired: h.approvalRequired }, loading: h.workspaceLoading }),
+}));
+vi.mock("@/components/Toast", () => ({ useToast: () => h.toast }));
+// The dialogs have their own tests; here only that the page hands them the right post
+vi.mock("@/components/EditPostDialog", () => ({ EditPostDialog: ({ job }: { job: { id: string } }) => <div role="dialog" aria-label="edit dialog">{job.id}</div> }));
+vi.mock("@/components/ReviewDialog", () => ({ ReviewDialog: ({ job }: { job: { id: string } }) => <div role="dialog" aria-label="review dialog">{job.id}</div> }));
 vi.mock("next/link", () => ({
   default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => <a href={href} {...rest}>{children}</a>,
 }));
@@ -41,15 +54,22 @@ const dashboard = (patch: Partial<ApiDashboard> = {}): ApiDashboard => ({
 const calendar = (posts: ApiPost[], range: { from: string; to: string }, truncated = false): ApiCalendar => ({ ...range, posts, truncated });
 
 /** Route each path to an answer; the calendar can be answered per range. */
-function serve(dash: ApiDashboard | Error, cal: (from: string, to: string) => ApiCalendar | Promise<ApiCalendar> = (from, to) => calendar([], { from, to })) {
-  h.apiFetch.mockImplementation(async (path: string) => {
+function serve(
+  dash: ApiDashboard | Error,
+  cal: (from: string, to: string) => ApiCalendar | Promise<ApiCalendar> = (from, to) => calendar([], { from, to }),
+  /** Anything else the page may ask (the drawer, the actions): a path answers with its value; unknown paths still fail the test. */
+  other: (path: string, init?: { method?: string; body?: string }) => unknown = (path) => {
+    throw new Error(`unexpected ${path}`);
+  }
+) {
+  h.apiFetch.mockImplementation(async (path: string, init?: { method?: string; body?: string }) => {
     if (path === "/dashboard") {
       if (dash instanceof Error) throw dash;
       return dash;
     }
     const m = path.match(/^\/dashboard\/calendar\?from=([\d-]+)&to=([\d-]+)$/);
     if (m) return cal(m[1], m[2]);
-    throw new Error(`unexpected ${path}`);
+    return other(path, init);
   });
 }
 
@@ -58,6 +78,9 @@ beforeEach(() => {
   h.role = "member";
   h.workspace = "ws-1";
   h.workspaceLoading = false;
+  h.approvalRequired = false;
+  h.toast.success.mockReset();
+  h.toast.error.mockReset();
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-09T05:00:00Z"));
 });
@@ -342,5 +365,178 @@ describe("dashboard page: moving the calendar over a month that has posts", () =
     await screen.findByText("November post");
     await userEvent.click(screen.getByRole("button", { name: "Next month" }));
     expect(await screen.findByText("Your calendar is empty")).toBeTruthy();
+  });
+});
+
+describe("dashboard page: acting on the content list", () => {
+  // two drafts (one plain, one in review) and a scheduled post, under "Upcoming content"; the failed post is under "Need attention"
+  const acting = () =>
+    dashboard({
+      lists: {
+        upcoming: {
+          count: 3,
+          posts: [
+            post({ id: "d1", title: "Plain draft", status: "draft", scheduledFor: "2026-11-12T02:00:00.000Z" }),
+            post({ id: "d2", title: "Draft in review", status: "draft", approvalStatus: "pending", scheduledFor: "2026-11-13T02:00:00.000Z" }),
+            post({ id: "s1", title: "Scheduled post", status: "pending", scheduledFor: "2026-11-14T02:00:00.000Z" }),
+          ],
+        },
+        attention: { count: 1, posts: [post({ id: "a1", title: "Failed post", status: "failed" })] },
+        risk: { count: 0, posts: [] },
+        activity: { count: 0, posts: [] },
+      },
+    });
+
+  const detail = (id: string) => ({
+    id, status: "draft", approvalStatus: null, scheduledFor: "2026-11-12T02:00:00.000Z", title: "Plain draft", caption: "A caption", channels: ["instagram"],
+    sourceRow: null, link: null, designCopy: "", category: null, pillar: null, owner: null, accounts: [], captionLength: 9, commentText: null, media: [],
+    reviewNote: null, source: null, activity: [], mine: true, missing: [],
+  });
+
+  /** The dashboard with every request answered: the drawer, the lookups and the bulk actions. */
+  function serveActions() {
+    serve(acting(), undefined, (path, init) => {
+      if (path === "/accounts") return [];
+      if (path === "/templates") return { templates: [] };
+      if (path.endsWith("/detail")) return detail(path.split("/")[2]);
+      if (path === "/jobs/bulk") return { deleted: 2 };
+      if (path === "/jobs/submit-bulk") return { submitted: ["d1"], skipped: [] };
+      if (init?.method === "DELETE") return {};
+      throw new Error(`unexpected ${path}`);
+    });
+  }
+
+  const bar = () => screen.queryByRole("region", { name: "Selected posts" });
+  const asked = (path: string, method?: string) => h.apiFetch.mock.calls.filter((c) => c[0] === path && (method === undefined || c[1]?.method === method)).length;
+  const calendarCalls = () => h.apiFetch.mock.calls.filter((c) => String(c[0]).startsWith("/dashboard/calendar")).length;
+  const bodyOf = (path: string) => JSON.parse(h.apiFetch.mock.calls.find((c) => c[0] === path)![1].body);
+
+  it("there is no bar until a row is ticked; then it shows how many and Delete, and Clear takes it away", async () => {
+    serveActions();
+    render(<DashboardPage />);
+    await screen.findByText("Plain draft");
+    expect(bar()).toBeNull();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Plain draft" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Scheduled post" }));
+    expect(within(bar()!).getByText(/2 selected/)).toBeTruthy();
+    expect(within(bar()!).getByRole("button", { name: "Delete 2" })).toBeTruthy();
+    await userEvent.click(within(bar()!).getByRole("button", { name: "Clear" }));
+    expect(bar()).toBeNull();
+  });
+
+  it("the bar is a child of the page's column, after the table, so it can stick to the bottom of what scrolls", async () => {
+    serveActions();
+    render(<DashboardPage />);
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Select Plain draft" }));
+    const region = bar()!;
+    expect(region.className).toContain("sticky");
+    // the same parent as the table's section (the page's column that scrolls), and after it
+    const table = screen.getByRole("region", { name: "Content list" });
+    expect(region.parentElement).toBe(table.parentElement);
+    expect(table.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("Delete asks first, then deletes the ticked posts, and asks for the numbers and the calendar again", async () => {
+    serveActions();
+    render(<DashboardPage />);
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Select Plain draft" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Scheduled post" }));
+    await userEvent.click(within(bar()!).getByRole("button", { name: "Delete 2" }));
+    expect(await screen.findByText("Delete 2 posts?")).toBeTruthy();
+    expect(asked("/jobs/bulk")).toBe(0);
+    const dashboardBefore = asked("/dashboard");
+    const calendarBefore = calendarCalls();
+    await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(asked("/jobs/bulk", "DELETE")).toBe(1));
+    expect(bodyOf("/jobs/bulk")).toEqual({ ids: ["d1", "s1"] });
+    await waitFor(() => expect(h.toast.success).toHaveBeenCalledWith("Deleted 2 posts."));
+    await waitFor(() => expect(asked("/dashboard")).toBeGreaterThan(dashboardBefore));
+    await waitFor(() => expect(calendarCalls()).toBeGreaterThan(calendarBefore));
+    expect(bar()).toBeNull();
+  });
+
+  it("a click on a row opens that post in the drawer", async () => {
+    serveActions();
+    render(<DashboardPage />);
+    await userEvent.click(await screen.findByRole("row", { name: "Open Plain draft" }));
+    expect(await screen.findByRole("heading", { name: "Plain draft" })).toBeTruthy();
+    expect(asked("/jobs/d1/detail")).toBe(1);
+  });
+
+  it("picking another tab drops the ticks: a row ticked out of sight is never deleted", async () => {
+    serveActions();
+    render(<DashboardPage />);
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Select Plain draft" }));
+    expect(bar()).toBeTruthy();
+    await userEvent.click(screen.getByRole("tab", { name: /Need attention/ }));
+    expect(bar()).toBeNull();
+    await userEvent.click(screen.getByRole("tab", { name: /Upcoming content/ }));
+    expect(screen.getByRole("checkbox", { name: "Select Plain draft" }).getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("where drafts go through review, only the plain draft is sent: 'Submit 1 of 2 for review' posts that one", async () => {
+    h.approvalRequired = true;
+    serveActions();
+    render(<DashboardPage />);
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Select Plain draft" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Draft in review" }));
+    await userEvent.click(within(bar()!).getByRole("button", { name: "Submit 1 of 2 for review" }));
+    await waitFor(() => expect(asked("/jobs/submit-bulk", "POST")).toBe(1));
+    expect(bodyOf("/jobs/submit-bulk")).toEqual({ ids: ["d1"] });
+    await waitFor(() => expect(h.toast.success).toHaveBeenCalledWith("Sent 1 for design review."));
+  });
+
+  it("a ticked row that the next answer no longer lists is not still ticked out of sight: Delete never reaches a post the person cannot see", async () => {
+    h.approvalRequired = true;
+    serveActions();
+    render(<DashboardPage />);
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Select Scheduled post" }));
+    expect(within(bar()!).getByText(/1 selected/)).toBeTruthy();
+    // the dashboard lists only the first rows of each tab: after a change the scheduled post is gone from "Upcoming content"
+    const trimmed = acting();
+    trimmed.lists.upcoming.posts = trimmed.lists.upcoming.posts.filter((p) => p.id !== "s1");
+    serve(trimmed, undefined, (path) => {
+      if (path === "/accounts") return [];
+      if (path === "/templates") return { templates: [] };
+      if (path.endsWith("/detail")) return detail(path.split("/")[2]);
+      if (path === "/jobs/d1/submit") return {};
+      throw new Error(`unexpected ${path}`);
+    });
+    await userEvent.click(screen.getByRole("row", { name: "Open Plain draft" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Submit for review" }));
+    await waitFor(() => expect(screen.queryByText("Scheduled post")).toBeNull());
+    expect(bar()).toBeNull();
+  });
+
+  it("where drafts are not reviewed there is no Submit, only Delete", async () => {
+    serveActions();
+    render(<DashboardPage />);
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Select Plain draft" }));
+    expect(within(bar()!).queryByRole("button", { name: /Submit/ })).toBeNull();
+    expect(within(bar()!).getByRole("button", { name: "Delete 1" })).toBeTruthy();
+  });
+
+  it("a designer has no checkboxes, and still opens a row: the drawer is where a post is reviewed", async () => {
+    h.role = "designer";
+    serveActions();
+    render(<DashboardPage />);
+    await screen.findByText("Plain draft");
+    expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
+    await userEvent.click(screen.getByRole("row", { name: "Open Plain draft" }));
+    expect(await screen.findByRole("heading", { name: "Plain draft" })).toBeTruthy();
+    expect(bar()).toBeNull();
+  });
+
+  it("nothing asks for the accounts or the design references until a post is opened, and then only once", async () => {
+    serveActions();
+    render(<DashboardPage />);
+    await screen.findByText("Plain draft");
+    await waitFor(() => expect(calendarCalls()).toBeGreaterThan(0));
+    expect(asked("/accounts")).toBe(0);
+    expect(asked("/templates")).toBe(0);
+    await userEvent.click(screen.getByRole("row", { name: "Open Plain draft" }));
+    await screen.findByRole("heading", { name: "Plain draft" });
+    await waitFor(() => expect(asked("/templates")).toBe(1));
+    expect(asked("/accounts")).toBe(1);
   });
 });

@@ -80,7 +80,12 @@ describe("toContentRow", () => {
     expect(toContentRow(post({ channels: ["linkedin", "instagram", "mastodon"], category: "Industry insight", thumbnail: "/uploads/a.png" }))).toEqual({
       id: "p1", title: "5 Habits", channels: ["linkedin", "instagram", "mastodon"], category: "Industry insight", thumbnail: "/uploads/a.png",
       publishAt: "2026-11-18T02:00:00.000Z", owner: "Putri", production: "approved", publication: "scheduled",
+      status: "pending", approvalStatus: null,
     });
+  });
+  it("keeps the post's own status and approval, which the actions on a row read (a draft sent back is not a draft in review)", () => {
+    expect(toContentRow(post({ status: "draft", approvalStatus: "rejected" }))).toMatchObject({ status: "draft", approvalStatus: "rejected" });
+    expect(toContentRow(post({ status: "draft", approvalStatus: "pending" }))).toMatchObject({ status: "draft", approvalStatus: "pending" });
   });
   it("a draft has no publication stage: null, not one it has not reached", () => {
     const row = toContentRow(post({ status: "draft", approvalStatus: "pending", scheduledFor: null, channels: [], owner: null }));

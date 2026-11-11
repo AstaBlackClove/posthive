@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, CloudUploadIcon, ListIcon, PlusIcon } from "lucide-react";
 import {
   createColumnHelper,
   createSortedRowModel,
-  rowSelectionFeature,
   rowSortingFeature,
   sortFn_datetime,
   sortFn_text,
@@ -31,7 +30,6 @@ import type { ContentRow, TabKey } from "./types";
 // Module scope on purpose: TanStack Table needs stable features, columns and fallback data, or it rebuilds its rows on every render.
 const features = tableFeatures({
   rowSortingFeature,
-  rowSelectionFeature,
   sortedRowModel: createSortedRowModel(),
   sortFns: { text: sortFn_text, datetime: sortFn_datetime },
 });
@@ -70,6 +68,22 @@ type Props = {
   tabCounts: Record<TabKey, number>;
   /** Today as a WIB "YYYY-MM-DD" key: a post of today has its row marked and says "today 14:00". */
   todayKey?: string;
+  /**
+   * The ticked rows, kept by the page (they drive its bar of actions). Without it the rows have no checkbox: the table
+   * only lists. The first column stays either way, so the others do not move.
+   */
+  selection?: {
+    selected: ReadonlySet<string>;
+    onToggle: (id: string) => void;
+    /** Tick or untick these rows: the ones of the tab that is shown. */
+    onToggleAll: (ids: string[], on: boolean) => void;
+  };
+  /** A click, or Enter or Space, on a row. Without it a row is not a button. */
+  onOpen?: (id: string) => void;
+  /** The row whose post is open, for its tint. */
+  openId?: string | null;
+  /** The person picked another tab. */
+  onTabChange?: (tab: TabKey) => void;
 };
 
 function SortIcon({ state }: { state: false | "asc" | "desc" }) {
@@ -78,8 +92,11 @@ function SortIcon({ state }: { state: false | "asc" | "desc" }) {
   return <ArrowUpDownIcon aria-hidden="true" className="size-3.5 opacity-50" />;
 }
 
-/** The tabs and the table of content (sortable, selectable). With no rows it is the empty state inside the table. */
-export function ContentTable({ rows: rowsByTab, tabCounts, todayKey }: Props) {
+/**
+ * The tabs and the table of content (sortable). The page decides what a row can do: with `selection` the rows can be
+ * ticked, with `onOpen` they open the post. With no rows it is the empty state inside the table.
+ */
+export function ContentTable({ rows: rowsByTab, tabCounts, todayKey, selection, onOpen, openId, onTabChange }: Props) {
   const [tab, setTab] = useState<TabKey>("upcoming");
   const rows = rowsByTab?.[tab] ?? NO_ROWS;
   // The list starts in the order its footer promises: by publish date, soonest first
@@ -87,9 +104,29 @@ export function ContentTable({ rows: rowsByTab, tabCounts, todayKey }: Props) {
   const result = table.getRowModel().rows;
   const empty = EMPTY[tab];
 
+  const ids = result.map((r) => r.id);
+  const allOn = Boolean(selection) && ids.length > 0 && ids.every((id) => selection!.selected.has(id));
+  const someOn = Boolean(selection) && !allOn && ids.some((id) => selection!.selected.has(id));
+
+  function onKey(e: KeyboardEvent<HTMLTableRowElement>, id: string) {
+    // Only the row itself: Enter on the checkbox inside is the checkbox's own
+    if (e.target !== e.currentTarget) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onOpen?.(id);
+    }
+  }
+
   return (
     <section aria-label="Content list" className="space-y-3">
-      <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)} className="gap-3">
+      <Tabs
+        value={tab}
+        onValueChange={(v) => {
+          setTab(v as TabKey);
+          onTabChange?.(v as TabKey);
+        }}
+        className="gap-3"
+      >
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <TabsList aria-label="Content views" className="border-0 bg-transparent p-0">
@@ -117,12 +154,14 @@ export function ContentTable({ rows: rowsByTab, tabCounts, todayKey }: Props) {
               {table.getHeaderGroups().map((group) => (
                 <TableRow key={group.id} className="hover:bg-transparent">
                   <TableHead className="w-10">
-                    <Checkbox
-                      aria-label="Select all rows"
-                      checked={table.getIsAllRowsSelected() ? true : table.getIsSomeRowsSelected() ? "indeterminate" : false}
-                      disabled={result.length === 0}
-                      onCheckedChange={(v) => table.toggleAllRowsSelected(v === true)}
-                    />
+                    {selection && (
+                      <Checkbox
+                        aria-label="Select all rows"
+                        checked={allOn ? true : someOn ? "indeterminate" : false}
+                        disabled={result.length === 0}
+                        onCheckedChange={(v) => selection.onToggleAll(ids, v === true)}
+                      />
+                    )}
                   </TableHead>
                   {group.headers.map((header) => {
                     const sorted = header.column.getIsSorted();
@@ -143,10 +182,29 @@ export function ContentTable({ rows: rowsByTab, tabCounts, todayKey }: Props) {
                 const post = row.original;
                 const at = post.publishAt ? new Date(post.publishAt) : null;
                 const isToday = Boolean(at && todayKey && wibDateKey(at) === todayKey);
+                const on = Boolean(selection?.selected.has(post.id));
+                const open = openId === post.id;
                 return (
-                  <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined} data-today={isToday || undefined} className={cn("bg-surface hover:bg-brand-50", isToday && "bg-brand-50")}>
-                    <TableCell>
-                      <Checkbox aria-label={`Select ${post.title}`} checked={row.getIsSelected()} onCheckedChange={(v) => row.toggleSelected(v === true)} />
+                  <TableRow
+                    key={row.id}
+                    // a row that opens a post is a button: reachable by Tab, and named for what it opens
+                    {...(onOpen && {
+                      tabIndex: 0,
+                      "aria-label": `Open ${post.title}`,
+                      onClick: () => onOpen(post.id),
+                      onKeyDown: (e: KeyboardEvent<HTMLTableRowElement>) => onKey(e, post.id),
+                    })}
+                    data-state={on ? "selected" : undefined}
+                    data-open={open || undefined}
+                    data-today={isToday || undefined}
+                    className={cn(
+                      "bg-surface hover:bg-brand-50",
+                      onOpen && "cursor-pointer outline-none focus-visible:bg-brand-50 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-inset",
+                      (isToday || on || open) && "bg-brand-50"
+                    )}
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      {selection && <Checkbox aria-label={`Select ${post.title}`} checked={on} onCheckedChange={() => selection.onToggle(post.id)} />}
                     </TableCell>
                     <TableCell className="max-w-72 min-w-48 whitespace-normal">
                       <p className="line-clamp-2 type-body-m-s break-words" title={post.title}>

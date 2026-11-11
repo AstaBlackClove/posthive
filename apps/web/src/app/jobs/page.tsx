@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDaysIcon, CloudUploadIcon, KanbanIcon, ListIcon, PlusIcon, Table2Icon } from "lucide-react";
-import { ContentDrawer } from "@/components/content-list/ContentDrawer";
 import { ContentListTable } from "@/components/content-list/ContentListTable";
 import { DraftBanner } from "@/components/content-list/DraftBanner";
 import { KanbanBoard } from "@/components/content-list/KanbanBoard";
@@ -11,16 +10,12 @@ import { ListCalendar, useCalendarPosition } from "@/components/content-list/Lis
 import { SelectionBar } from "@/components/content-list/SelectionBar";
 import { SourceCard } from "@/components/content-list/SourceCard";
 import { StatusCounts } from "@/components/content-list/StatusCounts";
+import { useContentActions } from "@/components/content-list/useContentActions";
 import { TopbarActions } from "@/components/dashboard/Topbar";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { EditPostDialog } from "@/components/EditPostDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { InlineAlert } from "@/components/InlineAlert";
 import { Pager } from "@/components/Pager";
-import { ReviewDialog } from "@/components/ReviewDialog";
-import { useToast } from "@/components/Toast";
 import { TrialUrgentBanner } from "@/components/TrialUrgentBanner";
-import type { Account } from "@/components/PlatformPreview";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,19 +24,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/cn";
-import { apiFetch } from "@/lib/api";
-import { LIST_STATUS, filterOf, footerLine, listSubtitle, showDraftBanner, visibleFilters, type ListFilter, type ListItem, type ListView } from "@/lib/content-list";
+import { LIST_STATUS, footerLine, listSubtitle, showDraftBanner, visibleFilters, type ListFilter, type ListView } from "@/lib/content-list";
 import { wibDateKey } from "@/lib/datetime";
-import {
-  approveJob, deleteJob, deleteMany, fetchJob, rejectJob, retryFailed, savedMessage, submitForReview, submitMany, updateJob,
-} from "@/lib/jobActions";
-import type { Job } from "@/lib/jobTypes";
-import { MISSING_LABEL, type MissingField } from "@/lib/submitReadiness";
-import type { DesignTemplate } from "@/lib/templates";
 import { useContentList } from "@/lib/useContentList";
 import { usePermissions } from "@/lib/usePermissions";
-
-const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /**
  * The Content List: how many posts are in each status, the posts a page at a time, and a drawer with the whole post
@@ -50,7 +36,6 @@ const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
  */
 export default function ContentListPage() {
   const { user } = useAuth();
-  const { success, error: toastError } = useToast();
   const { canEditContent, canReview, canSubmitOwn } = usePermissions();
   const now = useMemo(() => new Date(), []);
   const todayKey = wibDateKey(now);
@@ -61,118 +46,18 @@ export default function ContentListPage() {
   const [page, setPage] = useState(1);
   const { data, source, loading, error, reload, version } = useContentList(filter, page);
 
-  const [openId, setOpenId] = useState<string | null>(null);
-  // The rows ticked, with their status: the bar under the list offers only what each of them may do (a page turn keeps them)
-  const [picked, setPicked] = useState<Map<string, ListItem>>(new Map());
-  const selected = useMemo(() => new Set(picked.keys()), [picked]);
-  const [busy, setBusy] = useState(false);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [templates, setTemplates] = useState<DesignTemplate[]>([]);
-  const [editing, setEditing] = useState<Job | null>(null);
-  const [reviewing, setReviewing] = useState<Job | null>(null);
-  const [deleting, setDeleting] = useState<string[] | null>(null);
-
-  useEffect(() => {
-    apiFetch<Account[]>("/accounts").then(setAccounts).catch(() => {});
-    // Design references for the drawer and for the edit and review dialogs
-    apiFetch<{ templates: DesignTemplate[] }>("/templates").then((d) => setTemplates(d.templates)).catch(() => {});
-  }, []);
-
   const role = { canEditContent, canReview, canSubmitOwn };
   const filters = visibleFilters(role);
   const counts = data?.counts;
   const items = data?.items ?? [];
 
+  // Opening, ticking, sending, deleting, editing and reviewing a post: the same for the dashboard's table
+  const actions = useContentActions({ rows: items, reload });
+
   function pick(next: ListFilter) {
     setFilter(next);
     setPage(1);
-    setPicked(new Map());
-  }
-
-  const toggle = (id: string) =>
-    setPicked((prev) => {
-      const next = new Map(prev);
-      const row = items.find((i) => i.id === id);
-      if (!next.delete(id) && row) next.set(id, row);
-      return next;
-    });
-  const toggleAll = (ids: string[], on: boolean) =>
-    setPicked((prev) => {
-      const next = new Map(prev);
-      for (const id of ids) {
-        const row = items.find((i) => i.id === id);
-        if (!on) next.delete(id);
-        else if (row) next.set(id, row);
-      }
-      return next;
-    });
-
-  // Only a plain draft is sent for review: one that is in review, sent back by the reviewer (until an edit changes it),
-  // scheduled, out or failed is not, so the bar does not offer to send it
-  // The page's own row wins over the one kept when it was ticked: a post sent from the drawer since is in review now
-  const submittable = [...picked.values()].filter((i) => filterOf(items.find((x) => x.id === i.id) ?? i) === "draft").map((i) => i.id);
-
-  /** Open the full post in a dialog (they need its whole content, not the list's light rows). */
-  async function openDialog(id: string, kind: "edit" | "review") {
-    try {
-      const job = await fetchJob(id);
-      setOpenId(null);
-      if (kind === "edit") setEditing(job);
-      else setReviewing(job);
-    } catch (e) {
-      toastError(errorText(e));
-    }
-  }
-
-  async function run(work: () => Promise<void>) {
-    setBusy(true);
-    try {
-      await work();
-    } catch (e) {
-      toastError(errorText(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const sendForReview = (id: string) =>
-    run(async () => {
-      await submitForReview(id);
-      success("Sent for design review: waiting for approval.");
-      setOpenId(null);
-      reload();
-    });
-
-  const sendSelected = () =>
-    run(async () => {
-      const res = await submitMany(submittable);
-      if (res.submitted.length > 0) success(`Sent ${res.submitted.length} for design review.`);
-      if (res.skipped.length > 0) {
-        const first = res.skipped[0];
-        const why = first.missing ? `missing ${first.missing.map((m) => MISSING_LABEL[m as MissingField] ?? m).join(", ")}` : first.reason.toLowerCase();
-        toastError(`Skipped ${res.skipped.length}: "${first.title}" ${why}${res.skipped.length > 1 ? " and more" : ""}.`);
-      }
-      setPicked(new Map());
-      reload();
-    });
-
-  const retry = (id: string) =>
-    run(async () => {
-      await retryFailed(id);
-      success("Retrying failed platforms…");
-      reload();
-    });
-
-  async function confirmDelete(ids: string[]) {
-    const removed = ids.length === 1 ? (await deleteJob(ids[0]), 1) : await deleteMany(ids);
-    // the server skips posts that are not the person's own or are publishing right now, and still answers 200
-    const skipped = "The rest are not yours, or are publishing right now.";
-    if (removed === 0) toastError(`Nothing was deleted. ${skipped}`);
-    else if (removed < ids.length) success(`Deleted ${removed} of ${ids.length} posts. ${skipped}`);
-    else success(`Deleted ${removed} post${removed === 1 ? "" : "s"}.`);
-    setPicked(new Map());
-    setOpenId(null);
-    reload();
+    actions.clear();
   }
 
   const empty = !loading && !error && counts?.all === 0;
@@ -287,12 +172,12 @@ export default function ContentListPage() {
                     <div className={loading ? "opacity-60 transition-opacity" : "transition-opacity"}>
                       <ContentListTable
                         items={items}
-                        selected={selected}
-                        openId={openId}
+                        selected={actions.selected}
+                        openId={actions.openId}
                         selectable={canEditContent}
-                        onToggle={toggle}
-                        onToggleAll={toggleAll}
-                        onOpen={setOpenId}
+                        onToggle={actions.toggle}
+                        onToggleAll={actions.toggleAll}
+                        onOpen={actions.open}
                       />
                     </div>
                     {items.length === 0 && !loading && (
@@ -310,7 +195,7 @@ export default function ContentListPage() {
               )}
 
               {view === "calendar" && (
-                <ListCalendar filter={filter} counts={counts} position={calendarPosition} todayKey={todayKey} version={version} role={role} openId={openId} onOpen={setOpenId} />
+                <ListCalendar filter={filter} counts={counts} position={calendarPosition} todayKey={todayKey} version={version} role={role} openId={actions.openId} onOpen={actions.open} />
               )}
 
               {view === "kanban" && (
@@ -319,8 +204,8 @@ export default function ContentListPage() {
                   filters={filters}
                   counts={counts}
                   version={version}
-                  openId={openId}
-                  onOpen={setOpenId}
+                  openId={actions.openId}
+                  onOpen={actions.open}
                   onMore={(f) => {
                     setView("table");
                     pick(f);
@@ -331,104 +216,21 @@ export default function ContentListPage() {
 
             {view === "table" && (canEditContent || canSubmitOwn) && (
               <SelectionBar
-                count={picked.size}
-                submittable={submittable.length}
+                count={actions.count}
+                submittable={actions.submittable}
                 canEdit={canEditContent}
                 canSubmitOwn={canSubmitOwn}
-                busy={busy}
-                onClear={() => setPicked(new Map())}
-                onSubmit={sendSelected}
-                onDelete={() => setDeleting([...picked.keys()])}
+                busy={actions.busy}
+                onClear={actions.clear}
+                onSubmit={actions.submitSelected}
+                onDelete={actions.askDeleteSelected}
               />
             )}
           </>
         )}
       </div>
 
-      <ContentDrawer
-        id={openId}
-        templates={templates}
-        canEdit={canEditContent}
-        canReview={canReview}
-        canSubmitOwn={canSubmitOwn}
-        onClose={() => setOpenId(null)}
-        onEdit={(id) => openDialog(id, "edit")}
-        onReview={(id) => openDialog(id, "review")}
-        onSubmit={sendForReview}
-        onRetry={retry}
-        onDelete={(id) => setDeleting([id])}
-      />
-
-      {editing && (
-        <EditPostDialog
-          open
-          job={editing}
-          accounts={accounts}
-          templates={templates}
-          reviewMode={editing.status === "draft" && canSubmitOwn}
-          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, contentType, title, send) => {
-            const isDraft = editing.status === "draft";
-            try {
-              await updateJob(editing.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, isDraft, canSubmitOwn, youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, contentType, title, send);
-            } catch (e) {
-              toastError(errorText(e));
-              throw e;
-            }
-            success(savedMessage(isDraft, canSubmitOwn, send));
-            reload();
-          }}
-          onClose={() => setEditing(null)}
-        />
-      )}
-
-      {reviewing && (
-        <ReviewDialog
-          job={reviewing}
-          templates={templates}
-          onClose={() => setReviewing(null)}
-          onApprove={async () => {
-            try {
-              await approveJob(reviewing);
-              success("Approved: the post is scheduled.");
-              window.dispatchEvent(new CustomEvent("ph:post-scheduled"));
-            } catch (e) {
-              toastError(errorText(e));
-              throw e;
-            }
-            setReviewing(null);
-            reload();
-          }}
-          onReject={async (note) => {
-            try {
-              await rejectJob(reviewing, note);
-              success("Rejected: sent back to the creator with your note.");
-            } catch (e) {
-              toastError(errorText(e));
-              throw e;
-            }
-            setReviewing(null);
-            reload();
-          }}
-        />
-      )}
-
-      <ConfirmDialog
-        open={deleting !== null}
-        onOpenChange={(open) => !open && setDeleting(null)}
-        title={deleting && deleting.length > 1 ? `Delete ${deleting.length} posts?` : "Delete this post?"}
-        description="This permanently deletes the post and cannot be undone."
-        confirmLabel="Delete"
-        pendingLabel="Deleting…"
-        onConfirm={async () => {
-          if (!deleting) return;
-          try {
-            await confirmDelete(deleting);
-          } catch (e) {
-            toastError(errorText(e));
-            throw e;
-          }
-        }}
-      />
+      {actions.layer}
     </div>
   );
 }

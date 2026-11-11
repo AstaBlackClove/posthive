@@ -251,12 +251,47 @@ describe("Content List page", () => {
   });
 
   describe("the drawer", () => {
+    it("the accounts and the design references are asked the first time something needs them, and once: not when the list opens", async () => {
+      serve();
+      render(<ContentListPage />);
+      await screen.findByText("Post 1");
+      const asked = (p: string) => h.apiFetch.mock.calls.filter((c) => c[0] === p).length;
+      expect(asked("/accounts")).toBe(0);
+      expect(asked("/templates")).toBe(0);
+      await userEvent.click(screen.getByRole("row", { name: "Open Post 1" }));
+      await waitFor(() => expect(asked("/templates")).toBe(1));
+      expect(asked("/accounts")).toBe(1);
+      await screen.findByRole("heading", { name: "Post 1" });
+      await userEvent.keyboard("{Escape}");
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      await userEvent.click(screen.getByRole("row", { name: "Open Post 2" }));
+      await screen.findByRole("dialog");
+      expect(asked("/accounts")).toBe(1);
+      expect(asked("/templates")).toBe(1);
+    });
+
     it("a click on a row opens that post", async () => {
       serve();
       render(<ContentListPage />);
       await userEvent.click(await screen.findByRole("row", { name: "Open Post 2" }));
       expect(h.apiFetch).toHaveBeenCalledWith("/jobs/p2/detail");
       expect(await screen.findByRole("heading", { name: "Post 1" })).toBeTruthy();
+    });
+
+    it("Edit Content waits for the accounts: the editor reads them once, when it opens, so it must not open on an empty list", async () => {
+      serve();
+      const base = h.apiFetch.getMockImplementation()!;
+      let release!: () => void;
+      h.apiFetch.mockImplementation(async (path: string, init?: { method?: string }) =>
+        path === "/accounts" ? new Promise((resolve) => (release = () => resolve([]))) : base(path, init as never)
+      );
+      render(<ContentListPage />);
+      await userEvent.click(await screen.findByRole("row", { name: "Open Post 1" }));
+      await userEvent.click(await screen.findByRole("button", { name: "Edit Content" }));
+      await waitFor(() => expect(h.apiFetch).toHaveBeenCalledWith("/jobs/p1"));
+      expect(screen.queryByRole("dialog", { name: "edit dialog" })).toBeNull();
+      release();
+      expect(await screen.findByRole("dialog", { name: "edit dialog" })).toBeTruthy();
     });
 
     it("Edit Content fetches the whole post and opens the editor with it", async () => {
@@ -365,19 +400,45 @@ describe("Content List page", () => {
   });
 
   describe("selecting rows", () => {
-    it("ticking rows counts them in the bar; Clear empties it; a status change clears it too", async () => {
+    const bar = () => screen.queryByRole("region", { name: "Selected posts" });
+
+    it("the bar is not there until a row is ticked; ticking counts them; Clear takes it away; a status change does too", async () => {
       serve();
       render(<ContentListPage />);
       await screen.findByText("Post 1");
-      expect(screen.getByText(/0 selected/)).toBeTruthy();
+      expect(bar()).toBeNull();
       await userEvent.click(screen.getByRole("checkbox", { name: "Select Post 1" }));
       await userEvent.click(screen.getByRole("checkbox", { name: "Select Post 2" }));
-      expect(screen.getByText(/2 selected/)).toBeTruthy();
+      expect(within(bar()!).getByText(/2 selected/)).toBeTruthy();
       await userEvent.click(screen.getByRole("button", { name: "Clear" }));
-      expect(screen.getByText(/0 selected/)).toBeTruthy();
+      expect(bar()).toBeNull();
       await userEvent.click(screen.getByRole("checkbox", { name: "Select Post 1" }));
+      expect(bar()).toBeTruthy();
       await userEvent.click(screen.getByRole("button", { name: "Draft: 60" }));
-      await waitFor(() => expect(screen.getByText(/0 selected/)).toBeTruthy());
+      await waitFor(() => expect(bar()).toBeNull());
+    });
+
+    it("a tick is kept when the person turns the page, and the bar counts it (the dashboard drops ticks that leave its list; this list must not)", async () => {
+      serve((q) => answer({ page: Number(q.get("page")), items: [row(Number(q.get("page")) * 10)] }));
+      render(<ContentListPage />);
+      await userEvent.click(await screen.findByRole("checkbox", { name: "Select Post 10" }));
+      await userEvent.click(screen.getByRole("button", { name: "Page 2" }));
+      await screen.findByText("Post 20");
+      expect(within(bar()!).getByText(/1 selected/)).toBeTruthy();
+      expect(screen.getByRole("checkbox", { name: "Select Post 20" }).getAttribute("aria-checked")).toBe("false");
+    });
+
+    it("the bar floats over the list: it sits after the card in the page's column, sticky, not fixed", async () => {
+      serve();
+      render(<ContentListPage />);
+      await userEvent.click(await screen.findByRole("checkbox", { name: "Select Post 1" }));
+      const region = bar()!;
+      expect(region.className).toContain("sticky");
+      expect(region.className).not.toMatch(/\bfixed\b/);
+      // a child of the page's own column (the box that scrolls), after the list, so sticky holds it at the bottom of that box
+      const card = document.querySelector("[data-slot=card]")!;
+      expect(region.parentElement).toBe(card.parentElement);
+      expect(card.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
     it("selecting does not open the drawer", async () => {
@@ -772,14 +833,15 @@ describe("Content List page: Kanban view", () => {
     expect(screen.queryByRole("region", { name: "Draft" })).toBeNull();
   });
 
-  it("the selection bar is the table's: the board has nothing to tick", async () => {
+  it("the selection bar is the table's: the board has nothing to tick, and a tick made in the table is not shown over it", async () => {
     serve(board);
     render(<ContentListPage />);
-    await screen.findByText("Post 1");
-    expect(screen.getByText(/0 selected/)).toBeTruthy();
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Select Post 1" }));
+    expect(screen.getByRole("region", { name: "Selected posts" })).toBeTruthy();
     await userEvent.click(screen.getByRole("radio", { name: "Kanban view" }));
-    expect(screen.queryByText(/0 selected/)).toBeNull();
+    expect(screen.queryByRole("region", { name: "Selected posts" })).toBeNull();
     await userEvent.click(screen.getByRole("radio", { name: "Table view" }));
-    expect(await screen.findByText(/0 selected/)).toBeTruthy();
+    // the tick was kept, so the bar comes back with the table
+    expect(await screen.findByText(/1 selected/)).toBeTruthy();
   });
 });

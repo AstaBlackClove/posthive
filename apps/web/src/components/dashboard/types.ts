@@ -44,6 +44,9 @@ export interface ContentRow {
   production: ContentStatusKey;
   /** Scheduled, published or failed; null for a draft, which is not on its way out yet. */
   publication: ContentStatusKey | null;
+  /** The post's own status and approval, as the server keeps them: what a row may be sent for (a draft in review or sent back is not sent again). */
+  status: string;
+  approvalStatus: string | null;
 }
 
 export type TabKey = "upcoming" | "attention" | "risk" | "activity";

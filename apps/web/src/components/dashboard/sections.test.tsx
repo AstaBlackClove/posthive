@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { useState, type ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -362,11 +363,39 @@ describe("SideColumn", () => {
   });
 });
 
+/** The ticks live in the page (they drive its bar), so the table gets them as props: this holds them the way the page does. */
+function WithTicks(props: Omit<ComponentProps<typeof ContentTable>, "selection">) {
+  const [on, setOn] = useState<ReadonlySet<string>>(new Set());
+  return (
+    <ContentTable
+      {...props}
+      selection={{
+        selected: on,
+        onToggle: (id) =>
+          setOn((prev) => {
+            const next = new Set(prev);
+            if (!next.delete(id)) next.add(id);
+            return next;
+          }),
+        onToggleAll: (ids, value) =>
+          setOn((prev) => {
+            const next = new Set(prev);
+            for (const id of ids) {
+              if (value) next.add(id);
+              else next.delete(id);
+            }
+            return next;
+          }),
+      }}
+    />
+  );
+}
+
 describe("ContentTable", () => {
   const rows: ContentRow[] = [
-    { id: "1", title: "Launch teaser", channels: ["instagram"], publishAt: "2026-11-09T02:00:00Z", owner: "Rani", production: "design", publication: "scheduled" },
-    { id: "2", title: "Weekly tips", channels: ["linkedin"], publishAt: "2026-11-07T02:00:00Z", owner: null, production: "review", publication: "scheduled" },
-    { id: "3", title: "Case study", channels: ["linkedin"], publishAt: null, owner: "Budi", production: "approved", publication: "scheduled" },
+    { id: "1", title: "Launch teaser", channels: ["instagram"], publishAt: "2026-11-09T02:00:00Z", owner: "Rani", production: "design", publication: "scheduled", status: "pending", approvalStatus: null },
+    { id: "2", title: "Weekly tips", channels: ["linkedin"], publishAt: "2026-11-07T02:00:00Z", owner: null, production: "review", publication: "scheduled", status: "pending", approvalStatus: null },
+    { id: "3", title: "Case study", channels: ["linkedin"], publishAt: null, owner: "Budi", production: "approved", publication: "scheduled", status: "pending", approvalStatus: null },
   ];
   const counts = { upcoming: 3, attention: 0, risk: 0, activity: 0 };
   const bodyTitles = () => screen.getAllByRole("row").slice(1).map((r) => within(r).getAllByRole("cell")[1]?.textContent);
@@ -395,7 +424,7 @@ describe("ContentTable", () => {
   });
 
   it("empty: the select-all box is disabled, not checked", () => {
-    render(<ContentTable tabCounts={counts} />);
+    render(<WithTicks tabCounts={counts} />);
     const all = screen.getByRole("checkbox", { name: "Select all rows" });
     expect((all as HTMLButtonElement).disabled).toBe(true);
     expect(all.getAttribute("aria-checked")).toBe("false");
@@ -465,7 +494,7 @@ describe("ContentTable", () => {
   });
 
   it("selecting: a row checkbox, then select-all (indeterminate in between), then clear", async () => {
-    render(<ContentTable rows={{ upcoming: rows }} tabCounts={counts} />);
+    render(<WithTicks rows={{ upcoming: rows }} tabCounts={counts} />);
     const all = screen.getByRole("checkbox", { name: "Select all rows" });
     await userEvent.click(screen.getByRole("checkbox", { name: "Select Launch teaser" }));
     expect(screen.getByRole("checkbox", { name: "Select Launch teaser" }).getAttribute("aria-checked")).toBe("true");
@@ -477,8 +506,77 @@ describe("ContentTable", () => {
     for (const r of rows) expect(screen.getByRole("checkbox", { name: `Select ${r.title}` }).getAttribute("aria-checked")).toBe("false");
   });
 
+  describe("acting on a row", () => {
+    it("a table with no `selection` only lists: no checkboxes, no select-all", () => {
+      render(<ContentTable rows={{ upcoming: rows }} tabCounts={counts} />);
+      expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
+      // the first column stays, so the others do not move when the checkboxes come and go
+      expect(screen.getAllByRole("columnheader")).toHaveLength(7);
+    });
+
+    it("a table with no `onOpen` has rows that are not buttons", () => {
+      render(<ContentTable rows={{ upcoming: rows }} tabCounts={counts} />);
+      expect(screen.queryByRole("row", { name: /^Open / })).toBeNull();
+    });
+
+    it("a click on a row opens that post; a click on its checkbox only ticks it", async () => {
+      const onOpen = vi.fn();
+      render(<WithTicks rows={{ upcoming: rows }} tabCounts={counts} onOpen={onOpen} />);
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select Launch teaser" }));
+      expect(onOpen).not.toHaveBeenCalled();
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select all rows" }));
+      expect(onOpen).not.toHaveBeenCalled();
+      await userEvent.click(screen.getByRole("row", { name: "Open Weekly tips" }));
+      expect(onOpen).toHaveBeenCalledOnce();
+      expect(onOpen).toHaveBeenCalledWith("2");
+    });
+
+    it("Enter or Space on a focused row opens it, Enter on the checkbox inside is the checkbox's own", async () => {
+      const onOpen = vi.fn();
+      render(<WithTicks rows={{ upcoming: rows }} tabCounts={counts} onOpen={onOpen} />);
+      const row = screen.getByRole("row", { name: "Open Case study" });
+      row.focus();
+      await userEvent.keyboard("{Enter}");
+      await userEvent.keyboard(" ");
+      expect(onOpen).toHaveBeenCalledTimes(2);
+      expect(onOpen).toHaveBeenLastCalledWith("3");
+      onOpen.mockClear();
+      screen.getByRole("checkbox", { name: "Select Case study" }).focus();
+      await userEvent.keyboard("{Enter}");
+      expect(onOpen).not.toHaveBeenCalled();
+    });
+
+    it("the row whose post is open is marked, like a ticked one", async () => {
+      render(<WithTicks rows={{ upcoming: rows }} tabCounts={counts} onOpen={() => {}} openId="2" />);
+      expect(screen.getByRole("row", { name: "Open Weekly tips" }).getAttribute("data-open")).toBe("true");
+      expect(screen.getByRole("row", { name: "Open Launch teaser" }).getAttribute("data-open")).toBeNull();
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select Launch teaser" }));
+      expect(screen.getByRole("row", { name: "Open Launch teaser" }).getAttribute("data-state")).toBe("selected");
+    });
+
+    it("picking another tab tells the page, which drops the ticks (a row ticked out of sight must not be deleted)", async () => {
+      const onTabChange = vi.fn();
+      render(<WithTicks rows={{ upcoming: rows }} tabCounts={counts} onTabChange={onTabChange} />);
+      await userEvent.click(screen.getByRole("tab", { name: /At risk/ }));
+      expect(onTabChange).toHaveBeenCalledWith("risk");
+    });
+
+    it("the select-all box ticks the rows of the tab that is shown, and no others", async () => {
+      const seen: [string[], boolean][] = [];
+      render(
+        <ContentTable
+          rows={{ upcoming: rows, risk: [{ ...rows[0], id: "r1", title: "Risky" }] }}
+          tabCounts={counts}
+          selection={{ selected: new Set(), onToggle: () => {}, onToggleAll: (ids, on) => seen.push([[...ids].sort(), on]) }}
+        />
+      );
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select all rows" }));
+      expect(seen).toEqual([[["1", "2", "3"], true]]);
+    });
+  });
+
   it("a selected row keeps its selection when the list is sorted", async () => {
-    render(<ContentTable rows={{ upcoming: rows }} tabCounts={counts} />);
+    render(<WithTicks rows={{ upcoming: rows }} tabCounts={counts} />);
     await userEvent.click(screen.getByRole("checkbox", { name: "Select Weekly tips" }));
     await userEvent.click(within(screen.getByRole("columnheader", { name: /Content/ })).getByRole("button"));
     expect(screen.getByRole("checkbox", { name: "Select Weekly tips" }).getAttribute("aria-checked")).toBe("true");
@@ -486,8 +584,8 @@ describe("ContentTable", () => {
 });
 
 describe("ContentTable: rows per tab", () => {
-  const upcoming: ContentRow[] = [{ id: "u", title: "Launch teaser", channels: ["instagram", "linkedin"], publishAt: "2026-11-09T02:00:00Z", owner: "Rani", production: "approved", publication: "scheduled" }];
-  const attention: ContentRow[] = [{ id: "a", title: "Failed post", channels: ["linkedin"], publishAt: "2026-11-05T02:00:00Z", owner: null, production: "approved", publication: "approved" }];
+  const upcoming: ContentRow[] = [{ id: "u", title: "Launch teaser", channels: ["instagram", "linkedin"], publishAt: "2026-11-09T02:00:00Z", owner: "Rani", production: "approved", publication: "scheduled", status: "pending", approvalStatus: null }];
+  const attention: ContentRow[] = [{ id: "a", title: "Failed post", channels: ["linkedin"], publishAt: "2026-11-05T02:00:00Z", owner: null, production: "approved", publication: "approved", status: "pending", approvalStatus: null }];
   const counts = { upcoming: 31, attention: 1, risk: 0, activity: 0 };
   const titles = () => screen.getAllByRole("row").slice(1).map((r) => within(r).getAllByRole("cell")[1]?.textContent);
 
@@ -510,7 +608,7 @@ describe("ContentTable: rows per tab", () => {
   });
 
   it("sorting by channel puts a post with no channel last, either way", async () => {
-    const none: ContentRow = { id: "n", title: "Plan row", channels: [], publishAt: null, owner: null, production: "brief", publication: null };
+    const none: ContentRow = { id: "n", title: "Plan row", channels: [], publishAt: null, owner: null, production: "brief", publication: null, status: "draft", approvalStatus: null };
     render(<ContentTable rows={{ upcoming: [none, ...upcoming] }} tabCounts={counts} />);
     const sort = () => within(screen.getByRole("columnheader", { name: /Channel/ })).getByRole("button");
     await userEvent.click(sort());
@@ -520,14 +618,14 @@ describe("ContentTable: rows per tab", () => {
   });
 
   it("a draft's publication is 'Not scheduled', never a stage it has not reached", () => {
-    const draft: ContentRow = { id: "d", title: "A draft", channels: ["instagram"], publishAt: null, owner: null, production: "brief", publication: null };
+    const draft: ContentRow = { id: "d", title: "A draft", channels: ["instagram"], publishAt: null, owner: null, production: "brief", publication: null, status: "draft", approvalStatus: null };
     render(<ContentTable rows={{ upcoming: [draft] }} tabCounts={counts} />);
     expect(screen.getByText("Not scheduled")).toBeTruthy();
     expect(screen.getAllByText("Brief needed")).toHaveLength(1);
   });
 
   it("a post that goes to more than one channel lists each, one above the other; one with no channel yet shows a dash", () => {
-    const none: ContentRow = { id: "n", title: "Plan row", channels: [], publishAt: null, owner: null, production: "brief", publication: null };
+    const none: ContentRow = { id: "n", title: "Plan row", channels: [], publishAt: null, owner: null, production: "brief", publication: null, status: "draft", approvalStatus: null };
     render(<ContentTable rows={{ upcoming: [...upcoming, none] }} tabCounts={counts} />);
     const cells = screen.getAllByRole("row").slice(1).map((r) => within(r).getAllByRole("cell")[2]);
     expect(within(cells[0]).getAllByRole("listitem").map((li) => li.textContent)).toEqual(["Instagram", "LinkedIn"]);
@@ -535,7 +633,7 @@ describe("ContentTable: rows per tab", () => {
   });
 
   it("shows the category under the title, the date with its weekday and time, and the owner as 'Putri A.'", () => {
-    const row: ContentRow = { id: "c", title: "Geo Dashboard", channels: ["linkedin"], category: "Industry insight", publishAt: "2026-11-13T07:00:00Z", owner: "Putri Anggraini", production: "approved", publication: "scheduled" };
+    const row: ContentRow = { id: "c", title: "Geo Dashboard", channels: ["linkedin"], category: "Industry insight", publishAt: "2026-11-13T07:00:00Z", owner: "Putri Anggraini", production: "approved", publication: "scheduled", status: "pending", approvalStatus: null };
     render(<ContentTable rows={{ upcoming: [row] }} tabCounts={counts} todayKey="2026-11-13" />);
     expect(screen.getByText("Industry insight")).toBeTruthy();
     expect(screen.getByText("Fri 13 Nov · 14:00")).toBeTruthy();
@@ -543,7 +641,7 @@ describe("ContentTable: rows per tab", () => {
   });
 
   it("the row of today is marked and its publication says 'today 14:00'; another day does not", () => {
-    const at = (id: string, iso: string): ContentRow => ({ id, title: `Post ${id}`, channels: ["instagram"], publishAt: iso, owner: null, production: "approved", publication: "scheduled" });
+    const at = (id: string, iso: string): ContentRow => ({ id, title: `Post ${id}`, channels: ["instagram"], publishAt: iso, owner: null, production: "approved", publication: "scheduled", status: "pending", approvalStatus: null });
     render(<ContentTable rows={{ upcoming: [at("a", "2026-11-13T07:00:00Z"), at("b", "2026-11-17T02:00:00Z")] }} tabCounts={counts} todayKey="2026-11-13" />);
     expect(screen.getByText("Scheduled · today 14:00")).toBeTruthy();
     expect(screen.getByText("Scheduled · 09:00")).toBeTruthy();
@@ -554,13 +652,13 @@ describe("ContentTable: rows per tab", () => {
 
   it("a title as long as a paragraph stays inside its cell: cut to two lines, whole in the tooltip", () => {
     const long = "Geospatial ".repeat(60).trim();
-    render(<ContentTable rows={{ upcoming: [{ id: "l", title: long, channels: ["instagram"], publishAt: null, owner: null, production: "brief", publication: null }] }} tabCounts={counts} />);
+    render(<ContentTable rows={{ upcoming: [{ id: "l", title: long, channels: ["instagram"], publishAt: null, owner: null, production: "brief", publication: null, status: "draft", approvalStatus: null }] }} tabCounts={counts} />);
     expect(screen.getByTitle(long).className).toContain("line-clamp-2");
   });
 });
 
 describe("SideColumn: today's posts and tasks", () => {
-  const row = (id: string, title: string, patch: Partial<ContentRow> = {}): ContentRow => ({ id, title, channels: ["instagram"], publishAt: "2026-11-06T02:00:00Z", owner: "Putri", production: "approved", publication: "scheduled", ...patch });
+  const row = (id: string, title: string, patch: Partial<ContentRow> = {}): ContentRow => ({ id, title, channels: ["instagram"], publishAt: "2026-11-06T02:00:00Z", owner: "Putri", production: "approved", publication: "scheduled", status: "pending", approvalStatus: null, ...patch });
 
   it("lists today's posts with channel, time and status, and says how many more there are", () => {
     render(<SideColumn data={{ ...empty, today: { count: 3, rows: [row("1", "Launch teaser"), row("2", "Weekly tips")] } }} today={TODAY} />);

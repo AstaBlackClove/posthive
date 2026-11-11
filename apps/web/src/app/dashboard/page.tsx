@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +12,8 @@ import { firstName, greetingFor } from "@/lib/dashboard-format";
 import { rowsByTab, subtitleOf, toDashboardData } from "@/lib/dashboard-data";
 import { useCalendar, useDashboard } from "@/lib/useDashboard";
 import { usePermissions } from "@/lib/usePermissions";
+import { SelectionBar } from "@/components/content-list/SelectionBar";
+import { useContentActions } from "@/components/content-list/useContentActions";
 import { ContentCalendar } from "@/components/dashboard/ContentCalendar";
 import { ContentTable } from "@/components/dashboard/ContentTable";
 import { PlanMarketingCard } from "@/components/dashboard/PlanMarketingCard";
@@ -26,7 +28,7 @@ import { Topbar } from "@/components/dashboard/Topbar";
 // "use client": it reads the signed-in user, and the calendar and table are interactive.
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { canAccess } = usePermissions();
+  const { canAccess, canEditContent, canSubmitOwn } = usePermissions();
 
   const now = useMemo(() => new Date(), []);
   const todayKey = wibDateKey(now);
@@ -36,6 +38,17 @@ export default function DashboardPage() {
   const data = api ? toDashboardData({ api, userName: user?.name ?? "", brand: BRAND.name, canAccess }) : null;
   // The table's rows must keep their identity between renders (TanStack rebuilds its rows when they change)
   const rows = useMemo(() => (api ? rowsByTab(api) : undefined), [api]);
+
+  // The table acts on a post as the Content List does: the same drawer, bar and dialogs. After a change the numbers and
+  // the calendar are asked again, so they never show a post that was deleted or sent a moment ago.
+  const { retry: reloadCalendar } = calendar;
+  const afterChange = useCallback(() => {
+    reload();
+    reloadCalendar();
+  }, [reload, reloadCalendar]);
+  // A post can be in two tabs; it is the same post, so the first row found is as good as any
+  const allRows = useMemo(() => (rows ? Object.values(rows).flat() : []), [rows]);
+  const actions = useContentActions({ rows: allRows, reload: afterChange, keepGone: false });
 
   // A workspace with posts in it is greeted by the time of day, as in the design; a brand-new one is welcomed
   const hasContent = Boolean(api && (api.quarter.planned > 0 || api.setup.imported || api.setup.created));
@@ -103,10 +116,35 @@ export default function DashboardPage() {
               <SideColumn data={data} today={now} />
             </div>
 
-            <ContentTable rows={rows} tabCounts={data.tabCounts} todayKey={todayKey} />
+            <ContentTable
+              rows={rows}
+              tabCounts={data.tabCounts}
+              todayKey={todayKey}
+              // A designer reviews from the drawer and has no checkboxes: nothing for them to delete or send in bulk
+              selection={canEditContent ? { selected: actions.selected, onToggle: actions.toggle, onToggleAll: actions.toggleAll } : undefined}
+              onOpen={actions.open}
+              openId={actions.openId}
+              // a row ticked on a tab that is no longer shown must not be deleted unseen
+              onTabChange={actions.clear}
+            />
+
+            {(canEditContent || canSubmitOwn) && (
+              <SelectionBar
+                count={actions.count}
+                submittable={actions.submittable}
+                canEdit={canEditContent}
+                canSubmitOwn={canSubmitOwn}
+                busy={actions.busy}
+                onClear={actions.clear}
+                onSubmit={actions.submitSelected}
+                onDelete={actions.askDeleteSelected}
+              />
+            )}
           </>
         )}
       </div>
+
+      {actions.layer}
     </div>
   );
 }

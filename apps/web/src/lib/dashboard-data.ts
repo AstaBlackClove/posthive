@@ -89,6 +89,8 @@ export function toContentRow(post: ApiPost): ContentRow {
     owner: post.owner,
     production,
     publication: publicationOf(post),
+    status: post.status,
+    approvalStatus: post.approvalStatus,
   };
 }
 

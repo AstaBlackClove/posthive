@@ -215,11 +215,35 @@ describe("SelectionBar", () => {
     return handlers;
   };
 
-  it("with nothing ticked it says so, and both buttons wait", () => {
+  it("with nothing ticked there is no bar at all: it appears with the first tick and does not cover the rows before", () => {
     bar();
-    expect(screen.getByText(/0 selected · tick rows to submit several posts for review at once/)).toBeTruthy();
-    expect((screen.getByRole("button", { name: "Submit selected for review" }) as HTMLButtonElement).disabled).toBe(true);
-    expect((screen.getByRole("button", { name: "Delete" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole("region", { name: "Selected posts" })).toBeNull();
+    expect(screen.queryByText(/selected/)).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  // A live region that is added to the page together with its text is often not read out. This one is always on the page,
+  // empty while nothing is ticked, so the first tick is announced; the visible count is not live too (it would be read twice).
+  it("the count is read out by a live region that is on the page before the first tick", () => {
+    const first = render(<SelectionBar count={0} submittable={0} canEdit canSubmitOwn busy={false} onClear={vi.fn()} onSubmit={vi.fn()} onDelete={vi.fn()} />);
+    const live = screen.getByRole("status");
+    expect(live.textContent).toBe("");
+    first.rerender(<SelectionBar count={1} submittable={1} canEdit canSubmitOwn busy={false} onClear={vi.fn()} onSubmit={vi.fn()} onDelete={vi.fn()} />);
+    expect(screen.getByRole("status")).toBe(live); // the same element: it was not remounted
+    expect(live.textContent).toBe("1 post selected");
+    first.rerender(<SelectionBar count={3} submittable={1} canEdit canSubmitOwn busy={false} onClear={vi.fn()} onSubmit={vi.fn()} onDelete={vi.fn()} />);
+    expect(live.textContent).toBe("3 posts selected");
+    expect(live.className).toContain("sr-only");
+    expect(screen.getByRole("region", { name: "Selected posts" }).querySelector("[aria-live]")).toBeNull();
+  });
+
+  it("it floats: it sticks to the bottom of the page's scroll area, centred and as wide as its content, over the rows", () => {
+    bar({ count: 2 });
+    const region = screen.getByRole("region", { name: "Selected posts" });
+    for (const c of ["sticky", "bottom-4", "z-10", "self-center", "sm:w-fit", "shadow-lg"]) expect(region.className).toContain(c);
+    // sticky, not fixed: it stays inside the page's own scroll box, under the drawer and the dialogs (z-50)
+    expect(region.className).not.toMatch(/\b(fixed|absolute)\b/);
+    expect(region.className).toContain("motion-reduce:animate-none");
   });
 
   it("with some ticked it counts them, and each button does its work", async () => {
@@ -253,11 +277,6 @@ describe("SelectionBar", () => {
     const { onSubmit } = bar({ count: 4, submittable: 1 });
     await userEvent.click(screen.getByRole("button", { name: "Submit 1 of 4 for review" }));
     expect(onSubmit).toHaveBeenCalledOnce();
-  });
-
-  it("with nothing ticked the button waits, as in the design", () => {
-    bar({ count: 0, submittable: 0 });
-    expect((screen.getByRole("button", { name: "Submit selected for review" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("while something runs, the buttons wait", () => {
