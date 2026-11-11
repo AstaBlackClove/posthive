@@ -270,11 +270,21 @@ describe("GET /jobs/calendar", () => {
     ["a range that ends before it starts", "from=2026-03-05&to=2026-03-01"],
     ["more than 42 days", "from=2026-03-01&to=2026-04-12"],
     ["a repeated day", "from=2026-03-01&from=2026-03-02&to=2026-03-05"],
+    // Postgres cannot store these: asking for them would be a 500, not a 400
+    ["year 0000, which Postgres cannot store", "from=0000-01-01&to=0000-01-02"],
+    ["a year before 2000", "from=1999-12-30&to=1999-12-31"],
+    ["a year after 2100", "from=2101-01-01&to=2101-01-02"],
   ])("%s is a 400 and reaches no query", async (_name, query) => {
     const res = await app.inject({ method: "GET", url: `/jobs/calendar?${query}` });
     expect(res.statusCode).toBe(400);
     expect(res.json().code).toBe("INVALID_RANGE");
     expect(h.calls).toHaveLength(0);
+  });
+
+  it("accepts exactly 42 days, a six-week month grid, and refuses one more", async () => {
+    const ask = (to: string) => app.inject({ method: "GET", url: `/jobs/calendar?from=2026-10-26&to=${to}` });
+    expect((await ask("2026-12-06")).statusCode).toBe(200);
+    expect((await ask("2026-12-07")).statusCode).toBe(400);
   });
 
   it("a day is a range of one", async () => {

@@ -12,7 +12,6 @@ const h = vi.hoisted(() => ({
   targets: [] as Array<{ accountId: string; _count: { accountId: number } }>,
   counts: {} as Record<string, number>,
   posts: [] as unknown[],
-  calendar: [] as unknown[],
   imported: null as { id: string } | null,
   created: null as { id: string } | null,
 }));
@@ -43,7 +42,7 @@ vi.mock("../lib/prisma.js", () => {
         findMany: record("postJob", "findMany", (args) => {
           const json = JSON.stringify(args);
           if (json.includes('"take":5000')) return h.quarterPosts;
-          return json.includes('"take":401') ? h.calendar : h.posts;
+          return h.posts;
         }),
         findFirst: record("postJob", "findFirst", (args) => (hasKey(args) && JSON.stringify(args).includes('"not":null') ? h.imported : h.created)),
       },
@@ -86,7 +85,6 @@ beforeEach(() => {
   h.targets = [];
   h.counts = {};
   h.posts = [];
-  h.calendar = [];
   h.imported = null;
   h.created = null;
 });
@@ -257,51 +255,3 @@ describe("GET /dashboard", () => {
   });
 });
 
-describe("GET /dashboard/calendar", () => {
-  const get = (query: string) => app.inject({ method: "GET", url: `/dashboard/calendar${query}` });
-
-  it("returns the posts of the range and asks for it in WIB, last day included", async () => {
-    h.calendar = [post("a"), post("b")];
-    const res = await get("?from=2026-10-26&to=2026-12-06");
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toMatchObject({ from: "2026-10-26", to: "2026-12-06", truncated: false });
-    expect(res.json().posts.map((p: { id: string }) => p.id)).toEqual(["a", "b"]);
-    const query = h.calls.find((c) => c.fn === "findMany");
-    expect(JSON.stringify(query!.args)).toContain('"gte":"2026-10-25T17:00:00.000Z","lt":"2026-12-06T17:00:00.000Z"');
-  });
-
-  it("says when the range held more than it sends", async () => {
-    h.calendar = Array.from({ length: 401 }, (_, i) => post(`p${i}`));
-    const json = (await get("?from=2026-11-01&to=2026-11-30")).json();
-    expect(json.truncated).toBe(true);
-    expect(json.posts).toHaveLength(400);
-  });
-
-  it.each([
-    ["year 0000, which Postgres cannot store", "?from=0000-01-01&to=0000-01-02"],
-    ["a year before 2000", "?from=1999-12-30&to=1999-12-31"],
-    ["a year after 2100", "?from=2101-01-01&to=2101-01-02"],
-    ["no range", ""],
-    ["no end", "?from=2026-11-01"],
-    ["a day that does not exist", "?from=2026-02-31&to=2026-03-05"],
-    ["a wrong format", "?from=01-11-2026&to=30-11-2026"],
-    ["an end before the start", "?from=2026-11-10&to=2026-11-01"],
-    ["more than 42 days", "?from=2026-11-01&to=2026-12-20"],
-  ])("refuses %s", async (_label, query) => {
-    const res = await get(query);
-    expect(res.statusCode).toBe(400);
-    expect(res.json().code).toBe("INVALID_RANGE");
-    expect(h.calls).toEqual([]);
-  });
-
-  it("accepts exactly 42 days, a six-week month grid", async () => {
-    expect((await get("?from=2026-10-26&to=2026-12-06")).statusCode).toBe(200);
-    expect((await get("?from=2026-10-26&to=2026-12-07")).statusCode).toBe(400);
-  });
-
-  it("applies the same draft visibility as the list", async () => {
-    h.role = "designer";
-    await get("?from=2026-11-01&to=2026-11-30");
-    expect(JSON.stringify(h.calls[0].args)).toContain('"approvalStatus":"pending"');
-  });
-});

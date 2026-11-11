@@ -4,25 +4,19 @@ import { prisma } from "../lib/prisma.js";
 import { getUser, getWorkspaceId, getWorkspaceRole, jobVisibilityWhere, withAuth } from "../lib/auth/withAuth.js";
 import { STATUS_GROUPS } from "../lib/jobFilters.js";
 import {
-  CALENDAR_LIMIT,
   LIST_LIMIT,
-  MAX_CALENDAR_DAYS,
-  addDays,
   dayWhere,
-  isDateKey,
   listWhere,
   monthOf,
   plainDraft,
   QUARTER_LIMIT,
   quarterCount,
   quarterOf,
-  rangeWhere,
   readyToSchedule,
   tasksWhere,
   toPost,
   wibKey,
   wibStart,
-  type DashboardPost,
   type ListKind,
 } from "../lib/dashboardData.js";
 
@@ -189,37 +183,6 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
           invites,
         },
       });
-    },
-  );
-
-  // The posts of a range of days for the calendar, e.g. the six weeks a month grid shows.
-  app.get(
-    "/dashboard/calendar",
-    { preHandler: [withAuth], config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
-    async (req, reply) => {
-      const { id: userId } = getUser(req);
-      const workspaceId = getWorkspaceId(req);
-      const { from, to } = req.query as { from?: string; to?: string };
-
-      if (!isDateKey(from) || !isDateKey(to)) {
-        return reply.status(400).send({ error: "from and to must be days like 2026-11-09.", code: "INVALID_RANGE" });
-      }
-      if (to < from || addDays(from, MAX_CALENDAR_DAYS - 1) < to) {
-        return reply.status(400).send({ error: `The range must be 1 to ${MAX_CALENDAR_DAYS} days.`, code: "INVALID_RANGE" });
-      }
-
-      const role = await getWorkspaceRole(userId, workspaceId);
-      const base: Prisma.PostJobWhereInput = { workspaceId, AND: [jobVisibilityWhere(role, userId)] };
-      // one more than the limit tells us there were more
-      const rows = await prisma.postJob.findMany({
-        where: rangeWhere(base, from, to),
-        orderBy: [{ scheduledFor: "asc" }, { id: "asc" }],
-        take: CALENDAR_LIMIT + 1,
-        select: POST_SELECT,
-      });
-      const truncated = rows.length > CALENDAR_LIMIT;
-      const posts: DashboardPost[] = (truncated ? rows.slice(0, CALENDAR_LIMIT) : rows).map(toPost);
-      return reply.send({ from, to, posts, truncated });
     },
   );
 }
