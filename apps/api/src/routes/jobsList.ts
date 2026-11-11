@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { getUser, getWorkspaceId, getWorkspaceRole, isDraftVisibleTo, jobVisibilityWhere, withAuth } from "../lib/auth/withAuth.js";
 import { bucketJobCounts, jobFilterWhere, type JobCounts } from "../lib/jobFilters.js";
-import { contentOf } from "../lib/dashboardData.js";
+import { CALENDAR_LIMIT, MAX_CALENDAR_DAYS, addDays, contentOf, isDateKey, rangeWhere, wibStart } from "../lib/dashboardData.js";
 import {
   LIST_PAGE_MAX,
   LIST_PAGE_SIZE,
@@ -55,6 +55,9 @@ async function latestImport(base: Prisma.PostJobWhereInput): Promise<ImportSourc
   return { ...source, importedBy: newest.user?.name ?? null, count };
 }
 
+/** The where of a status filter: `{}` for "all", null when it is not a filter we know. */
+const filterWhereOf = (filter: string): Prisma.PostJobWhereInput | null => (filter === "all" ? {} : jobFilterWhere(filter));
+
 export async function jobsListRoutes(app: FastifyInstance): Promise<void> {
   // One page of the Content List: the rows of a status filter, soonest first (drafts with no date last), with the
   // count of every filter. The role decides which drafts are visible (the Posts page's rule), so a count here is
@@ -69,10 +72,8 @@ export async function jobsListRoutes(app: FastifyInstance): Promise<void> {
       const query = req.query as { filter?: string; page?: string; limit?: string; source?: string };
 
       const filter = query.filter ?? "all";
-      const filterWhere = filter === "all" ? null : jobFilterWhere(filter);
-      if (filter !== "all" && !filterWhere) {
-        return reply.status(400).send({ error: "Unknown filter.", code: "INVALID_FILTER" });
-      }
+      const filterWhere = filterWhereOf(filter);
+      if (!filterWhere) return reply.status(400).send({ error: "Unknown filter.", code: "INVALID_FILTER" });
       const size = Math.min(Math.max(Math.trunc(Number(query.limit)) || LIST_PAGE_SIZE, 1), LIST_PAGE_MAX);
 
       const role = await getWorkspaceRole(userId, workspaceId);
@@ -86,7 +87,7 @@ export async function jobsListRoutes(app: FastifyInstance): Promise<void> {
 
       const [rows, source] = await Promise.all([
         prisma.postJob.findMany({
-          where: filterWhere ? { AND: [base, filterWhere] } : base,
+          where: { AND: [base, filterWhere] },
           orderBy: [{ scheduledFor: { sort: "asc", nulls: "last" } }, { id: "asc" }],
           skip: (page - 1) * size,
           take: size,
@@ -103,6 +104,59 @@ export async function jobsListRoutes(app: FastifyInstance): Promise<void> {
         pageCount,
         counts,
         ...(source !== undefined ? { source } : {}),
+      });
+    },
+  );
+
+  // The posts of a range of days (a month grid is at most 42), for the calendar view of the list: the same rows as
+  // /jobs/list, cut by the same status filter and visibility. `next` and `prev` are the closest dated posts outside the
+  // range: the Day view names the next one, and a calendar whose month is empty jumps to one of them.
+  app.get(
+    "/jobs/calendar",
+    { preHandler: [withAuth], config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const { id: userId } = getUser(req);
+      const workspaceId = getWorkspaceId(req);
+      const query = req.query as { filter?: string; from?: string; to?: string };
+
+      const filterWhere = filterWhereOf(query.filter ?? "all");
+      if (!filterWhere) return reply.status(400).send({ error: "Unknown filter.", code: "INVALID_FILTER" });
+      const { from, to } = query;
+      if (!isDateKey(from) || !isDateKey(to)) {
+        return reply.status(400).send({ error: "from and to must be days like 2026-11-09.", code: "INVALID_RANGE" });
+      }
+      if (to < from || addDays(from, MAX_CALENDAR_DAYS - 1) < to) {
+        return reply.status(400).send({ error: `The range must be 1 to ${MAX_CALENDAR_DAYS} days.`, code: "INVALID_RANGE" });
+      }
+
+      const role = await getWorkspaceRole(userId, workspaceId);
+      const base: Prisma.PostJobWhereInput = { AND: [{ workspaceId, AND: [jobVisibilityWhere(role, userId)] }, filterWhere] };
+      const closest = (scheduledFor: Prisma.DateTimeNullableFilter, sort: "asc" | "desc") =>
+        prisma.postJob.findFirst({
+          where: { AND: [base, { scheduledFor }] },
+          orderBy: [{ scheduledFor: sort }, { id: sort }],
+          select: LIST_SELECT,
+        });
+
+      // one more than the limit tells us there were more
+      const [rows, next, prev] = await Promise.all([
+        prisma.postJob.findMany({
+          where: rangeWhere(base, from, to),
+          orderBy: [{ scheduledFor: "asc" }, { id: "asc" }],
+          take: CALENDAR_LIMIT + 1,
+          select: LIST_SELECT,
+        }),
+        closest({ gte: wibStart(addDays(to, 1)) }, "asc"),
+        closest({ lt: wibStart(from) }, "desc"),
+      ]);
+      const truncated = rows.length > CALENDAR_LIMIT;
+      return reply.send({
+        from,
+        to,
+        items: (truncated ? rows.slice(0, CALENDAR_LIMIT) : rows).map(toListItem),
+        truncated,
+        next: next ? toListItem(next) : null,
+        prev: prev ? toListItem(prev) : null,
       });
     },
   );

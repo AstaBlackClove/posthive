@@ -10,6 +10,8 @@ const h = vi.hoisted(() => ({
   newest: null as unknown,
   importCount: 0,
   job: null as unknown,
+  next: null as unknown,
+  prev: null as unknown,
 }));
 
 vi.mock("../lib/prisma.js", () => {
@@ -23,7 +25,12 @@ vi.mock("../lib/prisma.js", () => {
       postJob: {
         groupBy: record("groupBy", () => h.groups),
         findMany: record("findMany", () => h.rows),
-        findFirst: record("findFirst", (args) => (JSON.stringify(args).includes('"importKey"') ? h.newest : h.job)),
+        // the newest import, else a calendar's closest post (latest first = the one before the range), else one post by id
+        findFirst: record("findFirst", (args) => {
+          const json = JSON.stringify(args);
+          if (json.includes('"importKey"')) return h.newest;
+          return json.includes('"orderBy"') ? (json.includes('"desc"') ? h.prev : h.next) : h.job;
+        }),
         count: record("count", () => h.importCount),
       },
     },
@@ -58,6 +65,8 @@ beforeEach(() => {
   h.newest = null;
   h.importCount = 0;
   h.job = null;
+  h.next = null;
+  h.prev = null;
 });
 
 const draft = (id: string, patch: Record<string, unknown> = {}) => ({
@@ -200,6 +209,91 @@ describe("GET /jobs/list", () => {
     const json = (await app.inject({ method: "GET", url: "/jobs/list" })).json();
     expect(json.items[0].link).toBeNull();
     expect(JSON.stringify(json)).not.toContain("private");
+  });
+});
+
+// the six weeks a month grid shows: Mon 2 Mar – Sun 12 Apr 2026
+const RANGE = "from=2026-03-02&to=2026-04-12";
+
+describe("GET /jobs/calendar", () => {
+  it("answers the posts of the range as list rows, with the closest posts before and after it", async () => {
+    h.rows = [draft("a"), draft("b")];
+    h.next = draft("n", { scheduledFor: new Date("2026-05-01T03:00:00Z") });
+    h.prev = draft("p", { scheduledFor: new Date("2026-02-01T03:00:00Z") });
+    const res = await app.inject({ method: "GET", url: `/jobs/calendar?${RANGE}` });
+    expect(res.statusCode).toBe(200);
+    const json = res.json();
+    expect(json).toMatchObject({ from: "2026-03-02", to: "2026-04-12", truncated: false });
+    expect(json.items.map((i: { id: string }) => i.id)).toEqual(["a", "b"]);
+    expect(json.items[0]).toMatchObject({ title: "Post a", channels: ["linkedin"], sourceRow: 1 });
+    expect(json.next).toMatchObject({ id: "n" });
+    expect(json.prev).toMatchObject({ id: "p" });
+  });
+
+  it("reads the range in WIB days; next starts the day after it and prev ends the day it starts", async () => {
+    await app.inject({ method: "GET", url: `/jobs/calendar?${RANGE}` });
+    // WIB is UTC+7: 2 Mar 00:00 WIB is 1 Mar 17:00 UTC
+    expect(JSON.stringify(call("findMany")[0].args)).toContain('"scheduledFor":{"gte":"2026-03-01T17:00:00.000Z","lt":"2026-04-12T17:00:00.000Z"}');
+    const [next, prev] = call("findFirst").map((c) => JSON.stringify(c.args));
+    expect(next).toContain('"scheduledFor":{"gte":"2026-04-12T17:00:00.000Z"}');
+    expect(prev).toContain('"scheduledFor":{"lt":"2026-03-01T17:00:00.000Z"}');
+  });
+
+  it("says so when there is no post before or after: null, not a missing field", async () => {
+    const json = (await app.inject({ method: "GET", url: `/jobs/calendar?${RANGE}` })).json();
+    expect(json).toMatchObject({ items: [], next: null, prev: null });
+  });
+
+  it("cuts at 400 posts and says the range was cut", async () => {
+    h.rows = Array.from({ length: 401 }, (_, i) => draft(`p${i}`));
+    const json = (await app.inject({ method: "GET", url: `/jobs/calendar?${RANGE}` })).json();
+    expect(json.items).toHaveLength(400);
+    expect(json.truncated).toBe(true);
+  });
+
+  it("is cut by the status filter, in the rows and in the closest posts", async () => {
+    await app.inject({ method: "GET", url: `/jobs/calendar?filter=review&${RANGE}` });
+    for (const c of [...call("findMany"), ...call("findFirst")]) expect(JSON.stringify(c.args)).toContain('"approvalStatus":"pending"');
+  });
+
+  it("an unknown filter is a 400 and reaches no query", async () => {
+    const res = await app.inject({ method: "GET", url: `/jobs/calendar?filter=everything&${RANGE}` });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().code).toBe("INVALID_FILTER");
+    expect(h.calls).toHaveLength(0);
+  });
+
+  it.each([
+    ["no range", ""],
+    ["a day that is not one", "from=2026-02-31&to=2026-03-05"],
+    ["a day that is text", "from=today&to=2026-03-05"],
+    ["a range that ends before it starts", "from=2026-03-05&to=2026-03-01"],
+    ["more than 42 days", "from=2026-03-01&to=2026-04-12"],
+    ["a repeated day", "from=2026-03-01&from=2026-03-02&to=2026-03-05"],
+  ])("%s is a 400 and reaches no query", async (_name, query) => {
+    const res = await app.inject({ method: "GET", url: `/jobs/calendar?${query}` });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().code).toBe("INVALID_RANGE");
+    expect(h.calls).toHaveLength(0);
+  });
+
+  it("a day is a range of one", async () => {
+    expect((await app.inject({ method: "GET", url: "/jobs/calendar?from=2026-03-07&to=2026-03-07" })).statusCode).toBe(200);
+  });
+
+  it("an admin sees only own drafts, drafts in review and sent posts: the rule of the list", async () => {
+    h.role = "admin";
+    await app.inject({ method: "GET", url: `/jobs/calendar?${RANGE}` });
+    for (const c of h.calls) {
+      expect(JSON.stringify(c.args), c.fn).toContain('"userId":"user-1"');
+      expect(JSON.stringify(c.args), c.fn).toContain('"workspaceId":"ws-1"');
+    }
+  });
+
+  it("a row never carries the content JSON", async () => {
+    h.rows = [draft("a", { content: JSON.stringify({ title: "T", assetNotes: "private" }) })];
+    h.next = draft("n", { content: JSON.stringify({ title: "N", assetNotes: "private" }) });
+    expect(JSON.stringify((await app.inject({ method: "GET", url: `/jobs/calendar?${RANGE}` })).json())).not.toContain("private");
   });
 });
 
