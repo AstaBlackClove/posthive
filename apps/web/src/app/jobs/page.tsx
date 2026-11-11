@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CloudUploadIcon, ListIcon, PlusIcon } from "lucide-react";
+import { CalendarDaysIcon, CloudUploadIcon, KanbanIcon, ListIcon, PlusIcon, Table2Icon } from "lucide-react";
 import { ContentDrawer } from "@/components/content-list/ContentDrawer";
 import { ContentListTable } from "@/components/content-list/ContentListTable";
 import { DraftBanner } from "@/components/content-list/DraftBanner";
+import { KanbanBoard } from "@/components/content-list/KanbanBoard";
+import { ListCalendar, useCalendarPosition } from "@/components/content-list/ListCalendar";
 import { SelectionBar } from "@/components/content-list/SelectionBar";
 import { SourceCard } from "@/components/content-list/SourceCard";
 import { StatusCounts } from "@/components/content-list/StatusCounts";
@@ -24,10 +26,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/cn";
 import { apiFetch } from "@/lib/api";
-import { LIST_STATUS, filterOf, footerLine, listSubtitle, showDraftBanner, visibleFilters, type ListFilter, type ListItem } from "@/lib/content-list";
+import { LIST_STATUS, filterOf, footerLine, listSubtitle, showDraftBanner, visibleFilters, type ListFilter, type ListItem, type ListView } from "@/lib/content-list";
+import { wibDateKey } from "@/lib/datetime";
 import {
   approveJob, deleteJob, deleteMany, fetchJob, rejectJob, retryFailed, savedMessage, submitForReview, submitMany, updateJob,
 } from "@/lib/jobActions";
@@ -49,10 +53,13 @@ export default function ContentListPage() {
   const { success, error: toastError } = useToast();
   const { canEditContent, canReview, canSubmitOwn } = usePermissions();
   const now = useMemo(() => new Date(), []);
+  const todayKey = wibDateKey(now);
+  const calendarPosition = useCalendarPosition(todayKey);
 
   const [filter, setFilter] = useState<ListFilter>("all");
+  const [view, setView] = useState<ListView>("table");
   const [page, setPage] = useState(1);
-  const { data, source, loading, error, reload } = useContentList(filter, page);
+  const { data, source, loading, error, reload, version } = useContentList(filter, page);
 
   const [openId, setOpenId] = useState<string | null>(null);
   // The rows ticked, with their status: the bar under the list offers only what each of them may do (a page turn keeps them)
@@ -260,36 +267,69 @@ export default function ContentListPage() {
                     ))}
                   </TabsList>
                 </Tabs>
-                <p className="type-body-r-xs text-muted-foreground">Click a row to preview · sorted by post date</p>
+                <ToggleGroup type="single" variant="pill" value={view} onValueChange={(v) => setView(v as ListView)} aria-label="View" className="shrink-0 bg-bg">
+                  <ToggleGroupItem value="kanban" aria-label="Kanban view" title="Kanban view" className="px-4 py-1.5">
+                    <KanbanIcon />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="table" aria-label="Table view" title="Table view" className="px-4 py-1.5">
+                    <Table2Icon />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="calendar" aria-label="Calendar view" title="Calendar view" className="px-4 py-1.5">
+                    <CalendarDaysIcon />
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </div>
 
-              {/* @container: the table drops its Link and Caption columns when this box is narrow (the drawer has both), so Status never hides behind a scroll */}
-              <div className="@container overflow-hidden rounded-xl border border-border" aria-busy={loading}>
-                <div className={loading ? "opacity-60 transition-opacity" : "transition-opacity"}>
-                  <ContentListTable
-                    items={items}
-                    selected={selected}
-                    openId={openId}
-                    selectable={canEditContent}
-                    onToggle={toggle}
-                    onToggleAll={toggleAll}
-                    onOpen={setOpenId}
-                  />
-                </div>
-                {items.length === 0 && !loading && (
-                  <p className="px-4 py-10 text-center type-body-r-s text-muted-foreground">No {LIST_STATUS[filter].toLowerCase()} posts.</p>
-                )}
-              </div>
+              {view === "table" && (
+                <>
+                  {/* @container: the table drops its Link and Caption columns when this box is narrow (the drawer has both), so Status never hides behind a scroll */}
+                  <div className="@container overflow-hidden rounded-xl border border-border" aria-busy={loading}>
+                    <div className={loading ? "opacity-60 transition-opacity" : "transition-opacity"}>
+                      <ContentListTable
+                        items={items}
+                        selected={selected}
+                        openId={openId}
+                        selectable={canEditContent}
+                        onToggle={toggle}
+                        onToggleAll={toggleAll}
+                        onOpen={setOpenId}
+                      />
+                    </div>
+                    {items.length === 0 && !loading && (
+                      <p className="px-4 py-10 text-center type-body-r-s text-muted-foreground">No {LIST_STATUS[filter].toLowerCase()} posts.</p>
+                    )}
+                  </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 type-body-r-xs text-muted-foreground">
-                <p aria-live="polite">
-                  {footerLine(items.length, shown ?? 0, filter, counts, items.some((i) => i.sourceRow !== null))}
-                </p>
-                <Pager page={data.page} pageCount={data.pageCount} onPage={setPage} />
-              </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 type-body-r-xs text-muted-foreground">
+                    <p aria-live="polite">
+                      {footerLine(items.length, shown ?? 0, filter, counts, items.some((i) => i.sourceRow !== null))}
+                    </p>
+                    <Pager page={data.page} pageCount={data.pageCount} onPage={setPage} />
+                  </div>
+                </>
+              )}
+
+              {view === "calendar" && (
+                <ListCalendar filter={filter} counts={counts} position={calendarPosition} todayKey={todayKey} version={version} role={role} openId={openId} onOpen={setOpenId} />
+              )}
+
+              {view === "kanban" && (
+                <KanbanBoard
+                  filter={filter}
+                  filters={filters}
+                  counts={counts}
+                  version={version}
+                  openId={openId}
+                  onOpen={setOpenId}
+                  onMore={(f) => {
+                    setView("table");
+                    pick(f);
+                  }}
+                />
+              )}
             </Card>
 
-            {(canEditContent || canSubmitOwn) && (
+            {view === "table" && (canEditContent || canSubmitOwn) && (
               <SelectionBar
                 count={picked.size}
                 submittable={submittable.length}

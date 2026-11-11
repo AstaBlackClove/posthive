@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ListAnswer, ListCounts, ListItem, PostDetail } from "@/lib/content-list";
+import type { CalendarAnswer } from "@/lib/useContentList";
 
 const h = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -72,11 +73,26 @@ const detail = (id = "p1"): PostDetail => ({
   missing: [],
 });
 
+/** The calendar's answer for a range: no post in it, none before or after. */
+const calendar = (query: URLSearchParams, patch: Partial<CalendarAnswer> = {}): CalendarAnswer => ({
+  from: query.get("from") ?? "",
+  to: query.get("to") ?? "",
+  items: [],
+  truncated: false,
+  next: null,
+  prev: null,
+  ...patch,
+});
+
 /** Answer each path; the list can be answered per query. */
-function serve(list: (query: URLSearchParams) => ListAnswer | Promise<ListAnswer> = () => answer()) {
+function serve(
+  list: (query: URLSearchParams) => ListAnswer | Promise<ListAnswer> = () => answer(),
+  cal: (query: URLSearchParams) => CalendarAnswer | Promise<CalendarAnswer> = (q) => calendar(q)
+) {
   h.apiFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
     const [pathname, search = ""] = path.split("?");
     if (pathname === "/jobs/list") return list(new URLSearchParams(search));
+    if (pathname === "/jobs/calendar") return cal(new URLSearchParams(search));
     if (/^\/jobs\/[^/]+\/detail$/.test(pathname)) return detail(pathname.split("/")[2]);
     if (pathname === "/accounts") return [];
     if (pathname === "/templates") return { templates: [] };
@@ -117,7 +133,10 @@ describe("Content List page", () => {
     expect(screen.getByRole("button", { name: "Draft: 60" })).toBeTruthy();
     expect(screen.getByText("All imported posts are in Draft")).toBeTruthy();
     expect(screen.getByText("Showing 2 of 60 posts · 60 Draft · Row # = source row in imported file")).toBeTruthy();
-    expect(screen.getByText("Click a row to preview · sorted by post date")).toBeTruthy();
+    // the table is the view it opens in; the other two are one click away
+    expect(screen.getByRole("radio", { name: "Table view" }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByRole("radio", { name: "Kanban view" })).toBeTruthy();
+    expect(screen.getByRole("radio", { name: "Calendar view" })).toBeTruthy();
   });
 
   it("asks for the first page of All, and for the imported file once", async () => {
@@ -509,5 +528,258 @@ describe("Content List page", () => {
     const file = screen.getByRole("heading", { name: /quarterly-plan-/ });
     expect(file.className).toContain("truncate");
     expect(file.parentElement!.className).toContain("min-w-0");
+  });
+});
+
+const calendarCalls = () => h.apiFetch.mock.calls.map((c) => String(c[0])).filter((p) => p.startsWith("/jobs/calendar"));
+/** The posts at 08:00 WIB of 7 Mar 2026 and at 10:00 WIB of 12 Mar 2026. */
+const mar7 = row(1, { scheduledFor: "2026-03-07T01:00:00.000Z", channels: ["linkedin", "instagram"] });
+const mar12 = row(3, { scheduledFor: "2026-03-12T03:00:00.000Z" });
+
+async function openView(name: "Kanban view" | "Calendar view") {
+  await screen.findByText("Post 1");
+  await userEvent.click(screen.getByRole("radio", { name }));
+}
+
+describe("Content List page: calendar view", () => {
+  it("asks for the six weeks of the month of today, of the status tab on screen", async () => {
+    serve();
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    // 13 Nov 2026: November's grid runs Mon 26 Oct to Sun 6 Dec
+    await waitFor(() => expect(calendarCalls()).toEqual(["/jobs/calendar?filter=all&from=2026-10-26&to=2026-12-06"]));
+    expect(await screen.findByRole("heading", { name: "November 2026" })).toBeTruthy();
+    // the table and its bar are not drawn: nothing here is ticked
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.queryByText(/selected/)).toBeNull();
+  });
+
+  it("an empty month jumps once to the month of the closest post, and only once", async () => {
+    serve(undefined, (q) => (q.get("from") === "2026-10-26" ? calendar(q, { prev: mar7 }) : calendar(q, { items: [mar7, mar12] })));
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    expect(await screen.findByRole("heading", { name: "March 2026" })).toBeTruthy();
+    expect(calendarCalls().at(-1)).toBe("/jobs/calendar?filter=all&from=2026-02-23&to=2026-04-05");
+    // moving on to an empty month is the person's choice: it stays there
+    await userEvent.click(screen.getByRole("button", { name: "Next month" }));
+    await userEvent.click(screen.getByRole("button", { name: "Next month" }));
+    expect(await screen.findByRole("heading", { name: "May 2026" })).toBeTruthy();
+  });
+
+  it("places a post on its day, and a click opens its drawer", async () => {
+    serve(undefined, (q) => (q.get("from") === "2026-10-26" ? calendar(q, { prev: mar7 }) : calendar(q, { items: [mar7, mar12] })));
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    const cell = await screen.findByRole("gridcell", { name: "Sat, 7 Mar 2026" });
+    expect(within(cell).getByText("1 post")).toBeTruthy();
+    await userEvent.click(within(cell).getByRole("button", { name: /^Open 08:00 Post 1, Draft$/ }));
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    expect(h.apiFetch).toHaveBeenCalledWith("/jobs/p1/detail");
+  });
+
+  it("a busy month cell lists the first post and '+2 more', which opens that day", async () => {
+    const day = (n: number) => row(n, { id: `d${n}`, title: `Busy ${n}`, scheduledFor: `2026-03-07T0${n}:00:00.000Z` });
+    serve(undefined, (q) => (q.get("from") === "2026-10-26" ? calendar(q, { prev: mar7 }) : calendar(q, { items: [day(1), day(2), day(3)] })));
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    const cell = await screen.findByRole("gridcell", { name: "Sat, 7 Mar 2026" });
+    expect(within(cell).getByText("3 posts")).toBeTruthy();
+    expect(within(cell).getAllByRole("button", { name: /^Open / })).toHaveLength(1);
+    await userEvent.click(within(cell).getByRole("button", { name: "+2 more" }));
+    expect(await screen.findByRole("heading", { name: "Saturday, 7 Mar 2026" })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /^Open Busy / })).toHaveLength(3);
+  });
+
+  it("the week view puts a post in the column of its day and the row of its hour", async () => {
+    serve(undefined, (q) => (q.get("from") === "2026-11-09" ? calendar(q, { items: [row(5, { id: "w5", title: "Friday post", scheduledFor: "2026-11-13T07:30:00.000Z" })] }) : calendar(q)));
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    await userEvent.click(screen.getByRole("radio", { name: "Week" }));
+    // 07:30 UTC = 14:30 WIB on Fri 13 Nov
+    const chip = await screen.findByRole("button", { name: "Open 14:30 Friday post, Draft" });
+    const cells = within(chip.closest('[role="row"]') as HTMLElement).getAllByRole("gridcell");
+    expect(cells.indexOf(chip.closest('[role="gridcell"]') as HTMLElement)).toBe(4);
+    expect(within(chip.closest('[role="row"]') as HTMLElement).getByRole("rowheader").textContent).toBe("14:00");
+  });
+
+  it("the week view heads each column with its day and how many posts it has, and rows the hours", async () => {
+    serve(undefined, (q) => calendar(q, { items: [] }));
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    await userEvent.click(screen.getByRole("radio", { name: "Week" }));
+    // 13 Nov 2026 is a Friday: the week is 9 – 15 Nov
+    expect(await screen.findByRole("heading", { name: "9 – 15 Nov 2026" })).toBeTruthy();
+    expect(calendarCalls().at(-1)).toBe("/jobs/calendar?filter=all&from=2026-11-09&to=2026-11-15");
+    expect(screen.getAllByText("No posts").length).toBe(7);
+    expect(screen.getByRole("rowheader", { name: "08:00" })).toBeTruthy();
+    expect(screen.getByRole("rowheader", { name: "17:00" })).toBeTruthy();
+  });
+
+  it("the day view says what the next step is, and offers the next post", async () => {
+    h.perms = { canEditContent: true, canReview: false, canSubmitOwn: true };
+    serve(undefined, (q) => (q.get("from") === "2026-10-26" ? calendar(q, { prev: mar7 }) : q.get("from") === "2026-03-07" ? calendar(q, { items: [mar7], next: mar12 }) : calendar(q, { items: [mar7, mar12] })));
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    await screen.findByRole("heading", { name: "March 2026" });
+    // from the month, a day's "+N more" or a click on the post goes to the day: here the person picks Day
+    await userEvent.click(screen.getByRole("radio", { name: "Day" }));
+    expect(await screen.findByRole("heading", { name: "Saturday, 7 Mar 2026" })).toBeTruthy();
+    const step = await screen.findByRole("complementary", { name: "Next step" });
+    expect(within(step).getByText(/submit it for review/)).toBeTruthy();
+    await userEvent.click(within(step).getByRole("button", { name: /^Next post: Thu 12 Mar · 10:00 · Post 3$/ }));
+    expect(await screen.findByRole("heading", { name: "Thursday, 12 Mar 2026" })).toBeTruthy();
+  });
+
+  it("a slow answer for a range the person left does not land on the range they are on", async () => {
+    let late!: (a: CalendarAnswer) => void;
+    const stale = new Promise<CalendarAnswer>((resolve) => (late = resolve));
+    const dec = row(7, { id: "dec", title: "December post", scheduledFor: "2026-12-10T03:00:00.000Z" });
+    const nov = row(8, { id: "nov", title: "November post", scheduledFor: "2026-11-13T03:00:00.000Z" });
+    // November (the first range) is slow; December answers at once
+    serve(undefined, (q) => (q.get("from") === "2026-10-26" ? stale : calendar(q, { items: [dec] })));
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    await userEvent.click(await screen.findByRole("button", { name: "Next month" }));
+    expect(await screen.findByRole("button", { name: /^Open 10:00 December post/ })).toBeTruthy();
+    late(calendar(new URLSearchParams("from=2026-10-26&to=2026-12-06"), { items: [nov] }));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByRole("button", { name: /November post/ })).toBeNull();
+    // and the grid still has December's post: the late answer did not replace it
+    expect(screen.getByRole("button", { name: /^Open 10:00 December post/ })).toBeTruthy();
+  });
+
+  it("coming back from the table finds the calendar where the person left it, and does not jump again", async () => {
+    serve(undefined, (q) => (q.get("from") === "2026-10-26" ? calendar(q, { prev: mar7 }) : calendar(q, { items: [mar7] })));
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    await screen.findByRole("heading", { name: "March 2026" });
+    await userEvent.click(screen.getByRole("radio", { name: "Week" }));
+    await userEvent.click(screen.getByRole("button", { name: "Next week" }));
+    // the jump put the anchor on Sat 7 Mar: its week is 2 – 8 Mar, the next one 9 – 15 Mar
+    expect(await screen.findByRole("heading", { name: "9 – 15 Mar 2026" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("radio", { name: "Table view" }));
+    await screen.findByRole("table");
+    await userEvent.click(screen.getByRole("radio", { name: "Calendar view" }));
+    expect(await screen.findByRole("heading", { name: "9 – 15 Mar 2026" })).toBeTruthy();
+    expect(screen.getByRole("radio", { name: "Week" }).getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("a status tab asks for its own status", async () => {
+    h.perms = { canEditContent: true, canReview: true, canSubmitOwn: false };
+    serve(() => answer({ counts: counts({ draft: 58, review: 2 }) }));
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    await userEvent.click(screen.getByRole("button", { name: "In Review: 2" }));
+    await waitFor(() => expect(calendarCalls().at(-1)).toBe("/jobs/calendar?filter=review&from=2026-10-26&to=2026-12-06"));
+  });
+
+  it("a range that could not be loaded says so and can be asked again", async () => {
+    let fail = true;
+    serve(undefined, (q) => {
+      if (fail) throw new Error("The server is busy.");
+      return calendar(q);
+    });
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    expect(await screen.findByText("The server is busy.")).toBeTruthy();
+    fail = false;
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(screen.queryByText("The server is busy.")).toBeNull());
+  });
+
+  it("an edit that reloads the list asks the calendar again", async () => {
+    serve(undefined, (q) => (q.get("from") === "2026-10-26" ? calendar(q, { prev: mar7 }) : calendar(q, { items: [mar7] })));
+    render(<ContentListPage />);
+    await openView("Calendar view");
+    await userEvent.click(await screen.findByRole("button", { name: /^Open 08:00 Post 1, Draft$/ }));
+    await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }));
+    await userEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(h.toast.success).toHaveBeenCalled());
+    const before = calendarCalls().length;
+    await waitFor(() => expect(calendarCalls().length).toBeGreaterThanOrEqual(before));
+    expect(before).toBeGreaterThan(2);
+  });
+});
+
+describe("Content List page: Kanban view", () => {
+  // the table's own request (filter=all, a page) and the Draft column have rows; every other column is empty
+  const board = (q: URLSearchParams) =>
+    q.get("filter") === "draft" || q.get("filter") === "all" ? answer({ items: [row(1), row(3)], total: 60 }) : answer({ items: [], total: 0, pageCount: 1 });
+
+  it("asks for a few cards of each status the role has, and draws a column per status", async () => {
+    h.perms = { canEditContent: true, canReview: false, canSubmitOwn: true };
+    serve(board);
+    render(<ContentListPage />);
+    await openView("Kanban view");
+    expect(await screen.findByRole("region", { name: "Revision Required" })).toBeTruthy();
+    for (const f of ["draft", "review", "rejected", "pending", "done", "failed"]) expect(listCalls()).toContain(`/jobs/list?filter=${f}&limit=4`);
+    for (const name of ["Draft", "In Review", "Revision Required", "Ready to Publish", "Published", "Failed"]) expect(screen.getByRole("region", { name })).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Draft" })).getByText("Post 1")).toBeTruthy();
+  });
+
+  it("a board that could not be loaded says so and shows no placeholders, and asking again fills it", async () => {
+    let fail = true;
+    serve((q) => {
+      if (fail && q.get("limit") === "4") throw new Error("The server is busy.");
+      return board(q);
+    });
+    const { container } = render(<ContentListPage />);
+    await openView("Kanban view");
+    expect(await screen.findByText("The server is busy.")).toBeTruthy();
+    expect(container.querySelector('[data-slot="skeleton"]')).toBeNull();
+    fail = false;
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("button", { name: "Open Post 3" })).toBeTruthy();
+  });
+
+  it("an empty column says why nothing is there", async () => {
+    serve(board);
+    render(<ContentListPage />);
+    await openView("Kanban view");
+    const done = await screen.findByRole("region", { name: "Published" });
+    expect(within(done).getByText("No posts yet")).toBeTruthy();
+    expect(within(done).getByText("Posts that went out show up here.")).toBeTruthy();
+  });
+
+  it("the rest of a column is in the table: '+ 58 more drafts' opens the Draft tab", async () => {
+    serve(board);
+    render(<ContentListPage />);
+    await openView("Kanban view");
+    await userEvent.click(await screen.findByRole("button", { name: "+ 58 more drafts" }));
+    expect(screen.getByRole("radio", { name: "Table view" }).getAttribute("aria-checked")).toBe("true");
+    await waitFor(() => expect(listCalls().at(-1)).toBe("/jobs/list?filter=draft&page=1&limit=10"));
+    expect(screen.getByRole("tab", { name: /^Draft/ }).getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("a card opens the drawer, and is not draggable", async () => {
+    serve(board);
+    render(<ContentListPage />);
+    await openView("Kanban view");
+    const card = await screen.findByRole("button", { name: "Open Post 3" });
+    expect(card.closest("article")?.getAttribute("draggable")).toBeNull();
+    await userEvent.click(card);
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    expect(h.apiFetch).toHaveBeenCalledWith("/jobs/p3/detail");
+  });
+
+  it("a status tab leaves that column alone, with more cards", async () => {
+    h.perms = { canEditContent: true, canReview: true, canSubmitOwn: false };
+    serve((q) => answer({ counts: counts({ draft: 58, review: 2 }), items: [row(1)], page: Number(q.get("page")) }));
+    render(<ContentListPage />);
+    await openView("Kanban view");
+    await userEvent.click(screen.getByRole("button", { name: "In Review: 2" }));
+    await waitFor(() => expect(listCalls()).toContain("/jobs/list?filter=review&limit=12"));
+    expect(screen.queryByRole("region", { name: "Draft" })).toBeNull();
+  });
+
+  it("the selection bar is the table's: the board has nothing to tick", async () => {
+    serve(board);
+    render(<ContentListPage />);
+    await screen.findByText("Post 1");
+    expect(screen.getByText(/0 selected/)).toBeTruthy();
+    await userEvent.click(screen.getByRole("radio", { name: "Kanban view" }));
+    expect(screen.queryByText(/0 selected/)).toBeNull();
+    await userEvent.click(screen.getByRole("radio", { name: "Table view" }));
+    expect(await screen.findByText(/0 selected/)).toBeTruthy();
   });
 });
