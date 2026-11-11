@@ -92,6 +92,7 @@ export default function DashboardPage() {
                 <ContentCalendar
                   todayKey={todayKey}
                   events={calendar.events}
+                  eventsRange={calendar.range}
                   loading={calendar.loading}
                   truncated={calendar.truncated}
                   error={calendar.error}

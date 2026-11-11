@@ -26,6 +26,12 @@ type Props = {
   todayKey: string;
   /** The posts of the days the grid shows. None shows the empty state over the grid. */
   events?: CalendarEvent[];
+  /**
+   * The days `events` were loaded for. While they are not the days on screen the grid is waiting, and says nothing
+   * about them (an old answer is not an empty one). null = nothing has come yet; left out = `events` are for the
+   * days on screen.
+   */
+  eventsRange?: { from: string; to: string } | null;
   /** The grid is waiting for the posts of the range it moved to. */
   loading?: boolean;
   /** The server cut the range short: not every post is on the grid. */
@@ -77,9 +83,9 @@ function chunk<T>(items: T[], size: number): T[][] {
  * The month grid. It is built from plain "YYYY-MM-DD" keys (lib/calendar-range), not from the
  * shadcn Calendar: that one is a date picker, this one is a board that will hold events. The
  * filter, the view switch and the arrows are shadcn components; with no posts an Empty sits over
- * the middle of the grid.
+ * the middle of the grid, in the grid's own area, so a short board (a day, a week) grows to hold it.
  */
-export function ContentCalendar({ todayKey, events, loading = false, truncated = false, error = null, onRetry, onRangeChange }: Props) {
+export function ContentCalendar({ todayKey, events, eventsRange, loading = false, truncated = false, error = null, onRetry, onRangeChange }: Props) {
   const [view, setView] = useState<CalendarView>("month");
   const [channel, setChannel] = useState<string>("all");
   const [anchor, setAnchor] = useState(todayKey);
@@ -105,7 +111,10 @@ export function ContentCalendar({ todayKey, events, loading = false, truncated =
   }, [events, channel]);
   const shown = useMemo(() => (events ?? []).filter((e) => channel === "all" || e.channels.includes(channel)), [events, channel]);
   const byDay = useMemo(() => eventsByDay(shown), [shown]);
-  const empty = !loading && !error && shown.length === 0;
+  // The page learns the new days from an effect and only then starts loading, so for a render or two `events` and
+  // `loading` still belong to the days the person just left: that is waiting, not an empty range.
+  const answered = eventsRange === undefined || (eventsRange !== null && eventsRange.from === first && eventsRange.to === last);
+  const empty = answered && !loading && !error && shown.length === 0;
 
   return (
     <Card aria-labelledby="calendar-title" className="gap-4 py-4">
@@ -121,10 +130,13 @@ export function ContentCalendar({ todayKey, events, loading = false, truncated =
         </ToggleGroup>
       </div>
 
-      <div className="relative px-4">
-        {/* the board of the design: the range controls on top, the grid under them, one border around both */}
-        <div className="overflow-hidden rounded-xl border border-border">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 p-3">
+      <div className="px-4">
+        {/* the board of the design: the range controls on top, the grid under them, one border around both. It is a
+            grid of its own so the empty state can take the grid's place: a day or a week is shorter than the card, and
+            the board grows to the taller of the two instead of the card spilling over the controls. Every child has its
+            cell spelled out: a child with a fixed cell is placed first, and would push the others a row down. */}
+        <div className="grid grid-cols-1 overflow-hidden rounded-xl border border-border">
+          <div className="col-start-1 row-start-1 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 p-3">
             <div className="flex flex-wrap items-center gap-3">
               <Button variant="secondary" size="sm" className="rounded-full px-4 py-1.5" onClick={() => setAnchor(todayKey)}>
                 Today
@@ -147,7 +159,7 @@ export function ContentCalendar({ todayKey, events, loading = false, truncated =
             </ToggleGroup>
           </div>
 
-          <div role="grid" aria-label={`${month}, content calendar`}>
+          <div role="grid" aria-label={`${month}, content calendar`} className="col-start-1 row-start-2">
             {view !== "day" && (
               <div role="row" className="grid grid-cols-7 border-b border-border/60 bg-surface">
                 {WEEKDAYS.map((d, col) => (
@@ -201,36 +213,36 @@ export function ContentCalendar({ todayKey, events, loading = false, truncated =
               </div>
             ))}
           </div>
-        </div>
 
-        {empty && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
-            <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-border bg-surface shadow-lg">
-              <EmptyState
-                size="inline"
-                icon={<CalendarDaysIcon />}
-                title="Your calendar is empty"
-                description={`Schedule your first post or import a quarter plan to fill ${month.split(" ")[0]} with content.`}
-                action={
-                  <>
-                    <Button asChild variant="olive">
-                      <Link href="/jobs/import">
-                        <CloudUploadIcon />
-                        Import plan
-                      </Link>
-                    </Button>
-                    <Button asChild>
-                      <Link href="/compose">
-                        <PlusIcon />
-                        Add content
-                      </Link>
-                    </Button>
-                  </>
-                }
-              />
+          {empty && (
+            <div className="pointer-events-none col-start-1 row-start-2 flex items-center justify-center p-4">
+              <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-border bg-surface shadow-lg">
+                <EmptyState
+                  size="inline"
+                  icon={<CalendarDaysIcon />}
+                  title="Your calendar is empty"
+                  description={`Schedule your first post or import a quarter plan to fill ${month.split(" ")[0]} with content.`}
+                  action={
+                    <>
+                      <Button asChild variant="olive">
+                        <Link href="/jobs/import">
+                          <CloudUploadIcon />
+                          Import plan
+                        </Link>
+                      </Button>
+                      <Button asChild>
+                        <Link href="/compose">
+                          <PlusIcon />
+                          Add content
+                        </Link>
+                      </Button>
+                    </>
+                  }
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {error && (

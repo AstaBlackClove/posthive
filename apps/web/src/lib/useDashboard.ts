@@ -54,6 +54,8 @@ export function useDashboard(): DashboardState {
 
 export interface CalendarState {
   events: CalendarEvent[];
+  /** The days `events` were answered for (null before the first answer), so the grid knows when it is still waiting. */
+  range: { from: string; to: string } | null;
   /** True from the start: the grid always asks for its first range as soon as it is drawn. */
   loading: boolean;
   truncated: boolean;
@@ -113,5 +115,6 @@ export function useCalendar(): CalendarState {
     () => (answer && range && answer.from === range.from && answer.to === range.to ? toCalendarEvents(answer.posts, dayOf, timeOf) : []),
     [answer, range]
   );
-  return { events, loading, truncated: Boolean(answer?.truncated && events.length > 0), error, setRange, retry };
+  const answered = useMemo(() => (answer ? { from: answer.from, to: answer.to } : null), [answer]);
+  return { events, range: answered, loading, truncated: Boolean(answer?.truncated && events.length > 0), error, setRange, retry };
 }

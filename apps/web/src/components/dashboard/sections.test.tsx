@@ -237,6 +237,32 @@ describe("ContentCalendar", () => {
     expect(screen.queryByText("Your calendar is empty")).toBeNull();
   });
 
+  // A day or a week is a short board, shorter than the card. The card used to be laid over the whole board and spilled
+  // out of it, covering the arrows. jsdom has no layout, so this checks the structure that keeps it inside: the card
+  // takes the grid's place in the board's own grid (which grows to the taller of the two), under the controls.
+  it.each([
+    ["Month", "Month"],
+    ["Week", "Week"],
+    ["Day", "Day"],
+  ])("in the %s view the empty state shares the grid's area under the controls, so it never covers them", async (_name, view) => {
+    render(<ContentCalendar todayKey={TODAY_KEY} />);
+    await userEvent.click(screen.getByRole("radio", { name: view }));
+    const board = screen.getByRole("grid").parentElement!;
+    expect(board.className).toContain("grid");
+    const card = within(board).getByText("Your calendar is empty");
+    const wrapper = [...board.children].find((child) => child.contains(card)) as HTMLElement;
+    expect(wrapper).toBeTruthy();
+    expect(wrapper.className).toContain("col-start-1");
+    expect(wrapper.className).toContain("row-start-2");
+    expect(wrapper.className).not.toContain("absolute");
+    expect(wrapper.contains(screen.getByRole("group", { name: "Change range" }))).toBe(false);
+    expect(wrapper.contains(screen.getByRole("radiogroup", { name: "View" }))).toBe(false);
+    // a child with a fixed cell is placed first: the controls and the grid must have theirs too, or the grid drops to row 3
+    expect(screen.getByRole("grid").className).toContain("row-start-2");
+    const controls = [...board.children].find((child) => child.contains(screen.getByRole("group", { name: "Change range" }))) as HTMLElement;
+    expect(controls.className).toContain("row-start-1");
+  });
+
   it("the arrows move a month at a time and Today comes back", async () => {
     render(<ContentCalendar todayKey={TODAY_KEY} />);
     await userEvent.click(screen.getByRole("button", { name: "Next month" }));
@@ -703,6 +729,39 @@ describe("ContentCalendar: events", () => {
   it("while a range loads there is no 'calendar is empty' message", () => {
     render(<ContentCalendar todayKey={TODAY_KEY} events={[]} loading />);
     expect(screen.queryByText("Your calendar is empty")).toBeNull();
+  });
+
+  describe("posts that were loaded for other days than the grid shows", () => {
+    const NOVEMBER = { from: "2026-10-26", to: "2026-12-06" }; // the six weeks of the grid on TODAY_KEY
+    const DECEMBER = { from: "2026-11-30", to: "2027-01-03" };
+
+    it("an answer for the days on screen with no posts is an empty calendar", () => {
+      render(<ContentCalendar todayKey={TODAY_KEY} events={[]} eventsRange={NOVEMBER} />);
+      expect(screen.getByText("Your calendar is empty")).toBeTruthy();
+    });
+
+    it("an answer for other days says nothing about these ones: no empty message", () => {
+      render(<ContentCalendar todayKey={TODAY_KEY} events={[]} eventsRange={DECEMBER} />);
+      expect(screen.queryByText("Your calendar is empty")).toBeNull();
+    });
+
+    it("nothing has come yet (null): no empty message", () => {
+      render(<ContentCalendar todayKey={TODAY_KEY} events={[]} eventsRange={null} />);
+      expect(screen.queryByText("Your calendar is empty")).toBeNull();
+    });
+
+    it("the person moves the grid before the page has asked: the old empty answer does not carry over to the new days", async () => {
+      render(<ContentCalendar todayKey={TODAY_KEY} events={[]} eventsRange={NOVEMBER} />);
+      expect(screen.getByText("Your calendar is empty")).toBeTruthy();
+      await userEvent.click(screen.getByRole("button", { name: "Next month" }));
+      expect(screen.queryByText("Your calendar is empty")).toBeNull();
+    });
+
+    it("the same for a change of view", async () => {
+      render(<ContentCalendar todayKey={TODAY_KEY} events={[]} eventsRange={NOVEMBER} />);
+      await userEvent.click(screen.getByRole("radio", { name: "Week" }));
+      expect(screen.queryByText("Your calendar is empty")).toBeNull();
+    });
   });
 
   it("says when the server cut the range short", () => {

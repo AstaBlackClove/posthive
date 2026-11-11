@@ -279,3 +279,68 @@ describe("dashboard page: the calendar", () => {
     expect(screen.getByText(/more posts than the calendar can show/)).toBeTruthy();
   });
 });
+
+/**
+ * Moving the grid is two renders and an effect before the page knows it is waiting. A message that is on the page
+ * for one render is gone before an assertion can look, so this records every node that was ever added.
+ */
+function watchForText(text: string) {
+  let appeared = false;
+  const look = (records: MutationRecord[]) => {
+    for (const r of records) r.addedNodes.forEach((n) => { if (n.textContent?.includes(text)) appeared = true; });
+  };
+  const observer = new MutationObserver(look);
+  observer.observe(document.body, { childList: true, subtree: true });
+  return {
+    appeared: () => {
+      look(observer.takeRecords());
+      observer.disconnect();
+      return appeared;
+    },
+  };
+}
+
+describe("dashboard page: moving the calendar over a month that has posts", () => {
+  const nov = post({ id: "nov", title: "November post", scheduledFor: "2026-11-10T02:00:00.000Z" });
+
+  /** November answers at once; any other range waits until the test lets it go, with `posts`. */
+  function serveHeld(posts: ApiPost[]) {
+    let release: () => void = () => {};
+    serve(dashboard(), (from, to) =>
+      from === "2026-10-26"
+        ? calendar([nov], { from, to })
+        : new Promise<ApiCalendar>((resolve) => { release = () => resolve(calendar(posts, { from, to })); })
+    );
+    return () => release();
+  }
+
+  it("never says the calendar is empty on the way to the next month", async () => {
+    const release = serveHeld([post({ id: "dec", title: "December post", scheduledFor: "2026-12-10T02:00:00.000Z" })]);
+    render(<DashboardPage />);
+    await screen.findByText("November post");
+    const watch = watchForText("Your calendar is empty");
+    await userEvent.click(screen.getByRole("button", { name: "Next month" }));
+    release();
+    expect(await screen.findByText("December post")).toBeTruthy();
+    expect(watch.appeared()).toBe(false);
+  });
+
+  it("never says the calendar is empty on the way from Month to Week", async () => {
+    const release = serveHeld([post({ id: "thu", title: "Thursday post", scheduledFor: "2026-11-12T02:00:00.000Z" })]);
+    render(<DashboardPage />);
+    await screen.findByText("November post");
+    const watch = watchForText("Your calendar is empty");
+    await userEvent.click(screen.getByRole("radio", { name: "Week" }));
+    release();
+    expect(await screen.findByText("Thursday post")).toBeTruthy();
+    expect(watch.appeared()).toBe(false);
+  });
+
+  it("still says it when the month it arrives at really has no posts", async () => {
+    serve(dashboard(), (from, to) => calendar(from === "2026-10-26" ? [nov] : [], { from, to }));
+    render(<DashboardPage />);
+    await screen.findByText("November post");
+    await userEvent.click(screen.getByRole("button", { name: "Next month" }));
+    expect(await screen.findByText("Your calendar is empty")).toBeTruthy();
+  });
+});
