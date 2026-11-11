@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   calls: [] as Array<{ model: string; fn: string; args: unknown }>,
   groups: [] as Array<{ status: string; approvalStatus?: string | null; _count: number }>,
   quarterGroups: [] as Array<{ status: string; _count: number }>,
+  quarterPosts: [] as Array<{ status: string; content: string }>,
   accounts: [] as Array<{ id: string; platform: string; displayName: string }>,
   targets: [] as Array<{ accountId: string; _count: { accountId: number } }>,
   counts: {} as Record<string, number>,
@@ -41,6 +42,7 @@ vi.mock("../lib/prisma.js", () => {
         }),
         findMany: record("postJob", "findMany", (args) => {
           const json = JSON.stringify(args);
+          if (json.includes('"take":5000')) return h.quarterPosts;
           return json.includes('"take":401') ? h.calendar : h.posts;
         }),
         findFirst: record("postJob", "findFirst", (args) => (hasKey(args) && JSON.stringify(args).includes('"not":null') ? h.imported : h.created)),
@@ -79,6 +81,7 @@ beforeEach(() => {
   h.calls = [];
   h.groups = [];
   h.quarterGroups = [];
+  h.quarterPosts = [];
   h.accounts = [];
   h.targets = [];
   h.counts = {};
@@ -100,17 +103,66 @@ const post = (id: string, patch: Record<string, unknown> = {}) => ({
 });
 
 describe("GET /dashboard", () => {
+  const inQuarter = (status: string, content: Record<string, unknown> = {}) => ({ status, content: JSON.stringify(content) });
+  const quarterRead = () => h.calls.find((c) => c.fn === "findMany" && JSON.stringify(c.args).includes('"take":5000'));
+  const quarterCounts = () => h.calls.find((c) => c.fn === "groupBy" && (c.args as { by: string[] }).by.length === 1 && JSON.stringify(c.args).includes("2026-09-30T17:00:00.000Z"));
+
   it("names the quarter from the WIB calendar and counts what is planned and what is out", async () => {
     h.quarterGroups = [{ status: "draft", _count: 4 }, { status: "pending", _count: 3 }, { status: "done", _count: 5 }, { status: "post_done", _count: 1 }, { status: "failed", _count: 2 }];
     const json = (await app.inject({ method: "GET", url: "/dashboard" })).json();
-    expect(json.quarter).toEqual({ label: "Q4 2026", planned: 15, published: 6 });
+    expect(json.quarter).toEqual({ label: "Q4 2026", planned: 15, published: 6, milestones: [], uncategorized: 15 });
   });
 
-  it("asks for the quarter in WIB: from 1 Oct 00:00 WIB to 1 Jan 00:00 WIB", async () => {
+  it("the totals are counted by the database over the WHOLE quarter, so thousands of posts with no category (drip) never cut them", async () => {
+    h.quarterGroups = [{ status: "pending", _count: 9000 }, { status: "done", _count: 40 }];
+    h.quarterPosts = [inQuarter("done", { category: "Case Study" })];
+    const json = (await app.inject({ method: "GET", url: "/dashboard" })).json();
+    expect(json.quarter).toMatchObject({ planned: 9040, published: 40, uncategorized: 9039 });
+    expect(json.quarter.milestones).toEqual([{ category: "Case Study", planned: 1, posted: 1, scheduled: 0 }]);
+  });
+
+  it("answers a milestone per content category: its target is what the plan holds, and what is out of it", async () => {
+    h.quarterGroups = [{ status: "done", _count: 1 }, { status: "pending", _count: 1 }, { status: "draft", _count: 4 }];
+    h.quarterPosts = [
+      inQuarter("done", { category: "Product Features" }),
+      inQuarter("pending", { category: "Product Features" }),
+      inQuarter("draft", { category: "Product Features", sourceStatus: "Published" }),
+      inQuarter("draft", { category: "Product Features" }),
+      inQuarter("draft", { category: "Internal Event" }),
+    ];
+    const json = (await app.inject({ method: "GET", url: "/dashboard" })).json();
+    expect(json.quarter.milestones).toEqual([
+      { category: "Product Features", planned: 4, posted: 2, scheduled: 1 },
+      { category: "Internal Event", planned: 1, posted: 0, scheduled: 0 },
+    ]);
+    // the plan row marked Published is one more published post, on top of the one the app sent
+    expect(json.quarter).toMatchObject({ planned: 6, published: 2, uncategorized: 1 });
+  });
+
+  it("asks for the quarter in WIB, from 1 Oct 00:00 WIB to 1 Jan 00:00 WIB, for the counts and for the read", async () => {
     await app.inject({ method: "GET", url: "/dashboard" });
-    const quarter = h.calls.find((c) => c.fn === "groupBy" && JSON.stringify(c.args).includes("2026-09-30T17:00:00.000Z"));
-    expect(quarter).toBeTruthy();
-    expect(JSON.stringify(quarter!.args)).toContain("2026-12-31T17:00:00.000Z");
+    for (const q of [quarterCounts(), quarterRead()]) {
+      expect(q).toBeTruthy();
+      expect(JSON.stringify(q!.args)).toContain("2026-09-30T17:00:00.000Z");
+      expect(JSON.stringify(q!.args)).toContain("2026-12-31T17:00:00.000Z");
+    }
+  });
+
+  it("reads only what the milestones need: the status and content of posts that name a category or are a Published plan row", async () => {
+    await app.inject({ method: "GET", url: "/dashboard" });
+    const read = quarterRead()!.args as { select: unknown; where: unknown };
+    expect(read.select).toEqual({ status: true, content: true });
+    const where = JSON.stringify(read.where);
+    // the stored content is compact JSON, so these are the exact strings a categorized or Published row holds
+    expect(where).toContain('{"content":{"contains":"\\"category\\":\\""}}');
+    expect(where).toContain('"status":"draft","content":{"contains":"\\"sourceStatus\\":\\"Published\\"","mode":"insensitive"}');
+  });
+
+  it("the quarter's counts and read follow the role's draft visibility, like every other number on the page", async () => {
+    h.role = "admin";
+    await app.inject({ method: "GET", url: "/dashboard" });
+    expect(JSON.stringify(quarterCounts()!.args)).toContain('"approvalStatus":"pending"');
+    expect(JSON.stringify(quarterRead()!.args)).toContain('"approvalStatus":"pending"');
   });
 
   it("hands over the in-production posts as status and approval pairs for the browser to place in stages", async () => {
@@ -185,13 +237,14 @@ describe("GET /dashboard", () => {
   it("a member sees every draft: no visibility filter is added", async () => {
     h.role = "member";
     await app.inject({ method: "GET", url: "/dashboard" });
-    const list = h.calls.find((c) => c.model === "postJob" && c.fn === "findMany");
+    const list = h.calls.find((c) => c.model === "postJob" && c.fn === "findMany" && !JSON.stringify(c.args).includes('"take":5000'));
     expect(JSON.stringify(list!.args)).not.toContain('"approvalStatus":"pending"');
   });
 
   it("sorts the lists soonest first with undated drafts last, and recent activity by latest change", async () => {
     await app.inject({ method: "GET", url: "/dashboard" });
-    const orders = h.calls.filter((c) => c.fn === "findMany" && c.model === "postJob").map((c) => JSON.stringify((c.args as { orderBy: unknown }).orderBy));
+    // the quarter's count reads every post and has no order
+    const orders = h.calls.filter((c) => c.fn === "findMany" && c.model === "postJob" && "orderBy" in (c.args as object)).map((c) => JSON.stringify((c.args as { orderBy: unknown }).orderBy));
     expect(orders.filter((o) => o.includes('"nulls":"last"'))).toHaveLength(3);
     expect(orders.filter((o) => o.includes('"updatedAt":"desc"'))).toHaveLength(1);
   });

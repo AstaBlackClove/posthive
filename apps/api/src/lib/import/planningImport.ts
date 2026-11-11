@@ -175,6 +175,11 @@ function cleanCell(value: string | undefined): string {
   return (value ?? "").replace(/^\uFEFF/, "").trim();
 }
 
+/** A plan row whose Status cell says Published: it went out before the app, and is still saved as a draft. */
+export function isPublishedInFile(value: unknown): boolean {
+  return typeof value === "string" && /^published$/i.test(value.trim());
+}
+
 function isBlankRow(row: string[]): boolean {
   return row.every((cell) => cell.trim() === "");
 }
@@ -610,8 +615,8 @@ export function parsePlanningRows(
       },
       warnings: [
         ...(parsedDate?.warning ? [parsedDate.warning] : []),
-        ...(/^published$/i.test(cleanCell(getCell(row, header.columns, "sourceStatus")))
-          ? ["The source status is Published; it is still saved as a draft."]
+        ...(isPublishedInFile(getCell(row, header.columns, "sourceStatus"))
+          ?["The source status is Published; it is still saved as a draft."]
           : []),
         ...extraWarnings,
       ],
@@ -639,7 +644,7 @@ export function parsePlanningRows(
     }
 
     const sourceStatus = nullable(cleanCell(getCell(row, header.columns, "sourceStatus")));
-    if (sourceStatus && /^published$/i.test(sourceStatus)) {
+    if (isPublishedInFile(sourceStatus)) {
       warnings.push("The source status is Published; it is still saved as a draft.");
     }
 

@@ -13,6 +13,8 @@ import {
   listWhere,
   monthOf,
   plainDraft,
+  QUARTER_LIMIT,
+  quarterCount,
   quarterOf,
   rangeWhere,
   readyToSchedule,
@@ -77,6 +79,7 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
 
       const [
         inProduction,
+        quarterByStatus,
         quarterRows,
         ready,
         upcomingRows, upcomingCount,
@@ -97,7 +100,20 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
           where: { AND: [base, { status: { in: ["draft", ...STATUS_GROUPS.pending] } }] },
           _count: true,
         }),
+        // The totals count every post of the quarter in the database: exact, and nothing is read. The milestones read
+        // only the posts that name a category, or a plan row marked Published (the stored JSON is compact, so these
+        // strings match): a plan, not the automatic drip posts, which can be thousands a quarter.
         prisma.postJob.groupBy({ by: ["status"], where: inQuarter, _count: true }),
+        prisma.postJob.findMany({
+          where: {
+            AND: [
+              inQuarter,
+              { OR: [{ content: { contains: '"category":"' } }, { status: "draft", content: { contains: '"sourceStatus":"Published"', mode: "insensitive" } }] },
+            ],
+          },
+          select: { status: true, content: true },
+          take: QUARTER_LIMIT,
+        }),
         prisma.postJob.count({ where: { AND: [base, readyToSchedule(now)] } }),
         upcoming.findMany(), upcoming.count(),
         attention.findMany(), attention.count(),
@@ -151,13 +167,8 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
         else channels.push({ platform: a.platform, accounts: 1, handle: a.displayName, posts: monthPosts.get(a.platform) ?? 0 });
       }
 
-      const planned = quarterRows.reduce((sum, r) => sum + r._count, 0);
-      const published = quarterRows
-        .filter((r) => (STATUS_GROUPS.done as readonly string[]).includes(r.status))
-        .reduce((sum, r) => sum + r._count, 0);
-
       return reply.send({
-        quarter: { label: quarter.label, planned, published },
+        quarter: { label: quarter.label, ...quarterCount(quarterByStatus, quarterRows) },
         inProduction: inProduction.map((r) => ({ status: r.status, approvalStatus: r.approvalStatus, count: r._count })),
         readyToSchedule: ready,
         needAttention: attentionCount,

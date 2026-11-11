@@ -2,6 +2,8 @@
 // where-fragments behind each list and count, and the shape of one post in a list.
 // Pure, so the rules are tested without a database; routes/dashboard.ts runs the queries.
 import type { Prisma } from "@prisma/client";
+import { CATEGORIES, normalizeCategory, type Category } from "./contentTypes.js";
+import { isPublishedInFile } from "./import/planningImport.js";
 import { STATUS_GROUPS } from "./jobFilters.js";
 
 // ── WIB calendar ────────────────────────────────────────────────────────────
@@ -142,6 +144,66 @@ export function dayWhere(base: Where, key: string): Where {
 /** Posts scheduled in a range of WIB days, both ends included. */
 export function rangeWhere(base: Where, from: string, to: string): Where {
   return { AND: [base, { scheduledFor: { gte: wibStart(from), lt: wibStart(addDays(to, 1)) } }] };
+}
+
+// ── The quarter, per content category ───────────────────────────────────────
+
+/**
+ * Most posts the milestone count reads. It reads only posts that carry a category or a "Published" plan row (see
+ * quarterRows in routes/dashboard.ts): a plan, not the thousands of automatic drip posts. Past this the bars undercount.
+ * shortcut: a quarter with this many categorized posts needs a category column and a GROUP BY instead.
+ */
+export const QUARTER_LIMIT = 5000;
+
+export interface Milestone {
+  category: Category;
+  /** Posts of this category with a date in the quarter: its target. */
+  planned: number;
+  /** Out: published by the app, or a plan row the file already marked Published. */
+  posted: number;
+  /** Waiting for their time. */
+  scheduled: number;
+}
+
+export interface QuarterCount {
+  planned: number;
+  published: number;
+  milestones: Milestone[];
+  /** Posts of the quarter that are in no milestone: no category, an unknown one, or not read. */
+  uncategorized: number;
+}
+
+/**
+ * What the quarter holds. The totals come from the status counts of ALL its posts, so they are exact however many
+ * posts there are. The milestones come from `rows`, the posts that have a category or a "Published" plan row.
+ * The target of a category is what the plan has in it, so the bar moves when the plan does. An import saves every
+ * row as a draft, so a draft whose plan row says Published counts as out; a failed post does not.
+ * Largest target first, ties in the order of the content types list.
+ */
+export function quarterCount(byStatus: { status: string; _count: number }[], rows: { status: string; content: string }[]): QuarterCount {
+  const isDone = (status: string) => (STATUS_GROUPS.done as readonly string[]).includes(status);
+  const planned = byStatus.reduce((sum, r) => sum + r._count, 0);
+  let published = byStatus.filter((r) => isDone(r.status)).reduce((sum, r) => sum + r._count, 0);
+
+  const byCategory = new Map<Category, Milestone>();
+  for (const { status, content } of rows) {
+    const json = contentOf(content);
+    const fromFile = status === "draft" && isPublishedInFile(json.sourceStatus);
+    // a post that went out by the app is already in the status counts; only the plan rows are added
+    if (fromFile) published += 1;
+
+    const category = normalizeCategory(json.category);
+    if (!category) continue;
+    const milestone = byCategory.get(category) ?? { category, planned: 0, posted: 0, scheduled: 0 };
+    milestone.planned += 1;
+    if (isDone(status) || fromFile) milestone.posted += 1;
+    else if ((STATUS_GROUPS.pending as readonly string[]).includes(status)) milestone.scheduled += 1;
+    byCategory.set(category, milestone);
+  }
+
+  const milestones = [...byCategory.values()].sort((a, b) => b.planned - a.planned || CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category));
+  const inBars = milestones.reduce((sum, m) => sum + m.planned, 0);
+  return { planned, published, milestones, uncategorized: planned - inBars };
 }
 
 // ── One post ────────────────────────────────────────────────────────────────

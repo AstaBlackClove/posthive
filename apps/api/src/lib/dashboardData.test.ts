@@ -5,6 +5,7 @@ import {
   isDateKey,
   listWhere,
   monthOf,
+  quarterCount,
   quarterOf,
   rangeWhere,
   readyToSchedule,
@@ -240,5 +241,92 @@ describe("toPost", () => {
 
   it("a post with no date keeps null", () => {
     expect(toPost(record({ scheduledFor: null })).scheduledFor).toBeNull();
+  });
+});
+
+describe("quarterCount: the quarter, per content category", () => {
+  type Row = { status: string; content: string };
+  const row = (status: string, content: Record<string, unknown> | string = {}): Row => ({
+    status,
+    content: typeof content === "string" ? content : JSON.stringify(content),
+  });
+  const cat = (name: string, extra: Record<string, unknown> = {}) => ({ category: name, ...extra });
+  /** The status counts the database would give for exactly these posts, plus posts the count never reads (no category). */
+  const withStatuses = (rows: Row[], unread: Record<string, number> = {}) => {
+    const by = new Map<string, number>();
+    for (const r of rows) by.set(r.status, (by.get(r.status) ?? 0) + 1);
+    for (const [status, n] of Object.entries(unread)) by.set(status, (by.get(status) ?? 0) + n);
+    return [...by].map(([status, _count]) => ({ status, _count }));
+  };
+  const count = (rows: Row[], unread: Record<string, number> = {}) => quarterCount(withStatuses(rows, unread), rows);
+
+  it("an empty quarter has nothing planned and no milestones", () => {
+    expect(quarterCount([], [])).toEqual({ planned: 0, published: 0, milestones: [], uncategorized: 0 });
+  });
+
+  it("the totals come from the status counts, not from the posts that were read: nothing is cut or guessed", () => {
+    const byStatus = [{ status: "draft", _count: 4 }, { status: "pending", _count: 3 }, { status: "done", _count: 5 }, { status: "post_done", _count: 1 }, { status: "failed", _count: 2 }];
+    expect(quarterCount(byStatus, [])).toEqual({ planned: 15, published: 6, milestones: [], uncategorized: 15 });
+  });
+
+  it("thousands of posts that carry no category (automatic drip posts) are counted exactly and never have to be read", () => {
+    const result = quarterCount([{ status: "pending", _count: 9000 }, { status: "done", _count: 40 }], [row("done", cat("Case Study"))]);
+    expect(result).toMatchObject({ planned: 9040, published: 40, uncategorized: 9039 });
+    expect(result.milestones).toEqual([{ category: "Case Study", planned: 1, posted: 1, scheduled: 0 }]);
+  });
+
+  it("groups by the canonical category: a plan cell with other case or spaces is the same category", () => {
+    const { milestones } = count([row("draft", cat(" product features ")), row("draft", cat("Product Features")), row("draft", cat("AMA"))]);
+    expect(milestones).toEqual([
+      { category: "Product Features", planned: 2, posted: 0, scheduled: 0 },
+      { category: "Ask Me Anything", planned: 1, posted: 0, scheduled: 0 },
+    ]);
+  });
+
+  it("every status counts as planned, but only a post that went out is posted and only a waiting one is scheduled", () => {
+    const rows = [
+      row("done", cat("Case Study")), row("post_done", cat("Case Study")), row("comment_done", cat("Case Study")),
+      row("pending", cat("Case Study")), row("running", cat("Case Study")),
+      row("draft", cat("Case Study")), row("failed", cat("Case Study")), row("post_failed", cat("Case Study")),
+    ];
+    const result = count(rows);
+    expect(result.milestones).toEqual([{ category: "Case Study", planned: 8, posted: 3, scheduled: 2 }]);
+    expect(result).toMatchObject({ planned: 8, published: 3, uncategorized: 0 });
+  });
+
+  it("a draft whose plan row says Published was posted outside the app: it is posted in its bar and in the total, on top of the posts that went out", () => {
+    const { milestones, published } = count([
+      row("done", cat("Blog Post")),
+      row("draft", cat("Blog Post", { sourceStatus: "Published" })),
+      row("draft", cat("Blog Post", { sourceStatus: " published " })),
+      row("draft", cat("Blog Post", { sourceStatus: "Draft" })),
+    ]);
+    expect(milestones).toEqual([{ category: "Blog Post", planned: 4, posted: 3, scheduled: 0 }]);
+    expect(published).toBe(3);
+  });
+
+  it("the file's status does not rescue a post that failed or is waiting: only a draft was left unrecorded by the import", () => {
+    const result = count([row("failed", cat("Blog Post", { sourceStatus: "Published" })), row("pending", cat("Blog Post", { sourceStatus: "Published" }))]);
+    expect(result.milestones).toEqual([{ category: "Blog Post", planned: 2, posted: 0, scheduled: 1 }]);
+    expect(result.published).toBe(0);
+  });
+
+  it("a Published plan row with no category is still in the published total, and in no bar", () => {
+    const result = count([row("draft", { sourceStatus: "Published" })]);
+    expect(result).toMatchObject({ planned: 1, published: 1, uncategorized: 1, milestones: [] });
+  });
+
+  it("a post with an unknown category, a non-text one or a broken content column is uncategorized, and never throws", () => {
+    const result = count([row("draft", cat("Made Up")), row("draft", "{not json"), row("draft", "null"), row("draft", cat(7 as unknown as string)), row("done", cat("Made Up"))]);
+    expect(result).toMatchObject({ planned: 5, published: 1, uncategorized: 5, milestones: [] });
+  });
+
+  it("the largest target comes first, ties in the order of the content types list", () => {
+    const rows = [
+      row("draft", cat("Internal Event")), row("draft", cat("Internal Event")),
+      row("draft", cat("Blog Post")),
+      row("draft", cat("Product Features")),
+    ];
+    expect(count(rows).milestones.map((m) => m.category)).toEqual(["Internal Event", "Product Features", "Blog Post"]);
   });
 });
