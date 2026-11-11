@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDaysIcon, CheckIcon, LinkIcon, PlusIcon } from "lucide-react";
+import { CalendarDaysIcon, CheckIcon, PlusIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ItemGroup, ItemSeparator } from "@/components/ui/item";
@@ -7,12 +7,15 @@ import { EmptyState } from "@/components/EmptyState";
 import { formatTodayLong } from "@/lib/dashboard-format";
 import { ChannelRow } from "./ChannelRow";
 import { PostLine } from "./PostLine";
+import { QuarterMilestones } from "./QuarterMilestones";
 import { SectionPanel } from "./SectionPanel";
 import type { DashboardData } from "./types";
 
 type Props = {
   data: Pick<DashboardData, "plan" | "today" | "milestones" | "channels" | "tasksToday" | "taskRows">;
   today: Date;
+  /** Whether the person's role opens the import page, which the empty milestones panel points to. */
+  canImport?: boolean;
 };
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -21,7 +24,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 const SIDE_ROWS = 3;
 
 /** Today's publishing, today's tasks, the quarter's milestones and the channels: the right-hand column. */
-export function SideColumn({ data, today }: Props) {
+export function SideColumn({ data, today, canImport = true }: Props) {
   const { plan, today: publishToday, milestones, channels, tasksToday, taskRows } = data;
   const anyDisconnected = channels.some((c) => !c.connected);
   const connected = channels.filter((c) => c.connected).length;
@@ -99,28 +102,7 @@ export function SideColumn({ data, today }: Props) {
         )}
       </SectionPanel>
 
-      <SectionPanel
-        title="Quarter milestones"
-        action={
-          <Button asChild variant="secondary" size="sm" className="rounded-full">
-            <Link href="/jobs">View all</Link>
-          </Button>
-        }
-      >
-        {milestones.count === 0 && (
-          <EmptyState
-            size="inline"
-            icon={<LinkIcon />}
-            title="No milestones yet"
-            description="Group posts into campaigns like a product launch to track progress across the quarter."
-            action={
-              <Button asChild variant="outline-brand">
-                <Link href="/jobs/import">Create milestone</Link>
-              </Button>
-            }
-          />
-        )}
-      </SectionPanel>
+      <QuarterMilestones quarter={plan.label} milestones={milestones} canImport={canImport} />
 
       <SectionPanel title="Channels this month" contentClassName="space-y-3">
         <ItemGroup className="gap-3">

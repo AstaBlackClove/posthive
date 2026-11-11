@@ -25,8 +25,22 @@ export interface TodayPublish {
   rows: ContentRow[];
 }
 
+/** One content category of the quarter: what the plan holds of it, and how much of that is out. */
+export interface Milestone {
+  category: string;
+  /** Posts of the category with a date in the quarter: its target. */
+  planned: number;
+  /** Out: published, or a plan row the file already marked Published. */
+  posted: number;
+  /** Waiting for their time. */
+  scheduled: number;
+}
+
 export interface MilestoneData {
-  count: number;
+  /** One per category the quarter has posts in, the largest target first. */
+  rows: Milestone[];
+  /** Posts of the quarter with no known category: in no row. */
+  uncategorized: number;
 }
 
 export interface ContentRow {

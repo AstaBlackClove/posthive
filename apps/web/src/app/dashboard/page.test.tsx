@@ -34,7 +34,7 @@ const post = (patch: Partial<ApiPost> = {}): ApiPost => ({
 });
 
 const dashboard = (patch: Partial<ApiDashboard> = {}): ApiDashboard => ({
-  quarter: { label: "Q4 2026", planned: 12, published: 5 },
+  quarter: { label: "Q4 2026", planned: 12, published: 5, milestones: [], uncategorized: 0 },
   inProduction: [{ status: "draft", approvalStatus: null, count: 4 }, { status: "draft", approvalStatus: "pending", count: 2 }],
   readyToSchedule: 2,
   needAttention: 1,
@@ -124,7 +124,7 @@ describe("dashboard page: real data", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).toMatch(/^Good (morning|afternoon|evening), Putri$/);
     unmount();
 
-    serve(dashboard({ quarter: { label: "Q4 2026", planned: 0, published: 0 }, setup: { imported: false, created: false, accounts: 0, members: 1, invites: 0 }, todayPosts: { count: 0, posts: [] }, myTasks: { count: 0, posts: [] } }));
+    serve(dashboard({ quarter: { label: "Q4 2026", planned: 0, published: 0, milestones: [], uncategorized: 0 }, setup: { imported: false, created: false, accounts: 0, members: 1, invites: 0 }, todayPosts: { count: 0, posts: [] }, myTasks: { count: 0, posts: [] } }));
     render(<DashboardPage />);
     await screen.findByText("Plan Marketing");
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Welcome to Postly, Putri");
@@ -181,7 +181,7 @@ describe("dashboard page: real data", () => {
 
   it("a workspace with nothing planned is the welcome screen, with the quick start", async () => {
     serve(dashboard({
-      quarter: { label: "Q4 2026", planned: 0, published: 0 },
+      quarter: { label: "Q4 2026", planned: 0, published: 0, milestones: [], uncategorized: 0 },
       setup: { imported: false, created: false, accounts: 0, members: 1, invites: 0 },
       lists: { upcoming: { count: 0, posts: [] }, attention: { count: 0, posts: [] }, risk: { count: 0, posts: [] }, activity: { count: 0, posts: [] } },
       todayPosts: { count: 0, posts: [] }, myTasks: { count: 0, posts: [] }, channels: [], inProduction: [], readyToSchedule: 0, needAttention: 0,
@@ -198,6 +198,42 @@ describe("dashboard page: real data", () => {
     render(<DashboardPage />);
     await screen.findByText("Plan Marketing");
     expect(screen.queryByText("Let's get your first campaign live")).toBeNull();
+  });
+
+  it("the quarter milestones are the categories the server counted, each with how much of its plan is out", async () => {
+    serve(dashboard({
+      quarter: {
+        label: "Q4 2026", planned: 20, published: 6, uncategorized: 2,
+        milestones: [{ category: "Product Features", planned: 15, posted: 6, scheduled: 4 }, { category: "Internal Event", planned: 3, posted: 3, scheduled: 0 }],
+      },
+    }));
+    render(<DashboardPage />);
+    await screen.findByText("Plan Marketing");
+    const panel = within(screen.getByRole("heading", { name: "Quarter milestones" }).closest("[data-slot=card]") as HTMLElement);
+    expect(panel.getByRole("progressbar", { name: "Product Features" }).getAttribute("aria-valuetext")).toBe("6 of 15 posted, 4 scheduled");
+    expect(panel.getByRole("progressbar", { name: "Internal Event" }).getAttribute("aria-valuenow")).toBe("3");
+    expect(panel.getByText("Target reached")).toBeTruthy();
+    expect(panel.getByText("2 posts this quarter have no content category, so they are not in these bars.")).toBeTruthy();
+    expect(panel.queryByText("No milestones yet")).toBeNull();
+  });
+
+  it("a quarter with no categorized post says no milestones yet, and Marketing is offered the import", async () => {
+    serve(dashboard());
+    render(<DashboardPage />);
+    await screen.findByText("Plan Marketing");
+    const panel = within(screen.getByRole("heading", { name: "Quarter milestones" }).closest("[data-slot=card]") as HTMLElement);
+    expect(panel.getByText("No milestones yet")).toBeTruthy();
+    expect(panel.getByRole("link", { name: "Import quarter plan" }).getAttribute("href")).toBe("/jobs/import");
+  });
+
+  it("a designer sees the milestones but is not sent to an import page they cannot open", async () => {
+    h.role = "designer";
+    serve(dashboard());
+    render(<DashboardPage />);
+    await screen.findByText("Plan Marketing");
+    const panel = within(screen.getByRole("heading", { name: "Quarter milestones" }).closest("[data-slot=card]") as HTMLElement);
+    expect(panel.getByText("No milestones yet")).toBeTruthy();
+    expect(panel.queryByRole("link", { name: "Import quarter plan" })).toBeNull();
   });
 });
 

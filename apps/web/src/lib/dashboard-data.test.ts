@@ -32,7 +32,7 @@ const post = (patch: Partial<ApiPost> = {}): ApiPost => ({
 });
 
 const api = (patch: Partial<ApiDashboard> = {}): ApiDashboard => ({
-  quarter: { label: "Q4 2026", planned: 12, published: 5 },
+  quarter: { label: "Q4 2026", planned: 12, published: 5, milestones: [], uncategorized: 0 },
   inProduction: [],
   readyToSchedule: 2,
   needAttention: 1,
@@ -131,6 +131,9 @@ describe("quick start", () => {
     expect(steps.map((s) => s.step)).toEqual([1, 2, 3, 4]);
     expect(done).toBe(false);
     expect(steps[0].description).toContain("Q4 2026");
+    // milestones come from the plan's categories now: nobody "sets" them, so the banner must not say so
+    expect(steps[0].description).not.toMatch(/set milestones/i);
+    expect(steps[0].description).toMatch(/categor/i);
     expect(steps[2].description).toContain("Postly");
     expect(JSON.stringify(steps)).not.toMatch(/\{quarter\}|\{brand\}/);
   });
@@ -210,8 +213,17 @@ describe("toDashboardData", () => {
     expect(d.today.rows).toHaveLength(1);
   });
 
-  it("there are no milestones yet: nothing records them", () => {
-    expect(build().milestones.count).toBe(0);
+  it("the milestones are the quarter's categories as the server counted them, and the posts that have none", () => {
+    const milestones = [
+      { category: "Product Features", planned: 15, posted: 6, scheduled: 4 },
+      { category: "Internal Event", planned: 3, posted: 0, scheduled: 0 },
+    ];
+    const d = build(api({ quarter: { label: "Q4 2026", planned: 20, published: 6, milestones, uncategorized: 2 } }));
+    expect(d.milestones).toEqual({ rows: milestones, uncategorized: 2 });
+  });
+
+  it("a quarter with no categorized post has no milestone rows", () => {
+    expect(build().milestones).toEqual({ rows: [], uncategorized: 0 });
   });
 
   it("hides the quick start once the workspace is set up", () => {
@@ -286,21 +298,21 @@ describe("subtitleOf", () => {
   const scheduledAt = (id: string, iso: string) => post({ id, status: "pending", scheduledFor: iso });
 
   it("a workspace with nothing planned is told to plan", () => {
-    expect(subtitleOf(api({ quarter: { label: "Q4 2026", planned: 0, published: 0 } }))).toBe("Your workspace is ready — plan your first posts and they'll show up here.");
+    expect(subtitleOf(api({ quarter: { label: "Q4 2026", planned: 0, published: 0, milestones: [], uncategorized: 0 } }))).toBe("Your workspace is ready — plan your first posts and they'll show up here.");
   });
 
   it("a plan that came in from a file, with one post going out today, says when, in WIB", () => {
-    const text = subtitleOf(api({ quarter: { label: "Q4 2026", planned: 60, published: 1 }, setup: { imported: true, created: false, accounts: 2, members: 1, invites: 0 }, todayPosts: today([scheduledAt("a", "2026-11-13T07:00:00.000Z")]) }));
+    const text = subtitleOf(api({ quarter: { label: "Q4 2026", planned: 60, published: 1, milestones: [], uncategorized: 0 }, setup: { imported: true, created: false, accounts: 2, members: 1, invites: 0 }, todayPosts: today([scheduledAt("a", "2026-11-13T07:00:00.000Z")]) }));
     expect(text).toBe("60 posts imported from your Q4 plan · 1 post goes live today at 14:00.");
   });
 
   it("posts made by hand are 'planned', not 'imported'; several going out name the first time", () => {
-    const text = subtitleOf(api({ quarter: { label: "Q4 2026", planned: 12, published: 0 }, setup: { imported: true, created: true, accounts: 2, members: 1, invites: 0 }, todayPosts: today([scheduledAt("a", "2026-11-13T07:00:00.000Z"), scheduledAt("b", "2026-11-13T09:00:00.000Z")]) }));
+    const text = subtitleOf(api({ quarter: { label: "Q4 2026", planned: 12, published: 0, milestones: [], uncategorized: 0 }, setup: { imported: true, created: true, accounts: 2, members: 1, invites: 0 }, todayPosts: today([scheduledAt("a", "2026-11-13T07:00:00.000Z"), scheduledAt("b", "2026-11-13T09:00:00.000Z")]) }));
     expect(text).toBe("12 posts planned in Q4 2026 · 2 posts go live today, the first at 14:00.");
   });
 
   it("nothing going out today ends after the count; drafts and posts already out do not count as going live", () => {
-    const text = subtitleOf(api({ quarter: { label: "Q4 2026", planned: 1, published: 0 }, todayPosts: today([post({ status: "draft" }), post({ id: "b", status: "done" })]) }));
+    const text = subtitleOf(api({ quarter: { label: "Q4 2026", planned: 1, published: 0, milestones: [], uncategorized: 0 }, todayPosts: today([post({ status: "draft" }), post({ id: "b", status: "done" })]) }));
     expect(text).toBe("1 post planned in Q4 2026.");
   });
 });

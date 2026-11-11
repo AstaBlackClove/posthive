@@ -25,7 +25,7 @@ const TODAY_KEY = "2026-11-06";
 
 // A workspace with nothing in it, as the API would describe it, through the same code the page uses
 const NOTHING: ApiDashboard = {
-  quarter: { label: "Q4 2026", planned: 0, published: 0 },
+  quarter: { label: "Q4 2026", planned: 0, published: 0, milestones: [], uncategorized: 0 },
   inProduction: [],
   readyToSchedule: 0,
   needAttention: 0,
@@ -39,7 +39,7 @@ const empty = toDashboardData({ api: NOTHING, userName: "Puteri Anggraini", bran
 
 describe("fixture: a brand-new account", () => {
   it("has nothing in it", () => {
-    expect(empty.readyToSchedule + empty.published + empty.needAttention + empty.tasksToday + empty.today.count + empty.milestones.count).toBe(0);
+    expect(empty.readyToSchedule + empty.published + empty.needAttention + empty.tasksToday + empty.today.count + empty.milestones.rows.length + empty.milestones.uncategorized).toBe(0);
     expect(Object.values(empty.pipeline.counts).every((n) => n === 0)).toBe(true);
     expect(empty.channels.every((c) => !c.connected && c.handle === null && c.posts === 0)).toBe(true);
     expect(Object.values(empty.tabCounts).every((n) => n === 0)).toBe(true);
@@ -335,12 +335,28 @@ describe("SideColumn", () => {
     render(<SideColumn data={empty} today={TODAY} />);
     for (const t of ["Nothing publishing today", "No tasks today", "No milestones yet"]) expect(screen.getByText(t)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Add content" }).getAttribute("href")).toBe("/compose");
-    expect(screen.getByRole("link", { name: "Create milestone" }).getAttribute("href")).toBe("/jobs/import");
-    expect(screen.getAllByRole("link", { name: "View all" })).toHaveLength(2);
+    expect(screen.getByRole("link", { name: "Import quarter plan" }).getAttribute("href")).toBe("/jobs/import");
+    // only the tasks panel links on: the milestones panel has no "View all" that leads nowhere
+    expect(screen.getAllByRole("link", { name: "View all" })).toHaveLength(1);
+  });
+
+  it("the milestones panel is the quarter's categories with their bars, under the tasks and above the channels", () => {
+    const milestones = { rows: [{ category: "Product Features", planned: 15, posted: 6, scheduled: 4 }], uncategorized: 0 };
+    render(<SideColumn data={{ ...empty, plan: { label: "Q4 2026", planned: 15 }, milestones }} today={TODAY} />);
+    const panel = screen.getByRole("heading", { name: "Quarter milestones" }).closest("[data-slot=card]")!;
+    expect(within(panel as HTMLElement).getByRole("progressbar", { name: "Product Features" }).getAttribute("aria-valuetext")).toBe("6 of 15 posted, 4 scheduled");
+    expect(within(panel as HTMLElement).getByText("Q4 2026 · posted of planned, per category")).toBeTruthy();
+    expect(screen.queryByText("No milestones yet")).toBeNull();
+  });
+
+  it("a role that cannot import is not offered the import in the empty milestones panel", () => {
+    render(<SideColumn data={empty} today={TODAY} canImport={false} />);
+    expect(screen.getByText("No milestones yet")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Import quarter plan" })).toBeNull();
   });
 
   it("an empty panel goes away when it has content", () => {
-    render(<SideColumn data={{ ...empty, tasksToday: 2, milestones: { count: 1 } }} today={TODAY} />);
+    render(<SideColumn data={{ ...empty, tasksToday: 2, milestones: { rows: [{ category: "Blog Post", planned: 2, posted: 1, scheduled: 0 }], uncategorized: 0 } }} today={TODAY} />);
     expect(screen.queryByText("No tasks today")).toBeNull();
     expect(screen.queryByText("No milestones yet")).toBeNull();
   });

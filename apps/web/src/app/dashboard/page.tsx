@@ -113,7 +113,7 @@ export default function DashboardPage() {
                   onRangeChange={calendar.setRange}
                 />
               </div>
-              <SideColumn data={data} today={now} />
+              <SideColumn data={data} today={now} canImport={canAccess("/jobs/import")} />
             </div>
 
             <ContentTable

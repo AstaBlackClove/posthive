@@ -8,7 +8,7 @@
 //  - publication stage: scheduled while it is waiting for its time, published once it went out,
 //    failed when the worker could not publish it; a draft has none yet.
 
-import type { ContentRow, DashboardData, TabKey } from "@/components/dashboard/types";
+import type { ContentRow, DashboardData, Milestone, TabKey } from "@/components/dashboard/types";
 import type { QuickStart } from "@/components/dashboard/QuickStartStep";
 import type { ChannelStat } from "@/components/dashboard/ChannelRow";
 import { emptyStatusCounts, type ContentStatusKey } from "@/lib/content-status";
@@ -35,7 +35,7 @@ export interface ApiList {
 }
 
 export interface ApiDashboard {
-  quarter: { label: string; planned: number; published: number };
+  quarter: { label: string; planned: number; published: number; milestones: Milestone[]; uncategorized: number };
   inProduction: Array<{ status: string; approvalStatus: string | null; count: number }>;
   readyToSchedule: number;
   needAttention: number;
@@ -155,7 +155,7 @@ export function subtitleOf(api: ApiDashboard): string {
 // ── Quick start ─────────────────────────────────────────────────────────────
 
 export const QUICK_START: QuickStart[] = [
-  { step: 1, title: "Plan your quarter", description: "Import a CSV plan or set milestones for {quarter}.", cta: "Import planning", href: "/jobs/import" },
+  { step: 1, title: "Plan your quarter", description: "Import a CSV plan for {quarter}. Each content category in it becomes a milestone.", cta: "Import planning", href: "/jobs/import" },
   { step: 2, title: "Create your first post", description: "Draft a post and send it into production.", cta: "Add content", href: "/compose" },
   { step: 3, title: "Connect a channel", description: "Link Instagram or LinkedIn to publish straight from {brand}.", cta: "Connect channel", href: "/accounts" },
   { step: 4, title: "Invite your team", description: "Add teammates to write, design and approve.", cta: "Invite team", href: "/team" },
@@ -222,7 +222,7 @@ export function toDashboardData({ api, userName, brand, canAccess }: Build): Das
     tasksToday: api.myTasks.count,
     taskRows: api.myTasks.posts.map(toContentRow),
     today: { count: api.todayPosts.count, rows: api.todayPosts.posts.map(toContentRow) },
-    milestones: { count: 0 },
+    milestones: { rows: api.quarter.milestones, uncategorized: api.quarter.uncategorized },
     channels: channelStats(api.channels),
     tabCounts: {
       upcoming: api.lists.upcoming.count,
