@@ -21,8 +21,6 @@ import { isSsrfBlocked } from "../lib/ssrf.js";
 import { getPlan } from "../lib/plans.js";
 import { sendPostFailedEmail } from "../lib/mailer.js";
 import type { PostResult, CommentResult } from "../adapters/types.js";
-import type { StorageAdapter } from "../lib/storage.js";
-import { withoutTemplateMedia } from "../lib/templates.js";
 
 const MAX_ATTEMPTS = 3;
 
@@ -63,10 +61,7 @@ function dryRunCommentResult(platform: string): CommentResult {
   return { platformCommentId: `dry-run:comment:${platform}:${Date.now()}` };
 }
 
-export async function runJob(
-  job: PostJob & { targets: FullTarget[] },
-  storage?: StorageAdapter
-): Promise<void> {
+export async function runJob(job: PostJob & { targets: FullTarget[] }): Promise<void> {
   // Defensive guard — only pending (approved & queued) jobs may run.
   // Drafts awaiting design approval must never publish, even if a stale
   // queue entry somehow fires (e.g. scheduler rehydrated before approval).
@@ -250,25 +245,10 @@ export async function runJob(
     }
   }
 
-  // Clean up stored media if all posts succeeded (even if first comment failed)
-  const postingSucceeded = !anyPostFailed;
-  if (postingSucceeded && !job.dryRun && storage) {
-    const urlsToClean = [
-      ...(content.mediaUrls ?? []),
-      ...(content.youtubeThumbnailUrl ? [content.youtubeThumbnailUrl] : []),
-    ];
-    // Template files (incl. legacy kit designs posts may share) — never clean them up here
-    const ownedUrls = await withoutTemplateMedia(urlsToClean.filter((url) => storage.ownsUrl(url)));
-    if (ownedUrls.length) {
-      await Promise.allSettled(
-        ownedUrls.map((url) => {
-          console.log(`[storage] deleting ${url} after successful post`);
-          return storage.delete(url);
-        })
-      );
-      await prisma.upload.deleteMany({ where: { url: { in: ownedUrls } } });
-    }
-  }
+  // The post's pictures stay in storage after it goes out. The content list and the dashboard show a published post's
+  // design, and a repeating post's next occurrence copies the same files. Posts that failed are cleaned after 30 days
+  // (cleanupCron.ts); a published post's files are not cleaned at all.
+  // shortcut: storage grows with every published post, delete files of posts published long ago when it costs too much.
 }
 
 type EffectiveContent = {

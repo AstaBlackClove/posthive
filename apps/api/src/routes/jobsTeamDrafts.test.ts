@@ -25,10 +25,12 @@ vi.mock("../lib/prisma.js", () => {
         findMany: record("findMany", () => h.jobs),
         update: record("update", (args) => ({ id: "p1", ...(args as { data: object }).data })),
         updateMany: record("updateMany", () => ({ count: 1 })),
+        create: record("create", (args) => ({ id: "new", ...(args as { data: object }).data })),
       },
-      workspace: { findUnique: record("workspace.findUnique", () => ({ approvalRequired: true })) },
+      workspace: { findUnique: record("workspace.findUnique", () => ({ approvalRequired: true, plan: "pro" })) },
       postJobTarget: { findMany: record("target.findMany", () => []), deleteMany: record("target.deleteMany", () => ({})), createMany: record("target.createMany", () => ({})) },
-      account: { findMany: record("account.findMany", () => []) },
+      account: { findMany: record("account.findMany", (args) => ((args as { where: { id: { in: string[] } } }).where.id.in.map((id) => ({ id })))) },
+      $transaction: async (fn: (tx: unknown) => unknown) => fn({ postJob: { create: record("create", (args) => ({ id: "new", ...(args as { data: object }).data })) } }),
       upload: { deleteMany: record("upload.deleteMany", () => ({ count: 1 })), updateMany: record("upload.updateMany", () => ({ count: 1 })) },
     },
   };
@@ -41,6 +43,8 @@ vi.mock("../lib/auth/withAuth.js", async () => {
     getUser: () => ({ id: h.viewer }),
     getWorkspaceId: () => "ws-1",
     getWorkspaceRole: async () => h.role,
+    // the real one reads the membership through the module's own getWorkspaceRole, not through this mock
+    requireContentEditorRole: async () => (h.role === "designer" ? { error: "Content is created and edited by Admin and Marketing only.", code: "FORBIDDEN" } : null),
   };
 });
 vi.mock("../lib/queue.js", () => ({ schedulePostJob: vi.fn(), postJobQueue: { remove: vi.fn(async () => {}) } }));
@@ -146,12 +150,57 @@ describe("PATCH /jobs/:id: a colleague edits a draft the head of marketing uploa
     expect(call("findFirst")[0].args).toMatchObject({ where: { id: "p1", workspaceId: "ws-1" } });
   });
 
+  // The orphan cleaner deletes an upload nobody claimed after a day. A picture added while editing is as much the
+  // post's as one added when it was made, so the edit claims it: otherwise the picture of a draft that waits for review
+  // disappears and the drawer shows an empty box.
+  it("a picture added in an edit is claimed by the editor, so the orphan cleaner leaves it alone", async () => {
+    h.job = draft();
+    await patch({ mediaUrls: ["/uploads/a.png", "/uploads/new.png"] });
+    const claim = call("upload.updateMany");
+    expect(claim).toHaveLength(1);
+    const args = claim[0].args as { where: Record<string, unknown>; data: { claimedAt: unknown } };
+    expect(args.where).toEqual({ url: { in: ["/uploads/a.png", "/uploads/new.png"] }, userId: "colleague" });
+    expect(args.data.claimedAt).toBeInstanceOf(Date);
+  });
+
+  it("an edit that does not touch the pictures claims nothing", async () => {
+    h.job = draft();
+    await patch({ title: "Only the title" });
+    expect(call("upload.updateMany")).toHaveLength(0);
+  });
+
+  it("removing every picture claims nothing", async () => {
+    h.job = draft();
+    await patch({ mediaUrls: [] });
+    expect(call("upload.updateMany")).toHaveLength(0);
+  });
+
   it("a file a colleague removes from the draft goes, whoever uploaded it, so no row points at a deleted file", async () => {
     h.job = draft();
     await patch({ mediaUrls: [] });
     expect(storage.delete).toHaveBeenCalledWith("/uploads/a.png");
     const where = (call("upload.deleteMany")[0].args as { where: Record<string, unknown> }).where;
     expect(where).toEqual({ url: { in: ["/uploads/a.png"] } });
+  });
+});
+
+describe("POST /jobs: the pictures of a new post", () => {
+  const ACCOUNT = "cmw0000000000000000000000";
+  const create = (mediaUrls: string[]) =>
+    app.inject({ method: "POST", url: "/jobs", payload: { draft: true, accountIds: [ACCOUNT], content: { text: "Caption", mediaUrls } } });
+
+  it("are claimed by the person who made it, so the orphan cleaner leaves them alone", async () => {
+    h.viewer = "head-of-marketing";
+    const res = await create(["/uploads/a.png"]);
+    expect(res.statusCode).toBe(201);
+    const claim = call("upload.updateMany");
+    expect(claim).toHaveLength(1);
+    expect((claim[0].args as { where: unknown }).where).toEqual({ url: { in: ["/uploads/a.png"] }, userId: "head-of-marketing" });
+  });
+
+  it("a post with no pictures claims nothing", async () => {
+    expect((await create([])).statusCode).toBe(201);
+    expect(call("upload.updateMany")).toHaveLength(0);
   });
 });
 

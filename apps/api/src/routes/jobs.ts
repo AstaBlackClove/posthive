@@ -19,6 +19,15 @@ import { canEditJob, sameContent, shouldResetReview } from "../lib/jobEditRules.
 import { missingForReview, type MissingField } from "../lib/submitReadiness.js";
 import { CATEGORIES, PILLARS, pillarFor, type Category, type Pillar } from "../lib/contentTypes.js";
 
+/**
+ * Marks uploads as used by a post, so the orphan cleaner (index.ts) leaves them alone: it deletes an unclaimed upload
+ * after a day. Only the person's own uploads are claimed.
+ */
+async function claimUploads(urls: string[] | undefined, userId: string): Promise<void> {
+  if (!urls?.length) return;
+  await prisma.upload.updateMany({ where: { url: { in: urls }, userId }, data: { claimedAt: new Date() } });
+}
+
 const TARGET_SELECT = {
   id: true, accountId: true, status: true,
   platformPostId: true, error: true, attempts: true,
@@ -197,13 +206,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       await schedulePostJob(job.id, new Date(scheduledFor!));
     }
 
-    // Mark uploaded files as claimed so the orphan cron leaves them alone
-    if (content.mediaUrls?.length) {
-      await prisma.upload.updateMany({
-        where: { url: { in: content.mediaUrls }, userId },
-        data: { claimedAt: new Date() },
-      });
-    }
+    await claimUploads(content.mediaUrls, userId);
 
     return reply.status(201).send(job);
   });
@@ -499,6 +502,9 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         await prisma.postJobTarget.createMany({ data: toAdd.map(accountId => ({ postJobId: id, accountId })) });
       }
     }
+
+    // A picture added in this edit belongs to the post now, or the orphan cleaner deletes it after a day
+    await claimUploads(body.data.mediaUrls, userId);
 
     // Delete removed media files from storage (best-effort, non-fatal)
     if (body.data.mediaUrls !== undefined || body.data.youtubeThumbnailUrl !== undefined) {

@@ -300,7 +300,7 @@ async function main() {
   await app.listen({ port: PORT, host: "0.0.0.0" });
   console.log(`API listening on http://localhost:${PORT}`);
 
-  startWorker(storage);
+  startWorker();
   rehydrateQueue().catch((e) => console.error("[rehydrate] error:", e));
   startOrphanCleanup(storage);
   startTokenRefreshCron();

@@ -15,11 +15,10 @@ import { Worker } from "bullmq";
 import { prisma } from "./prisma.js";
 import { type PostJobPayload } from "./queue.js";
 import { runJob } from "../runner/jobRunner.js";
-import type { StorageAdapter } from "./storage.js";
 
 const connection = { url: process.env.REDIS_URL! };
 
-export function startWorker(storage: StorageAdapter): void {
+export function startWorker(): void {
   const worker = new Worker<PostJobPayload>(
     "post-jobs",
     async (job) => {
@@ -44,7 +43,7 @@ export function startWorker(storage: StorageAdapter): void {
 
       console.log(`[worker] processing PostJob ${postJobId}`);
       try {
-        await runJob(postJob, storage);
+        await runJob(postJob);
       } catch (err) {
         // runJob threw before it could update PostJob status — mark it failed
         console.error(`[worker] runJob threw for PostJob ${postJobId}:`, err);
