@@ -321,12 +321,12 @@ function OnboardingContent() {
     setScheduling(true);
     setScheduleError(null);
     try {
-      const asDraft = billingEnabled;
+      const firstPostTime = new Date(Date.now() + 60 * 60 * 1000).toISOString();
       await apiFetch("/jobs", {
         method: "POST",
         body: JSON.stringify({
-          scheduledFor: asDraft ? undefined : new Date(scheduledFor).toISOString(),
-          draft: asDraft,
+          scheduledFor: firstPostTime,
+          draft: false,
           content: { text: postText.trim(), mediaUrls: [] },
           accountIds: selectedIds,
         }),
@@ -626,11 +626,11 @@ function OnboardingContent() {
                 </div>
               </div>
 
-              {!billingEnabled && (
-                <div className="px-5 py-4 flex items-center gap-3">
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="#555" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+              <div className="px-5 py-4 flex items-center gap-3">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="#555" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {!billingEnabled ? (
                   <input
                     type="datetime-local"
                     value={scheduledFor}
@@ -639,16 +639,10 @@ function OnboardingContent() {
                     className="flex-1 bg-transparent text-sm focus:outline-none"
                     style={{ color: "#ededed", colorScheme: "dark" }}
                   />
-                </div>
-              )}
-              {billingEnabled && (
-                <div className="px-5 py-3 flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="#444" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span className="text-xs" style={{ color: "#444" }}>Saved as draft · activate after choosing a plan</span>
-                </div>
-              )}
+                ) : (
+                  <span className="text-xs" style={{ color: "#555" }}>Goes live in 1 hour — you can reschedule it anytime from Posts</span>
+                )}
+              </div>
             </div>
           )}
 
@@ -666,7 +660,7 @@ function OnboardingContent() {
                 className="w-full py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 active:scale-[0.98]"
                 style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
               >
-                {scheduling ? "Saving…" : billingEnabled ? "Save draft & choose plan →" : "Schedule my first post"}
+                {scheduling ? "Saving…" : billingEnabled ? "Schedule it & choose plan →" : "Schedule my first post"}
               </button>
             )}
             <button
