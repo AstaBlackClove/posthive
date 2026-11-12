@@ -77,7 +77,7 @@ export interface DashboardData {
   readyToSchedule: number;
   published: number;
   needAttention: number;
-  /** What the attention posts are, "1 publish failed · 1 changes requested"; left out when the list is cut and cannot be split. */
+  /** What the attention posts are, "1 publish failed · 1 changes requested"; left out when nothing needs attention. */
   needAttentionNote?: string;
   tasksToday: number;
   /** The first of the person's own posts for today (tasksToday may be larger). */

@@ -28,6 +28,7 @@ const NOTHING: ApiDashboard = {
   inProduction: [],
   readyToSchedule: 0,
   needAttention: 0,
+  needAttentionBy: [],
   todayPosts: { count: 0, posts: [] },
   myTasks: { count: 0, posts: [] },
   lists: { upcoming: { count: 0, posts: [] }, attention: { count: 0, posts: [] }, risk: { count: 0, posts: [] }, activity: { count: 0, posts: [] } },

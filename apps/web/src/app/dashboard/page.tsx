@@ -9,8 +9,9 @@ import { useAuth } from "@/context/AuthContext";
 import { BRAND } from "@/lib/brand";
 import { wibDateKey } from "@/lib/datetime";
 import { firstName, greetingFor } from "@/lib/dashboard-format";
-import { rowsByTab, subtitleOf, toDashboardData } from "@/lib/dashboard-data";
+import { subtitleOf, toDashboardData } from "@/lib/dashboard-data";
 import { useDashboard } from "@/lib/useDashboard";
+import { useDashboardRows } from "@/lib/useDashboardRows";
 import { usePermissions } from "@/lib/usePermissions";
 import { SelectionBar } from "@/components/content-list/SelectionBar";
 import { useContentActions } from "@/components/content-list/useContentActions";
@@ -35,8 +36,9 @@ export default function DashboardPage() {
   const { data: api, loading, error, reload } = useDashboard();
 
   const data = api ? toDashboardData({ api, userName: user?.name ?? "", brand: BRAND.name, canAccess }) : null;
-  // The table's rows must keep their identity between renders (TanStack rebuilds its rows when they change)
-  const rows = useMemo(() => (api ? rowsByTab(api) : undefined), [api]);
+  // The table shows ten rows of one tab; the rows keep their identity between renders (TanStack rebuilds its rows when they change)
+  const table = useDashboardRows(api);
+  const rows = useMemo(() => ({ [table.tab]: table.rows }), [table.tab, table.rows]);
 
   // The table and the calendar act on a post as the Content List does: the same drawer, bar and dialogs. After a change the
   // numbers and the calendar are asked again (the calendar when `version` changes), so they never show a post that was
@@ -46,9 +48,9 @@ export default function DashboardPage() {
     reload();
     setVersion((v) => v + 1);
   }, [reload]);
-  // A post can be in two tabs; it is the same post, so the first row found is as good as any
-  const allRows = useMemo(() => (rows ? Object.values(rows).flat() : []), [rows]);
-  const actions = useContentActions({ rows: allRows, reload: afterChange, keepGone: false });
+  // Only the rows on screen can be ticked: keepGone: false drops a tick whose row left the table, so a page turn never
+  // leaves a post ticked out of sight for Delete to reach (a tab change also clears at once, below)
+  const actions = useContentActions({ rows: table.rows, reload: afterChange, keepGone: false });
 
   // A workspace with posts in it is greeted by the time of day, as in the design; a brand-new one is welcomed
   const hasContent = Boolean(api && (api.quarter.planned > 0 || api.setup.imported || api.setup.created));
@@ -122,8 +124,20 @@ export default function DashboardPage() {
               onOpen={actions.open}
               openId={actions.openId}
               // a row ticked on a tab that is no longer shown must not be deleted unseen
-              onTabChange={actions.clear}
+              onTabChange={(tab) => {
+                actions.clear();
+                table.pickTab(tab);
+              }}
+              paging={{ page: table.page, pageCount: table.pageCount, loading: table.loading, onPage: table.setPage }}
             />
+            {table.error && (
+              <InlineAlert tone="danger" title="We couldn't load that page of content">
+                {table.error}{" "}
+                <Button variant="link" size="sm" className="inline-flex h-auto p-0" onClick={table.retry}>
+                  <RefreshCwIcon /> Try again
+                </Button>
+              </InlineAlert>
+            )}
 
             {(canEditContent || canSubmitOwn) && (
               <SelectionBar

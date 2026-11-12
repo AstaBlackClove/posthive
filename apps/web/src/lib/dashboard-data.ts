@@ -39,6 +39,8 @@ export interface ApiDashboard {
   inProduction: Array<{ status: string; approvalStatus: string | null; count: number }>;
   readyToSchedule: number;
   needAttention: number;
+  /** The posts that need attention, counted by status and approval (all of them, not one page). */
+  needAttentionBy: Array<{ status: string; approvalStatus: string | null; count: number }>;
   todayPosts: ApiList;
   myTasks: ApiList;
   lists: Record<TabKey, ApiList>;
@@ -107,18 +109,19 @@ export function pipelineCounts(groups: ApiDashboard["inProduction"]): Record<Con
 // ── What the page says about the quarter ────────────────────────────────────
 
 /**
- * "1 publish failed · 1 changes requested": what the posts that need attention are. Only said when the
- * list holds all of them (it is cut at twenty): a split of part of them would be a wrong number.
+ * "1 publish failed · 1 changes requested": what the posts that need attention are, from the API's count of
+ * every one of them by (status, approval), not from the rows of a page. Nothing needs attention: no note.
  */
-export function attentionNote(list: ApiList): string | undefined {
-  if (list.count === 0 || list.count > list.posts.length) return undefined;
+export function attentionNote(groups: ApiDashboard["needAttentionBy"]): string | undefined {
   let failed = 0;
   let changes = 0;
-  for (const p of list.posts) {
-    if (publicationOf(p) === "failed") failed += 1;
-    else if (productionOf(p) === "changes") changes += 1;
+  let behind = 0;
+  for (const g of groups) {
+    if (publicationOf(g) === "failed") failed += g.count;
+    else if (productionOf(g) === "changes") changes += g.count;
+    else behind += g.count;
   }
-  const behind = list.count - failed - changes;
+  if (failed + changes + behind === 0) return undefined;
   return [
     failed > 0 && `${failed} ${failed === 1 ? "publish" : "publishes"} failed`,
     changes > 0 && `${changes} changes requested`,
@@ -211,7 +214,7 @@ export function toDashboardData({ api, userName, brand, canAccess }: Build): Das
     readyToSchedule: api.readyToSchedule,
     published: api.quarter.published,
     needAttention: api.needAttention,
-    needAttentionNote: attentionNote(api.lists.attention),
+    needAttentionNote: attentionNote(api.needAttentionBy),
     tasksToday: api.myTasks.count,
     taskRows: api.myTasks.posts.map(toContentRow),
     today: { count: api.todayPosts.count, rows: api.todayPosts.posts.map(toContentRow) },
@@ -223,16 +226,6 @@ export function toDashboardData({ api, userName, brand, canAccess }: Build): Das
       risk: api.lists.risk.count,
       activity: api.lists.activity.count,
     },
-  };
-}
-
-/** The rows of each tab, so switching tab does not ask the server again. */
-export function rowsByTab(api: ApiDashboard): Record<TabKey, ContentRow[]> {
-  return {
-    upcoming: api.lists.upcoming.posts.map(toContentRow),
-    attention: api.lists.attention.posts.map(toContentRow),
-    risk: api.lists.risk.posts.map(toContentRow),
-    activity: api.lists.activity.posts.map(toContentRow),
   };
 }
 

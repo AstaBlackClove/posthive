@@ -7,7 +7,6 @@ import {
   productionOf,
   publicationOf,
   quickStart,
-  rowsByTab,
   toContentRow,
   toDashboardData,
   type ApiDashboard,
@@ -33,6 +32,7 @@ const api = (patch: Partial<ApiDashboard> = {}): ApiDashboard => ({
   inProduction: [],
   readyToSchedule: 2,
   needAttention: 1,
+  needAttentionBy: [{ status: "failed", approvalStatus: null, count: 1 }],
   todayPosts: { count: 2, posts: [post({ id: "t1" })] },
   myTasks: { count: 3, posts: [post({ id: "m1" })] },
   lists: {
@@ -205,7 +205,6 @@ describe("toDashboardData", () => {
   it("the tab counts are the true totals, the rows are the cut lists", () => {
     const d = build();
     expect(d.tabCounts.upcoming).toBe(31);
-    expect(rowsByTab(api()).upcoming).toHaveLength(1);
     expect(d.taskRows).toHaveLength(1);
     expect(d.today.rows).toHaveLength(1);
   });
@@ -228,34 +227,33 @@ describe("toDashboardData", () => {
     expect(build(api({ setup: { imported: true, created: true, accounts: 1, members: 2, invites: 0 } })).quickStartDone).toBe(true);
   });
 
-  it("rowsByTab gives each tab its own list", () => {
-    const rows = rowsByTab(api());
-    expect(rows.upcoming.map((r) => r.id)).toEqual(["u1"]);
-    expect(rows.attention.map((r) => r.id)).toEqual(["a1"]);
-    expect(rows.risk).toEqual([]);
-    expect(rows.activity.map((r) => r.id)).toEqual(["x1"]);
-  });
-
   it("all text is English", () => {
     expect(JSON.stringify(build())).not.toMatch(/Tambah|Quartal|Akun/);
   });
 });
 
 describe("attentionNote", () => {
-  const list = (posts: ApiPost[], count = posts.length) => ({ count, posts });
+  const group = (status: string, approvalStatus: string | null, count: number) => ({ status, approvalStatus, count });
 
-  it("says what the posts that need attention are, when the list holds all of them", () => {
-    const note = attentionNote(list([post({ status: "failed" }), post({ id: "b", status: "draft", approvalStatus: "rejected" }), post({ id: "c", status: "draft" })]));
+  it("says what the posts that need attention are", () => {
+    const note = attentionNote([group("failed", null, 1), group("draft", "rejected", 1), group("draft", null, 1)]);
     expect(note).toBe("1 publish failed · 1 changes requested · 1 behind schedule");
   });
 
   it("uses the plural for several failures, and leaves out what there is none of", () => {
-    expect(attentionNote(list([post({ status: "failed" }), post({ id: "b", status: "post_failed" })]))).toBe("2 publishes failed");
+    expect(attentionNote([group("failed", null, 1), group("post_failed", null, 1)])).toBe("2 publishes failed");
   });
 
-  it("says nothing when the list is cut (a split of part of the posts would be a wrong number) or empty", () => {
-    expect(attentionNote(list([post({ status: "failed" })], 25))).toBeUndefined();
-    expect(attentionNote(list([]))).toBeUndefined();
+  it("counts every post, also the ones past the first page of the table", () => {
+    expect(attentionNote([group("failed", null, 12), group("draft", "rejected", 3)])).toBe("12 publishes failed · 3 changes requested");
+  });
+
+  it("sums the groups that are the same kind of attention, e.g. a late post and a draft whose date passed", () => {
+    expect(attentionNote([group("pending", null, 4), group("draft", null, 7)])).toBe("11 behind schedule");
+  });
+
+  it("says nothing when nothing needs attention", () => {
+    expect(attentionNote([])).toBeUndefined();
   });
 });
 

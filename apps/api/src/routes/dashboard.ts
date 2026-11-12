@@ -6,6 +6,7 @@ import { STATUS_GROUPS } from "../lib/jobFilters.js";
 import {
   LIST_LIMIT,
   dayWhere,
+  isListKind,
   listWhere,
   monthOf,
   plainDraft,
@@ -35,7 +36,35 @@ const LIVE = [...STATUS_GROUPS.pending, ...STATUS_GROUPS.done];
 /** Most posts a day can list on the dashboard: a busy day, not a whole quarter. */
 const TODAY_LIMIT = 50;
 
+/** Soonest first, a draft with no date last; activity is the other way round: latest change first. */
+const listOrder = (kind: ListKind): Prisma.PostJobOrderByWithRelationInput[] =>
+  kind === "activity" ? [{ updatedAt: "desc" }, { id: "asc" }] : [{ scheduledFor: { sort: "asc", nulls: "last" } }, { id: "asc" }];
+
 export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
+  // One page of one tab of the content table: the rows /dashboard sends for page 1 (same filter, order and visibility),
+  // so a page turn asks only for the page, not for the whole dashboard again. A page past the end answers the last one.
+  app.get(
+    "/dashboard/content",
+    { preHandler: [withAuth], config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const { id: userId } = getUser(req);
+      const workspaceId = getWorkspaceId(req);
+      const query = req.query as { tab?: string; page?: string };
+      const kind = query.tab;
+      if (!isListKind(kind)) return reply.status(400).send({ error: "Unknown tab.", code: "INVALID_TAB" });
+
+      const role = await getWorkspaceRole(userId, workspaceId);
+      const base: Prisma.PostJobWhereInput = { workspaceId, AND: [jobVisibilityWhere(role, userId)] };
+      const where = listWhere(base, kind, new Date());
+
+      const count = await prisma.postJob.count({ where });
+      const pageCount = Math.max(1, Math.ceil(count / LIST_LIMIT));
+      const page = Math.min(Math.max(Math.trunc(Number(query.page)) || 1, 1), pageCount);
+      const rows = await prisma.postJob.findMany({ where, orderBy: listOrder(kind), skip: (page - 1) * LIST_LIMIT, take: LIST_LIMIT, select: POST_SELECT });
+      return reply.send({ count, page, pageCount, posts: rows.map(toPost) });
+    },
+  );
+
   // Everything the dashboard shows about this workspace, in one round trip. The role decides which
   // drafts are visible (the same rule as the Posts page), so a number here is a number there.
   app.get(
@@ -59,8 +88,7 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
         findMany: () =>
           prisma.postJob.findMany({
             where: listWhere(base, kind, now),
-            // soonest first, a draft with no date last; activity is the other way round: latest change first
-            orderBy: kind === "activity" ? [{ updatedAt: "desc" as const }, { id: "asc" as const }] : [{ scheduledFor: { sort: "asc" as const, nulls: "last" as const } }, { id: "asc" as const }],
+            orderBy: listOrder(kind),
             take: LIST_LIMIT,
             select: POST_SELECT,
           }),
@@ -77,7 +105,7 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
         quarterRows,
         ready,
         upcomingRows, upcomingCount,
-        attentionRows, attentionCount,
+        attentionRows, attentionBy,
         riskRows, riskCount,
         activityRows, activityCount,
         todayRows, todayCount,
@@ -110,7 +138,9 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
         }),
         prisma.postJob.count({ where: { AND: [base, readyToSchedule(now)] } }),
         upcoming.findMany(), upcoming.count(),
-        attention.findMany(), attention.count(),
+        attention.findMany(),
+        // The total and what the posts are in one query: the browser says "2 publishes failed · 1 changes requested" from the pairs
+        prisma.postJob.groupBy({ by: ["status", "approvalStatus"], where: listWhere(base, "attention", now), _count: true }),
         risk.findMany(), risk.count(),
         activity.findMany(), activity.count(),
         prisma.postJob.findMany({
@@ -161,11 +191,16 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
         else channels.push({ platform: a.platform, accounts: 1, handle: a.displayName, posts: monthPosts.get(a.platform) ?? 0 });
       }
 
+      const pairs = (groups: { status: string; approvalStatus: string | null; _count: number }[]) =>
+        groups.map((r) => ({ status: r.status, approvalStatus: r.approvalStatus, count: r._count }));
+      const attentionCount = attentionBy.reduce((sum, g) => sum + g._count, 0);
+
       return reply.send({
         quarter: { label: quarter.label, ...quarterCount(quarterByStatus, quarterRows) },
-        inProduction: inProduction.map((r) => ({ status: r.status, approvalStatus: r.approvalStatus, count: r._count })),
+        inProduction: pairs(inProduction),
         readyToSchedule: ready,
         needAttention: attentionCount,
+        needAttentionBy: pairs(attentionBy),
         todayPosts: { count: todayCount, posts: todayRows.map(toPost) },
         myTasks: { count: taskCount, posts: taskRows.map(toPost) },
         lists: {

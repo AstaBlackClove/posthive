@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/EmptyState";
+import { Pager } from "@/components/Pager";
 import { cn } from "@/lib/cn";
 import { statusLabel } from "@/lib/content-status";
 import { formatPublishAt, shortName, sortSummary } from "@/lib/dashboard-format";
@@ -84,6 +85,8 @@ type Props = {
   openId?: string | null;
   /** The person picked another tab. */
   onTabChange?: (tab: TabKey) => void;
+  /** The tab's rows come a page at a time: with this the table has a pager under it. Without it the rows are all there is. */
+  paging?: { page: number; pageCount: number; loading: boolean; onPage: (page: number) => void };
 };
 
 function SortIcon({ state }: { state: false | "asc" | "desc" }) {
@@ -96,7 +99,7 @@ function SortIcon({ state }: { state: false | "asc" | "desc" }) {
  * The tabs and the table of content (sortable). The page decides what a row can do: with `selection` the rows can be
  * ticked, with `onOpen` they open the post. With no rows it is the empty state inside the table.
  */
-export function ContentTable({ rows: rowsByTab, tabCounts, todayKey, selection, onOpen, openId, onTabChange }: Props) {
+export function ContentTable({ rows: rowsByTab, tabCounts, todayKey, selection, onOpen, openId, onTabChange, paging }: Props) {
   const [tab, setTab] = useState<TabKey>("upcoming");
   const rows = rowsByTab?.[tab] ?? NO_ROWS;
   // The list starts in the order its footer promises: by publish date, soonest first
@@ -148,7 +151,7 @@ export function ContentTable({ rows: rowsByTab, tabCounts, todayKey, selection, 
           </Button>
         </div>
 
-        <TabsContent value={tab} className="overflow-hidden rounded-2xl border border-neutral-200 bg-bg">
+        <TabsContent value={tab} aria-busy={paging?.loading} className={cn("overflow-hidden rounded-2xl border border-neutral-200 bg-bg transition-opacity", paging?.loading && "opacity-60")}>
           <Table aria-label={TABS.find((t) => t.key === tab)?.label} className="min-w-160">
             <TableHeader>
               {table.getHeaderGroups().map((group) => (
@@ -282,7 +285,9 @@ export function ContentTable({ rows: rowsByTab, tabCounts, todayKey, selection, 
           <p aria-live="polite">
             Showing {result.length} of {Math.max(tabCounts[tab], result.length)} posts
           </p>
-          <p>{sortSummary(table.state.sorting)}</p>
+          {paging && <Pager page={paging.page} pageCount={paging.pageCount} onPage={paging.onPage} />}
+          {/* the table sorts the rows it holds: with more pages, that is this page and not the whole list */}
+          <p>{sortSummary(table.state.sorting)}{paging && paging.pageCount > 1 ? " · on this page" : ""}</p>
         </div>
       </Tabs>
     </section>

@@ -40,6 +40,7 @@ const dashboard = (patch: Partial<ApiDashboard> = {}): ApiDashboard => ({
   inProduction: [{ status: "draft", approvalStatus: null, count: 4 }, { status: "draft", approvalStatus: "pending", count: 2 }],
   readyToSchedule: 2,
   needAttention: 1,
+  needAttentionBy: [{ status: "failed", approvalStatus: null, count: 1 }],
   todayPosts: { count: 2, posts: [post({ id: "t1", title: "Today post" })] },
   myTasks: { count: 1, posts: [post({ id: "m1", title: "My own draft" })] },
   lists: {
@@ -159,6 +160,131 @@ describe("dashboard page: real data", () => {
     expect(calls("/dashboard").filter((c) => c[0] === "/dashboard")).toHaveLength(1); // switching tab asks nothing
   });
 
+  describe("the content table's pages", () => {
+    /** A list of `n` posts of which /dashboard holds the first ten; /dashboard/content answers the later pages. */
+    const paged = (n: number) => {
+      const make = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => post({ id: `u${from + i}`, title: `Row ${from + i}` }));
+      const pageOf = (page: number) => ({ count: n, page, pageCount: Math.ceil(n / 10), posts: make((page - 1) * 10 + 1, Math.min(page * 10, n)) });
+      const dash = dashboard({ lists: { ...dashboard().lists, upcoming: { count: n, posts: make(1, 10) } } });
+      return { dash, pageOf };
+    };
+    const contentCalls = () => calls("/dashboard/content").map((c) => String(c[0]));
+    const titles = () => screen.getByRole("table", { name: "Upcoming content" }).querySelectorAll("tbody tr").length;
+
+    it("shows ten rows and a pager; the first page is part of /dashboard, so it asks for nothing more", async () => {
+      const { dash } = paged(25);
+      serve(dash, undefined, () => {
+        throw new Error("the first page must not ask for another");
+      });
+      render(<DashboardPage />);
+      await screen.findByText("Row 1");
+      expect(titles()).toBe(10);
+      expect(screen.getByText("Showing 10 of 25 posts")).toBeTruthy();
+      expect(screen.getByRole("navigation", { name: "Pages" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Page 3" })).toBeTruthy();
+      expect(contentCalls()).toEqual([]);
+    });
+
+    it("a page turn asks for that page of the tab, shows its rows and keeps the numbers of the dashboard", async () => {
+      const { dash, pageOf } = paged(25);
+      serve(dash, undefined, (path) => {
+        const m = path.match(/^\/dashboard\/content\?tab=upcoming&page=(\d+)$/);
+        if (m) return pageOf(Number(m[1]));
+        throw new Error(`unexpected ${path}`);
+      });
+      render(<DashboardPage />);
+      await screen.findByText("Row 1");
+      await userEvent.click(screen.getByRole("button", { name: "Page 3" }));
+      expect(await screen.findByText("Row 21")).toBeTruthy();
+      expect(titles()).toBe(5);
+      expect(screen.queryByText("Row 1")).toBeNull();
+      expect(contentCalls()).toEqual(["/dashboard/content?tab=upcoming&page=3"]);
+      expect(calls("/dashboard").filter((c) => c[0] === "/dashboard")).toHaveLength(1);
+      // back to page 1: from /dashboard, nothing more asked
+      await userEvent.click(screen.getByRole("button", { name: "Page 1" }));
+      expect(await screen.findByText("Row 1")).toBeTruthy();
+      expect(contentCalls()).toHaveLength(1);
+    });
+
+    it("a page that is past the end after deletes lands on the last page the server has, and asks for it once", async () => {
+      // /dashboard still says 25 posts (3 pages); five were deleted since, so the server has 20 and answers page 2 for page 3
+      const { dash } = paged(25);
+      const { pageOf } = paged(20);
+      serve(dash, undefined, (path) => {
+        if (path === "/dashboard/content?tab=upcoming&page=3" || path === "/dashboard/content?tab=upcoming&page=2") return pageOf(2);
+        throw new Error(`unexpected ${path}`);
+      });
+      render(<DashboardPage />);
+      await screen.findByText("Row 1");
+      await userEvent.click(screen.getByRole("button", { name: "Page 3" }));
+      expect(await screen.findByText("Row 11")).toBeTruthy();
+      await waitFor(() => expect(screen.getByRole("button", { name: "Page 2" }).getAttribute("aria-current")).toBe("page"));
+      expect(screen.queryByRole("button", { name: "Page 3" })).toBeNull();
+      expect(titles()).toBe(10);
+      expect(contentCalls()).toEqual(["/dashboard/content?tab=upcoming&page=3"]);
+      // the skip is for that one landing: a later page turn is asked for as usual
+      await userEvent.click(screen.getByRole("button", { name: "Page 1" }));
+      await screen.findByText("Row 1");
+      await userEvent.click(screen.getByRole("button", { name: "Page 2" }));
+      await screen.findByText("Row 11");
+      expect(contentCalls()).toEqual(["/dashboard/content?tab=upcoming&page=3", "/dashboard/content?tab=upcoming&page=2"]);
+    });
+
+    it("another tab starts at its first page, and a list of one page has no pager", async () => {
+      const { dash, pageOf } = paged(25);
+      serve(dash, undefined, (path) => {
+        const m = path.match(/^\/dashboard\/content\?tab=upcoming&page=(\d+)$/);
+        if (m) return pageOf(Number(m[1]));
+        throw new Error(`unexpected ${path}`);
+      });
+      render(<DashboardPage />);
+      await screen.findByText("Row 1");
+      await userEvent.click(screen.getByRole("button", { name: "Page 2" }));
+      await screen.findByText("Row 11");
+      await userEvent.click(screen.getByRole("tab", { name: /Need attention/ }));
+      expect(screen.getByText("Failed post")).toBeTruthy();
+      expect(screen.queryByRole("navigation", { name: "Pages" })).toBeNull();
+      await userEvent.click(screen.getByRole("tab", { name: /Upcoming content/ }));
+      expect(await screen.findByText("Row 1")).toBeTruthy();
+    });
+
+    it("a page that fails to load says so and offers to try again, and the rows already on screen stay", async () => {
+      const { dash, pageOf } = paged(25);
+      let fail = true;
+      serve(dash, undefined, (path) => {
+        if (fail) throw new Error("Server is down");
+        return pageOf(Number(path.match(/page=(\d+)/)![1]));
+      });
+      render(<DashboardPage />);
+      await screen.findByText("Row 1");
+      await userEvent.click(screen.getByRole("button", { name: "Page 2" }));
+      expect(await screen.findByText("We couldn't load that page of content")).toBeTruthy();
+      expect(screen.getByText("Server is down")).toBeTruthy();
+      fail = false;
+      await userEvent.click(screen.getByRole("button", { name: /Try again/ }));
+      expect(await screen.findByText("Row 11")).toBeTruthy();
+      expect(screen.queryByText("We couldn't load that page of content")).toBeNull();
+    });
+
+    it("a page turn drops the ticks: a row ticked on the page that is gone is never deleted", async () => {
+      const { dash, pageOf } = paged(25);
+      serve(dash, undefined, (path) => pageOf(Number(path.match(/page=(\d+)/)![1])));
+      render(<DashboardPage />);
+      await userEvent.click(await screen.findByRole("checkbox", { name: "Select Row 1" }));
+      expect(screen.queryByRole("region", { name: "Selected posts" })).toBeTruthy();
+      await userEvent.click(screen.getByRole("button", { name: "Page 2" }));
+      await screen.findByText("Row 11");
+      expect(screen.queryByRole("region", { name: "Selected posts" })).toBeNull();
+    });
+
+    it("the footer says the sort is of this page once there is more than one", async () => {
+      serve(paged(25).dash);
+      render(<DashboardPage />);
+      await screen.findByText("Row 1");
+      expect(screen.getByText("Sorted by publish date, soonest first · on this page")).toBeTruthy();
+    });
+  });
+
   it("asks for the workspace once, and for the calendar of the days the grid shows: six weeks of November", async () => {
     serve(dashboard());
     render(<DashboardPage />);
@@ -191,7 +317,7 @@ describe("dashboard page: real data", () => {
       quarter: { label: "Q4 2026", planned: 0, published: 0, milestones: [], uncategorized: 0 },
       setup: { imported: false, created: false, accounts: 0, members: 1, invites: 0 },
       lists: { upcoming: { count: 0, posts: [] }, attention: { count: 0, posts: [] }, risk: { count: 0, posts: [] }, activity: { count: 0, posts: [] } },
-      todayPosts: { count: 0, posts: [] }, myTasks: { count: 0, posts: [] }, channels: [], inProduction: [], readyToSchedule: 0, needAttention: 0,
+      todayPosts: { count: 0, posts: [] }, myTasks: { count: 0, posts: [] }, channels: [], inProduction: [], readyToSchedule: 0, needAttention: 0, needAttentionBy: [],
     }));
     render(<DashboardPage />);
     expect(await screen.findByText("Let's get your first campaign live")).toBeTruthy();

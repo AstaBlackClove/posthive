@@ -57,8 +57,8 @@ export function monthOf(key: string): { start: string; end: string } {
 
 // ── What each list holds ────────────────────────────────────────────────────
 
-/** Rows a list shows. The count next to it is the true total. */
-export const LIST_LIMIT = 20;
+/** Rows a page of a dashboard list shows (the table under the calendar). The count next to it is the true total. */
+export const LIST_LIMIT = 10;
 /** A calendar range answers with at most this many posts. */
 export const CALENDAR_LIMIT = 400;
 /** Longest range the calendar asks for: a six-week month grid is 42 days. */
@@ -73,7 +73,9 @@ export const OVERDUE_MINUTES = 15;
 /** "Recent activity" is what changed in this many days. */
 export const ACTIVITY_DAYS = 7;
 
-export type ListKind = "upcoming" | "attention" | "risk" | "activity";
+export const LIST_KINDS = ["upcoming", "attention", "risk", "activity"] as const;
+export type ListKind = (typeof LIST_KINDS)[number];
+export const isListKind = (value: unknown): value is ListKind => LIST_KINDS.includes(value as ListKind);
 
 type Where = Prisma.PostJobWhereInput;
 

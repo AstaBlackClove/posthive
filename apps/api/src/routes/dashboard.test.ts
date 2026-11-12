@@ -6,6 +6,7 @@ const h = vi.hoisted(() => ({
   userId: "user-1",
   calls: [] as Array<{ model: string; fn: string; args: unknown }>,
   groups: [] as Array<{ status: string; approvalStatus?: string | null; _count: number }>,
+  attentionGroups: [] as Array<{ status: string; approvalStatus: string | null; _count: number }>,
   quarterGroups: [] as Array<{ status: string; _count: number }>,
   quarterPosts: [] as Array<{ status: string; content: string }>,
   accounts: [] as Array<{ id: string; platform: string; displayName: string }>,
@@ -26,8 +27,11 @@ vi.mock("../lib/prisma.js", () => {
   return {
     prisma: {
       postJob: {
-        groupBy: record("postJob", "groupBy", (args) =>
-          (args as { by: string[] }).by.length === 2 ? h.groups : h.quarterGroups),
+        // Two keys: the in-production pairs, or the attention list's own (the only one with the plan-import clause)
+        groupBy: record("postJob", "groupBy", (args) => {
+          if ((args as { by: string[] }).by.length !== 2) return h.quarterGroups;
+          return JSON.stringify(args).includes('"importKey":null') ? h.attentionGroups : h.groups;
+        }),
         count: record("postJob", "count", (args) => {
           // Each count has one clause nothing else has; the order matters (the more specific first)
           const json = JSON.stringify(args);
@@ -79,6 +83,7 @@ beforeEach(() => {
   h.role = "member";
   h.calls = [];
   h.groups = [];
+  h.attentionGroups = [];
   h.quarterGroups = [];
   h.quarterPosts = [];
   h.accounts = [];
@@ -173,7 +178,8 @@ describe("GET /dashboard", () => {
   });
 
   it("carries the counts and the posts of every list, with the true total next to a cut list", async () => {
-    h.counts = { upcoming: 31, attention: 2, risk: 1, activity: 40, ready: 5, today: 3, tasks: 2 };
+    h.counts = { upcoming: 31, risk: 1, activity: 40, ready: 5, today: 3, tasks: 2 };
+    h.attentionGroups = [{ status: "failed", approvalStatus: null, _count: 2 }];
     h.posts = [post("a"), post("b")];
     const json = (await app.inject({ method: "GET", url: "/dashboard" })).json();
     expect(json.lists.upcoming.count).toBe(31);
@@ -186,6 +192,23 @@ describe("GET /dashboard", () => {
     expect(json.todayPosts.count).toBe(3);
     expect(json.myTasks.count).toBe(2);
     expect(json.lists.upcoming.posts[0]).toMatchObject({ id: "a", title: "Post a", channels: ["instagram"], owner: "Putri" });
+  });
+
+  it("counts the attention posts by what they are, all of them, however many a page holds", async () => {
+    h.role = "admin";
+    h.attentionGroups = [{ status: "failed", approvalStatus: null, _count: 12 }, { status: "draft", approvalStatus: "rejected", _count: 3 }];
+    const json = (await app.inject({ method: "GET", url: "/dashboard" })).json();
+    expect(json.needAttention).toBe(15);
+    expect(json.lists.attention.count).toBe(15);
+    expect(json.needAttentionBy).toEqual([
+      { status: "failed", approvalStatus: null, count: 12 },
+      { status: "draft", approvalStatus: "rejected", count: 3 },
+    ]);
+    // one query for the total and the split, with the attention filter and the role's visibility
+    const grouped = h.calls.filter((c) => c.fn === "groupBy" && JSON.stringify(c.args).includes('"importKey":null'));
+    expect(grouped).toHaveLength(1);
+    expect(JSON.stringify(grouped[0].args)).toContain('"approvalStatus":"pending"');
+    expect(h.calls.filter((c) => c.fn === "count" && JSON.stringify(c.args).includes('"importKey":null'))).toHaveLength(0);
   });
 
   it("never sends the content of a post, only what a list shows", async () => {
@@ -252,6 +275,94 @@ describe("GET /dashboard", () => {
     await app.inject({ method: "GET", url: "/dashboard" });
     const tasks = h.calls.find((c) => c.model === "postJob" && c.fn === "findMany" && JSON.stringify(c.args).includes('"userId":"user-1","status"'));
     expect(tasks).toBeTruthy();
+  });
+
+  it("sends only the first 10 rows of each list: the rest are asked for a page at a time", async () => {
+    await app.inject({ method: "GET", url: "/dashboard" });
+    const lists = h.calls.filter((c) => c.fn === "findMany" && c.model === "postJob" && JSON.stringify((c.args as { orderBy?: unknown }).orderBy ?? "").match(/nulls|updatedAt/) && !JSON.stringify(c.args).includes('"userId":"user-1","status"'));
+    expect(lists).toHaveLength(4);
+    for (const q of lists) expect((q.args as { take: number }).take).toBe(10);
+  });
+});
+
+describe("GET /dashboard/content", () => {
+  const pageQuery = () => h.calls.find((c) => c.fn === "findMany" && c.model === "postJob")!.args as { skip: number; take: number; where: unknown; orderBy: unknown };
+
+  it("answers the page asked for with the true total and the number of pages", async () => {
+    h.counts = { upcoming: 31 };
+    h.posts = [post("a"), post("b")];
+    const json = (await app.inject({ method: "GET", url: "/dashboard/content?tab=upcoming&page=2" })).json();
+    expect(json).toMatchObject({ count: 31, page: 2, pageCount: 4 });
+    expect(json.posts).toHaveLength(2);
+    expect(json.posts[0]).toMatchObject({ id: "a", title: "Post a", channels: ["instagram"], owner: "Putri" });
+    expect(pageQuery()).toMatchObject({ skip: 10, take: 10 });
+  });
+
+  it("the first page, and a page that is not a number, start at the first row", async () => {
+    h.counts = { upcoming: 31 };
+    for (const url of ["/dashboard/content?tab=upcoming", "/dashboard/content?tab=upcoming&page=abc", "/dashboard/content?tab=upcoming&page=-3"]) {
+      h.calls = [];
+      expect((await app.inject({ method: "GET", url })).json().page, url).toBe(1);
+      expect(pageQuery().skip, url).toBe(0);
+    }
+  });
+
+  it("a page past the end answers the last page, and an empty list is one empty page", async () => {
+    h.counts = { upcoming: 31 };
+    const last = (await app.inject({ method: "GET", url: "/dashboard/content?tab=upcoming&page=99" })).json();
+    expect(last).toMatchObject({ page: 4, pageCount: 4 });
+    expect(pageQuery().skip).toBe(30);
+    h.counts = {};
+    h.calls = [];
+    expect((await app.inject({ method: "GET", url: "/dashboard/content?tab=upcoming&page=5" })).json()).toMatchObject({ count: 0, page: 1, pageCount: 1, posts: [] });
+  });
+
+  it("an unknown or missing tab is refused before anything is read", async () => {
+    for (const url of ["/dashboard/content?tab=nope", "/dashboard/content"]) {
+      h.calls = [];
+      const res = await app.inject({ method: "GET", url });
+      expect(res.statusCode, url).toBe(400);
+      expect(res.json().code, url).toBe("INVALID_TAB");
+      expect(h.calls, url).toHaveLength(0);
+    }
+  });
+
+  it("each tab is counted and read with its own filter: the same one /dashboard uses", async () => {
+    const countOf = async (tab: string) => {
+      h.calls = [];
+      await app.inject({ method: "GET", url: `/dashboard/content?tab=${tab}` });
+      return JSON.stringify(h.calls.find((c) => c.fn === "count")!.args);
+    };
+    expect(await countOf("activity")).toContain('"updatedAt"');
+    expect(await countOf("risk")).toContain('"scheduledFor":{"gte":"2026-11-09T05:00:00.000Z"');
+    expect(await countOf("attention")).toContain('"importKey":null');
+    expect(await countOf("upcoming")).toContain('"status":"draft","scheduledFor":null');
+  });
+
+  it("sorts like the first page: soonest first with undated drafts last, activity by latest change", async () => {
+    await app.inject({ method: "GET", url: "/dashboard/content?tab=upcoming" });
+    expect(JSON.stringify(pageQuery().orderBy)).toContain('"nulls":"last"');
+    h.calls = [];
+    await app.inject({ method: "GET", url: "/dashboard/content?tab=activity" });
+    expect(JSON.stringify(pageQuery().orderBy)).toContain('"updatedAt":"desc"');
+  });
+
+  it("follows the role's draft visibility and the workspace, for the count and for the read", async () => {
+    h.role = "admin";
+    await app.inject({ method: "GET", url: "/dashboard/content?tab=upcoming" });
+    const queries = h.calls.filter((c) => c.model === "postJob");
+    expect(queries).toHaveLength(2);
+    for (const q of queries) {
+      expect(JSON.stringify(q.args), q.fn).toContain('"approvalStatus":"pending"');
+      expect(JSON.stringify(q.args), q.fn).toContain('"workspaceId":"ws-1"');
+    }
+  });
+
+  it("never sends the content of a post, only what a list shows", async () => {
+    h.posts = [post("a", { content: JSON.stringify({ title: "T", designCopy: "SECRET-DESIGN-COPY" }) })];
+    const text = (await app.inject({ method: "GET", url: "/dashboard/content?tab=upcoming" })).body;
+    expect(text).not.toContain("SECRET-DESIGN-COPY");
+    expect(text).not.toContain('"content"');
   });
 });
 
