@@ -5,6 +5,7 @@ import { schedulePostJob, postJobQueue } from "../lib/queue.js";
 import { compressForPlatform } from "../lib/compress.js";
 import { ALLOWED_IMAGE_TYPES, type StorageAdapter } from "../lib/storage.js";
 import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
+import { validatePlatformContent } from "../lib/platformValidation.js";
 
 const preHandler = [withApiKey];
 
@@ -21,37 +22,6 @@ function normalizePerAccount(
 }
 const MAX_VIDEO_SIZE_BYTES = 100_000_000;
 
-const VIDEO_URL_RE = /\.(mp4|mov|quicktime)(\?|#|$)/i;
-const isVideoUrl = (u: string): boolean => VIDEO_URL_RE.test(u);
-
-// Mirrors the client-side checks in apps/web/src/app/compose/page.tsx's validate() —
-// the API/MCP path has no browser form to block a bad submit before it reaches the queue,
-// so a post that would fail at publish time (days later) must be rejected here instead.
-function validatePlatformContent(
-  accounts: { id: string; platform: string }[],
-  opts: { text: string; images: string[]; mediaType?: string; tiktokPrivacyLevel?: string }
-): string | null {
-  const hasVideo = opts.images.some(isVideoUrl);
-  const hasMedia = opts.images.length > 0;
-
-  for (const a of accounts) {
-    if (a.platform === "instagram") {
-      if (opts.mediaType === "story" && !hasMedia) return "Instagram Story requires an image or video.";
-      if (opts.mediaType === "reel" && !hasVideo) return "Instagram Reel requires a video.";
-      if ((opts.mediaType ?? "post") === "post" && !hasMedia) return "Instagram Post requires at least one image or video.";
-    }
-    if (a.platform === "bluesky" && !opts.text.trim()) return "Bluesky requires a caption.";
-    if (a.platform === "threads" && !opts.text.trim()) return "Threads requires a caption.";
-    if (a.platform === "tiktok") {
-      if (!hasVideo) return "TikTok requires a video — attach an mp4 or mov file.";
-      if (!opts.tiktokPrivacyLevel) return "TikTok requires tiktokPrivacyLevel to be set before posting.";
-    }
-    if (a.platform === "youtube" && !hasVideo) return "YouTube requires a video attached.";
-    if (a.platform === "pinterest" && !hasMedia) return "Pinterest requires at least one image.";
-    if (a.platform === "pixelfed" && !hasMedia) return "Pixelfed requires at least one image.";
-  }
-  return null;
-}
 
 export async function publicApiRoutes(
   app: FastifyInstance,

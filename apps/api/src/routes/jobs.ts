@@ -14,6 +14,18 @@ import type { StorageAdapter } from "../lib/storage.js";
 import { adapters } from "../adapters/index.js";
 import { filterUrlsSafeToDelete } from "../runner/jobRunner.js";
 import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
+import { validatePlatformContent } from "../lib/platformValidation.js";
+
+type StoredContent = { text?: string; mediaUrls?: string[]; mediaType?: string; youtubeVideoUrl?: string; tiktokPrivacyLevel?: string; perAccount?: Record<string, { text?: string } | undefined> };
+const mediaError = (accounts: { id: string; platform: string }[], c: StoredContent) =>
+  validatePlatformContent(accounts, {
+    text: c.text ?? "",
+    images: c.mediaUrls ?? [],
+    mediaType: c.mediaType,
+    youtubeVideoUrl: c.youtubeVideoUrl,
+    tiktokPrivacyLevel: c.tiktokPrivacyLevel,
+    perAccountText: Object.fromEntries(Object.entries(c.perAccount ?? {}).map(([k, v]) => [k, v?.text])),
+  });
 
 // Tab filters cover multiple real PostJob.status values — shared by GET /jobs,
 // GET /jobs/counts, and DELETE /jobs/bulk's status-based delete.
@@ -127,6 +139,13 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     });
     if (textLimitErrors.length) {
       return reply.status(400).send({ error: textLimitErrors.join(" | "), code: "TEXT_LIMIT" });
+    }
+    const mediaErrors = jobs
+      .map((j, i) => ({ i, err: mediaError(j.accountIds.map((id) => ({ id, platform: platformById.get(id)! })), j.content) }))
+      .filter((x) => x.err)
+      .map((x) => `Row ${x.i + 1}: ${x.err}`);
+    if (mediaErrors.length) {
+      return reply.status(400).send({ error: mediaErrors.join(" | "), code: "MEDIA_REQUIREMENT" });
     }
 
     // Plan limit check — once for the entire batch
@@ -290,6 +309,10 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     })));
     if (violations.length) {
       return reply.status(400).send({ error: formatTextLimitError(violations), code: "TEXT_LIMIT", violations });
+    }
+    if (!draft) {
+      const err = mediaError(accounts, content);
+      if (err) return reply.status(400).send({ error: err, code: "MEDIA_REQUIREMENT" });
     }
 
     // Wrap plan-limit check + job creation in a transaction with an advisory lock
@@ -593,6 +616,12 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (editViolations.length) {
       return reply.status(400).send({ error: formatTextLimitError(editViolations), code: "TEXT_LIMIT", violations: editViolations });
     }
+    // drafts may stay incomplete; a live (pending) post must still be publishable after the edit
+    if (job.status === "pending") {
+      const merged = JSON.parse((updateData.content as string | undefined) ?? job.content) as StoredContent;
+      const err = mediaError(finalAccountIds.map((aid) => ({ id: aid, platform: finalPlatformById.get(aid)! })), merged);
+      if (err) return reply.status(400).send({ error: err, code: "MEDIA_REQUIREMENT" });
+    }
 
     const updated = await prisma.postJob.update({ where: { id }, data: updateData });
 
@@ -650,9 +679,15 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     const body = z.object({ scheduledFor: z.string().datetime() }).safeParse(req.body);
     if (!body.success) return reply.status(400).send({ error: "scheduledFor is required" });
 
-    const job = await prisma.postJob.findFirst({ where: { id, workspaceId }, select: { status: true, userId: true } });
+    const job = await prisma.postJob.findFirst({
+      where: { id, workspaceId },
+      select: { status: true, userId: true, content: true, targets: { select: { accountId: true, account: { select: { platform: true } } } } },
+    });
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status !== "draft") return reply.status(409).send({ error: "Only draft jobs can be scheduled" });
+    // drafts skip media checks at creation, so they run here before the job goes live
+    const draftErr = mediaError(job.targets.map((t) => ({ id: t.accountId, platform: t.account.platform })), JSON.parse(job.content) as StoredContent);
+    if (draftErr) return reply.status(400).send({ error: draftErr, code: "MEDIA_REQUIREMENT" });
     const role = await getWorkspaceRole(userId, workspaceId);
     if (!["owner", "admin"].includes(role ?? "") && job.userId !== userId) {
       return reply.status(403).send({ error: "You can only schedule your own posts.", code: "FORBIDDEN" });
