@@ -106,16 +106,17 @@ export const PILL_OF: Record<Exclude<ListFilter, "all">, ContentStatusKey> = {
 };
 
 /**
- * A post's card on the calendar: the colour of its status's dot as a bar on the left, and a tint of it behind. A dot or a badge
- * is too small to read across a month; the card is what tells the statuses apart. Written out so Tailwind sees every class.
+ * A post's card on the calendar: the colour of its status's dot as a full 1px stroke, and a soft tint of it behind. The
+ * card carries the same colour as its dot, so the status reads across a whole month. Written out so Tailwind sees every
+ * class; the card adds `border` for the width.
  */
 export const CARD_TONE: Record<Exclude<ListFilter, "all">, string> = {
-  draft: "border-l-neutral-200 bg-neutral-200/35",
-  review: "border-l-brand-600 bg-brand-600/15",
-  rejected: "border-l-status-changes bg-status-changes/15",
-  pending: "border-l-green-600 bg-green-600/15",
-  done: "border-l-blue-600 bg-blue-600/15",
-  failed: "border-l-red-600 bg-red-600/15",
+  draft: "border-neutral-200 bg-neutral-200/15",
+  review: "border-brand-600 bg-brand-600/8",
+  rejected: "border-status-changes bg-status-changes/8",
+  pending: "border-green-600 bg-green-600/8",
+  done: "border-blue-600 bg-blue-600/8",
+  failed: "border-red-600 bg-red-600/8",
 };
 
 /** The dashboard's status key for the same post, for its pill (colour and dot). */
@@ -222,6 +223,9 @@ function keyParts(key: string) {
 
 /** "Sat" */
 export const weekdayName = (key: string): string => keyParts(key).weekday;
+
+/** A "YYYY-MM-DD" key that falls on a Saturday or a Sunday (the calendar draws its posts at 55%). */
+export const isWeekend = (key: string): boolean => new Date(`${key}T00:00:00Z`).getUTCDay() % 6 === 0;
 
 /** "Sat, 7 Mar 2026" */
 export function dayLabel(key: string): string {

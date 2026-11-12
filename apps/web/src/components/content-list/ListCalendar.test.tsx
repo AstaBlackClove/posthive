@@ -81,42 +81,78 @@ describe("ListCalendar: which channels a post goes to", () => {
   });
 });
 
-// The card is the status: a small dot or badge is too little to read across a month. Each status has its own tint and bar.
+// The card is the status: a small dot or badge is too little to read across a month. Each status has its own tint and stroke,
+// and the dot on the card repeats the stroke's colour.
 describe("ListCalendar: the colour of a post", () => {
   const byStatus: [string, Partial<ListItem>, string][] = [
-    ["Draft", { status: "draft" }, "border-l-neutral-200"],
-    ["In Review", { status: "draft", approvalStatus: "pending" }, "border-l-brand-600"],
-    ["Revision Required", { status: "draft", approvalStatus: "rejected" }, "border-l-status-changes"],
-    ["Ready to Publish", { status: "pending" }, "border-l-green-600"],
-    ["Published", { status: "done" }, "border-l-blue-600"],
-    ["Failed", { status: "failed" }, "border-l-red-600"],
+    ["Draft", { status: "draft" }, "neutral-200"],
+    ["In Review", { status: "draft", approvalStatus: "pending" }, "brand-600"],
+    ["Revision Required", { status: "draft", approvalStatus: "rejected" }, "status-changes"],
+    ["Ready to Publish", { status: "pending" }, "green-600"],
+    ["Published", { status: "done" }, "blue-600"],
+    ["Failed", { status: "failed" }, "red-600"],
   ];
 
-  it.each(byStatus)("a %s post has its own bar on the left", async (name, patch, bar) => {
+  it.each(byStatus)("a %s post has a full stroke and a tint in its own colour, and no bar on the left", async (name, patch, colour) => {
     serve((from, to) => answer(from, to, [item("a", patch)]));
     render(<Host />);
     const chip = await screen.findByRole("button", { name: `Open 09:00 Post a, ${name}` });
-    // a colour with no width draws nothing: the bar needs both
-    expect(chip.className.split(" ")).toEqual(expect.arrayContaining(["border-l-3", bar]));
-    expect(chip.className).toMatch(/(^| )bg-[a-z-]+-?\d*\/\d+/);
+    const classes = chip.className.split(" ");
+    // a colour with no width draws nothing: the stroke needs both
+    expect(classes).toEqual(expect.arrayContaining(["border", `border-${colour}`]));
+    expect(classes.some((c) => c.startsWith(`bg-${colour}/`))).toBe(true);
+    expect(classes.some((c) => c.startsWith("border-l-"))).toBe(false);
   });
 
   it("the six statuses are six different cards", async () => {
     serve((from, to) => answer(from, to, byStatus.map(([, patch], i) => item(`s${i}`, { ...patch, scheduledFor: `2026-11-1${i}T02:00:00.000Z` }))));
     render(<Host />);
     await screen.findByText("Post s0");
-    const bars = byStatus.map(([name]) => screen.getByRole("button", { name: new RegExp(`, ${name}$`) }).className.split(" ").find((c) => c.startsWith("border-l-") && c !== "border-l-3"));
-    expect(new Set(bars).size).toBe(6);
+    const strokes = byStatus.map(([name]) => screen.getByRole("button", { name: new RegExp(`, ${name}$`) }).className.split(" ").find((c) => c.startsWith("border-") && c !== "border"));
+    expect(new Set(strokes).size).toBe(6);
   });
 
-  it("the status is written in the chip as plain text: no badge, no dot, only the colour of the card says it too", async () => {
-    serve((from, to) => answer(from, to, [item("a", { status: "done" })]));
+  it.each(byStatus)("a %s post shows its status as a dot in the colour of its stroke, and not as a name", async (name, patch, colour) => {
+    serve((from, to) => answer(from, to, [item("a", patch)]));
     render(<Host />);
-    const chip = await screen.findByRole("button", { name: "Open 09:00 Post a, Published" });
-    const name = within(chip).getByText("Published");
-    expect(name.className).not.toContain("rounded-full");
-    expect(name.className).not.toMatch(/(^| )bg-/);
-    expect(chip.querySelector(".size-1\\.5")).toBeNull();
+    const chip = await screen.findByRole("button", { name: `Open 09:00 Post a, ${name}` });
+    // the name is in the button's label, not in its text
+    expect(within(chip).queryByText(name)).toBeNull();
+    const dot = chip.querySelector(`.bg-${colour}`);
+    expect(dot?.getAttribute("aria-hidden")).toBe("true");
+    expect(dot?.className).toContain("rounded-full");
+  });
+
+  it("a post on a Saturday or a Sunday is drawn at 55%, and so is one outside the month; a weekday post is not", async () => {
+    serve((from, to) =>
+      answer(from, to, [
+        item("fri", { scheduledFor: "2026-11-13T02:00:00.000Z" }),
+        item("sat", { scheduledFor: "2026-11-14T02:00:00.000Z" }),
+        item("sun", { scheduledFor: "2026-11-15T02:00:00.000Z" }),
+        item("out", { scheduledFor: "2026-10-27T02:00:00.000Z" }), // a Tuesday in the grid's first row, before November
+      ])
+    );
+    render(<Host />);
+    const faded = async (id: string) => (await screen.findByRole("button", { name: `Open 09:00 Post ${id}, Draft` })).className.split(" ").includes("opacity-55");
+    expect(await faded("fri")).toBe(false);
+    expect(await faded("sat")).toBe(true);
+    expect(await faded("sun")).toBe(true);
+    expect(await faded("out")).toBe(true);
+  });
+
+  it("the weekend fade is in the Week view too", async () => {
+    serve((from, to) => answer(from, to, [item("fri", { scheduledFor: "2026-11-13T02:00:00.000Z" }), item("sat", { scheduledFor: "2026-11-14T02:00:00.000Z" })]));
+    render(<Host />);
+    await userEvent.click(await screen.findByRole("radio", { name: "Week" }));
+    expect((await screen.findByRole("button", { name: "Open 09:00 Post sat, Draft" })).className.split(" ")).toContain("opacity-55");
+    expect(screen.getByRole("button", { name: "Open 09:00 Post fri, Draft" }).className.split(" ")).not.toContain("opacity-55");
+  });
+
+  it("a weekend post whose drawer is open is drawn at full strength", async () => {
+    serve((from, to) => answer(from, to, [item("sat", { scheduledFor: "2026-11-14T02:00:00.000Z" })]));
+    render(<Host openId="sat" />);
+    const chip = await screen.findByRole("button", { name: "Open 09:00 Post sat, Draft" });
+    expect(chip.className.split(" ")).not.toContain("opacity-55");
   });
 
   it("the chip of the post whose drawer is open is ringed", async () => {
@@ -130,20 +166,35 @@ describe("ListCalendar: the colour of a post", () => {
     expect(other.className.split(" ")).not.toContain("ring-2");
   });
 
-  it("in the Day view the card of a post has the colour of its status too", async () => {
+  it("in the Day view the card of a post has the stroke and tint of its status too", async () => {
     serve((from, to) => answer(from, to, [item("a", { status: "done", scheduledFor: "2026-11-13T02:00:00.000Z" })]));
     render(<Host />);
     await userEvent.click(await screen.findByRole("radio", { name: "Day" }));
     const card = await screen.findByRole("article");
-    expect(card.className.split(" ")).toEqual(expect.arrayContaining(["border-l-3", "border-l-blue-600"]));
+    expect(card.className.split(" ")).toEqual(expect.arrayContaining(["border", "border-blue-600"]));
+    expect(card.className.split(" ")).not.toContain("border-l-3");
     expect(card.className).toMatch(/(^| )bg-blue-600\/\d+/);
+    expect(within(card).getByText("Published")).toBeTruthy();
   });
 
-  it("the legend under the grid explains the colours, for a page that has its own empty state or not", async () => {
+  it("in the Day view a Saturday's card is drawn at 55%, a Friday's is not", async () => {
+    serve((from, to) => answer(from, to, [item("fri", { scheduledFor: "2026-11-13T02:00:00.000Z" }), item("sat", { scheduledFor: "2026-11-14T02:00:00.000Z" })]));
+    render(<Host />);
+    await userEvent.click(await screen.findByRole("radio", { name: "Day" }));
+    const wrapper = async () => (await screen.findByRole("article")).parentElement!;
+    expect((await wrapper()).className.split(" ")).not.toContain("opacity-55");
+    await userEvent.click(screen.getByRole("button", { name: "Next day" }));
+    await screen.findByText("Post sat");
+    expect((await wrapper()).className.split(" ")).toContain("opacity-55");
+  });
+
+  it("the legend under the grid explains the colours with a dot and a name each, for a page that has its own empty state or not", async () => {
     serve((from, to) => answer(from, to));
     const { unmount } = render(<Host />);
     const legend = await screen.findByRole("list", { name: "Status legend" });
-    expect(within(legend).getAllByRole("listitem").map((i) => i.textContent)).toEqual(["Draft", "In Review", "Revision Required", "Ready to Publish", "Published", "Failed"]);
+    const entries = within(legend).getAllByRole("listitem");
+    expect(entries.map((i) => i.textContent)).toEqual(["Draft", "In Review", "Revision Required", "Ready to Publish", "Published", "Failed"]);
+    for (const entry of entries) expect(entry.querySelector("span")?.className).toContain("rounded-full");
     unmount();
     render(<Host whenEmpty={empty} />);
     expect(await screen.findByRole("list", { name: "Status legend" })).toBeTruthy();

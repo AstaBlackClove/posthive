@@ -1,6 +1,6 @@
 import { cn } from "@/lib/cn";
 import { CONTENT_STATUS, PRODUCTION_STAGES, statusLabel, type ContentStatusKey } from "@/lib/content-status";
-import { CARD_TONE, LIST_STATUS, PILL_OF } from "@/lib/content-list";
+import { LIST_STATUS, PILL_OF } from "@/lib/content-list";
 
 /** The coloured dot of a status. Decorative: the label always sits next to it. */
 export function StatusDot({ status, className }: { status: ContentStatusKey; className?: string }) {
@@ -15,14 +15,14 @@ type LegendProps = {
   className?: string;
 };
 
-/** The status key: with counts under the pipeline, as a plain legend under the calendar (a swatch of the card of each status of the list, with its name). */
+/** The status key: with counts under the pipeline, as a plain legend under the calendar (the dot of each status of the list, with its name). */
 export function StatusLegend({ variant, counts, className }: LegendProps) {
   if (variant === "calendar") {
     return (
       <ul aria-label="Status legend" className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5 type-body-r-xs text-muted-foreground", className)}>
         {(Object.keys(PILL_OF) as (keyof typeof PILL_OF)[]).map((filter) => (
           <li key={filter} className="flex items-center gap-1.5">
-            <span aria-hidden="true" className={cn("h-3.5 w-5 shrink-0 rounded-sm border-l-3", CARD_TONE[filter])} />
+            <StatusDot status={PILL_OF[filter]} className="size-1.5" />
             {LIST_STATUS[filter]}
           </li>
         ))}

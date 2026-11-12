@@ -15,6 +15,7 @@ import {
   footerLine,
   groupByDay,
   hourOf,
+  isWeekend,
   listDate,
   listSubtitle,
   longDate,
@@ -119,13 +120,21 @@ describe("CARD_TONE: the colour of a post's card on the calendar", () => {
     expect(new Set(filters.map((f) => CONTENT_STATUS[PILL_OF[f]].dot)).size).toBe(filters.length);
   });
 
-  it("is the colour of the status's dot: a bar on the left in the full colour, a tint behind", () => {
+  it("is the colour of the status's dot: a full stroke in that colour, a tint behind", () => {
     for (const f of filters) {
       const colour = CONTENT_STATUS[PILL_OF[f]].dot.replace(/^bg-/, "");
       const classes = CARD_TONE[f].split(" ");
-      expect(classes, f).toContain(`border-l-${colour}`);
+      expect(classes, f).toContain(`border-${colour}`);
       expect(classes.some((c) => c.startsWith(`bg-${colour}/`)), f).toBe(true);
     }
+  });
+});
+
+describe("isWeekend", () => {
+  it("is true for Saturday and Sunday only", () => {
+    // Mon 9 Nov … Sun 15 Nov 2026
+    const week = ["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-14", "2026-11-15"];
+    expect(week.map(isWeekend)).toEqual([false, false, false, false, false, true, true]);
   });
 });
 

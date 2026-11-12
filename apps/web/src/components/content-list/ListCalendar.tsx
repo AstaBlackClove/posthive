@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { InlineAlert } from "@/components/InlineAlert";
-import { StatusLegend } from "@/components/dashboard/StatusDot";
+import { StatusDot, StatusLegend } from "@/components/dashboard/StatusDot";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/cn";
@@ -18,7 +18,9 @@ import {
   cellKey,
   channelOptions,
   hourLabel,
+  isWeekend,
   nextStep,
+  pillOf,
   placeByHour,
   postsLabel,
   rangeLabel,
@@ -54,11 +56,11 @@ function chunk<T>(items: T[], size: number): T[][] {
 type Open = { openId: string | null; onOpen: (id: string) => void };
 
 /**
- * A post inside a month cell or a week column: its channels, its time, its status and its title. The card is the colour of
- * its status (CARD_TONE), which reads across a whole month where a dot would not. In a narrow cell the status name is left
- * out and the colour stays; the full name is in the button's label and title.
+ * A post inside a month cell or a week column: its channels, its time, its status dot and its title. The card has a full
+ * stroke and a tint in the colour of its status (CARD_TONE), and the dot repeats that colour; the status name is in the
+ * button's label and title. `faded` draws it at 55% (a weekend, or a day outside the month) unless its drawer is open.
  */
-function Chip({ item, openId, onOpen }: Open & { item: ListItem }) {
+function Chip({ item, openId, onOpen, faded = false }: Open & { item: ListItem; faded?: boolean }) {
   const open = openId === item.id;
   const label = `${timeOf(item)} ${item.title}, ${statusOfPost(item)}`;
   return (
@@ -69,16 +71,16 @@ function Chip({ item, openId, onOpen }: Open & { item: ListItem }) {
       title={label}
       data-open={open || undefined}
       className={cn(
-        "@container flex w-full min-w-0 cursor-pointer flex-col gap-1 rounded-md border-l-3 py-1.5 pr-1.5 pl-2 text-left outline-none transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring/40",
+        "flex w-full min-w-0 cursor-pointer flex-col gap-1 rounded-md border px-2 py-1.5 text-left outline-none transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring/40",
         CARD_TONE[filterOf(item)],
+        faded && !open && "opacity-55",
         open && "ring-2 ring-neutral-700"
       )}
     >
       <span className="flex min-w-0 items-center gap-1.5">
         <ChannelStack channels={item.channels} size={16} />
-        <span className="shrink-0 type-body-sb-xxs text-fg tabular-nums">{timeOf(item)}</span>
-        {/* wide enough for the status name: a chip in the design's 1440px month cell or week column is about this wide */}
-        <span className="ml-auto hidden min-w-0 truncate type-body-sb-xxs text-fg @min-[7.5rem]:block">{statusOfPost(item)}</span>
+        <span className="shrink-0 type-body-sb-xxs text-brand-800 tabular-nums">{timeOf(item)}</span>
+        <StatusDot status={pillOf(item)} className="ml-auto size-1.5" />
       </span>
       <span className="truncate type-body-r-xs text-fg">{item.title}</span>
     </button>
@@ -114,7 +116,7 @@ function MonthGrid({ days, anchor, todayKey, byDay, openId, onOpen, onDay }: Ope
                   {posts.length > 0 && <span className="type-body-r-xxs text-muted-foreground max-sm:sr-only">{postsLabel(posts.length)}</span>}
                 </div>
                 {shown.map((item) => (
-                  <Chip key={item.id} item={item} openId={openId} onOpen={onOpen} />
+                  <Chip key={item.id} item={item} openId={openId} onOpen={onOpen} faded={isWeekend(day) || !inAnchorMonth(day, anchor)} />
                 ))}
                 {hidden > 0 && (
                   <button type="button" onClick={() => onDay(day)} className="w-fit cursor-pointer px-1 type-body-sb-xxs text-brand-800 underline-offset-2 hover:underline">
@@ -154,9 +156,9 @@ function WeekGrid({ days, todayKey, byDay, items, openId, onOpen }: Open & { day
             {hourLabel(hour)}
           </div>
           {days.map((day) => (
-            <div key={day} role="gridcell" className="flex min-h-13 min-w-0 flex-col gap-1.5 border-l border-border/60 bg-surface p-1.5">
+            <div key={day} role="gridcell" className={cn("flex min-h-13 min-w-0 flex-col gap-1.5 border-l border-border/60 p-1.5", isWeekend(day) ? "bg-neutral-50/25" : "bg-surface")}>
               {(cells.get(cellKey(day, hour)) ?? []).map((item) => (
-                <Chip key={item.id} item={item} openId={openId} onOpen={onOpen} />
+                <Chip key={item.id} item={item} openId={openId} onOpen={onOpen} faded={isWeekend(day)} />
               ))}
             </div>
           ))}
@@ -191,7 +193,7 @@ function DayGrid({ day, posts, next, role, openId, onOpen, onGoTo }: Open & { da
             </div>
             <div role="gridcell" className={cn("flex min-h-11 min-w-0 flex-wrap items-start gap-3 border-l border-border/60 p-3", here.length > 0 ? "bg-brand-50" : "bg-surface")}>
               {here.map((item) => (
-                <div key={item.id} className="w-96 max-w-full">
+                <div key={item.id} className={cn("w-96 max-w-full", isWeekend(day) && openId !== item.id && "opacity-55")}>
                   <PostCard item={item} open={openId === item.id} onOpen={onOpen} tinted />
                 </div>
               ))}
@@ -346,16 +348,17 @@ export function ListCalendar({ filter, counts, position, todayKey, version, role
         )}
       </div>
 
-      <StatusLegend variant="calendar" />
-
       {answer?.truncated && (
         <p role="status" className="type-body-r-xs text-brand-800">
           This range has more posts than the calendar can show. Move to a shorter view to see them all.
         </p>
       )}
-      <p className="type-body-r-xs text-muted-foreground" aria-live="polite">
-        {answer && calendarFooter(view, anchor, inRange.length, filter, counts)}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <p className="type-body-r-xs text-muted-foreground" aria-live="polite">
+          {answer && calendarFooter(view, anchor, inRange.length, filter, counts)}
+        </p>
+        <StatusLegend variant="calendar" />
+      </div>
     </div>
   );
 }

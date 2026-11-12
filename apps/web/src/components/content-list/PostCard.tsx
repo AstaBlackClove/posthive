@@ -25,13 +25,13 @@ type Props = {
   /** The post whose drawer is open. */
   open: boolean;
   onOpen: (id: string) => void;
-  /** Draw the card in the colour of its status, as the calendar does; the Kanban's columns say the status themselves. */
+  /** Draw the card with the stroke and tint of its status, as the calendar does; the Kanban's columns say the status themselves. */
   tinted?: boolean;
 };
 
 /**
  * One post as a card, for the Kanban columns and the Day view: its channels, its title, the start of its caption, the
- * link of its design copy and its date and status. In the calendar (`tinted`) the card has the colour of its status. The title is the card's button and stretches over the whole card
+ * link of its design copy and its date and status. In the calendar (`tinted`) the card has the stroke and tint of its status. The title is the card's button and stretches over the whole card
  * (`after:inset-0`), so the card opens the drawer by click or by Enter and the link keeps its own click without a
  * button inside a button.
  */
@@ -42,7 +42,7 @@ export function PostCard({ item, open, onOpen, tinted = false }: Props) {
       className={cn(
         "relative flex min-w-0 flex-col gap-2 rounded-xl p-3.5 transition-colors focus-within:ring-2 focus-within:ring-ring/40",
         tinted
-          ? cn("border-l-3", CARD_TONE[filterOf(item)], open && "ring-2 ring-neutral-700")
+          ? cn("border", CARD_TONE[filterOf(item)], open && "ring-2 ring-neutral-700")
           : cn("border", open ? "border-brand-400 bg-brand-50" : "border-border bg-surface hover:border-neutral-300")
       )}
     >
@@ -72,11 +72,7 @@ export function PostCard({ item, open, onOpen, tinted = false }: Props) {
 
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2.5">
         <span className="type-body-r-xs whitespace-nowrap text-fg tabular-nums">{item.scheduledFor ? listDate(item.scheduledFor) : <span className="text-muted-foreground">No date</span>}</span>
-        {tinted ? (
-          <span className="type-body-sb-xxs text-fg">{statusOfPost(item)}</span>
-        ) : (
-          <StatusPill status={pillOf(item)}>{statusOfPost(item)}</StatusPill>
-        )}
+        <StatusPill status={pillOf(item)}>{statusOfPost(item)}</StatusPill>
       </div>
     </article>
   );

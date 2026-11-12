@@ -11,7 +11,7 @@ import { SegmentedProgress } from "./SegmentedProgress";
 import { StatCard, percentOf } from "./StatCard";
 import { StatusDot, StatusLegend } from "./StatusDot";
 import { CONTENT_STATUS } from "@/lib/content-status";
-import { CARD_TONE } from "@/lib/content-list";
+import { PILL_OF } from "@/lib/content-list";
 
 afterEach(cleanup);
 
@@ -153,24 +153,25 @@ describe("StatusDot and StatusLegend", () => {
     expect(items.map((i) => i.textContent)).toEqual(["Draft", "In Review", "Revision Required", "Ready to Publish", "Published", "Failed"]);
   });
 
-  it("each legend swatch is a small card in the colours of that status: the same classes as the post's card", () => {
+  it("each legend entry is a round dot in the colour of that status and its name: no card swatch", () => {
     render(<StatusLegend variant="calendar" />);
     const items = within(screen.getByRole("list", { name: "Status legend" })).getAllByRole("listitem");
     const filters = ["draft", "review", "rejected", "pending", "done", "failed"] as const;
     items.forEach((item, i) => {
-      const swatch = item.querySelector("span")!;
-      expect(swatch.getAttribute("aria-hidden")).toBe("true");
-      for (const c of CARD_TONE[filters[i]].split(" ")) expect(classesOf(swatch), filters[i]).toContain(c);
+      const dot = item.querySelector("span")!;
+      expect(dot.getAttribute("aria-hidden")).toBe("true");
+      expect(classesOf(dot), filters[i]).toContain("rounded-full");
+      expect(classesOf(dot), filters[i]).toContain(CONTENT_STATUS[PILL_OF[filters[i]]].dot);
+      expect(classesOf(dot), filters[i]).not.toContain("border-l-3");
     });
   });
 
-  it("the same status has the same colour in the pipeline and the calendar: the swatch's bar is the pipeline's dot", () => {
+  it("the same status has the same colour in the pipeline and the calendar: the legend's dot is the pipeline's dot", () => {
     const { container } = render(<><StatusLegend variant="pipeline" /><StatusLegend variant="calendar" /></>);
     const review = [...container.querySelectorAll("li")].filter((li) => /^in review/i.test(li.textContent ?? ""));
     expect(review).toHaveLength(2);
-    const colour = CONTENT_STATUS.review.dot.replace(/^bg-/, "");
     expect(classesOf(review[0].querySelector("span")!)).toContain(CONTENT_STATUS.review.dot);
-    expect(classesOf(review[1].querySelector("span")!)).toContain(`border-l-${colour}`);
+    expect(classesOf(review[1].querySelector("span")!)).toContain(CONTENT_STATUS.review.dot);
   });
 });
 
