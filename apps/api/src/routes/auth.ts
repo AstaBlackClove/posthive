@@ -110,6 +110,12 @@ function buildRedirect(base: string, params: Record<string, string>): string {
   return url.toString();
 }
 
+// Meta returns user_id as a bare JSON number; 17-digit IDs exceed Number.MAX_SAFE_INTEGER,
+// so JSON.parse silently rounds them. Read the digits from the raw body instead.
+function rawUserId(body: string): string | undefined {
+  return body.match(/"user_id"\s*:\s*"?(\d+)/)?.[1];
+}
+
 async function upsertThreadsAccount(userId: string, workspaceId: string | null, displayName: string, credentials: string, avatarUrl: string | null, expiresAt?: Date) {
   const existing = await prisma.account.findFirst({
     where: workspaceId ? { platform: "threads", displayName, workspaceId } : { platform: "threads", displayName, userId },
@@ -196,7 +202,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       }
       const tokenData = JSON.parse(tokenText) as { access_token: string; user_id: number };
       shortLivedToken = tokenData.access_token;
-      threadsUserId = String(tokenData.user_id);
+      threadsUserId = rawUserId(tokenText) ?? String(tokenData.user_id);
     } catch (err) {
       console.error("[threads oauth] token_exchange_failed:", err);
       return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
@@ -227,9 +233,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     let avatarUrl: string | null = null;
     try {
       const profileRes = await fetch(
-        `https://graph.threads.net/v1.0/me?fields=username,threads_profile_picture_url&access_token=${longLivedToken}`
+        `https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url&access_token=${longLivedToken}`
       );
-      const profile = await profileRes.json() as { username?: string; threads_profile_picture_url?: string };
+      const profile = await profileRes.json() as { id?: string; username?: string; threads_profile_picture_url?: string };
+      if (profile.id) threadsUserId = profile.id;
       displayName = profile.username ?? threadsUserId;
       avatarUrl = profile.threads_profile_picture_url ?? null;
     } catch { /* optional */ }
@@ -326,7 +333,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       }
       const tokenData = JSON.parse(tokenText) as { access_token: string; user_id: number };
       shortToken = tokenData.access_token;
-      igUserId = String(tokenData.user_id);
+      igUserId = rawUserId(tokenText) ?? String(tokenData.user_id);
     } catch (err) {
       console.error("[instagram oauth] token exchange error:", err);
       return reply.redirect(buildRedirect(redirectBase, { error: "token_exchange_failed" }));
