@@ -21,6 +21,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { prisma } from "../lib/prisma.js";
 import { schedulePostJob } from "../lib/queue.js";
+import { validateStoredContent, type StoredContent } from "../lib/platformValidation.js";
+import { imageLimitError } from "../lib/enforcePlan.js";
 import { withApiKey, canUseApi } from "../lib/auth/withApiKey.js";
 
 async function withMcpGate(req: FastifyRequest, reply: FastifyReply): Promise<void> {
@@ -70,7 +72,8 @@ const TOOLS = [
       "Use list_accounts to get valid account IDs before calling this tool. " +
       "Each platform has its own character limit for both the post text and the first_comment — the request is rejected with a 400 if either exceeds it for any selected account: " +
       "Bluesky 300, Threads/Mastodon/Pinterest 500, Instagram/TikTok 2200, Discord 2000, LinkedIn 3000, Telegram/Tumblr 4096, YouTube 5000, Nostr/Lemmy 10000, Twitter/X 25000, Facebook 63206. " +
-      "Check the content and first_comment length against the shortest limit among the selected platforms before calling, and warn the user if a caption (especially a long hashtag block) would be rejected.",
+      "Check the content and first_comment length against the shortest limit among the selected platforms before calling, and warn the user if a caption (especially a long hashtag block) would be rejected. " +
+      "Required media, also rejected if missing: YouTube and Instagram Reels need a video in media_urls; TikTok needs an .mp4/.mov video plus tiktok_privacy_level; Instagram posts/stories, Pinterest and Pixelfed need at least one image; Bluesky and Threads need text.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -96,6 +99,17 @@ const TOOLS = [
           description: "YouTube video type. 'short' = YouTube Short (vertical, ≤60s), 'video' = standard upload. Only relevant for YouTube accounts.",
         },
         first_comment: { type: "string", description: "Optional first comment to fire after the post goes live." },
+        tiktok_privacy_level: {
+          type: "string",
+          enum: ["PUBLIC_TO_EVERYONE", "MUTUAL_FOLLOW_FRIENDS", "FOLLOWER_OF_CREATOR", "SELF_ONLY"],
+          description: "Required for TikTok accounts: who can view the video.",
+        },
+        tiktok_title: { type: "string", description: "Optional TikTok title/caption override." },
+        tiktok_disable_comment: { type: "boolean", description: "TikTok: turn off comments." },
+        tiktok_disable_duet: { type: "boolean", description: "TikTok: turn off duets." },
+        tiktok_disable_stitch: { type: "boolean", description: "TikTok: turn off stitches." },
+        tiktok_branded_content: { type: "boolean", description: "TikTok: disclose as paid partnership (branded content)." },
+        tiktok_your_brand: { type: "boolean", description: "TikTok: disclose as promoting your own brand." },
         scheduled_time: {
           type: "string",
           description: "ISO 8601 datetime for publish time. Required when schedule_directly is true.",
@@ -420,20 +434,33 @@ async function handleTool(
       const accountIds = args.account_ids as string[];
       const accounts = await prisma.account.findMany({
         where: { id: { in: accountIds }, workspaceId },
-        select: { id: true },
+        select: { id: true, platform: true },
       });
       if (accounts.length !== accountIds.length) {
         throw new Error("One or more account_ids are invalid or do not belong to your workspace");
       }
 
       const isDraft = !scheduleDirectly;
-      const contentPayload = JSON.stringify({
+      const content = {
         text: args.content,
         mediaUrls: (args.media_urls as string[] | undefined) ?? [],
         ...(args.media_type ? { mediaType: args.media_type } : {}),
         ...(args.youtube_type ? { youtubeType: args.youtube_type } : {}),
         ...(args.per_account ? { perAccount: args.per_account } : {}),
-      });
+        ...(args.tiktok_privacy_level ? { tiktokPrivacyLevel: args.tiktok_privacy_level } : {}),
+        ...(args.tiktok_title ? { tiktokTitle: args.tiktok_title } : {}),
+        ...(args.tiktok_disable_comment !== undefined ? { tiktokDisableComment: args.tiktok_disable_comment } : {}),
+        ...(args.tiktok_disable_duet !== undefined ? { tiktokDisableDuet: args.tiktok_disable_duet } : {}),
+        ...(args.tiktok_disable_stitch !== undefined ? { tiktokDisableStitch: args.tiktok_disable_stitch } : {}),
+        ...(args.tiktok_branded_content !== undefined ? { tiktokBrandedContent: args.tiktok_branded_content } : {}),
+        ...(args.tiktok_your_brand !== undefined ? { tiktokYourBrand: args.tiktok_your_brand } : {}),
+      };
+      // checked even for drafts: the agent gets the error now, not the user at publish time
+      const invalid = validateStoredContent(accounts, content as StoredContent, args.first_comment as string | undefined);
+      if (invalid) throw new Error(invalid);
+      const imgErr = await imageLimitError(workspaceId, content.mediaUrls.length);
+      if (imgErr) throw new Error(imgErr.error);
+      const contentPayload = JSON.stringify(content);
 
       const job = await prisma.postJob.create({
         data: {
@@ -540,11 +567,20 @@ async function handleTool(
         throw new Error("scheduled_time must be a future ISO date string");
       }
 
-      const job = await prisma.postJob.findUnique({ where: { id: postId } });
+      const job = await prisma.postJob.findUnique({
+        where: { id: postId },
+        include: { targets: { select: { accountId: true, account: { select: { platform: true } } } } },
+      });
       if (!job || job.workspaceId !== workspaceId) throw new Error("Post not found");
       if (job.status !== "draft") {
         throw new Error(`Post status is '${job.status}' — only drafts can be approved`);
       }
+      const invalid = validateStoredContent(
+        job.targets.map((t) => ({ id: t.accountId, platform: t.account.platform })),
+        JSON.parse(job.content) as StoredContent,
+        job.commentText,
+      );
+      if (invalid) throw new Error(`Can't schedule this draft yet: ${invalid}`);
 
       const updated = await prisma.postJob.update({
         where: { id: postId },
@@ -587,6 +623,18 @@ async function handleTool(
 
       if (Object.keys(updateData).length === 0) {
         throw new Error("Provide at least one field to update");
+      }
+      if (job.status === "pending") {
+        const targets = await prisma.postJobTarget.findMany({
+          where: { postJobId: postId },
+          select: { accountId: true, account: { select: { platform: true } } },
+        });
+        const invalid = validateStoredContent(
+          targets.map((t) => ({ id: t.accountId, platform: t.account.platform })),
+          JSON.parse((updateData.content as string | undefined) ?? job.content) as StoredContent,
+          updateData.commentText !== undefined ? (updateData.commentText as string) : job.commentText,
+        );
+        if (invalid) throw new Error(invalid);
       }
 
       const updated = await prisma.postJob.update({ where: { id: postId }, data: updateData });
@@ -684,7 +732,7 @@ async function handleTool(
       const accountIds = args.account_ids as string[];
       const accounts = await prisma.account.findMany({
         where: { id: { in: accountIds }, workspaceId },
-        select: { id: true },
+        select: { id: true, platform: true },
       });
       if (accounts.length !== accountIds.length) {
         throw new Error("One or more account_ids are invalid or do not belong to your workspace");
@@ -694,11 +742,12 @@ async function handleTool(
       const text = (args.content_override as string | undefined) ?? (tc.text as string) ?? "";
       const commentText = (args.first_comment_override as string | undefined) ?? (tc.commentText as string | undefined) ?? null;
 
-      const contentPayload = JSON.stringify({
-        ...tc,
-        text,
-        commentText,
-      });
+      const templateContent = { ...tc, text, commentText };
+      const invalid = validateStoredContent(accounts, templateContent as StoredContent, commentText);
+      if (invalid) throw new Error(invalid);
+      const imgErr = await imageLimitError(workspaceId, ((tc.mediaUrls as string[] | undefined) ?? []).length);
+      if (imgErr) throw new Error(imgErr.error);
+      const contentPayload = JSON.stringify(templateContent);
 
       const job = await prisma.postJob.create({
         data: {

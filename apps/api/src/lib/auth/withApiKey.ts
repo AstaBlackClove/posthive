@@ -65,8 +65,8 @@ export async function withApiKey(req: FastifyRequest, reply: FastifyReply): Prom
 export function canUseApi(plan: string, planStatus: string): boolean {
   // Self-hosters (billing disabled) always get access
   if (process.env.ENABLE_BILLING !== "true") return true;
-  // Trialing/Creator plans don't get API access
-  if (planStatus !== "active") return false;
+  // Trialing/Creator plans don't get API access; "cancelling" is still paid through the period end
+  if (planStatus !== "active" && planStatus !== "cancelling") return false;
   return plan === "pro" || plan === "team";
 }
 

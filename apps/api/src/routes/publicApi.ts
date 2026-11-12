@@ -1,13 +1,26 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../lib/prisma.js";
-import { withApiKey } from "../lib/auth/withApiKey.js";
+import type { FastifyReply, FastifyRequest } from "fastify";
+import { withApiKey, canUseApi } from "../lib/auth/withApiKey.js";
 import { schedulePostJob, postJobQueue } from "../lib/queue.js";
 import { compressForPlatform } from "../lib/compress.js";
 import { ALLOWED_IMAGE_TYPES, type StorageAdapter } from "../lib/storage.js";
 import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
-import { validatePlatformContent } from "../lib/platformValidation.js";
+import { validatePlatformContent, validateStoredContent, type StoredContent } from "../lib/platformValidation.js";
+import { imageLimitError } from "../lib/enforcePlan.js";
 
-const preHandler = [withApiKey];
+// Checked on every request, not just at key creation: a key made on Pro must stop
+// working once the plan is cancelled, on hold, or downgraded.
+async function withApiGate(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  const user = req.apiKeyUser!;
+  if (!canUseApi(user.plan, user.planStatus)) {
+    return reply.status(403).send({
+      error: "API access requires an active Pro or Team plan. Upgrade at posthive.co/billing",
+      code: "PLAN_REQUIRED",
+    });
+  }
+}
+const preHandler = [withApiKey, withApiGate];
 
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/mov"];
 
@@ -124,8 +137,13 @@ export async function publicApiRoutes(
       images: body.images ?? [],
       mediaType: body.mediaType,
       tiktokPrivacyLevel: body.tiktokPrivacyLevel,
+      commentText: body.commentText,
+      perAccountText: Object.fromEntries(Object.entries(normalizedPerAccount ?? {}).map(([k, v]) => [k, v?.text])),
+      perAccountComment: Object.fromEntries(Object.entries(normalizedPerAccount ?? {}).map(([k, v]) => [k, v?.commentText])),
     });
     if (mediaError) return reply.status(400).send({ error: mediaError, code: "MEDIA_REQUIREMENT" });
+    const imgErr = await imageLimitError(workspaceId, (body.images ?? []).length);
+    if (imgErr) return reply.status(402).send(imgErr);
 
     const contentPayload = JSON.stringify({
       text: body.content,
@@ -388,8 +406,13 @@ export async function publicApiRoutes(
       images: finalImages,
       mediaType: finalMediaType,
       tiktokPrivacyLevel: finalTiktokPrivacyLevel,
+      commentText: finalCommentText,
+      perAccountText: Object.fromEntries(Object.entries(finalPerAccount ?? {}).map(([k, v]) => [k, v?.text])),
+      perAccountComment: Object.fromEntries(Object.entries(finalPerAccount ?? {}).map(([k, v]) => [k, v?.commentText])),
     });
     if (mediaError) return reply.status(400).send({ error: mediaError, code: "MEDIA_REQUIREMENT" });
+    const imgErr = await imageLimitError(workspaceId, finalImages.length);
+    if (imgErr) return reply.status(402).send(imgErr);
 
     const updated = await prisma.postJob.update({ where: { id }, data: updateData });
 
@@ -445,9 +468,19 @@ export async function publicApiRoutes(
     if (isNaN(scheduledFor.getTime()) || scheduledFor <= new Date())
       return reply.status(400).send({ error: "scheduledFor must be a future ISO date string" });
 
-    const job = await prisma.postJob.findFirst({ where: { id, workspaceId } });
+    const job = await prisma.postJob.findFirst({
+      where: { id, workspaceId },
+      include: { targets: { select: { accountId: true, account: { select: { platform: true } } } } },
+    });
     if (!job) return reply.status(404).send({ error: "Post not found" });
     if (job.status !== "draft") return reply.status(409).send({ error: `Post status is '${job.status}' — only drafts can be approved` });
+    // drafts can come from the web app or older MCP calls without checks; verify before going live
+    const approveErr = validateStoredContent(
+      job.targets.map((t) => ({ id: t.accountId, platform: t.account.platform })),
+      JSON.parse(job.content) as StoredContent,
+      job.commentText,
+    );
+    if (approveErr) return reply.status(400).send({ error: approveErr, code: "MEDIA_REQUIREMENT" });
 
     const updated = await prisma.postJob.update({
       where: { id },
@@ -568,6 +601,10 @@ export async function publicApiRoutes(
     if (templateViolations.length) {
       return reply.status(400).send({ error: formatTextLimitError(templateViolations), code: "TEXT_LIMIT", violations: templateViolations });
     }
+    const templateMediaErr = validateStoredContent(accounts, { ...tc, text } as StoredContent, commentText);
+    if (templateMediaErr) return reply.status(400).send({ error: templateMediaErr, code: "MEDIA_REQUIREMENT" });
+    const templateImgErr = await imageLimitError(workspaceId, ((tc.mediaUrls as string[] | undefined) ?? []).length);
+    if (templateImgErr) return reply.status(402).send(templateImgErr);
 
     const job = await prisma.postJob.create({
       data: {

@@ -14,18 +14,9 @@ import type { StorageAdapter } from "../lib/storage.js";
 import { adapters } from "../adapters/index.js";
 import { filterUrlsSafeToDelete } from "../runner/jobRunner.js";
 import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
-import { validatePlatformContent } from "../lib/platformValidation.js";
+import { validateStoredContent, type StoredContent } from "../lib/platformValidation.js";
 
-type StoredContent = { text?: string; mediaUrls?: string[]; mediaType?: string; youtubeVideoUrl?: string; tiktokPrivacyLevel?: string; perAccount?: Record<string, { text?: string } | undefined> };
-const mediaError = (accounts: { id: string; platform: string }[], c: StoredContent) =>
-  validatePlatformContent(accounts, {
-    text: c.text ?? "",
-    images: c.mediaUrls ?? [],
-    mediaType: c.mediaType,
-    youtubeVideoUrl: c.youtubeVideoUrl,
-    tiktokPrivacyLevel: c.tiktokPrivacyLevel,
-    perAccountText: Object.fromEntries(Object.entries(c.perAccount ?? {}).map(([k, v]) => [k, v?.text])),
-  });
+const mediaError = (accounts: { id: string; platform: string }[], c: StoredContent) => validateStoredContent(accounts, c);
 
 // Tab filters cover multiple real PostJob.status values — shared by GET /jobs,
 // GET /jobs/counts, and DELETE /jobs/bulk's status-based delete.

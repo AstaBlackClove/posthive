@@ -25,3 +25,11 @@ test("per-account text override satisfies the bluesky caption rule", () => {
   assert.match(validatePlatformContent(bs, { text: "", images: [] }) ?? "", /Bluesky requires a caption/);
   assert.equal(validatePlatformContent(bs, { text: "", images: [], perAccountText: { b: "hello" } }), null);
 });
+
+test("validateStoredContent checks text limits before media", async () => {
+  const { validateStoredContent } = await import("./platformValidation.js");
+  const bs = [{ id: "b", platform: "bluesky" }];
+  assert.match(validateStoredContent(bs, { text: "x".repeat(301) }) ?? "", /bluesky: post text is 301 characters, max 300/);
+  assert.match(validateStoredContent(bs, { text: "ok" }, "c".repeat(301)) ?? "", /first comment/);
+  assert.equal(validateStoredContent(bs, { text: "ok" }), null);
+});

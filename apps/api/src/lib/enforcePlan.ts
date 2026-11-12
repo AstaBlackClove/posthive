@@ -166,3 +166,16 @@ export async function enforcePlan(
 
   return null;
 }
+
+// Per-plan cap on images per post. Same message as the web compose route.
+export async function imageLimitError(workspaceId: string, imageCount: number): Promise<PlanError | null> {
+  if (process.env.ENABLE_BILLING !== "true" || imageCount === 0) return null;
+  const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { plan: true } });
+  const plan = getPlan(ws?.plan ?? "cancelled");
+  if (imageCount <= plan.maxImagesPerPost) return null;
+  return {
+    error: `Your ${plan.name} plan allows up to ${plan.maxImagesPerPost} images per post.${plan.maxImagesPerPost < 10 ? " Upgrade to Pro for up to 10." : ""}`,
+    code: "PLAN_LIMIT",
+    upgradeRequired: plan.maxImagesPerPost < 10,
+  };
+}
