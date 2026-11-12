@@ -148,6 +148,51 @@ describe("ListCalendar: the colour of a post", () => {
     expect(screen.getByRole("button", { name: "Open 09:00 Post fri, Draft" }).className.split(" ")).not.toContain("opacity-55");
   });
 
+  describe("the grey of a Saturday and a Sunday", () => {
+    const cellOf = (el: HTMLElement) => el.closest("[role=gridcell]") as HTMLElement;
+    const grey = (cell: HTMLElement) => cell.className.split(" ").includes("bg-neutral-50/25");
+
+    it("Month: the cells of a Saturday and a Sunday of the month are grey, a weekday's is not, and a day outside the month keeps its own", async () => {
+      serve((from, to) =>
+        answer(from, to, [
+          item("fri", { scheduledFor: "2026-11-13T02:00:00.000Z" }),
+          item("sat", { scheduledFor: "2026-11-14T02:00:00.000Z" }),
+          item("sun", { scheduledFor: "2026-11-15T02:00:00.000Z" }),
+          item("out", { scheduledFor: "2026-12-05T02:00:00.000Z" }), // a Saturday in the grid's last row, after November
+        ])
+      );
+      render(<Host />);
+      const cell = async (id: string) => cellOf(await screen.findByRole("button", { name: `Open 09:00 Post ${id}, Draft` }));
+      expect(grey(await cell("fri"))).toBe(false);
+      expect(grey(await cell("sat"))).toBe(true);
+      expect(grey(await cell("sun"))).toBe(true);
+      // outside the month: its own muted cell, not the weekend's
+      expect(grey(await cell("out"))).toBe(false);
+      expect((await cell("out")).className).toContain("bg-bg");
+    });
+
+    it("Week: the Saturday and Sunday columns are grey, the weekdays' are not", async () => {
+      serve((from, to) => answer(from, to, [item("fri", { scheduledFor: "2026-11-13T02:00:00.000Z" }), item("sat", { scheduledFor: "2026-11-14T02:00:00.000Z" })]));
+      render(<Host />);
+      await userEvent.click(await screen.findByRole("radio", { name: "Week" }));
+      expect(grey(cellOf(await screen.findByRole("button", { name: "Open 09:00 Post sat, Draft" })))).toBe(true);
+      expect(grey(cellOf(screen.getByRole("button", { name: "Open 09:00 Post fri, Draft" })))).toBe(false);
+    });
+
+    it("Day: the row that holds a Saturday's post is grey where a weekday's is the warm tint; an empty hour stays plain", async () => {
+      serve((from, to) => answer(from, to, [item("fri", { scheduledFor: "2026-11-13T02:00:00.000Z" }), item("sat", { scheduledFor: "2026-11-14T02:00:00.000Z" })]));
+      render(<Host />);
+      await userEvent.click(await screen.findByRole("radio", { name: "Day" }));
+      const rowCell = async () => cellOf(await screen.findByRole("article"));
+      expect((await rowCell()).className).toContain("bg-brand-50");
+      expect(grey(await rowCell())).toBe(false);
+      await userEvent.click(screen.getByRole("button", { name: "Next day" }));
+      await screen.findByText("Post sat");
+      expect(grey(await rowCell())).toBe(true);
+      expect((await rowCell()).className).not.toContain("bg-brand-50");
+    });
+  });
+
   it("a weekend post whose drawer is open is drawn at full strength", async () => {
     serve((from, to) => answer(from, to, [item("sat", { scheduledFor: "2026-11-14T02:00:00.000Z" })]));
     render(<Host openId="sat" />);

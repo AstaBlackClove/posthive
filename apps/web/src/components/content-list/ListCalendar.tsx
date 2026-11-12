@@ -40,6 +40,8 @@ import { ChannelStack, PostCard } from "./PostCard";
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 /** Posts a month cell lists before "+N more". */
 const MONTH_CELL_POSTS = 2;
+/** The cell of a Saturday or a Sunday: a light grey over the card, as the design draws it (its posts are drawn at 55% too). */
+const WEEKEND_BG = "bg-neutral-50/25";
 /** The columns of the week and day grids: the hours, then the days. */
 const WEEK_COLUMNS = "grid-cols-[4.5rem_repeat(7,minmax(0,1fr))]";
 const DAY_COLUMNS = "grid-cols-[4.5rem_minmax(0,1fr)]";
@@ -109,7 +111,7 @@ function MonthGrid({ days, anchor, todayKey, byDay, openId, onOpen, onDay }: Ope
                 key={day}
                 role="gridcell"
                 aria-label={dayLabel(day)}
-                className={cn("flex min-h-32 min-w-0 flex-col gap-1.5 border-r border-border/60 p-2 last:border-r-0", inAnchorMonth(day, anchor) ? "bg-surface" : "bg-bg text-muted-foreground/60")}
+                className={cn("flex min-h-32 min-w-0 flex-col gap-1.5 border-r border-border/60 p-2 last:border-r-0", !inAnchorMonth(day, anchor) ? "bg-bg text-muted-foreground/60" : isWeekend(day) ? WEEKEND_BG : "bg-surface")}
               >
                 <div className="flex h-6 items-center justify-between gap-1">
                   <span className={cn("flex h-6 min-w-6 items-center justify-center rounded-full px-1 type-body-r-s", isToday && "bg-accent type-body-sb-xs text-accent-fg")}>{Number(day.slice(8))}</span>
@@ -156,7 +158,7 @@ function WeekGrid({ days, todayKey, byDay, items, openId, onOpen }: Open & { day
             {hourLabel(hour)}
           </div>
           {days.map((day) => (
-            <div key={day} role="gridcell" className={cn("flex min-h-13 min-w-0 flex-col gap-1.5 border-l border-border/60 p-1.5", isWeekend(day) ? "bg-neutral-50/25" : "bg-surface")}>
+            <div key={day} role="gridcell" className={cn("flex min-h-13 min-w-0 flex-col gap-1.5 border-l border-border/60 p-1.5", isWeekend(day) ? WEEKEND_BG : "bg-surface")}>
               {(cells.get(cellKey(day, hour)) ?? []).map((item) => (
                 <Chip key={item.id} item={item} openId={openId} onOpen={onOpen} faded={isWeekend(day)} />
               ))}
@@ -191,7 +193,7 @@ function DayGrid({ day, posts, next, role, openId, onOpen, onGoTo }: Open & { da
             <div role="rowheader" className="bg-bg/60 px-3 py-3 type-body-r-xs text-muted-foreground tabular-nums">
               {hourLabel(hour)}
             </div>
-            <div role="gridcell" className={cn("flex min-h-11 min-w-0 flex-wrap items-start gap-3 border-l border-border/60 p-3", here.length > 0 ? "bg-brand-50" : "bg-surface")}>
+            <div role="gridcell" className={cn("flex min-h-11 min-w-0 flex-wrap items-start gap-3 border-l border-border/60 p-3", here.length === 0 ? "bg-surface" : isWeekend(day) ? WEEKEND_BG : "bg-brand-50")}>
               {here.map((item) => (
                 <div key={item.id} className={cn("w-96 max-w-full", isWeekend(day) && openId !== item.id && "opacity-55")}>
                   <PostCard item={item} open={openId === item.id} onOpen={onOpen} tinted />
