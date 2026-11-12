@@ -207,27 +207,27 @@ describe("listSubtitle and the banner", () => {
 });
 
 describe("sourceLine", () => {
-  it("says when, by whom (shortened), how many, and what Row # is", () => {
-    expect(sourceLine(source)).toBe("Imported 13 Nov 2026 · 10:42 by Putri A. · 60 posts imported · source row numbers kept as Row #");
+  it("says when, by whom (shortened) and how many; the # column no longer counts the file's rows, so it says nothing about them", () => {
+    expect(sourceLine(source)).toBe("Imported 13 Nov 2026 · 10:42 by Putri A. · 60 posts imported");
   });
 
   it("without a name it does not say 'by'", () => {
-    expect(sourceLine({ ...source, importedBy: null, count: 1 })).toBe("Imported 13 Nov 2026 · 10:42 · 1 post imported · source row numbers kept as Row #");
+    expect(sourceLine({ ...source, importedBy: null, count: 1 })).toBe("Imported 13 Nov 2026 · 10:42 · 1 post imported");
   });
 });
 
 describe("footerLine", () => {
-  it("under All it splits the total by status, and says what Row # is when rows have one", () => {
-    expect(footerLine(10, 60, "all", counts({ all: 60, draft: 60 }), true)).toBe("Showing 10 of 60 posts · 60 Draft · Row # = source row in imported file");
-    expect(footerLine(10, 62, "all", counts({ all: 62, draft: 58, review: 2, pending: 2 }), false)).toBe("Showing 10 of 62 posts · 58 Draft · 2 In Review · 2 Ready to Publish");
+  it("under All it splits the total by status", () => {
+    expect(footerLine(10, 60, "all", counts({ all: 60, draft: 60 }))).toBe("Showing 10 of 60 posts · 60 Draft");
+    expect(footerLine(10, 62, "all", counts({ all: 62, draft: 58, review: 2, pending: 2 }))).toBe("Showing 10 of 62 posts · 58 Draft · 2 In Review · 2 Ready to Publish");
   });
 
   it("under one tab it does not repeat the split", () => {
-    expect(footerLine(2, 2, "review", counts({ all: 60, draft: 58, review: 2 }), false)).toBe("Showing 2 of 2 posts");
+    expect(footerLine(2, 2, "review", counts({ all: 60, draft: 58, review: 2 }))).toBe("Showing 2 of 2 posts");
   });
 
   it("one post is '1 post'", () => {
-    expect(footerLine(1, 1, "done", counts({ all: 1, done: 1 }), false)).toBe("Showing 1 of 1 post");
+    expect(footerLine(1, 1, "done", counts({ all: 1, done: 1 }))).toBe("Showing 1 of 1 post");
   });
 });
 

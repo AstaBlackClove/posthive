@@ -16,6 +16,8 @@ type Props = {
   openId: string | null;
   /** Rows can be ticked (the person makes content). */
   selectable: boolean;
+  /** The number of the first row on screen: 1 on the first page, 11 on the second. The `#` column counts the list, not the file the posts came from. */
+  firstNumber?: number;
   onToggle: (id: string) => void;
   onToggleAll: (ids: string[], on: boolean) => void;
   onOpen: (id: string) => void;
@@ -26,7 +28,7 @@ type Props = {
  * click. Every cell can shrink and its text is cut, so a title with no spaces or an address as long as a paragraph
  * cannot widen the table.
  */
-export function ContentListTable({ items, selected, openId, selectable, onToggle, onToggleAll, onOpen }: Props) {
+export function ContentListTable({ items, selected, openId, selectable, firstNumber = 1, onToggle, onToggleAll, onOpen }: Props) {
   const allOn = items.length > 0 && items.every((i) => selected.has(i.id));
   const someOn = !allOn && items.some((i) => selected.has(i.id));
 
@@ -62,7 +64,7 @@ export function ContentListTable({ items, selected, openId, selectable, onToggle
         </TableRow>
       </TableHeader>
       <TableBody>
-        {items.map((item) => {
+        {items.map((item, index) => {
           const on = selected.has(item.id);
           return (
             <TableRow
@@ -78,7 +80,7 @@ export function ContentListTable({ items, selected, openId, selectable, onToggle
               <TableCell onClick={(e) => e.stopPropagation()}>
                 {selectable && <Checkbox aria-label={`Select ${item.title}`} checked={on} onCheckedChange={() => onToggle(item.id)} />}
               </TableCell>
-              <TableCell className="tabular-nums text-muted-foreground">{item.sourceRow ?? "—"}</TableCell>
+              <TableCell className="tabular-nums text-muted-foreground">{firstNumber + index}</TableCell>
               <TableCell className="whitespace-normal">
                 <p className="line-clamp-2 type-body-m-s break-words" title={item.title}>
                   {item.title}

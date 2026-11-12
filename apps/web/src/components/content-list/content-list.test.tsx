@@ -80,7 +80,7 @@ describe("SourceCard", () => {
   it("names the file, says when, by whom and how many came in", () => {
     render(<SourceCard source={source} canImport />);
     expect(screen.getByRole("heading", { name: source.fileName })).toBeTruthy();
-    expect(screen.getByText("Imported 13 Nov 2026 · 10:42 by Putri A. · 60 posts imported · source row numbers kept as Row #")).toBeTruthy();
+    expect(screen.getByText("Imported 13 Nov 2026 · 10:42 by Putri A. · 60 posts imported")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Import new plan" }).getAttribute("href")).toBe("/jobs/import");
   });
 
@@ -162,6 +162,19 @@ describe("ContentListTable", () => {
   it("a role that cannot make content has no checkboxes", () => {
     table([item()], { selectable: false });
     expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
+  });
+
+  it("the # column counts the rows of the list from 1, whatever row of the file each post came from", () => {
+    const rows = [item({ id: "a", sourceRow: 41 }), item({ id: "b", sourceRow: 7 }), item({ id: "c", sourceRow: null })];
+    table(rows);
+    const numbers = screen.getAllByRole("row").slice(1).map((r) => within(r).getAllByRole("cell")[1].textContent);
+    expect(numbers).toEqual(["1", "2", "3"]);
+  });
+
+  it("the # of a later page goes on from the page before: the second page starts at 11", () => {
+    table([item({ id: "a" }), item({ id: "b" })], { firstNumber: 11 });
+    const numbers = screen.getAllByRole("row").slice(1).map((r) => within(r).getAllByRole("cell")[1].textContent);
+    expect(numbers).toEqual(["11", "12"]);
   });
 
   it("a post made here has no source row; with no date, no channel and no caption it says so", () => {

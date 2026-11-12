@@ -175,6 +175,7 @@ export default function ContentListPage() {
                         selected={actions.selected}
                         openId={actions.openId}
                         selectable={canEditContent}
+                        firstNumber={(data.page - 1) * data.pageSize + 1}
                         onToggle={actions.toggle}
                         onToggleAll={actions.toggleAll}
                         onOpen={actions.open}
@@ -187,7 +188,7 @@ export default function ContentListPage() {
 
                   <div className="flex flex-wrap items-center justify-between gap-2 type-body-r-xs text-muted-foreground">
                     <p aria-live="polite">
-                      {footerLine(items.length, shown ?? 0, filter, counts, items.some((i) => i.sourceRow !== null))}
+                      {footerLine(items.length, shown ?? 0, filter, counts)}
                     </p>
                     <Pager page={data.page} pageCount={data.pageCount} onPage={setPage} />
                   </div>

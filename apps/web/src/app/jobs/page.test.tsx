@@ -132,7 +132,7 @@ describe("Content List page", () => {
     expect(screen.getByRole("heading", { name: "_2026 Plan.xlsx" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Draft: 60" })).toBeTruthy();
     expect(screen.getByText("All imported posts are in Draft")).toBeTruthy();
-    expect(screen.getByText("Showing 2 of 60 posts · 60 Draft · Row # = source row in imported file")).toBeTruthy();
+    expect(screen.getByText("Showing 2 of 60 posts · 60 Draft")).toBeTruthy();
     // the table is the view it opens in; the other two are one click away
     expect(screen.getByRole("radio", { name: "Table view" }).getAttribute("aria-checked")).toBe("true");
     expect(screen.getByRole("radio", { name: "Kanban view" })).toBeTruthy();
@@ -155,6 +155,16 @@ describe("Content List page", () => {
     expect(listCalls().at(-1)).toBe("/jobs/list?filter=all&page=2&limit=10");
     // the file card stays while the next page loads
     expect(screen.getByRole("heading", { name: "_2026 Plan.xlsx" })).toBeTruthy();
+  });
+
+  it("the # column counts the list from 1 and goes on over the pages, whatever row of the file a post came from", async () => {
+    // Post 20 is row 20 of the file, but it is the 11th of the list
+    serve((q) => answer({ page: Number(q.get("page")), items: [row(Number(q.get("page")) * 10)] }));
+    render(<ContentListPage />);
+    const numberOf = async (title: string) => within(await screen.findByRole("row", { name: `Open ${title}` })).getAllByRole("cell")[1].textContent;
+    expect(await numberOf("Post 10")).toBe("1");
+    await userEvent.click(screen.getByRole("button", { name: "Page 2" }));
+    expect(await numberOf("Post 20")).toBe("11");
   });
 
   it("after a reload (an action) the next answer asks for the file again, and a page turn after that does not", async () => {

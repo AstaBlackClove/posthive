@@ -183,7 +183,7 @@ export function listSubtitle(counts: ListCounts, source: ImportSource | null | u
 export function sourceLine(source: ImportSource): string {
   const at = new Date(source.importedAt);
   const when = `Imported ${formatPlanDate(wibDateKey(at))} · ${formatTime(at)}`;
-  return [when + (source.importedBy ? ` by ${shortName(source.importedBy)}` : ""), `${plural(source.count, "post", "posts")} imported`, "source row numbers kept as Row #"].join(" · ");
+  return [when + (source.importedBy ? ` by ${shortName(source.importedBy)}` : ""), `${plural(source.count, "post", "posts")} imported`].join(" · ");
 }
 
 /** The yellow banner shows while everything the workspace holds is still a draft and a plan was imported. */
@@ -193,11 +193,10 @@ export const showDraftBanner = (counts: ListCounts, source: ImportSource | null 
 const statusSplit = (counts: ListCounts): string[] =>
   (["draft", "review", "rejected", "pending", "done", "failed"] as const).filter((f) => counts[f] > 0).map((f) => `${counts[f]} ${LIST_STATUS[f]}`);
 
-/** The footer of the table: "Showing 10 of 60 posts · 60 Draft · Row # = source row in imported file". */
-export function footerLine(shown: number, total: number, filter: ListFilter, counts: ListCounts, hasSourceRows: boolean): string {
+/** The footer of the table: "Showing 10 of 60 posts · 60 Draft". */
+export function footerLine(shown: number, total: number, filter: ListFilter, counts: ListCounts): string {
   const parts = [`Showing ${shown} of ${plural(total, "post", "posts")}`];
   if (filter === "all") parts.push(...statusSplit(counts));
-  if (hasSourceRows) parts.push("Row # = source row in imported file");
   return parts.join(" · ");
 }
 
