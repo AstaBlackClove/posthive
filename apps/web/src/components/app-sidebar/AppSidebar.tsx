@@ -27,13 +27,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { apiFetch } from "@/lib/api";
 import { canAccessPage } from "@/lib/permissions";
-import { usePermissions } from "@/lib/usePermissions";
 import { FeedbackDialog } from "./FeedbackDialog";
 import { NewWorkspaceDialog } from "./NewWorkspaceDialog";
 import { VerifyEmailNotice, WhatsNewCard } from "./SidebarNotices";
 import { UserMenu } from "./UserMenu";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
-import { ADD_ACCOUNT, NEW_POST, footerItemsFor, isActiveHref, manageGroupFor, navGroupsFor, type NavGroup, type NavItem } from "./nav-config";
+import { ADD_ACCOUNT, footerItemsFor, isActiveHref, manageGroupFor, navGroupsFor, type NavGroup, type NavItem } from "./nav-config";
 
 /** A link, or a dimmed "Soon" row for a page that does not exist yet. */
 function NavRow({ item, pathname }: { item: NavItem; pathname: string }) {
@@ -96,7 +95,7 @@ function CloseOnNavigate() {
 }
 
 /**
- * The app's sidebar: workspace switcher, New post, the links for the person's role, the notices
+ * The app's sidebar: workspace switcher, the links for the person's role, the notices
  * (email, trial, what's new), feedback and the user. Collapses to icons (button, rail or Ctrl+B);
  * on a phone it is a drawer.
  */
@@ -105,7 +104,6 @@ export function AppSidebar() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { activeWorkspace } = useWorkspace();
-  const { canEditContent } = usePermissions();
   const role = activeWorkspace?.role ?? user?.role;
 
   const [newWorkspaceOpen, setNewWorkspaceOpen] = useState(false);
@@ -140,18 +138,6 @@ export function AppSidebar() {
             <SidebarTrigger aria-label="Toggle sidebar" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground" />
           </div>
           <WorkspaceSwitcher onNewWorkspace={() => setNewWorkspaceOpen(true)} />
-          {canEditContent && (
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={NEW_POST.label} className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground">
-                  <Link href={NEW_POST.href}>
-                    <PlusIcon />
-                    <span>{NEW_POST.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          )}
         </SidebarHeader>
 
         <SidebarContent className="gap-0">

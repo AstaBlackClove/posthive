@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { canAccessPage } from "@/lib/permissions";
-import { ADD_ACCOUNT, FOOTER_ITEMS, MANAGE_GROUP, NAV_GROUPS, NEW_POST, footerItemsFor, isActiveHref, manageGroupFor, navGroupsFor } from "./nav-config";
+import { ADD_ACCOUNT, FOOTER_ITEMS, MANAGE_GROUP, NAV_GROUPS, footerItemsFor, isActiveHref, manageGroupFor, navGroupsFor } from "./nav-config";
 
 const ROLES = ["owner", "admin", "designer", "member"] as const;
 
@@ -76,8 +76,7 @@ describe("navGroupsFor / footerItemsFor", () => {
     }
   });
 
-  it("New post and Add account point at pages with their own guard", () => {
-    expect(NEW_POST.href).toBe("/compose");
+  it("Add account points at a page with its own guard", () => {
     expect(ADD_ACCOUNT.href).toBe("/accounts");
     expect(canAccessPage(ADD_ACCOUNT.href, "member")).toBe(false);
     expect(canAccessPage(ADD_ACCOUNT.href, "admin")).toBe(true);

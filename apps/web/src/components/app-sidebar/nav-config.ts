@@ -82,9 +82,6 @@ export const FOOTER_ITEMS: NavItem[] = [
 /** "Add account" button of the Channel active group. */
 export const ADD_ACCOUNT = { label: "Add account", href: "/accounts" } as const;
 
-/** "New post" button. */
-export const NEW_POST = { label: "New post", href: "/compose" } as const;
-
 const visible = (item: NavItem, role: string | null | undefined) => item.href === null || canAccessPage(item.href, role);
 
 /** The links a role may see. A group with nothing left is dropped. */
@@ -102,7 +99,7 @@ export function footerItemsFor(role: string | null | undefined): NavItem[] {
   return FOOTER_ITEMS.filter((i) => visible(i, role));
 }
 
-const ALL_HREFS = [...NAV_GROUPS.flatMap((g) => g.items), ...MANAGE_GROUP.items, ...FOOTER_ITEMS, ADD_ACCOUNT, NEW_POST]
+const ALL_HREFS = [...NAV_GROUPS.flatMap((g) => g.items), ...MANAGE_GROUP.items, ...FOOTER_ITEMS, ADD_ACCOUNT]
   .map((i) => i.href)
   .filter((h): h is string => h !== null);
 

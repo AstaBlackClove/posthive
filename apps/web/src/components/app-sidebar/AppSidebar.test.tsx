@@ -84,20 +84,14 @@ describe("AppSidebar: links by role", () => {
     expect(screen.queryByText("Workspace")).toBeNull();
   });
 
-  it("a designer has no New post (review-only role)", () => {
-    h.workspace = { id: "w1", name: "Postly Studio", role: "designer", isActive: true };
-    render(<Shell />);
-    expect(screen.queryByRole("link", { name: "New post" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Content list" })).toBeTruthy();
-  });
-
-  it("an owner and a member both get New post", () => {
-    const { unmount } = render(<Shell />);
-    expect(screen.getByRole("link", { name: "New post" }).getAttribute("href")).toBe("/compose");
-    unmount();
-    h.workspace = { id: "w1", name: "Postly Studio", role: "member", isActive: true };
-    render(<Shell />);
-    expect(screen.getByRole("link", { name: "New post" })).toBeTruthy();
+  it("no role has a New post button: the design has none, and Add content on the dashboard opens the composer", () => {
+    for (const role of ["owner", "member", "designer"]) {
+      h.workspace = { id: "w1", name: "Postly Studio", role, isActive: true };
+      const { unmount } = render(<Shell />);
+      expect(screen.queryByRole("link", { name: "New post" }), role).toBeNull();
+      expect(labels().some((l) => l.startsWith("New post")), role).toBe(false);
+      unmount();
+    }
   });
 
   it("pages that do not exist yet are dimmed rows with 'Soon', not links", () => {
