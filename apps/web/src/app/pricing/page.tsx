@@ -13,6 +13,18 @@ interface BillingStatus {
   billingInterval: string;
 }
 
+// MCP clients and automation tools people use with the Posthive API/MCP (favicon domains)
+const AI_TOOLS = [
+  { name: "Claude", domain: "claude.ai" },
+  { name: "ChatGPT", domain: "chatgpt.com" },
+  { name: "Cursor", domain: "cursor.com" },
+  { name: "Gemini", domain: "gemini.google.com" },
+  { name: "Grok", domain: "grok.com" },
+  { name: "OpenClaw", domain: "openclaw.ai" },
+  { name: "Windsurf", domain: "windsurf.com" },
+  { name: "n8n", domain: "n8n.io" },
+];
+
 const PLANS = [
   {
     id: "creator",
@@ -64,7 +76,7 @@ const PLANS = [
       { text: "Per-platform overrides", included: true },
       { text: "Content Library (20,000 items)", included: true },
       { text: "X/Twitter posting (100/mo, no links)", included: true },
-      { text: "API access & MCP", included: true },
+      { text: "API access & MCP", included: true, tools: AI_TOOLS },
       { text: "Webhook outbound", included: true },
     ],
   },
@@ -91,7 +103,7 @@ const PLANS = [
       { text: "Per-platform overrides", included: true },
       { text: "Content Library (100,000 items)", included: true },
       { text: "X/Twitter posting (100/mo, no links)", included: true },
-      { text: "API access & MCP", included: true },
+      { text: "API access & MCP", included: true, tools: AI_TOOLS },
       { text: "Webhook outbound", included: true },
     ],
   },
@@ -191,7 +203,7 @@ export default function PricingPage() {
           }}>
             Pricing
           </div>
-          <h1 style={{ fontSize: 52, fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 16px", lineHeight: 1.1 }}>
+          <h1 style={{ fontSize: 52, fontWeight: 400, letterSpacing: "-0.02em", margin: "0 0 16px", lineHeight: 1.1 }}>
             Simple, transparent pricing
           </h1>
           <p style={{ fontSize: 18, color: "#666", margin: "0 0 32px", maxWidth: 520, marginLeft: "auto", marginRight: "auto" }}>
@@ -327,11 +339,35 @@ export default function PricingPage() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
                 {plan.features.map((f) => (
-                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 14, color: f.included ? "#4ade80" : "#333", flexShrink: 0 }}>
-                      {f.included ? "✓" : "—"}
-                    </span>
-                    <span style={{ fontSize: 13.5, color: f.included ? "#b4b4b4" : "#444" }}>{f.text}</span>
+                  <div key={f.text}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 14, color: f.included ? "#4ade80" : "#333", flexShrink: 0 }}>
+                        {f.included ? "✓" : "—"}
+                      </span>
+                      <span style={{ fontSize: 13.5, color: f.included ? "#b4b4b4" : "#444" }}>{f.text}</span>
+                    </div>
+                    {"tools" in f && f.tools && (
+                      <div style={{ display: "flex", alignItems: "center", marginTop: 8, marginLeft: 24 }}>
+                        {f.tools.map((t, i) => (
+                          <span
+                            key={t.domain}
+                            title={t.name}
+                            style={{
+                              width: 30, height: 30, borderRadius: "50%", background: "#1a1a1a",
+                              border: "2px solid #111", display: "inline-flex", flexShrink: 0,
+                              alignItems: "center", justifyContent: "center",
+                              marginLeft: i === 0 ? 0 : -8, position: "relative", zIndex: f.tools.length - i,
+                            }}
+                          >
+                            <img
+                              src={`https://www.google.com/s2/favicons?domain=${t.domain}&sz=64`}
+                              width={18} height={18} alt={t.name} loading="lazy"
+                              style={{ borderRadius: 4 }}
+                            />
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -360,7 +396,7 @@ export default function PricingPage() {
 
         {/* Comparison table */}
         <div style={{ marginBottom: 80 }}>
-          <h2 style={{ fontSize: 28, fontWeight: 700, color: "#ededed", letterSpacing: "-0.02em", marginBottom: 32, textAlign: "center" }}>
+          <h2 style={{ fontSize: 28, fontWeight: 400, color: "#ededed", letterSpacing: "-0.01em", marginBottom: 32, textAlign: "center" }}>
             Compare plans
           </h2>
           <div style={{ overflowX: "auto" }}>
@@ -398,7 +434,7 @@ export default function PricingPage() {
 
         {/* FAQ */}
         <div style={{ maxWidth: 680, margin: "0 auto 80px" }}>
-          <h2 style={{ fontSize: 28, fontWeight: 700, color: "#ededed", letterSpacing: "-0.02em", marginBottom: 32, textAlign: "center" }}>
+          <h2 style={{ fontSize: 28, fontWeight: 400, color: "#ededed", letterSpacing: "-0.01em", marginBottom: 32, textAlign: "center" }}>
             Frequently asked questions
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
