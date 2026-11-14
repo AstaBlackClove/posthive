@@ -44,6 +44,7 @@ import { publicApiRoutes } from "./routes/publicApi.js";
 import { mcpRoutes } from "./routes/mcp.js";
 import { oauthRoutes } from "./routes/oauth.js";
 import { startWorker } from "./lib/worker.js";
+import { gracefulShutdown } from "./lib/gracefulShutdown.js";
 import { rehydrateQueue } from "./lib/rehydrateQueue.js";
 import { startTokenRefreshCron } from "./lib/tokenRefreshCron.js";
 import { startStatsCron, runStatsCronNow } from "./lib/statsCron.js";
@@ -299,7 +300,28 @@ async function main() {
   await app.listen({ port: PORT, host: "0.0.0.0" });
   console.log(`API listening on http://localhost:${PORT}`);
 
-  startWorker(storage);
+  const worker = startWorker(storage);
+
+  // A deploy sends SIGTERM (Ctrl+C sends SIGINT locally). Let running jobs finish before exiting,
+  // so a post is never cut off mid-send and left stuck as "running".
+  let shuttingDown = false;
+  const shutdown = (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`[shutdown] ${signal} received`);
+    gracefulShutdown({
+      closeWorker: () => worker.close(),
+      forceCloseWorker: () => worker.close(true),
+      closeServer: () => app.close(),
+      closeDb: () => prisma.$disconnect(),
+      log: console.log,
+    })
+      .then(() => process.exit(0))
+      .catch((err) => { console.error("[shutdown] failed:", err); process.exit(1); });
+  };
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
+
   rehydrateQueue().catch((e) => console.error("[rehydrate] error:", e));
   startOrphanCleanup(storage);
   startTokenRefreshCron();
@@ -344,7 +366,3 @@ function startOrphanCleanup(storage: StorageAdapter) {
   setInterval(() => run().catch((e) => console.error("[orphan-cleanup] error:", e)), INTERVAL_MS);
 }
 
-process.on("SIGTERM", async () => {
-  await prisma.$disconnect();
-  process.exit(0);
-});

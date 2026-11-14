@@ -19,7 +19,7 @@ import type { StorageAdapter } from "./storage.js";
 
 const connection = { url: process.env.REDIS_URL! };
 
-export function startWorker(storage: StorageAdapter): void {
+export function startWorker(storage: StorageAdapter): Worker<PostJobPayload> {
   const worker = new Worker<PostJobPayload>(
     "post-jobs",
     async (job) => {
@@ -72,4 +72,6 @@ export function startWorker(storage: StorageAdapter): void {
   });
 
   console.log("[worker] started — waiting for jobs");
+
+  return worker;
 }
