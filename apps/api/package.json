@@ -8,7 +8,6 @@
     "build": "tsc",
     "start": "node --max-old-space-size=640 dist/index.js",
     "typecheck": "tsc --noEmit",
-    "check:deploy": "node scripts/check-deploy.mjs",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio"
