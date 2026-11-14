@@ -84,16 +84,39 @@ export async function fetchNostrProfile(
   }
 }
 
+const RELAY_TIMEOUT_MS = 8_000;
+const RETRY_DELAY_MS = 3_000;
+
+function withTimeout<T>(p: Promise<T>, label: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${label} timed out`)), RELAY_TIMEOUT_MS)),
+  ]);
+}
+
+// One relay accepting the event counts as success. If every relay fails (relays rate-limit
+// back-to-back publishes, e.g. a post followed by its first comment) wait briefly and retry
+// once, then report each relay's reason so the failure is diagnosable.
 async function publishToRelays(event: ReturnType<typeof finalizeEvent>, relays: string[]): Promise<void> {
-  const results = await Promise.allSettled(
-    relays.map(async (url) => {
-      const relay = await Relay.connect(url);
-      await relay.publish(event);
-      relay.close();
-    })
-  );
-  const succeeded = results.filter((r) => r.status === "fulfilled").length;
-  if (succeeded === 0) throw new Error("Failed to publish to any Nostr relay");
+  let results: PromiseSettledResult<void>[] = [];
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    results = await Promise.allSettled(
+      relays.map(async (url) => {
+        const relay = await withTimeout(Relay.connect(url), "connect");
+        try {
+          await withTimeout(relay.publish(event), "publish");
+        } finally {
+          relay.close();
+        }
+      })
+    );
+    if (results.some((r) => r.status === "fulfilled")) return;
+    if (attempt === 1) await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+  }
+  const reasons = results
+    .map((r, i) => `${relays[i]}: ${r.status === "rejected" ? String(r.reason?.message ?? r.reason ?? "unknown") : "ok"}`)
+    .join("; ");
+  throw new Error(`Failed to publish to any Nostr relay (${reasons})`);
 }
 
 export const nostrAdapter: PlatformAdapter = {
