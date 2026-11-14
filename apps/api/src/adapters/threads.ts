@@ -14,6 +14,7 @@ import { prisma } from "../lib/prisma.js";
 import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 import { ensureSupportedImageUrl, cleanupConvertedLater } from "../lib/mediaFormat.js";
 import type { StorageAdapter } from "../lib/storage.js";
+import { isContainerNotReady, retry } from "../lib/threadsRetry.js";
 
 const BASE = "https://graph.threads.net/v1.0";
 
@@ -87,18 +88,20 @@ async function publishContainer(
   accessToken: string,
   containerId: string
 ): Promise<string> {
-  const res = await threadsPost(`/${userId}/threads_publish`, {
-    creation_id: containerId,
-    access_token: accessToken,
-  });
+  return retry(async () => {
+    const res = await threadsPost(`/${userId}/threads_publish`, {
+      creation_id: containerId,
+      access_token: accessToken,
+    });
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Threads publish failed: ${body}`);
-  }
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Threads publish failed: ${body}`);
+    }
 
-  const data = await res.json() as { id: string };
-  return data.id;
+    const data = await res.json() as { id: string };
+    return data.id;
+  }, (e) => isContainerNotReady((e as Error).message));
 }
 
 export const threadsAdapter: PlatformAdapter = {

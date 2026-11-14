@@ -11,10 +11,10 @@ import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import { getMediaBuffer, type StorageAdapter } from "../lib/storage.js";
+import { planTikTokChunks, tikTokChunkRange } from "../lib/tiktokChunks.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 const API_BASE = "https://open.tiktokapis.com";
-const CHUNK_SIZE = 64 * 1024 * 1024; // 64 MB max per chunk
 
 interface TikTokCredentials {
   accessToken: string;
@@ -119,8 +119,7 @@ export const tiktokAdapter: PlatformAdapter = {
 
     const videoBuffer = await getMediaBuffer(storageAdapter, videoUrl);
     const videoSize = videoBuffer.length;
-    const chunkSize = Math.min(CHUNK_SIZE, videoSize);
-    const totalChunkCount = Math.ceil(videoSize / chunkSize);
+    const { chunkSize, totalChunkCount } = planTikTokChunks(videoSize);
     const caption = (content.tiktokTitle ?? content.text).slice(0, 2200);
 
     const initRes = await fetch(`${API_BASE}/v2/post/publish/video/init/`, {
@@ -157,8 +156,7 @@ export const tiktokAdapter: PlatformAdapter = {
     const { publish_id: publishId, upload_url: uploadUrl } = initData.data;
 
     for (let i = 0; i < totalChunkCount; i++) {
-      const start = i * chunkSize;
-      const end = Math.min(start + chunkSize, videoSize) - 1;
+      const { start, end } = tikTokChunkRange(i, chunkSize, totalChunkCount, videoSize);
       const chunk = videoBuffer.subarray(start, end + 1);
       const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
