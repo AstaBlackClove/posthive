@@ -88,10 +88,16 @@ const PLANS = [
   },
 ];
 
+// Highest-demand platforms — shown up front, 2-column grid.
 const OAUTH_PLATFORMS = [
   { platform: "linkedin",  label: "LinkedIn",   sub: "LinkedIn OAuth",     path: "/auth/linkedin",  proOnly: false },
-  { platform: "youtube",   label: "YouTube",    sub: "Google OAuth",       path: "/auth/youtube",   proOnly: false },
+  { platform: "threads",   label: "Threads",    sub: "Meta OAuth",         path: "/auth/threads",   proOnly: false },
+  { platform: "facebook",  label: "Facebook",   sub: "Facebook OAuth",     path: "/auth/facebook",  proOnly: false },
   { platform: "discord",   label: "Discord",    sub: "Webhook + OAuth",    path: "/auth/discord",   proOnly: false },
+];
+
+// Lower-demand / more setup — tucked behind "More platforms".
+const MORE_OAUTH_PLATFORMS = [
   { platform: "tumblr",    label: "Tumblr",     sub: "Tumblr OAuth",       path: "/auth/tumblr",    proOnly: false },
 ];
 
@@ -255,6 +261,408 @@ function BlueskyConnect({ onConnected }: { onConnected: () => void }) {
   );
 }
 
+// ── Mastodon inline form (instance → OAuth redirect) ────────────────────────────
+function MastodonConnect() {
+  const [open, setOpen] = useState(false);
+  const [instance, setInstance] = useState("mastodon.social");
+
+  function connect() {
+    window.location.href = `${API_BASE}/auth/mastodon?instance=${encodeURIComponent(instance.trim())}&from=onboarding`;
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-3 w-full p-3.5 rounded-xl text-left transition-all hover:border-gray-600/50"
+        style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+      >
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
+          <PlatformIcon platform="mastodon" size={18} />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Mastodon</p>
+          <p className="text-xs" style={{ color: "#555" }}>Any instance</p>
+        </div>
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
+          Connect
+        </span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-xl p-4" style={{ backgroundColor: "#111111", border: "1px solid #5b63d340" }}>
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1a1a1a" }}>
+          <PlatformIcon platform="mastodon" size={16} />
+        </div>
+        <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Connect Mastodon</p>
+        <button onClick={() => setOpen(false)} className="ml-auto text-xs hover:opacity-70" style={{ color: "#444" }}>
+          Cancel
+        </button>
+      </div>
+      <div className="space-y-2.5">
+        <input
+          placeholder="mastodon.social"
+          value={instance}
+          onChange={(e) => setInstance(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && instance.trim() && connect()}
+          autoFocus
+          className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+          style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+        />
+        <button
+          onClick={connect}
+          disabled={!instance.trim()}
+          className="w-full py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 hover:bg-gray-100"
+          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Telegram inline form ──────────────────────────────────────────────────────
+function TelegramConnect({ onConnected }: { onConnected: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [botToken, setBotToken] = useState("");
+  const [chatId, setChatId] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setConnecting(true);
+    setError(null);
+    try {
+      await apiFetch("/auth/telegram", {
+        method: "POST",
+        body: JSON.stringify({ botToken: botToken.trim(), chatId: chatId.trim() }),
+      });
+      setOpen(false);
+      setBotToken("");
+      setChatId("");
+      onConnected();
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-3 w-full p-3.5 rounded-xl text-left transition-all hover:border-gray-600/50"
+        style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+      >
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
+          <PlatformIcon platform="telegram" size={18} />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Telegram</p>
+          <p className="text-xs" style={{ color: "#555" }}>Bot token · no OAuth</p>
+        </div>
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
+          Connect
+        </span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-xl p-4" style={{ backgroundColor: "#111111", border: "1px solid #5b63d340" }}>
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1a1a1a" }}>
+          <PlatformIcon platform="telegram" size={16} />
+        </div>
+        <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Connect Telegram</p>
+        <button onClick={() => setOpen(false)} className="ml-auto text-xs hover:opacity-70" style={{ color: "#444" }}>
+          Cancel
+        </button>
+      </div>
+      <form onSubmit={submit} className="space-y-2.5">
+        <div>
+          <input
+            placeholder="Bot token — e.g. 123456789:ABC-DEF..."
+            value={botToken}
+            onChange={(e) => setBotToken(e.target.value)}
+            required
+            autoFocus
+            className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+            style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+          />
+          <p className="text-xs mt-1.5" style={{ color: "#555" }}>Create a bot via @BotFather, then add it as admin to your channel</p>
+        </div>
+        <input
+          placeholder="Channel — e.g. @mychannel"
+          value={chatId}
+          onChange={(e) => setChatId(e.target.value)}
+          required
+          className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+          style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+        />
+        {error && (
+          <p className="text-xs rounded-lg px-3 py-2" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1a1a", color: "#f87171" }}>
+            {error}
+          </p>
+        )}
+        <button
+          type="submit"
+          disabled={connecting}
+          className="w-full py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 hover:bg-gray-100"
+          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+        >
+          {connecting ? "Connecting…" : "Connect Telegram"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ── Lemmy inline form ─────────────────────────────────────────────────────────
+function LemmyConnect({ onConnected }: { onConnected: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [instanceUrl, setInstanceUrl] = useState("https://lemmy.world");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [community, setCommunity] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setConnecting(true);
+    setError(null);
+    try {
+      await apiFetch("/auth/lemmy", {
+        method: "POST",
+        body: JSON.stringify({
+          instanceUrl: instanceUrl.trim(),
+          username: username.trim(),
+          password: password.trim(),
+          community: community.trim(),
+        }),
+      });
+      setOpen(false);
+      setUsername("");
+      setPassword("");
+      setCommunity("");
+      onConnected();
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-3 w-full p-3.5 rounded-xl text-left transition-all hover:border-gray-600/50"
+        style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+      >
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
+          <PlatformIcon platform="lemmy" size={18} />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Lemmy</p>
+          <p className="text-xs" style={{ color: "#555" }}>Username + password</p>
+        </div>
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
+          Connect
+        </span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-xl p-4" style={{ backgroundColor: "#111111", border: "1px solid #5b63d340" }}>
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1a1a1a" }}>
+          <PlatformIcon platform="lemmy" size={16} />
+        </div>
+        <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Connect Lemmy</p>
+        <button onClick={() => setOpen(false)} className="ml-auto text-xs hover:opacity-70" style={{ color: "#444" }}>
+          Cancel
+        </button>
+      </div>
+      <form onSubmit={submit} className="space-y-2.5">
+        <input
+          placeholder="Instance — https://lemmy.world"
+          value={instanceUrl}
+          onChange={(e) => setInstanceUrl(e.target.value)}
+          required
+          autoFocus
+          className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+          style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+        />
+        <input
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+          className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+          style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+          style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+        />
+        <div>
+          <input
+            placeholder="Community — e.g. selfhosted@lemmy.world"
+            value={community}
+            onChange={(e) => setCommunity(e.target.value)}
+            required
+            className="w-full rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+            style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+          />
+          <p className="text-xs mt-1.5" style={{ color: "#555" }}>Format: communityname@instance.url</p>
+        </div>
+        {error && (
+          <p className="text-xs rounded-lg px-3 py-2" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1a1a", color: "#f87171" }}>
+            {error}
+          </p>
+        )}
+        <button
+          type="submit"
+          disabled={connecting}
+          className="w-full py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 hover:bg-gray-100"
+          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+        >
+          {connecting ? "Connecting…" : "Connect Lemmy"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ── Nostr inline form ─────────────────────────────────────────────────────────
+function NostrConnect({ onConnected }: { onConnected: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [nsec, setNsec] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generatedNpub, setGeneratedNpub] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function generate() {
+    setGenerating(true);
+    setError(null);
+    try {
+      const data = await apiFetch("/accounts/nostr/generate", { method: "POST" }) as { nsecBech32: string; npubBech32: string };
+      setNsec(data.nsecBech32);
+      setGeneratedNpub(data.npubBech32);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setConnecting(true);
+    setError(null);
+    try {
+      await apiFetch("/accounts/nostr", { method: "POST", body: JSON.stringify({ nsec: nsec.trim() }) });
+      setOpen(false);
+      setNsec("");
+      setGeneratedNpub(null);
+      onConnected();
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-3 w-full p-3.5 rounded-xl text-left transition-all hover:border-gray-600/50"
+        style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+      >
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
+          <PlatformIcon platform="nostr" size={18} />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Nostr</p>
+          <p className="text-xs" style={{ color: "#555" }}>Keypair · no OAuth</p>
+        </div>
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
+          Connect
+        </span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-xl p-4" style={{ backgroundColor: "#111111", border: "1px solid #5b63d340" }}>
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1a1a1a" }}>
+          <PlatformIcon platform="nostr" size={16} />
+        </div>
+        <p className="text-sm font-semibold" style={{ color: "#ededed" }}>Connect Nostr</p>
+        <button onClick={() => setOpen(false)} className="ml-auto text-xs hover:opacity-70" style={{ color: "#444" }}>
+          Cancel
+        </button>
+      </div>
+      <form onSubmit={submit} className="space-y-2.5">
+        <input
+          placeholder="nsec1… or generate one below"
+          value={nsec}
+          onChange={(e) => setNsec(e.target.value)}
+          required
+          autoFocus
+          className="w-full rounded-lg px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-white/10"
+          style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", color: "#ededed" }}
+        />
+        {generatedNpub && (
+          <div className="rounded-lg p-3" style={{ backgroundColor: "#0a1a0a", border: "1px solid #14532d" }}>
+            <p className="text-xs font-semibold" style={{ color: "#4ade80" }}>Keypair generated — save your nsec!</p>
+            <p className="text-[11px] font-mono break-all mt-1" style={{ color: "#888" }}>npub: {generatedNpub}</p>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={generate}
+          disabled={generating}
+          className="w-full py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+          style={{ backgroundColor: "#1a1a1a", color: "#aaa", border: "1px solid #2a2a2a" }}
+        >
+          {generating ? "Generating…" : "Generate a new keypair for me"}
+        </button>
+        {error && (
+          <p className="text-xs rounded-lg px-3 py-2" style={{ backgroundColor: "#1a0a0a", border: "1px solid #3a1a1a", color: "#f87171" }}>
+            {error}
+          </p>
+        )}
+        <button
+          type="submit"
+          disabled={connecting || !nsec.trim()}
+          className="w-full py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 hover:bg-gray-100"
+          style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
+        >
+          {connecting ? "Connecting…" : "Connect Nostr"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 // ── Main content ───────────────────────────────────────────────────────────────
 function OnboardingContent() {
   const router = useRouter();
@@ -267,6 +675,7 @@ function OnboardingContent() {
   const [isIndia, setIsIndia] = useState(true);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
+  const [showMorePlatforms, setShowMorePlatforms] = useState(false);
 
   const [postText, setPostText] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -481,12 +890,13 @@ function OnboardingContent() {
             </div>
           ) : (
             <>
-              {/* Bluesky inline form */}
-              <div className="mb-3">
+              {/* Most-requested — Bluesky + Telegram (inline) first */}
+              <div className="mb-3 space-y-2.5">
                 <BlueskyConnect onConnected={fetchAccounts} />
+                <TelegramConnect onConnected={fetchAccounts} />
               </div>
 
-              {/* OAuth platforms 2-column grid */}
+              {/* Most-requested — LinkedIn, Threads, Facebook, Discord (OAuth) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
                 {OAUTH_PLATFORMS.map(({ platform, label, sub, path, proOnly }) =>
                   proOnly && billingEnabled ? (
@@ -529,10 +939,58 @@ function OnboardingContent() {
                 )}
               </div>
 
-              <p className="text-xs mb-6 text-center" style={{ color: "#999" }}>
-                Instagram, Threads, Facebook, Pinterest, Mastodon, Telegram, Nostr & more →{" "}
-                <span>available after setup in Settings</span>
-              </p>
+              {/* More platforms — collapsed by default */}
+              <button
+                onClick={() => setShowMorePlatforms((v) => !v)}
+                className="w-full text-xs font-semibold text-center py-2 mb-3 hover:opacity-70 transition-opacity"
+                style={{ color: "#5b63d3" }}
+              >
+                {showMorePlatforms ? "Hide more platforms ↑" : "More platforms (Mastodon, Lemmy, Nostr, Tumblr) ↓"}
+              </button>
+
+              {showMorePlatforms && (
+                <div className="mb-4 space-y-2.5">
+                  <MastodonConnect />
+                  <LemmyConnect onConnected={fetchAccounts} />
+                  <NostrConnect onConnected={fetchAccounts} />
+                  {MORE_OAUTH_PLATFORMS.map(({ platform, label, sub, path }) => (
+                    <a
+                      key={platform}
+                      href={`${API_BASE}${path}?from=onboarding`}
+                      className="flex items-center gap-3 p-3.5 rounded-xl transition-all hover:border-gray-600/50"
+                      style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#1a1a1a" }}>
+                        <PlatformIcon platform={platform} size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold" style={{ color: "#ededed" }}>{label}</p>
+                        <p className="text-xs truncate" style={{ color: "#555" }}>{sub}</p>
+                      </div>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#1a1a1a", color: "#666", border: "1px solid #2a2a2a" }}>
+                        Connect
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <div className="flex items-center -space-x-1.5">
+                  {["instagram", "youtube", "pinterest", "twitter", "tiktok", "pixelfed", "googlebusiness"].map((p) => (
+                    <div
+                      key={p}
+                      className="w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "#1a1a1a", border: "2px solid #0a0a0a" }}
+                    >
+                      <PlatformIcon platform={p} size={12} />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm text-center font-medium" style={{ color: "#ededed" }}>
+                  & more available after setup in Settings
+                </p>
+              </div>
             </>
           )}
 
