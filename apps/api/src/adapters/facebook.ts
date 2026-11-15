@@ -57,6 +57,67 @@ async function graphGet(path: string, params: Record<string, string>): Promise<R
  * Converts unsupported formats to JPEG via sharp.
  * Returns the photo's Facebook ID (or post_id for published single photos).
  */
+// Posting the same image to many Facebook pages in one job (a customer with
+// several connected pages) calls this per page, in parallel, with the same
+// imageUrl — the output is deterministic for a given input, so dedupe the
+// fetch + sharp decode/resize/re-encode work instead of redoing it per page.
+const processedPhotoCache = new Map<string, Promise<{ buffer: Buffer; mimeType: string }>>();
+
+async function getProcessedFacebookPhoto(
+  storageAdapter: StorageAdapter,
+  imageUrl: string,
+): Promise<{ buffer: Buffer; mimeType: string }> {
+  const existing = processedPhotoCache.get(imageUrl);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    let buffer = await getMediaBuffer(storageAdapter, imageUrl);
+    let mimeType = "image/jpeg";
+
+    // Detect format from magic bytes
+    if (buffer[0] === 0x89 && buffer[1] === 0x50) mimeType = "image/png";
+    else if (buffer[0] === 0xff && buffer[1] === 0xd8) mimeType = "image/jpeg";
+    else if (buffer.slice(0, 4).toString() === "RIFF" || buffer.slice(0, 4).toString("hex") === "52494646") {
+      mimeType = "image/webp"; // WebP starts with RIFF....WEBP
+    } else if (buffer.slice(0, 3).toString() === "GIF") mimeType = "image/gif";
+
+    // Convert WebP/GIF to JPEG — Facebook rejects both
+    if (!FB_SUPPORTED.has(mimeType)) {
+      const sharp = (await import("sharp")).default;
+      buffer = await sharp(buffer).jpeg({ quality: 92 }).toBuffer();
+      mimeType = "image/jpeg";
+    }
+
+    // Oversized images get "reduce the amount of data" from Graph API — downscale to fit
+    if (buffer.length > MAX_FB_PHOTO_BYTES) {
+      const sharp = (await import("sharp")).default;
+      buffer = await sharp(buffer)
+        .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 85 })
+        .toBuffer();
+      mimeType = "image/jpeg";
+    }
+
+    // Progressive JPEGs also trigger "reduce the amount of data" on Graph API — force baseline encoding
+    if (mimeType === "image/jpeg") {
+      const sharp = (await import("sharp")).default;
+      const meta = await sharp(buffer).metadata();
+      if (meta.isProgressive) {
+        buffer = await sharp(buffer).jpeg({ quality: 92, progressive: false }).toBuffer();
+      }
+    }
+
+    return { buffer, mimeType };
+  })();
+
+  processedPhotoCache.set(imageUrl, promise);
+  try {
+    return await promise;
+  } finally {
+    processedPhotoCache.delete(imageUrl);
+  }
+}
+
 async function uploadPhotoBuffer(
   pageId: string,
   pageAccessToken: string,
@@ -75,41 +136,7 @@ async function uploadPhotoBuffer(
     return data.post_id ?? data.id;
   }
 
-  let buffer = await getMediaBuffer(storageAdapter, imageUrl);
-  let mimeType = "image/jpeg";
-
-  // Detect format from magic bytes
-  if (buffer[0] === 0x89 && buffer[1] === 0x50) mimeType = "image/png";
-  else if (buffer[0] === 0xff && buffer[1] === 0xd8) mimeType = "image/jpeg";
-  else if (buffer.slice(0, 4).toString() === "RIFF" || buffer.slice(0, 4).toString("hex") === "52494646") {
-    mimeType = "image/webp"; // WebP starts with RIFF....WEBP
-  } else if (buffer.slice(0, 3).toString() === "GIF") mimeType = "image/gif";
-
-  // Convert WebP/GIF to JPEG — Facebook rejects both
-  if (!FB_SUPPORTED.has(mimeType)) {
-    const sharp = (await import("sharp")).default;
-    buffer = await sharp(buffer).jpeg({ quality: 92 }).toBuffer();
-    mimeType = "image/jpeg";
-  }
-
-  // Oversized images get "reduce the amount of data" from Graph API — downscale to fit
-  if (buffer.length > MAX_FB_PHOTO_BYTES) {
-    const sharp = (await import("sharp")).default;
-    buffer = await sharp(buffer)
-      .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 85 })
-      .toBuffer();
-    mimeType = "image/jpeg";
-  }
-
-  // Progressive JPEGs also trigger "reduce the amount of data" on Graph API — force baseline encoding
-  if (mimeType === "image/jpeg") {
-    const sharp = (await import("sharp")).default;
-    const meta = await sharp(buffer).metadata();
-    if (meta.isProgressive) {
-      buffer = await sharp(buffer).jpeg({ quality: 92, progressive: false }).toBuffer();
-    }
-  }
+  const { buffer, mimeType } = await getProcessedFacebookPhoto(storageAdapter, imageUrl);
 
   const form = new FormData();
   form.append("source", new Blob([new Uint8Array(buffer)], { type: mimeType }), "photo.jpg");

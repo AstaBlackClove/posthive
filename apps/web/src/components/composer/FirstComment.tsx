@@ -1,6 +1,7 @@
 import { PlatformIcon } from "../PlatformIcon";
 
 interface PlatformCommentLimit {
+  id: string;
   platform: string;
   limit: number;
   commentCount: number;
@@ -35,7 +36,7 @@ export function FirstComment({ value, onChange, platformLimits }: Props) {
       {value && platformLimits && platformLimits.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
           {platformLimits.map((p) => (
-            <span key={p.platform} className="text-xs font-medium flex items-center gap-1"
+            <span key={p.id} className="text-xs font-medium flex items-center gap-1"
               style={{ color: p.commentOver ? "#ef4444" : p.commentCount > p.limit * 0.8 ? "#f59e0b" : "#444" }}>
               <PlatformIcon platform={p.platform} size={11} /> {p.commentCount}/{p.limit}
             </span>

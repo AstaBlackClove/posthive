@@ -369,7 +369,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     const effectiveComment = perAccountOverrides[a.id]?.commentText ?? commentText;
     const commentCount = countGraphemes(effectiveComment);
     const commentOver = commentCount > limit;
-    return { platform: a.platform, limit, effectiveCount, over: effectiveCount > limit, commentCount, commentOver };
+    return { id: a.id, platform: a.platform, limit, effectiveCount, over: effectiveCount > limit, commentCount, commentOver };
   });
   const overAnyLimit = platformLimits.some(p => p.over || p.commentOver);
 
@@ -520,7 +520,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#444" }}>Caption</span>
               <div className="flex items-center gap-3">
                 {platformLimits.map(p => (
-                  <span key={p.platform} className="text-xs font-medium flex items-center gap-1"
+                  <span key={p.id} className="text-xs font-medium flex items-center gap-1"
                     style={{ color: p.over ? "#ef4444" : p.effectiveCount > p.limit * 0.8 ? "#f59e0b" : "#555" }}>
                     <PlatformIcon platform={p.platform} size={12} /> {p.effectiveCount}/{p.limit}
                   </span>
@@ -637,7 +637,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
           {/* First comment */}
           {!noCommentSupport && (
             <FirstComment value={commentText} onChange={setCommentText}
-              platformLimits={platformLimits.map(p => ({ platform: p.platform, limit: p.limit, commentCount: p.commentCount, commentOver: p.commentOver }))} />
+              platformLimits={platformLimits.map(p => ({ id: p.id, platform: p.platform, limit: p.limit, commentCount: p.commentCount, commentOver: p.commentOver }))} />
           )}
 
           {/* Media */}

@@ -48,16 +48,34 @@ export interface StorageAdapter {
   ownsUrl(url: string): boolean;
 }
 
+// A job posts the same media to several platforms in parallel (runJob runs all
+// targets at once), and every adapter calls getMediaBuffer itself — without this,
+// one 100MB video posted to 3 platforms means 3 concurrent 100MB buffers in RAM.
+// This dedupes concurrent fetches of the same URL so they share one buffer.
+const inFlight = new Map<string, Promise<Buffer>>();
+
 /**
  * Fetch media for a post, whichever URL it came from.
  * A URL the storage adapter owns is read from internal storage; any other
  * URL (e.g. a customer's own CDN) is fetched directly over HTTP.
  */
 export async function getMediaBuffer(storageAdapter: StorageAdapter, url: string): Promise<Buffer> {
-  if (storageAdapter.ownsUrl(url)) return storageAdapter.getBuffer(url);
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch media ${url}: ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
+  const existing = inFlight.get(url);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    if (storageAdapter.ownsUrl(url)) return storageAdapter.getBuffer(url);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to fetch media ${url}: ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
+  })();
+
+  inFlight.set(url, promise);
+  try {
+    return await promise;
+  } finally {
+    inFlight.delete(url);
+  }
 }
 
 export class LocalDiskStorage implements StorageAdapter {
