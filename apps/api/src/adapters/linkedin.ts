@@ -4,8 +4,11 @@
  * Auth: OAuth 2.0 — scopes: openid profile email w_member_social
  * Tokens: access token (~60 days) + refresh token (~1 year), stored encrypted.
  *
- * Posting uses the newer Posts API (LinkedIn-Version: 202306):
+ * Posting uses the newer Posts API (see LI_VERSION below):
  *   POST https://api.linkedin.com/rest/posts
+ *
+ * LinkedIn retires each LinkedIn-Version (YYYYMM) ~12 months after release —
+ * bump LI_VERSION periodically or posts start failing with 426 NONEXISTENT_VERSION.
  *
  * Images require a 3-step flow:
  *   1. POST /rest/images?action=initializeUpload  → uploadUrl + image URN
@@ -20,7 +23,7 @@ import { getMediaBuffer, type StorageAdapter } from "../lib/storage.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 const API_BASE = "https://api.linkedin.com";
-const LI_VERSION = "202511";
+const LI_VERSION = "202611";
 
 interface LinkedInCredentials {
   accessToken: string;
