@@ -3,11 +3,21 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
+import { useWorkspace } from "../../context/WorkspaceContext";
 import { apiFetch } from "../../lib/api";
 import Image from "next/image";
 
+// Mirrors canUseApi() in apps/api/src/lib/auth/withApiKey.ts — UI-only check,
+// the server still enforces this for real on every MCP request.
+function canUseApi(plan: string, planStatus: string): boolean {
+  if (process.env.NEXT_PUBLIC_ENABLE_BILLING !== "true") return true;
+  if (planStatus !== "active" && planStatus !== "cancelling") return false;
+  return plan === "pro" || plan === "team";
+}
+
 export default function McpConnectPage() {
   const { user, loading } = useAuth();
+  const { activeWorkspace, loading: workspaceLoading } = useWorkspace();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -62,10 +72,29 @@ export default function McpConnectPage() {
     window.location.href = url.toString();
   }
 
-  if (loading || !user) {
+  if (loading || !user || workspaceLoading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
         <div style={{ width: 24, height: 24, border: "2px solid #2a2a2a", borderTopColor: "#5b63d3", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      </div>
+    );
+  }
+
+  if (activeWorkspace && !canUseApi(activeWorkspace.plan, activeWorkspace.planStatus)) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a", padding: 24 }}>
+        <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 16, padding: 32, maxWidth: 400, textAlign: "center" }}>
+          <p style={{ color: "#ededed", fontSize: 15, fontWeight: 600, margin: "0 0 8px" }}>MCP requires Pro or Team</p>
+          <p style={{ color: "#888", fontSize: 13, lineHeight: 1.6, margin: "0 0 20px" }}>
+            Your workspace is on the {activeWorkspace.plan} plan. Upgrade to Pro or Team to connect Posthive to Claude.
+          </p>
+          <a
+            href="/billing"
+            style={{ display: "inline-block", padding: "10px 24px", borderRadius: 10, background: "#5b63d3", color: "#fff", fontSize: 14, fontWeight: 600, textDecoration: "none" }}
+          >
+            View plans
+          </a>
+        </div>
       </div>
     );
   }
