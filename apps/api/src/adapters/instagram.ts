@@ -306,6 +306,7 @@ const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body)
       likes:     get(res.data, "likes"),
       replies:   get(res.data, "comments"),
       reposts:   get(res.data, "shares"),
+      saves:     get(res.data, "saved"),
       views,
       fetchedAt: new Date().toISOString(),
     };

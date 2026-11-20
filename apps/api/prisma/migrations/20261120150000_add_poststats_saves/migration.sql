@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "PostStats" ADD COLUMN     "saves" INTEGER NOT NULL DEFAULT 0;

@@ -237,6 +237,7 @@ model PostStats {
   likes    Int  @default(0)
   reposts  Int  @default(0)
   replies  Int  @default(0)
+  saves    Int  @default(0)
   views    Int?
 
   fetchedAt DateTime

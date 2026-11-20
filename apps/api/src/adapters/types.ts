@@ -21,6 +21,7 @@ export interface AnalyticsResult {
   likes?: number;
   reposts?: number;
   replies?: number;
+  saves?: number;        // bookmarks/saves (platform-specific; Instagram only for now)
   views?: number;       // impressions / views (platform-specific)
   fetchedAt: string;   // ISO timestamp
 }
