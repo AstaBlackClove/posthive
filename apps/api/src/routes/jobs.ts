@@ -8,7 +8,7 @@ const SSE_MAX_PER_USER = 3;
 import { schedulePostJob, postJobQueue } from "../lib/queue.js";
 import { withAuth, getUser, getWorkspaceId, getWorkspaceRole, ACCESS_COOKIE_NAME } from "../lib/auth/withAuth.js";
 import { authProvider } from "../lib/auth/index.js";
-import { enforcePlan } from "../lib/enforcePlan.js";
+import { enforcePlan, imageLimitError } from "../lib/enforcePlan.js";
 import { getPlan } from "../lib/plans.js";
 import type { StorageAdapter } from "../lib/storage.js";
 import { adapters } from "../adapters/index.js";
@@ -29,7 +29,7 @@ const STATUS_FILTER_MAP: Record<string, string[]> = {
 
 const TARGET_SELECT = {
   id: true, accountId: true, status: true,
-  platformPostId: true, error: true, attempts: true,
+  platformPostId: true, permalink: true, error: true, attempts: true,
   account: { select: { platform: true, displayName: true, avatarUrl: true } },
 };
 
@@ -53,6 +53,8 @@ const createJobBody = z.object({
     locationId: z.string().optional(),
     userTags: z.array(z.string()).optional(),
     collaborators: z.array(z.string()).optional(),
+    instagramTrialReel: z.boolean().optional(),
+    instagramTrialGraduation: z.enum(["MANUAL", "SS_PERFORMANCE"]).optional(),
     pixelfedSensitive: z.boolean().optional(),
     pixelfedVisibility: z.enum(["public", "unlisted", "private"]).optional(),
     youtubeVisibility: z.enum(["public", "unlisted", "private"]).optional(),
@@ -273,15 +275,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       if (overrideBlocked) return reply.status(402).send(overrideBlocked);
     }
     if (content.mediaUrls.length > 0) {
-      const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { plan: true } });
-      const planCfg = getPlan(ws?.plan ?? "cancelled");
-      if (content.mediaUrls.length > planCfg.maxImagesPerPost) {
-        return reply.status(402).send({
-          error: `Your ${planCfg.name} plan allows up to ${planCfg.maxImagesPerPost} images per post. Upgrade to Pro for up to 10.`,
-          code: "PLAN_LIMIT",
-          upgradeRequired: true,
-        });
-      }
+      const imageBlocked = await imageLimitError(workspaceId, content.mediaUrls.length);
+      if (imageBlocked) return reply.status(402).send(imageBlocked);
     }
 
     // Verify accounts belong to this workspace
@@ -522,6 +517,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       youtubeVideoMode: z.enum(["upload", "url"]).optional(),
       youtubeVideoUrl: z.string().optional(),
       youtubeThumbnailUrl: z.string().optional(),
+      instagramTrialReel: z.boolean().optional(),
+      instagramTrialGraduation: z.enum(["MANUAL", "SS_PERFORMANCE"]).optional(),
       pixelfedSensitive: z.boolean().optional(),
       pixelfedVisibility: z.enum(["public", "unlisted", "private"]).optional(),
       youtubeVisibility: z.enum(["public", "unlisted", "private"]).optional(),
@@ -550,8 +547,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (body.data.scheduledFor) {
       updateData.scheduledFor = new Date(body.data.scheduledFor);
     }
-    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.youtubeVideoMode !== undefined || body.data.youtubeVideoUrl !== undefined || body.data.youtubeThumbnailUrl !== undefined || body.data.pixelfedSensitive !== undefined || body.data.pixelfedVisibility !== undefined || body.data.youtubeVisibility !== undefined || body.data.youtubeTags !== undefined || body.data.youtubeMadeForKids !== undefined || body.data.linkedinVisibility !== undefined || body.data.blueskyLanguage !== undefined || body.data.blueskyContentWarning !== undefined || body.data.perAccount !== undefined) {
-      const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; youtubeType?: string; youtubeVideoMode?: string; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; pixelfedSensitive?: boolean; pixelfedVisibility?: string; youtubeVisibility?: string; youtubeTags?: string[]; youtubeMadeForKids?: boolean; linkedinVisibility?: string; blueskyLanguage?: string; blueskyContentWarning?: string; perAccount?: Record<string, unknown> };
+    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.youtubeVideoMode !== undefined || body.data.youtubeVideoUrl !== undefined || body.data.youtubeThumbnailUrl !== undefined || body.data.instagramTrialReel !== undefined || body.data.instagramTrialGraduation !== undefined || body.data.pixelfedSensitive !== undefined || body.data.pixelfedVisibility !== undefined || body.data.youtubeVisibility !== undefined || body.data.youtubeTags !== undefined || body.data.youtubeMadeForKids !== undefined || body.data.linkedinVisibility !== undefined || body.data.blueskyLanguage !== undefined || body.data.blueskyContentWarning !== undefined || body.data.perAccount !== undefined) {
+      const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; youtubeType?: string; youtubeVideoMode?: string; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; instagramTrialReel?: boolean; instagramTrialGraduation?: string; pixelfedSensitive?: boolean; pixelfedVisibility?: string; youtubeVisibility?: string; youtubeTags?: string[]; youtubeMadeForKids?: boolean; linkedinVisibility?: string; blueskyLanguage?: string; blueskyContentWarning?: string; perAccount?: Record<string, unknown> };
       updateData.content = JSON.stringify({
         ...existing,
         ...(body.data.text !== undefined ? { text: body.data.text } : {}),
@@ -561,6 +558,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         ...(body.data.youtubeVideoMode !== undefined ? { youtubeVideoMode: body.data.youtubeVideoMode } : {}),
         ...(body.data.youtubeVideoUrl !== undefined ? { youtubeVideoUrl: body.data.youtubeVideoUrl } : {}),
         ...(body.data.youtubeThumbnailUrl !== undefined ? { youtubeThumbnailUrl: body.data.youtubeThumbnailUrl } : {}),
+        ...(body.data.instagramTrialReel !== undefined ? { instagramTrialReel: body.data.instagramTrialReel } : {}),
+        ...(body.data.instagramTrialGraduation !== undefined ? { instagramTrialGraduation: body.data.instagramTrialGraduation } : {}),
         ...(body.data.pixelfedSensitive !== undefined ? { pixelfedSensitive: body.data.pixelfedSensitive } : {}),
         ...(body.data.pixelfedVisibility !== undefined ? { pixelfedVisibility: body.data.pixelfedVisibility } : {}),
         ...(body.data.youtubeVisibility !== undefined ? { youtubeVisibility: body.data.youtubeVisibility } : {}),

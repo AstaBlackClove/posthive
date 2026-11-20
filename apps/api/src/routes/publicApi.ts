@@ -267,7 +267,7 @@ export async function publicApiRoutes(
 
     const job = await prisma.postJob.findFirst({
       where: { id, workspaceId },
-      include: { targets: { select: { id: true, accountId: true, status: true, error: true, platformPostId: true } } },
+      include: { targets: { select: { id: true, accountId: true, status: true, error: true, platformPostId: true, permalink: true } } },
     });
     if (!job) return reply.status(404).send({ error: "Post not found" });
 

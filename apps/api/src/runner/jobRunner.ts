@@ -41,6 +41,8 @@ type JobContent = {
   locationId?: string;
   userTags?: string[];
   collaborators?: string[];
+  instagramTrialReel?: boolean;
+  instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE";
   pixelfedSensitive?: boolean;
   pixelfedVisibility?: "public" | "unlisted" | "private";
   linkedinVisibility?: "PUBLIC" | "CONNECTIONS";
@@ -83,7 +85,7 @@ export async function runJob(
   }
 
   // Block execution if workspace subscription is on hold or cancelled
-  if (job.workspaceId) {
+  if (process.env.ENABLE_BILLING === "true" && job.workspaceId) {
     const ws = await prisma.workspace.findUnique({
       where: { id: job.workspaceId },
       select: { planStatus: true, onHoldSince: true },
@@ -120,6 +122,8 @@ export async function runJob(
         locationId: content.locationId,
         userTags: content.userTags,
         collaborators: content.collaborators,
+        instagramTrialReel: content.instagramTrialReel,
+        instagramTrialGraduation: content.instagramTrialGraduation,
         pixelfedSensitive: content.pixelfedSensitive,
         pixelfedVisibility: content.pixelfedVisibility,
         linkedinVisibility: content.linkedinVisibility,
@@ -364,6 +368,7 @@ async function runTarget(
       data: {
         status: "post_done",
         platformPostId: postResult.platformPostId,
+        permalink: postResult.permalink ?? null,
         replyContext: JSON.stringify(postResult.replyContext),
         error: null,
       },

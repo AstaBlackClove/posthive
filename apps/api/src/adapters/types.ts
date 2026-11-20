@@ -10,6 +10,7 @@ export type { Account };
 export interface PostResult {
   platformPostId: string;
   replyContext: unknown; // stored as JSON in PostJobTarget.replyContext
+  permalink?: string; // direct link to the live post, when the platform exposes one
 }
 
 export interface CommentResult {
@@ -60,6 +61,8 @@ export interface PlatformAdapter {
       locationId?: string;           // Instagram: Facebook Place ID for location tagging
       userTags?: string[];           // Instagram: usernames to tag in the post
       collaborators?: string[];      // Instagram: usernames to add as collaborators
+      instagramTrialReel?: boolean;  // Instagram: publish as a Trial Reel (shown to non-followers first)
+      instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE"; // Instagram: how the trial reel graduates to followers
       pixelfedSensitive?: boolean;   // Pixelfed: blur media behind content warning
       pixelfedVisibility?: "public" | "unlisted" | "private"; // Pixelfed: audience
       linkedinVisibility?: "PUBLIC" | "CONNECTIONS"; // LinkedIn: post audience

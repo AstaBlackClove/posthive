@@ -18,6 +18,7 @@ import { YoutubeFields } from "../../components/composer/YoutubeFields";
 import { TiktokFields } from "../../components/composer/TiktokFields";
 import { PinterestFields } from "../../components/composer/PinterestFields";
 import { PixelfedFields } from "../../components/composer/PixelfedFields";
+import { InstagramTrialReelFields } from "../../components/composer/InstagramTrialReelFields";
 import { LinkedinFields } from "../../components/composer/LinkedinFields";
 import { BlueskyFields } from "../../components/composer/BlueskyFields";
 import { FirstComment } from "../../components/composer/FirstComment";
@@ -72,6 +73,8 @@ export default function ComposePage() {
   const [youtubeMadeForKids, setYoutubeMadeForKids] = useState(false);
   const [pinterestTitle, setPinterestTitle] = useState("");
   const [pinterestDescription, setPinterestDescription] = useState("");
+  const [instagramTrialReel, setInstagramTrialReel] = useState(false);
+  const [instagramTrialGraduation, setInstagramTrialGraduation] = useState<"MANUAL" | "SS_PERFORMANCE">("MANUAL");
   const [pixelfedSensitive, setPixelfedSensitive] = useState(false);
   const [pixelfedVisibility, setPixelfedVisibility] = useState<"public" | "unlisted" | "private">("public");
   const [linkedinVisibility, setLinkedinVisibility] = useState<"PUBLIC" | "CONNECTIONS">("PUBLIC");
@@ -508,6 +511,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setYoutubeThumbnailUrl(null); setYoutubeThumbnailPreview(null);
     setYoutubeVisibility("public"); setYoutubeTags(""); setYoutubeMadeForKids(false);
     setPinterestTitle(""); setPinterestDescription("");
+    setInstagramTrialReel(false); setInstagramTrialGraduation("MANUAL");
     setPixelfedSensitive(false); setPixelfedVisibility("public");
     setLinkedinVisibility("PUBLIC");
     setBlueskyContentWarning("");
@@ -547,6 +551,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected ? { youtubeVisibility } : {}),
             ...(youtubeSelected && youtubeTags.trim() ? { youtubeTags: youtubeTags.split(",").map(t => t.trim()).filter(Boolean) } : {}),
             ...(youtubeSelected && youtubeMadeForKids ? { youtubeMadeForKids } : {}),
+            ...(hasInstagram && igMediaType === "reel" && instagramTrialReel ? { instagramTrialReel, instagramTrialGraduation } : {}),
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(linkedinSelected ? { linkedinVisibility } : {}),
             ...(blueskySelected && blueskyContentWarning ? { blueskyContentWarning } : {}),
@@ -601,6 +606,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected ? { youtubeVisibility } : {}),
             ...(youtubeSelected && youtubeTags.trim() ? { youtubeTags: youtubeTags.split(",").map(t => t.trim()).filter(Boolean) } : {}),
             ...(youtubeSelected && youtubeMadeForKids ? { youtubeMadeForKids } : {}),
+            ...(hasInstagram && igMediaType === "reel" && instagramTrialReel ? { instagramTrialReel, instagramTrialGraduation } : {}),
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(linkedinSelected ? { linkedinVisibility } : {}),
             ...(blueskySelected && blueskyContentWarning ? { blueskyContentWarning } : {}),
@@ -1242,6 +1248,14 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
               pinterestTitle={pinterestTitle} onTitleChange={setPinterestTitle}
               pinterestDescription={pinterestDescription} onDescriptionChange={setPinterestDescription}
               onlyPinterest={onlyPinterest}
+            />
+          )}
+
+          {/* Instagram — Trial Reel toggle (reel format only) */}
+          {instagramSelected && igMediaType === "reel" && !loadingAccounts && (
+            <InstagramTrialReelFields
+              trialReel={instagramTrialReel} onTrialReelChange={setInstagramTrialReel}
+              graduation={instagramTrialGraduation} onGraduationChange={setInstagramTrialGraduation}
             />
           )}
 

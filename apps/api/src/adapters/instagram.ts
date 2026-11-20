@@ -100,6 +100,15 @@ async function publishContainer(userId: string, token: string, containerId: stri
   return res.id;
 }
 
+async function getPermalink(mediaId: string, token: string): Promise<string | undefined> {
+  try {
+    const res = await apiGet<{ permalink?: string }>(`/${mediaId}`, token, { fields: "permalink" });
+    return res.permalink;
+  } catch {
+    return undefined; // non-fatal — the post already succeeded, just no link to show
+  }
+}
+
 function isVideoUrl(url: string): boolean {
   return /\.(mp4|mov|quicktime)(\?|$)/i.test(url);
 }
@@ -111,7 +120,7 @@ export const instagramAdapter: PlatformAdapter = {
     return refreshIfNeeded(account);
   },
 
-  async createPost(account, { text, mediaUrls, altTexts, mediaType, locationId }) {
+  async createPost(account, { text, mediaUrls, altTexts, mediaType, locationId, instagramTrialReel, instagramTrialGraduation }) {
     const { accessToken, userId } = getCredentials(account);
 
     const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "";
@@ -149,22 +158,31 @@ export const instagramAdapter: PlatformAdapter = {
       const { id: containerId } = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body);
       await waitForContainer(userId, accessToken, containerId);
       const postId = await publishContainer(userId, accessToken, containerId);
-      return { platformPostId: postId, replyContext: { postId, userId } };
+      return { platformPostId: postId, replyContext: { postId, userId }, permalink: await getPermalink(postId, accessToken) };
     }
 
     // ── Reel ───────────────────────────────────────────────────────────────
     if (type === "reel") {
       if (absoluteUrls.length === 0) throw new Error("Instagram Reels require a video file.");
+      if (instagramTrialReel && absoluteUrls.length > 1) {
+        throw new Error("Instagram Trial Reels can only have one video.");
+      }
       const videoUrl = absoluteUrls.find(isVideoUrl) ?? absoluteUrls[0];
+      if (instagramTrialReel && !isVideoUrl(videoUrl)) {
+        throw new Error("Instagram Trial Reels must be a video.");
+      }
       const body: Record<string, string> = {
         media_type: "REELS",
         video_url: videoUrl,
       };
       if (text) body.caption = text;
+      if (instagramTrialReel) {
+        body.trial_params = JSON.stringify({ graduation_strategy: instagramTrialGraduation ?? "MANUAL" });
+      }
       const { id: containerId } = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body);
       await waitForContainer(userId, accessToken, containerId, 300_000); // 5 min for video processing
       const postId = await publishContainer(userId, accessToken, containerId);
-      return { platformPostId: postId, replyContext: { postId, userId } };
+      return { platformPostId: postId, replyContext: { postId, userId }, permalink: await getPermalink(postId, accessToken) };
     }
 
     // ── Regular post (image / carousel / mixed video+image carousel) ──────
@@ -211,7 +229,7 @@ const res = await apiPost<{ id: string }>(`/${userId}/media`, accessToken, body)
 
     await waitForContainer(userId, accessToken, containerId);
     const postId = await publishContainer(userId, accessToken, containerId);
-    return { platformPostId: postId, replyContext: { postId, userId } };
+    return { platformPostId: postId, replyContext: { postId, userId }, permalink: await getPermalink(postId, accessToken) };
     }
   },
 

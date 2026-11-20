@@ -17,6 +17,7 @@ interface Target {
   accountId: string;
   status: string;
   platformPostId: string | null;
+  permalink: string | null;
   error: string | null;
   attempts: number;
   account: { platform: string; displayName: string; avatarUrl: string | null } | null;
@@ -348,14 +349,22 @@ function JobCard({ job, onEdit, onDelete, onRetry, onDuplicate, onRepeat, select
                       <StatusBadge status={t.status} />
                       {t.attempts > 1 && <span style={{ color: "#555" }}>{t.attempts} attempts</span>}
                       {t.error && <span className="text-red-500 truncate flex-1">{t.error}</span>}
-                      {canFetchAnalytics && !analytic && (
-                        <button onClick={fetchAnalytics} className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors"
-                          style={{ color: "#888", border: "1px solid #2a2a2a", backgroundColor: "#111" }}>
-                          Stats
-                        </button>
-                      )}
-                      {analytic === "loading" && <span className="ml-auto text-[10px]" style={{ color: "#555" }}>Loading…</span>}
-                      {analytic === "error" && <span className="ml-auto text-[10px] text-red-500">Failed</span>}
+                      <div className="ml-auto flex items-center gap-2">
+                        {isPublished && t.permalink && (
+                          <a href={t.permalink} target="_blank" rel="noopener noreferrer" className="text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors"
+                            style={{ color: "#888", border: "1px solid #2a2a2a", backgroundColor: "#111" }}>
+                            View post ↗
+                          </a>
+                        )}
+                        {canFetchAnalytics && !analytic && (
+                          <button onClick={fetchAnalytics} className="text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors"
+                            style={{ color: "#888", border: "1px solid #2a2a2a", backgroundColor: "#111" }}>
+                            Stats
+                          </button>
+                        )}
+                        {analytic === "loading" && <span className="text-[10px]" style={{ color: "#555" }}>Loading…</span>}
+                        {analytic === "error" && <span className="text-[10px] text-red-500">Failed</span>}
+                      </div>
                     </div>
                     {analytic && analytic !== "loading" && analytic !== "error" && (
                       <div className="flex items-center gap-3 pl-5 text-[10px]" style={{ color: "#666" }}>
@@ -583,7 +592,7 @@ export default function JobsPage() {
     }).catch(() => {});
   }
 
-  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, isDraft?: boolean, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string) {
+  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, isDraft?: boolean, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string, instagramTrialReel?: boolean, instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE") {
     try {
       // Always patch content/accounts first
       await apiFetch(`/jobs/${jobId}`, {
@@ -599,6 +608,8 @@ export default function JobsPage() {
           ...(youtubeVideoMode ? { youtubeVideoMode } : {}),
           ...(youtubeVideoUrl !== undefined ? { youtubeVideoUrl } : {}),
           ...(youtubeThumbnailUrl !== undefined ? { youtubeThumbnailUrl } : {}),
+          ...(instagramTrialReel !== undefined ? { instagramTrialReel } : {}),
+          ...(instagramTrialGraduation !== undefined ? { instagramTrialGraduation } : {}),
           ...(pixelfedSensitive !== undefined ? { pixelfedSensitive } : {}),
           ...(pixelfedVisibility !== undefined ? { pixelfedVisibility } : {}),
           ...(youtubeVisibility !== undefined ? { youtubeVisibility } : {}),
@@ -774,8 +785,8 @@ export default function JobsPage() {
           open={!!editingJob}
           job={editingJob}
           accounts={accounts}
-          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning) => {
-            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, editingJob.status === "draft", youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning);
+          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, instagramTrialReel, instagramTrialGraduation) => {
+            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, editingJob.status === "draft", youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, instagramTrialReel, instagramTrialGraduation);
           }}
           onClose={() => setEditingJob(null)}
         />

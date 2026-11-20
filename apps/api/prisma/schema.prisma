@@ -210,6 +210,7 @@ model PostJobTarget {
 
   status         String  @default("pending")
   platformPostId String?
+  permalink      String? // direct link to the live post, when the platform exposes one
   replyContext   String?
   error          String?
   attempts       Int     @default(0)
