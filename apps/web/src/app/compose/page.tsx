@@ -75,6 +75,9 @@ export default function ComposePage() {
   const [pinterestDescription, setPinterestDescription] = useState("");
   const [instagramTrialReel, setInstagramTrialReel] = useState(false);
   const [instagramTrialGraduation, setInstagramTrialGraduation] = useState<"MANUAL" | "SS_PERFORMANCE">("MANUAL");
+  const [instagramCoverUrl, setInstagramCoverUrl] = useState<string | null>(null);
+  const [instagramCoverPreview, setInstagramCoverPreview] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
   const [pixelfedSensitive, setPixelfedSensitive] = useState(false);
   const [pixelfedVisibility, setPixelfedVisibility] = useState<"public" | "unlisted" | "private">("public");
   const [linkedinVisibility, setLinkedinVisibility] = useState<"PUBLIC" | "CONNECTIONS">("PUBLIC");
@@ -362,6 +365,32 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setYoutubeThumbnailPreview(null);
   }
 
+  async function uploadCover(file: File) {
+    setCoverUploading(true);
+    const previewUrl = URL.createObjectURL(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) { const b = await res.json() as { error: string }; setUploadError(b.error ?? "Cover upload failed"); URL.revokeObjectURL(previewUrl); }
+      else {
+        const { url } = await res.json() as { url: string };
+        if (instagramCoverUrl) deleteFromStorage(instagramCoverUrl);
+        if (instagramCoverPreview) URL.revokeObjectURL(instagramCoverPreview);
+        setInstagramCoverUrl(url);
+        setInstagramCoverPreview(previewUrl);
+      }
+    } catch { setUploadError("Upload failed — is the API running?"); URL.revokeObjectURL(previewUrl); }
+    setCoverUploading(false);
+  }
+
+  function removeCover() {
+    if (instagramCoverUrl) deleteFromStorage(instagramCoverUrl);
+    if (instagramCoverPreview) URL.revokeObjectURL(instagramCoverPreview);
+    setInstagramCoverUrl(null);
+    setInstagramCoverPreview(null);
+  }
+
   function removeMediaItem(i: number) {
     setMediaItems((prev) => {
       const item = prev[i];
@@ -512,6 +541,8 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
     setYoutubeVisibility("public"); setYoutubeTags(""); setYoutubeMadeForKids(false);
     setPinterestTitle(""); setPinterestDescription("");
     setInstagramTrialReel(false); setInstagramTrialGraduation("MANUAL");
+    if (instagramCoverPreview) URL.revokeObjectURL(instagramCoverPreview);
+    setInstagramCoverUrl(null); setInstagramCoverPreview(null);
     setPixelfedSensitive(false); setPixelfedVisibility("public");
     setLinkedinVisibility("PUBLIC");
     setBlueskyContentWarning("");
@@ -552,6 +583,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected && youtubeTags.trim() ? { youtubeTags: youtubeTags.split(",").map(t => t.trim()).filter(Boolean) } : {}),
             ...(youtubeSelected && youtubeMadeForKids ? { youtubeMadeForKids } : {}),
             ...(hasInstagram && igMediaType === "reel" && instagramTrialReel ? { instagramTrialReel, instagramTrialGraduation } : {}),
+            ...(hasInstagram && igMediaType === "reel" && instagramCoverUrl ? { instagramCoverUrl } : {}),
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(linkedinSelected ? { linkedinVisibility } : {}),
             ...(blueskySelected && blueskyContentWarning ? { blueskyContentWarning } : {}),
@@ -607,6 +639,7 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             ...(youtubeSelected && youtubeTags.trim() ? { youtubeTags: youtubeTags.split(",").map(t => t.trim()).filter(Boolean) } : {}),
             ...(youtubeSelected && youtubeMadeForKids ? { youtubeMadeForKids } : {}),
             ...(hasInstagram && igMediaType === "reel" && instagramTrialReel ? { instagramTrialReel, instagramTrialGraduation } : {}),
+            ...(hasInstagram && igMediaType === "reel" && instagramCoverUrl ? { instagramCoverUrl } : {}),
             ...(pixelfedSelected ? { pixelfedSensitive, pixelfedVisibility } : {}),
             ...(linkedinSelected ? { linkedinVisibility } : {}),
             ...(blueskySelected && blueskyContentWarning ? { blueskyContentWarning } : {}),
@@ -1251,11 +1284,14 @@ const [youtubeShortsWarning, setYoutubeShortsWarning] = useState<string | null>(
             />
           )}
 
-          {/* Instagram — Trial Reel toggle (reel format only) */}
+          {/* Instagram — Cover + Trial Reel toggle (reel format only) */}
           {instagramSelected && igMediaType === "reel" && !loadingAccounts && (
             <InstagramTrialReelFields
               trialReel={instagramTrialReel} onTrialReelChange={setInstagramTrialReel}
               graduation={instagramTrialGraduation} onGraduationChange={setInstagramTrialGraduation}
+              coverUrl={instagramCoverUrl} coverPreview={instagramCoverPreview}
+              onCoverUpload={uploadCover} onCoverRemove={removeCover}
+              coverUploading={coverUploading}
             />
           )}
 

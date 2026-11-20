@@ -35,12 +35,12 @@ interface Props {
   open: boolean;
   job: EditableJob;
   accounts: Account[];
-  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string, instagramTrialReel?: boolean, instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE") => Promise<void>;
+  onSave: (text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string, instagramTrialReel?: boolean, instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE", instagramCoverUrl?: string) => Promise<void>;
   onClose: () => void;
 }
 
 export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) {
-  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; youtubeVideoMode?: "upload" | "url"; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; perAccount?: Record<string, PerAccountOverride>; pixelfedSensitive?: boolean; pixelfedVisibility?: "public" | "unlisted" | "private"; linkedinVisibility?: "PUBLIC" | "CONNECTIONS"; blueskyContentWarning?: string; instagramTrialReel?: boolean; instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE" };
+  const parsedContent = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: "post" | "reel" | "story"; youtubeType?: "short" | "video"; youtubeVideoMode?: "upload" | "url"; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; perAccount?: Record<string, PerAccountOverride>; pixelfedSensitive?: boolean; pixelfedVisibility?: "public" | "unlisted" | "private"; linkedinVisibility?: "PUBLIC" | "CONNECTIONS"; blueskyContentWarning?: string; instagramTrialReel?: boolean; instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE"; instagramCoverUrl?: string };
 
   const [text, setText] = useState(parsedContent.text);
   const [commentText, setCommentText] = useState(job.commentText ?? "");
@@ -106,6 +106,9 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
   const [pinterestDescription, setPinterestDescription] = useState(initPinOverride.description);
   const [instagramTrialReel, setInstagramTrialReel] = useState(parsedContent.instagramTrialReel ?? false);
   const [instagramTrialGraduation, setInstagramTrialGraduation] = useState<"MANUAL" | "SS_PERFORMANCE">(parsedContent.instagramTrialGraduation ?? "MANUAL");
+  const [instagramCoverUrl, setInstagramCoverUrl] = useState<string | null>(parsedContent.instagramCoverUrl ?? null);
+  const [instagramCoverPreview, setInstagramCoverPreview] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
   const [pixelfedSensitive, setPixelfedSensitive] = useState(parsedContent.pixelfedSensitive ?? false);
   const [pixelfedVisibility, setPixelfedVisibility] = useState<"public" | "unlisted" | "private">(parsedContent.pixelfedVisibility ?? "public");
   const [linkedinVisibility, setLinkedinVisibility] = useState<"PUBLIC" | "CONNECTIONS">(parsedContent.linkedinVisibility ?? "PUBLIC");
@@ -272,6 +275,36 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     setYoutubeThumbnailPreview(null);
   }
 
+  async function uploadCover(file: File) {
+    setCoverUploading(true);
+    const previewUrl = URL.createObjectURL(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({})) as { error?: string };
+        setSaveError(b.error ?? "Cover upload failed");
+        URL.revokeObjectURL(previewUrl);
+      } else {
+        const { url } = await res.json() as { url: string };
+        if (instagramCoverPreview) URL.revokeObjectURL(instagramCoverPreview);
+        setInstagramCoverUrl(url);
+        setInstagramCoverPreview(previewUrl);
+      }
+    } catch {
+      setSaveError("Upload failed — is the API running?");
+      URL.revokeObjectURL(previewUrl);
+    }
+    setCoverUploading(false);
+  }
+
+  function removeCover() {
+    if (instagramCoverPreview) URL.revokeObjectURL(instagramCoverPreview);
+    setInstagramCoverUrl(null);
+    setInstagramCoverPreview(null);
+  }
+
   function handlePaste(e: React.ClipboardEvent) {
     const files = Array.from(e.clipboardData.files).filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"));
     if (!files.length) return;
@@ -309,7 +342,7 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
     try {
       const hasLinkedin = selectedAccounts.some(a => a.platform === "linkedin");
       const hasBluesky = selectedAccounts.some(a => a.platform === "bluesky");
-      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined, hasYoutube ? youtubeVideoMode : undefined, hasYoutube ? (youtubeVideoMode === "url" ? youtubeVideoUrl.trim() : "") : undefined, hasYoutube && youtubeThumbnailUrl ? youtubeThumbnailUrl : undefined, pixelfedSelected ? pixelfedSensitive : undefined, pixelfedSelected ? pixelfedVisibility : undefined, hasYoutube ? youtubeVisibility : undefined, hasYoutube && youtubeTags.trim() ? youtubeTags.split(",").map(t => t.trim()).filter(Boolean) : undefined, hasYoutube ? youtubeMadeForKids : undefined, hasLinkedin ? linkedinVisibility : undefined, hasBluesky ? (blueskyContentWarning || undefined) : undefined, hasInstagram && igMediaType === "reel" ? instagramTrialReel : undefined, hasInstagram && igMediaType === "reel" ? instagramTrialGraduation : undefined);
+      await onSave(text.trim(), commentText.trim(), date, mediaUrls, selectedIds, cleanOverrides, hasInstagram ? igMediaType : undefined, hasYoutube ? youtubeType : undefined, hasYoutube ? youtubeVideoMode : undefined, hasYoutube ? (youtubeVideoMode === "url" ? youtubeVideoUrl.trim() : "") : undefined, hasYoutube && youtubeThumbnailUrl ? youtubeThumbnailUrl : undefined, pixelfedSelected ? pixelfedSensitive : undefined, pixelfedSelected ? pixelfedVisibility : undefined, hasYoutube ? youtubeVisibility : undefined, hasYoutube && youtubeTags.trim() ? youtubeTags.split(",").map(t => t.trim()).filter(Boolean) : undefined, hasYoutube ? youtubeMadeForKids : undefined, hasLinkedin ? linkedinVisibility : undefined, hasBluesky ? (blueskyContentWarning || undefined) : undefined, hasInstagram && igMediaType === "reel" ? instagramTrialReel : undefined, hasInstagram && igMediaType === "reel" ? instagramTrialGraduation : undefined, hasInstagram && igMediaType === "reel" ? (instagramCoverUrl ?? undefined) : undefined);
       onClose();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message.replace(/^API PATCH.*→ \d+: /, "") : "Save failed");
@@ -617,11 +650,14 @@ export function EditPostDialog({ open, job, accounts, onSave, onClose }: Props) 
             />
           )}
 
-          {/* Instagram — Trial Reel toggle (reel format only) */}
+          {/* Instagram — Cover + Trial Reel toggle (reel format only) */}
           {instagramSelected && igMediaType === "reel" && (
             <InstagramTrialReelFields
               trialReel={instagramTrialReel} onTrialReelChange={setInstagramTrialReel}
               graduation={instagramTrialGraduation} onGraduationChange={setInstagramTrialGraduation}
+              coverUrl={instagramCoverUrl} coverPreview={instagramCoverPreview}
+              onCoverUpload={uploadCover} onCoverRemove={removeCover}
+              coverUploading={coverUploading}
             />
           )}
 

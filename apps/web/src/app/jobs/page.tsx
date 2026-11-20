@@ -592,7 +592,7 @@ export default function JobsPage() {
     }).catch(() => {});
   }
 
-  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, isDraft?: boolean, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string, instagramTrialReel?: boolean, instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE") {
+  async function updateJob(jobId: string, text: string, commentText: string, scheduledFor: Date, mediaUrls: string[], accountIds: string[], perAccount: Record<string, PerAccountOverride>, mediaType?: "post" | "reel" | "story", youtubeType?: "short" | "video", youtubeVideoMode?: "upload" | "url", youtubeVideoUrl?: string, isDraft?: boolean, youtubeThumbnailUrl?: string, pixelfedSensitive?: boolean, pixelfedVisibility?: "public" | "unlisted" | "private", youtubeVisibility?: "public" | "unlisted" | "private", youtubeTags?: string[], youtubeMadeForKids?: boolean, linkedinVisibility?: "PUBLIC" | "CONNECTIONS", blueskyContentWarning?: string, instagramTrialReel?: boolean, instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE", instagramCoverUrl?: string) {
     try {
       // Always patch content/accounts first
       await apiFetch(`/jobs/${jobId}`, {
@@ -610,6 +610,7 @@ export default function JobsPage() {
           ...(youtubeThumbnailUrl !== undefined ? { youtubeThumbnailUrl } : {}),
           ...(instagramTrialReel !== undefined ? { instagramTrialReel } : {}),
           ...(instagramTrialGraduation !== undefined ? { instagramTrialGraduation } : {}),
+          ...(instagramCoverUrl !== undefined ? { instagramCoverUrl } : {}),
           ...(pixelfedSensitive !== undefined ? { pixelfedSensitive } : {}),
           ...(pixelfedVisibility !== undefined ? { pixelfedVisibility } : {}),
           ...(youtubeVisibility !== undefined ? { youtubeVisibility } : {}),
@@ -785,8 +786,8 @@ export default function JobsPage() {
           open={!!editingJob}
           job={editingJob}
           accounts={accounts}
-          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, instagramTrialReel, instagramTrialGraduation) => {
-            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, editingJob.status === "draft", youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, instagramTrialReel, instagramTrialGraduation);
+          onSave={async (text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, instagramTrialReel, instagramTrialGraduation, instagramCoverUrl) => {
+            await updateJob(editingJob.id, text, commentText, scheduledFor, mediaUrls, accountIds, perAccount, mediaType, youtubeType, youtubeVideoMode, youtubeVideoUrl, editingJob.status === "draft", youtubeThumbnailUrl, pixelfedSensitive, pixelfedVisibility, youtubeVisibility, youtubeTags, youtubeMadeForKids, linkedinVisibility, blueskyContentWarning, instagramTrialReel, instagramTrialGraduation, instagramCoverUrl);
           }}
           onClose={() => setEditingJob(null)}
         />

@@ -43,6 +43,7 @@ type JobContent = {
   collaborators?: string[];
   instagramTrialReel?: boolean;
   instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE";
+  instagramCoverUrl?: string;
   pixelfedSensitive?: boolean;
   pixelfedVisibility?: "public" | "unlisted" | "private";
   linkedinVisibility?: "PUBLIC" | "CONNECTIONS";
@@ -124,6 +125,7 @@ export async function runJob(
         collaborators: content.collaborators,
         instagramTrialReel: content.instagramTrialReel,
         instagramTrialGraduation: content.instagramTrialGraduation,
+        instagramCoverUrl: content.instagramCoverUrl,
         pixelfedSensitive: content.pixelfedSensitive,
         pixelfedVisibility: content.pixelfedVisibility,
         linkedinVisibility: content.linkedinVisibility,

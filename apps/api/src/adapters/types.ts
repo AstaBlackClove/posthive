@@ -63,6 +63,7 @@ export interface PlatformAdapter {
       collaborators?: string[];      // Instagram: usernames to add as collaborators
       instagramTrialReel?: boolean;  // Instagram: publish as a Trial Reel (shown to non-followers first)
       instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE"; // Instagram: how the trial reel graduates to followers
+      instagramCoverUrl?: string;    // Instagram: custom cover image for a Reel
       pixelfedSensitive?: boolean;   // Pixelfed: blur media behind content warning
       pixelfedVisibility?: "public" | "unlisted" | "private"; // Pixelfed: audience
       linkedinVisibility?: "PUBLIC" | "CONNECTIONS"; // LinkedIn: post audience

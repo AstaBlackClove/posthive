@@ -114,6 +114,19 @@ const TOOLS = [
           enum: ["post", "reel", "story"],
           description: "Instagram media type. 'post' = feed image/carousel, 'reel' = video reel, 'story' = story. Only relevant for Instagram accounts.",
         },
+        instagram_trial_reel: {
+          type: "boolean",
+          description: "Instagram: publish this Reel as a Trial Reel, shown to non-followers first instead of going straight to followers. Only valid when media_type is 'reel'. Requires the account to have at least 200 followers (Meta's own requirement, not enforced by Posthive).",
+        },
+        instagram_trial_graduation: {
+          type: "string",
+          enum: ["MANUAL", "SS_PERFORMANCE"],
+          description: "Instagram: how a Trial Reel graduates to followers. 'MANUAL' = you promote it yourself in the Instagram app later. 'SS_PERFORMANCE' = Instagram promotes it automatically if it performs well. Defaults to 'MANUAL'. Only used when instagram_trial_reel is true.",
+        },
+        instagram_cover_url: {
+          type: "string",
+          description: "Instagram: custom cover image URL for a Reel. Upload via POST /api/v1/upload first to get a URL. Only valid when media_type is 'reel'.",
+        },
         youtube_type: {
           type: "string",
           enum: ["short", "video"],
@@ -322,6 +335,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           ...(scheduleDirectly && scheduledTime ? { scheduledFor: scheduledTime } : {}),
           ...(a.media_urls ? { images: a.media_urls } : {}),
           ...(a.media_type ? { mediaType: a.media_type } : {}),
+          ...(a.instagram_trial_reel !== undefined ? { instagramTrialReel: a.instagram_trial_reel } : {}),
+          ...(a.instagram_trial_graduation ? { instagramTrialGraduation: a.instagram_trial_graduation } : {}),
+          ...(a.instagram_cover_url ? { instagramCoverUrl: a.instagram_cover_url } : {}),
           ...(a.youtube_type ? { youtubeType: a.youtube_type } : {}),
           ...(a.tiktok_privacy_level ? { tiktokPrivacyLevel: a.tiktok_privacy_level } : {}),
           ...(a.tiktok_title ? { tiktokTitle: a.tiktok_title } : {}),

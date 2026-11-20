@@ -120,7 +120,7 @@ export const instagramAdapter: PlatformAdapter = {
     return refreshIfNeeded(account);
   },
 
-  async createPost(account, { text, mediaUrls, altTexts, mediaType, locationId, instagramTrialReel, instagramTrialGraduation }) {
+  async createPost(account, { text, mediaUrls, altTexts, mediaType, locationId, instagramTrialReel, instagramTrialGraduation, instagramCoverUrl }) {
     const { accessToken, userId } = getCredentials(account);
 
     const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "";
@@ -176,6 +176,12 @@ export const instagramAdapter: PlatformAdapter = {
         video_url: videoUrl,
       };
       if (text) body.caption = text;
+      if (instagramCoverUrl) {
+        const abs = instagramCoverUrl.startsWith("http") ? instagramCoverUrl : `${PUBLIC_API_URL}${instagramCoverUrl}`;
+        const absoluteCoverUrl = storageAdapter ? await ensureSupportedImageUrl(abs, storageAdapter) : abs;
+        if (absoluteCoverUrl !== abs) convertedUrls.push(absoluteCoverUrl);
+        body.cover_url = absoluteCoverUrl;
+      }
       if (instagramTrialReel) {
         body.trial_params = JSON.stringify({ graduation_strategy: instagramTrialGraduation ?? "MANUAL" });
       }

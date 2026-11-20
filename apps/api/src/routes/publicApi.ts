@@ -86,6 +86,9 @@ export async function publicApiRoutes(
       tiktokDisableStitch?: boolean;
       tiktokBrandedContent?: boolean;
       tiktokYourBrand?: boolean;
+      instagramTrialReel?: boolean;
+      instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE";
+      instagramCoverUrl?: string;
     };
 
     if (!body.content?.trim()) return reply.status(400).send({ error: "content is required" });
@@ -114,6 +117,9 @@ export async function publicApiRoutes(
 
     if (body.youtubeType && !["short", "video"].includes(body.youtubeType))
       return reply.status(400).send({ error: "youtubeType must be 'short' or 'video'" });
+
+    if (body.instagramTrialGraduation && !["MANUAL", "SS_PERFORMANCE"].includes(body.instagramTrialGraduation))
+      return reply.status(400).send({ error: "instagramTrialGraduation must be 'MANUAL' or 'SS_PERFORMANCE'" });
 
     const accounts = await prisma.account.findMany({
       where: { id: { in: body.accountIds }, workspaceId },
@@ -304,6 +310,9 @@ export async function publicApiRoutes(
       tiktokDisableStitch?: boolean;
       tiktokBrandedContent?: boolean;
       tiktokYourBrand?: boolean;
+      instagramTrialReel?: boolean;
+      instagramTrialGraduation?: "MANUAL" | "SS_PERFORMANCE";
+      instagramCoverUrl?: string;
     };
 
     const job = await prisma.postJob.findFirst({ where: { id, workspaceId } });
@@ -316,6 +325,9 @@ export async function publicApiRoutes(
 
     if (body.youtubeType && !["short", "video"].includes(body.youtubeType))
       return reply.status(400).send({ error: "youtubeType must be 'short' or 'video'" });
+
+    if (body.instagramTrialGraduation && !["MANUAL", "SS_PERFORMANCE"].includes(body.instagramTrialGraduation))
+      return reply.status(400).send({ error: "instagramTrialGraduation must be 'MANUAL' or 'SS_PERFORMANCE'" });
 
     const updateData: Record<string, unknown> = {};
 
@@ -332,13 +344,15 @@ export async function publicApiRoutes(
       body.tiktokPrivacyLevel !== undefined || body.tiktokTitle !== undefined ||
       body.tiktokDisableComment !== undefined || body.tiktokDisableDuet !== undefined ||
       body.tiktokDisableStitch !== undefined || body.tiktokBrandedContent !== undefined ||
-      body.tiktokYourBrand !== undefined;
+      body.tiktokYourBrand !== undefined || body.instagramTrialReel !== undefined ||
+      body.instagramTrialGraduation !== undefined || body.instagramCoverUrl !== undefined;
 
     const existing = JSON.parse(job.content) as {
       text: string; mediaUrls?: string[]; altTexts?: string[];
       mediaType?: string; youtubeType?: string;
       perAccount?: Record<string, { text?: string; commentText?: string }>;
       tiktokPrivacyLevel?: string;
+      instagramTrialReel?: boolean; instagramTrialGraduation?: string; instagramCoverUrl?: string;
     };
 
     if (needsContentUpdate) {
@@ -359,6 +373,9 @@ export async function publicApiRoutes(
         ...(body.tiktokDisableStitch !== undefined ? { tiktokDisableStitch: body.tiktokDisableStitch } : {}),
         ...(body.tiktokBrandedContent !== undefined ? { tiktokBrandedContent: body.tiktokBrandedContent } : {}),
         ...(body.tiktokYourBrand !== undefined ? { tiktokYourBrand: body.tiktokYourBrand } : {}),
+        ...(body.instagramTrialReel !== undefined ? { instagramTrialReel: body.instagramTrialReel } : {}),
+        ...(body.instagramTrialGraduation !== undefined ? { instagramTrialGraduation: body.instagramTrialGraduation } : {}),
+        ...(body.instagramCoverUrl !== undefined ? { instagramCoverUrl: body.instagramCoverUrl } : {}),
       });
     }
 

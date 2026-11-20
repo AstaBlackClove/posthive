@@ -93,6 +93,19 @@ const TOOLS = [
           enum: ["post", "reel", "story"],
           description: "Instagram media type. 'post' = feed image/carousel, 'reel' = video reel, 'story' = story. Only relevant for Instagram accounts.",
         },
+        instagram_trial_reel: {
+          type: "boolean",
+          description: "Instagram: publish this Reel as a Trial Reel, shown to non-followers first instead of going straight to followers. Only valid when media_type is 'reel'. Requires the account to have at least 200 followers (Meta's own requirement, not enforced by Posthive).",
+        },
+        instagram_trial_graduation: {
+          type: "string",
+          enum: ["MANUAL", "SS_PERFORMANCE"],
+          description: "Instagram: how a Trial Reel graduates to followers. 'MANUAL' = you promote it yourself in the Instagram app later. 'SS_PERFORMANCE' = Instagram promotes it automatically if it performs well. Defaults to 'MANUAL'. Only used when instagram_trial_reel is true.",
+        },
+        instagram_cover_url: {
+          type: "string",
+          description: "Instagram: custom cover image URL for a Reel. Upload via POST /api/v1/upload first to get a URL. Only valid when media_type is 'reel'.",
+        },
         youtube_type: {
           type: "string",
           enum: ["short", "video"],
@@ -445,6 +458,9 @@ async function handleTool(
         text: args.content,
         mediaUrls: (args.media_urls as string[] | undefined) ?? [],
         ...(args.media_type ? { mediaType: args.media_type } : {}),
+        ...(args.instagram_trial_reel !== undefined ? { instagramTrialReel: args.instagram_trial_reel } : {}),
+        ...(args.instagram_trial_graduation ? { instagramTrialGraduation: args.instagram_trial_graduation } : {}),
+        ...(args.instagram_cover_url ? { instagramCoverUrl: args.instagram_cover_url } : {}),
         ...(args.youtube_type ? { youtubeType: args.youtube_type } : {}),
         ...(args.per_account ? { perAccount: args.per_account } : {}),
         ...(args.tiktok_privacy_level ? { tiktokPrivacyLevel: args.tiktok_privacy_level } : {}),

@@ -55,6 +55,7 @@ const createJobBody = z.object({
     collaborators: z.array(z.string()).optional(),
     instagramTrialReel: z.boolean().optional(),
     instagramTrialGraduation: z.enum(["MANUAL", "SS_PERFORMANCE"]).optional(),
+    instagramCoverUrl: z.string().optional(),
     pixelfedSensitive: z.boolean().optional(),
     pixelfedVisibility: z.enum(["public", "unlisted", "private"]).optional(),
     youtubeVisibility: z.enum(["public", "unlisted", "private"]).optional(),
@@ -519,6 +520,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       youtubeThumbnailUrl: z.string().optional(),
       instagramTrialReel: z.boolean().optional(),
       instagramTrialGraduation: z.enum(["MANUAL", "SS_PERFORMANCE"]).optional(),
+      instagramCoverUrl: z.string().optional(),
       pixelfedSensitive: z.boolean().optional(),
       pixelfedVisibility: z.enum(["public", "unlisted", "private"]).optional(),
       youtubeVisibility: z.enum(["public", "unlisted", "private"]).optional(),
@@ -547,8 +549,8 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (body.data.scheduledFor) {
       updateData.scheduledFor = new Date(body.data.scheduledFor);
     }
-    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.youtubeVideoMode !== undefined || body.data.youtubeVideoUrl !== undefined || body.data.youtubeThumbnailUrl !== undefined || body.data.instagramTrialReel !== undefined || body.data.instagramTrialGraduation !== undefined || body.data.pixelfedSensitive !== undefined || body.data.pixelfedVisibility !== undefined || body.data.youtubeVisibility !== undefined || body.data.youtubeTags !== undefined || body.data.youtubeMadeForKids !== undefined || body.data.linkedinVisibility !== undefined || body.data.blueskyLanguage !== undefined || body.data.blueskyContentWarning !== undefined || body.data.perAccount !== undefined) {
-      const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; youtubeType?: string; youtubeVideoMode?: string; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; instagramTrialReel?: boolean; instagramTrialGraduation?: string; pixelfedSensitive?: boolean; pixelfedVisibility?: string; youtubeVisibility?: string; youtubeTags?: string[]; youtubeMadeForKids?: boolean; linkedinVisibility?: string; blueskyLanguage?: string; blueskyContentWarning?: string; perAccount?: Record<string, unknown> };
+    if (body.data.text !== undefined || body.data.mediaUrls !== undefined || body.data.mediaType !== undefined || body.data.youtubeType !== undefined || body.data.youtubeVideoMode !== undefined || body.data.youtubeVideoUrl !== undefined || body.data.youtubeThumbnailUrl !== undefined || body.data.instagramTrialReel !== undefined || body.data.instagramTrialGraduation !== undefined || body.data.instagramCoverUrl !== undefined || body.data.pixelfedSensitive !== undefined || body.data.pixelfedVisibility !== undefined || body.data.youtubeVisibility !== undefined || body.data.youtubeTags !== undefined || body.data.youtubeMadeForKids !== undefined || body.data.linkedinVisibility !== undefined || body.data.blueskyLanguage !== undefined || body.data.blueskyContentWarning !== undefined || body.data.perAccount !== undefined) {
+      const existing = JSON.parse(job.content) as { text: string; mediaUrls?: string[]; mediaType?: string; youtubeType?: string; youtubeVideoMode?: string; youtubeVideoUrl?: string; youtubeThumbnailUrl?: string; instagramTrialReel?: boolean; instagramTrialGraduation?: string; instagramCoverUrl?: string; pixelfedSensitive?: boolean; pixelfedVisibility?: string; youtubeVisibility?: string; youtubeTags?: string[]; youtubeMadeForKids?: boolean; linkedinVisibility?: string; blueskyLanguage?: string; blueskyContentWarning?: string; perAccount?: Record<string, unknown> };
       updateData.content = JSON.stringify({
         ...existing,
         ...(body.data.text !== undefined ? { text: body.data.text } : {}),
@@ -560,6 +562,7 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
         ...(body.data.youtubeThumbnailUrl !== undefined ? { youtubeThumbnailUrl: body.data.youtubeThumbnailUrl } : {}),
         ...(body.data.instagramTrialReel !== undefined ? { instagramTrialReel: body.data.instagramTrialReel } : {}),
         ...(body.data.instagramTrialGraduation !== undefined ? { instagramTrialGraduation: body.data.instagramTrialGraduation } : {}),
+        ...(body.data.instagramCoverUrl !== undefined ? { instagramCoverUrl: body.data.instagramCoverUrl } : {}),
         ...(body.data.pixelfedSensitive !== undefined ? { pixelfedSensitive: body.data.pixelfedSensitive } : {}),
         ...(body.data.pixelfedVisibility !== undefined ? { pixelfedVisibility: body.data.pixelfedVisibility } : {}),
         ...(body.data.youtubeVisibility !== undefined ? { youtubeVisibility: body.data.youtubeVisibility } : {}),
