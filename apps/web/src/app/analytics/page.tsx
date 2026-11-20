@@ -231,17 +231,6 @@ export default function AnalyticsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Platform icon toggles */}
-            <div className="flex items-center gap-1 px-2 py-1.5 rounded-lg" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-              {allPlatforms.map((p) => (
-                <button key={p} type="button" onClick={() => togglePlatform(p)}
-                  title={p}
-                  className="w-7 h-7 rounded-md flex items-center justify-center transition-opacity"
-                  style={{ opacity: platformVisible(p) ? 1 : 0.3, backgroundColor: platformFilter.has(p) ? "#1a1a2e" : "transparent" }}>
-                  <PlatformIcon platform={p} size={14} />
-                </button>
-              ))}
-            </div>
             {/* Date range */}
             <select value={days} onChange={(e) => setDays(Number(e.target.value))}
               className="px-3 py-2 rounded-lg text-sm font-medium"
@@ -325,14 +314,18 @@ export default function AnalyticsPage() {
                   <ComposedChart data={data!.timeseries}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" />
                     <XAxis dataKey="date" tickFormatter={(d) => new Date(d).toLocaleDateString([], { month: "short", day: "numeric" })} tick={{ fill: "#666", fontSize: 11 }} />
-                    <YAxis tick={{ fill: "#666", fontSize: 11 }} />
+                    {/* Views runs in the hundreds/thousands while likes/comments/shares run in the
+                        tens — sharing one axis flattens the smaller series to near-invisible, so
+                        views gets its own right-hand axis. */}
+                    <YAxis yAxisId="left" tick={{ fill: "#666", fontSize: 11 }} />
+                    <YAxis yAxisId="right" orientation="right" tick={{ fill: "#22d3ee", fontSize: 11 }} />
                     <Tooltip contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 12 }}
                       labelFormatter={(d) => new Date(d).toLocaleDateString([], { month: "short", day: "numeric" })} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                     {METRIC_SERIES.filter((m) => activeMetrics.includes(m.key)).map((m) =>
                       m.key === "postsPublished"
-                        ? <Bar key={m.key} dataKey={m.key} name={m.label} fill={m.color} opacity={0.5} radius={[3, 3, 0, 0]} />
-                        : <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color} strokeWidth={2} dot={false} />
+                        ? <Bar key={m.key} yAxisId="left" dataKey={m.key} name={m.label} fill={m.color} opacity={0.5} radius={[3, 3, 0, 0]} />
+                        : <Line key={m.key} yAxisId={m.key === "views" ? "right" : "left"} type="monotone" dataKey={m.key} name={m.label} stroke={m.color} strokeWidth={2} dot={false} />
                     )}
                   </ComposedChart>
                 </ResponsiveContainer>
@@ -341,18 +334,31 @@ export default function AnalyticsPage() {
 
             {tab === "videos" && (
               <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
-                <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid #1f1f1f" }}>
+                <div className="flex items-center justify-between px-5 py-3 flex-wrap gap-3" style={{ borderBottom: "1px solid #1f1f1f" }}>
                   <span className="text-sm" style={{ color: "#888" }}>
                     Every post, every platform · <span style={{ color: "#5b63d3" }}>1.0x = your median post ({numFmt(localMedian)} views)</span>
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    {([["outlier", "Outlier score"], ["newest", "Newest"]] as const).map(([key, label]) => (
-                      <button key={key} onClick={() => setSortBy(key)}
-                        className="px-2.5 py-1 rounded-lg text-xs font-medium"
-                        style={sortBy === key ? { backgroundColor: "#1a1a2e", color: "#8c92ff", border: "1px solid #5b63d350" } : { backgroundColor: "transparent", color: "#666", border: "1px solid transparent" }}>
-                        {label}
-                      </button>
-                    ))}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Platform filter — scoped to this tab only, so it never looks like it should affect the stat cards above */}
+                    <div className="flex items-center gap-1 px-1.5 py-1 rounded-lg" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                      {allPlatforms.map((p) => (
+                        <button key={p} type="button" onClick={() => togglePlatform(p)}
+                          title={`Filter: ${p}`}
+                          className="w-6 h-6 rounded-md flex items-center justify-center transition-opacity"
+                          style={{ opacity: platformVisible(p) ? 1 : 0.3, backgroundColor: platformFilter.has(p) ? "#1a1a2e" : "transparent" }}>
+                          <PlatformIcon platform={p} size={13} />
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {([["outlier", "Outlier score"], ["newest", "Newest"]] as const).map(([key, label]) => (
+                        <button key={key} onClick={() => setSortBy(key)}
+                          className="px-2.5 py-1 rounded-lg text-xs font-medium"
+                          style={sortBy === key ? { backgroundColor: "#1a1a2e", color: "#8c92ff", border: "1px solid #5b63d350" } : { backgroundColor: "transparent", color: "#666", border: "1px solid transparent" }}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <div className="divide-y divide-[#1f1f1f] overflow-y-auto" style={{ maxHeight: "55vh" }}>
@@ -364,10 +370,21 @@ export default function AnalyticsPage() {
                     const totalViews = p.targets.reduce((s, t) => s + (t.views ?? 0), 0);
                     const bestViews = Math.max(0, ...p.targets.map((t) => t.views ?? 0));
                     const outlier = localMedian > 0 ? bestViews / localMedian : 0;
+                    // Dedupe to distinct platforms (a post can go to many same-platform accounts —
+                    // beardtricks posts to 14 Facebook pages at once) and cap the icon stack so one
+                    // heavy post doesn't crowd the row.
+                    const postPlatforms = Array.from(new Set(p.targets.map((t) => t.platform)));
+                    const shownPlatforms = postPlatforms.slice(0, 3);
+                    const extraPlatforms = postPlatforms.length - shownPlatforms.length;
                     return (
                       <div key={p.jobId} className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 sm:px-5 py-3">
                         <div className="flex items-center gap-3 min-w-0 sm:flex-1">
-                          <div className="w-10 h-10 rounded-lg flex-shrink-0" style={{ backgroundColor: "#1a1a1a", border: "1px solid #242424" }} />
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {shownPlatforms.map((plat) => <PlatformIcon key={plat} platform={plat} size={14} />)}
+                            {extraPlatforms > 0 && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#1a1a1a", color: "#888" }}>+{extraPlatforms}</span>
+                            )}
+                          </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium truncate" style={{ color: "#ededed" }}>{excerpt(p.text)}</p>
                             <div className="flex items-center gap-2 text-[11px] mt-0.5" style={{ color: "#555" }}>
