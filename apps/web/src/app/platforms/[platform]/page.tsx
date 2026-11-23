@@ -94,8 +94,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#0085ff",
     headline: "Schedule Bluesky posts without the tab-switching",
     subheadline: "Stay consistent on the open social web. Write your Bluesky posts in Posthive, set a time, and let it publish while you focus on everything else.",
-    metaTitle: "Schedule Bluesky Posts | Posthive",
-    metaDescription: "Schedule Bluesky posts in advance with a free 14-day trial, no credit card required. Write once, set a time, and let Posthive publish while you focus on everything else.",
+    metaTitle: "Bluesky Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Bluesky posts in advance. Free 14-day trial, no credit card required. Write once, set a time, and let Posthive publish while you focus on everything else.",
     supports: [
       { label: "Text posts up to 300 chars", icon: "text" as IconKey },
       { label: "Up to 4 images per post", icon: "image" as IconKey },
@@ -233,8 +233,8 @@ const PLATFORMS: Record<string, PlatformData> = {
     color: "#6364ff",
     headline: "Schedule to any Mastodon instance, yours or anyone's",
     subheadline: "Mastodon.social, Fosstodon, Hachyderm. It doesn't matter which instance you're on. Posthive works with any Mastodon-compatible server.",
-    metaTitle: "Schedule Mastodon Posts | Posthive",
-    metaDescription: "Schedule Mastodon posts to any instance with a free 14-day trial, no credit card required. Mastodon.social, Fosstodon, Hachyderm, or your own server.",
+    metaTitle: "Mastodon Scheduler — Free 14-Day Trial | Posthive",
+    metaDescription: "Schedule Mastodon posts to any instance. Free 14-day trial, no credit card required. Mastodon.social, Fosstodon, Hachyderm, or your own server.",
     supports: [
       { label: "Any Mastodon instance", icon: "globe" as IconKey },
       { label: "Text posts up to 500 chars", icon: "text" as IconKey },
