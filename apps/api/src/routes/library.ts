@@ -1,11 +1,16 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import Parser from "rss-parser";
 import * as Sentry from "@sentry/node";
 import { prisma } from "../lib/prisma.js";
 import { withAuth, getUser, getWorkspaceId } from "../lib/auth/withAuth.js";
 import { getPlan } from "../lib/plans.js";
 import { enforcePlan } from "../lib/enforcePlan.js";
 import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
+import { isSsrfBlocked } from "../lib/ssrf.js";
+import { runRssCronNow } from "../lib/rssCron.js";
+
+const rssParser = new Parser();
 
 const MAX_CSV_ROWS = 500;
 const MAX_TEXT_LENGTH = 5000;
@@ -19,6 +24,12 @@ const libraryCreateSchema = z.object({
   timeSlots: z.array(timeSlotSchema).min(1).max(50),
   timezone: z.string().min(1).max(100).default("UTC"),
   accountIds: z.array(z.string().cuid()).min(1).max(100),
+  sourceType: z.enum(["csv", "rss"]).default("csv"),
+  rssUrl: z.string().url().max(2000).optional(),
+  aiSummarize: z.boolean().default(false),
+}).refine((d) => d.sourceType !== "rss" || !!d.rssUrl, {
+  message: "rssUrl is required when sourceType is rss",
+  path: ["rssUrl"],
 });
 
 const libraryUpdateSchema = z.object({
@@ -28,6 +39,8 @@ const libraryUpdateSchema = z.object({
   timeSlots: z.array(timeSlotSchema).min(1).max(50).optional(),
   timezone: z.string().min(1).max(100).optional(),
   accountIds: z.array(z.string().cuid()).min(1).max(100).optional(),
+  rssUrl: z.string().url().max(2000).optional(),
+  aiSummarize: z.boolean().optional(),
 });
 
 // CSV item schema — one row from the uploaded CSV
@@ -55,6 +68,23 @@ async function getWorkspacePlan(workspaceId: string) {
 }
 
 export async function libraryRoutes(app: FastifyInstance): Promise<void> {
+
+  // POST /library/validate-rss — check a feed URL is reachable and parseable before saving it
+  app.post("/library/validate-rss", {
+    preHandler: [withAuth],
+    config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
+  }, async (req, reply) => {
+    const { url } = (req.body as { url?: string }) ?? {};
+    if (!url) return reply.status(400).send({ error: "url is required" });
+    if (isSsrfBlocked(url)) return reply.status(400).send({ error: "Feed URL is not reachable or not allowed." });
+
+    try {
+      const feed = await rssParser.parseURL(url);
+      return reply.send({ valid: true, title: feed.title ?? null, itemCount: feed.items?.length ?? 0 });
+    } catch {
+      return reply.status(400).send({ valid: false, error: "Could not read this feed. Check the URL and try again." });
+    }
+  });
 
   // GET /library — list all libraries for workspace
   app.get("/library", { preHandler: [withAuth] }, async (req, reply) => {
@@ -110,7 +140,11 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
 
     const parsed = libraryCreateSchema.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.flatten() });
-    const { name, postsPerDay, timeSlots, timezone, accountIds } = parsed.data;
+    const { name, postsPerDay, timeSlots, timezone, accountIds, sourceType, rssUrl, aiSummarize } = parsed.data;
+
+    if (sourceType === "rss" && rssUrl && isSsrfBlocked(rssUrl)) {
+      return reply.status(400).send({ error: "Feed URL is not reachable or not allowed." });
+    }
 
     // Plan gate (skipped when billing is disabled — self-hosted mode)
     let maxDripPerDay = postsPerDay; // uncapped in self-hosted
@@ -144,9 +178,16 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
           timezone,
           accountIds: accountIds as unknown as string[],
           status: "active",
+          sourceType,
+          rssUrl: sourceType === "rss" ? rssUrl : null,
+          aiSummarize,
         },
       });
       void userId;
+      if (sourceType === "rss") {
+        // Kick off a first poll so the library doesn't sit empty for up to 20 min.
+        runRssCronNow().catch((err) => console.error("[library] initial rss poll failed:", err));
+      }
       return reply.status(201).send(library);
     } catch (err) {
       Sentry.captureException(err, { tags: { route: "POST /library", workspaceId } });
@@ -195,6 +236,11 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
       }
     }
 
+    if (safeData.rssUrl !== undefined) {
+      if (library.sourceType !== "rss") return reply.status(400).send({ error: "rssUrl only applies to RSS libraries." });
+      if (isSsrfBlocked(safeData.rssUrl)) return reply.status(400).send({ error: "Feed URL is not reachable or not allowed." });
+    }
+
     try {
       const updated = await prisma.contentLibrary.update({
         where: { id },
@@ -205,6 +251,8 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
           ...(safeData.timeSlots !== undefined ? { timeSlots: safeData.timeSlots as unknown as string[] } : {}),
           ...(safeData.timezone !== undefined ? { timezone: safeData.timezone } : {}),
           ...(safeData.accountIds !== undefined ? { accountIds: safeData.accountIds as unknown as string[] } : {}),
+          ...(safeData.rssUrl !== undefined ? { rssUrl: safeData.rssUrl } : {}),
+          ...(safeData.aiSummarize !== undefined ? { aiSummarize: safeData.aiSummarize } : {}),
         },
       });
       return reply.send(updated);

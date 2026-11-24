@@ -33,6 +33,9 @@ interface Library {
   timeSlots: string[];
   timezone: string;
   accountIds: string[];
+  sourceType: "csv" | "rss";
+  rssUrl: string | null;
+  aiSummarize: boolean;
   lastDripAt?: string;
   createdAt: string;
   _count: { items: number };
@@ -253,6 +256,9 @@ export default function LibraryPage() {
     timeSlots: ["09:00"],
     timezone: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC",
     accountIds: [] as string[],
+    sourceType: "csv" as "csv" | "rss",
+    rssUrl: "",
+    aiSummarize: false,
   });
 
   // Items
@@ -342,11 +348,12 @@ export default function LibraryPage() {
     if (!form.name.trim()) return;
     if (form.accountIds.length === 0) { error("Select at least one account"); return; }
     if (form.timeSlots.length === 0) { error("Add at least one time slot"); return; }
+    if (form.sourceType === "rss" && !form.rssUrl.trim()) { error("Enter a feed URL"); return; }
     setCreating(true);
     try {
       const lib = await apiFetch<{ id: string }>("/library", { method: "POST", body: JSON.stringify(form) });
       setCreateOpen(false);
-      setForm({ name: "", postsPerDay: 1, timeSlots: ["09:00"], timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", accountIds: [] });
+      setForm({ name: "", postsPerDay: 1, timeSlots: ["09:00"], timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", accountIds: [], sourceType: "csv", rssUrl: "", aiSummarize: false });
       await loadLibraries();
       success("Library created");
       setSelectedId(lib.id);
@@ -653,6 +660,7 @@ export default function LibraryPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
+                    {lib.sourceType === "rss" && <span style={{ fontSize: 10, color: "#818cf8", border: "1px solid #5b63d380", borderRadius: 4, padding: "0 5px" }}>RSS</span>}
                     <span style={{ fontSize: 11, color: "#777" }}>{lib._count?.items ?? 0} items</span>
                     {queued > 0 && <span style={{ fontSize: 11, color: "#818cf8" }}>{queued} queued</span>}
                     <span style={{ fontSize: 11, color: "#777" }}>{lib.postsPerDay}/day</span>
@@ -874,36 +882,48 @@ function LibraryDetail({
           )}
         </div>
 
-        {/* CSV drop zone */}
-        <div
-          className="mx-4 mt-3 mb-2 shrink-0"
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={handleDrop}
-          onClick={() => !csvUploading && fileInputRef.current?.click()}
-          style={{
-            border: `1.5px dashed ${dragOver ? "#818cf8" : "#222"}`,
-            borderRadius: 8,
-            padding: "10px 14px",
-            display: "flex", alignItems: "center", gap: 10,
-            cursor: csvUploading ? "wait" : "pointer",
-            backgroundColor: dragOver ? "#0d0d2a" : "#0d0d0d",
-            transition: "all 0.15s",
-          }}
-        >
-          <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onCsvFile(f); }} />
-          <svg style={{ width: 15, height: 15, color: csvUploading ? "#818cf8" : "#444", flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-          </svg>
-          {csvUploading ? (
-            <p style={{ fontSize: 12, color: "#818cf8" }}>Uploading…</p>
-          ) : (
-            <div>
-              <p style={{ fontSize: 12, color: "#aaa", fontWeight: 500 }}>Drop CSV or click to upload</p>
-              <p style={{ fontSize: 11, color: "#777", marginTop: 1 }}>Columns: text, comment (opt), mediaUrls pipe-separated (opt) · max {MAX_CSV_ROWS} rows</p>
+        {/* CSV drop zone, or RSS feed info when the library is RSS-sourced */}
+        {library.sourceType === "rss" ? (
+          <div className="mx-4 mt-3 mb-2 shrink-0" style={{ border: "1px solid #1e1e1e", borderRadius: 8, padding: "10px 14px", backgroundColor: "#0d0d0d" }}>
+            <div className="flex items-center gap-2">
+              <svg style={{ width: 14, height: 14, color: "#818cf8", flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 11a9 9 0 019 9M4 4a16 16 0 0116 16M5 19a1 1 0 100-2 1 1 0 000 2z" />
+              </svg>
+              <p style={{ fontSize: 12, color: "#aaa", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{library.rssUrl}</p>
             </div>
-          )}
-        </div>
+            <p style={{ fontSize: 11, color: "#777", marginTop: 3 }}>Polled automatically every ~20 minutes{library.aiSummarize ? " · AI summarize on" : ""}</p>
+          </div>
+        ) : (
+          <div
+            className="mx-4 mt-3 mb-2 shrink-0"
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            onClick={() => !csvUploading && fileInputRef.current?.click()}
+            style={{
+              border: `1.5px dashed ${dragOver ? "#818cf8" : "#222"}`,
+              borderRadius: 8,
+              padding: "10px 14px",
+              display: "flex", alignItems: "center", gap: 10,
+              cursor: csvUploading ? "wait" : "pointer",
+              backgroundColor: dragOver ? "#0d0d2a" : "#0d0d0d",
+              transition: "all 0.15s",
+            }}
+          >
+            <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onCsvFile(f); }} />
+            <svg style={{ width: 15, height: 15, color: csvUploading ? "#818cf8" : "#444", flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            {csvUploading ? (
+              <p style={{ fontSize: 12, color: "#818cf8" }}>Uploading…</p>
+            ) : (
+              <div>
+                <p style={{ fontSize: 12, color: "#aaa", fontWeight: 500 }}>Drop CSV or click to upload</p>
+                <p style={{ fontSize: 11, color: "#777", marginTop: 1 }}>Columns: text, comment (opt), mediaUrls pipe-separated (opt) · max {MAX_CSV_ROWS} rows</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Filter tabs */}
         <div className="flex items-center gap-1 px-4 mb-2 shrink-0 overflow-x-auto">
@@ -937,7 +957,7 @@ function LibraryDetail({
           ) : items.length === 0 ? (
             <div className="py-10 text-center">
               <p style={{ fontSize: 13, color: "#444" }}>No items{itemsFilter !== "all" ? ` with status "${itemsFilter}"` : ""}</p>
-              {itemsFilter === "all" && <p style={{ fontSize: 11, color: "#333", marginTop: 4 }}>Upload a CSV above to add content</p>}
+              {itemsFilter === "all" && <p style={{ fontSize: 11, color: "#333", marginTop: 4 }}>{library.sourceType === "rss" ? "Waiting for new articles from the feed" : "Upload a CSV above to add content"}</p>}
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -1035,17 +1055,22 @@ function SettingsPanel({ library, accounts, onClose, onSaved, onError, onSuccess
     timeSlots: [...library.timeSlots],
     timezone: library.timezone,
     accountIds: [...library.accountIds],
+    rssUrl: library.rssUrl ?? "",
+    aiSummarize: library.aiSummarize,
   });
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (form.accountIds.length === 0) { onError("Select at least one account"); return; }
     if (form.timeSlots.length === 0) { onError("Add at least one time slot"); return; }
+    if (library.sourceType === "rss" && !form.rssUrl.trim()) { onError("Enter a feed URL"); return; }
     setSaving(true);
     try {
+      const { rssUrl, aiSummarize, ...rest } = form;
+      const body = library.sourceType === "rss" ? { ...rest, rssUrl, aiSummarize } : rest;
       await apiFetch(`/library/${library.id}`, {
         method: "PATCH",
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       });
       onSaved({ id: library.id, ...form });
       onSuccess("Settings saved");
@@ -1076,6 +1101,22 @@ function SettingsPanel({ library, accounts, onClose, onSaved, onError, onSuccess
             style={{ width: "100%", backgroundColor: "#111", border: "1px solid #2a2a2a", borderRadius: 7, padding: "7px 10px", fontSize: 12, color: "#ededed", outline: "none" }}
           />
         </div>
+
+        {/* RSS feed settings */}
+        {library.sourceType === "rss" && (
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#888" }}>Feed URL</label>
+            <input
+              value={form.rssUrl}
+              onChange={e => setForm(f => ({ ...f, rssUrl: e.target.value }))}
+              style={{ width: "100%", backgroundColor: "#111", border: "1px solid #2a2a2a", borderRadius: 7, padding: "7px 10px", fontSize: 12, color: "#ededed", outline: "none" }}
+            />
+            <label className="flex items-center gap-2 mt-2.5" style={{ cursor: "pointer" }}>
+              <input type="checkbox" checked={form.aiSummarize} onChange={e => setForm(f => ({ ...f, aiSummarize: e.target.checked }))} />
+              <span style={{ fontSize: 11, color: "#aaa" }}>Summarize articles with AI</span>
+            </label>
+          </div>
+        )}
 
         {/* Posts per day */}
         <div>
@@ -1180,13 +1221,28 @@ const PLATFORM_BRAND_LIB: Record<string, string> = {
 function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClose, maxDripPerDay = 50 }: {
   title: string;
   accounts: Account[];
-  form: { name: string; postsPerDay: number; timeSlots: string[]; timezone: string; accountIds: string[] };
+  form: { name: string; postsPerDay: number; timeSlots: string[]; timezone: string; accountIds: string[]; sourceType: "csv" | "rss"; rssUrl: string; aiSummarize: boolean };
   setForm: React.Dispatch<React.SetStateAction<typeof form>>;
   saving: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
   maxDripPerDay?: number;
 }) {
+  const [feedCheck, setFeedCheck] = useState<{ state: "idle" | "checking" | "valid" | "invalid"; message?: string }>({ state: "idle" });
+
+  async function checkFeed() {
+    if (!form.rssUrl.trim()) return;
+    setFeedCheck({ state: "checking" });
+    try {
+      const res = await apiFetch<{ valid: boolean; title?: string | null; itemCount?: number; error?: string }>(
+        "/library/validate-rss", { method: "POST", body: JSON.stringify({ url: form.rssUrl.trim() }) }
+      );
+      setFeedCheck({ state: "valid", message: `${res.title ?? "Feed"} — ${res.itemCount ?? 0} item(s) found` });
+    } catch (e) {
+      setFeedCheck({ state: "invalid", message: e instanceof Error ? e.message : "Could not read this feed" });
+    }
+  }
+
   const inputStyle: React.CSSProperties = {
     width: "100%", backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a",
     borderRadius: 8, padding: "9px 12px", fontSize: 13, color: "#ededed", outline: "none",
@@ -1223,6 +1279,73 @@ function LibraryModal({ title, accounts, form, setForm, saving, onSubmit, onClos
                 placeholder="e.g. Facebook Motivational Posts"
                 style={inputStyle} />
             </div>
+
+            {/* Source: CSV upload vs RSS feed */}
+            <div>
+              <label style={labelStyle}>Source</label>
+              <div className="flex gap-2">
+                {(["csv", "rss"] as const).map(src => (
+                  <button key={src} type="button"
+                    onClick={() => setForm(f => ({ ...f, sourceType: src }))}
+                    style={{
+                      flex: 1, padding: "9px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                      backgroundColor: form.sourceType === src ? "#5b63d312" : "#0a0a0a",
+                      border: `1px solid ${form.sourceType === src ? "#5b63d380" : "#2a2a2a"}`,
+                      color: form.sourceType === src ? "#818cf8" : "#888",
+                    }}>
+                    {src === "csv" ? "Upload CSV" : "RSS feed"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {form.sourceType === "rss" && (
+              <>
+                <div>
+                  <label style={labelStyle}>Feed URL</label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input value={form.rssUrl}
+                      onChange={e => { setForm(f => ({ ...f, rssUrl: e.target.value })); setFeedCheck({ state: "idle" }); }}
+                      placeholder="https://example.com/feed.xml"
+                      style={{ ...inputStyle, flex: 1, minWidth: 0 }} />
+                    <button type="button" onClick={checkFeed} disabled={feedCheck.state === "checking" || !form.rssUrl.trim()}
+                      className="flex items-center justify-center gap-1.5 sm:justify-start"
+                      style={{ padding: "9px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, backgroundColor: "#1a1a1a", color: "#ededed", border: "1px solid #2a2a2a", cursor: feedCheck.state === "checking" || !form.rssUrl.trim() ? "default" : "pointer", whiteSpace: "nowrap", opacity: !form.rssUrl.trim() ? 0.5 : 1, flexShrink: 0 }}>
+                      {feedCheck.state === "checking" ? (
+                        <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M12 2a10 10 0 100 20"/></svg>
+                      ) : (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 11a9 9 0 019 9M4 4a16 16 0 0116 16M5 19a1 1 0 100-2 1 1 0 000 2z"/></svg>
+                      )}
+                      {feedCheck.state === "checking" ? "Checking…" : "Test feed"}
+                    </button>
+                  </div>
+                  {feedCheck.state === "valid" && (
+                    <div style={{ marginTop: 8, padding: "7px 10px", borderRadius: 6, borderLeft: "2px solid #22c55e", backgroundColor: "#22c55e0d" }}>
+                      <p style={{ fontSize: 11, color: "#4ade80", fontWeight: 500 }}>✓ Feed valid — {feedCheck.message}</p>
+                    </div>
+                  )}
+                  {feedCheck.state === "invalid" && (
+                    <div style={{ marginTop: 8, padding: "7px 10px", borderRadius: 6, borderLeft: "2px solid #ef4444", backgroundColor: "#ef44440d" }}>
+                      <p style={{ fontSize: 11, color: "#f87171", fontWeight: 500 }}>{feedCheck.message}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-start gap-2.5" style={{ cursor: "pointer" }}>
+                    <input type="checkbox" checked={form.aiSummarize} onChange={e => setForm(f => ({ ...f, aiSummarize: e.target.checked }))}
+                      style={{ marginTop: 2, flexShrink: 0 }} />
+                    <span style={{ fontSize: 12.5, color: "#ccc", fontWeight: 500 }}>Summarize articles with AI before posting</span>
+                  </label>
+                  <div className="flex items-start gap-1.5" style={{ marginTop: 8, padding: "7px 10px", borderRadius: 6, backgroundColor: "#0a0a0a", border: "1px solid #1e1e1e" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" style={{ marginTop: 2, flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 8v4M12 16h.01"/></svg>
+                    <p style={{ fontSize: 11, color: "#777", lineHeight: 1.5 }}>Checked every ~20 minutes for new articles, queued automatically. The article link is always included.</p>
+                  </div>
+                </div>
+
+                <div style={{ height: 1, backgroundColor: "#242424" }} />
+              </>
+            )}
 
             {/* Posts per day + Time slots side by side */}
             <div className="grid grid-cols-2 gap-3">

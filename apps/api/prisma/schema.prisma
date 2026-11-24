@@ -464,16 +464,34 @@ model ContentLibrary {
   timezone    String   @default("UTC")
   accountIds  Json                          // String[] — account IDs to post to
 
+  // Source: "csv" (manual upload, exhausts) or "rss" (auto-refills from a feed)
+  sourceType  String   @default("csv")
+  rssUrl      String?
+  aiSummarize Boolean  @default(false)      // summarize articles with Claude Haiku instead of raw title/snippet
+
   // Safety: track last drip run to avoid double-firing
   lastDripAt  DateTime?
 
   items       LibraryItem[]
+  rssItems    RssFeedItem[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([workspaceId])
   @@index([status])
+}
+
+// Tracks which RSS feed entries have already been turned into a LibraryItem,
+// so the poller never re-adds the same article.
+model RssFeedItem {
+  id        String   @id @default(cuid())
+  libraryId String
+  library   ContentLibrary @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+  guid      String                          // feed item guid, falls back to link
+  createdAt DateTime @default(now())
+
+  @@unique([libraryId, guid])
 }
 
 // A single content item inside a ContentLibrary.

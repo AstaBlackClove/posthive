@@ -76,6 +76,7 @@ type LibraryRow = {
   timeSlots: unknown;
   timezone: string;
   accountIds: unknown;
+  sourceType: string;
   lastDripAt: Date | null;
   workspace: { planStatus: string; onHoldSince: Date | null; members: { userId: string; user: { email: string; name: string | null } }[] };
 };
@@ -120,8 +121,9 @@ async function processLibrary(lib: LibraryRow) {
   if (!items.length) {
     await prisma.contentLibrary.update({ where: { id: lib.id }, data: { status: "exhausted" } });
     console.log(`[drip] library ${lib.id} exhausted`);
+    // RSS libraries self-refill on the next poll — no need to alarm the owner.
     const owner = lib.workspace.members[0];
-    if (owner) {
+    if (owner && lib.sourceType !== "rss") {
       sendLibraryExhaustedEmail(
         owner.user.email,
         owner.user.name ?? "there",
@@ -246,6 +248,7 @@ async function run() {
           timeSlots: true,
           timezone: true,
           accountIds: true,
+          sourceType: true,
           lastDripAt: true,
           workspace: { select: { planStatus: true, onHoldSince: true, members: { where: { role: "owner" }, select: { userId: true, user: { select: { email: true, name: true } } }, take: 1 } } },
         },

@@ -51,6 +51,7 @@ import { startStatsCron, runStatsCronNow } from "./lib/statsCron.js";
 import { startCleanupCron, setCleanupStorage, runCleanupNow } from "./lib/cleanupCron.js";
 import { startOnboardingCron } from "./lib/onboardingCron.js";
 import { startDripCron, runDripNow } from "./lib/dripCron.js";
+import { startRssCron } from "./lib/rssCron.js";
 import { startLibraryDigestCron } from "./lib/libraryDigestCron.js";
 import { startStuckJobCron } from "./lib/stuckJobCron.js";
 import { analyticsRoutes } from "./routes/analytics.js";
@@ -330,6 +331,7 @@ async function main() {
   startCleanupCron();
   startOnboardingCron();
   startDripCron();
+  startRssCron();
   startLibraryDigestCron();
   startStuckJobCron();
 }
