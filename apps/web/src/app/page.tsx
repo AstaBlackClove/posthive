@@ -1356,7 +1356,7 @@ export default function RootPage() {
                 icon: <RssIcon />,
                 title: "Content Library & RSS auto-post",
                 href: "/docs#content-library",
-                body: "Drip out an evergreen content queue, or point a library at an RSS feed and new articles get queued and posted automatically — no manual upload, ever.",
+                body: "Drip out an evergreen content queue, or point a library at an RSS feed and new articles get queued and posted automatically no manual upload, ever.",
               },
               {
                 icon: <McpIcon />,
@@ -1368,7 +1368,7 @@ export default function RootPage() {
                 icon: <RepeatIcon />,
                 title: "Repeat post scheduling",
                 href: "/docs#repeat-posts",
-                body: "Set a post to repeat daily, weekly, or monthly. Each occurrence auto-schedules the next — stop anytime by deleting the upcoming post.",
+                body: "Set a post to repeat daily, weekly, or monthly. Each occurrence auto-schedules the next stop anytime by deleting the upcoming post.",
               },
               {
                 icon: <SparklesIcon />,
