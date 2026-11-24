@@ -21,6 +21,7 @@ import { isSsrfBlocked } from "../lib/ssrf.js";
 import { getPlan } from "../lib/plans.js";
 import { sendPostFailedEmail, sendAccountExpiryEmail } from "../lib/mailer.js";
 import { isDeadTokenError } from "../lib/tokenRevocation.js";
+import { findDeadMediaUrl } from "../lib/mediaFormat.js";
 import type { PostResult, CommentResult } from "../adapters/types.js";
 import type { StorageAdapter } from "../lib/storage.js";
 
@@ -120,6 +121,23 @@ export async function runJob(
   }
 
   const content: JobContent = JSON.parse(job.content);
+
+  // Re-check media once for the whole job, right before publish — not just at schedule
+  // time. A file can die (orphan-cleanup, manual delete) during the gap between
+  // scheduling and the job firing. All targets share the same mediaUrls, so this runs
+  // once here instead of once per platform inside runTarget.
+  if (!job.dryRun && content.mediaUrls?.length) {
+    const deadUrl = await findDeadMediaUrl(content.mediaUrls);
+    if (deadUrl) {
+      await prisma.postJobTarget.updateMany({
+        where: { postJobId: job.id, status: "pending" },
+        data: { status: "post_failed", error: `Media no longer available at publish time: ${deadUrl}` },
+      });
+      await prisma.postJob.update({ where: { id: job.id }, data: { status: "failed" } });
+      console.warn(`[runner] job ${job.id} skipped — dead media URL: ${deadUrl}`);
+      return;
+    }
+  }
 
   await Promise.allSettled(
     job.targets.map((target) => {
