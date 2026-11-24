@@ -15,6 +15,7 @@ import { adapters } from "../adapters/index.js";
 import { filterUrlsSafeToDelete } from "../runner/jobRunner.js";
 import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
 import { validateStoredContent, type StoredContent } from "../lib/platformValidation.js";
+import { findDeadMediaUrl } from "../lib/mediaFormat.js";
 
 const mediaError = (accounts: { id: string; platform: string }[], c: StoredContent) => validateStoredContent(accounts, c);
 
@@ -140,6 +141,22 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       .map((x) => `Row ${x.i + 1}: ${x.err}`);
     if (mediaErrors.length) {
       return reply.status(400).send({ error: mediaErrors.join(" | "), code: "MEDIA_REQUIREMENT" });
+    }
+
+    // Batched (not all 250 rows at once) — keeps outbound HEAD-check fan-out bounded.
+    const DEAD_URL_CHECK_BATCH = 20;
+    const deadUrlErrors: string[] = [];
+    for (let i = 0; i < jobs.length; i += DEAD_URL_CHECK_BATCH) {
+      const chunk = jobs.slice(i, i + DEAD_URL_CHECK_BATCH);
+      const results = await Promise.all(
+        chunk.map(async (j, idx) => ({ i: i + idx, dead: j.content.mediaUrls.length ? await findDeadMediaUrl(j.content.mediaUrls) : null }))
+      );
+      for (const r of results) {
+        if (r.dead) deadUrlErrors.push(`Row ${r.i + 1}: image or video no longer available: ${r.dead}`);
+      }
+    }
+    if (deadUrlErrors.length) {
+      return reply.status(400).send({ error: deadUrlErrors.join(" | "), code: "MEDIA_UNREACHABLE" });
     }
 
     // Plan limit check — once for the entire batch
@@ -300,6 +317,11 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (!draft) {
       const err = mediaError(accounts, content);
       if (err) return reply.status(400).send({ error: err, code: "MEDIA_REQUIREMENT" });
+
+      if (content.mediaUrls.length > 0) {
+        const deadUrl = await findDeadMediaUrl(content.mediaUrls);
+        if (deadUrl) return reply.status(400).send({ error: `This image or video is no longer available: ${deadUrl}. Please re-upload it.`, code: "MEDIA_UNREACHABLE" });
+      }
     }
 
     // Wrap plan-limit check + job creation in a transaction with an advisory lock
@@ -614,6 +636,11 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       const merged = JSON.parse((updateData.content as string | undefined) ?? job.content) as StoredContent;
       const err = mediaError(finalAccountIds.map((aid) => ({ id: aid, platform: finalPlatformById.get(aid)! })), merged);
       if (err) return reply.status(400).send({ error: err, code: "MEDIA_REQUIREMENT" });
+
+      if (merged.mediaUrls?.length) {
+        const deadUrl = await findDeadMediaUrl(merged.mediaUrls);
+        if (deadUrl) return reply.status(400).send({ error: `This image or video is no longer available: ${deadUrl}. Please re-upload it.`, code: "MEDIA_UNREACHABLE" });
+      }
     }
 
     const updated = await prisma.postJob.update({ where: { id }, data: updateData });
@@ -679,8 +706,13 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     if (!job) return reply.status(404).send({ error: "Job not found" });
     if (job.status !== "draft") return reply.status(409).send({ error: "Only draft jobs can be scheduled" });
     // drafts skip media checks at creation, so they run here before the job goes live
-    const draftErr = mediaError(job.targets.map((t) => ({ id: t.accountId, platform: t.account.platform })), JSON.parse(job.content) as StoredContent);
+    const draftContent = JSON.parse(job.content) as StoredContent;
+    const draftErr = mediaError(job.targets.map((t) => ({ id: t.accountId, platform: t.account.platform })), draftContent);
     if (draftErr) return reply.status(400).send({ error: draftErr, code: "MEDIA_REQUIREMENT" });
+    if (draftContent.mediaUrls?.length) {
+      const deadUrl = await findDeadMediaUrl(draftContent.mediaUrls);
+      if (deadUrl) return reply.status(400).send({ error: `This image or video is no longer available: ${deadUrl}. Please re-upload it.`, code: "MEDIA_UNREACHABLE" });
+    }
     const role = await getWorkspaceRole(userId, workspaceId);
     if (!["owner", "admin"].includes(role ?? "") && job.userId !== userId) {
       return reply.status(403).send({ error: "You can only schedule your own posts.", code: "FORBIDDEN" });

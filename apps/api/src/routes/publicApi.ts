@@ -8,6 +8,7 @@ import { ALLOWED_IMAGE_TYPES, type StorageAdapter } from "../lib/storage.js";
 import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
 import { validatePlatformContent, validateStoredContent, type StoredContent } from "../lib/platformValidation.js";
 import { imageLimitError } from "../lib/enforcePlan.js";
+import { findDeadMediaUrl } from "../lib/mediaFormat.js";
 
 // Checked on every request, not just at key creation: a key made on Pro must stop
 // working once the plan is cancelled, on hold, or downgraded.
@@ -148,6 +149,10 @@ export async function publicApiRoutes(
       perAccountComment: Object.fromEntries(Object.entries(normalizedPerAccount ?? {}).map(([k, v]) => [k, v?.commentText])),
     });
     if (mediaError) return reply.status(400).send({ error: mediaError, code: "MEDIA_REQUIREMENT" });
+    if (body.images?.length) {
+      const deadUrl = await findDeadMediaUrl(body.images);
+      if (deadUrl) return reply.status(400).send({ error: `This image or video is no longer available: ${deadUrl}`, code: "MEDIA_UNREACHABLE" });
+    }
     const imgErr = await imageLimitError(workspaceId, (body.images ?? []).length);
     if (imgErr) return reply.status(402).send(imgErr);
 
@@ -428,6 +433,10 @@ export async function publicApiRoutes(
       perAccountComment: Object.fromEntries(Object.entries(finalPerAccount ?? {}).map(([k, v]) => [k, v?.commentText])),
     });
     if (mediaError) return reply.status(400).send({ error: mediaError, code: "MEDIA_REQUIREMENT" });
+    if (finalImages.length) {
+      const deadUrl = await findDeadMediaUrl(finalImages);
+      if (deadUrl) return reply.status(400).send({ error: `This image or video is no longer available: ${deadUrl}`, code: "MEDIA_UNREACHABLE" });
+    }
     const imgErr = await imageLimitError(workspaceId, finalImages.length);
     if (imgErr) return reply.status(402).send(imgErr);
 
@@ -492,12 +501,17 @@ export async function publicApiRoutes(
     if (!job) return reply.status(404).send({ error: "Post not found" });
     if (job.status !== "draft") return reply.status(409).send({ error: `Post status is '${job.status}' — only drafts can be approved` });
     // drafts can come from the web app or older MCP calls without checks; verify before going live
+    const approveContent = JSON.parse(job.content) as StoredContent;
     const approveErr = validateStoredContent(
       job.targets.map((t) => ({ id: t.accountId, platform: t.account.platform })),
-      JSON.parse(job.content) as StoredContent,
+      approveContent,
       job.commentText,
     );
     if (approveErr) return reply.status(400).send({ error: approveErr, code: "MEDIA_REQUIREMENT" });
+    if (approveContent.mediaUrls?.length) {
+      const deadUrl = await findDeadMediaUrl(approveContent.mediaUrls);
+      if (deadUrl) return reply.status(400).send({ error: `This image or video is no longer available: ${deadUrl}`, code: "MEDIA_UNREACHABLE" });
+    }
 
     const updated = await prisma.postJob.update({
       where: { id },

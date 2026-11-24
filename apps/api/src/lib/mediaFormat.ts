@@ -3,6 +3,26 @@ import { getMediaBuffer, type StorageAdapter } from "./storage.js";
 const UNSUPPORTED_EXT = /\.(webp|gif|bmp|tiff?|avif|heic|heif)(\?.*)?$/i;
 const MAX_CONVERT_BYTES = 20_000_000; // sanity cap before feeding sharp — avoid huge-image memory spikes
 const FETCH_TIMEOUT_MS = 15_000;
+const HEAD_CHECK_TIMEOUT_MS = 8_000;
+
+/**
+ * HEAD-checks each media URL so a job isn't scheduled against a file that's
+ * already gone (e.g. an upload the orphan-cleanup cron already deleted before
+ * this job claimed it). Returns the first dead URL found, or null if all are live.
+ * Same check dripCron already runs before drip-publishing a library item.
+ */
+export async function findDeadMediaUrl(urls: string[]): Promise<string | null> {
+  const httpUrls = urls.filter((u) => u.startsWith("http"));
+  const results = await Promise.all(httpUrls.map(async (url) => {
+    try {
+      const res = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(HEAD_CHECK_TIMEOUT_MS) });
+      return res.ok ? null : url;
+    } catch {
+      return url;
+    }
+  }));
+  return results.find((dead) => dead !== null) ?? null;
+}
 
 /**
  * Instagram, Threads, and Tumblr fetch image URLs themselves and only
