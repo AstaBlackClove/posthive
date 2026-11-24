@@ -19,11 +19,26 @@ import { prisma } from "../lib/prisma.js";
 import { schedulePostJob } from "../lib/queue.js";
 import { isSsrfBlocked } from "../lib/ssrf.js";
 import { getPlan } from "../lib/plans.js";
-import { sendPostFailedEmail } from "../lib/mailer.js";
+import { sendPostFailedEmail, sendAccountExpiryEmail } from "../lib/mailer.js";
+import { isDeadTokenError } from "../lib/tokenRevocation.js";
 import type { PostResult, CommentResult } from "../adapters/types.js";
 import type { StorageAdapter } from "../lib/storage.js";
 
 const MAX_ATTEMPTS = 3;
+
+// Some platforms (Pixelfed, and Facebook/Instagram when their proactive refresh
+// cron missed it) only reveal a dead token when a real post attempt fails here —
+// not every 12h via tokenRefreshCron. Catch it here too, once per account.
+async function notifyIfDeadToken(err: unknown, account: Account): Promise<void> {
+  if (account.warnedExpiryAt) return;
+  const msg = err instanceof Error ? err.message : String(err);
+  if (!isDeadTokenError(msg)) return;
+  const user = await prisma.user.findUnique({ where: { id: account.userId }, select: { email: true } });
+  if (!user?.email) return;
+  await sendAccountExpiryEmail(user.email, account.platform, account.displayName, 0)
+    .catch((e) => console.warn(`[runner] reconnect email failed for account ${account.id}:`, e));
+  await prisma.account.update({ where: { id: account.id }, data: { warnedExpiryAt: new Date() } });
+}
 
 type FullTarget = PostJobTarget & { account: Account };
 type PerAccountOverride = { text?: string; commentText?: string };
@@ -346,6 +361,7 @@ async function runTarget(
         ? target.account
         : await adapter.refreshTokenIfNeeded(target.account);
     } catch (err) {
+      await notifyIfDeadToken(err, target.account);
       await setTargetStatus(target.id, "post_failed", { error: String(err) });
       return;
     }
@@ -361,6 +377,7 @@ async function runTarget(
         tags: { component: "runner", platform: target.account.platform },
         extra: { postJobId: target.postJobId, accountId: target.accountId },
       });
+      await notifyIfDeadToken(err, target.account);
       await setTargetStatus(target.id, "post_failed", { error: String(err) });
       return;
     }
@@ -400,6 +417,7 @@ async function runTarget(
       ? target.account
       : await adapter.refreshTokenIfNeeded(target.account);
   } catch (err) {
+    await notifyIfDeadToken(err, target.account);
     await setTargetStatus(target.id, "comment_failed", { error: String(err) });
     return;
   }
@@ -416,6 +434,7 @@ async function runTarget(
       tags: { component: "runner", platform: target.account.platform, step: "createComment" },
       extra: { postJobId: target.postJobId, accountId: target.accountId },
     });
+    await notifyIfDeadToken(err, target.account);
     await setTargetStatus(target.id, "comment_failed", { error: String(err) });
   }
 }

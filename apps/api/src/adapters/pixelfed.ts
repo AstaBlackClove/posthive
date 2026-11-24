@@ -32,7 +32,7 @@ async function apiPost<T>(instanceUrl: string, token: string, path: string, body
   } catch {
     throw new Error(`Pixelfed returned non-JSON (${res.status}): ${text.slice(0, 200)}`);
   }
-  if (!res.ok) throw new Error(json.error ?? `Pixelfed API error: ${res.status}`);
+  if (!res.ok) throw new Error(`${json.error ?? `Pixelfed API error: ${res.status}`}${res.status === 401 ? " — reconnect required" : ""}`);
   return json;
 }
 
@@ -51,7 +51,7 @@ async function uploadMedia(instanceUrl: string, token: string, buffer: Buffer, m
   let json: { id?: string; error?: string };
   try { json = JSON.parse(rawText) as { id?: string; error?: string }; }
   catch { throw new Error(`Pixelfed media upload returned non-JSON (${res.status}): ${rawText.slice(0, 200)}`); }
-  if (!res.ok) throw new Error(json.error ?? `Pixelfed media upload failed: ${res.status}`);
+  if (!res.ok) throw new Error(`${json.error ?? `Pixelfed media upload failed: ${res.status}`}${res.status === 401 ? " — reconnect required" : ""}`);
   return json.id!;
 }
 

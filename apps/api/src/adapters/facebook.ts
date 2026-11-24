@@ -1,5 +1,5 @@
 /**
- * Facebook Pages adapter — Graph API v21.0
+ * Facebook Pages adapter — Graph API v27.0
  *
  * Auth: OAuth 2.0 long-lived page access token (never expires while page is connected).
  * Flow:
@@ -14,9 +14,10 @@ import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
 import { getMediaBuffer, type StorageAdapter } from "../lib/storage.js";
+import { isDeadTokenError } from "../lib/tokenRevocation.js";
 import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
-const GRAPH = "https://graph.facebook.com/v21.0";
+const GRAPH = "https://graph.facebook.com/v27.0";
 
 // Facebook only accepts JPEG and PNG for photo posts
 const FB_SUPPORTED = new Set(["image/jpeg", "image/png"]);
@@ -173,7 +174,11 @@ export const facebookAdapter: PlatformAdapter = {
     });
 
     if (!res.ok) {
-      console.error("[facebook] token refresh failed:", await res.text());
+      const body = await res.text();
+      console.error("[facebook] token refresh failed:", body);
+      // Only a confirmed dead token (not a transient refresh hiccup) is worth
+      // throwing — the caller's catch triggers the reconnect warning for it.
+      if (isDeadTokenError(body)) throw new Error(`Facebook token refresh failed: ${body} — reconnect required`);
       return account;
     }
 

@@ -15,6 +15,7 @@ import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from
 import { ensureSupportedImageUrl, cleanupConvertedLater } from "../lib/mediaFormat.js";
 import type { StorageAdapter } from "../lib/storage.js";
 import { isContainerNotReady, retry } from "../lib/threadsRetry.js";
+import { isDeadTokenError } from "../lib/tokenRevocation.js";
 
 const BASE = "https://graph.threads.net/v1.0";
 
@@ -126,7 +127,7 @@ export const threadsAdapter: PlatformAdapter = {
 
     if (!res.ok) {
       const body = await res.text();
-      throw new Error(`Threads token refresh failed: ${body}`);
+      throw new Error(`Threads token refresh failed: ${body}${isDeadTokenError(body) ? " — reconnect required" : ""}`);
     }
 
     const data = await res.json() as { access_token: string; expires_in: number };

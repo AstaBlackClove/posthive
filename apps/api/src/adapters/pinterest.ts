@@ -17,6 +17,7 @@
 import type { Account } from "@prisma/client";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { prisma } from "../lib/prisma.js";
+import { isDeadTokenError } from "../lib/tokenRevocation.js";
 import type { CommentResult, PlatformAdapter, PostResult } from "./types.js";
 
 // API calls use sandbox when PINTEREST_SANDBOX=true (Trial-access apps can't write to production).
@@ -54,7 +55,10 @@ async function refreshAccessToken(account: Account): Promise<PinterestCredential
       refresh_token: creds.refreshToken,
     }),
   });
-  if (!res.ok) throw new Error(`Pinterest token refresh failed: ${await res.text()}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Pinterest token refresh failed: ${body}${isDeadTokenError(body) ? " — reconnect required" : ""}`);
+  }
 
   const data = await res.json() as { access_token: string; refresh_token: string; expires_in: number };
   return {

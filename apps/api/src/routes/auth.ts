@@ -371,7 +371,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     let avatarUrl: string | null = null;
     try {
       const profileRes = await fetch(
-        `https://graph.instagram.com/v21.0/me?fields=id,username,profile_picture_url&access_token=${longToken}`
+        `https://graph.instagram.com/v27.0/me?fields=id,username,profile_picture_url&access_token=${longToken}`
       );
       const profileText = await profileRes.text();
       if (!profileRes.ok) {
@@ -1365,7 +1365,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       response_type: "code",
       state,
     });
-    return reply.redirect(`https://www.facebook.com/v21.0/dialog/oauth?${params}`);
+    return reply.redirect(`https://www.facebook.com/v27.0/dialog/oauth?${params}`);
   });
 
   app.get("/auth/facebook/callback", async (req, reply) => {
@@ -1400,7 +1400,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     let shortLivedToken: string;
     try {
-      const tokenRes = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?${tokenParams}`);
+      const tokenRes = await fetch(`https://graph.facebook.com/v27.0/oauth/access_token?${tokenParams}`);
       const tokenText = await tokenRes.text();
       if (!tokenRes.ok) {
         console.error(`[facebook oauth] short-lived token exchange failed (${tokenRes.status}): ${tokenText}`);
@@ -1423,7 +1423,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         client_secret: FB_APP_SECRET,
         fb_exchange_token: shortLivedToken,
       });
-      const llRes = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?${llParams}`);
+      const llRes = await fetch(`https://graph.facebook.com/v27.0/oauth/access_token?${llParams}`);
       const llText = await llRes.text();
       if (!llRes.ok) {
         console.error(`[facebook oauth] long-lived token exchange failed: ${llText}`);
@@ -1440,7 +1440,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     // Get user ID
     let fbUserId: string;
     try {
-      const meRes = await fetch(`https://graph.facebook.com/v21.0/me?access_token=${longLivedToken}`);
+      const meRes = await fetch(`https://graph.facebook.com/v27.0/me?access_token=${longLivedToken}`);
       const meData = await meRes.json() as { id: string; name?: string };
       fbUserId = meData.id;
     } catch (err) {
@@ -1452,7 +1452,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     type FbPage = { id: string; name: string; access_token: string; picture?: { data?: { url?: string } } };
     let pages: FbPage[] = [];
     try {
-      let url: string | null = `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,picture&limit=100&access_token=${longLivedToken}`;
+      let url: string | null = `https://graph.facebook.com/v27.0/me/accounts?fields=id,name,access_token,picture&limit=100&access_token=${longLivedToken}`;
       while (url) {
         const pagesRes = await fetch(url);
         const pagesData = await pagesRes.json() as { data?: FbPage[]; paging?: { next?: string } };
@@ -1467,7 +1467,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     // Also fetch pages managed via Meta Business Portfolio (Business Manager)
     try {
       type FbBusiness = { id: string; name: string; owned_pages?: { data?: Array<{ id: string; name: string }>; paging?: { next?: string } } };
-      let bizUrl: string | null = `https://graph.facebook.com/v21.0/me/businesses?fields=id,name,owned_pages{id,name}&limit=10&access_token=${longLivedToken}`;
+      let bizUrl: string | null = `https://graph.facebook.com/v27.0/me/businesses?fields=id,name,owned_pages{id,name}&limit=10&access_token=${longLivedToken}`;
       const pageIds = new Set(pages.map(p => p.id));
       while (bizUrl) {
         const bizRes = await fetch(bizUrl);
@@ -1481,7 +1481,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
             if (!pageIds.has(p.id)) {
               // Fetch full page data (access_token + picture) for this business page
               try {
-                const fullRes = await fetch(`https://graph.facebook.com/v21.0/${p.id}?fields=id,name,access_token,picture&access_token=${longLivedToken}`);
+                const fullRes = await fetch(`https://graph.facebook.com/v27.0/${p.id}?fields=id,name,access_token,picture&access_token=${longLivedToken}`);
                 const full = await fullRes.json() as FbPage & { error?: unknown };
                 if (!('error' in full) && full.access_token) {
                   pages.push(full);
@@ -1497,7 +1497,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
             for (const p of nextData.data ?? []) {
               if (!pageIds.has(p.id)) {
                 try {
-                  const fullRes = await fetch(`https://graph.facebook.com/v21.0/${p.id}?fields=id,name,access_token,picture&access_token=${longLivedToken}`);
+                  const fullRes = await fetch(`https://graph.facebook.com/v27.0/${p.id}?fields=id,name,access_token,picture&access_token=${longLivedToken}`);
                   const full = await fullRes.json() as FbPage & { error?: unknown };
                   if (!('error' in full) && full.access_token) {
                     pages.push(full);

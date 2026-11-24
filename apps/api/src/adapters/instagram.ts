@@ -4,8 +4,9 @@ import type { AnalyticsResult, CommentResult, PlatformAdapter, PostResult } from
 import { prisma } from "../lib/prisma.js";
 import { ensureSupportedImageUrl, cleanupConvertedLater } from "../lib/mediaFormat.js";
 import type { StorageAdapter } from "../lib/storage.js";
+import { isDeadTokenError } from "../lib/tokenRevocation.js";
 
-const API = "https://graph.instagram.com/v21.0";
+const API = "https://graph.instagram.com/v27.0";
 
 let storageAdapter: StorageAdapter | null = null;
 export function setInstagramStorage(s: StorageAdapter): void { storageAdapter = s; }
@@ -58,12 +59,25 @@ async function refreshIfNeeded(account: Account): Promise<Account> {
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
   if (expiresAt.getTime() - Date.now() > sevenDays) return account;
 
+  let res: Response;
   try {
-    const res = await fetch(
+    res = await fetch(
       `https://graph.instagram.com/refresh_access_token?` +
       new URLSearchParams({ grant_type: "ig_refresh_token", access_token: creds.accessToken })
     );
-    if (!res.ok) return account;
+  } catch {
+    return account; // network error — try again next cron run
+  }
+
+  if (!res.ok) {
+    const body = await res.text();
+    // Only a confirmed dead token is worth throwing — the caller's catch
+    // triggers the reconnect warning for it; a transient hiccup just retries later.
+    if (isDeadTokenError(body)) throw new Error(`Instagram token refresh failed: ${body} — reconnect required`);
+    return account;
+  }
+
+  try {
     const data = await res.json() as { access_token: string; expires_in: number };
     const newCreds: InstagramCredentials = {
       ...creds,

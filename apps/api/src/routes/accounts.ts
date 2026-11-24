@@ -236,7 +236,7 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
 
     const { accessToken } = JSON.parse(decrypt(igAccount.credentials)) as { accessToken: string; userId: string };
 
-    const url = new URL("https://graph.facebook.com/v21.0/search");
+    const url = new URL("https://graph.facebook.com/v27.0/search");
     url.searchParams.set("type", "place");
     url.searchParams.set("q", q);
     url.searchParams.set("fields", "id,name,location");
@@ -364,7 +364,7 @@ export async function accountRoutes(app: FastifyInstance, opts: { storage: Stora
         }
         case "facebook": {
           const res = await fetch(
-            `https://graph.facebook.com/v21.0/${creds.pageId}?fields=name,picture.type(large)&access_token=${creds.pageAccessToken}`
+            `https://graph.facebook.com/v27.0/${creds.pageId}?fields=name,picture.type(large)&access_token=${creds.pageAccessToken}`
           );
           if (res.ok) {
             const d = await res.json() as { name?: string; picture?: { data?: { url?: string } } };

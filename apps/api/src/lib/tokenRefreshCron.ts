@@ -22,6 +22,7 @@ import * as Sentry from "@sentry/node";
 import { prisma } from "./prisma.js";
 import { getAdapter } from "../adapters/index.js";
 import { sendAccountExpiryEmail } from "./mailer.js";
+import { isDeadTokenError } from "./tokenRevocation.js";
 
 // youtube and googlebusiness use 1-hour Google tokens — inline refresh in the adapter
 // handles them at job time. Proactive cron refresh is wasted API calls for these.
@@ -67,7 +68,7 @@ async function run(skipRecentlyRefreshed = false) {
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             console.error(`[token-refresh] failed for ${account.platform} account ${account.id}:`, err);
-            const isRevoked = msg.includes("invalid_grant") || msg.includes("reconnect");
+            const isRevoked = isDeadTokenError(msg);
             if (!isRevoked) {
               Sentry.captureException(err, {
                 tags: { component: "token-refresh", platform: account.platform },
