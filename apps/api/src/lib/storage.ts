@@ -16,6 +16,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { retry } from "./threadsRetry.js";
 
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 export const MAX_IMAGE_SIZE_BYTES = 10_000_000; // 10 MB
@@ -65,8 +66,21 @@ export async function getMediaBuffer(storageAdapter: StorageAdapter, url: string
 
   const promise = (async () => {
     if (storageAdapter.ownsUrl(url)) return storageAdapter.getBuffer(url);
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Failed to fetch media ${url}: ${res.status}`);
+    // External hosts (user-linked images) are flaky — retry transient failures
+    // (timeouts, 5xx) but not a permanent 4xx, which won't fix itself.
+    const res = await retry(
+      async () => {
+        const r = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+        if (!r.ok) throw new Error(`Failed to fetch media ${url}: ${r.status}`);
+        return r;
+      },
+      (err) => {
+        const status = Number((err instanceof Error ? err.message : "").match(/: (\d{3})$/)?.[1]);
+        return !status || status >= 500;
+      },
+      3,
+      2000,
+    );
     return Buffer.from(await res.arrayBuffer());
   })();
 

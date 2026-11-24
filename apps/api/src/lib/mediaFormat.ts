@@ -2,7 +2,6 @@ import { getMediaBuffer, type StorageAdapter } from "./storage.js";
 
 const UNSUPPORTED_EXT = /\.(webp|gif|bmp|tiff?|avif|heic|heif)(\?.*)?$/i;
 const MAX_CONVERT_BYTES = 20_000_000; // sanity cap before feeding sharp — avoid huge-image memory spikes
-const FETCH_TIMEOUT_MS = 15_000;
 const HEAD_CHECK_TIMEOUT_MS = 8_000;
 
 /**
@@ -35,12 +34,8 @@ export async function findDeadMediaUrl(urls: string[]): Promise<string | null> {
 export async function ensureSupportedImageUrl(url: string, storage: StorageAdapter): Promise<string> {
   if (!UNSUPPORTED_EXT.test(url)) return url;
 
-  const buffer = await Promise.race([
-    getMediaBuffer(storage, url),
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`Timed out fetching media for format conversion: ${url}`)), FETCH_TIMEOUT_MS)
-    ),
-  ]);
+  // getMediaBuffer owns its own per-attempt timeout and retry on transient failures.
+  const buffer = await getMediaBuffer(storage, url);
 
   if (buffer.length > MAX_CONVERT_BYTES) {
     throw new Error(`Media file too large to convert to a supported format (${(buffer.length / 1_000_000).toFixed(1)} MB, max 20 MB): ${url}`);
