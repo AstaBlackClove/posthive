@@ -322,7 +322,7 @@ const PLANS = [
       { text: "1 team member", included: true },
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
-      { text: "Content Library (1,000 items)", included: true },
+      { text: "Content Library + RSS auto-post (1,000 items)", included: true },
       { text: "X/Twitter posting", included: false },
       { text: "API access & MCP", included: false },
       { text: "Webhook outbound", included: false },
@@ -349,7 +349,7 @@ const PLANS = [
       { text: "2 team members", included: true },
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
-      { text: "Content Library (20,000 items)", included: true },
+      { text: "Content Library + RSS auto-post (20,000 items)", included: true },
       { text: "X/Twitter posting (100/mo, no links)*", included: true },
       { text: "API access & MCP", included: true },
       { text: "Webhook outbound", included: true },
@@ -376,7 +376,7 @@ const PLANS = [
       { text: "4 team members", included: true },
       { text: "Reels & Stories", included: true },
       { text: "Per-platform overrides", included: true },
-      { text: "Content Library (100,000 items)", included: true },
+      { text: "Content Library + RSS auto-post (100,000 items)", included: true },
       { text: "X/Twitter posting (100/mo, no links)*", included: true },
       { text: "API access & MCP", included: true },
       { text: "Webhook outbound", included: true },
@@ -1351,6 +1351,12 @@ export default function RootPage() {
                 title: "Bulk CSV scheduling",
                 href: "/features/bulk-csv-scheduling",
                 body: "Upload a CSV and schedule hundreds of posts at once. Exclude platforms per row with !platform syntax.",
+              },
+              {
+                icon: <RssIcon />,
+                title: "Content Library & RSS auto-post",
+                href: "/docs#content-library",
+                body: "Drip out an evergreen content queue, or point a library at an RSS feed and new articles get queued and posted automatically — no manual upload, ever.",
               },
               {
                 icon: <McpIcon />,
@@ -4578,6 +4584,21 @@ function CsvIcon() {
       <line x1="8" y1="13" x2="16" y2="13" />
       <line x1="8" y1="17" x2="16" y2="17" />
       <line x1="8" y1="9" x2="10" y2="9" />
+    </svg>
+  );
+}
+function RssIcon() {
+  return (
+    <svg
+      width="21"
+      height="21"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+    >
+      <path d="M4 11a9 9 0 019 9M4 4a16 16 0 0116 16" strokeLinecap="round" />
+      <circle cx="5" cy="19" r="1.5" />
     </svg>
   );
 }

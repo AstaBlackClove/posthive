@@ -1196,6 +1196,11 @@ TIKTOK_REDIRECT_URI="https://your-domain.com/auth/tiktok/callback"`}</pre>
                 <li className="doc-li"><span className="doc-inline-code">commentText</span> — optional. Auto-posted as first comment after the post publishes.</li>
               </ul>
 
+              <h4 className="doc-h3">RSS feeds</h4>
+              <p className="doc-p">
+                Instead of uploading a CSV, point a library at an RSS feed. New articles are checked for every ~20 minutes and queued automatically — no manual upload, ever. Optionally summarize each article into a short caption with Claude Haiku before posting; off by default, which uses the raw article title. The article link is always included.
+              </p>
+
               <h4 className="doc-h3">Plan limits</h4>
               <ul className="doc-ul">
                 <li className="doc-li"><strong>Creator:</strong> 1,000 items across all libraries.</li>

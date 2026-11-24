@@ -25,7 +25,7 @@ const NAV_GROUPS = [
       },
       {
         href: "/library",
-        label: "Library",
+        label: "Library & RSS",
         icon: <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
       },
       {
@@ -77,26 +77,46 @@ const NAV_GROUPS = [
   },
 ];
 
+const WHATS_NEW_TIPS = [
+  {
+    key: "rss-autopost",
+    title: "RSS auto-posting",
+    body: "Point a content library at an RSS feed and new articles get queued and posted automatically.",
+    href: "/library",
+  },
+  {
+    key: "repeat-posts",
+    title: "Repeat post scheduling",
+    body: "Schedule posts to repeat daily, weekly, or monthly. Set an end date and let it run.",
+    href: "/compose",
+  },
+];
+
 function WhatsNewCard() {
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     try {
-      if (localStorage.getItem("ph:dismissed:repeat-posts") === "1") setDismissed(true);
+      const next: Record<string, boolean> = {};
+      for (const tip of WHATS_NEW_TIPS) {
+        if (localStorage.getItem(`ph:dismissed:${tip.key}`) === "1") next[tip.key] = true;
+      }
+      setDismissed(next);
     } catch { /* ignore */ }
   }, []);
 
-  if (dismissed) return null;
-
-  function dismiss() {
-    setDismissed(true);
-    try { localStorage.setItem("ph:dismissed:repeat-posts", "1"); } catch { /* ignore */ }
+  function dismiss(key: string) {
+    setDismissed((d) => ({ ...d, [key]: true }));
+    try { localStorage.setItem(`ph:dismissed:${key}`, "1"); } catch { /* ignore */ }
   }
+
+  const tip = WHATS_NEW_TIPS.find((t) => !dismissed[t.key]);
+  if (!tip) return null;
 
   return (
     <div className="mx-2 mb-2 rounded-xl px-3 py-2.5" style={{ backgroundColor: "#0d0f1f", border: "1px solid #3a3a5a", position: "relative" }}>
       <button
-        onClick={dismiss}
+        onClick={() => dismiss(tip.key)}
         aria-label="Dismiss"
         style={{ position: "absolute", top: 7, right: 7, background: "none", border: "none", cursor: "pointer", color: "#555", padding: 2, lineHeight: 1 }}
       >
@@ -105,12 +125,10 @@ function WhatsNewCard() {
         </svg>
       </button>
       <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#818cf8" }}>New</p>
-      <p className="text-xs font-semibold mb-0.5" style={{ color: "#ededed" }}>Repeat post scheduling</p>
-      <p className="text-xs mb-2" style={{ color: "#888", lineHeight: 1.5 }}>
-        Schedule posts to repeat daily, weekly, or monthly. Set an end date and let it run.
-      </p>
+      <p className="text-xs font-semibold mb-0.5" style={{ color: "#ededed" }}>{tip.title}</p>
+      <p className="text-xs mb-2" style={{ color: "#888", lineHeight: 1.5 }}>{tip.body}</p>
       <a
-        href="/compose"
+        href={tip.href}
         style={{ fontSize: 11, fontWeight: 600, color: "#818cf8", textDecoration: "none" }}
         className="hover:opacity-80 transition-opacity"
       >
