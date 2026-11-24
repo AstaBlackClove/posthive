@@ -89,22 +89,30 @@ async function getProcessedFacebookPhoto(
       mimeType = "image/jpeg";
     }
 
-    // Oversized images get "reduce the amount of data" from Graph API — downscale to fit
-    if (buffer.length > MAX_FB_PHOTO_BYTES) {
-      const sharp = (await import("sharp")).default;
-      buffer = await sharp(buffer)
-        .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
-        .jpeg({ quality: 85 })
-        .toBuffer();
-      mimeType = "image/jpeg";
-    }
-
-    // Progressive JPEGs also trigger "reduce the amount of data" on Graph API — force baseline encoding
+    // Progressive JPEGs also trigger "reduce the amount of data" on Graph API — force baseline encoding.
+    // Do this before the size pass below so a growing re-encode still gets caught by it.
     if (mimeType === "image/jpeg") {
       const sharp = (await import("sharp")).default;
       const meta = await sharp(buffer).metadata();
       if (meta.isProgressive) {
         buffer = await sharp(buffer).jpeg({ quality: 92, progressive: false }).toBuffer();
+      }
+    }
+
+    // Oversized images get "reduce the amount of data" from Graph API — downscale to fit.
+    // One pass isn't always enough (e.g. a photo-heavy image still over 8MB at 2048px/q85),
+    // so step quality down and re-check, same fixed resize each time.
+    if (buffer.length > MAX_FB_PHOTO_BYTES) {
+      const sharp = (await import("sharp")).default;
+      // shortcut: gives up after quality 40 — a real photo never stays over 8MB at
+      // 2048px/q40, so ships whatever this produces. Revisit if that stops holding.
+      for (const quality of [85, 70, 55, 40]) {
+        buffer = await sharp(buffer)
+          .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality })
+          .toBuffer();
+        mimeType = "image/jpeg";
+        if (buffer.length <= MAX_FB_PHOTO_BYTES) break;
       }
     }
 
