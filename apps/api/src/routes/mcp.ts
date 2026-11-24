@@ -23,6 +23,7 @@ import { prisma } from "../lib/prisma.js";
 import { schedulePostJob } from "../lib/queue.js";
 import { validateStoredContent, type StoredContent } from "../lib/platformValidation.js";
 import { imageLimitError } from "../lib/enforcePlan.js";
+import { findDeadMediaUrl } from "../lib/mediaFormat.js";
 import { withApiKey, canUseApi } from "../lib/auth/withApiKey.js";
 
 async function withMcpGate(req: FastifyRequest, reply: FastifyReply): Promise<void> {
@@ -476,6 +477,10 @@ async function handleTool(
       if (invalid) throw new Error(invalid);
       const imgErr = await imageLimitError(workspaceId, content.mediaUrls.length);
       if (imgErr) throw new Error(imgErr.error);
+      if (content.mediaUrls.length) {
+        const deadUrl = await findDeadMediaUrl(content.mediaUrls);
+        if (deadUrl) throw new Error(`This image or video is no longer available: ${deadUrl}`);
+      }
       const contentPayload = JSON.stringify(content);
 
       const job = await prisma.postJob.create({
@@ -591,12 +596,17 @@ async function handleTool(
       if (job.status !== "draft") {
         throw new Error(`Post status is '${job.status}' — only drafts can be approved`);
       }
+      const approveContent = JSON.parse(job.content) as StoredContent;
       const invalid = validateStoredContent(
         job.targets.map((t) => ({ id: t.accountId, platform: t.account.platform })),
-        JSON.parse(job.content) as StoredContent,
+        approveContent,
         job.commentText,
       );
       if (invalid) throw new Error(`Can't schedule this draft yet: ${invalid}`);
+      if (approveContent.mediaUrls?.length) {
+        const deadUrl = await findDeadMediaUrl(approveContent.mediaUrls);
+        if (deadUrl) throw new Error(`This image or video is no longer available: ${deadUrl}`);
+      }
 
       const updated = await prisma.postJob.update({
         where: { id: postId },
@@ -761,8 +771,13 @@ async function handleTool(
       const templateContent = { ...tc, text, commentText };
       const invalid = validateStoredContent(accounts, templateContent as StoredContent, commentText);
       if (invalid) throw new Error(invalid);
-      const imgErr = await imageLimitError(workspaceId, ((tc.mediaUrls as string[] | undefined) ?? []).length);
+      const templateMediaUrls = (tc.mediaUrls as string[] | undefined) ?? [];
+      const imgErr = await imageLimitError(workspaceId, templateMediaUrls.length);
       if (imgErr) throw new Error(imgErr.error);
+      if (templateMediaUrls.length) {
+        const deadUrl = await findDeadMediaUrl(templateMediaUrls);
+        if (deadUrl) throw new Error(`This image or video is no longer available: ${deadUrl}`);
+      }
       const contentPayload = JSON.stringify(templateContent);
 
       const job = await prisma.postJob.create({

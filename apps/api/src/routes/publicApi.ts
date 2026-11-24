@@ -149,12 +149,12 @@ export async function publicApiRoutes(
       perAccountComment: Object.fromEntries(Object.entries(normalizedPerAccount ?? {}).map(([k, v]) => [k, v?.commentText])),
     });
     if (mediaError) return reply.status(400).send({ error: mediaError, code: "MEDIA_REQUIREMENT" });
+    const imgErr = await imageLimitError(workspaceId, (body.images ?? []).length);
+    if (imgErr) return reply.status(402).send(imgErr);
     if (body.images?.length) {
       const deadUrl = await findDeadMediaUrl(body.images);
       if (deadUrl) return reply.status(400).send({ error: `This image or video is no longer available: ${deadUrl}`, code: "MEDIA_UNREACHABLE" });
     }
-    const imgErr = await imageLimitError(workspaceId, (body.images ?? []).length);
-    if (imgErr) return reply.status(402).send(imgErr);
 
     const contentPayload = JSON.stringify({
       text: body.content,
@@ -433,12 +433,12 @@ export async function publicApiRoutes(
       perAccountComment: Object.fromEntries(Object.entries(finalPerAccount ?? {}).map(([k, v]) => [k, v?.commentText])),
     });
     if (mediaError) return reply.status(400).send({ error: mediaError, code: "MEDIA_REQUIREMENT" });
+    const imgErr = await imageLimitError(workspaceId, finalImages.length);
+    if (imgErr) return reply.status(402).send(imgErr);
     if (finalImages.length) {
       const deadUrl = await findDeadMediaUrl(finalImages);
       if (deadUrl) return reply.status(400).send({ error: `This image or video is no longer available: ${deadUrl}`, code: "MEDIA_UNREACHABLE" });
     }
-    const imgErr = await imageLimitError(workspaceId, finalImages.length);
-    if (imgErr) return reply.status(402).send(imgErr);
 
     const updated = await prisma.postJob.update({ where: { id }, data: updateData });
 
