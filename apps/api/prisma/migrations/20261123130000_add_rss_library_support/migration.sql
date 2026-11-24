@@ -18,3 +18,6 @@ CREATE UNIQUE INDEX "RssFeedItem_libraryId_guid_key" ON "RssFeedItem"("libraryId
 
 -- AddForeignKey
 ALTER TABLE "RssFeedItem" ADD CONSTRAINT "RssFeedItem_libraryId_fkey" FOREIGN KEY ("libraryId") REFERENCES "ContentLibrary"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Enable Row Level Security
+ALTER TABLE "RssFeedItem" ENABLE ROW LEVEL SECURITY;
