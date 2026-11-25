@@ -33,11 +33,19 @@ const REFRESH_PLATFORMS = new Set([
 const WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const BATCH_SIZE = 50;
 const BATCH_CONCURRENCY = 5;
+// Caps the expiry-email burst per run, not the refresh attempts themselves — a backlog of
+// many accounts crossing the warning threshold at once (e.g. a provider that never issues a
+// refresh token, so every account relying on it queues up) shouldn't spend a meaningful slice
+// of a daily email cap in one run. Unemailed accounts stay unwarned (warnedExpiryAt untouched)
+// and get picked up by the next run 12h later, so a backlog drains over a few runs instead of
+// bursting. Soft limit — a race between concurrent accounts can push it slightly over.
+const MAX_EXPIRY_EMAILS_PER_RUN = 20;
 
 async function run(skipRecentlyRefreshed = false) {
   const cutoff = new Date(Date.now() + WINDOW_MS);
   const recentCutoff = new Date(Date.now() - 60 * 60 * 1000); // 1h ago
   let cursor: string | undefined;
+  let expiryEmailsSent = 0;
 
   while (true) {
     const batch = await prisma.account.findMany({
@@ -74,7 +82,8 @@ async function run(skipRecentlyRefreshed = false) {
                 tags: { component: "token-refresh", platform: account.platform },
                 extra: { accountId: account.id },
               });
-            } else if (!account.warnedExpiryAt && account.user?.email) {
+            } else if (!account.warnedExpiryAt && account.user?.email && expiryEmailsSent < MAX_EXPIRY_EMAILS_PER_RUN) {
+              expiryEmailsSent++;
               const daysLeft = Math.max(0, Math.ceil((account.expiresAt!.getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
               await sendAccountExpiryEmail(account.user.email, account.platform, account.displayName, daysLeft)
                 .catch((e) => console.error(`[token-refresh] expiry email failed for ${account.id}:`, e));

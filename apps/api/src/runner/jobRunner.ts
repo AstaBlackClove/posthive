@@ -246,21 +246,39 @@ export async function runJob(
     });
   }
 
-  // Send failure email for non-library, non-dryRun failed jobs
+  // Send failure email for non-library, non-dryRun failed jobs — at most one per user per
+  // day. A user with a broken connection can fail dozens of jobs a day; without this, each
+  // one sends its own email (confirmed: one user hit 129 failed jobs in a week), which on a
+  // capped email plan can crowd out other users' verification/reset mail for the day.
   if (finalStatus === "failed" && !job.dryRun) {
     const isLibraryJob = await prisma.libraryItem.count({ where: { scheduledJobId: job.id } }) > 0;
     if (!isLibraryJob) {
-      const user = await prisma.user.findUnique({
-        where: { id: job.userId },
-        select: { email: true },
+      // Proxy for "already emailed today" — approximate (a prior library-only failure
+      // wouldn't have emailed either) but errs toward sending fewer, not more.
+      // shortcut: two jobs for the same user failing at the exact same instant can both
+      // read 0 before either commits, sending 2 emails instead of 1 — rare, and still far
+      // better than one per failed job. Revisit only if that race starts happening often.
+      const otherFailureToday = await prisma.postJob.count({
+        where: {
+          userId: job.userId,
+          id: { not: job.id },
+          status: "failed",
+          updatedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        },
       });
-      if (user?.email && job.scheduledFor) {
-        const platforms = job.targets
-          .filter(t => t.status === "post_failed" || t.status === "comment_failed")
-          .map(t => t.account.platform);
-        sendPostFailedEmail(user.email, platforms, job.scheduledFor, job.id).catch((err) => {
-          console.warn(`[runner] failed to send failure email for job ${job.id}:`, err.message);
+      if (otherFailureToday === 0) {
+        const user = await prisma.user.findUnique({
+          where: { id: job.userId },
+          select: { email: true },
         });
+        if (user?.email && job.scheduledFor) {
+          const platforms = job.targets
+            .filter(t => t.status === "post_failed" || t.status === "comment_failed")
+            .map(t => t.account.platform);
+          sendPostFailedEmail(user.email, platforms, job.scheduledFor, job.id).catch((err) => {
+            console.warn(`[runner] failed to send failure email for job ${job.id}:`, err.message);
+          });
+        }
       }
     }
   }
