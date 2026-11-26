@@ -27,6 +27,25 @@ function isVideoUrl(url: string): boolean {
   return /\.(mp4|mov|quicktime|webm|m4v)(\?|$)/i.test(url);
 }
 
+// Shorts only accept a custom thumbnail once processing has finished — polling is the only
+// way to know that, there's no webhook. Gives up after ~1 minute; the post itself already
+// succeeded either way, a thumbnail is a nice-to-have on top of it.
+async function waitForVideoProcessed(yt: ReturnType<typeof google.youtube>, videoId: string): Promise<boolean> {
+  const MAX_ATTEMPTS = 12;
+  const DELAY_MS = 5_000;
+  for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    const res = await yt.videos.list({ part: ["processingDetails"], id: [videoId] });
+    const status = res.data.items?.[0]?.processingDetails?.processingStatus;
+    if (status === "succeeded") return true;
+    // "processing" (or no status yet) means keep waiting; any other defined status
+    // ("failed" confirmed, possibly others undocumented) means it's not going to
+    // succeed — stop early instead of burning the full ~1 minute on every one of them.
+    if (status && status !== "processing") return false;
+    await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+  }
+  return false;
+}
+
 // Title = first line of the post text, description = the rest.
 // YouTube titles are capped at 100 chars; truncate safely rather than reject.
 function splitTitleDescription(text: string, asShort: boolean): { title: string; description: string } {
@@ -179,9 +198,22 @@ export const youtubeAdapter: PlatformAdapter = {
     }
     const video = await uploadRes.json() as { id: string };
 
-    // Set custom thumbnail if provided — requires phone-verified channel; not supported for Shorts
-    if (youtubeThumbnailUrl && youtubeType !== "short") {
+    // Set custom thumbnail if provided — requires phone-verified channel.
+    // Shorts are supported too, but only once the video has finished processing
+    // (Google: calling thumbnails.set before that may silently not apply it).
+    if (youtubeThumbnailUrl) {
       try {
+        const auth = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET);
+        auth.setCredentials({ access_token: accessToken });
+        const yt = google.youtube({ version: "v3", auth });
+
+        if (asShort) {
+          const processed = await waitForVideoProcessed(yt, video.id);
+          if (!processed) {
+            throw new Error(`Short ${video.id} didn't finish processing in time — skipping thumbnail`);
+          }
+        }
+
         const PUBLIC_API_URL2 = process.env.PUBLIC_API_URL ?? "";
         const thumbUrl = youtubeThumbnailUrl.startsWith("http")
           ? youtubeThumbnailUrl
@@ -196,10 +228,6 @@ export const youtubeAdapter: PlatformAdapter = {
         if (!thumbRes.ok || !thumbRes.body) {
           console.warn(`[youtube] failed to fetch thumbnail from ${thumbUrl}: ${thumbRes.status}`);
         } else {
-          const auth = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET);
-          auth.setCredentials({ access_token: accessToken });
-          const yt = google.youtube({ version: "v3", auth });
-
           // Pass the response body as a Node.js readable stream
           const { Readable } = await import("node:stream");
           const stream = Readable.fromWeb(thumbRes.body as import("node:stream/web").ReadableStream);
