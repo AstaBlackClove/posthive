@@ -896,30 +896,27 @@ export default function JobsPage() {
           ))}
         </div>
 
-        {viewTab === "list" && (
-          <>
-            <div className="h-4 w-px hidden sm:block" style={{ backgroundColor: "#2a2a2a" }} />
-            <div className="flex gap-1.5 flex-wrap">
-              {([
-                { id: "all",     label: "All",       dot: null,       activeColor: "#ededed", activeBg: "#2a2a2a" },
-                { id: "draft",   label: "Drafts",    dot: "#6b7280",  activeColor: "#9ca3af", activeBg: "#1a1a1a" },
-                { id: "pending", label: "Scheduled",  dot: "#f59e0b", activeColor: "#fbbf24", activeBg: "#1c1a10" },
-                { id: "done",    label: "Published",  dot: "#22c55e", activeColor: "#4ade80", activeBg: "#0a1f12" },
-                { id: "failed",  label: "Failed",     dot: "#ef4444", activeColor: "#f87171", activeBg: "#1f0a0a" },
-              ] as { id: FilterTab; label: string; dot: string | null; activeColor: string; activeBg: string }[]).map((f) => (
-                <button key={f.id} onClick={() => { setFilter(f.id); clearSelection(); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
-                  style={filter === f.id
-                    ? { backgroundColor: f.activeBg, color: f.activeColor, border: `1px solid ${f.dot ?? "#3a3a3a"}40` }
-                    : { backgroundColor: "transparent", border: "1px solid #2a2a2a" }}>
-                  {f.dot && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: filter === f.id ? f.dot : "#333" }} />}
-                  {f.label}
-                  <span className="ml-0.5 tabular-nums" style={{ opacity: 0.6, fontSize: "0.65rem" }}>{counts[f.id]}</span>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+        {/* Status filter — shared by List and Calendar, not list-only */}
+        <div className="h-4 w-px hidden sm:block" style={{ backgroundColor: "#2a2a2a" }} />
+        <div className="flex gap-1.5 flex-wrap">
+          {([
+            { id: "all",     label: "All",       dot: null,       activeColor: "#ededed", activeBg: "#2a2a2a" },
+            { id: "draft",   label: "Drafts",    dot: "#6b7280",  activeColor: "#9ca3af", activeBg: "#1a1a1a" },
+            { id: "pending", label: "Scheduled",  dot: "#f59e0b", activeColor: "#fbbf24", activeBg: "#1c1a10" },
+            { id: "done",    label: "Published",  dot: "#22c55e", activeColor: "#4ade80", activeBg: "#0a1f12" },
+            { id: "failed",  label: "Failed",     dot: "#ef4444", activeColor: "#f87171", activeBg: "#1f0a0a" },
+          ] as { id: FilterTab; label: string; dot: string | null; activeColor: string; activeBg: string }[]).map((f) => (
+            <button key={f.id} onClick={() => { setFilter(f.id); clearSelection(); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+              style={filter === f.id
+                ? { backgroundColor: f.activeBg, color: f.activeColor, border: `1px solid ${f.dot ?? "#3a3a3a"}40` }
+                : { backgroundColor: "transparent", border: "1px solid #2a2a2a" }}>
+              {f.dot && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: filter === f.id ? f.dot : "#333" }} />}
+              {f.label}
+              <span className="ml-0.5 tabular-nums" style={{ opacity: 0.6, fontSize: "0.65rem" }}>{counts[f.id]}</span>
+            </button>
+          ))}
+        </div>
 
         {/* Platform filter */}
         {allPlatforms.length > 1 && (

@@ -19,6 +19,7 @@ import cron from "node-cron";
 import { prisma } from "./prisma.js";
 import type { StorageAdapter } from "./storage.js";
 import { sendCleanupSummaryEmail } from "./mailer.js";
+import { archivePublishedCount } from "./lifetimeStats.js";
 
 let storageAdapter: StorageAdapter | null = null;
 export function setCleanupStorage(s: StorageAdapter): void { storageAdapter = s; }
@@ -41,16 +42,7 @@ async function runCleanup(): Promise<void> {
   });
   const prunedJobIds = prunedJobIdsResult.map((j) => j.id);
   if (prunedJobIds.length) {
-    const archivedCount = await prisma.postJobTarget.count({
-      where: { postJobId: { in: prunedJobIds }, status: { in: ["post_done", "comment_done"] } },
-    });
-    if (archivedCount > 0) {
-      await prisma.lifetimeStat.upsert({
-        where: { id: 1 },
-        create: { id: 1, postsPublished: archivedCount },
-        update: { postsPublished: { increment: archivedCount } },
-      });
-    }
+    await archivePublishedCount({ postJobId: { in: prunedJobIds } });
   }
 
   const [oldSessions, bounceSessions, oldEvents, oldPostJobs, oldOAuthStates, oldEmailVerifications, oldPendingSignups, revokedApiKeys, staleApiKeys, staleOAuthClients, oldLibraryItems] = await Promise.all([

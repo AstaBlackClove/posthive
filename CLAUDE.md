@@ -35,6 +35,25 @@ Note: `PostJobTarget` has no `platform` column — join `Account` on `accountId`
 
 ---
 
+## Querying Billing (Dodo) and Infra (Railway)
+
+Both CLIs are linked — use them directly instead of raw API calls with local keys.
+
+```bash
+# Dodo: subscription status, next renewal date, etc.
+dodo subscriptions get sub_xxx
+
+# Railway: run a one-off script with prod env vars injected (never reads secrets into context)
+railway run --service Posthive node some-script.mjs
+
+# Railway: logs, deploys, metrics
+railway logs
+```
+
+Local `apps/api/.env` is `DODO_ENV=test_mode` — querying live subscriptions needs the CLI (prod) or `railway run`, not a direct fetch with the local key.
+
+---
+
 ## Running the Project
 
 ```bash

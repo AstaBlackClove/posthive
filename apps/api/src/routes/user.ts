@@ -9,6 +9,7 @@ import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/mailer.js"
 import { generateCode, hashCode, codeMatches, isCodeFormat, MAX_CODE_ATTEMPTS, CODE_TTL_MIN } from "../lib/auth/emailCode.js";
 import { encrypt, decrypt } from "../lib/encryption.js";
 import { passwordProblem } from "../lib/auth/passwordPolicy.js";
+import { archivePublishedCount } from "../lib/lifetimeStats.js";
 
 const registerBody = z.object({
   email: z.string().email(),
@@ -466,16 +467,19 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         })).map((a) => a.id)
       : [];
 
-    // 1. Delete PostJobTargets first (no FK cascade on Account → PostJobTarget)
+    // 1. Delete PostJobTargets first (no FK cascade on Account → PostJobTarget).
+    // Archive their published count into LifetimeStat first — so /stats/public's
+    // lifetime total survives this user's history being wiped, same as it survives
+    // 90-day pruning.
     if (allJobIds.length > 0 || workspaceAccountIds.length > 0) {
-      await prisma.postJobTarget.deleteMany({
-        where: {
-          OR: [
-            ...(allJobIds.length > 0 ? [{ postJobId: { in: allJobIds } }] : []),
-            ...(workspaceAccountIds.length > 0 ? [{ accountId: { in: workspaceAccountIds } }] : []),
-          ],
-        },
-      });
+      const targetFilter = {
+        OR: [
+          ...(allJobIds.length > 0 ? [{ postJobId: { in: allJobIds } }] : []),
+          ...(workspaceAccountIds.length > 0 ? [{ accountId: { in: workspaceAccountIds } }] : []),
+        ],
+      };
+      await archivePublishedCount(targetFilter);
+      await prisma.postJobTarget.deleteMany({ where: targetFilter });
     }
 
     // 2. Delete PostJobs

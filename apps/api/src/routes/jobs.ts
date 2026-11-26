@@ -16,6 +16,7 @@ import { filterUrlsSafeToDelete } from "../runner/jobRunner.js";
 import { checkTextLimits, formatTextLimitError } from "../lib/platformLimits.js";
 import { validateStoredContent, type StoredContent } from "../lib/platformValidation.js";
 import { findDeadMediaUrl } from "../lib/mediaFormat.js";
+import { archivePublishedCount } from "../lib/lifetimeStats.js";
 
 const mediaError = (accounts: { id: string; platform: string }[], c: StoredContent) => validateStoredContent(accounts, c);
 
@@ -651,7 +652,9 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       const toAdd = newIds.filter(nid => !currentTargets.some(t => t.accountId === nid));
 
       if (toRemove.length > 0) {
-        await prisma.postJobTarget.deleteMany({ where: { id: { in: toRemove.map(t => t.id) } } });
+        const removedIds = toRemove.map(t => t.id);
+        await archivePublishedCount({ id: { in: removedIds } });
+        await prisma.postJobTarget.deleteMany({ where: { id: { in: removedIds } } });
       }
       if (toAdd.length > 0) {
         await prisma.postJobTarget.createMany({ data: toAdd.map(accountId => ({ postJobId: id, accountId })) });
@@ -819,7 +822,9 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
     // Remove from queue if pending
     if (job.status === "pending") await postJobQueue.remove(id).catch(() => {});
 
-    // Targets are deleted automatically via onDelete: Cascade
+    // Targets are deleted automatically via onDelete: Cascade — archive their published
+    // count first so /stats/public's lifetime total survives this delete.
+    await archivePublishedCount({ postJobId: id });
     await prisma.postJob.delete({ where: { id } });
 
     return reply.status(204).send();
@@ -884,7 +889,9 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
       await prisma.upload.deleteMany({ where: { url: { in: deletable } } });
     }
 
-    // Bulk delete — targets cascade
+    // Bulk delete — targets cascade. Archive their published count first (status: "done"
+    // is a valid bulk-delete filter, so this can wipe hundreds of published posts at once).
+    await archivePublishedCount({ postJobId: { in: deletableIds } });
     const { count } = await prisma.postJob.deleteMany({ where: { id: { in: deletableIds } } });
 
     return reply.status(200).send({ deleted: count });
