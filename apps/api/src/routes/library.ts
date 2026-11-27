@@ -392,6 +392,24 @@ export async function libraryRoutes(app: FastifyInstance): Promise<void> {
       throw err;
     }
 
+    // Mark uploaded files as claimed so the orphan cron leaves them alone — same as job
+    // creation elsewhere. Needed here specifically: a library item can sit queued for days
+    // or weeks before dripCron ever turns it into a PostJob (that's the point of a content
+    // library), but the orphan cron deletes any unclaimed upload after just 24h — so any
+    // self-hosted image referenced here would die long before drip ever got to use it.
+    try {
+      const allMediaUrls = items.flatMap((item) => item.mediaUrls ?? []);
+      for (let i = 0; i < allMediaUrls.length; i += BATCH) {
+        const urlChunk = allMediaUrls.slice(i, i + BATCH);
+        await prisma.upload.updateMany({
+          where: { url: { in: urlChunk } },
+          data: { claimedAt: new Date() },
+        });
+      }
+    } catch (err) {
+      console.warn(`[library] failed to mark media claimed for library ${id}:`, err);
+    }
+
     // If library was marked exhausted before items were uploaded, reactivate it
     await prisma.contentLibrary.updateMany({
       where: { id, status: "exhausted" },

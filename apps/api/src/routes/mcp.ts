@@ -501,6 +501,23 @@ async function handleTool(
 
       if (!isDraft) await schedulePostJob(job.id, scheduledFor);
 
+      // Mark uploaded files as claimed so the orphan cron leaves them alone — matches
+      // POST /jobs and POST /api/v1/posts. Missing this let an MCP-created post's media
+      // get auto-deleted within ~24h even though all MCP posts default to draft and may
+      // sit unapproved (or scheduled far out) well past that.
+      // Best-effort: the post above is already created and scheduled — a failure here must
+      // not throw, or the calling agent sees an error and may retry, duplicating the post.
+      try {
+        if (content.mediaUrls.length) {
+          await prisma.upload.updateMany({
+            where: { url: { in: content.mediaUrls } },
+            data: { claimedAt: new Date() },
+          });
+        }
+      } catch (err) {
+        console.warn(`[mcp] failed to mark media claimed for job ${job.id}:`, err);
+      }
+
       return ok({
         id: job.id,
         status: job.status,
@@ -795,6 +812,20 @@ async function handleTool(
       });
 
       if (!isDraft) await schedulePostJob(job.id, scheduledFor);
+
+      // Mark uploaded files as claimed so the orphan cron leaves them alone — matches
+      // POST /jobs, POST /api/v1/posts, and MCP's create_post. Best-effort, same reason:
+      // the post is already created and scheduled above, a failure here must not throw.
+      try {
+        if (templateMediaUrls.length) {
+          await prisma.upload.updateMany({
+            where: { url: { in: templateMediaUrls } },
+            data: { claimedAt: new Date() },
+          });
+        }
+      } catch (err) {
+        console.warn(`[mcp] failed to mark media claimed for job ${job.id}:`, err);
+      }
 
       return ok({
         id: job.id,

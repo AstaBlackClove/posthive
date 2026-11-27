@@ -253,6 +253,23 @@ export async function jobRoutes(app: FastifyInstance, { storage }: { storage: St
           return results;
         }, { timeout: 30_000 });
         createdJobs.push(...created.filter(j => j.scheduledFor).map(j => ({ id: j.id, scheduledFor: j.scheduledFor! })));
+
+        // Mark uploaded files as claimed so the orphan cron leaves them alone — same as
+        // POST /jobs. Missing here meant bulk-CSV images got auto-deleted within ~24h
+        // regardless of how far out the post was scheduled (confirmed real case, Nov 2026).
+        // Best-effort: these jobs are already created and pushed to createdJobs above, so a
+        // failure here must not land these rows in `errors` and report them as failed.
+        try {
+          const chunkMediaUrls = chunk.flatMap(job => job.content.mediaUrls ?? []);
+          if (chunkMediaUrls.length) {
+            await prisma.upload.updateMany({
+              where: { url: { in: chunkMediaUrls } },
+              data: { claimedAt: new Date() },
+            });
+          }
+        } catch (err) {
+          console.warn(`[jobs/bulk] failed to mark media claimed for chunk starting at row ${i}:`, err);
+        }
       } catch (err) {
         const chunkStart = i;
         for (let k = 0; k < chunk.length; k++) {
