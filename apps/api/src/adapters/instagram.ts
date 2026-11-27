@@ -22,13 +22,22 @@ function getCredentials(account: Account): InstagramCredentials {
   return JSON.parse(decrypt(account.credentials)) as InstagramCredentials;
 }
 
+// Throws the raw error object (code, error_subcode, message — not just the message text)
+// so isDeadTokenError() can see "code":190 etc. Every other adapter's generic API-call
+// error already does this (e.g. facebook.ts throws raw res.text()); this one used to
+// extract only .message, silently losing the code and making the reconnect-email path
+// unreachable for any dead-token failure surfacing through a normal post/get call.
+function apiError(json: { error?: unknown }, status: number): Error {
+  return new Error(json.error ? JSON.stringify(json.error) : `Instagram API error: ${status}`);
+}
+
 async function apiGet<T>(path: string, token: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${API}${path}`);
   url.searchParams.set("access_token", token);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const res = await fetch(url.toString());
-  const json = await res.json() as T & { error?: { message: string } };
-  if (!res.ok) throw new Error((json as { error?: { message: string } }).error?.message ?? `Instagram API error: ${res.status}`);
+  const json = await res.json() as T & { error?: unknown };
+  if (!res.ok) throw apiError(json, res.status);
   return json;
 }
 
@@ -37,8 +46,8 @@ async function apiPost<T>(path: string, token: string, body: Record<string, stri
   url.searchParams.set("access_token", token);
   for (const [k, v] of Object.entries(body)) url.searchParams.set(k, v);
   const res = await fetch(url.toString(), { method: "POST" });
-  const json = await res.json() as T & { error?: { message: string } };
-  if (!res.ok) throw new Error((json as { error?: { message: string } }).error?.message ?? `Instagram API error: ${res.status}`);
+  const json = await res.json() as T & { error?: unknown };
+  if (!res.ok) throw apiError(json, res.status);
   return json;
 }
 
