@@ -97,11 +97,16 @@ async function refreshIfNeeded(account: Account): Promise<Account> {
 async function waitForContainer(userId: string, token: string, containerId: string, maxWait = 300_000): Promise<void> {
   const start = Date.now();
   while (Date.now() - start < maxWait) {
-    const res = await apiGet<{ status_code: string }>(
-      `/${containerId}`, token, { fields: "status_code" }
+    const res = await apiGet<{ status_code: string; status?: string }>(
+      `/${containerId}`, token, { fields: "status_code,status" }
     );
     if (res.status_code === "FINISHED") return;
-    if (res.status_code === "ERROR") throw new Error("Instagram media container processing failed");
+    // On ERROR, `status` holds an error subcode (not a message — Meta's ig-container
+    // reference has no human-readable error field), e.g. 2207027 = media not ready,
+    // 2207020 = container expired. Surfacing the code beats a blind generic string.
+    if (res.status_code === "ERROR") {
+      throw new Error(`Instagram media container processing failed${res.status ? ` (code ${res.status})` : ""}`);
+    }
     await new Promise((r) => setTimeout(r, 3000));
   }
   throw new Error("Instagram media container timed out");
